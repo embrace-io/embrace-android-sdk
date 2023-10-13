@@ -39,8 +39,6 @@ internal class SdkModeBehavior(
         private const val DEFAULT_OFFSET = 0
     }
 
-    fun isIntegrationModeEnabled(): Boolean = local?.sdkConfig?.integrationModeEnabled ?: false
-
     /**
      * Checks if beta features are enabled for this device.
      *

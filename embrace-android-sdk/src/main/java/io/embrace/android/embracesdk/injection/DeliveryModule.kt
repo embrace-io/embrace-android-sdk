@@ -50,7 +50,6 @@ internal class DeliveryModuleImpl(
             essentialServiceModule.apiClient,
             deliveryCacheManager,
             coreModule.logger,
-            essentialServiceModule.configService,
             apiRetryExecutor,
             dataCaptureServiceModule.networkConnectivityService,
             coreModule.jsonSerializer,
@@ -64,8 +63,7 @@ internal class DeliveryModuleImpl(
             deliveryNetworkManager,
             cachedSessionsExecutorService,
             sendSessionsExecutorService,
-            coreModule.logger,
-            essentialServiceModule.configService
+            coreModule.logger
         )
     }
 }

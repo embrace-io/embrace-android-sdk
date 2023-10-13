@@ -13,7 +13,6 @@ internal class SdkModeBehaviorTest {
     private val local = LocalConfig(
         "", false,
         SdkLocalConfig(
-            integrationModeEnabled = true,
             betaFeaturesEnabled = true
         )
     )
@@ -34,7 +33,6 @@ internal class SdkModeBehaviorTest {
                 thresholdCheck = disabled
             )
         ) {
-            assertFalse(isIntegrationModeEnabled())
             assertFalse(isBetaFeaturesEnabled())
             assertFalse(isSdkDisabled())
         }
@@ -48,7 +46,6 @@ internal class SdkModeBehaviorTest {
                 localCfg = { local }
             )
         ) {
-            assertTrue(isIntegrationModeEnabled())
             assertTrue(isBetaFeaturesEnabled())
         }
     }

@@ -20,8 +20,7 @@ internal class SdkObservabilityModuleImpl(
 
     private val logStrictMode by lazy {
         val configService = essentialServiceModule.configService
-        configService.sessionBehavior.isSessionErrorLogStrictModeEnabled() ||
-            configService.sdkModeBehavior.isIntegrationModeEnabled()
+        configService.sessionBehavior.isSessionErrorLogStrictModeEnabled()
     }
 
     override val exceptionService: EmbraceInternalErrorService by singleton {

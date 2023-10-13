@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalErrorLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -10,22 +8,19 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val networkManager: DeliveryNetworkManager,
     private val cachedSessionsExecutorService: ExecutorService,
     private val sendSessionsExecutorService: ExecutorService,
-    private val logger: InternalEmbraceLogger,
-    private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger
 ) : DeliveryService, DeliveryServiceNetwork by networkManager {
 
     companion object {
         private const val TAG = "EmbraceDeliveryService"
 
         private const val SEND_SESSION_TIMEOUT = 1L
-        private const val CRASH_MAX_DIFF_WITH_SESSION_END = 7000
     }
 
     private val backgroundActivities by lazy { mutableSetOf<String>() }
@@ -58,10 +53,6 @@ internal class EmbraceDeliveryService(
                     var onFinish: (() -> Unit)? = null
                     if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
                         onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
-                        if (configService.sdkModeBehavior.isIntegrationModeEnabled()) {
-                            validateNetworkCalls(sessionMessage)
-                            validateSessionTimestamps(sessionMessage)
-                        }
                     }
 
                     if (state == SessionMessageState.END_WITH_CRASH) {
@@ -160,27 +151,6 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    private fun validateSessionTimestamps(sessionMessage: SessionMessage) {
-        val endTime = sessionMessage.session.endTime ?: 0
-        if (endTime <= sessionMessage.session.startTime) {
-            logger.logError(
-                "Session end time less or equal to start time",
-                InternalErrorLogger.IntegrationModeException("wrong session start/end time")
-            )
-        }
-    }
-
-    private fun validateNetworkCalls(sessionMessage: SessionMessage) {
-        val p = sessionMessage.performanceInfo
-        val networkRequests = p?.networkRequests
-        if (networkRequests?.networkSessionV2?.requestCounts?.isEmpty() == true) {
-            logger.logError(
-                "Session with no network calls",
-                InternalErrorLogger.IntegrationModeException("No network calls")
-            )
-        }
-    }
-
     override fun sendCachedSessions(
         isNdkEnabled: Boolean,
         ndkService: NdkService,
@@ -251,26 +221,8 @@ internal class EmbraceDeliveryService(
             "Attaching native crash ${nativeCrashData.nativeCrashId} to session ${sessionMessage.session.sessionId}"
         )
 
-        if (configService.sdkModeBehavior.isIntegrationModeEnabled()) {
-            verifyCrashTimeStamp(nativeCrashData, sessionMessage)
-        }
-
         val session = sessionMessage.session.copy(crashReportId = nativeCrashData.nativeCrashId)
         return sessionMessage.copy(session = session)
-    }
-
-    // Crash must occur within 7 seconds of the session end
-    private fun verifyCrashTimeStamp(
-        nativeCrashData: NativeCrashData,
-        sessionMessage: SessionMessage
-    ) {
-        val endTime = sessionMessage.session.endTime ?: 0
-        if (abs(nativeCrashData.timestamp - endTime) >= CRASH_MAX_DIFF_WITH_SESSION_END) {
-            logger.logError(
-                "Crash " + nativeCrashData.nativeCrashId + " happened outside 7 seconds of session end",
-                InternalErrorLogger.IntegrationModeException(nativeCrashData.nativeCrashId + " outside 7 secs range")
-            )
-        }
     }
 
     private fun sendCachedSessions(ids: List<String>, currentSession: String?) {
@@ -279,13 +231,6 @@ internal class EmbraceDeliveryService(
                 try {
                     val payload = cacheManager.loadSessionBytes(id)
                     if (payload != null) {
-                        if (configService.sdkModeBehavior.isIntegrationModeEnabled()) {
-                            logger.logError(
-                                "send cached sessions",
-                                InternalErrorLogger.IntegrationModeException("Found cached session $id")
-                            )
-                        }
-
                         // The network requests will be executed sequentially in a single-threaded executor by the network manager
                         networkManager.sendSession(payload) { cacheManager.deleteSession(id) }
                     } else {

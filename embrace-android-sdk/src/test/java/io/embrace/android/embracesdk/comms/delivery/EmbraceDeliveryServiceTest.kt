@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakeBackgroundActivity
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
@@ -16,7 +14,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertNotNull
-import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.Future
@@ -31,7 +28,6 @@ internal class EmbraceDeliveryServiceTest {
         private lateinit var mockDeliveryCacheManager: DeliveryCacheManager
         private lateinit var mockDeliveryNetworkManager: DeliveryNetworkManager
         private lateinit var logger: InternalEmbraceLogger
-        private lateinit var configService: ConfigService
 
         @BeforeClass
         @JvmStatic
@@ -42,11 +38,6 @@ internal class EmbraceDeliveryServiceTest {
             mockDeliveryNetworkManager = mockk(relaxed = true)
             logger = InternalEmbraceLogger()
         }
-    }
-
-    @Before
-    fun setUp() {
-        configService = FakeConfigService()
     }
 
     @After
@@ -61,8 +52,7 @@ internal class EmbraceDeliveryServiceTest {
             mockDeliveryNetworkManager,
             executor,
             executor,
-            logger,
-            configService
+            logger
         )
     }
 

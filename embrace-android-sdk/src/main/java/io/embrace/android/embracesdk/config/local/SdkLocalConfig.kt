@@ -28,12 +28,6 @@ internal class SdkLocalConfig(
     val webViewConfig: WebViewLocalConfig? = null,
 
     /**
-     * Whether integration mode should be enabled or not
-     */
-    @SerializedName("integration_mode")
-    val integrationModeEnabled: Boolean? = null,
-
-    /**
      * Whether beta features should be enabled or not
      */
     @SerializedName("beta_features_enabled")

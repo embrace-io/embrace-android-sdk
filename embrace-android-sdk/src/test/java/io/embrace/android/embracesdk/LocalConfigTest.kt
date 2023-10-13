@@ -301,28 +301,6 @@ internal class LocalConfigTest {
     }
 
     @Test
-    fun testIntegrationModeEnabled() {
-        val localConfig = LocalConfig.buildConfig(
-            "GrCPU",
-            false,
-            "{\"integration_mode\": true}",
-            EmbraceSerializer()
-        )
-        assertTrue(checkNotNull(localConfig.sdkConfig.integrationModeEnabled))
-    }
-
-    @Test
-    fun testIntegrationModeDisabled() {
-        val localConfig = LocalConfig.buildConfig(
-            "GrCPU",
-            false,
-            "{\"integration_mode\": false}",
-            EmbraceSerializer()
-        )
-        assertFalse(checkNotNull(localConfig.sdkConfig.integrationModeEnabled))
-    }
-
-    @Test
     fun testWebviewCaptureOnlyConfig() {
         var localConfig = LocalConfig.buildConfig(
             "GrCPU",

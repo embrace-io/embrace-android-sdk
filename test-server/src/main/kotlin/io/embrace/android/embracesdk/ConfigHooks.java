@@ -84,7 +84,6 @@ public class ConfigHooks {
             null,
             null,
             null,
-            null,
             getNetworkConfig(),
             null,
             null,

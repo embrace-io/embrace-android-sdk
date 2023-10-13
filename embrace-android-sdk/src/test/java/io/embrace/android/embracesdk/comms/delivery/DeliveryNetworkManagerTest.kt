@@ -1,25 +1,15 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.payload.Event
-import io.embrace.android.embracesdk.payload.EventMessage
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
@@ -42,8 +32,6 @@ internal class DeliveryNetworkManagerTest {
 
         private lateinit var mockApiUrlBuilder: ApiUrlBuilder
         private lateinit var mockApiClient: ApiClient
-        private lateinit var configService: ConfigService
-        private lateinit var cfg: LocalConfig
         private lateinit var mockCacheManager: DeliveryCacheManager
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var testScheduledExecutor: ScheduledExecutorService
@@ -54,7 +42,6 @@ internal class DeliveryNetworkManagerTest {
         @BeforeClass
         @JvmStatic
         fun setupBeforeAll() {
-            cfg = LocalConfig("", false, SdkLocalConfig())
             mockApiUrlBuilder = mockk(relaxUnitFun = true)
             every { mockApiUrlBuilder.getEmbraceUrlWithSuffix(any()) } returns "http://fake.url"
 
@@ -73,11 +60,6 @@ internal class DeliveryNetworkManagerTest {
 
     @Before
     fun setup() {
-        configService = FakeConfigService(
-            sdkModeBehavior = fakeSdkModeBehavior(
-                localCfg = { cfg }
-            )
-        )
         mockApiClient = mockk()
         every { mockApiClient.post(any(), any()) } returns ""
         failedApiCalls = DeliveryFailedApiCalls()
@@ -273,39 +255,6 @@ internal class DeliveryNetworkManagerTest {
         Assert.assertEquals(200, networkManager.pendingRetriesCount())
     }
 
-    @Test
-    fun `test app and device info verification is not executed if integrationMode is false`() {
-        initDeliveryNetworkManager(status = NetworkStatus.WIFI)
-        val mocked = spyk(networkManager, recordPrivateCalls = true)
-        val eventMessage = mockk<EventMessage>(relaxed = true)
-        val event = Event(
-            eventId = Uuid.getEmbUuid(),
-            timestamp = 100L,
-            type = EmbraceEvent.Type.CRASH
-        )
-        every { eventMessage.event } returns event
-        mocked.sendEvent(eventMessage)
-        verify(exactly = 0) { mocked["verifyDeviceInfo"](eventMessage) }
-        verify(exactly = 0) { mocked["verifyAppInfo"](eventMessage) }
-    }
-
-    @Test
-    fun `test app and device info verification is executed if integrationMode is true`() {
-        initDeliveryNetworkManager(status = NetworkStatus.WIFI, integrationMode = true)
-
-        val mocked = spyk(networkManager, recordPrivateCalls = true)
-        val event = Event(
-            eventId = Uuid.getEmbUuid(),
-            timestamp = 100L,
-            type = EmbraceEvent.Type.CRASH
-        )
-        val eventMessage = mockk<EventMessage>(relaxed = true)
-        every { eventMessage.event } returns event
-        mocked.sendEvent(eventMessage)
-        verify { mocked["verifyDeviceInfo"](eventMessage) }
-        verify { mocked["verifyAppInfo"](eventMessage) }
-    }
-
     private fun clearApiPipeline() {
         clearMocks(mockApiClient, answers = false)
         failedApiCalls.clear()
@@ -316,10 +265,8 @@ internal class DeliveryNetworkManagerTest {
     private fun initDeliveryNetworkManager(
         status: NetworkStatus,
         loadFailedRequest: Boolean = true,
-        runRetryJobAfterScheduling: Boolean = false,
-        integrationMode: Boolean = false,
+        runRetryJobAfterScheduling: Boolean = false
     ) {
-        cfg = LocalConfig("", false, SdkLocalConfig(integrationModeEnabled = integrationMode))
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
         networkManager = DeliveryNetworkManager(
@@ -328,7 +275,6 @@ internal class DeliveryNetworkManagerTest {
             mockApiClient,
             mockCacheManager,
             mockk(relaxUnitFun = true),
-            configService,
             testScheduledExecutor,
             networkConnectivityService,
             EmbraceSerializer(),

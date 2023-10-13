@@ -9,10 +9,8 @@ import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalErrorLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -39,7 +37,6 @@ internal class DeliveryNetworkManager(
     private val apiClient: ApiClient,
     private val cacheManager: DeliveryCacheManager,
     private val logger: InternalEmbraceLogger,
-    private val configService: ConfigService,
     private val scheduledExecutorService: ScheduledExecutorService,
     networkConnectivityService: NetworkConnectivityService,
     private val serializer: EmbraceSerializer,
@@ -255,54 +252,12 @@ internal class DeliveryNetworkManager(
         return postEvent(eventMessage, request, null)
     }
 
-    private fun verifyDeviceInfo(eventMessage: EventMessage) {
-        if (eventMessage.deviceInfo == null) {
-            logger.logError(
-                eventMessage.event.name + "device Info null",
-                InternalErrorLogger.IntegrationModeException(eventMessage.event.name + ": No deviceInfo")
-            )
-        }
-    }
-
-    private fun verifyAppInfo(eventMessage: EventMessage) {
-        if (eventMessage.appInfo == null) {
-            logger.logError(
-                eventMessage.event.name + "app Info null",
-                InternalErrorLogger.IntegrationModeException(eventMessage.event.name + ": No appInfo")
-            )
-        }
-    }
-
-    private fun verifyNativeCrashSymbols(eventMessage: EventMessage) {
-        if (eventMessage.event.type == EmbraceEvent.Type.CRASH && eventMessage.nativeCrash != null) {
-            if (eventMessage.nativeCrash.symbols.isNullOrEmpty()) {
-                logger.logError(
-                    "No symbols for native crash: " + eventMessage.nativeCrash.id,
-                    InternalErrorLogger.IntegrationModeException("No symbols for native crash")
-                )
-            }
-
-            if (eventMessage.nativeCrash.errors.isNullOrEmpty()) {
-                logger.logError(
-                    "No NativeCrashData error data for crash id: " + eventMessage.nativeCrash.id,
-                    InternalErrorLogger.IntegrationModeException("No NativeCrashData error data")
-                )
-            }
-        }
-    }
-
     private fun postEvent(
         eventMessage: EventMessage,
         request: ApiRequest,
         onComplete: (() -> Unit)?
     ): Future<*>? {
         val bytes = serializer.bytesFromPayload(eventMessage, EventMessage::class.java)
-
-        if (configService.sdkModeBehavior.isIntegrationModeEnabled()) {
-            verifyDeviceInfo(eventMessage)
-            verifyAppInfo(eventMessage)
-            verifyNativeCrashSymbols(eventMessage)
-        }
 
         bytes?.let {
             logger.logDeveloper(TAG, "Post event")

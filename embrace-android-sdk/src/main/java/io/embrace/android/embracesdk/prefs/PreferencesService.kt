@@ -1,0 +1,186 @@
+package io.embrace.android.embracesdk.prefs
+
+internal interface PreferencesService {
+
+    /**
+     * The last registered Host App version name
+     */
+    var appVersion: String?
+
+    /**
+     * The last registered OS Version
+     */
+    var osVersion: String?
+
+    /**
+     * The app install date in ms
+     */
+    var installDate: Long?
+
+    /**
+     * The unique identifier for this device.
+     */
+    var deviceIdentifier: String
+
+    /**
+     * The last SDK startup status registered.
+     */
+    val sdkStartupStatus: String?
+
+    /**
+     * If the sdk is disabled
+     */
+    var sdkDisabled: Boolean
+
+    /**
+     * If the user is payer
+     */
+    var userPayer: Boolean
+
+    /**
+     * User unique identifier
+     */
+    var userIdentifier: String?
+
+    /**
+     * User email address
+     */
+    var userEmailAddress: String?
+
+    /**
+     * Personas for the user
+     */
+    var userPersonas: Set<String>?
+
+    /**
+     * All permanent session properties
+     */
+    var permanentSessionProperties: Map<String, String>?
+
+    /**
+     * No longer used, will be removed in a future version.
+     *
+     * Method is still present to ensure that during any upgrades to SDK3, any custom
+     * personas are merged with the user personas list.
+     *
+     * @return custom personas
+     */
+    @Deprecated("")
+    val customPersonas: Set<String>?
+
+    /**
+     * Username for the user
+     */
+    var username: String?
+
+    /**
+     * The last time config was fetched from the server
+     */
+    var lastConfigFetchDate: Long?
+
+    /**
+     * If the user message needs to retry send
+     */
+    var userMessageNeedsRetry: Boolean
+
+    /**
+     * Last session number. Increments by one.
+     */
+    var sessionNumber: Int
+
+    /**
+     * Last javaScript bundle string url.
+     */
+    var javaScriptBundleURL: String?
+
+    /**
+     * Embrace sdk version.
+     */
+    var rnSdkVersion: String?
+
+    /**
+     * Last javaScript patch string number.
+     */
+    var javaScriptPatchNumber: String?
+
+    /**
+     * Last react native version.
+     */
+    var reactNativeVersionNumber: String?
+
+    /**
+     * Last Unity version.
+     */
+    var unityVersionNumber: String?
+
+    /**
+     * Last Unity Build ID
+     */
+    var unityBuildIdNumber: String?
+
+    /**
+     * Last Unity SDK version
+     */
+    var unitySdkVersionNumber: String?
+
+    /**
+     * Last Flutter SDK version
+     */
+    var embraceFlutterSdkVersion: String?
+
+    /**
+     * Last Dart SDK version
+     */
+    var dartSdkVersion: String?
+
+    /**
+     * If the device is a rooted device.
+     */
+    var jailbroken: Boolean?
+
+    /**
+     * The device's screen resolution.
+     */
+    var screenResolution: String?
+
+    /**
+     * The device's cpu name.
+     */
+    var cpuName: String?
+
+    /**
+     * The device's egl.
+     */
+    var egl: String?
+
+    /**
+     * If background activity capture is enabled
+     */
+    var backgroundActivityEnabled: Boolean
+
+    /**
+     * Set of hashcodes derived from ApplicationExitInfo objects
+     */
+    var applicationExitInfoHistory: Set<String>?
+
+    /**
+     * Whether or not the app was installed within the last 24 hours.
+     *
+     * @return true if it is the user's first day, false otherwise
+     */
+    fun isUsersFirstDay(): Boolean
+
+    /**
+     * Ssuffix to compose the key to get the stored value
+     */
+    fun isNetworkCaptureRuleOver(id: String): Boolean
+
+    /**
+     * Suffix to compose the key to get the stored value
+     */
+    fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int)
+
+    companion object {
+        const val DAY_IN_MS = 60 * 60 * 24 * 1000L
+    }
+}

@@ -1,0 +1,15 @@
+{ "pr": {
+    "Float": 1,
+    "String": "TestString"
+  },
+  "sp": {},
+  "n": "test",
+  "li": "messageId",
+  "id": "eventId",
+  "si": "sessionId",
+  "t": "warning",
+  "ts": 1111,
+  "sc": false,
+  "st": "active",
+  "et": "none"
+}

@@ -1,0 +1,17 @@
+{
+  "ts": 156098234092,
+  "threads": [
+    {
+      "threadId": 13,
+      "state": "RUNNABLE",
+      "n": "my-thread",
+      "p": 5,
+      "tt": [
+        "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
+        "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
+      ]
+    }
+  ],
+  "o": 2,
+  "c": 0
+}

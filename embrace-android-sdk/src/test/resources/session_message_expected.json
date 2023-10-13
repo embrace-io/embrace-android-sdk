@@ -1,0 +1,49 @@
+{
+  "s": {
+    "id": "fakeSessionId",
+    "st": 160000000000,
+    "sn": 1,
+    "ty": "st",
+    "as": "foreground",
+    "cs": true,
+    "sm": "s",
+    "sp": {}
+  },
+  "u": {
+    "id": "fake-user-id",
+    "em": "fake-user-name"
+  },
+  "a": {
+    "v": "fake-app-version"
+  },
+  "d": {
+    "dm": "fake-manufacturer"
+  },
+  "p": {
+    "ds": {
+      "as": 150923409,
+      "fs": 509209823
+    }
+  },
+  "br": {
+    "cb": [
+      {
+        "m": "Hi",
+        "ts": 109234098234
+      }
+    ]
+  },
+  "spans": [
+    {
+      "trace_id": "fake-span-id",
+      "span_id": "",
+      "name": "",
+      "start_time_unix_nano": 0,
+      "end_time_unix_nano": 0,
+      "status": "OK",
+      "events": [],
+      "attributes": {}
+    }
+  ],
+  "v": 13
+}

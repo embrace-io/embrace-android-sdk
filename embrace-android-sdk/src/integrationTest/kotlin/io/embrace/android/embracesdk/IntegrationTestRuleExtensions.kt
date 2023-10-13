@@ -1,0 +1,107 @@
+package io.embrace.android.embracesdk
+
+import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.SessionMessage
+import org.junit.Assert.assertEquals
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+
+/*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
+
+/**
+ * Returns a list of [EventMessage] logs that were sent by the SDK since startup. If [expectedSize] is specified, it will wait up to
+ * 1 second to validate the number of sent log message equal that size. If a second passes that the size requirement is not met, a
+ * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right
+ * away.
+ */
+internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<EventMessage> {
+    val logs = fakeDeliveryModule.deliveryService.lastSentLogs
+    return when (expectedSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs.size == expectedSize
+        }
+    }
+}
+
+/**
+ * Returns the last [EventMessage] log that was sent by the SDK. If [expectedSize] is specified, it will wait up to 1 second to validate
+ * the number of sent log message equal that size. If a second passes that the size requirement is not met, a [TimeoutException] will
+ * be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right away.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int? = null): EventMessage {
+    return getSentLogMessages(expectedSize).last()
+}
+
+/**
+ * Returns a list of [SessionMessage] that were sent by the SDK since startup.
+ */
+internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
+    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }
+}
+
+/**
+ * Returns the last [SessionMessage] that was sent by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage {
+    return getSentSessionMessages().last()
+}
+
+/**
+ * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
+ * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,
+ * send log messages etc, while the session is active. The end session message is returned so
+ * that the caller can perform further assertions if needed.
+ *
+ * This function fakes the lifecycle events that trigger a session start & end. The session
+ * should always be 30s long. Additionally, it performs assertions against fields that
+ * are guaranteed not to change in the start/end message.
+ */
+internal fun IntegrationTestRule.Harness.recordSession(action: () -> Unit): SessionMessage {
+    // get the activity service & simulate the lifecycle event that triggers a new session.
+    val activityService = checkNotNull(Embrace.getImpl().activityService)
+    activityService.onForeground()
+
+    // assert a session was started.
+    val startSession = getLastSentSessionMessage()
+    assertEquals("st", startSession.session.messageType)
+    // TODO: future: increase number of assertions on what is always in a start message?
+
+    // perform a custom action during the session boundary, e.g. adding a breadcrumb.
+    action()
+
+    // end session 30s later by entering background
+    fakeClock.tick(30000)
+    activityService.onBackground()
+
+    val endSession = getLastSentSessionMessage()
+    assertEquals("en", endSession.session.messageType)
+    // TODO: future: increase number of assertions on what is always in a start message?
+
+    // return the session end message for further assertions.
+    return endSession
+}
+
+internal fun exceptionsService(): EmbraceInternalErrorService? = Embrace.getImpl().exceptionsService
+
+/**
+ * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs] elapses. Otherwise, throws [TimeoutException]
+ */
+internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs: Int = 1000, condition: () -> Boolean): T {
+    val tries: Int = waitTimeMs / CHECK_INTERVAL_MS
+    val countDownLatch = CountDownLatch(1)
+
+    repeat(tries) {
+        if (!condition()) {
+            countDownLatch.await(CHECK_INTERVAL_MS.toLong(), TimeUnit.MILLISECONDS)
+        } else {
+            return desiredValueSupplier.invoke()
+        }
+    }
+
+    throw TimeoutException("Timeout period elapsed before condition met")
+}
+
+private const val CHECK_INTERVAL_MS: Int = 10

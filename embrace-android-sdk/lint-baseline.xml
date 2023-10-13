@@ -1,0 +1,1830 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 7.3.0" type="baseline" client="gradle" dependencies="false" name="AGP (7.3.0)" variant="all" version="7.3.0">
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        return httpMethod != null ? httpMethod.name().toUpperCase() : null;"
+        errorLine2="                                                      ~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/EmbraceNetworkRequest.java"
+            line="521"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        return httpMethod != null ? httpMethod.name().toUpperCase() : null;"
+        errorLine2="                                                      ~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/EmbraceNetworkRequestV2.java"
+            line="125"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class AutomaticVerificationChecker {"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutomaticVerificationChecker.kt"
+            line="9"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class VerificationResult {"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutomaticVerificationChecker.kt"
+            line="83"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class AutomaticVerificationExceptionHandler constructor("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutomaticVerificationExceptionHandler.kt"
+            line="9"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class VerifyIntegrationException(message: String) : Exception(message)"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutomaticVerificationExceptionHandler.kt"
+            line="27"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public annotation class BetaApi"
+        errorLine2="                        ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/BetaApi.kt"
+            line="10"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class BuildInfo internal constructor("
+        errorLine2="               ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/BuildInfo.kt"
+            line="9"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    internal companion object {"
+        errorLine2="                       ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/BuildInfo.kt"
+            line="26"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="class ComparableVersion implements Comparable&lt;ComparableVersion> {"
+        errorLine2="      ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ComparableVersion.java"
+            line="65"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    private interface Item {"
+        errorLine2="                      ~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ComparableVersion.java"
+            line="72"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    private static class IntegerItem implements Item {"
+        errorLine2="                         ~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ComparableVersion.java"
+            line="87"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    private static class StringItem"
+        errorLine2="                         ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ComparableVersion.java"
+            line="138"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    protected static class ListItem extends ArrayList implements Item {"
+        errorLine2="                           ~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ComparableVersion.java"
+            line="233"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface CpuInfoDelegate {"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/CpuInfoDelegate.kt"
+            line="6"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="abstract class CustomFlow {"
+        errorLine2="               ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/CustomFlow.java"
+            line="26"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    private static class Moment {"
+        errorLine2="                         ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/CustomFlow.java"
+            line="405"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class Embrace implements EmbraceAndroidApi {"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/Embrace.java"
+            line="35"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public enum AppFramework {"
+        errorLine2="                ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/Embrace.java"
+            line="1183"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public enum LastRunEndState {"
+        errorLine2="                ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/Embrace.java"
+            line="1410"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="interface EmbraceAndroidApi extends EmbraceApi {"
+        errorLine2="          ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceAndroidApi.java"
+            line="13"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi, UserApi, TracingApi {"
+        errorLine2="          ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceApi.java"
+            line="15"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceAutomaticVerification("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
+            line="31"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    companion object {"
+        errorLine2="              ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
+            line="53"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceBackgroundActivityService("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceBackgroundActivityService.kt"
+            line="36"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    companion object {"
+        errorLine2="              ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceBackgroundActivityService.kt"
+            line="355"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceCpuInfoDelegate("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceCpuInfoDelegate.kt"
+            line="6"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal object EmbraceCrashSamples {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceCrashSamples.kt"
+            line="11"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceSampleCodeException(val msg: String) : Exception(msg)"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceCrashSamples.kt"
+            line="133"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface CrashSamplesNdkDelegate {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceCrashSamplesNdkDelegate.kt"
+            line="3"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceCrashSamplesNdkDelegateImpl : CrashSamplesNdkDelegate {"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceCrashSamplesNdkDelegate.kt"
+            line="11"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceEvent private constructor() {"
+        errorLine2="               ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceEvent.kt"
+            line="9"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    enum class Type("
+        errorLine2="               ~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceEvent.kt"
+            line="16"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="        companion object {"
+        errorLine2="                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceEvent.kt"
+            line="54"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="final class EmbraceImpl {"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceImpl.java"
+            line="114"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="interface EmbraceInternalInterface {"
+        errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceInternalInterface.java"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class EmbraceInternalInterfaceImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceInternalInterfaceImpl.kt"
+            line="9"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class EmbraceLogger {"
+        errorLine2="             ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="10"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public enum Severity {"
+        errorLine2="                ~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="16"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public object EmbraceSamples {"
+        errorLine2="              ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceSamples.kt"
+            line="8"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface FlutterInternalInterface : EmbraceInternalInterface {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/FlutterInternalInterface.kt"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class FlutterInternalInterfaceImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/FlutterInternalInterfaceImpl.kt"
+            line="6"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public interface HttpPathOverrideRequest&lt;T> {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="4"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public annotation class InternalApi"
+        errorLine2="                        ~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/InternalApi.kt"
+            line="8"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface InternalInterfaceModule {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/InternalInterfaceModule.kt"
+            line="9"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class InternalInterfaceModuleImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/InternalInterfaceModule.kt"
+            line="16"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public enum class LogExceptionType(internal val value: String) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/LogExceptionType.kt"
+            line="9"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public enum LogType {"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/LogType.java"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="interface LogsApi {"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/LogsApi.java"
+            line="11"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="interface MomentsApi {"
+        errorLine2="          ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/MomentsApi.java"
+            line="11"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface NetworkRequestApi {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/NetworkRequestApi.kt"
+            line="10"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class PurchaseFlow extends CustomFlow {"
+        errorLine2="                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="23"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface ReactNativeInternalInterface : EmbraceInternalInterface {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ReactNativeInternalInterface.kt"
+            line="9"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class ReactNativeInternalInterfaceImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ReactNativeInternalInterfaceImpl.kt"
+            line="11"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class RegistrationFlow extends CustomFlow {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="20"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface SessionApi {"
+        errorLine2="                   ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SessionApi.kt"
+            line="6"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface SessionModule {"
+        errorLine2="                   ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SessionModule.kt"
+            line="22"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class SessionModuleImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SessionModule.kt"
+            line="28"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public enum Severity {"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/Severity.java"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class SubscriptionPurchaseFlow extends CustomFlow {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="20"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface UnityInternalInterface : EmbraceInternalInterface {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/UnityInternalInterface.kt"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class UnityInternalInterfaceImpl("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/UnityInternalInterfaceImpl.kt"
+            line="6"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface UserApi {"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/UserApi.kt"
+            line="6"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class VerificationActions("
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/VerificationActions.kt"
+            line="26"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    companion object {"
+        errorLine2="              ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/VerificationActions.kt"
+            line="31"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class ViewSwazzledHooks {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="9"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public static final class OnClickListener {"
+        errorLine2="                              ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="42"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public static final class OnLongClickListener {"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="53"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class WebViewChromeClientSwazzledHooks {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/WebViewChromeClientSwazzledHooks.java"
+            line="10"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class WebViewClientSwazzledHooks {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/WebViewClientSwazzledHooks.java"
+            line="4"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="TrulyRandom"
+        message="Potentially insecure random numbers on Android 4.3 and older. Read https://android-developers.blogspot.com/2013/08/some-securerandom-thoughts.html for more info."
+        errorLine1="            cipher.init(Cipher.ENCRYPT_MODE, key);"
+        errorLine2="                   ~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/logging/NetworkCaptureEncryptionManager.java"
+            line="62"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="LambdaLast"
+        message="Functional interface parameters (such as parameter 1, &quot;thiz&quot;, in io.embrace.android.embracesdk.ViewSwazzledHooks.OnClickListener._preOnClick) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
+        errorLine1="        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {"
+        errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="47"
+            column="80"/>
+    </issue>
+
+    <issue
+        id="LambdaLast"
+        message="Functional interface parameters (such as parameter 1, &quot;thiz&quot;, in io.embrace.android.embracesdk.ViewSwazzledHooks.OnLongClickListener._preOnLongClick) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
+        errorLine1="        public static void _preOnLongClick(android.view.View.OnLongClickListener thiz, android.view.View view) {"
+        errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="58"
+            column="88"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Should explicitly declare type here since implicit type does not specify nullness"
+        errorLine1="    val fragmentStack = Collections.synchronizedList(ArrayList&lt;FragmentBreadcrumb>())"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/capture/crumbs/EmbraceBreadcrumbService.kt"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static String getURLString(HttpPathOverrideRequest request) {"
+        errorLine2="                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride.java"
+            line="31"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static String getURLString(HttpPathOverrideRequest request) {"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride.java"
+            line="31"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static String getURLString(HttpPathOverrideRequest request, String pathOverride) {"
+        errorLine2="                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride.java"
+            line="37"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static String getURLString(HttpPathOverrideRequest request, String pathOverride) {"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride.java"
+            line="37"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static String getURLString(HttpPathOverrideRequest request, String pathOverride) {"
+        errorLine2="                                                                       ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride.java"
+            line="37"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void setThreshold(Severity threshold) {"
+        errorLine2="                                    ~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="34"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="43"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg, Throwable throwable) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="53"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg, Throwable throwable) {"
+        errorLine2="                                            ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="53"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="64"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                            ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="64"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logDebug(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                                                 ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="64"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg) {"
+        errorLine2="                               ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="73"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg, Throwable throwable) {"
+        errorLine2="                               ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="83"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg, Throwable throwable) {"
+        errorLine2="                                           ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="83"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                               ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="93"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                           ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="93"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logInfo(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                                                ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="93"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg) {"
+        errorLine2="                                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="102"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg, Throwable throwable) {"
+        errorLine2="                                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="112"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg, Throwable throwable) {"
+        errorLine2="                                              ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="112"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                  ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="123"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                              ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="123"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logWarning(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                                                   ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="123"
+            column="68"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="132"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg, Throwable throwable) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="142"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg, Throwable throwable) {"
+        errorLine2="                                            ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="142"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="153"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                            ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="153"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void logError(String msg, Throwable throwable, Boolean logStacktrace) {"
+        errorLine2="                                                                 ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="153"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void log(Severity severity, String msg, Throwable throwable, boolean logStacktrace) {"
+        errorLine2="                           ~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="166"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void log(Severity severity, String msg, Throwable throwable, boolean logStacktrace) {"
+        errorLine2="                                              ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="166"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void log(Severity severity, String msg, Throwable throwable, boolean logStacktrace) {"
+        errorLine2="                                                          ~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceLogger.java"
+            line="166"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static HttpMethod fromString(String method) {"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
+            line="27"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static HttpMethod fromString(String method) {"
+        errorLine2="                                        ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
+            line="27"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static HttpMethod fromInt(Integer method) {"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
+            line="60"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static HttpMethod fromInt(Integer method) {"
+        errorLine2="                                     ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
+            line="60"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    String getHeaderByName(String name);"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    String getHeaderByName(String name);"
+        errorLine2="                           ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="5"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    String getOverriddenURL(String pathOverride);"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    String getOverriddenURL(String pathOverride);"
+        errorLine2="                            ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="8"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    String getURLString();"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/HttpPathOverrideRequest.java"
+            line="11"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public String addToCartStart(String itemId,"
+        errorLine2="           ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="66"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public String addToCartStart(String itemId,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="66"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Number quantity,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="67"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Number price,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="68"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Map&lt;String, Object> properties) {"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="69"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean addToCartComplete(String momentId) {"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="101"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean addToCartComplete(String momentId, Map&lt;String, Object> properties) {"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="117"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean addToCartComplete(String momentId, Map&lt;String, Object> properties) {"
+        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="117"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean addToCartFail(String momentId,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="144"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 String msg,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="145"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Map&lt;String, Object> properties) {"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="146"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean addToCartFail(String momentId,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="183"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 String msg) {"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="184"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean purchaseStart(String orderId,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="211"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Number numItems,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="212"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Number amount,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="213"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 String paymentType,"
+        errorLine2="                                 ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="214"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                 Map&lt;String, Object> properties) {"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="215"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean purchaseComplete(Map&lt;String, Object> properties) {"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="248"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean purchaseFail(String msg) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="285"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean purchaseFail(String msg, Map&lt;String, Object> properties) {"
+        errorLine2="                                ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="300"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean purchaseFail(String msg, Map&lt;String, Object> properties) {"
+        errorLine2="                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/PurchaseFlow.java"
+            line="300"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationStart(String userId,"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="53"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                     String username,"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="54"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                     String email,"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="55"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                     Map&lt;String, Object> properties) {"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="56"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationStart(String source,"
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="87"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                     Map&lt;String, Object> properties) {"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="88"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationComplete(Boolean isPayer) {"
+        errorLine2="                                        ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="139"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationComplete(Boolean isPayer, Map&lt;String, Object> properties) {"
+        errorLine2="                                        ~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="158"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationComplete(Boolean isPayer, Map&lt;String, Object> properties) {"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="158"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationFail(String msg) {"
+        errorLine2="                                    ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="205"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationFail(String msg, Map&lt;String, Object> properties) {"
+        errorLine2="                                    ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="219"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean registrationFail(String msg, Map&lt;String, Object> properties) {"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/RegistrationFlow.java"
+            line="219"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean subscriptionPurchaseStart(String orderId,"
+        errorLine2="                                             ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="53"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                             String subscriptionType,"
+        errorLine2="                                             ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="54"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                             Number amount,"
+        errorLine2="                                             ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="55"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                             String paymentType,"
+        errorLine2="                                             ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="56"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                             Map&lt;String, Object> properties) {"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="57"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean subscriptionPurchaseComplete(Map&lt;String, Object> properties) {"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="90"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean subscriptionPurchaseFail(String msg) {"
+        errorLine2="                                            ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="130"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean subscriptionPurchaseFail(String msg, Map&lt;String, Object> properties, boolean allowScreenshot) {"
+        errorLine2="                                            ~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="142"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public boolean subscriptionPurchaseFail(String msg, Map&lt;String, Object> properties, boolean allowScreenshot) {"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/SubscriptionPurchaseFlow.java"
+            line="142"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="47"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {"
+        errorLine2="                                                                               ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="47"
+            column="80"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="        public static void _preOnLongClick(android.view.View.OnLongClickListener thiz, android.view.View view) {"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="58"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="        public static void _preOnLongClick(android.view.View.OnLongClickListener thiz, android.view.View view) {"
+        errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
+            line="58"
+            column="88"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void _preOnPageStarted(android.webkit.WebView view,"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/WebViewClientSwazzledHooks.java"
+            line="10"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                         java.lang.String url,"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/WebViewClientSwazzledHooks.java"
+            line="11"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="                                         android.graphics.Bitmap favicon) {"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/WebViewClientSwazzledHooks.java"
+            line="12"
+            column="42"/>
+    </issue>
+
+</issues>

@@ -1,0 +1,308 @@
+public abstract interface annotation class io/embrace/android/embracesdk/BetaApi : java/lang/annotation/Annotation {
+}
+
+public final class io/embrace/android/embracesdk/BuildConfig {
+	public static final field BUILD_TYPE Ljava/lang/String;
+	public static final field DEBUG Z
+	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
+	public static final field VERSION_CODE Ljava/lang/String;
+	public static final field VERSION_NAME Ljava/lang/String;
+	public fun <init> ()V
+}
+
+public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/EmbraceAndroidApi {
+	public fun addBreadcrumb (Ljava/lang/String;)V
+	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
+	public fun addUserPersona (Ljava/lang/String;)V
+	public fun clearAllUserPersonas ()V
+	public fun clearUserAsPayer ()V
+	public fun clearUserEmail ()V
+	public fun clearUserIdentifier ()V
+	public fun clearUserPersona (Ljava/lang/String;)V
+	public fun clearUsername ()V
+	public fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun endAppStartup ()V
+	public fun endAppStartup (Ljava/util/Map;)V
+	public fun endMoment (Ljava/lang/String;)V
+	public fun endMoment (Ljava/lang/String;Ljava/lang/String;)V
+	public fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun endMoment (Ljava/lang/String;Ljava/util/Map;)V
+	public fun endSession ()V
+	public fun endSession (Z)V
+	public fun endView (Ljava/lang/String;)Z
+	public fun generateW3cTraceparent ()Ljava/lang/String;
+	public fun getConfigService ()Lio/embrace/android/embracesdk/config/ConfigService;
+	public fun getCurrentSessionId ()Ljava/lang/String;
+	public fun getDeviceId ()Ljava/lang/String;
+	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
+	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
+	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
+	public fun getSessionProperties ()Ljava/util/Map;
+	public fun getTraceIdHeader ()Ljava/lang/String;
+	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
+	public fun isStarted ()Z
+	public fun isTracingAvailable ()Z
+	public fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
+	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
+	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
+	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
+	public fun logError (Ljava/lang/String;)V
+	public fun logException (Ljava/lang/Throwable;)V
+	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
+	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
+	public fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun logInfo (Ljava/lang/String;)V
+	public fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
+	public fun logInternalError (Ljava/lang/Throwable;)V
+	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
+	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
+	public fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
+	public fun logRnView (Ljava/lang/String;)V
+	public fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun logWarning (Ljava/lang/String;)V
+	public fun recordCompletedSpan (Ljava/lang/String;JJ)Z
+	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
+	public fun recordCompletedSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
+	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public fun removeSessionProperty (Ljava/lang/String;)Z
+	public fun sampleCurrentThreadDuringAnrs ()V
+	public fun setAppId (Ljava/lang/String;)Z
+	public fun setProcessStartedByNotification ()V
+	public fun setUserAsPayer ()V
+	public fun setUserEmail (Ljava/lang/String;)V
+	public fun setUserIdentifier (Ljava/lang/String;)V
+	public fun setUsername (Ljava/lang/String;)V
+	public fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
+	public fun start (Landroid/content/Context;)V
+	public fun start (Landroid/content/Context;Z)V
+	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public fun startMoment (Ljava/lang/String;)V
+	public fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
+	public fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun startView (Ljava/lang/String;)Z
+	public fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
+	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/Embrace$AppFramework : java/lang/Enum {
+	public static final field FLUTTER Lio/embrace/android/embracesdk/Embrace$AppFramework;
+	public static final field NATIVE Lio/embrace/android/embracesdk/Embrace$AppFramework;
+	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/Embrace$AppFramework;
+	public static final field UNITY Lio/embrace/android/embracesdk/Embrace$AppFramework;
+	public fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Embrace$AppFramework;
+	public static fun values ()[Lio/embrace/android/embracesdk/Embrace$AppFramework;
+}
+
+public final class io/embrace/android/embracesdk/Embrace$LastRunEndState : java/lang/Enum {
+	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public static final field CRASH Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public static final field INVALID Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public static fun values ()[Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+}
+
+public final class io/embrace/android/embracesdk/EmbraceSamples {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/EmbraceSamples;
+	public static final fun causeNdkIllegalInstruction ()V
+	public static final fun throwJvmException ()V
+	public static final fun triggerAnr ()V
+	public static final fun triggerLongAnr ()V
+	public static final fun verifyIntegration ()V
+}
+
+public abstract interface class io/embrace/android/embracesdk/HttpPathOverrideRequest {
+	public abstract fun getHeaderByName (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getOverriddenURL (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getURLString ()Ljava/lang/String;
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/InternalApi : java/lang/annotation/Annotation {
+}
+
+public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
+	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
+	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
+	public static final field UNHANDLED Lio/embrace/android/embracesdk/LogExceptionType;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogExceptionType;
+	public static fun values ()[Lio/embrace/android/embracesdk/LogExceptionType;
+}
+
+public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
+	public static final field ERROR Lio/embrace/android/embracesdk/LogType;
+	public static final field INFO Lio/embrace/android/embracesdk/LogType;
+	public static final field WARNING Lio/embrace/android/embracesdk/LogType;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogType;
+	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
+}
+
+public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
+	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
+	public static final field INFO Lio/embrace/android/embracesdk/Severity;
+	public static final field WARNING Lio/embrace/android/embracesdk/Severity;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Severity;
+	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener {
+	public static fun _preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener {
+	public static fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+}
+
+public final class io/embrace/android/embracesdk/WebViewChromeClientSwazzledHooks {
+	public static fun _preOnConsoleMessage (Landroid/webkit/ConsoleMessage;)V
+}
+
+public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
+	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
+}
+
+public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
+	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+	public fun getBytesIn ()Ljava/lang/Long;
+	public fun getBytesOut ()Ljava/lang/Long;
+	public fun getBytesReceived ()Ljava/lang/Long;
+	public fun getBytesSent ()Ljava/lang/Long;
+	public fun getEndTime ()Ljava/lang/Long;
+	public fun getError ()Ljava/lang/Throwable;
+	public fun getErrorMessage ()Ljava/lang/String;
+	public fun getErrorType ()Ljava/lang/String;
+	public fun getHttpMethod ()Ljava/lang/String;
+	public fun getNetworkCaptureData ()Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;
+	public fun getResponseCode ()Ljava/lang/Integer;
+	public fun getStartTime ()Ljava/lang/Long;
+	public fun getTraceId ()Ljava/lang/String;
+	public fun getUrl ()Ljava/lang/String;
+	public fun getW3cTraceparent ()Ljava/lang/String;
+}
+
+public class io/embrace/android/embracesdk/network/http/EmbraceHttpPathOverride {
+	protected static final field PATH_OVERRIDE Ljava/lang/String;
+	public fun <init> ()V
+	public static fun getURLString (Lio/embrace/android/embracesdk/HttpPathOverrideRequest;)Ljava/lang/String;
+	public static fun getURLString (Lio/embrace/android/embracesdk/HttpPathOverrideRequest;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/lang/Enum {
+	public static final field CONNECT Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field DELETE Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field GET Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field HEAD Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field OPTIONS Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field PATCH Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field POST Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field PUT Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static final field TRACE Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static fun fromInt (Ljava/lang/Integer;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static fun fromString (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static fun values ()[Lio/embrace/android/embracesdk/network/http/HttpMethod;
+}
+
+public final class io/embrace/android/embracesdk/network/http/NetworkCaptureData {
+	public fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()[B
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()[B
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;)Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;
+	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapturedRequestBody ()[B
+	public final fun getCapturedResponseBody ()[B
+	public final fun getDataCaptureErrorMessage ()Ljava/lang/String;
+	public final fun getRequestBodySize ()I
+	public final fun getRequestHeaders ()Ljava/util/Map;
+	public final fun getRequestQueryParams ()Ljava/lang/String;
+	public final fun getResponseBodySize ()I
+	public final fun getResponseHeaders ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan {
+	public abstract fun addAttribute (Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun addEvent (Ljava/lang/String;)Z
+	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
+	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun getSpanId ()Ljava/lang/String;
+	public abstract fun getTraceId ()Ljava/lang/String;
+	public abstract fun isRecording ()Z
+	public abstract fun start ()Z
+	public abstract fun stop ()Z
+	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
+}
+
+public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {
+	public static final field Companion Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;Ljava/lang/String;JLjava/util/Map;ILjava/lang/Object;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttributes ()Ljava/util/Map;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getTimestampNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion {
+	public final fun create (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+}
+
+public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum, io/embrace/android/embracesdk/internal/spans/EmbraceAttributes$Attribute {
+	public static final field FAILURE Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static final field UNKNOWN Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static final field USER_ABANDON Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public fun getCanonicalName ()Ljava/lang/String;
+	public fun keyName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static fun values ()[Lio/embrace/android/embracesdk/spans/ErrorCode;
+}
+
+public abstract interface class io/embrace/android/embracesdk/spans/TracingApi {
+	public abstract fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun isTracingAvailable ()Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJ)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
+	public abstract fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+

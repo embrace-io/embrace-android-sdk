@@ -1,0 +1,19 @@
+package io.embrace.android.embracesdk.fakes
+
+import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.MemoryCleanerService
+
+internal class FakeMemoryCleanerService : MemoryCleanerService {
+
+    val listeners = mutableListOf<MemoryCleanerListener>()
+
+    override fun addListener(listener: MemoryCleanerListener) {
+        listeners.add(listener)
+    }
+
+    override fun cleanServicesCollections(
+        exceptionService: EmbraceInternalErrorService
+    ) {
+    }
+}

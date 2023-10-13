@@ -1,0 +1,21 @@
+{
+  "v": "1.0.0",
+  "f": 2,
+  "bi": "1234",
+  "bt": "debug",
+  "fl": "free",
+  "e": "UNKNOWN",
+  "vu": false,
+  "vul": false,
+  "bv": "10",
+  "ou": false,
+  "oul": false,
+  "sdk": "{versionName}",
+  "sdc": "{versionCode}",
+  "rn": "1234",
+  "jsp": null,
+  "rnv": null,
+  "unv": null,
+  "ubg": null,
+  "usv": null
+}

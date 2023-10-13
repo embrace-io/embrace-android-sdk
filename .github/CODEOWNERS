@@ -1,0 +1,15 @@
+# DevOps
+.github @embrace-io/team-devops
+
+# Global owners
+* @embrace-io/sdk-android
+
+# API surface owners
+*.api @fractalwrench @fnewberg
+**/Embrace.java @fractalwrench @fnewberg
+**/EmbraceApi.java @fractalwrench @fnewberg
+**/EmbraceAndroidApi.java @fractalwrench @fnewberg
+**/EmbraceInternalInterface.java @fractalwrench @fnewberg
+**/FlutterInternalInterface.java @fractalwrench @fnewberg
+**/ReactNativeInternalInterface.java @fractalwrench @fnewberg
+**/UnityInternalInterface.java @fractalwrench @fnewberg

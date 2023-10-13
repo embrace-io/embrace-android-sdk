@@ -1,0 +1,44 @@
+{
+  "s": {
+    "id": "fake-activity",
+    "st": 0,
+    "as": ""
+  },
+  "u": {
+    "id": "fake-user-id"
+  },
+  "a": {
+    "v": "fake-app-id"
+  },
+  "d": {
+    "dm": "fake-manufacturer"
+  },
+  "p": {
+    "ds": {
+      "as": 1,
+      "fs": 2
+    }
+  },
+  "br": {
+    "cb": [
+      {
+        "m": "fake-breadcrumb",
+        "ts": 1
+      }
+    ]
+  },
+  "spans": [
+    {
+      "trace_id": "fake-span-id",
+      "span_id": "",
+      "parent_span_id": "",
+      "name": "",
+      "start_time_unix_nano": 0,
+      "end_time_unix_nano": 0,
+      "status": "OK",
+      "events": [],
+      "attributes": {}
+    }
+  ],
+  "v": 13
+}

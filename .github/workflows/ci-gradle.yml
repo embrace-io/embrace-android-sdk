@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches:
+  release:
+    types: [ released ]
+
+jobs:
+  gradle-test:
+    runs-on: ubuntu-22.04-4cores
+    strategy:
+      matrix:
+        jdk-version: ["11"]
+        ndk-version: ["21.4.7075529"]
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # EMB-11508 - See https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Install JDK ${{ matrix.jdk-version }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.jdk-version }}
+
+      - name: Setup NDK ${{ matrix.ndk-version }}
+        run: |
+          export ANDROID_ROOT=/usr/local/lib/android
+          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      # Build the entire project, run the tests, and run all static analysis
+      - name: Gradle Build
+        run: ./gradlew assembleRelease check --stacktrace
+
+      - name: Archive Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-sdk-test-results
+          path: embrace-android-sdk/build/reports/tests/
+
+      - name: Run Kover Code Coverage
+        run: ./gradlew clean koverXmlReportRelease
+
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          file: embrace-android-sdk/build/reports/kover/reportRelease.xml
+
+      - name: Cleanup Gradle Cache
+        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
+        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+        run: |
+          rm -f ~/.gradle/caches/modules-2/modules-2.lock
+          rm -f ~/.gradle/caches/modules-2/gc.properties

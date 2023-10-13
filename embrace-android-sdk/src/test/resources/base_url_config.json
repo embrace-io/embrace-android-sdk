@@ -1,0 +1,6 @@
+{
+  "config": "https://config.example.com",
+  "data": "https://data.example.com",
+  "data_dev": "https://data-dev.example.com",
+  "images": "https://images.example.com"
+}

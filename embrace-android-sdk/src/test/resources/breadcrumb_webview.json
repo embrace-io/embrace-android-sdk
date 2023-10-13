@@ -1,0 +1,31 @@
+{
+  "s": {
+    "id": "fakeSessionId",
+    "st": 160000000000,
+    "sn": 1,
+    "ty": "st",
+    "as": "foreground",
+    "cs": true,
+    "sm": "s",
+    "sp": {}
+  },
+  "br": {
+    "vb": [],
+    "tb": [],
+    "cb": [],
+    "wv": [
+      {
+        "u": "https://example.com/path2",
+        "st": 1577836803000
+      },
+      {
+        "u": "https://example.com/path1",
+        "st": 1577836802000
+      }
+    ],
+    "cv": [],
+    "rna": [],
+    "pn": []
+  },
+  "v": 13
+}

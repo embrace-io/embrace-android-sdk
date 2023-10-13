@@ -1,0 +1,62 @@
+# https://detekt.dev/docs/introduction/configurations/
+build:
+  maxIssues: 0
+complexity:
+  NestedBlockDepth:
+    threshold: 10
+  LargeClass:
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  LongMethod:
+    active: false
+  LongParameterList:
+    constructorThreshold: 30
+    functionThreshold: 11
+    ignoreDataClasses: true
+  TooManyFunctions:
+    thresholdInFiles: 31
+    thresholdInClasses: 31
+    thresholdInInterfaces: 31
+    thresholdInObjects: 31
+    thresholdInEnums: 31
+    ignoreOverridden: true
+empty-blocks:
+  EmptyFunctionBlock:
+    ignoreOverridden: true
+exceptions:
+  InstanceOfCheckForException:
+    active: false
+  SwallowedException:
+    active: false
+  TooGenericExceptionCaught:
+    active: false
+  TooGenericExceptionThrown:
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+formatting:
+  ArgumentListWrapping:
+    maxLineLength: 140
+  MaximumLineLength:
+    maxLineLength: 140
+potential-bugs:
+  ElseCaseInsteadOfExhaustiveWhen:
+    active: true
+style:
+  ForbiddenComment:
+    active: false
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    maxLineLength: 140
+  ReturnCount:
+    active: false
+  MandatoryBracesIfStatements:
+    active: true
+  MandatoryBracesLoops:
+    active: true
+  SpacingBetweenPackageAndImports:
+    active: true
+  UnusedImports:
+    active: true

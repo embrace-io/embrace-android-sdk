@@ -1,0 +1,12 @@
+name: Measure SDK Size
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  measure-sdk-size:
+    uses: embrace-io/android-size-measure/.github/workflows/analyze-sdk-size.yml@main
+    with:
+      sdk_version: '5.21.0'
+      token: ${{ secrets.CD_GITHUB_TOKEN }}
+    

@@ -1,0 +1,29 @@
+public abstract interface class io/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks : android/app/Application$ActivityLifecycleCallbacks {
+	public abstract fun onActivityCreated (Landroid/app/Activity;Landroid/os/Bundle;)V
+	public abstract fun onActivityDestroyed (Landroid/app/Activity;)V
+	public abstract fun onActivityPaused (Landroid/app/Activity;)V
+	public abstract fun onActivitySaveInstanceState (Landroid/app/Activity;Landroid/os/Bundle;)V
+	public abstract fun onActivityStarted (Landroid/app/Activity;)V
+	public abstract fun onActivityStopped (Landroid/app/Activity;)V
+}
+
+public final class io/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks$DefaultImpls {
+	public static fun onActivityCreated (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;Landroid/os/Bundle;)V
+	public static fun onActivityDestroyed (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;)V
+	public static fun onActivityPaused (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;)V
+	public static fun onActivitySaveInstanceState (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;Landroid/os/Bundle;)V
+	public static fun onActivityStarted (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;)V
+	public static fun onActivityStopped (Lio/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks;Landroid/app/Activity;)V
+}
+
+public final class io/embrace/android/embracesdk/compose/ComposeActivityListener : io/embrace/android/embracesdk/compose/ActivityLifeCycleCallbacks {
+	public fun <init> ()V
+	public fun onActivityCreated (Landroid/app/Activity;Landroid/os/Bundle;)V
+	public fun onActivityDestroyed (Landroid/app/Activity;)V
+	public fun onActivityPaused (Landroid/app/Activity;)V
+	public fun onActivityResumed (Landroid/app/Activity;)V
+	public fun onActivitySaveInstanceState (Landroid/app/Activity;Landroid/os/Bundle;)V
+	public fun onActivityStarted (Landroid/app/Activity;)V
+	public fun onActivityStopped (Landroid/app/Activity;)V
+}
+

@@ -1,0 +1,15 @@
+anr_pe_sc_extra_time=30000
+max_depth=100
+anr_pe_delay=5000
+min_duration=1000
+per_interval=80
+priority=0
+allow_early_capture=true
+pct_bg_enabled=0
+pct_enabled=100
+per_session=5
+anr_pe_interval=1000
+interval=100
+main_thread_only=true
+monitor_thread_priority=0
+timestamp=1499999999

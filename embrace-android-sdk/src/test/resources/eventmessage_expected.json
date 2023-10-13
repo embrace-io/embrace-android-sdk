@@ -1,0 +1,34 @@
+{
+  "et": {
+     "pr": {
+        "Float": 1,
+        "String": "TestString"
+      },
+      "sp": {},
+      "n": "test",
+      "li": "messageId",
+      "id": "eventId",
+      "si": "sessionId",
+      "t": "warning",
+      "ts": 1111,
+      "sc": false,
+      "st": "active",
+      "et": "none"
+  },
+  "u": {
+    "per": [
+      "first_day"
+    ]
+  },
+  "p": {
+    "ds": {
+      "fs": 3862863872
+    },
+    "lp": [
+      {
+        "st": 1679580212117
+      }
+    ]
+  },
+  "v": 13
+}

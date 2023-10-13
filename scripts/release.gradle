@@ -1,0 +1,106 @@
+apply plugin: "maven-publish"
+apply plugin: "signing"
+
+// load credentials from local properties if present
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
+// create component with single publication variant
+// https://developer.android.com/studio/publish-library/configure-pub-variants#single-pub-var
+android {
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+// https://developer.android.com/studio/publish-library/upload-library
+publishing {
+    publications {
+
+        // create a single release publication
+        release(MavenPublication) {
+            groupId = "io.embrace"
+            artifactId = project.name
+            version = project.version
+
+            afterEvaluate {
+                from components.release
+            }
+
+            // append some license metadata to the POM.
+            pom {
+                name = project.name
+                description = "Embrace Android SDK"
+                url = "https://github.com/embrace-io/embrace-android-sdk"
+                licenses {
+                    license {
+                        name = "Embrace license"
+                        url = "https://embrace.io/docs/embrace-software-notice/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "dev1"
+                        name = "Embrace"
+                        email = "support@embrace.io"
+                    }
+                }
+                scm {
+                    connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
+                    developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+                    url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
+                }
+            }
+        }
+    }
+
+    // configure repositories where the publication can be hosted
+    repositories {
+        // beta releases
+        maven {
+            credentials {
+                username System.getenv("MAVEN_QA_USER")
+                password System.getenv("MAVEN_QA_PASSWORD")
+            }
+            name = "Qa"
+            url = "https://repo.embrace.io/repository/beta"
+        }
+        // the android-testing maven repository is used for publishing snapshots
+        maven {
+            credentials {
+                username System.getenv("MAVEN_QA_USER")
+                password System.getenv("MAVEN_QA_PASSWORD")
+            }
+            name = "Snapshot"
+            url = "https://repo.embrace.io/repository/android-testing"
+        }
+
+        // sonatype repo that provides path to publishing on maven central
+        maven {
+            credentials {
+                username System.getenv("SONATYPE_USERNAME") ?: localProperties.ossrhUsername
+                password System.getenv("SONATYPE_PASSWORD") ?: localProperties.ossrhPassword
+            }
+            name = "sonatype"
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+        }
+    }
+}
+
+allprojects {
+    ext."signing.keyId" = System.getenv("mavenSigningKeyId") ?: localProperties.getProperty("signing.keyId")
+    ext."signing.secretKeyRingFile" = System.getenv("mavenSigningKeyRingFile") ?: localProperties.getProperty("signing.secretKeyRingFile")
+    ext."signing.password" = System.getenv("mavenSigningKeyPassword") ?: localProperties.getProperty("signing.password")
+}
+
+signing {
+    sign publishing.publications.release
+}
+
+project.tasks.withType(Sign)*.enabled = !project.version.endsWith("-SNAPSHOT")

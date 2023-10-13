@@ -1,0 +1,100 @@
+name: Snapshot
+
+env:
+  MAVEN_QA_USER: github
+  MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  functional:
+    name: Run Functional Tests
+    uses: ./.github/workflows/functional-tests.yml
+    secrets:
+      token: ${{ secrets.CD_GITHUB_TOKEN }}
+#  swazzlertests:
+#    uses: embrace-io/swazzler-test/.github/workflows/callable_swazzler_test.yml@master
+#    secrets:
+#      token: ${{ secrets.CD_GITHUB_TOKEN }}
+  # baseline-profile:
+  #  name: Update Baseline Profile file
+  #todo
+  sdk:
+    name: Publish SDK to Maven Internal
+    needs: [functional] # swazzlertests, baseline-profile
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk-version: ["11"]
+        ndk-version: ["21.4.7075529"]
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Install JDK ${{ matrix.jdk-version }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.jdk-version }}
+
+      - name: Setup NDK ${{ matrix.ndk-version }}
+        run: |
+          export ANDROID_ROOT=/usr/local/lib/android
+          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      # Build the entire project, run the tests, and run all static analysis
+      - name: Gradle Build
+        run: ./gradlew assembleRelease check --stacktrace
+
+      - name: Archive Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-sdk-test-results
+          path: embrace-android-sdk/build/reports/tests/
+
+      - name: Gradlew Release to internal Maven
+        run: |
+          ./gradlew clean publishReleasePublicationToSnapshotRepository --stacktrace
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v3
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          path: ./embrace-swazzler3
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Swazzler Release
+        run: |
+          cd ./embrace-swazzler3
+          ./gradlew clean publishPluginMavenPublicationToSnapshotRepository --stacktrace          
+
+      - name: Cleanup Gradle Cache
+        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
+        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+        run: |
+          rm -f ~/.gradle/caches/modules-2/modules-2.lock
+          rm -f ~/.gradle/caches/modules-2/gc.properties

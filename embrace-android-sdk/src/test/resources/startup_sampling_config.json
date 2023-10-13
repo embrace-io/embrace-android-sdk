@@ -1,0 +1,7 @@
+{
+  "pct_enabled": 5,
+  "sample_granularity": 200,
+  "sample_interval": 50,
+  "sampling_duration": 5000,
+  "stacktrace_length": 200
+}

@@ -1,0 +1,154 @@
+import io.embrace.gradle.Versions
+
+plugins {
+    id "internal-embrace-plugin"
+    id("org.jetbrains.kotlinx.kover") version "0.7.1"
+}
+
+description = "Embrace Android SDK: Core"
+
+apply plugin: "org.jetbrains.dokka"
+
+def NO_NDK = "noNdk"
+
+android {
+    useLibrary "android.test.runner"
+    useLibrary "android.test.base"
+    useLibrary "android.test.mock"
+    ndkVersion "${Versions.ndk}"
+
+    defaultConfig {
+        namespace = "io.embrace.android.embracesdk"
+        versionCode 53
+        versionName version
+        consumerProguardFiles "embrace-proguard.cfg"
+
+        // For library projects only, the BuildConfig.VERSION_NAME and BuildConfig.VERSION_CODE properties have been removed from the generated BuildConfig class
+        //
+        // https://developer.android.com/studio/releases/gradle-plugin#version_properties_removed_from_buildconfig_class_in_library_projects
+        buildConfigField "String", "VERSION_NAME", "\"${defaultConfig.versionName}\""
+        buildConfigField "String", "VERSION_CODE", "\"${defaultConfig.versionCode}\""
+    }
+
+    if (!project.hasProperty(NO_NDK)) {
+        externalNativeBuild {
+            cmake {
+                path file("CMakeLists.txt")
+            }
+        }
+    }
+    packagingOptions {
+        pickFirst "**/*.so"
+    }
+
+    sourceSets {
+        // Had to add a 'java' directory to store Java test files, as it doesn't get picked up as a test if I put it in
+        // the kotlin directory. If I've just screwed up somehow and this is actually possible, please consolidate.
+        test.java.srcDirs += "src/integrationTest/java"
+        test.kotlin.srcDirs += "src/integrationTest/kotlin"
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+// See: https://kotlin.github.io/kotlinx-kover/gradle-plugin/configuring#configuring-default-reports
+koverReport {
+    filters {
+        excludes {
+            // exclusion rules - classes to exclude from report
+            classes("io.embrace.android.embracesdk.BuildConfig")
+        }
+    }
+
+    androidReports("release") {
+        filters {
+            // override report filters for all reports for `release` build variant
+            // all filters specified by the level above cease to work
+        }
+
+        xml { /* XML report config for `release` build variant */ }
+        html {
+            title = "Embrace Android SDK merged coverage report"
+        }
+        verify {
+            // FUTURE: we can specify a minimum bound of coverage for new code here.
+        }
+    }
+}
+
+dependencies {
+    androidTestImplementation project(":test-server")
+    androidTestImplementation "androidx.test.ext:junit:1.1.3"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    androidTestImplementation project(path: ":embrace-android-sdk")
+
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.5.0"
+    implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
+    implementation "com.google.code.gson:gson:2.9.0"
+
+    implementation "io.opentelemetry:opentelemetry-api:${Versions.openTelemetry}"
+    implementation "io.opentelemetry:opentelemetry-sdk:${Versions.openTelemetry}"
+    implementation "io.opentelemetry:opentelemetry-context:${Versions.openTelemetry}"
+
+    // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
+    // Please, don"t update it until we update compileSdk.
+    implementation "androidx.profileinstaller:profileinstaller:1.0.0"
+
+    testImplementation "io.mockk:mockk:1.12.2"
+    testImplementation "androidx.test:core:1.4.0"
+    testImplementation "androidx.test.ext:junit:1.1.3"
+    testImplementation "org.robolectric:robolectric:4.10.3"
+    testImplementation project(path: ":embrace-android-sdk")
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+}
+
+dokkaHtml {
+    outputDirectory.set(rootProject.file("docs"))
+    dokkaSourceSets {
+        configureEach {
+            perPackageOption {
+                skipDeprecated.set(false)
+                reportUndocumented.set(true) // Emit warnings about not documented members
+                includeNonPublic.set(false)
+
+                // Match all packages and suppress them
+                perPackageOption {
+                    matchingRegex.set(".*.networking.*?")
+                    suppress.set(true)
+                }
+
+                perPackageOption {
+                    matchingRegex.set(".*.network.*?")
+                    suppress.set(true)
+                }
+
+                perPackageOption {
+                    matchingRegex.set(".*.utils.*?")
+                    suppress.set(true)
+                }
+
+                perPackageOption {
+                    matchingRegex.set(".*.internal.*?")
+                    suppress.set(true)
+                }
+
+                // unsuppress only the ones that we care about
+                perPackageOption {
+                    matchingRegex.set("embrace-android-sdk")
+                    suppress.set(false)
+                }
+            }
+        }
+        named("main") {
+            noAndroidSdkLink.set(false)
+        }
+    }
+}
+
+task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }
+task publishSonatype { dependsOn("publishMavenPublicationToMavenSonatype") }
+task publishQa { dependsOn("publishMavenPublicationToQaRepository") }

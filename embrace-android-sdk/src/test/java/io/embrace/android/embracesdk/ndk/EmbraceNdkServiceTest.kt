@@ -1,0 +1,583 @@
+package io.embrace.android.embracesdk.ndk
+
+import android.content.Context
+import android.content.res.Resources
+import android.os.Build
+import android.util.Base64
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.gson.Gson
+import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.user.UserService
+import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.local.LocalConfig
+import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.payload.AppInfo
+import io.embrace.android.embracesdk.payload.DeviceInfo
+import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.payload.NativeCrashMetadata
+import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
+import io.mockk.verifyOrder
+import org.junit.After
+import org.junit.AfterClass
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.BeforeClass
+import org.junit.Test
+import java.io.File
+import java.util.concurrent.ExecutorService
+
+internal class EmbraceNdkServiceTest {
+
+    companion object {
+        private lateinit var embraceNdkService: TestEmbraceNdkService
+        private lateinit var context: Context
+        private lateinit var metadataService: MetadataService
+        private lateinit var configService: ConfigService
+        private lateinit var activityService: FakeActivityService
+        private lateinit var localConfig: LocalConfig
+        private lateinit var mockDeliveryService: EmbraceDeliveryService
+        private lateinit var userService: UserService
+        private lateinit var sessionProperties: EmbraceSessionProperties
+        private lateinit var appFramework: Embrace.AppFramework
+        private lateinit var sharedObjectLoader: SharedObjectLoader
+        private lateinit var logger: InternalEmbraceLogger
+        private lateinit var delegate: NdkServiceDelegate.NdkDelegate
+        private lateinit var repository: EmbraceNdkServiceRepository
+        private lateinit var resources: Resources
+        private lateinit var gson: Gson
+        private val deviceArchitecture = FakeDeviceArchitecture()
+
+        @BeforeClass
+        @JvmStatic
+        fun beforeClass() {
+            mockkStatic(ExecutorService::class)
+            mockkStatic(Uuid::class)
+            mockkStatic(Embrace::class)
+            context = mockk(relaxed = true)
+            metadataService = mockk(relaxed = true)
+            configService = mockk(relaxed = true)
+            activityService = FakeActivityService()
+            localConfig = mockk(relaxed = true)
+            mockDeliveryService = mockk()
+            userService = mockk(relaxed = true)
+            sessionProperties = mockk(relaxed = true)
+            appFramework = mockk()
+            sharedObjectLoader = mockk()
+            logger = InternalEmbraceLogger()
+            delegate = mockk(relaxed = true)
+            repository = mockk(relaxUnitFun = true)
+            resources = mockk(relaxUnitFun = true)
+            gson = Gson()
+
+            val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
+            every { metadataService.getAppInfo() } returns appInfo
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun afterClass() {
+            unmockkAll()
+        }
+    }
+
+    @After
+    fun after() {
+        clearAllMocks(
+            answers = false,
+            staticMocks = false,
+            objectMocks = false
+        )
+
+        val file = File(context.cacheDir.toString() + "/ndk")
+        if (file.exists()) {
+            file.delete()
+        }
+    }
+
+    private fun initializeService() {
+        embraceNdkService = TestEmbraceNdkService(
+            context,
+            metadataService,
+            activityService,
+            mockDeliveryService,
+            userService,
+            sessionProperties,
+            appFramework,
+            sharedObjectLoader,
+            logger,
+            repository,
+            delegate,
+            MoreExecutors.newDirectExecutorService(),
+            MoreExecutors.newDirectExecutorService()
+        )
+    }
+
+    @Test
+    fun `test updateSessionId where installSignals was not executed and isInstalled false`() {
+        enableNdk(false)
+        initializeService()
+        embraceNdkService.updateSessionId("sessionId")
+        verify(exactly = 0) { delegate._updateSessionId("sessionId") }
+    }
+
+    @Test
+    fun `test updateSessionId where installSignals was executed and isInstalled true`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        embraceNdkService.updateSessionId("sessionId")
+        verify(exactly = 1) { delegate._updateSessionId("sessionId") }
+    }
+
+    @Test
+    fun `test onBackground doesn't run _updateAppState when _updateMetaData was not executed and isInstalled false`() {
+        enableNdk(false)
+        initializeService()
+        embraceNdkService.onBackground(0L)
+        verify(exactly = 0) { delegate._updateAppState("background") }
+    }
+
+    @Test
+    fun `test onBackground runs _updateAppState when _updateMetaData was executed and isInstalled true`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        embraceNdkService.onBackground(0L)
+        verify(exactly = 1) { delegate._updateAppState("background") }
+    }
+
+    @Test
+    fun `test onSessionPropertiesUpdate where _updateMetaData was not executed and isInstalled false`() {
+        enableNdk(false)
+        initializeService()
+        embraceNdkService.onSessionPropertiesUpdate(sessionProperties.get())
+        verify(exactly = 0) { delegate._updateMetaData(any()) }
+    }
+
+    @Test
+    fun `test onSessionPropertiesUpdate where _updateMetaData was executed and isInstalled true`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        embraceNdkService.onSessionPropertiesUpdate(sessionProperties.get())
+        val newDeviceMetaData =
+            NativeCrashMetadata(
+                metadataService.getAppInfo(),
+                metadataService.getDeviceInfo(),
+                userService.getUserInfo(),
+                sessionProperties.get().toMap()
+            )
+
+        verify { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+    }
+
+    @Test
+    fun `test initialization with unity id and ndk enabled runs installSignals and updateDeviceMetaData`() {
+        every { Uuid.getEmbUuid() } returns "unityId"
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        appFramework = Embrace.AppFramework.UNITY
+        initializeService()
+        assertTrue(activityService.listeners.contains(embraceNdkService))
+
+        val reportBasePath = context.cacheDir.absolutePath + "/ndk"
+        val markerFilePath = context.cacheDir.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+        verify(exactly = 1) {
+            delegate._installSignalHandlers(
+                reportBasePath,
+                markerFilePath,
+                any(),
+                "null",
+                metadataService.getAppState(),
+                embraceNdkService.getUnityCrashId(),
+                Build.VERSION.SDK_INT,
+                deviceArchitecture.is32BitDevice,
+                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+            )
+        }
+
+        val newDeviceMetaData = NativeCrashMetadata(
+            metadataService.getAppInfo(),
+            metadataService.getDeviceInfo(),
+            userService.getUserInfo(),
+            sessionProperties.get().toMap()
+        ).toJson()
+
+        verify(exactly = 1) { delegate._updateMetaData(newDeviceMetaData) }
+        assertEquals(embraceNdkService.getUnityCrashId(), Uuid.getEmbUuid())
+    }
+
+    @Test
+    fun `test metadata is updated after installation of the signal handler`() {
+        every { Uuid.getEmbUuid() } returns "uuid"
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+
+        val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
+        every { metadataService.getAppInfo() } returns appInfo
+        every { metadataService.getLightweightAppInfo() } returns appInfo
+        val deviceInfo = DeviceInfo(jailbroken = false)
+        every { metadataService.getDeviceInfo() } returns deviceInfo
+        every { metadataService.getLightweightDeviceInfo() } returns deviceInfo
+
+        val metaData = NativeCrashMetadata(
+            metadataService.getLightweightAppInfo(),
+            metadataService.getLightweightDeviceInfo(),
+            userService.getUserInfo(),
+            sessionProperties.get().toMap()
+        ).toJson()
+
+        initializeService()
+        assertTrue(activityService.listeners.contains(embraceNdkService))
+
+        val reportBasePath = context.cacheDir.absolutePath + "/ndk"
+        val markerFilePath = context.cacheDir.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+
+        verifyOrder {
+            metadataService.getLightweightAppInfo()
+            metadataService.getLightweightDeviceInfo()
+
+            delegate._installSignalHandlers(
+                reportBasePath,
+                markerFilePath,
+                metaData,
+                "null",
+                metadataService.getAppState(),
+                "uuid",
+                Build.VERSION.SDK_INT,
+                deviceArchitecture.is32BitDevice,
+                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+            )
+
+            metadataService.getAppInfo()
+            metadataService.getDeviceInfo()
+
+            delegate._updateMetaData(metaData)
+        }
+    }
+
+    @Test
+    fun `test getUnityCrashId`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        appFramework = Embrace.AppFramework.UNITY
+        every { Uuid.getEmbUuid() } returns "unityId"
+        initializeService()
+        val uuid = embraceNdkService.getUnityCrashId()
+        assertEquals(uuid, "unityId")
+    }
+
+    @Test
+    fun `test initialization with ndk disabled doesn't run _installSignalHandlers and _updateMetaData`() {
+        enableNdk(false)
+        initializeService()
+        val reportBasePath = context.cacheDir.absolutePath + "/ndk"
+        val markerFilePath = context.cacheDir.absolutePath + "/crash_file_marker"
+
+        verify(exactly = 0) {
+            delegate._installSignalHandlers(
+                reportBasePath,
+                markerFilePath,
+                "{}",
+                "null",
+                metadataService.getAppState(),
+                embraceNdkService.getUnityCrashId(),
+                Build.VERSION.SDK_INT,
+                deviceArchitecture.is32BitDevice,
+                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+            )
+        }
+
+        val newDeviceMetaData =
+            NativeCrashMetadata(
+                metadataService.getAppInfo(),
+                metadataService.getDeviceInfo(),
+                userService.getUserInfo(),
+                sessionProperties.get().toMap()
+            )
+
+        verify(exactly = 0) { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+    }
+
+    @Test
+    fun `test testCrash where isCpp is true`() {
+        initializeService()
+        embraceNdkService.testCrash(true)
+        verify { delegate._testNativeCrash_CPP() }
+        verify(exactly = 0) { delegate._testNativeCrash_C() }
+    }
+
+    @Test
+    fun `test testCrash where isCpp is false`() {
+        initializeService()
+        embraceNdkService.testCrash(false)
+        verify { delegate._testNativeCrash_C() }
+        verify(exactly = 0) { delegate._testNativeCrash_CPP() }
+    }
+
+    @Test
+    fun `test onUserInfoUpdate where _updateMetaData was not executed and isInstalled false`() {
+        enableNdk(false)
+        initializeService()
+        embraceNdkService.onUserInfoUpdate()
+        verify(exactly = 0) { delegate._updateMetaData(any()) }
+    }
+
+    @Test
+    fun `test onUserInfoUpdate where _updateMetaData was executed and isInstalled true`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        embraceNdkService.onUserInfoUpdate()
+        val newDeviceMetaData =
+            NativeCrashMetadata(
+                metadataService.getAppInfo(),
+                metadataService.getDeviceInfo(),
+                userService.getUserInfo(),
+                sessionProperties.get().toMap()
+            )
+
+        verify { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+    }
+
+    @Test
+    fun `test onForeground runs _updateAppState when _updateMetaData was executed and isInstalled true`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        embraceNdkService.onForeground(true, 1, 10)
+        verify(exactly = 1) { delegate._updateAppState("active") }
+    }
+
+    @Test
+    fun `test onForeground doesn't run _updateAppState when _updateMetaData was not executed and isInstalled false`() {
+        enableNdk(false)
+        initializeService()
+        embraceNdkService.onForeground(true, 1, 100)
+        verify(exactly = 0) { delegate._updateAppState("active") }
+    }
+
+    @Test
+    fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
+        every { repository.sortNativeCrashes(false) } returns listOf()
+        initializeService()
+        val result = embraceNdkService.checkForNativeCrash()
+        assertNull(result)
+        verify { repository.sortNativeCrashes(false) }
+        verify(exactly = 0) { delegate._getCrashReport(any()) }
+        verify(exactly = 0) { repository.errorFileForCrash(any()) }
+        verify(exactly = 0) { repository.mapFileForCrash(any()) }
+        verify(exactly = 0) {
+            repository.deleteFiles(
+                any(),
+                any(),
+                any(),
+                any() as NativeCrashData
+            )
+        }
+        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+    }
+
+    @Test
+    fun `test getSymbolsForCurrentArch`() {
+        mockkStatic(Base64::class)
+        val resourceId = 10
+        val nativeSymbolsJson = "{\"symbols\":{\"arm64-v8a\":{\"symbol1\":\"test\"}}}"
+
+        enableNdk(true)
+        every { context.resources } returns resources
+        every { context.packageName } returns "package-name"
+        every { resources.getString(resourceId) } returns "result"
+        every {
+            resources.getIdentifier(
+                "emb_ndk_symbols",
+                "string",
+                "package-name"
+            )
+        } returns resourceId
+        every { resources.getString(resourceId) } returns nativeSymbolsJson
+        every {
+            Base64.decode(
+                nativeSymbolsJson,
+                Base64.DEFAULT
+            )
+        } returns nativeSymbolsJson.encodeToByteArray()
+        initializeService()
+
+        val result = embraceNdkService.getSymbolsForCurrentArch()
+        assert(result != null)
+        assert(result?.containsKey("symbol1") ?: false)
+        assert(result?.getOrDefault("symbol1", "") == "test")
+    }
+
+    @Test
+    fun `test checkForNativeCrash catches an exception if _getCrashReport returns an empty string`() {
+        val crashFile = File.createTempFile("test", "test")
+        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
+        every { delegate._getCrashReport(any()) } returns ""
+        initializeService()
+        val crashData = embraceNdkService.checkForNativeCrash()
+        assertNull(crashData)
+    }
+
+    @Test
+    fun `test checkForNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
+        val crashFile = File.createTempFile("test", "test")
+        every { Uuid.getEmbUuid() } returns "unityId"
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+
+        val json = "{\n" +
+            "  \"sid\": [\n" +
+            "    {\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}"
+        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
+        every { delegate._getCrashReport(any()) } returns json
+
+        initializeService()
+        val crashData = embraceNdkService.checkForNativeCrash()
+        assertNull(crashData)
+    }
+
+    @Test
+    fun `test checkForNativeCrash when a native crash was captured`() {
+        val crashFile: File = File.createTempFile("test", "test")
+        val errorFile: File = File.createTempFile("test", "test")
+        val mapFile: File = File.createTempFile("test", "test")
+
+        every { Uuid.getEmbUuid() } returns "unityId"
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        every { repository.errorFileForCrash(crashFile) } returns errorFile
+        every { repository.mapFileForCrash(crashFile) } returns mapFile
+
+        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
+
+        appFramework = Embrace.AppFramework.UNITY
+        initializeService()
+        val mockedNdkService = spyk(embraceNdkService, recordPrivateCalls = true)
+        every { mockedNdkService.getSymbolsForCurrentArch() } returns mockk()
+
+        val result = mockedNdkService.checkForNativeCrash()
+        assertNotNull(result)
+
+        verify { mockedNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
+        verify(exactly = 1) { repository.sortNativeCrashes(false) }
+        verify(exactly = 1) { delegate._getCrashReport(any()) }
+        verify(exactly = 1) { repository.errorFileForCrash(crashFile) }
+        verify(exactly = 1) { repository.mapFileForCrash(crashFile) }
+        verify(exactly = 1) {
+            repository.deleteFiles(
+                crashFile,
+                errorFile,
+                mapFile,
+                any() as NativeCrashData
+            )
+        }
+    }
+
+    @Test
+    fun `test checkForNativeCrash when there is no native crash does not execute crash files logic`() {
+        every { repository.sortNativeCrashes(false) } returns listOf()
+
+        appFramework = Embrace.AppFramework.UNITY
+        initializeService()
+
+        val result = embraceNdkService.checkForNativeCrash()
+        assertNull(result)
+
+        verify(exactly = 1) { repository.sortNativeCrashes(false) }
+        verify(exactly = 0) { delegate._getCrashReport(any()) }
+        verify(exactly = 0) { repository.errorFileForCrash(any()) }
+        verify(exactly = 0) { repository.mapFileForCrash(any()) }
+        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+        verify(exactly = 0) {
+            repository.deleteFiles(
+                any() as File,
+                any() as File,
+                any() as File,
+                any() as NativeCrashData
+            )
+        }
+        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+    }
+
+    @Test
+    fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
+        enableNdk(true)
+        every { sharedObjectLoader.loadEmbraceNative() } returns false
+        initializeService()
+        val mockedNdkService = spyk(embraceNdkService, recordPrivateCalls = false)
+        verify(exactly = 0) { mockedNdkService["installSignals"]() }
+        verify(exactly = 0) { mockedNdkService["createCrashReportDirectory"]() }
+    }
+
+    private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")
+
+    private fun enableNdk(enabled: Boolean) {
+        every { configService.autoDataCaptureBehavior } returns fakeAutoDataCaptureBehavior(localCfg = {
+            LocalConfig("", enabled, SdkLocalConfig())
+        })
+    }
+
+    private class TestEmbraceNdkService(
+        context: Context,
+        metadataService: MetadataService,
+        activityService: ActivityService,
+        deliveryService: DeliveryService,
+        userService: UserService,
+        sessionProperties: EmbraceSessionProperties,
+        appFramework: Embrace.AppFramework,
+        sharedObjectLoader: SharedObjectLoader,
+        logger: InternalEmbraceLogger,
+        repository: EmbraceNdkServiceRepository,
+        delegate: NdkServiceDelegate.NdkDelegate,
+        cleanCacheExecutorService: ExecutorService,
+        ndkStartupExecutorService: ExecutorService
+    ) : EmbraceNdkService(
+        context,
+        metadataService,
+        activityService,
+        configService,
+        deliveryService,
+        userService,
+        sessionProperties,
+        appFramework,
+        sharedObjectLoader,
+        logger,
+        repository,
+        delegate,
+        cleanCacheExecutorService,
+        ndkStartupExecutorService,
+        deviceArchitecture
+    ) {
+        override fun createCrashReportDirectory() {
+        }
+    }
+}

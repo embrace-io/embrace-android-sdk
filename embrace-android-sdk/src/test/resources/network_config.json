@@ -1,0 +1,6 @@
+{
+  "defaultCaptureLimit": 2000,
+  "domains": {
+    "google.com": 500
+  }
+}

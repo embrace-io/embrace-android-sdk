@@ -1,0 +1,28 @@
+{
+  "attributes": {
+    "emb.sequence_id": "3",
+    "emb.type": "PERFORMANCE"
+  },
+  "end_time_unix_nano": 1681972471871000000,
+  "events": [
+    {
+      "attributes": {
+        "test1": "value1",
+        "test2": "value2"
+      },
+      "name": "start-time",
+      "time_unix_nano": 1681972471807000000
+    },
+    {
+      "attributes": {},
+      "name": "end-span-event",
+      "time_unix_nano": 1681972471871000000
+    }
+  ],
+  "name": "emb-sdk-init",
+  "parent_span_id": "0000000000000000",
+  "span_id": "342eb9c7f8cb54ff",
+  "start_time_unix_nano": 1681972471806000000,
+  "status": "OK",
+  "trace_id": "19bb482ec1c7e6b2f10fb89e0ccc85fa"
+}

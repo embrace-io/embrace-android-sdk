@@ -1,0 +1,85 @@
+
+{
+  "ts": 1111,
+  "u": "https://embrace.io/",
+  "vt": [
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "CLS",
+      "st": 1111,
+      "d": 10,
+      "s": 0.1,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "CLS",
+      "st": 1111,
+      "d": 30,
+      "s": 0.1,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "CLS",
+      "st": 1111,
+      "d": 20,
+      "s": 0.1,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "LCP",
+      "st": 2222
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "LCP",
+      "st": 2222
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FCP",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FID",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FCP",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FID",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "a": {
+    "f": 1,
+    "vu": false,
+    "vul": false,
+    "v": "1.1.2",
+    "fl": "default test build flavor",
+    "bi": "default test build id",
+    "bt": "default test build type",
+    "bv": "5",
+    "e": "dev",
+    "ou": false,
+    "oul": false,
+    "sdc": "53",
+    "sdk": "__EMBRACE_TEST_IGNORE__"
+  },
+  "d": "__EMBRACE_TEST_IGNORE__",
+  "et": {
+    "st": "active",
+    "id": "__EMBRACE_TEST_IGNORE__",
+    "et": "none",
+    "f": 1,
+    "li": "__EMBRACE_TEST_IGNORE__",
+    "n": "Test log info",
+    "sc": false,
+    "si": "__EMBRACE_TEST_IGNORE__",
+    "sp": {},
+    "ts": "__EMBRACE_TEST_IGNORE__",
+    "t": "info"
+  },
+  "sk": {
+    "tt": "__EMBRACE_TEST_IGNORE__"
+  },
+  "u": "__EMBRACE_TEST_IGNORE__",
+  "v": 13
+}

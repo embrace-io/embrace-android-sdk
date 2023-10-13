@@ -1,0 +1,15 @@
+{
+  "id": "id",
+  "m": "crashMessage",
+  "sb": {
+    "key": "value"
+  },
+  "er": [
+    {
+      "n": 5,
+      "c": 2
+    }
+  ],
+  "ue": 2,
+  "ma": "map"
+}

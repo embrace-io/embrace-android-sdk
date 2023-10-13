@@ -1,0 +1,4 @@
+public final class io/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks {
+	public static fun _onMessageReceived (Lcom/google/firebase/messaging/RemoteMessage;)V
+}
+

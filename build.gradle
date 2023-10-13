@@ -1,0 +1,31 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+import io.embrace.gradle.Versions
+
+buildscript {
+    repositories {
+        google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:${Versions.agp}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detekt}")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

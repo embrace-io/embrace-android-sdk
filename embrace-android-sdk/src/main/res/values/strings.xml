@@ -1,0 +1,16 @@
+<resources>
+    <string name="got_it">GOT IT</string>
+    <string name="send_error_log">SEND ERROR LOG</string>
+    <string name="close">CLOSE</string>
+    <string name="automatic_verification_success_title">Success! Open your dashboard</string>
+    <string name="automatic_verification_success_message">Almost done. Please check the Embrace dashboard to confirm that the information was received.
+        \n\nIf you’re experiencing any issues, reach out to support@embrace.io or your Embrace contact.\n</string>
+    <string name="automatic_verification_started">"Automatic verification has started. The app will relaunch shortly."</string>
+    <string name="automatic_verification_error_title">Hmm… Something went wrong</string>
+    <string name="automatic_verification_default_error_message">Please try again. If you continue to experience issues,
+        reach out to support@embrace.io or your Embrace contact</string>
+    <string name="automatic_verification_not_started">The verification cannot be started. Reach out to support@embrace.io or your Embrace contact</string>
+    <string name="automatic_verification_lifecycle_error_message">The Embrace SDK was not notified of lifecycle events, and will not report sessions.</string>
+    <string name="automatic_verification_no_initializer_message">The Embrace SDK cannot report sessions because ProcessLifecycleInitializer was not called.</string>
+    <string name="embrace_verification_errors">Embrace SDK has found the following issues:\n[X].\nPlease reach out to support@embrace.io or your Embrace contact.</string>
+</resources>

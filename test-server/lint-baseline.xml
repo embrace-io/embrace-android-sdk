@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 7.3.0" type="baseline" client="gradle" dependencies="false" name="AGP (7.3.0)" variant="all" version="7.3.0">
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="24"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="28"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="32"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="40"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="44"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="52"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="56"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="60"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="64"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="72"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="76"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="80"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="84"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="96"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="100"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="104"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="108"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="112"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="116"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockFragmentManager.kt"
+            line="120"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="MissingClass"
+        message="Class referenced in the manifest, `io.embrace.android.embracesdk.EmbraceContext$ActivityAccess`, was not found in the project or the libraries"
+        errorLine1="        &lt;activity android:name=&quot;io.embrace.android.embracesdk.EmbraceContext$ActivityAccess&quot; />"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="3"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class ActivityServiceHooks {"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/ActivityServiceHooks.java"
+            line="8"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file.">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/BaseTest.kt"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public open class BaseTest {"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/BaseTest.kt"
+            line="34"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public enum class EmbraceEndpoint(public val url: String) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/BaseTest.kt"
+            line="336"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="class BuildInfoHooks {"
+        errorLine2="      ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/BuildInfoHooks.java"
+            line="6"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class ConfigHooks {"
+        errorLine2="             ~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/ConfigHooks.java"
+            line="19"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class EmbraceContext(public val context: Context) : Application() {"
+        errorLine2="             ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/EmbraceContext.kt"
+            line="26"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class EmbraceResources("
+        errorLine2="             ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/EmbraceContext.kt"
+            line="194"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class EmbraceFileObserver("
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/EmbraceFileObserver.kt"
+            line="7"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal class FakePackageManager(private val embraceContext: EmbraceContext) : PackageManager() {"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/FakePackageManager.kt"
+            line="27"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file.">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/TestServer.kt"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public class TestServer {"
+        errorLine2="             ~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/TestServer.kt"
+            line="15"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="        mockWebServer.dispatcher = object : Dispatcher() {"
+        errorLine2="                                   ~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/TestServer.kt"
+            line="54"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public data class TestServerResponse(val statusCode: Int, val body: String = &quot;&quot;) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/TestServer.kt"
+            line="70"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="RestrictedApi"
+        message="ReportFragment can only be called from within the same library group prefix (referenced groupId=`androidx.lifecycle` with prefix androidx from groupId=`embrace-android-sdk`)"
+        errorLine1="public class MockReportFragment : ReportFragment() {"
+        errorLine2="                                  ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/androidx/lifecycle/MockReportFragment.kt"
+            line="6"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="RestrictedApi"
+        message="ActivityInitializationListener.onCreate can only be called from within the same library group prefix (referenced groupId=`androidx.lifecycle` with prefix androidx from groupId=`embrace-android-sdk`)"
+        errorLine1="            Lifecycle.Event.ON_CREATE -> embraceProcessListener?.onCreate()"
+        errorLine2="                                                                 ~~~~~~~~">
+        <location
+            file="src/main/kotlin/androidx/lifecycle/MockReportFragment.kt"
+            line="16"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="RestrictedApi"
+        message="ActivityInitializationListener.onStart can only be called from within the same library group prefix (referenced groupId=`androidx.lifecycle` with prefix androidx from groupId=`embrace-android-sdk`)"
+        errorLine1="            Lifecycle.Event.ON_START -> embraceProcessListener?.onStart()"
+        errorLine2="                                                                ~~~~~~~">
+        <location
+            file="src/main/kotlin/androidx/lifecycle/MockReportFragment.kt"
+            line="17"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="RestrictedApi"
+        message="ActivityInitializationListener.onResume can only be called from within the same library group prefix (referenced groupId=`androidx.lifecycle` with prefix androidx from groupId=`embrace-android-sdk`)"
+        errorLine1="            Lifecycle.Event.ON_RESUME -> embraceProcessListener?.onResume()"
+        errorLine2="                                                                 ~~~~~~~~">
+        <location
+            file="src/main/kotlin/androidx/lifecycle/MockReportFragment.kt"
+            line="18"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="RestrictedApi"
+        message="ReportFragment.get can only be called from within the same library group prefix (referenced groupId=`androidx.lifecycle` with prefix androidx from groupId=`embrace-android-sdk`)"
+        errorLine1="        return ReportFragment.get(activity)"
+        errorLine2="                              ~~~">
+        <location
+            file="src/main/kotlin/androidx/lifecycle/ProcessLifecycleOwnerAccess.kt"
+            line="16"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="LogConditional"
+        message="The log call Log.i(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
+        errorLine1="        Log.i("
+        errorLine2="        ^">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/utils/JsonValidator.kt"
+            line="32"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `MockView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class MockView(public val context: EmbraceContext) : View(context) {"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/MockView.kt"
+            line="7"
+            column="14"/>
+    </issue>
+
+</issues>

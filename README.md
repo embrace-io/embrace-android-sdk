@@ -10,7 +10,7 @@
 
 The Embrace Android SDK provides instrumentation for Android apps.
 
-[![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/branch/master/graph/badge.svg?token=QycvaJjZgr)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
+[![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/graph/badge.svg?token=4kNC8ceoVB)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
 [![android api](https://img.shields.io/badge/Android_API-16-green.svg "Android min API 21")](https://dash.embrace.io/signup/)
 [![build](https://img.shields.io/github/actions/workflow/status/embrace-io/embrace-android-sdk/ci-gradle.yml)](https://github.com/embrace-io/embrace-android-sdk/actions)
 

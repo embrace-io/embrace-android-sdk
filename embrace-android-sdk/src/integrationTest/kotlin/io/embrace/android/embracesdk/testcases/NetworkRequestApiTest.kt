@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -196,20 +197,24 @@ internal class NetworkRequestApiTest {
                 )
             }
 
-            val networkCall = validateAndReturnExpectedNetworkCall(harness)
+            val networkCall = validateAndReturnExpectedNetworkCall()
             assertEquals(URL, networkCall.url)
         }
     }
 
-    private fun assertSingleNetworkRequestInSession(expectedRequest: EmbraceNetworkRequest, completed: Boolean = true) {
+    private fun assertSingleNetworkRequestInSession(
+        expectedRequest: EmbraceNetworkRequest,
+        completed: Boolean = true
+    ) {
         with(testRule) {
             harness.recordSession {
+                harness.fakeClock.tick(2L)
                 harness.fakeConfigService.updateListeners()
                 harness.fakeClock.tick(5L)
                 embrace.recordNetworkRequest(expectedRequest)
             }
 
-            val networkCall = validateAndReturnExpectedNetworkCall(harness)
+            val networkCall = validateAndReturnExpectedNetworkCall()
             with(networkCall) {
                 assertEquals(expectedRequest.url, url)
                 assertEquals(expectedRequest.httpMethod, httpMethod)
@@ -235,22 +240,28 @@ internal class NetworkRequestApiTest {
         }
     }
 
-    private fun validateAndReturnExpectedNetworkCall(harness: IntegrationTestRule.Harness): NetworkCallV2 {
-        val lastSavedSessionRequestCount =
-            harness.fakeDeliveryModule.deliveryService.lastSavedSession?.performanceInfo?.networkRequests?.networkSessionV2?.requests?.size
-                ?: -1
-        val session = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
-        val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
-        val requestCount = requests.size
-        val networkCall = requests.first()
+    private fun validateAndReturnExpectedNetworkCall(): NetworkCallV2 {
+        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
 
+        // Look for a specific error where the fetch from the cache returns a stale value
+        session.session.exceptionError?.exceptionErrors?.forEach { errorInfo ->
+            errorInfo.exceptions?.forEach { exception ->
+                val msg = exception.message
+                assertTrue(
+                    "Wrong network call count returned: $msg",
+                    msg?.startsWith("Cached network call count") == false
+                )
+            }
+        }
+
+        val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
         assertEquals(
-            "Unexpected number of requests in sent session: $requestCount. Last saved session requests: $lastSavedSessionRequestCount",
+            "Unexpected number of requests in sent session: ${requests.size}",
             1,
-            requestCount
+            requests.size
         )
 
-        return networkCall
+        return requests.first()
     }
 
     companion object {

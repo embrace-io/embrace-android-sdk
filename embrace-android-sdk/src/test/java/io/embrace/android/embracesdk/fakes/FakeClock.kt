@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.clock.Clock
 
 internal class FakeClock(
+    @Volatile
     private var currentTime: Long = 0
 ) : Clock {
 

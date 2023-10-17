@@ -335,7 +335,6 @@ internal class SessionHandler(
             infoLogsAttemptedToSend = remoteLogger.getInfoLogsAttemptedToSend(),
             warnLogsAttemptedToSend = remoteLogger.getWarnLogsAttemptedToSend(),
             errorLogsAttemptedToSend = remoteLogger.getErrorLogsAttemptedToSend(),
-            exceptionError = exceptionService.currentExceptionError,
             lastHeartbeatTime = clock.now(),
             properties = sessionProperties.get(),
             endType = endType,
@@ -360,14 +359,19 @@ internal class SessionHandler(
             originSession.isColdStart,
             originSession.isReceivedTermination
         )
+        val appInfo = metadataService.getAppInfo()
+        val deviceInfo = metadataService.getDeviceInfo()
+        val breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime)
+
+        val realEndSession = endSession.copy(exceptionError = exceptionService.currentExceptionError)
 
         return SessionMessage(
-            session = endSession,
-            userInfo = endSession.user,
-            appInfo = metadataService.getAppInfo(),
-            deviceInfo = metadataService.getDeviceInfo(),
+            session = realEndSession,
+            userInfo = realEndSession.user,
+            appInfo = appInfo,
+            deviceInfo = deviceInfo,
             performanceInfo = performanceInfo.copy(),
-            breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime),
+            breadcrumbs = breadcrumbs,
             spans = spans
         )
     }

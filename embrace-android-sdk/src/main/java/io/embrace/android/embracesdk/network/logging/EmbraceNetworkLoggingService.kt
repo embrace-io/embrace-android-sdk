@@ -45,11 +45,9 @@ internal class EmbraceNetworkLoggingService(
 
     private val ipAddressCount = AtomicInteger(0)
 
-    override fun getNetworkCallsForSession(startTime: Long, lastKnownTime: Long): NetworkSessionV2 {
-        logger.logDeveloper("EmbraceNetworkLoggingService", "getNetworkCallsForSession")
-
+    override fun getNetworkCallsForSession(): NetworkSessionV2 {
         val calls = networkCallCache.value {
-            ArrayList(sessionNetworkCalls.subMap(startTime, lastKnownTime).values)
+            ArrayList(sessionNetworkCalls.values)
         }
 
         val storedCallsSize = sessionNetworkCalls.size

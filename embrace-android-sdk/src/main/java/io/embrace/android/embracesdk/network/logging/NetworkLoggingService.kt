@@ -10,14 +10,11 @@ import io.embrace.android.embracesdk.payload.NetworkSessionV2
 internal interface NetworkLoggingService {
 
     /**
-     * Get the calls and counts of network calls (which exceed the limit) within the specified time
-     * range.
+     * Get the calls and counts of network calls (which exceed the limit) that haven't been associated with a session or background activity
      *
-     * @param startTime     the start time
-     * @param lastKnownTime the end time
      * @return the network calls for the given session
      */
-    fun getNetworkCallsForSession(startTime: Long, lastKnownTime: Long): NetworkSessionV2
+    fun getNetworkCallsForSession(): NetworkSessionV2
 
     /**
      * Logs a HTTP network call.

@@ -349,8 +349,7 @@ internal class SessionHandler(
             startupThreshold = startupThreshold,
             user = userService.getUserInfo(),
             betaFeatures = betaFeatures,
-            symbols = nativeThreadSamplerService?.getNativeSymbols(),
-
+            symbols = nativeThreadSamplerService?.getNativeSymbols()
         )
 
         val performanceInfo = performanceInfoService.getSessionPerformanceInfo(
@@ -359,15 +358,16 @@ internal class SessionHandler(
             originSession.isColdStart,
             originSession.isReceivedTermination
         )
+
         val appInfo = metadataService.getAppInfo()
         val deviceInfo = metadataService.getDeviceInfo()
         val breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime)
 
-        val realEndSession = endSession.copy(exceptionError = exceptionService.currentExceptionError)
+        val endSessionWithAllErrors = endSession.copy(exceptionError = exceptionService.currentExceptionError)
 
         return SessionMessage(
-            session = realEndSession,
-            userInfo = realEndSession.user,
+            session = endSessionWithAllErrors,
+            userInfo = endSessionWithAllErrors.user,
             appInfo = appInfo,
             deviceInfo = deviceInfo,
             performanceInfo = performanceInfo.copy(),

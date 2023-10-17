@@ -26,7 +26,6 @@ internal interface PerformanceInfoService {
      *  * END
      *  * INTERRUPT
      *
-     *
      * @param startTime the start time of the performance information to retrieve
      * @param endTime   the end time of the performance information to retrieve
      * @return the performance information

@@ -48,7 +48,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getSdkApi().getSdkCurrentTime();
         Request request = chain.request();
         try {
             // we are not interested in response, just proceed
@@ -62,7 +62,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         urlString,
                         HttpMethod.fromString(request.method()),
                         startTime,
-                        System.currentTimeMillis(),
+                        embrace.getSdkApi().getSdkCurrentTime(),
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
                         request.header(embrace.getTraceIdHeader()),
@@ -84,7 +84,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         urlString,
                         HttpMethod.fromString(request.method()),
                         startTime,
-                        System.currentTimeMillis(),
+                        embrace.getSdkApi().getSdkCurrentTime(),
                         errorType != null ? errorType : UNKNOWN_EXCEPTION,
                         errorMessage != null ? errorMessage : UNKNOWN_MESSAGE,
                         request.header(embrace.getTraceIdHeader()),

@@ -112,6 +112,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockEmbrace.isStarted } answers { isSDKStarted }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
+        every { mockEmbrace.sdkApi.getSdkCurrentTime() } answers { System.currentTimeMillis() }
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
     }
 

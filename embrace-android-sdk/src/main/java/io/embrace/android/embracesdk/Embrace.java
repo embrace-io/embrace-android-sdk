@@ -611,6 +611,22 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     */
+    @InternalApi
+    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
+        impl.setEmbraceFlutterSdkVersion(version);
+    }
+
+    /**
+     * Sets the Dart version - this is not intended for public use.
+     */
+    @InternalApi
+    public void setDartVersion(@Nullable String version) {
+        impl.setDartVersion(version);
+    }
+
+    /**
      * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
      */
     @InternalApi

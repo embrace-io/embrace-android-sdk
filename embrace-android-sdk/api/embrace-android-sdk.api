@@ -77,6 +77,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun removeSessionProperty (Ljava/lang/String;)Z
 	public fun sampleCurrentThreadDuringAnrs ()V
 	public fun setAppId (Ljava/lang/String;)Z
+	public fun setDartVersion (Ljava/lang/String;)V
+	public fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
 	public fun setProcessStartedByNotification ()V
 	public fun setUserAsPayer ()V
 	public fun setUserEmail (Ljava/lang/String;)V

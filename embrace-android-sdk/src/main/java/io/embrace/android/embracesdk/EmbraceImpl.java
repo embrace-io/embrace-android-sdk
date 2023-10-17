@@ -1597,6 +1597,26 @@ final class EmbraceImpl {
     }
 
     /**
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     */
+    @InternalApi
+    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
+        }
+    }
+
+    /**
+     * Sets the Dart version - this is not intended for public use.
+     */
+    @InternalApi
+    public void setDartVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setDartVersion(version);
+        }
+    }
+
+    /**
      * Saves captured push notification information into session payload
      *
      * @param title                    the title of the notification as a string (or null)

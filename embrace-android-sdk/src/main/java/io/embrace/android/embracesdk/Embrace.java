@@ -14,6 +14,7 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.SdkApi;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -735,6 +736,12 @@ public final class Embrace implements EmbraceAndroidApi {
         public int getValue() {
             return value;
         }
+    }
+
+    @NonNull
+    @InternalApi
+    public SdkApi getSdkApi() {
+        return impl.getSdkApi();
     }
 
     /**

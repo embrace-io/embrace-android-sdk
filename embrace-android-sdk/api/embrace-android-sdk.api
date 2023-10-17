@@ -40,6 +40,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
+	public fun getSdkApi ()Lio/embrace/android/embracesdk/internal/SdkApi;
 	public fun getSessionProperties ()Ljava/util/Map;
 	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
@@ -177,6 +178,8 @@ public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/SdkApi {
+	public abstract fun getSdkCurrentTime ()J
 public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
 	public abstract fun isNetworkSpanForwardingEnabled ()Z
 	public abstract fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V

@@ -12,6 +12,7 @@ internal class FakeNetworkLoggingService : NetworkLoggingService {
         data
 
     override fun logNetworkCall(
+        callId: String,
         url: String,
         httpMethod: String,
         statusCode: Int,
@@ -27,6 +28,7 @@ internal class FakeNetworkLoggingService : NetworkLoggingService {
     }
 
     override fun logNetworkError(
+        callId: String,
         url: String,
         httpMethod: String,
         startTime: Long,

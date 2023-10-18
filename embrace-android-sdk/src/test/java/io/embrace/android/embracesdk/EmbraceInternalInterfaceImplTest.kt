@@ -297,4 +297,21 @@ internal class EmbraceInternalInterfaceImplTest {
         assertEquals("id-123", request.traceId)
         assertNull(request.networkCaptureData)
     }
+
+    @Test
+    fun testRecordAndDeduplicateNetworkRequest() {
+        val url = "https://embrace.io"
+        val callId = "testID"
+        val captor = slot<EmbraceNetworkRequest>()
+        val networkRequest: EmbraceNetworkRequest = mockk()
+        every { networkRequest.url } answers { url }
+
+        impl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
+
+        verify(exactly = 1) {
+            embrace.recordAndDeduplicateNetworkRequest(callId, capture(captor))
+        }
+
+        assertEquals(url, captor.captured.url)
+    }
 }

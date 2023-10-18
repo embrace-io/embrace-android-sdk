@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityService
@@ -35,7 +35,7 @@ internal class EmbraceMetadataReactNativeTest {
     private lateinit var assetManager: AssetManager
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
-    private var appFramework: Embrace.AppFramework = Embrace.AppFramework.REACT_NATIVE
+    private var appFramework: AppFramework = AppFramework.REACT_NATIVE
     private lateinit var preferencesService: PreferencesService
     private lateinit var activityService: ActivityService
     private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate

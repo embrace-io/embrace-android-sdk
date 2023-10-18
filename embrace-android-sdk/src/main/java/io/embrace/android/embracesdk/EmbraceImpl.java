@@ -19,6 +19,8 @@ import io.embrace.android.embracesdk.anr.AnrService;
 import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerServiceKt;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
+import io.embrace.android.embracesdk.app.AppFramework;
+import io.embrace.android.embracesdk.app.LastRunEndState;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
 import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
@@ -149,7 +151,7 @@ final class EmbraceImpl {
      * SDK like Flutter, React Native, or Unity.
      */
     @Nullable
-    private volatile Embrace.AppFramework appFramework;
+    private volatile AppFramework appFramework;
 
     @Nullable
     private volatile BreadcrumbService breadcrumbService;
@@ -236,7 +238,7 @@ final class EmbraceImpl {
     private final Clock sdkClock;
 
     @NonNull
-    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
+    private final Function2<Context, AppFramework, CoreModule> coreModuleSupplier;
 
     @NonNull
     private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
@@ -264,7 +266,7 @@ final class EmbraceImpl {
     Object composeActivityListenerInstance;
 
     EmbraceImpl(@NonNull Function0<InitModule> initModuleSupplier,
-                @NonNull Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier,
+                @NonNull Function2<Context, AppFramework, CoreModule> coreModuleSupplier,
                 @NonNull Function0<WorkerThreadModule> workerThreadModuleSupplier,
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
@@ -316,7 +318,7 @@ final class EmbraceImpl {
      */
     public void start(@NonNull Context context,
                       boolean enableIntegrationTesting,
-                      @NonNull Embrace.AppFramework appFramework) {
+                      @NonNull AppFramework appFramework) {
         try {
             startImpl(context, enableIntegrationTesting, appFramework);
         } catch (Exception ex) {
@@ -327,7 +329,7 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) {
+                           @NonNull AppFramework framework) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             InternalStaticEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -542,7 +544,7 @@ final class EmbraceImpl {
             nativeThreadSampler.setupNativeSampler();
 
             // In Unity this should always run on the Unity thread.
-            if (coreModule.getAppFramework() == Embrace.AppFramework.UNITY && EmbraceNativeThreadSamplerServiceKt.isUnityMainThread()) {
+            if (coreModule.getAppFramework() == AppFramework.UNITY && EmbraceNativeThreadSamplerServiceKt.isUnityMainThread()) {
                 sampleCurrentThreadDuringAnrs();
             }
         } else {
@@ -1452,7 +1454,7 @@ final class EmbraceImpl {
      * @param screen the name of the view to log
      */
     public void logRnView(@NonNull String screen) {
-        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
+        if (appFramework != AppFramework.REACT_NATIVE) {
             InternalStaticEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
             return;
         }
@@ -1695,15 +1697,15 @@ final class EmbraceImpl {
      * @return LastRunEndState enum value representing the end state of the last run.
      */
     @NonNull
-    public Embrace.LastRunEndState getLastRunEndState() {
+    public LastRunEndState getLastRunEndState() {
         if (isStarted() && crashVerifier != null) {
             if (crashVerifier.didLastRunCrash()) {
-                return Embrace.LastRunEndState.CRASH;
+                return LastRunEndState.CRASH;
             } else {
-                return Embrace.LastRunEndState.CLEAN_EXIT;
+                return LastRunEndState.CLEAN_EXIT;
             }
         } else {
-            return Embrace.LastRunEndState.INVALID;
+            return LastRunEndState.INVALID;
         }
     }
 

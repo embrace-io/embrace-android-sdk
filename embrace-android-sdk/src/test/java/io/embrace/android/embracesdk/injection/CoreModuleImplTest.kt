@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -16,7 +16,7 @@ internal class CoreModuleImplTest {
     @Test
     fun testApplicationObject() {
         val ctx = RuntimeEnvironment.getApplication().applicationContext
-        val module = CoreModuleImpl(ctx, Embrace.AppFramework.NATIVE)
+        val module = CoreModuleImpl(ctx, AppFramework.NATIVE)
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
         assertSame(InternalStaticEmbraceLogger.logger, module.logger)
@@ -29,7 +29,7 @@ internal class CoreModuleImplTest {
         val application = RuntimeEnvironment.getApplication()
         val isDebug = application.applicationInfo.isDebug()
         val ctx = application.applicationContext
-        val module = CoreModuleImpl(ctx, Embrace.AppFramework.NATIVE)
+        val module = CoreModuleImpl(ctx, AppFramework.NATIVE)
         assertSame(application, module.application)
         assertEquals(isDebug, module.isDebug)
     }

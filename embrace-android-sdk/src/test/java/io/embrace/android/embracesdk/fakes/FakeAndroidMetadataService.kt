@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
@@ -15,7 +15,7 @@ internal class FakeAndroidMetadataService(sessionId: String? = null) : MetadataS
     companion object {
         private val androidAppInfo = AppInfo(
             appVersion = "1.0.0",
-            appFramework = Embrace.AppFramework.NATIVE.value,
+            appFramework = AppFramework.NATIVE.value,
             buildId = "100",
             buildType = "release",
             buildFlavor = "oem",

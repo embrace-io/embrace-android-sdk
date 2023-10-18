@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import io.embrace.android.embracesdk.app.AppFramework;
+import io.embrace.android.embracesdk.app.LastRunEndState;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
@@ -561,26 +563,6 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * The AppFramework that is in use.
-     */
-    public enum AppFramework {
-        NATIVE(1),
-        REACT_NATIVE(2),
-        UNITY(3),
-        FLUTTER(4);
-
-        private final int value;
-
-        AppFramework(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-    }
-
-    /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for React Native.
      */
@@ -754,36 +736,6 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public LastRunEndState getLastRunEndState() {
         return impl.getLastRunEndState();
-    }
-
-    /**
-     * Enum representing the end state of the last run of the application.
-     */
-    public enum LastRunEndState {
-        /**
-         * The SDK has not been started yet.
-         */
-        INVALID(0),
-
-        /**
-         * The last run resulted in a crash.
-         */
-        CRASH(1),
-
-        /**
-         * The last run did not result in a crash.
-         */
-        CLEAN_EXIT(2);
-
-        private final int value;
-
-        LastRunEndState(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
     }
 
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {

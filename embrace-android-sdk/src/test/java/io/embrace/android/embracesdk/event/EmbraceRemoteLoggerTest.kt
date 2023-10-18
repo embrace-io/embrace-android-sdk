@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.event
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
@@ -200,7 +200,7 @@ internal class EmbraceRemoteLoggerTest {
             null,
             exception.stackTrace,
             null,
-            Embrace.AppFramework.NATIVE,
+            AppFramework.NATIVE,
             null,
             null,
             exception.javaClass.simpleName,
@@ -354,7 +354,7 @@ internal class EmbraceRemoteLoggerTest {
             null,
             null,
             "my stacktrace",
-            Embrace.AppFramework.UNITY,
+            AppFramework.UNITY,
             null,
             null,
             null,
@@ -385,7 +385,7 @@ internal class EmbraceRemoteLoggerTest {
             null,
             null,
             "my stacktrace",
-            Embrace.AppFramework.UNITY,
+            AppFramework.UNITY,
             null,
             null,
             null,
@@ -415,7 +415,7 @@ internal class EmbraceRemoteLoggerTest {
             null,
             null,
             "my stacktrace",
-            Embrace.AppFramework.FLUTTER,
+            AppFramework.FLUTTER,
             "dart context",
             "dart library",
             "Dart error name",

@@ -6,7 +6,7 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.config.ConfigService
@@ -101,7 +101,7 @@ internal class EmbraceMetadataUnityTest {
         context,
         buildInfo,
         configService,
-        Embrace.AppFramework.UNITY,
+        AppFramework.UNITY,
         preferencesService,
         activityService,
         MoreExecutors.newDirectExecutorService(),

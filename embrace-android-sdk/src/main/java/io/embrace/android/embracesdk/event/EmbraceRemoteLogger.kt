@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService

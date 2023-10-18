@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger

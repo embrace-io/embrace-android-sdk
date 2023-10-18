@@ -7,8 +7,8 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -111,7 +111,7 @@ internal class EmbraceMetadataServiceTest {
         )
     }
 
-    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE) =
+    private fun getMetadataService(framework: AppFramework = AppFramework.NATIVE) =
         EmbraceMetadataService.ofContext(
             context,
             buildInfo,
@@ -133,7 +133,7 @@ internal class EmbraceMetadataServiceTest {
             context,
             buildInfo,
             configService,
-            Embrace.AppFramework.REACT_NATIVE,
+            AppFramework.REACT_NATIVE,
             preferencesService,
             activityService,
             MoreExecutors.newDirectExecutorService(),
@@ -267,7 +267,7 @@ internal class EmbraceMetadataServiceTest {
             context,
             buildInfo,
             configService,
-            Embrace.AppFramework.NATIVE,
+            AppFramework.NATIVE,
             preferencesService,
             activityService,
             mockk(relaxed = true), // No background worker to run async calculations
@@ -315,7 +315,7 @@ internal class EmbraceMetadataServiceTest {
 
     @Test
     fun `test flutter APIs`() {
-        val metadataService = getMetadataService(Embrace.AppFramework.FLUTTER)
+        val metadataService = getMetadataService(AppFramework.FLUTTER)
         metadataService.setEmbraceFlutterSdkVersion("1.1.0")
         metadataService.setDartVersion("2.19.1")
         verify(exactly = 1) { preferencesService.dartSdkVersion = "2.19.1" }
@@ -328,7 +328,7 @@ internal class EmbraceMetadataServiceTest {
 
     @Test
     fun `test flutter API defaults to preferenceService`() {
-        val metadataService = getMetadataService(Embrace.AppFramework.FLUTTER)
+        val metadataService = getMetadataService(AppFramework.FLUTTER)
         every { preferencesService.dartSdkVersion }.returns("2.17.1")
         every { preferencesService.embraceFlutterSdkVersion }.returns("1.0.0")
         val defaultInfo = metadataService.getAppInfo()

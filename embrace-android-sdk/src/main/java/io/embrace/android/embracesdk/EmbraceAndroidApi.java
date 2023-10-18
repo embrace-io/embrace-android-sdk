@@ -4,6 +4,8 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import io.embrace.android.embracesdk.app.AppFramework;
+
 /**
  * Declares the functions that consist of Embrace's public API - specifically
  * those that are only declared on Android. You should not use
@@ -57,7 +59,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      */
     void start(@NonNull Context context,
                boolean enableIntegrationTesting,
-               @NonNull Embrace.AppFramework appFramework);
+               @NonNull AppFramework appFramework);
 
     /**
      * Whether or not the SDK has been started.

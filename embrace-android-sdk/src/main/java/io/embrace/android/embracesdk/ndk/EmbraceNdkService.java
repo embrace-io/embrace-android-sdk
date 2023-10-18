@@ -32,8 +32,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.EmbraceEvent;
+import io.embrace.android.embracesdk.app.AppFramework;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.comms.api.ApiClient;
@@ -140,7 +140,7 @@ class EmbraceNdkService implements NdkService, ActivityListener {
         @NonNull DeliveryService deliveryService,
         @NonNull UserService userService,
         @NonNull EmbraceSessionProperties sessionProperties,
-        @NonNull Embrace.AppFramework appFramework,
+        @NonNull AppFramework appFramework,
         @NonNull SharedObjectLoader sharedObjectLoader,
         @NonNull InternalEmbraceLogger logger,
         @NonNull EmbraceNdkServiceRepository repository,
@@ -178,7 +178,7 @@ class EmbraceNdkService implements NdkService, ActivityListener {
             activityService.addListener(this);
             this.gson = LazyKt.lazy(Gson::new);
 
-            if (appFramework == Embrace.AppFramework.UNITY) {
+            if (appFramework == AppFramework.UNITY) {
                 this.unityCrashId = Uuid.getEmbUuid();
             }
 

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.isDebug

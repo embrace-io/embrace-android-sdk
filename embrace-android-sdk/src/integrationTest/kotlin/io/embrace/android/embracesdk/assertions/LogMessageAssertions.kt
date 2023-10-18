@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.app.AppFramework
 import org.junit.Assert.assertEquals
 
 /**
@@ -26,7 +26,7 @@ internal fun assertLogMessageReceived(
         assertEquals(false, screenshotTaken)
         assertEquals(logType.value, logExceptionType)
         assertEquals(eventType, type)
-        assertEquals(Embrace.AppFramework.NATIVE.value, framework)
+        assertEquals(AppFramework.NATIVE.value, framework)
         assertEquals(properties, customPropertiesMap)
         exception?.let {
             assertEquals(it.message, exceptionMessage)

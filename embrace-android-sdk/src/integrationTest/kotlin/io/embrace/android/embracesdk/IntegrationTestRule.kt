@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -124,7 +125,7 @@ internal class IntegrationTestRule(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val fakeClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val enableIntegrationTesting: Boolean = false,
-        val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
+        val appFramework: AppFramework = AppFramework.NATIVE,
         val initModule: InitModule = FakeInitModule(clock = fakeClock),
         val fakeCoreModule: FakeCoreModule = FakeCoreModule(),
         val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(),

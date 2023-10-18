@@ -12,7 +12,7 @@ import android.os.StatFs
 import android.view.WindowManager
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService

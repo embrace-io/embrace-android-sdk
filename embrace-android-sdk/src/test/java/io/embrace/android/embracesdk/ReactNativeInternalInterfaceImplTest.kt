@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
-import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
+import io.embrace.android.embracesdk.app.AppFramework.FLUTTER
+import io.embrace.android.embracesdk.app.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService

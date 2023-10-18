@@ -9,6 +9,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.embrace.android.embracesdk.app.AppFramework;
+
 @RunWith(AndroidJUnit4.class)
 public class PreSdkStartTest {
 
@@ -24,7 +26,7 @@ public class PreSdkStartTest {
     public void testStartWithNullContext() {
         embrace.start(null);
         embrace.start(null, true);
-        embrace.start(null, false, Embrace.AppFramework.NATIVE);
+        embrace.start(null, false, AppFramework.NATIVE);
         assertFalse(embrace.isStarted());
     }
 

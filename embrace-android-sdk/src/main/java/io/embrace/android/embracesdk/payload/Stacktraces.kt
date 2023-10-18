@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.payload
 
 import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
-import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
-import io.embrace.android.embracesdk.Embrace.AppFramework.UNITY
+import io.embrace.android.embracesdk.app.AppFramework
+import io.embrace.android.embracesdk.app.AppFramework.FLUTTER
+import io.embrace.android.embracesdk.app.AppFramework.REACT_NATIVE
+import io.embrace.android.embracesdk.app.AppFramework.UNITY
 
 internal class Stacktraces @JvmOverloads constructor(
     stacktraces: List<String>?,

@@ -5,6 +5,7 @@ import android.webkit.ConsoleMessage;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.embrace.android.embracesdk.app.LastRunEndState;
 import io.embrace.android.embracesdk.spans.TracingApi;
 
 /**
@@ -86,5 +87,5 @@ interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi,
      * @return LastRunEndState enum value representing the end state of the last run.
      */
     @NonNull
-    Embrace.LastRunEndState getLastRunEndState();
+    LastRunEndState getLastRunEndState();
 }

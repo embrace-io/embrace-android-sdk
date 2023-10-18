@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
@@ -61,7 +62,7 @@ internal class EmbraceNdkServiceTest {
         private lateinit var mockDeliveryService: EmbraceDeliveryService
         private lateinit var userService: UserService
         private lateinit var sessionProperties: EmbraceSessionProperties
-        private lateinit var appFramework: Embrace.AppFramework
+        private lateinit var appFramework: AppFramework
         private lateinit var sharedObjectLoader: SharedObjectLoader
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var delegate: NdkServiceDelegate.NdkDelegate
@@ -92,7 +93,7 @@ internal class EmbraceNdkServiceTest {
             resources = mockk(relaxUnitFun = true)
             gson = Gson()
 
-            val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
+            val appInfo = AppInfo(appFramework = AppFramework.NATIVE.value)
             every { metadataService.getAppInfo() } returns appInfo
         }
 
@@ -199,7 +200,7 @@ internal class EmbraceNdkServiceTest {
         every { Uuid.getEmbUuid() } returns "unityId"
         enableNdk(true)
         every { sharedObjectLoader.loadEmbraceNative() } returns true
-        appFramework = Embrace.AppFramework.UNITY
+        appFramework = AppFramework.UNITY
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
 
@@ -236,7 +237,7 @@ internal class EmbraceNdkServiceTest {
         enableNdk(true)
         every { sharedObjectLoader.loadEmbraceNative() } returns true
 
-        val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
+        val appInfo = AppInfo(appFramework = AppFramework.NATIVE.value)
         every { metadataService.getAppInfo() } returns appInfo
         every { metadataService.getLightweightAppInfo() } returns appInfo
         val deviceInfo = DeviceInfo(jailbroken = false)
@@ -283,7 +284,7 @@ internal class EmbraceNdkServiceTest {
     fun `test getUnityCrashId`() {
         enableNdk(true)
         every { sharedObjectLoader.loadEmbraceNative() } returns true
-        appFramework = Embrace.AppFramework.UNITY
+        appFramework = AppFramework.UNITY
         every { Uuid.getEmbUuid() } returns "unityId"
         initializeService()
         val uuid = embraceNdkService.getUnityCrashId()
@@ -479,7 +480,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
 
-        appFramework = Embrace.AppFramework.UNITY
+        appFramework = AppFramework.UNITY
         initializeService()
         val mockedNdkService = spyk(embraceNdkService, recordPrivateCalls = true)
         every { mockedNdkService.getSymbolsForCurrentArch() } returns mockk()
@@ -506,7 +507,7 @@ internal class EmbraceNdkServiceTest {
     fun `test checkForNativeCrash when there is no native crash does not execute crash files logic`() {
         every { repository.sortNativeCrashes(false) } returns listOf()
 
-        appFramework = Embrace.AppFramework.UNITY
+        appFramework = AppFramework.UNITY
         initializeService()
 
         val result = embraceNdkService.checkForNativeCrash()
@@ -553,7 +554,7 @@ internal class EmbraceNdkServiceTest {
         deliveryService: DeliveryService,
         userService: UserService,
         sessionProperties: EmbraceSessionProperties,
-        appFramework: Embrace.AppFramework,
+        appFramework: AppFramework,
         sharedObjectLoader: SharedObjectLoader,
         logger: InternalEmbraceLogger,
         repository: EmbraceNdkServiceRepository,

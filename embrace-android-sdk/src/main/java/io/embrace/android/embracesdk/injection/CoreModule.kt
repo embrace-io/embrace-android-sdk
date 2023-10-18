@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.app.AppFramework
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer

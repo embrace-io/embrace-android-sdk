@@ -34,6 +34,7 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.metadataService,
             androidServicesModule.preferencesService,
             remoteLogger,
+            essentialServiceModule.coreConfigService,
             essentialServiceModule.configService,
             coreModule.jsonSerializer
         )

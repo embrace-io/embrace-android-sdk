@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.behavior.SpansBehavior
@@ -140,12 +139,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             thresholdCheck = thresholdCheck,
             localSupplier = { localConfig },
             remoteSupplier = remoteSupplier
-        )
-
-    override val sdkEndpointBehavior: SdkEndpointBehavior =
-        SdkEndpointBehavior(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::baseUrls,
         )
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehavior(

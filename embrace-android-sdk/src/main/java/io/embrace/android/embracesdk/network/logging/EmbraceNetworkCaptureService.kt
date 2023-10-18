@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -18,6 +19,7 @@ internal class EmbraceNetworkCaptureService(
     private val metadataService: MetadataService,
     private val preferencesService: PreferencesService,
     private val remoteLogger: EmbraceRemoteLogger,
+    private val coreConfigService: CoreConfigService,
     private val configService: ConfigService,
     private val serializer: EmbraceSerializer
 ) : NetworkCaptureService {
@@ -41,7 +43,7 @@ internal class EmbraceNetworkCaptureService(
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
-        if (url.contentEquals(configService.sdkEndpointBehavior.getData(metadataService.getAppId()))) {
+        if (url.contentEquals(coreConfigService.sdkEndpointBehavior.getData(metadataService.getAppId()))) {
             InternalStaticEmbraceLogger.logger.logDebug("Cannot intercept Embrace endpoints")
             return emptySet()
         }

@@ -10,9 +10,11 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeCoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -34,6 +36,7 @@ internal class EmbraceMetadataUnityTest {
         private val fakeClock = FakeClock()
         private lateinit var context: Context
         private lateinit var buildInfo: BuildInfo
+        private lateinit var coreConfigService: CoreConfigService
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
         private lateinit var activityService: ActivityService
@@ -51,6 +54,7 @@ internal class EmbraceMetadataUnityTest {
             context = mockk(relaxed = true)
             buildInfo = mockk()
             configService = mockk(relaxed = true)
+            coreConfigService = FakeCoreConfigService()
             preferencesService = FakePreferenceService()
             activityService = FakeActivityService()
             cacheService = mockk()
@@ -100,6 +104,7 @@ internal class EmbraceMetadataUnityTest {
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
         buildInfo,
+        coreConfigService,
         configService,
         Embrace.AppFramework.UNITY,
         preferencesService,

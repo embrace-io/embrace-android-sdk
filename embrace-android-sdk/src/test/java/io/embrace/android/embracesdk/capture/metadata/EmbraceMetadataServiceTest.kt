@@ -11,13 +11,16 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.fakeSdkAppBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
@@ -100,6 +103,12 @@ internal class EmbraceMetadataServiceTest {
                 }
             )
         )
+    private val coreConfigService: CoreConfigService =
+        FakeCoreConfigService(
+            sdkAppBehavior = fakeSdkAppBehavior {
+                LocalConfig("appId", false, SdkLocalConfig())
+            }
+        )
 
     @Before
     fun setUp() {
@@ -115,6 +124,7 @@ internal class EmbraceMetadataServiceTest {
         EmbraceMetadataService.ofContext(
             context,
             buildInfo,
+            coreConfigService,
             configService,
             framework,
             preferencesService,
@@ -132,6 +142,7 @@ internal class EmbraceMetadataServiceTest {
         EmbraceMetadataService.ofContext(
             context,
             buildInfo,
+            coreConfigService,
             configService,
             Embrace.AppFramework.REACT_NATIVE,
             preferencesService,
@@ -182,7 +193,7 @@ internal class EmbraceMetadataServiceTest {
 
         val expectedInfo = ResourceReader.readResourceAsText("metadata_appinfo_expected.json")
             .replace("{versionName}", BuildConfig.VERSION_NAME)
-            .replace("{versionCode}", BuildConfig.VERSION_CODE.toString())
+            .replace("{versionCode}", BuildConfig.VERSION_CODE)
             .filter { !it.isWhitespace() }
 
         val appInfo = getMetadataService().getAppInfo().toJson()
@@ -266,6 +277,7 @@ internal class EmbraceMetadataServiceTest {
         val metadataService = EmbraceMetadataService.ofContext(
             context,
             buildInfo,
+            coreConfigService,
             configService,
             Embrace.AppFramework.NATIVE,
             preferencesService,

@@ -10,10 +10,12 @@ import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -31,11 +33,12 @@ internal class FakeEssentialServiceModule(
     override val activityService: ActivityService = FakeActivityService(),
     override val metadataService: MetadataService = FakeAndroidMetadataService(),
     override val configService: ConfigService = FakeConfigService(),
+    override val coreConfigService: CoreConfigService = FakeCoreConfigService(),
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),
     override val gatingService: GatingService = FakeGatingService(),
     override val orientationService: OrientationService = NoOpOrientationService(),
     override val urlBuilder: ApiUrlBuilder = ApiUrlBuilder(
-        configService = configService,
+        coreConfigService = coreConfigService,
         metadataService = metadataService,
         enableIntegrationTesting = true,
         isDebug = false

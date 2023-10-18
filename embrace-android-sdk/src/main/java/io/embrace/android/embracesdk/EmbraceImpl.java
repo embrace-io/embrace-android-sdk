@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
 import io.embrace.android.embracesdk.clock.Clock;
 import io.embrace.android.embracesdk.config.ConfigService;
+import io.embrace.android.embracesdk.config.CoreConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger;
@@ -99,7 +100,7 @@ import kotlin.LazyKt;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function11;
+import kotlin.jvm.functions.Function12;
 import kotlin.jvm.functions.Function2;
 import kotlin.jvm.functions.Function3;
 import kotlin.jvm.functions.Function5;
@@ -179,6 +180,9 @@ final class EmbraceImpl {
     private volatile EmbraceRemoteLogger remoteLogger;
 
     @Nullable
+    private volatile CoreConfigService coreConfigService;
+
+    @Nullable
     private volatile ConfigService configService;
 
     @Nullable
@@ -248,8 +252,8 @@ final class EmbraceImpl {
     private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
 
     @NonNull
-    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
-        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
+    private final Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
+        Boolean, Function0<Unit>, Function0<CoreConfigService>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
 
     @NonNull
     private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
@@ -268,8 +272,8 @@ final class EmbraceImpl {
                 @NonNull Function0<WorkerThreadModule> workerThreadModuleSupplier,
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
-                @NonNull Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo,
-                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
+                @NonNull Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo,
+                                    String, Boolean, Function0<Unit>, Function0<CoreConfigService>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
@@ -372,12 +376,15 @@ final class EmbraceImpl {
                 return null;
             },
             () -> null,
+            () -> null,
             new DeviceArchitectureImpl());
 
         final ActivityService nonNullActivityService = essentialServiceModule.getActivityService();
         activityService = nonNullActivityService;
         final MetadataService nonNullMetadataService = essentialServiceModule.getMetadataService();
         metadataService = nonNullMetadataService;
+        final CoreConfigService nonNullCoreConfigService = essentialServiceModule.getCoreConfigService();
+        coreConfigService = nonNullCoreConfigService;
         final ConfigService nonNullConfigService = essentialServiceModule.getConfigService();
         configService = nonNullConfigService;
 
@@ -621,7 +628,7 @@ final class EmbraceImpl {
         unityInternalInterface = internalInterfaceModule.getUnityInternalInterface();
         flutterInternalInterface = internalInterfaceModule.getFlutterInternalInterface();
 
-        String startMsg = "Embrace SDK started. App ID: " + nonNullConfigService.getSdkModeBehavior().getAppId() +
+        String startMsg = "Embrace SDK started. App ID: " + coreConfigService.getSdkAppBehavior().getAppId() +
             " Version: " + BuildConfig.VERSION_NAME;
         internalEmbraceLogger.logInfo(startMsg);
 

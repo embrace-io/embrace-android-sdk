@@ -58,11 +58,6 @@ internal class SdkModeBehavior(
     }
 
     /**
-     * The Embrace app ID. This is used to identify the app within the database.
-     */
-    val appId: String by lazy { local?.appId ?: error("App ID not supplied.") }
-
-    /**
      * The % of devices that should be enabled.
      */
     private fun getThreshold(): Int = remote?.threshold ?: DEFAULT_THRESHOLD

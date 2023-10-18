@@ -36,6 +36,7 @@ internal class EmbraceNetworkLoggingService(
      * Network calls per domain prepared for the session.
      */
     private val sessionNetworkCalls = ConcurrentSkipListMap<Long, NetworkCallV2>()
+
     private val networkCallCache = CacheableValue<List<NetworkCallV2>>(sessionNetworkCalls::size)
 
     private val domainSettings = ConcurrentHashMap<String, DomainSettings>()
@@ -44,18 +45,24 @@ internal class EmbraceNetworkLoggingService(
 
     private val ipAddressCount = AtomicInteger(0)
 
-    override fun getNetworkCallsForSession(startTime: Long, lastKnownTime: Long): NetworkSessionV2 {
-        logger.logDeveloper("EmbraceNetworkLoggingService", "getNetworkCallsForSession")
-
+    override fun getNetworkCallsForSession(): NetworkSessionV2 {
         val calls = networkCallCache.value {
-            ArrayList(sessionNetworkCalls.subMap(startTime, lastKnownTime).values)
+            ArrayList(sessionNetworkCalls.values)
         }
+
+        val storedCallsSize = sessionNetworkCalls.size
+        val cachedCallsSize = calls.size
 
         val overLimit = hashMapOf<String, DomainCount>()
         for ((key, value) in callsPerDomain) {
             if (value.requestCount > value.captureLimit) {
                 overLimit[key] = value
             }
+        }
+
+        if (cachedCallsSize != storedCallsSize) {
+            val msg = "Cached network call count different than expected: $cachedCallsSize instead of $storedCallsSize"
+            logger.logError(msg, IllegalStateException(msg), true)
         }
 
         // clear calls per domain and session network calls lists before be used by the next session

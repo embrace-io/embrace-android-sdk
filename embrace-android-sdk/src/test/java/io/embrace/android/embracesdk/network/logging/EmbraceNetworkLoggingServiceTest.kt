@@ -76,18 +76,20 @@ internal class EmbraceNetworkLoggingServiceTest {
     }
 
     @Test
-    fun `test getNetworkCallsForSession only uses session between start and end time`() {
+    fun `test getNetworkCallsForSession returns all network calls current stored`() {
         logNetworkCall("www.example1.com", 100, 200)
         logNetworkCall("www.example2.com", 200, 300)
         logNetworkCall("www.example3.com", 300, 400)
         logNetworkCall("www.example4.com", 400, 500)
 
-        val result = service.getNetworkCallsForSession(200, 301)
+        val result = service.getNetworkCallsForSession()
 
         // test use only session calls
-        assertEquals(2, result.requests.size)
-        assertEquals("www.example2.com", result.requests.at(0)?.url)
-        assertEquals("www.example3.com", result.requests.at(1)?.url)
+        assertEquals(4, result.requests.size)
+        assertEquals("www.example1.com", result.requests.at(0)?.url)
+        assertEquals("www.example2.com", result.requests.at(1)?.url)
+        assertEquals("www.example3.com", result.requests.at(2)?.url)
+        assertEquals("www.example4.com", result.requests.at(3)?.url)
     }
 
     @Test
@@ -104,7 +106,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkCall("www.overLimit2.com")
         logNetworkCall("www.overLimit3.com")
 
-        val result = service.getNetworkCallsForSession(0, Long.MAX_VALUE)
+        val result = service.getNetworkCallsForSession()
 
         // overLimit1 has 4 calls. The limit is 2.
         val expectedOverLimit = DomainCount(4, 2)
@@ -131,7 +133,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkCall("www.overLimit2.com")
         logNetworkCall("www.overLimit3.com")
 
-        val result = service.getNetworkCallsForSession(0, Long.MAX_VALUE)
+        val result = service.getNetworkCallsForSession()
 
         // overLimit1 has 4 calls. The local limit is 2.
         val expectedOverLimit = DomainCount(4, 2)
@@ -161,7 +163,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             null
         )
 
-        val result = service.getNetworkCallsForSession(0, Long.MAX_VALUE)
+        val result = service.getNetworkCallsForSession()
 
         assertEquals(url, result.requests.at(0)?.url)
     }
@@ -229,7 +231,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         service.cleanCollections()
 
-        val result = service.getNetworkCallsForSession(0, Long.MAX_VALUE)
+        val result = service.getNetworkCallsForSession()
 
         assertEquals(0, result.requests.size)
         assertEquals(0, result.requestCounts.size)

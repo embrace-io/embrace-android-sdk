@@ -8,7 +8,7 @@ internal class FakeNetworkLoggingService : NetworkLoggingService {
 
     var data: NetworkSessionV2 = NetworkSessionV2(emptyList(), emptyMap())
 
-    override fun getNetworkCallsForSession(startTime: Long, lastKnownTime: Long): NetworkSessionV2 =
+    override fun getNetworkCallsForSession(): NetworkSessionV2 =
         data
 
     override fun logNetworkCall(

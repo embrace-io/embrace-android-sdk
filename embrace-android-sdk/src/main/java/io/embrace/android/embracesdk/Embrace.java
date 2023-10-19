@@ -666,7 +666,9 @@ public final class Embrace implements EmbraceAndroidApi {
      */
     @InternalApi
     public void logComposeTap(@NonNull Pair<Float, Float> point, @NonNull String elementName) {
-        impl.getEmbraceInternalInterface().logComposeTap(point, elementName);
+        if (isStarted()) {
+            impl.getEmbraceInternalInterface().logComposeTap(point, elementName);
+        }
     }
 
     /**

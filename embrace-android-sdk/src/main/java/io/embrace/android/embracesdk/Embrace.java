@@ -512,13 +512,6 @@ public final class Embrace implements EmbraceAndroidApi {
         return false;
     }
 
-    /**
-     * Allows Unity customers to verify their integration.
-     */
-    void verifyUnityIntegration() {
-        EmbraceSamples.verifyIntegration();
-    }
-
     @Override
     public void logPushNotification(@Nullable String title,
                                     @Nullable String body,

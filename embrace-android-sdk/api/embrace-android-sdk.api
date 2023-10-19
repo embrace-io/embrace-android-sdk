@@ -165,7 +165,7 @@ public final class io/embrace/android/embracesdk/app/AppFramework : java/lang/En
 	public static final field NATIVE Lio/embrace/android/embracesdk/app/AppFramework;
 	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/app/AppFramework;
 	public static final field UNITY Lio/embrace/android/embracesdk/app/AppFramework;
-	public fun getValue ()I
+	public final fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/app/AppFramework;
 	public static fun values ()[Lio/embrace/android/embracesdk/app/AppFramework;
 }
@@ -174,7 +174,7 @@ public final class io/embrace/android/embracesdk/app/LastRunEndState : java/lang
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/app/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/app/LastRunEndState;
 	public static final field INVALID Lio/embrace/android/embracesdk/app/LastRunEndState;
-	public fun getValue ()I
+	public final fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/app/LastRunEndState;
 	public static fun values ()[Lio/embrace/android/embracesdk/app/LastRunEndState;
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk;
 
 import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Pair;
 import android.webkit.ConsoleMessage;
@@ -27,22 +28,22 @@ import kotlin.jvm.functions.Function0;
  * <p>
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
+@SuppressLint("EmbracePublicApiPackageRule")
 @SuppressWarnings("unused")
 public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Singleton instance of the Embrace SDK.
      */
+    @NonNull
     private static final Embrace embrace = new Embrace();
+
     private static EmbraceImpl impl = new EmbraceImpl();
 
     @NonNull
     private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
 
     static final String NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE = " cannot be invoked because it contains null parameters";
-
-    Embrace() {
-    }
 
     /**
      * Gets the singleton instance of the Embrace SDK.
@@ -65,6 +66,9 @@ public final class Embrace implements EmbraceAndroidApi {
 
     static void setImpl(@Nullable EmbraceImpl instance) {
         impl = instance;
+    }
+
+    Embrace() {
     }
 
     @Override
@@ -288,16 +292,6 @@ public final class Embrace implements EmbraceAndroidApi {
         }
     }
 
-    /**
-     * Logs a React Native Redux Action.
-     */
-    public void logRnAction(@NonNull String name, long startTime, long endTime,
-                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
-            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        }
-    }
-
     @Override
     public void addBreadcrumb(@NonNull String message) {
         if (verifyNonNullParameters("addBreadcrumb", message)) {
@@ -387,22 +381,6 @@ public final class Embrace implements EmbraceAndroidApi {
         }
     }
 
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     */
-    @InternalApi
-    public void logInternalError(@Nullable String message, @Nullable String details) {
-        impl.logInternalError(message, details);
-    }
-
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     */
-    @InternalApi
-    public void logInternalError(@NonNull Throwable error) {
-        impl.logInternalError(error);
-    }
-
     @Override
     public synchronized void endSession() {
         endSession(false);
@@ -433,30 +411,6 @@ public final class Embrace implements EmbraceAndroidApi {
             return impl.endView(name);
         }
         return false;
-    }
-
-    /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    @InternalApi
-    public void logRnView(@NonNull String screen) {
-        impl.logRnView(screen);
-    }
-
-    @Nullable
-    @InternalApi
-    public ConfigService getConfigService() {
-        return impl.getConfigService();
-    }
-
-    @InternalApi
-    void installUnityThreadSampler() {
-        getImpl().installUnityThreadSampler();
     }
 
     @Override
@@ -560,24 +514,107 @@ public final class Embrace implements EmbraceAndroidApi {
         return false;
     }
 
+    @Override
+    public void logPushNotification(@Nullable String title,
+                                    @Nullable String body,
+                                    @Nullable String topic,
+                                    @Nullable String id,
+                                    @Nullable Integer notificationPriority,
+                                    @NonNull Integer messageDeliveredPriority,
+                                    @NonNull Boolean isNotification,
+                                    @NonNull Boolean hasData) {
+        if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
+            impl.logPushNotification(
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                messageDeliveredPriority,
+                PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
+            );
+        }
+    }
+
+    @Override
+    public void trackWebViewPerformance(@NonNull String tag, @NonNull ConsoleMessage consoleMessage) {
+        if (verifyNonNullParameters("trackWebViewPerformance", tag, consoleMessage)) {
+            if (consoleMessage.message() != null) {
+                trackWebViewPerformance(tag, consoleMessage.message());
+            } else {
+                logger.logDebug("Empty WebView console message.");
+            }
+        }
+    }
+
+    @Override
+    public void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
+        if (verifyNonNullParameters("trackWebViewPerformance", tag, message)) {
+            impl.trackWebViewPerformance(tag, message);
+        }
+    }
+
+    @Nullable
+    @Override
+    public String getCurrentSessionId() {
+        return impl.getCurrentSessionId();
+    }
+
+    @NonNull
+    @Override
+    public LastRunEndState getLastRunEndState() {
+        return impl.getLastRunEndState();
+    }
+
     /**
-     * The AppFramework that is in use.
+     * Logs a React Native Redux Action - this is not intended for public use.
      */
-    public enum AppFramework {
-        NATIVE(1),
-        REACT_NATIVE(2),
-        UNITY(3),
-        FLUTTER(4);
-
-        private final int value;
-
-        AppFramework(int value) {
-            this.value = value;
+    @InternalApi
+    public void logRnAction(@NonNull String name, long startTime, long endTime,
+                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
+        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
+            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
         }
+    }
 
-        public int getValue() {
-            return value;
-        }
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    @InternalApi
+    public void logInternalError(@Nullable String message, @Nullable String details) {
+        impl.logInternalError(message, details);
+    }
+
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    @InternalApi
+    public void logInternalError(@NonNull Throwable error) {
+        impl.logInternalError(error);
+    }
+
+    /**
+     * Logs the fact that a particular view was entered.
+     * <p>
+     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
+     * logged.
+     *
+     * @param screen the name of the view to log
+     */
+    @InternalApi
+    public void logRnView(@NonNull String screen) {
+        impl.logRnView(screen);
+    }
+
+    @Nullable
+    @InternalApi
+    public ConfigService getConfigService() {
+        return impl.getConfigService();
+    }
+
+    @InternalApi
+    void installUnityThreadSampler() {
+        getImpl().installUnityThreadSampler();
     }
 
     /**
@@ -660,47 +697,6 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Logs taps from Compose views
-     * @param point                    Position of the captured clicked
-     * @param elementName              Name of the clicked element
-     */
-    @InternalApi
-    public void logComposeTap(@NonNull Pair<Float, Float> point, @NonNull String elementName) {
-        if (isStarted()) {
-            impl.getEmbraceInternalInterface().logComposeTap(point, elementName);
-        }
-    }
-
-    /**
-     * Allows Unity customers to verify their integration.
-     */
-    void verifyUnityIntegration() {
-        EmbraceSamples.verifyIntegration();
-    }
-
-    @Override
-    public void logPushNotification(@Nullable String title,
-                                    @Nullable String body,
-                                    @Nullable String topic,
-                                    @Nullable String id,
-                                    @Nullable Integer notificationPriority,
-                                    @NonNull Integer messageDeliveredPriority,
-                                    @NonNull Boolean isNotification,
-                                    @NonNull Boolean hasData) {
-        if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
-            impl.logPushNotification(
-                title,
-                body,
-                topic,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
-            );
-        }
-    }
-
-    /**
      * Determine if a network call should be captured based on the network capture rules
      *
      * @param url    the url of the network call
@@ -722,40 +718,52 @@ public final class Embrace implements EmbraceAndroidApi {
         impl.setProcessStartedByNotification();
     }
 
-    @Override
-    public void trackWebViewPerformance(@NonNull String tag, @NonNull ConsoleMessage consoleMessage) {
-        if (verifyNonNullParameters("trackWebViewPerformance", tag, consoleMessage)) {
-            if (consoleMessage.message() != null) {
-                trackWebViewPerformance(tag, consoleMessage.message());
-            } else {
-                logger.logDebug("Empty WebView console message.");
-            }
+    /**
+     * Logs taps from Compose views
+     *
+     * @param point       Position of the captured clicked
+     * @param elementName Name of the clicked element
+     */
+    @InternalApi
+    public void logComposeTap(@NonNull Pair<Float, Float> point, @NonNull String elementName) {
+        if (isStarted()) {
+            impl.getEmbraceInternalInterface().logComposeTap(point, elementName);
         }
     }
 
-    @Override
-    public void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
-        if (verifyNonNullParameters("trackWebViewPerformance", tag, message)) {
-            impl.trackWebViewPerformance(tag, message);
+    private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {
+        for (Object param : params) {
+            if (param == null) {
+                final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
+                if (isStarted()) {
+                    internalEmbraceLogger.logError(errorMessage, new IllegalArgumentException(errorMessage), true);
+                } else {
+                    internalEmbraceLogger.logSDKNotInitialized(errorMessage);
+                }
+                return false;
+            }
         }
+        return true;
     }
 
     /**
-     * Get the ID for the current session.
-     * Returns null if a session has not been started yet or the SDK hasn't been initialized.
-     *
-     * @return The ID for the current Session, if available.
+     * The AppFramework that is in use.
      */
-    @Nullable
-    @Override
-    public String getCurrentSessionId() {
-        return impl.getCurrentSessionId();
-    }
+    public enum AppFramework {
+        NATIVE(1),
+        REACT_NATIVE(2),
+        UNITY(3),
+        FLUTTER(4);
 
-    @NonNull
-    @Override
-    public LastRunEndState getLastRunEndState() {
-        return impl.getLastRunEndState();
+        private final int value;
+
+        AppFramework(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
     }
 
     /**
@@ -786,20 +794,5 @@ public final class Embrace implements EmbraceAndroidApi {
         public int getValue() {
             return value;
         }
-    }
-
-    private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {
-        for (Object param : params) {
-            if (param == null) {
-                final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
-                if (isStarted()) {
-                    internalEmbraceLogger.logError(errorMessage, new IllegalArgumentException(errorMessage), true);
-                } else {
-                    internalEmbraceLogger.logSDKNotInitialized(errorMessage);
-                }
-                return false;
-            }
-        }
-        return true;
     }
 }

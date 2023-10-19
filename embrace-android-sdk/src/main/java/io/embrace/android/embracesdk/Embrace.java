@@ -35,16 +35,15 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Singleton instance of the Embrace SDK.
      */
+    @NonNull
     private static final Embrace embrace = new Embrace();
+
     private static EmbraceImpl impl = new EmbraceImpl();
 
     @NonNull
     private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
 
     static final String NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE = " cannot be invoked because it contains null parameters";
-
-    Embrace() {
-    }
 
     /**
      * Gets the singleton instance of the Embrace SDK.
@@ -67,6 +66,9 @@ public final class Embrace implements EmbraceAndroidApi {
 
     static void setImpl(@Nullable EmbraceImpl instance) {
         impl = instance;
+    }
+
+    Embrace() {
     }
 
     @Override

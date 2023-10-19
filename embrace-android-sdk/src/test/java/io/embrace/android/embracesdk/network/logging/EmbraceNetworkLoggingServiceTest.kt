@@ -22,7 +22,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import kotlin.random.Random
+import java.util.UUID
 
 internal class EmbraceNetworkLoggingServiceTest {
     private lateinit var service: EmbraceNetworkLoggingService
@@ -242,9 +242,45 @@ internal class EmbraceNetworkLoggingServiceTest {
         assertEquals(0, result.requestCounts.size)
     }
 
-    private fun logNetworkCall(url: String, startTime: Long = 100, endTime: Long = 200) {
+    @Test
+    fun `network requests with the same start time will be recorded each time`() {
+        val startTime = 99L
+        val endTime = 300L
+        repeat(2) {
+            logNetworkCall(url = "https://embrace.io", startTime = startTime, endTime = endTime)
+        }
+
+        repeat(2) {
+            logNetworkError(url = "https://embrace.io", startTime = startTime)
+        }
+
+        assertEquals(4, service.getNetworkCallsForSession().requests.size)
+    }
+
+    @Test
+    fun `network requests with the same callId will be logged once with last writer wins`() {
+        val callId = UUID.randomUUID().toString()
+        val expectedStartTime = 99L
+        val expectedEndTime = 300L
+        val expectedUrl = "https://embrace.io/forreal"
+
+        logNetworkCall(url = "https://embrace.io", startTime = 50, endTime = 100, callId = callId)
+        logNetworkError(url = "https://embrace.io", startTime = 50, callId = callId)
+        logNetworkCall(url = expectedUrl, startTime = expectedStartTime, endTime = expectedEndTime, callId = callId)
+
+        val result = service.getNetworkCallsForSession()
+        assertEquals(1, result.requests.size)
+        with(result.requests[0]) {
+            assertEquals(1, result.requests.size)
+            assertEquals(expectedStartTime, startTime)
+            assertEquals(expectedEndTime, endTime)
+            assertEquals(expectedUrl, url)
+        }
+    }
+
+    private fun logNetworkCall(url: String, startTime: Long = 100, endTime: Long = 200, callId: String = randomId()) {
         service.logNetworkCall(
-            randomId(),
+            callId,
             url,
             "GET",
             200,
@@ -258,5 +294,20 @@ internal class EmbraceNetworkLoggingServiceTest {
         )
     }
 
-    private fun randomId(): String = Random.Default.nextLong().toString()
+    private fun logNetworkError(url: String, startTime: Long = 100, callId: String = randomId()) {
+        service.logNetworkError(
+            callId,
+            url,
+            "GET",
+            startTime,
+            0,
+            NullPointerException::class.java.canonicalName,
+            "NPE baby",
+            null,
+            null,
+            null
+        )
+    }
+
+    private fun randomId(): String = UUID.randomUUID().toString()
 }

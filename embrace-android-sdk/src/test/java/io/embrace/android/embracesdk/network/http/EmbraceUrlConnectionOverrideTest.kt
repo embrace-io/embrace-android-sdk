@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.network.http
 
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.EmbraceInternalInterface
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
@@ -15,6 +16,7 @@ import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -24,8 +26,10 @@ import javax.net.ssl.HttpsURLConnection
 internal class EmbraceUrlConnectionOverrideTest {
 
     private lateinit var mockEmbrace: Embrace
+    private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var fakeConfigService: ConfigService
     private lateinit var mockConnection: HttpsURLConnection
+    private lateinit var capturedCallId: CapturingSlot<String>
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
     private lateinit var remoteNetworkSpanForwardingConfig: NetworkSpanForwardingRemoteConfig
     private lateinit var embraceUrlConnectionOverride: EmbraceUrlConnectionOverride<HttpsURLConnection>
@@ -34,6 +38,8 @@ internal class EmbraceUrlConnectionOverrideTest {
     @Before
     fun setup() {
         mockEmbrace = mockk(relaxed = true)
+        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
+        capturedCallId = slot()
         capturedEmbraceNetworkRequest = slot()
         remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 0f)
         fakeConfigService = FakeConfigService(
@@ -41,7 +47,10 @@ internal class EmbraceUrlConnectionOverrideTest {
                 remoteConfig = { remoteNetworkSpanForwardingConfig }
             )
         )
-        every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
+        mockInternalInterface = mockk(relaxed = true)
+        every {
+            mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest))
+        } answers { }
         every { mockEmbrace.configService } answers { fakeConfigService }
 
         mockConnection = createMockConnection()
@@ -52,7 +61,8 @@ internal class EmbraceUrlConnectionOverrideTest {
     @Test
     fun `completed network call logged exactly once if connection connected with wrapped output stream`() {
         executeRequest()
-        verify(exactly = 1) { mockEmbrace.recordNetworkRequest(any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        assertTrue(capturedCallId.captured.isNotBlank())
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(HttpMethod.POST.name, httpMethod)
             assertEquals(HTTP_OK, responseCode)
@@ -65,7 +75,8 @@ internal class EmbraceUrlConnectionOverrideTest {
     @Test
     fun `completed network call logged exactly once if connection connected with unwrapped output stream`() {
         executeRequest(embraceOverride = embraceUrlConnectionOverrideUnwrapped)
-        verify(exactly = 1) { mockEmbrace.recordNetworkRequest(any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        assertTrue(capturedCallId.captured.isNotBlank())
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(HttpMethod.POST.name, httpMethod)
             assertEquals(HTTP_OK, responseCode)
@@ -78,7 +89,8 @@ internal class EmbraceUrlConnectionOverrideTest {
     @Test
     fun `incomplete network call logged exactly once and response data not accessed if connection connected`() {
         executeRequest(exceptionOnInputStream = true)
-        verify(exactly = 1) { mockEmbrace.recordNetworkRequest(any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        assertTrue(capturedCallId.captured.isNotBlank())
         verify(exactly = 0) { mockConnection.responseCode }
         verify(exactly = 0) { mockConnection.contentLength }
         verify(exactly = 0) { mockConnection.headerFields }
@@ -204,7 +216,8 @@ internal class EmbraceUrlConnectionOverrideTest {
             verify(exactly = 0) { mockConnection.contentLength }
             verify(exactly = 0) { mockConnection.headerFields }
         }
-        verify(exactly = 1) { mockEmbrace.recordNetworkRequest(any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        assertTrue(capturedCallId.captured.isNotBlank())
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(errorType, capturedEmbraceNetworkRequest.captured.errorType)
     }

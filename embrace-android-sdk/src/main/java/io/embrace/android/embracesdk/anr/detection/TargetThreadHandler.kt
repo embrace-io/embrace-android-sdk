@@ -8,7 +8,6 @@ import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
@@ -63,7 +62,6 @@ internal class TargetThreadHandler(
                 // but if it does then we just log an internal error & consider the ANR ended at
                 // this point.
                 if (messageQueue == null || !installed) {
-                    logDebug("Failed to obtain main thread MessageQueue - using fallback ANR strategy.")
                     onMainThreadUnblocked()
                 }
             }

@@ -150,5 +150,4 @@ dokkaHtml {
 }
 
 task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }
-task publishSonatype { dependsOn("publishMavenPublicationToMavenSonatype") }
 task publishQa { dependsOn("publishMavenPublicationToQaRepository") }

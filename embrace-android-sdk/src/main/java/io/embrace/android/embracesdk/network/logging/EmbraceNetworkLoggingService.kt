@@ -32,6 +32,7 @@ internal class EmbraceNetworkLoggingService(
 ) : NetworkLoggingService, MemoryCleanerListener {
 
     private val callsStorageLastUpdate = AtomicInteger(0)
+
     /**
      * Network calls per domain prepared for the session.
      */
@@ -47,7 +48,9 @@ internal class EmbraceNetworkLoggingService(
 
     override fun getNetworkCallsForSession(): NetworkSessionV2 {
         val calls = networkCallCache.value {
-            sessionNetworkCalls.values.toList()
+            synchronized(callsStorageLastUpdate) {
+                sessionNetworkCalls.values.toList()
+            }
         }
 
         val storedCallsSize = sessionNetworkCalls.size
@@ -249,13 +252,17 @@ internal class EmbraceNetworkLoggingService(
     }
 
     private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
-        callsStorageLastUpdate.incrementAndGet()
-        sessionNetworkCalls[callId] = networkCall
+        synchronized(callsStorageLastUpdate) {
+            callsStorageLastUpdate.incrementAndGet()
+            sessionNetworkCalls[callId] = networkCall
+        }
     }
 
     private fun clearNetworkCalls() {
-        callsStorageLastUpdate.set(0)
-        sessionNetworkCalls.clear()
+        synchronized(callsStorageLastUpdate) {
+            callsStorageLastUpdate.set(0)
+            sessionNetworkCalls.clear()
+        }
     }
 
     override fun cleanCollections() {

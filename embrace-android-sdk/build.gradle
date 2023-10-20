@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.SonatypeHost
 import io.embrace.gradle.Versions
 
 plugins {
@@ -8,6 +9,7 @@ plugins {
 description = "Embrace Android SDK: Core"
 
 apply plugin: "org.jetbrains.dokka"
+apply plugin: "com.vanniktech.maven.publish"
 
 def NO_NDK = "noNdk"
 
@@ -147,6 +149,38 @@ dokkaHtml {
             noAndroidSdkLink.set(false)
         }
     }
+}
+
+mavenPublishing {
+    coordinates("io.embrace", project.name, project.version)
+
+    pom {
+        name = project.name
+        description = "Embrace Android SDK"
+        url = "https://github.com/embrace-io/embrace-android-sdk"
+        licenses {
+            license {
+                name = "Embrace license"
+                url = "https://embrace.io/docs/embrace-software-notice/"
+            }
+        }
+        developers {
+            developer {
+                id = "dev1"
+                name = "Embrace"
+                email = "support@embrace.io"
+            }
+        }
+        scm {
+            connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
+            developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+            url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
+        }
+    }
+
+    publishToMavenCentral(SonatypeHost.S01)
+
+    signAllPublications()
 }
 
 task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }

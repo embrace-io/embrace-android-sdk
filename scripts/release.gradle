@@ -1,6 +1,5 @@
 apply plugin: "maven-publish"
 apply plugin: "signing"
-apply plugin: "com.vanniktech.maven.publish"
 
 // load credentials from local properties if present
 def localProperties = new Properties()
@@ -22,6 +21,45 @@ android {
 
 // https://developer.android.com/studio/publish-library/upload-library
 publishing {
+    publications {
+
+        // create a single release publication
+        release(MavenPublication) {
+            groupId = "io.embrace"
+            artifactId = project.name
+            version = project.version
+
+            afterEvaluate {
+                from components.release
+            }
+
+            // append some license metadata to the POM.
+            pom {
+                name = project.name
+                description = "Embrace Android SDK"
+                url = "https://github.com/embrace-io/embrace-android-sdk"
+                licenses {
+                    license {
+                        name = "Embrace license"
+                        url = "https://embrace.io/docs/embrace-software-notice/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "dev1"
+                        name = "Embrace"
+                        email = "support@embrace.io"
+                    }
+                }
+                scm {
+                    connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
+                    developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+                    url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
+                }
+            }
+        }
+    }
+
     // configure repositories where the publication can be hosted
     repositories {
         // beta releases
@@ -53,38 +91,6 @@ publishing {
             url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
         }
     }
-}
-
-mavenPublishing {
-    coordinates("io.embrace", project.name, project.version)
-
-    pom {
-        name = project.name
-        description = "Embrace Android SDK"
-        url = "https://github.com/embrace-io/embrace-android-sdk"
-        licenses {
-            license {
-                name = "Embrace license"
-                url = "https://embrace.io/docs/embrace-software-notice/"
-            }
-        }
-        developers {
-            developer {
-                id = "dev1"
-                name = "Embrace"
-                email = "support@embrace.io"
-            }
-        }
-        scm {
-            connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
-            developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
-            url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
-        }
-    }
-
-    publishToMavenCentral(SonatypeHost.S01)
-
-    signAllPublications()
 }
 
 allprojects {

@@ -99,4 +99,8 @@ public interface EmbraceInternalInterface {
      * @param elementName the name of the element which was tapped
      */
     void logComposeTap(@NonNull Pair<Float, Float> point, @NonNull String elementName);
+
+    boolean shouldCaptureNetworkBody(@NonNull String url, @NonNull String method);
+
+    void setProcessStartedByNotification();
 }

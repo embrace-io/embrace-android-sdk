@@ -45,7 +45,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 	public fun isStarted ()Z
 	public fun isTracingAvailable ()Z
-	public fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
@@ -80,12 +79,10 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setAppId (Ljava/lang/String;)Z
 	public fun setDartVersion (Ljava/lang/String;)V
 	public fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
-	public fun setProcessStartedByNotification ()V
 	public fun setUserAsPayer ()V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
-	public fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 	public fun start (Landroid/content/Context;)V
 	public fun start (Landroid/content/Context;Z)V
 	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
@@ -126,6 +123,8 @@ public abstract interface class io/embrace/android/embracesdk/EmbraceInternalInt
 	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
+	public abstract fun setProcessStartedByNotification ()V
+	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 }
 
 public final class io/embrace/android/embracesdk/EmbraceSamples {

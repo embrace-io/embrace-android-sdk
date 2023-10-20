@@ -1662,8 +1662,13 @@ final class EmbraceImpl {
         }
     }
 
-    public boolean shouldCaptureNetworkCall(String url, String method) {
-        return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+    public boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
+        if (isStarted() && networkCaptureService != null) {
+            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+        } else {
+            internalEmbraceLogger.logSDKNotInitialized("Embrace SDK is not initialized yet, cannot check for capture rules.");
+            return false;
+        }
     }
 
     public void setProcessStartedByNotification() {

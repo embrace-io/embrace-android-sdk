@@ -44,7 +44,6 @@ internal class EmbraceUrlConnectionOverrideTest {
         mockEmbrace = mockk(relaxed = true)
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
         shouldCaptureNetworkBody = false
-        every { mockEmbrace.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
         capturedCallId = mutableListOf()
         capturedEmbraceNetworkRequest = slot()
         remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 0f)
@@ -54,6 +53,7 @@ internal class EmbraceUrlConnectionOverrideTest {
             )
         )
         mockInternalInterface = mockk(relaxed = true)
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
         every {
             mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest))
         } answers { }

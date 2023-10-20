@@ -123,7 +123,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             contentLength = 0L;
         }
 
-        boolean shouldCaptureNetworkData = embrace.shouldCaptureNetworkBody(request.url().toString(), request.method());
+        boolean shouldCaptureNetworkData = embrace.getInternalInterface().shouldCaptureNetworkBody(request.url().toString(), request.method());
 
         if (shouldCaptureNetworkData &&
             ENCODING_GZIP.equalsIgnoreCase(networkResponse.header(CONTENT_ENCODING_HEADER_NAME)) &&

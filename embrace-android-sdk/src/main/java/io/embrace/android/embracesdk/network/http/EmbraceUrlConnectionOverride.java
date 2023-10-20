@@ -823,7 +823,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         String url = this.connection.getURL().toString();
         String method = this.connection.getRequestMethod();
 
-        return embrace.shouldCaptureNetworkBody(url, method);
+        return embrace.getInternalInterface().shouldCaptureNetworkBody(url, method);
     }
 
     /**

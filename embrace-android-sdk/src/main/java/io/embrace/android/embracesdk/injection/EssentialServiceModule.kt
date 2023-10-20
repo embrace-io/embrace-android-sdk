@@ -151,11 +151,13 @@ internal class EssentialServiceModuleImpl(
 
     override val apiService: ApiService by singleton {
         EmbraceApiService(
-            { apiClient },
+            apiClient,
             urlBuilder,
             coreModule.jsonSerializer,
             { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
-            coreModule.logger
+            coreModule.logger,
+            metadataService,
+            userService
         )
     }
 

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal enum class SessionMessageState { START, END, END_WITH_CRASH }
 
-internal interface DeliveryService : DeliveryServiceNetwork {
+internal interface DeliveryService {
     fun saveSession(sessionMessage: SessionMessage)
     fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
@@ -18,13 +18,19 @@ internal interface DeliveryService : DeliveryServiceNetwork {
     fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
     fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
     fun sendBackgroundActivities()
-}
-
-internal interface DeliveryServiceNetwork {
     fun sendLogs(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
-    fun sendEvent(eventMessage: EventMessage)
-    fun sendEventAndWait(eventMessage: EventMessage)
     fun sendCrash(crash: EventMessage)
     fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>)
+    fun sendEvent(eventMessage: EventMessage)
+    fun sendEventAndWait(eventMessage: EventMessage)
 }
+
+// internal interface DeliveryServiceNetwork {
+//    fun sendLogs(eventMessage: EventMessage)
+//    fun sendNetworkCall(networkEvent: NetworkEvent)
+//    fun sendEvent(eventMessage: EventMessage)
+//    fun sendEventAndWait(eventMessage: EventMessage)
+//    fun sendCrash(crash: EventMessage)
+//    fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>)
+// }

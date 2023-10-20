@@ -21,7 +21,6 @@ internal class DeliveryModuleImplTest {
 
         assertNotNull(module.deliveryService)
         assertNotNull(module.deliveryCacheManager)
-        assertNotNull(module.deliveryNetworkManager)
         assertNotNull(module.cacheService)
     }
 }

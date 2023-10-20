@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryNetworkManager
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 internal interface DeliveryModule {
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
-    val deliveryNetworkManager: DeliveryNetworkManager
     val deliveryService: DeliveryService
 }
 
@@ -43,27 +41,22 @@ internal class DeliveryModuleImpl(
         )
     }
 
-    override val deliveryNetworkManager: DeliveryNetworkManager by singleton {
-        DeliveryNetworkManager(
-            essentialServiceModule.metadataService,
-            essentialServiceModule.urlBuilder,
-            essentialServiceModule.apiClient,
-            deliveryCacheManager,
-            coreModule.logger,
-            apiRetryExecutor,
-            dataCaptureServiceModule.networkConnectivityService,
-            coreModule.jsonSerializer,
-            essentialServiceModule.userService
-        )
-    }
-
     override val deliveryService: DeliveryService by singleton {
         EmbraceDeliveryService(
             deliveryCacheManager,
-            deliveryNetworkManager,
+            essentialServiceModule.apiService,
             cachedSessionsExecutorService,
             sendSessionsExecutorService,
             coreModule.logger
+        )
+    }
+
+    init {
+        val apiService = essentialServiceModule.apiService
+        apiService.initForDelivery(
+            deliveryCacheManager,
+            apiRetryExecutor,
+            dataCaptureServiceModule.networkConnectivityService
         )
     }
 }

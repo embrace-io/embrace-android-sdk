@@ -1,21 +1,24 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
-    private val networkManager: DeliveryNetworkManager,
+    private val apiService: ApiService,
     private val cachedSessionsExecutorService: ExecutorService,
     private val sendSessionsExecutorService: ExecutorService,
     private val logger: InternalEmbraceLogger
-) : DeliveryService, DeliveryServiceNetwork by networkManager {
+) : DeliveryService {
 
     companion object {
         private const val TAG = "EmbraceDeliveryService"
@@ -57,14 +60,14 @@ internal class EmbraceDeliveryService(
 
                     if (state == SessionMessageState.END_WITH_CRASH) {
                         // perform session request synchronously
-                        networkManager.sendSession(
+                        apiService.sendSession(
                             session,
                             onFinish
                         )[SEND_SESSION_TIMEOUT, TimeUnit.SECONDS]
                         logger.logDeveloper(TAG, "Session message sent.")
                     } else {
                         // perform session request asynchronously
-                        networkManager.sendSession(session, onFinish)
+                        apiService.sendSession(session, onFinish)
                         logger.logDeveloper(TAG, "Session message queued to be sent.")
                     }
                     logger.logDeveloper(
@@ -109,7 +112,7 @@ internal class EmbraceDeliveryService(
                 try {
                     val onFinish: (() -> Unit) =
                         { cacheManager.deleteSession(backgroundActivityMessage.backgroundActivity.sessionId) }
-                    networkManager.sendSession(backgroundActivity, onFinish)
+                    apiService.sendSession(backgroundActivity, onFinish)
                     logger.logDeveloper(TAG, "Session message queued to be sent.")
                 } catch (ex: Exception) {
                     logger.logInfo(
@@ -138,7 +141,7 @@ internal class EmbraceDeliveryService(
 
                     try {
                         val onFinish: () -> Unit = { cacheManager.deleteSession(backgroundActivityId) }
-                        networkManager.sendSession(backgroundActivity, onFinish)
+                        apiService.sendSession(backgroundActivity, onFinish)
                         logger.logDeveloper(TAG, "Session message queued to be sent.")
                     } catch (ex: Exception) {
                         logger.logInfo(
@@ -149,6 +152,30 @@ internal class EmbraceDeliveryService(
                 }
             }
         }
+    }
+
+    override fun sendLogs(eventMessage: EventMessage) {
+        apiService.sendLogs(eventMessage)
+    }
+
+    override fun sendNetworkCall(networkEvent: NetworkEvent) {
+        apiService.sendNetworkCall(networkEvent)
+    }
+
+    override fun sendCrash(crash: EventMessage) {
+        apiService.sendCrash(crash)
+    }
+
+    override fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>) {
+        apiService.sendAEIBlob(appExitInfoData)
+    }
+
+    override fun sendEvent(eventMessage: EventMessage) {
+        apiService.sendEvent(eventMessage)
+    }
+
+    override fun sendEventAndWait(eventMessage: EventMessage) {
+        apiService.sendEventAndWait(eventMessage)
     }
 
     override fun sendCachedSessions(
@@ -174,7 +201,7 @@ internal class EmbraceDeliveryService(
     private fun sendCachedCrash() {
         val crash = cacheManager.loadCrash()
         crash?.let {
-            networkManager.sendCrash(it)
+            apiService.sendCrash(it)
         }
     }
 
@@ -232,7 +259,7 @@ internal class EmbraceDeliveryService(
                     val payload = cacheManager.loadSessionBytes(id)
                     if (payload != null) {
                         // The network requests will be executed sequentially in a single-threaded executor by the network manager
-                        networkManager.sendSession(payload) { cacheManager.deleteSession(id) }
+                        apiService.sendSession(payload) { cacheManager.deleteSession(id) }
                     } else {
                         logger.logError("Session $id not found")
                     }
@@ -245,7 +272,7 @@ internal class EmbraceDeliveryService(
 
     override fun sendEventAsync(eventMessage: EventMessage) {
         sendSessionsExecutorService.submit {
-            networkManager.sendEvent(eventMessage)
+            apiService.sendEvent(eventMessage)
         }
     }
 }

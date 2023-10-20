@@ -35,6 +35,7 @@ static const char *kFrameAddrKey = "fa";
 static const char *kOffsetAddrKey = "oa";
 static const char *kModuleAddrKey = "ma";
 static const char *kLineNumKey = "ln";
+static const char *kBuildIdKey = "build_id";
 static const char *kCrashKey = "crash";
 static const char *kVersionKey = "v";
 
@@ -203,7 +204,7 @@ char *emb_crash_to_json(emb_crash *crash) {
         json_object_set_number(frame_object, kOffsetAddrKey, frame.offset_addr);
         json_object_set_number(frame_object, kModuleAddrKey, frame.module_addr);
         json_object_set_number(frame_object, kLineNumKey, frame.line_num);
-
+        json_object_set_string(frame_object, kBuildIdKey, frame.build_id);
         json_array_append_value(frames_object, frame_value);
     }
     EMB_LOGDEV("Finished serializing stackframes.");

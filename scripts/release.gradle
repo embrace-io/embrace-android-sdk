@@ -1,5 +1,6 @@
 apply plugin: "maven-publish"
 apply plugin: "signing"
+apply plugin: "com.vanniktech.maven.publish"
 
 // load credentials from local properties if present
 def localProperties = new Properties()

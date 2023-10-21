@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.network.http
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceInternalInterface
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.mockk.CapturingSlot
 import io.mockk.every

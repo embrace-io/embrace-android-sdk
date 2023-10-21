@@ -4,7 +4,6 @@ import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Pair;
 import android.webkit.ConsoleMessage;
 
 import androidx.annotation.NonNull;
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.config.ConfigService;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -566,7 +566,7 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getLastRunEndState();
     }
 
-    @Nullable
+    @NonNull
     @InternalApi
     public EmbraceInternalInterface getInternalInterface() {
         return impl.getEmbraceInternalInterface();

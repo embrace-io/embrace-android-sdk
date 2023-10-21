@@ -212,7 +212,7 @@ internal class NetworkRequestApiTest {
                 harness.fakeClock.tick(5)
 
                 val callId = UUID.randomUUID().toString()
-                embrace.internalInterface?.recordAndDeduplicateNetworkRequest(
+                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
                     callId,
                     EmbraceNetworkRequest.fromCompletedRequest(
                         "$URL/bad",
@@ -224,7 +224,7 @@ internal class NetworkRequestApiTest {
                         200
                     )
                 )
-                embrace.internalInterface?.recordAndDeduplicateNetworkRequest(
+                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
                     callId,
                     EmbraceNetworkRequest.fromCompletedRequest(
                         URL,

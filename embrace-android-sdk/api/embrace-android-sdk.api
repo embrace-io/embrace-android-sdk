@@ -37,7 +37,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getDeviceId ()Ljava/lang/String;
 	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
 	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
-	public fun getInternalInterface ()Lio/embrace/android/embracesdk/EmbraceInternalInterface;
+	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSessionProperties ()Ljava/util/Map;
@@ -113,20 +113,6 @@ public final class io/embrace/android/embracesdk/Embrace$LastRunEndState : java/
 	public static fun values ()[Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
 }
 
-public abstract interface class io/embrace/android/embracesdk/EmbraceInternalInterface {
-	public abstract fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
-	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
-	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
-	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun recordAndDeduplicateNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
-	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
-	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
-	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
-	public abstract fun setProcessStartedByNotification ()V
-	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
-}
-
 public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final field INSTANCE Lio/embrace/android/embracesdk/EmbraceSamples;
 	public static final fun causeNdkIllegalInstruction ()V
@@ -189,6 +175,20 @@ public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
+	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
+	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
+	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun recordAndDeduplicateNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
+	public abstract fun setProcessStartedByNotification ()V
+	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 }
 
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {

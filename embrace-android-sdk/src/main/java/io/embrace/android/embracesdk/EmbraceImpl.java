@@ -62,6 +62,8 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.BuildInfo;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -1565,9 +1567,14 @@ final class EmbraceImpl {
      * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    @Nullable
+    @NonNull
     EmbraceInternalInterface getEmbraceInternalInterface() {
-        return embraceInternalInterface;
+        if (isStarted() && embraceInternalInterface != null) {
+            return embraceInternalInterface;
+        } else {
+            return EmbraceInternalInterfaceKt.getDefault();
+        }
+
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.util.Pair
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.NetworkCaptureData
@@ -62,7 +63,7 @@ internal class EmbraceInternalInterfaceImpl(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
-        customStackTrace: Array<out StackTraceElement>?
+        customStackTrace: Array<StackTraceElement>?
     ) {
         embraceImpl.logMessage(
             type.toEventType(),

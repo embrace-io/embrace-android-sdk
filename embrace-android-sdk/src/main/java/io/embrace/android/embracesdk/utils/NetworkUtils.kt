@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.utils
 
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
 import java.net.MalformedURLException
@@ -101,8 +100,4 @@ internal object NetworkUtils {
             (if (pathPos < 0) 0 else pathPos) + suffix.length.coerceAtMost(terminalPos)
         )
     }
-
-    @JvmStatic
-    fun isNetworkSpanForwardingEnabled(configService: ConfigService?): Boolean =
-        configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() ?: false
 }

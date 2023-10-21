@@ -176,4 +176,8 @@ internal class EmbraceInternalInterfaceImpl(
     override fun setProcessStartedByNotification() {
         embraceImpl.setProcessStartedByNotification()
     }
+
+    override fun isNetworkSpanForwardingEnabled(): Boolean {
+        return embraceImpl.configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() ?: false
+    }
 }

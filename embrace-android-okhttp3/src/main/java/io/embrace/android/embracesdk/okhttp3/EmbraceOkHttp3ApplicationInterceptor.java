@@ -38,15 +38,12 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
     static final String UNKNOWN_MESSAGE = "An error occurred during the execution of this network request";
     final Embrace embrace;
 
-    private final SdkFacade sdkFacade;
-
     public EmbraceOkHttp3ApplicationInterceptor() {
-        this(Embrace.getInstance(), new SdkFacade());
+        this(Embrace.getInstance());
     }
 
-    EmbraceOkHttp3ApplicationInterceptor(Embrace embrace, SdkFacade sdkFacade) {
+    EmbraceOkHttp3ApplicationInterceptor(Embrace embrace) {
         this.embrace = embrace;
-        this.sdkFacade = sdkFacade;
     }
 
     @Override
@@ -69,7 +66,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
                         request.header(embrace.getTraceIdHeader()),
-                        sdkFacade.isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
+                        embrace.getInternalInterface().isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
                         null
                     )
                 );
@@ -91,7 +88,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         errorType != null ? errorType : UNKNOWN_EXCEPTION,
                         errorMessage != null ? errorMessage : UNKNOWN_MESSAGE,
                         request.header(embrace.getTraceIdHeader()),
-                        sdkFacade.isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
+                        embrace.getInternalInterface().isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
                         null
                     )
                 );

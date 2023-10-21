@@ -58,15 +58,13 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
     };
 
     final Embrace embrace;
-    private final SdkFacade sdkFacade;
 
     public EmbraceOkHttp3NetworkInterceptor() {
-        this(Embrace.getInstance(), new SdkFacade());
+        this(Embrace.getInstance());
     }
 
-    EmbraceOkHttp3NetworkInterceptor(Embrace embrace, SdkFacade sdkFacade) {
+    EmbraceOkHttp3NetworkInterceptor(Embrace embrace) {
         this.embrace = embrace;
-        this.sdkFacade = sdkFacade;
     }
 
     @Override
@@ -77,7 +75,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             return chain.proceed(originalRequest);
         }
 
-        boolean networkSpanForwardingEnabled = sdkFacade.isNetworkSpanForwardingEnabled();
+        boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
 
         String traceparent = null;
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {

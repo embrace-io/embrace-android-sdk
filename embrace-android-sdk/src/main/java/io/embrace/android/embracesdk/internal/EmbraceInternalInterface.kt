@@ -120,6 +120,8 @@ public interface EmbraceInternalInterface {
      * Mark that this application process was created in response to a notification
      */
     public fun setProcessStartedByNotification()
+
+    public fun isNetworkSpanForwardingEnabled(): Boolean
 }
 
 internal val default = object : EmbraceInternalInterface {
@@ -177,4 +179,6 @@ internal val default = object : EmbraceInternalInterface {
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
 
     override fun setProcessStartedByNotification() { }
+
+    override fun isNetworkSpanForwardingEnabled(): Boolean = false
 }

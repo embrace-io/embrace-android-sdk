@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.UNKNOWN_EXCEPTION
@@ -64,7 +65,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private lateinit var postNetworkInterceptorTestInterceptor: Interceptor
     private lateinit var okHttpClient: OkHttpClient
     private lateinit var mockEmbrace: Embrace
-    private lateinit var mockSdkFacade: SdkFacade
+    private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
@@ -79,13 +80,16 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun setup() {
         server = MockWebServer()
         mockEmbrace = mockk(relaxed = true)
-        mockSdkFacade = mockk(relaxed = true)
-        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace, mockSdkFacade)
+        mockInternalInterface = mockk(relaxed = true)
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
+        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> preNetworkInterceptorAfterResponseSupplier.invoke(response) }
         )
-        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockSdkFacade)
+        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace)
         postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> postNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> postNetworkInterceptorAfterResponseSupplier.invoke(response) }
@@ -106,11 +110,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
             .header(requestHeaderName, requestHeaderValue)
         capturedEmbraceNetworkRequest = slot()
         every { mockEmbrace.isStarted } answers { isSDKStarted }
-        every { mockEmbrace.internalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
-        every { mockEmbrace.internalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
-        every { mockSdkFacade.isNetworkSpanForwardingEnabled } answers { isNetworkSpanForwardingEnabled }
+        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
     }
 
     @After
@@ -184,7 +186,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         isSDKStarted = false
         server.enqueue(createBaseMockResponse())
         runGetRequest()
-        verify(exactly = 0) { mockSdkFacade.isNetworkSpanForwardingEnabled }
+        verify(exactly = 0) { mockInternalInterface.isNetworkSpanForwardingEnabled() }
         verify(exactly = 0) { mockEmbrace.internalInterface.shouldCaptureNetworkBody(any(), any()) }
     }
 

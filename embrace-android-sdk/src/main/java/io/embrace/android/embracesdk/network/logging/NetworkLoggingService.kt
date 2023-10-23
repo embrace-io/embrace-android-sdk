@@ -19,6 +19,7 @@ internal interface NetworkLoggingService {
     /**
      * Logs a HTTP network call.
      *
+     * @param callId             the unique ID of the call used for deduplication purposes
      * @param url                the URL being called
      * @param httpMethod         the HTTP method
      * @param statusCode         the status code from the response
@@ -30,7 +31,9 @@ internal interface NetworkLoggingService {
      * @param w3cTraceparent     optional W3C-compliant traceparent representing the network call that is being recorded
      * @param networkCaptureData the additional data captured if network body capture is enabled for the URL
      */
+    @Suppress("LongParameterList")
     fun logNetworkCall(
+        callId: String,
         url: String,
         httpMethod: String,
         statusCode: Int,
@@ -46,6 +49,7 @@ internal interface NetworkLoggingService {
     /**
      * Logs an exception which occurred when attempting to make a network call.
      *
+     * @param callId             the unique ID of the call used for deduplication purposes
      * @param url                the URL being called
      * @param httpMethod         the HTTP method
      * @param startTime          the start time of the request
@@ -57,6 +61,7 @@ internal interface NetworkLoggingService {
      * @param networkCaptureData the additional data captured if network body capture is enabled for the URL
      */
     fun logNetworkError(
+        callId: String,
         url: String,
         httpMethod: String,
         startTime: Long,

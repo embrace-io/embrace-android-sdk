@@ -251,4 +251,8 @@ internal class EmbraceInternalInterfaceImpl(
             )
         )
     }
+
+    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) {
+        embrace.recordAndDeduplicateNetworkRequest(callId, embraceNetworkRequest)
+    }
 }

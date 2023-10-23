@@ -617,6 +617,12 @@ public final class Embrace implements EmbraceAndroidApi {
         getImpl().installUnityThreadSampler();
     }
 
+    @Nullable
+    @InternalApi
+    public EmbraceInternalInterface getInternalInterface() {
+        return impl.getEmbraceInternalInterface();
+    }
+    
     /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for React Native.

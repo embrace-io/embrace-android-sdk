@@ -8,14 +8,14 @@ import androidx.annotation.Nullable;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
-import io.embrace.android.embracesdk.network.http.HttpMethod;
 import io.embrace.android.embracesdk.network.http.NetworkCaptureData;
 
 /**
- * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their
- * sole source of communication with the Android SDK.
+ * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their sole source of communication
+ * with the Android SDK. This is not publicly supported and methods can change at any time.
  */
-interface EmbraceInternalInterface {
+@InternalApi
+public interface EmbraceInternalInterface {
 
     /**
      * {@see Embrace#logInfo}
@@ -204,6 +204,16 @@ interface EmbraceInternalInterface {
                                         @Nullable String errorMessage,
                                         @Nullable String traceId,
                                         @Nullable NetworkCaptureData networkCaptureData);
+
+    /**
+     * Record a network request and overwrite any previously recorded request with the same callId
+     *
+     * @param callId                the ID with which the request will be identified internally. The session will only contain one recorded
+     *                              request with a given ID - last writer wins.
+     * @param embraceNetworkRequest the request to be recorded
+     */
+    void recordAndDeduplicateNetworkRequest(@NonNull String callId,
+                                            @NonNull EmbraceNetworkRequest embraceNetworkRequest);
 
     /**
      * Logs a tap on a Compose screen element.

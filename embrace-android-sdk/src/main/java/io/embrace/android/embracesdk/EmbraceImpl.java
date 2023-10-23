@@ -53,6 +53,8 @@ import io.embrace.android.embracesdk.injection.InitModule;
 import io.embrace.android.embracesdk.injection.InitModuleImpl;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
+import io.embrace.android.embracesdk.injection.SessionModule;
+import io.embrace.android.embracesdk.injection.SessionModuleImpl;
 import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
@@ -87,8 +89,6 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService;
 import io.embrace.android.embracesdk.session.EmbraceActivityService;
 import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.EmbraceSessionService;
-import io.embrace.android.embracesdk.injection.SessionModule;
-import io.embrace.android.embracesdk.injection.SessionModuleImpl;
 import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
@@ -1010,9 +1010,9 @@ final class EmbraceImpl {
      * <p>
      * The length of time a moment takes to execute is recorded.
      *
-     * @param name            a name identifying the moment
-     * @param identifier      an identifier distinguishing between multiple moments with the same name
-     * @param properties      custom key-value pairs to provide with the moment
+     * @param name       a name identifying the moment
+     * @param identifier an identifier distinguishing between multiple moments with the same name
+     * @param properties custom key-value pairs to provide with the moment
      */
     public void startMoment(@NonNull String name,
                             @Nullable String identifier,
@@ -1071,6 +1071,10 @@ final class EmbraceImpl {
     }
 
     public void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
+        recordAndDeduplicateNetworkRequest(request.getStartTime().toString(), request);
+    }
+
+    public void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
         internalEmbraceLogger.logDeveloper("Embrace", "recordNetworkRequest()");
 
         if (request == null) {
@@ -1079,6 +1083,7 @@ final class EmbraceImpl {
         }
 
         logNetworkRequestImpl(
+            callId,
             request.getNetworkCaptureData(),
             request.getUrl(),
             request.getHttpMethod(),
@@ -1094,7 +1099,8 @@ final class EmbraceImpl {
         );
     }
 
-    private void logNetworkRequestImpl(@Nullable NetworkCaptureData networkCaptureData,
+    private void logNetworkRequestImpl(@NonNull String callId,
+                                       @Nullable NetworkCaptureData networkCaptureData,
                                        String url,
                                        String httpMethod,
                                        Long startTime,
@@ -1117,6 +1123,7 @@ final class EmbraceImpl {
                 !errorType.isEmpty() &&
                 !errorMessage.isEmpty()) {
                 networkLoggingService.logNetworkError(
+                    callId,
                     url,
                     httpMethod,
                     startTime,
@@ -1128,6 +1135,7 @@ final class EmbraceImpl {
                     networkCaptureData);
             } else {
                 networkLoggingService.logNetworkCall(
+                    callId,
                     url,
                     httpMethod,
                     responseCode != null ? responseCode : 0,

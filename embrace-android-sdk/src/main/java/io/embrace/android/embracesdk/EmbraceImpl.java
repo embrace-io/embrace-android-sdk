@@ -1572,7 +1572,7 @@ final class EmbraceImpl {
         if (isStarted() && embraceInternalInterface != null) {
             return embraceInternalInterface;
         } else {
-            return EmbraceInternalInterfaceKt.getDefault();
+            return EmbraceInternalInterfaceKt.getDefaultImpl();
         }
 
     }

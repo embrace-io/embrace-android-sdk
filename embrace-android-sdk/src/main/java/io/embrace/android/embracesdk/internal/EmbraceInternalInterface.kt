@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
 import android.util.Pair
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.InternalApi
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -13,7 +14,7 @@ import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 @InternalApi
 public interface EmbraceInternalInterface {
     /**
-     * {@see Embrace#logInfo}
+     * See [Embrace.logInfo]
      */
     public fun logInfo(
         message: String,
@@ -21,7 +22,7 @@ public interface EmbraceInternalInterface {
     )
 
     /**
-     * {@see Embrace#logWarning}
+     * See [Embrace.logWarning]
      */
     public fun logWarning(
         message: String,
@@ -30,7 +31,7 @@ public interface EmbraceInternalInterface {
     )
 
     /**
-     * {@see Embrace#logError}
+     * See [Embrace.logError]
      */
     public fun logError(
         message: String,
@@ -40,7 +41,7 @@ public interface EmbraceInternalInterface {
     )
 
     /**
-     * {@see Embrace#logHandledException}
+     * Backwards compatible way for hosted SDKs to log a handled exception with different log levels
      */
     public fun logHandledException(
         throwable: Throwable,
@@ -95,7 +96,7 @@ public interface EmbraceInternalInterface {
      * Record a network request and overwrite any previously recorded request with the same callId
      *
      * @param callId                the ID with which the request will be identified internally. The session will only contain one recorded
-     * request with a given ID - last writer wins.
+     *                              request with a given ID - last writer wins.
      * @param embraceNetworkRequest the request to be recorded
      */
     public fun recordAndDeduplicateNetworkRequest(
@@ -127,7 +128,7 @@ public interface EmbraceInternalInterface {
     public fun isNetworkSpanForwardingEnabled(): Boolean
 }
 
-internal val default = object : EmbraceInternalInterface {
+internal val defaultImpl = object : EmbraceInternalInterface {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) { }
 

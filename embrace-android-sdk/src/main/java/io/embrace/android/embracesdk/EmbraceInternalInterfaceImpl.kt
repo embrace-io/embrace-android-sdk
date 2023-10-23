@@ -164,13 +164,6 @@ internal class EmbraceInternalInterfaceImpl(
         embraceImpl.recordAndDeduplicateNetworkRequest(callId, embraceNetworkRequest)
     }
 
-    /**
-     * Determine if a network call should be captured based on the network capture rules
-     *
-     * @param url    the url of the network call
-     * @param method the method of the network call
-     * @return the network capture rule to apply or null
-     */
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = embraceImpl.shouldCaptureNetworkCall(url, method)
 
     override fun setProcessStartedByNotification() {

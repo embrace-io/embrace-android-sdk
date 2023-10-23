@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Compani
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import java.io.BufferedReader
 import java.io.IOException
+import java.util.Base64
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionException
@@ -176,12 +176,14 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {
         try {
-            val trace = appExitInfo.traceInputStream?.bufferedReader()?.use(BufferedReader::readText)
+            val encoder = Base64.getEncoder()
+            val bytes = appExitInfo.traceInputStream?.readBytes()
 
-            if (trace == null) {
+            if (bytes == null) {
                 logDebug("AEI - No info trace collected")
                 return null
             }
+            val trace = encoder.encodeToString(bytes)
 
             val traceMaxLimit = configService.appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {

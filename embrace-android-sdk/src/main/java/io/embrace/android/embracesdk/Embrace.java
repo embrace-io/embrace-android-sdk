@@ -4,7 +4,6 @@ import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Pair;
 import android.webkit.ConsoleMessage;
 
 import androidx.annotation.NonNull;
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.config.ConfigService;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -566,15 +566,10 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getLastRunEndState();
     }
 
-    /**
-     * Logs a React Native Redux Action - this is not intended for public use.
-     */
+    @NonNull
     @InternalApi
-    public void logRnAction(@NonNull String name, long startTime, long endTime,
-                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
-            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        }
+    public EmbraceInternalInterface getInternalInterface() {
+        return impl.getEmbraceInternalInterface();
     }
 
     /**
@@ -593,6 +588,33 @@ public final class Embrace implements EmbraceAndroidApi {
         impl.logInternalError(error);
     }
 
+    @Nullable
+    @InternalApi
+    public ConfigService getConfigService() {
+        return impl.getConfigService();
+    }
+
+    /**
+     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for React Native.
+     */
+    @Nullable
+    @InternalApi
+    public ReactNativeInternalInterface getReactNativeInternalInterface() {
+        return impl.getReactNativeInternalInterface();
+    }
+
+    /**
+     * Logs a React Native Redux Action - this is not intended for public use.
+     */
+    @InternalApi
+    public void logRnAction(@NonNull String name, long startTime, long endTime,
+                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
+        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
+            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
+        }
+    }
+
     /**
      * Logs the fact that a particular view was entered.
      * <p>
@@ -606,33 +628,6 @@ public final class Embrace implements EmbraceAndroidApi {
         impl.logRnView(screen);
     }
 
-    @Nullable
-    @InternalApi
-    public ConfigService getConfigService() {
-        return impl.getConfigService();
-    }
-
-    @InternalApi
-    void installUnityThreadSampler() {
-        getImpl().installUnityThreadSampler();
-    }
-
-    @Nullable
-    @InternalApi
-    public EmbraceInternalInterface getInternalInterface() {
-        return impl.getEmbraceInternalInterface();
-    }
-    
-    /**
-     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native.
-     */
-    @Nullable
-    @InternalApi
-    public ReactNativeInternalInterface getReactNativeInternalInterface() {
-        return impl.getReactNativeInternalInterface();
-    }
-
     /**
      * Gets the {@link UnityInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Unity.
@@ -641,6 +636,11 @@ public final class Embrace implements EmbraceAndroidApi {
     @InternalApi
     public UnityInternalInterface getUnityInternalInterface() {
         return impl.getUnityInternalInterface();
+    }
+
+    @InternalApi
+    void installUnityThreadSampler() {
+        getImpl().installUnityThreadSampler();
     }
 
     /**
@@ -700,41 +700,6 @@ public final class Embrace implements EmbraceAndroidApi {
     @InternalApi
     public void sampleCurrentThreadDuringAnrs() {
         impl.sampleCurrentThreadDuringAnrs();
-    }
-
-    /**
-     * Determine if a network call should be captured based on the network capture rules
-     *
-     * @param url    the url of the network call
-     * @param method the method of the network call
-     * @return the network capture rule to apply or null
-     */
-    @InternalApi
-    public boolean shouldCaptureNetworkBody(@NonNull String url, @NonNull String method) {
-        if (isStarted()) {
-            return impl.shouldCaptureNetworkCall(url, method);
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("Embrace SDK is not initialized yet, cannot check for capture rules.");
-            return false;
-        }
-    }
-
-    @InternalApi
-    public void setProcessStartedByNotification() {
-        impl.setProcessStartedByNotification();
-    }
-
-    /**
-     * Logs taps from Compose views
-     *
-     * @param point       Position of the captured clicked
-     * @param elementName Name of the clicked element
-     */
-    @InternalApi
-    public void logComposeTap(@NonNull Pair<Float, Float> point, @NonNull String elementName) {
-        if (isStarted()) {
-            impl.getEmbraceInternalInterface().logComposeTap(point, elementName);
-        }
     }
 
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {

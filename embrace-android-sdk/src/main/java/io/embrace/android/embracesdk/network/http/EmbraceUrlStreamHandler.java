@@ -114,7 +114,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     }
 
     protected void injectTraceparent(@NonNull URLConnection connection) {
-        boolean networkSpanForwardingEnabled = NetworkUtils.isNetworkSpanForwardingEnabled(embrace.getConfigService());
+        boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
         if (networkSpanForwardingEnabled && !connection.getRequestProperties().containsKey(TRACEPARENT_HEADER_NAME)) {
             connection.addRequestProperty(TRACEPARENT_HEADER_NAME, embrace.generateW3cTraceparent());
         }

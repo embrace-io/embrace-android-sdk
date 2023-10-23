@@ -62,6 +62,8 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.BuildInfo;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -1565,9 +1567,14 @@ final class EmbraceImpl {
      * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    @Nullable
+    @NonNull
     EmbraceInternalInterface getEmbraceInternalInterface() {
-        return embraceInternalInterface;
+        if (isStarted() && embraceInternalInterface != null) {
+            return embraceInternalInterface;
+        } else {
+            return EmbraceInternalInterfaceKt.getDefaultImpl();
+        }
+
     }
 
     /**
@@ -1662,8 +1669,13 @@ final class EmbraceImpl {
         }
     }
 
-    public boolean shouldCaptureNetworkCall(String url, String method) {
-        return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+    public boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
+        if (isStarted() && networkCaptureService != null) {
+            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+        } else {
+            internalEmbraceLogger.logSDKNotInitialized("Embrace SDK is not initialized yet, cannot check for capture rules.");
+            return false;
+        }
     }
 
     public void setProcessStartedByNotification() {

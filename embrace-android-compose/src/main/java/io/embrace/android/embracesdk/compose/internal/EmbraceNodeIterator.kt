@@ -31,7 +31,7 @@ internal class EmbraceNodeIterator {
         backgroundWorker.submit {
             findClickedElement(semanticsNodes, x, y)?.let {
                 val clickedView = ClickedView(it, x, y)
-                Embrace.getInstance().internalInterface?.logComposeTap(Pair(clickedView.x, clickedView.y), clickedView.tag)
+                Embrace.getInstance().internalInterface.logComposeTap(Pair(clickedView.x, clickedView.y), clickedView.tag)
             }
         }
     }

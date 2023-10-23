@@ -1,12 +1,8 @@
 package io.embrace.android.embracesdk.network.http
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceInternalInterface
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.mockk.CapturingSlot
 import io.mockk.every
@@ -30,35 +26,28 @@ internal class EmbraceUrlConnectionOverrideTest {
 
     private lateinit var mockEmbrace: Embrace
     private lateinit var mockInternalInterface: EmbraceInternalInterface
-    private lateinit var fakeConfigService: ConfigService
     private lateinit var mockConnection: HttpsURLConnection
     private lateinit var capturedCallId: MutableList<String>
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private lateinit var remoteNetworkSpanForwardingConfig: NetworkSpanForwardingRemoteConfig
     private lateinit var embraceUrlConnectionOverride: EmbraceUrlConnectionOverride<HttpsURLConnection>
     private lateinit var embraceUrlConnectionOverrideUnwrapped: EmbraceUrlConnectionOverride<HttpsURLConnection>
     private var shouldCaptureNetworkBody = false
+    private var isNetworkSpanForwardingEnabled = false
 
     @Before
     fun setup() {
         mockEmbrace = mockk(relaxed = true)
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
         shouldCaptureNetworkBody = false
-        every { mockEmbrace.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
+        isNetworkSpanForwardingEnabled = false
         capturedCallId = mutableListOf()
         capturedEmbraceNetworkRequest = slot()
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 0f)
-        fakeConfigService = FakeConfigService(
-            networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(
-                remoteConfig = { remoteNetworkSpanForwardingConfig }
-            )
-        )
         mockInternalInterface = mockk(relaxed = true)
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
         every {
             mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest))
         } answers { }
-        every { mockEmbrace.configService } answers { fakeConfigService }
-
+        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         mockConnection = createMockConnection()
         embraceUrlConnectionOverride = EmbraceUrlConnectionOverride(mockConnection, true, mockEmbrace)
         embraceUrlConnectionOverrideUnwrapped = EmbraceUrlConnectionOverride(mockConnection, false, mockEmbrace)
@@ -182,7 +171,7 @@ internal class EmbraceUrlConnectionOverrideTest {
 
     @Test
     fun `check traceheaders are forwarded if feature flag is on`() {
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 100f)
+        isNetworkSpanForwardingEnabled = true
         executeRequest()
         assertEquals(HTTP_OK, capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
@@ -190,7 +179,7 @@ internal class EmbraceUrlConnectionOverrideTest {
 
     @Test
     fun `check traceheaders are forwarded on errors if feature flag is on`() {
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 100f)
+        isNetworkSpanForwardingEnabled = true
         executeRequest(exceptionOnInputStream = true)
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)

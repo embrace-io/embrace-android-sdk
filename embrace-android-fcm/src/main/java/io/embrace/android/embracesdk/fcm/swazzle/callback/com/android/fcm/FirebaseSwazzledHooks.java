@@ -32,7 +32,7 @@ public final class FirebaseSwazzledHooks {
     private static void handleRemoteMessage(@NonNull RemoteMessage message) {
         try {
             //flag process is already running to avoid track warm startup
-            Embrace.getInstance().setProcessStartedByNotification();
+            Embrace.getInstance().getInternalInterface().setProcessStartedByNotification();
 
             String messageId = null;
             try {

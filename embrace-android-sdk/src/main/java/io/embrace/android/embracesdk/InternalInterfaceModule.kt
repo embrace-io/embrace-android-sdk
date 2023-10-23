@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.singleton
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 internal interface InternalInterfaceModule {
     val embraceInternalInterface: EmbraceInternalInterface

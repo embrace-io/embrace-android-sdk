@@ -173,7 +173,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     public void connect() throws IOException {
         identifyTraceId();
         try {
-            if (NetworkUtils.isNetworkSpanForwardingEnabled(embrace.getConfigService())) {
+            if (embrace.getInternalInterface().isNetworkSpanForwardingEnabled()) {
                 traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
             }
         } catch (Exception e) {
@@ -823,7 +823,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         String url = this.connection.getURL().toString();
         String method = this.connection.getRequestMethod();
 
-        return embrace.shouldCaptureNetworkBody(url, method);
+        return embrace.getInternalInterface().shouldCaptureNetworkBody(url, method);
     }
 
     /**

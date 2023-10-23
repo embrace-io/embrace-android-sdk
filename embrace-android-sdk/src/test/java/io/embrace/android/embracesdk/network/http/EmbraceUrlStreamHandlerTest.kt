@@ -3,11 +3,8 @@ package io.embrace.android.embracesdk.network.http
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.mockk.CapturingSlot
 import io.mockk.every
@@ -25,23 +22,20 @@ import java.net.URL
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
     private lateinit var mockEmbrace: Embrace
-    private lateinit var fakeConfigService: ConfigService
+    private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private lateinit var remoteNetworkSpanForwardingConfig: NetworkSpanForwardingRemoteConfig
+    private var isNetworkSpanForwardingEnabled = false
 
     @Before
     fun setup() {
         mockEmbrace = mockk(relaxed = true)
+        mockInternalInterface = mockk(relaxed = true)
+        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         capturedEmbraceNetworkRequest = slot()
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 0f)
-        fakeConfigService = FakeConfigService(
-            networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(
-                remoteConfig = { remoteNetworkSpanForwardingConfig }
-            )
-        )
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
-        every { mockEmbrace.configService } answers { fakeConfigService }
+        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
         every { mockEmbrace.generateW3cTraceparent() } answers { TRACEPARENT }
+        isNetworkSpanForwardingEnabled = false
     }
 
     @Test
@@ -78,7 +72,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceheader is injected into http request if feature flag is on`() {
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 100f)
+        isNetworkSpanForwardingEnabled = true
         val url = URL(
             "http",
             "embrace.io",
@@ -95,7 +89,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceheader is injected into https request if feature flag is on`() {
-        remoteNetworkSpanForwardingConfig = NetworkSpanForwardingRemoteConfig(pctEnabled = 100f)
+        isNetworkSpanForwardingEnabled = true
         val url = URL(
             "https",
             "embrace.io",

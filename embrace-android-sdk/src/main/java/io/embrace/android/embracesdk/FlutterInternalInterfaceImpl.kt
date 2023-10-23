@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal class FlutterInternalInterfaceImpl(

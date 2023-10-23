@@ -21,7 +21,7 @@ The Embrace Android SDK gives you performance and stability insights into the us
 - [Go to our dashboard](https://dash.embrace.io/signup/) to create an account and get your API key
 - Check our [guide](https://embrace.io/docs/android/integration/) for instructions to integrate the SDK into your app
 
-## Upgrading from 5.x
+# Upgrading from 5.x
 
 - Follow our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/master/UPGRADING.md)
 
@@ -34,18 +34,6 @@ The Embrace Android SDK gives you performance and stability insights into the us
 - Join our [Community Slack](https://embraceio-community.slack.com/)
 - Contact us [support@embrace.io](mailto:support@embrace.io)
 
-# Development
-
-## Code Formatting and Linting
-
-We use `detekt` to lint our Kotlin code. GitHub workflows will run this check automatically and flag any violations.
-
-To run the check locally, you can run the following command in the root directory of the project:
-
-`./gradlew detekt`
-
-In many cases, running the command will fix the errors, so if you run it again, you might get fewer errors, leaving only the ones you need to fix manually.
-
-## License
+# License
 
 See the [LICENSE](https://github.com/embrace-io/embrace-android-sdk/blob/master/LICENSE) for details.

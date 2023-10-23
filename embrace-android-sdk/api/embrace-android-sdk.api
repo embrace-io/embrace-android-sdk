@@ -117,38 +117,15 @@ public final class io/embrace/android/embracesdk/Embrace$LastRunEndState : java/
 }
 
 public abstract interface class io/embrace/android/embracesdk/EmbraceInternalInterface {
-	public abstract fun addBreadcrumb (Ljava/lang/String;)V
-	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
-	public abstract fun addUserPersona (Ljava/lang/String;)V
-	public abstract fun clearAllUserPersonas ()V
-	public abstract fun clearUserAsPayer ()V
-	public abstract fun clearUserEmail ()V
-	public abstract fun clearUserIdentifier ()V
-	public abstract fun clearUserPersona (Ljava/lang/String;)V
-	public abstract fun clearUsername ()V
-	public abstract fun endAppStartup (Ljava/util/Map;)V
-	public abstract fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun endSession (Z)V
-	public abstract fun endView (Ljava/lang/String;)Z
-	public abstract fun getDeviceId ()Ljava/lang/String;
-	public abstract fun getSessionProperties ()Ljava/util/Map;
 	public abstract fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
 	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
 	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
 	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
 	public abstract fun recordAndDeduplicateNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/NetworkCaptureData;)V
-	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
-	public abstract fun setUserAsPayer ()V
-	public abstract fun setUserEmail (Ljava/lang/String;)V
-	public abstract fun setUserIdentifier (Ljava/lang/String;)V
-	public abstract fun setUsername (Ljava/lang/String;)V
-	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun startView (Ljava/lang/String;)Z
 }
 
 public final class io/embrace/android/embracesdk/EmbraceSamples {

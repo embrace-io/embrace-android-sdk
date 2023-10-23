@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 internal class EmbraceInternalInterfaceImpl(
-    private val embrace: EmbraceImpl
+    private val embraceImpl: EmbraceImpl
 ) : EmbraceInternalInterface {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
-        embrace.logMessage(
+        embraceImpl.logMessage(
             EmbraceEvent.Type.INFO_LOG,
             message,
             properties,
@@ -28,7 +28,7 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         stacktrace: String?
     ) {
-        embrace.logMessage(
+        embraceImpl.logMessage(
             EmbraceEvent.Type.WARNING_LOG,
             message,
             properties,
@@ -46,7 +46,7 @@ internal class EmbraceInternalInterfaceImpl(
         stacktrace: String?,
         isException: Boolean,
     ) {
-        embrace.logMessage(
+        embraceImpl.logMessage(
             EmbraceEvent.Type.ERROR_LOG,
             message,
             properties,
@@ -64,7 +64,7 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         customStackTrace: Array<out StackTraceElement>?
     ) {
-        embrace.logMessage(
+        embraceImpl.logMessage(
             type.toEventType(),
             throwable.message ?: "",
             properties,
@@ -76,104 +76,8 @@ internal class EmbraceInternalInterfaceImpl(
         )
     }
 
-    override fun addBreadcrumb(message: String) {
-        embrace.addBreadcrumb(message)
-    }
-
-    override fun getDeviceId(): String {
-        return embrace.deviceId
-    }
-
-    override fun setUserIdentifier(userId: String?) {
-        embrace.setUserIdentifier(userId)
-    }
-
-    override fun clearUserIdentifier() {
-        embrace.clearUserIdentifier()
-    }
-
-    override fun setUsername(username: String?) {
-        embrace.setUsername(username)
-    }
-
-    override fun clearUsername() {
-        embrace.clearUsername()
-    }
-
-    override fun setUserEmail(email: String?) {
-        embrace.setUserEmail(email)
-    }
-
-    override fun clearUserEmail() {
-        embrace.clearUserEmail()
-    }
-
-    override fun setUserAsPayer() {
-        embrace.setUserAsPayer()
-    }
-
-    override fun clearUserAsPayer() {
-        embrace.clearUserAsPayer()
-    }
-
-    override fun addUserPersona(persona: String) {
-        embrace.addUserPersona(persona)
-    }
-
-    override fun clearUserPersona(persona: String) {
-        embrace.clearUserPersona(persona)
-    }
-
-    override fun clearAllUserPersonas() {
-        embrace.clearAllUserPersonas()
-    }
-
-    override fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
-        return embrace.addSessionProperty(key, value, permanent)
-    }
-
-    override fun removeSessionProperty(key: String): Boolean {
-        return embrace.removeSessionProperty(key)
-    }
-
-    override fun getSessionProperties(): Map<String, String>? {
-        return embrace.sessionProperties
-    }
-
-    override fun startMoment(
-        name: String,
-        identifier: String?,
-        properties: Map<String, Any>?
-    ) {
-        embrace.startMoment(name, identifier, properties)
-    }
-
-    override fun endMoment(name: String, identifier: String?, properties: Map<String, Any>?) {
-        embrace.endMoment(name, identifier, properties)
-    }
-
-    override fun startView(name: String): Boolean {
-        return embrace.startView(name)
-    }
-
-    override fun endView(name: String): Boolean {
-        return embrace.endView(name)
-    }
-
-    override fun endAppStartup(properties: Map<String, Any>) {
-        embrace.endAppStartup(properties)
-    }
-
-    override fun logInternalError(message: String?, details: String?) {
-        embrace.logInternalError(message, details)
-    }
-
-    override fun endSession(clearUserInfo: Boolean) {
-        embrace.endSession(clearUserInfo)
-    }
-
     override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {
-        embrace.logTap(point, elementName, TapBreadcrumb.TapBreadcrumbType.TAP)
+        embraceImpl.logTap(point, elementName, TapBreadcrumb.TapBreadcrumbType.TAP)
     }
 
     override fun recordCompletedNetworkRequest(
@@ -187,7 +91,7 @@ internal class EmbraceInternalInterfaceImpl(
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
     ) {
-        embrace.recordNetworkRequest(
+        embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
                 url,
                 HttpMethod.fromString(httpMethod),
@@ -212,7 +116,7 @@ internal class EmbraceInternalInterfaceImpl(
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
     ) {
-        embrace.recordNetworkRequest(
+        embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 url,
                 HttpMethod.fromString(httpMethod),
@@ -237,7 +141,7 @@ internal class EmbraceInternalInterfaceImpl(
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
     ) {
-        embrace.recordNetworkRequest(
+        embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 url,
                 HttpMethod.fromString(httpMethod),
@@ -252,7 +156,10 @@ internal class EmbraceInternalInterfaceImpl(
         )
     }
 
-    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) {
-        embrace.recordAndDeduplicateNetworkRequest(callId, embraceNetworkRequest)
+    override fun recordAndDeduplicateNetworkRequest(
+        callId: String,
+        embraceNetworkRequest: EmbraceNetworkRequest
+    ) {
+        embraceImpl.recordAndDeduplicateNetworkRequest(callId, embraceNetworkRequest)
     }
 }

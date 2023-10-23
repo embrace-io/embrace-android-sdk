@@ -1072,12 +1072,12 @@ final class EmbraceImpl {
     }
 
     public void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
+        if (isStarted() && embraceInternalInterface != null) {
+            embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
+        }
     }
 
     public void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
-        internalEmbraceLogger.logDeveloper("Embrace", "recordNetworkRequest()");
-
         if (request == null) {
             internalEmbraceLogger.logDeveloper("Embrace", "Request is null");
             return;

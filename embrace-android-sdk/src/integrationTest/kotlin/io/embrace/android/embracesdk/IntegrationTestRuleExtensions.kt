@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk
 
+import android.app.Activity
+import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
+import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -59,10 +62,18 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
  * should always be 30s long. Additionally, it performs assertions against fields that
  * are guaranteed not to change in the start/end message.
  */
-internal fun IntegrationTestRule.Harness.recordSession(action: () -> Unit): SessionMessage {
+internal fun IntegrationTestRule.Harness.recordSession(
+    simulateAppStartup: Boolean = false,
+    action: () -> Unit
+): SessionMessage {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
+    val activityController = if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
+
+    activityController?.create()
+    activityController?.start()
     activityService.onForeground()
+    activityController?.resume()
 
     // assert a session was started.
     val startSession = getLastSentSessionMessage()
@@ -74,11 +85,14 @@ internal fun IntegrationTestRule.Harness.recordSession(action: () -> Unit): Sess
 
     // end session 30s later by entering background
     fakeClock.tick(30000)
+    activityController?.pause()
     activityService.onBackground()
+    activityController?.stop()
 
     val endSession = getLastSentSessionMessage()
     assertEquals("en", endSession.session.messageType)
     // TODO: future: increase number of assertions on what is always in a start message?
+
 
     // return the session end message for further assertions.
     return endSession

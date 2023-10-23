@@ -4,11 +4,14 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -138,6 +141,9 @@ internal class IntegrationTestRule(
                 localCfg = { DEFAULT_SDK_LOCAL_CONFIG },
                 remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG }
             ),
+            networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
+                NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
+            },
             spansBehavior = fakeSpansBehavior {
                 SpansRemoteConfig(pctEnabled = 100f)
             }
@@ -196,7 +202,16 @@ internal class IntegrationTestRule(
         )
 
         private val DEFAULT_SDK_REMOTE_CONFIG = RemoteConfig(
-            disabledUrlPatterns = setOf("dontlogmebro.pizza")
+            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+            networkCaptureRules = setOf(
+                NetworkCaptureRuleRemoteConfig(
+                    id = "test",
+                    duration = 10000,
+                    method = "GET",
+                    urlRegex = "capture.me",
+                    expiresIn = 10000
+                )
+            )
         )
 
         val DEFAULT_LOCAL_CONFIG = LocalConfig(

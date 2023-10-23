@@ -121,6 +121,9 @@ public interface EmbraceInternalInterface {
      */
     public fun setProcessStartedByNotification()
 
+    /**
+     * Whether the Network Span Forwarding feature is enabled
+     */
     public fun isNetworkSpanForwardingEnabled(): Boolean
 }
 

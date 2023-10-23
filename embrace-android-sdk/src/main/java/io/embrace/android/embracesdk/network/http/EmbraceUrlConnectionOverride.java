@@ -21,6 +21,7 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,6 +92,9 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      */
     private final Embrace embrace;
 
+    @NonNull
+    private final String callId;
+
     /**
      * A reference to the output stream wrapped in a counter, so we can determine the bytes sent.
      */
@@ -157,6 +161,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         this.createdTime = System.currentTimeMillis();
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.embrace = embrace;
+        this.callId = UUID.randomUUID().toString();
     }
 
     @Override
@@ -568,7 +573,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
                 long contentLength = bytesIn == null ? Math.max(0, responseSize.get()) : bytesIn;
 
                 if (inputStreamAccessException == null && lastConnectionAccessException == null && responseCode.get() != 0) {
-                    embrace.recordNetworkRequest(
+                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
+                        callId,
                         EmbraceNetworkRequest.fromCompletedRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -598,7 +604,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
                     String errorType = exceptionClass != null ? exceptionClass : "UnknownState";
                     String errorMessage = exceptionMessage != null ? exceptionMessage : "HTTP response state unknown";
 
-                    embrace.recordNetworkRequest(
+                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
+                        callId,
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),

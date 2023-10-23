@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -1071,7 +1072,7 @@ final class EmbraceImpl {
     }
 
     public void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        recordAndDeduplicateNetworkRequest(request.getStartTime().toString(), request);
+        recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
     }
 
     public void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
@@ -1564,7 +1565,7 @@ final class EmbraceImpl {
      * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    @NonNull
+    @Nullable
     EmbraceInternalInterface getEmbraceInternalInterface() {
         return embraceInternalInterface;
     }

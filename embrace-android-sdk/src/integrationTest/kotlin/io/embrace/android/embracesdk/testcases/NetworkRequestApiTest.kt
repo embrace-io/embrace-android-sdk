@@ -244,39 +244,39 @@ internal class NetworkRequestApiTest {
         }
     }
 
-//    /**
-//     * This reproduces the bug that will be fixed. Uncomment when ready.
-//     */
-//    @Test
-//    fun `ensure network calls with the same start time are recorded properly`() {
-//        with(testRule) {
-//            harness.recordSession {
-//                harness.fakeConfigService.updateListeners()
-//                harness.fakeClock.tick(5)
-//
-//                val request = EmbraceNetworkRequest.fromCompletedRequest(
-//                    URL,
-//                    HttpMethod.GET,
-//                    START_TIME,
-//                    END_TIME,
-//                    BYTES_SENT,
-//                    BYTES_RECEIVED,
-//                    200
-//                )
-//
-//                embrace.recordNetworkRequest(request)
-//                embrace.recordNetworkRequest(request)
-//            }
-//
-//            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
-//            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
-//            assertEquals(
-//                "Unexpected number of requests in sent session: ${requests.size}",
-//                2,
-//                requests.size
-//            )
-//        }
-//    }
+    /**
+     * This reproduces the bug that will be fixed. Uncomment when ready.
+     */
+    @Test
+    fun `ensure network calls with the same start time are recorded properly`() {
+        with(testRule) {
+            harness.recordSession {
+                harness.fakeConfigService.updateListeners()
+                harness.fakeClock.tick(5)
+
+                val request = EmbraceNetworkRequest.fromCompletedRequest(
+                    URL,
+                    HttpMethod.GET,
+                    START_TIME,
+                    END_TIME,
+                    BYTES_SENT,
+                    BYTES_RECEIVED,
+                    200
+                )
+
+                embrace.recordNetworkRequest(request)
+                embrace.recordNetworkRequest(request)
+            }
+
+            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            assertEquals(
+                "Unexpected number of requests in sent session: ${requests.size}",
+                2,
+                requests.size
+            )
+        }
+    }
 
     private fun assertSingleNetworkRequestInSession(
         expectedRequest: EmbraceNetworkRequest,

@@ -41,6 +41,7 @@ static const char *kFunctionNameKey = "function_name";
 static const char *kRelPcKey = "rel_pc";
 static const char *kPcKey = "pc";
 static const char *kSpKey = "sp";
+static const char *kLrKey = "lr";
 static const char *kStartKey = "start";
 static const char *kEndKey = "end";
 static const char *kOffsetKey = "offset";
@@ -148,6 +149,7 @@ void emb_log_frame_dbg_info(int i, emb_sframe *frame) {
     EMB_LOGDEV("rel_pc: 0x%lx", (unsigned long) frame->rel_pc);
     EMB_LOGDEV("pc: 0x%lx", (unsigned long) frame->pc);
     EMB_LOGDEV("sp: 0x%lx", (unsigned long) frame->sp);
+    EMB_LOGDEV("lr: 0x%lx", (unsigned long) frame->lr);
     EMB_LOGDEV("start: 0x%lx", (unsigned long) frame->start);
     EMB_LOGDEV("end: 0x%lx", (unsigned long) frame->end);
     EMB_LOGDEV("offset: 0x%lx", (unsigned long) frame->offset);
@@ -245,6 +247,7 @@ char *emb_crash_to_json(emb_crash *crash) {
         json_object_set_number(frame_object, kRelPcKey, (unsigned long) frame.rel_pc);
         json_object_set_number(frame_object, kPcKey, (unsigned long) frame.pc);
         json_object_set_number(frame_object, kSpKey, (unsigned long) frame.sp);
+        json_object_set_number(frame_object, kLrKey, (unsigned long) frame.lr);
         json_object_set_number(frame_object, kStartKey, (unsigned long) frame.start);
         json_object_set_number(frame_object, kEndKey, (unsigned long) frame.end);
         json_object_set_number(frame_object, kOffsetKey, (unsigned long) frame.offset);

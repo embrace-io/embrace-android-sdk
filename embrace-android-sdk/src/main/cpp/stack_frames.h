@@ -82,6 +82,7 @@ typedef struct {
     uint64_t rel_pc;
     uint64_t pc;
     uint64_t sp;
+    uint64_t lr; // only populated for the first frame.
     uint64_t function_offset;
     char function_name[EMB_FRAME_STR_SIZE];
 

@@ -30,8 +30,16 @@ emb_process_stack(emb_env *env, siginfo_t *info, void *user_context) {
 
     if (unwindSuccessful) {
         int i = 0;
+
+
         for (const auto &frame: android_unwinder_data.frames) {
             emb_sframe *data = &stacktrace[i++];
+
+            // populate the link register for the first value only
+            if (i == 0 && android_unwinder_data.saved_initial_regs.has_value()) {
+                data->lr = android_unwinder_data.saved_initial_regs->get()->lr();
+            }
+
             data->frame_addr = frame.pc;
             const auto map_info = frame.map_info;
             emb_strncpy(data->build_id, map_info->GetPrintableBuildID().c_str(), EMB_FRAME_STR_SIZE);

@@ -42,6 +42,10 @@ uint64_t RegsX86::sp() {
   return regs_[X86_REG_SP];
 }
 
+uint64_t RegsX86::lr() {
+  return 0;
+}
+
 void RegsX86::set_pc(uint64_t pc) {
   regs_[X86_REG_PC] = static_cast<uint32_t>(pc);
 }

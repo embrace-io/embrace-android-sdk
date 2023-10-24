@@ -84,6 +84,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        every { mockInternalInterface.getSdkCurrentTime() } answers { System.currentTimeMillis() }
         applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
@@ -112,7 +113,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockEmbrace.isStarted } answers { isSDKStarted }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
-        every { mockEmbrace.sdkApi.getSdkCurrentTime() } answers { System.currentTimeMillis() }
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
     }
 
@@ -188,7 +188,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         server.enqueue(createBaseMockResponse())
         runGetRequest()
         verify(exactly = 0) { mockInternalInterface.isNetworkSpanForwardingEnabled() }
-        verify(exactly = 0) { mockEmbrace.internalInterface.shouldCaptureNetworkBody(any(), any()) }
+        verify(exactly = 0) { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) }
     }
 
     @Test

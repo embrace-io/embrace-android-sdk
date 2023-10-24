@@ -78,7 +78,6 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
         long preRequestClockOffset = sdkClockOffset();
         boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
 
-
         String traceparent = null;
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
             traceparent = embrace.generateW3cTraceparent();
@@ -260,6 +259,6 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
      * determining client-side timestamps.
      */
     private long sdkClockOffset() {
-        return embrace.getSdkApi().getSdkCurrentTime() - System.currentTimeMillis();
+        return embrace.getInternalInterface().getSdkCurrentTime() - System.currentTimeMillis();
     }
 }

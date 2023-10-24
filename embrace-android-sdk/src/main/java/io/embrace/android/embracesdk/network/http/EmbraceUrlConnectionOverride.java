@@ -159,7 +159,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         this.connection = connection;
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.embrace = embrace;
-        this.createdTime = embrace.getSdkApi().getSdkCurrentTime();
+        this.createdTime = embrace.getInternalInterface().getSdkCurrentTime();
         this.callId = UUID.randomUUID().toString();
     }
 
@@ -358,7 +358,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Override
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
-        final long startTime = embrace.getSdkApi().getSdkCurrentTime();
+        final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         cacheResponseData();
         internalLogNetworkCall(startTime);
         return headerFields.get();
@@ -371,7 +371,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         if (name == null) {
             return null;
         }
-        long startTime = embrace.getSdkApi().getSdkCurrentTime();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         if (shouldInterceptHeaderRetrieval(name)) {
             // Strip the content encoding and length headers, as we transparently ungzip the content
             return defaultValue;
@@ -473,7 +473,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Override
     public int getResponseCode() {
         identifyTraceId();
-        long startTime = embrace.getSdkApi().getSdkCurrentTime();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         cacheResponseData();
         internalLogNetworkCall(startTime);
         return responseCode.get();
@@ -483,7 +483,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Nullable
     public String getResponseMessage() throws IOException {
         identifyTraceId();
-        long startTime = embrace.getSdkApi().getSdkCurrentTime();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         String responseMsg = this.connection.getResponseMessage();
         cacheResponseData();
         internalLogNetworkCall(startTime);
@@ -548,7 +548,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      * ignored.
      */
     synchronized void internalLogNetworkCall(long startTime) {
-        internalLogNetworkCall(startTime, embrace.getSdkApi().getSdkCurrentTime(), false, null);
+        internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime(), false, null);
     }
 
     /**
@@ -792,7 +792,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        long startTime = embrace.getSdkApi().getSdkCurrentTime();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
 
         InputStream in = null;
         if (shouldUncompressGzip()) {

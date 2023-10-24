@@ -36,6 +36,17 @@ static const char *kOffsetAddrKey = "oa";
 static const char *kModuleAddrKey = "ma";
 static const char *kLineNumKey = "ln";
 static const char *kBuildIdKey = "build_id";
+static const char *kFullNameKey = "full_name";
+static const char *kFunctionNameKey = "function_name";
+static const char *kRelPcKey = "rel_pc";
+static const char *kPcKey = "pc";
+static const char *kSpKey = "sp";
+static const char *kStartKey = "start";
+static const char *kEndKey = "end";
+static const char *kOffsetKey = "offset";
+static const char *kFunctionOffsetKey = "function_offset";
+static const char *kFlagsKey = "flags";
+static const char *kElfFileNotReadableKey = "elf_file_not_readable";
 static const char *kCrashKey = "crash";
 static const char *kVersionKey = "v";
 
@@ -123,6 +134,28 @@ emb_error *emb_read_errors_from_file(const char *path) {
     return errors;
 }
 
+void emb_log_frame_dbg_info(int i, emb_sframe *frame) {
+    EMB_LOGDEV("Logging out debug info for stackframe %d", i);
+    EMB_LOGDEV("filename: %s", frame->filename);
+    EMB_LOGDEV("method: %s", frame->method);
+    EMB_LOGDEV("frame_addr: 0x%lx", (unsigned long) frame->frame_addr);
+    EMB_LOGDEV("offset_addr: 0x%lx", (unsigned long) frame->offset_addr);
+    EMB_LOGDEV("module_addr: 0x%lx", (unsigned long) frame->module_addr);
+    EMB_LOGDEV("line_num: 0x%lx", (unsigned long) frame->line_num);
+    EMB_LOGDEV("build_id: %s", frame->build_id);
+    EMB_LOGDEV("full_name: %s", frame->full_name);
+    EMB_LOGDEV("function_name: %s", frame->function_name);
+    EMB_LOGDEV("rel_pc: 0x%lx", (unsigned long) frame->rel_pc);
+    EMB_LOGDEV("pc: 0x%lx", (unsigned long) frame->pc);
+    EMB_LOGDEV("sp: 0x%lx", (unsigned long) frame->sp);
+    EMB_LOGDEV("start: 0x%lx", (unsigned long) frame->start);
+    EMB_LOGDEV("end: 0x%lx", (unsigned long) frame->end);
+    EMB_LOGDEV("offset: 0x%lx", (unsigned long) frame->offset);
+    EMB_LOGDEV("function_offset: 0x%lx", (unsigned long) frame->function_offset);
+    EMB_LOGDEV("flags: 0x%lx", (unsigned long) frame->flags);
+    EMB_LOGDEV("flags: %d", frame->elf_file_not_readable);
+}
+
 char *emb_crash_to_json(emb_crash *crash) {
     EMB_LOGDEV("Starting serialization of emb_crash struct to JSON string.");
     JSON_Value *root_value = json_value_init_object();
@@ -205,7 +238,22 @@ char *emb_crash_to_json(emb_crash *crash) {
         json_object_set_number(frame_object, kModuleAddrKey, frame.module_addr);
         json_object_set_number(frame_object, kLineNumKey, frame.line_num);
         json_object_set_string(frame_object, kBuildIdKey, frame.build_id);
+
+        // extra debug info
+        json_object_set_string(frame_object, kFullNameKey, frame.full_name);
+        json_object_set_string(frame_object, kFunctionNameKey, frame.function_name);
+        json_object_set_number(frame_object, kRelPcKey, (unsigned long) frame.rel_pc);
+        json_object_set_number(frame_object, kPcKey, (unsigned long) frame.pc);
+        json_object_set_number(frame_object, kSpKey, (unsigned long) frame.sp);
+        json_object_set_number(frame_object, kStartKey, (unsigned long) frame.start);
+        json_object_set_number(frame_object, kEndKey, (unsigned long) frame.end);
+        json_object_set_number(frame_object, kOffsetKey, (unsigned long) frame.offset);
+        json_object_set_number(frame_object, kFunctionOffsetKey,(unsigned long) frame.function_offset);
+        json_object_set_number(frame_object, kFlagsKey, frame.flags);
+        json_object_set_number(frame_object, kElfFileNotReadableKey, frame.elf_file_not_readable);
+
         json_array_append_value(frames_object, frame_value);
+        emb_log_frame_dbg_info(i, &frame);
     }
     EMB_LOGDEV("Finished serializing stackframes.");
 

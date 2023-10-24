@@ -65,8 +65,6 @@ import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
-import io.embrace.android.embracesdk.internal.SdkApi;
-import io.embrace.android.embracesdk.internal.SdkApiKt;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService;
@@ -224,9 +222,6 @@ final class EmbraceImpl {
 
     @Nullable
     private FlutterInternalInterface flutterInternalInterface;
-
-    @Nullable
-    private SdkApi sdkApi;
 
     @Nullable
     private PushNotificationCaptureService pushNotificationService;
@@ -1746,15 +1741,5 @@ final class EmbraceImpl {
         crashVerifier.readAndCleanMarkerAsync(
             workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         );
-    }
-
-    @InternalApi
-    @NonNull
-    public SdkApi getSdkApi() {
-        if (isStarted() && sdkApi != null) {
-            return sdkApi;
-        } else {
-            return SdkApiKt.getDefault();
-        }
     }
 }

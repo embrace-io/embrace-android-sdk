@@ -25,6 +25,5 @@ internal class InternalInterfaceModuleImplTest {
         assertNotNull(module.unityInternalInterface)
         assertNotNull(module.reactNativeInternalInterface)
         assertNotNull(module.embraceInternalInterface)
-        assertNotNull(module.sdkApi)
     }
 }

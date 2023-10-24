@@ -92,6 +92,7 @@ internal class EmbraceInternalInterfaceTest {
             assertFalse(shouldCaptureNetworkBody("", ""))
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
+            getSdkCurrentTime()
         }
     }
 
@@ -238,6 +239,16 @@ internal class EmbraceInternalInterfaceTest {
             embrace.internalInterface.setProcessStartedByNotification()
             harness.recordSession(simulateAppStartup = true) { }
             assertEquals(EmbraceEvent.Type.START, harness.fakeDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
+        }
+    }
+
+    @Test
+    fun `test sdk time`() {
+        with(testRule) {
+            embrace.start(harness.fakeCoreModule.context)
+            assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
+            harness.fakeClock.tick()
+            assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
         }
     }
 

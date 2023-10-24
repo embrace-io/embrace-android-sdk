@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk
 
 import android.net.Uri
 import android.webkit.URLUtil
+import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.internal.defaultImpl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -11,6 +15,7 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -18,11 +23,15 @@ internal class EmbraceInternalInterfaceImplTest {
 
     private lateinit var impl: EmbraceInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
+    private lateinit var fakeClock: FakeClock
+    private lateinit var initModule: InitModule
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
-        impl = EmbraceInternalInterfaceImpl(embrace)
+        fakeClock = FakeClock(currentTime = beforeObjectInitTime)
+        initModule = FakeInitModule(clock = fakeClock)
+        impl = EmbraceInternalInterfaceImpl(embrace, initModule)
     }
 
     @Test
@@ -175,5 +184,23 @@ internal class EmbraceInternalInterfaceImplTest {
         }
 
         assertEquals(url, captor.captured.url)
+    }
+
+    @Test
+    fun `check usage of SDK time`() {
+        assertEquals(beforeObjectInitTime, impl.getSdkCurrentTime())
+        assertTrue(impl.getSdkCurrentTime() < System.currentTimeMillis())
+        fakeClock.tick(10L)
+        assertEquals(fakeClock.now(), impl.getSdkCurrentTime())
+    }
+
+    @Test
+    fun `check default implementation`() {
+        assertTrue(beforeObjectInitTime < defaultImpl.getSdkCurrentTime())
+        assertTrue(defaultImpl.getSdkCurrentTime() <= System.currentTimeMillis())
+    }
+
+    companion object {
+        val beforeObjectInitTime = System.currentTimeMillis() - 1
     }
 }

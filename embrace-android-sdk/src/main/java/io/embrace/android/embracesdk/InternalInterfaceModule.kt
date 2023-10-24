@@ -7,15 +7,12 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.SdkApi
-import io.embrace.android.embracesdk.internal.SdkApiImpl
 
 internal interface InternalInterfaceModule {
     val embraceInternalInterface: EmbraceInternalInterface
     val reactNativeInternalInterface: ReactNativeInternalInterface
     val unityInternalInterface: UnityInternalInterface
     val flutterInternalInterface: FlutterInternalInterface
-    val sdkApi: SdkApi
 }
 
 internal class InternalInterfaceModuleImpl(
@@ -28,7 +25,7 @@ internal class InternalInterfaceModuleImpl(
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(embrace)
+        EmbraceInternalInterfaceImpl(embrace, initModule)
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {
@@ -59,9 +56,5 @@ internal class InternalInterfaceModuleImpl(
             essentialServiceModule.metadataService,
             coreModule.logger
         )
-    }
-
-    override val sdkApi: SdkApi by singleton {
-        SdkApiImpl(initModule.clock)
     }
 }

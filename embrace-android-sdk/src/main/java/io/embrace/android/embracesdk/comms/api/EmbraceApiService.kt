@@ -37,21 +37,18 @@ internal class EmbraceApiService(
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
     private val metadataService: MetadataService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val scheduledExecutorService: ScheduledExecutorService,
+    networkConnectivityService: NetworkConnectivityService,
+    private val cacheManager: DeliveryCacheManager,
 ) : ApiService, NetworkConnectivityListener {
 
-    private lateinit var cacheManager: DeliveryCacheManager
+    private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
+    private var lastRetryTask: ScheduledFuture<*>? = null
+    private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
-    private lateinit var scheduledExecutorService: ScheduledExecutorService
-
-    override fun initForDelivery(
-        cacheManager: DeliveryCacheManager,
-        scheduledExecutorService: ScheduledExecutorService,
-        networkConnectivityService: NetworkConnectivityService
-    ) {
+    init {
         logger.logDeveloper(TAG, "start")
-        this.cacheManager = cacheManager
-        this.scheduledExecutorService = scheduledExecutorService
 
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
@@ -122,12 +119,6 @@ internal class EmbraceApiService(
             }
         }
     }
-
-    private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
-
-    private var lastRetryTask: ScheduledFuture<*>? = null
-
-    private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         lastNetworkStatus = status

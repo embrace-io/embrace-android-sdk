@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
+import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
@@ -14,6 +17,10 @@ import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService
+import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -50,6 +57,9 @@ internal interface EssentialServiceModule {
     val sharedObjectLoader: SharedObjectLoader
     val cpuInfoDelegate: CpuInfoDelegate
     val deviceArchitecture: DeviceArchitecture
+    val networkConnectivityService: NetworkConnectivityService
+    val cacheService: CacheService
+    val deliveryCacheManager: DeliveryCacheManager
 }
 
 internal class EssentialServiceModuleImpl(
@@ -68,6 +78,12 @@ internal class EssentialServiceModuleImpl(
 
     private val backgroundExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+
+    private val apiRetryExecutor =
+        workerThreadModule.scheduledExecutor(ExecutorName.API_RETRY)
+
+    private val deliveryCacheExecutorService =
+        workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -149,6 +165,34 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
+    override val networkConnectivityService: NetworkConnectivityService by singleton {
+        if (configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
+            EmbraceNetworkConnectivityService(
+                coreModule.context,
+                initModule.clock,
+                backgroundExecutorService,
+                coreModule.logger,
+                systemServiceModule.connectivityManager
+            )
+        } else {
+            NoOpNetworkConnectivityService()
+        }
+    }
+
+    override val cacheService: CacheService by singleton {
+        EmbraceCacheService(coreModule.context, coreModule.jsonSerializer, coreModule.logger)
+    }
+
+    override val deliveryCacheManager: DeliveryCacheManager by singleton {
+        EmbraceDeliveryCacheManager(
+            cacheService,
+            deliveryCacheExecutorService,
+            coreModule.logger,
+            initModule.clock,
+            coreModule.jsonSerializer
+        )
+    }
+
     override val apiService: ApiService by singleton {
         EmbraceApiService(
             apiClient,
@@ -157,7 +201,10 @@ internal class EssentialServiceModuleImpl(
             { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
             coreModule.logger,
             metadataService,
-            userService
+            userService,
+            apiRetryExecutor,
+            networkConnectivityService,
+            deliveryCacheManager
         )
     }
 

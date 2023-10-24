@@ -53,7 +53,6 @@ internal class EmbraceApiServiceTest {
                 every { getEmbraceUrlWithSuffix(any()) } returns "http://fake.url"
                 every { getConfigUrl() } returns "https://config.url"
             }
-
             networkConnectivityService = mockk(relaxUnitFun = true)
         }
 
@@ -69,23 +68,13 @@ internal class EmbraceApiServiceTest {
 
     @Before
     fun setUp() {
-        mockApiClient = mockk() {
+        mockApiClient = mockk {
             every { post(any(), any()) } returns ""
         }
         cachedConfig = CachedConfig(
             config = null,
             eTag = null
         )
-        apiService = EmbraceApiService(
-            apiClient = mockApiClient,
-            urlBuilder = mockApiUrlBuilder,
-            serializer = EmbraceSerializer(),
-            cachedConfigProvider = { _, _ -> cachedConfig },
-            logger = mockk(relaxed = true),
-            metadataService = metadataService,
-            userService = userService
-        )
-
         failedApiCalls = DeliveryFailedApiCalls()
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
@@ -108,6 +97,10 @@ internal class EmbraceApiServiceTest {
             body = json,
             headers = emptyMap()
         )
+        initApiService(
+            status = NetworkStatus.NOT_REACHABLE,
+            runRetryJobAfterScheduling = true
+        )
         val remoteConfig = apiService.getConfig()
 
         // verify a few fields were serialized correctly.
@@ -120,7 +113,10 @@ internal class EmbraceApiServiceTest {
     @Test(expected = IllegalStateException::class)
     fun `test getConfig rethrows an exception thrown by apiClient`() {
         every { mockApiClient.executeGet(any()) } throws IllegalStateException("Test exception message")
-
+        initApiService(
+            status = NetworkStatus.NOT_REACHABLE,
+            runRetryJobAfterScheduling = true
+        )
         // exception will be thrown and caught by this test's annotation
         apiService.getConfig()
     }
@@ -134,7 +130,10 @@ internal class EmbraceApiServiceTest {
             body = "",
             headers = emptyMap()
         )
-
+        initApiService(
+            status = NetworkStatus.NOT_REACHABLE,
+            runRetryJobAfterScheduling = true
+        )
         val remoteConfig = apiService.getConfig()
         assertSame(cfg, remoteConfig)
     }
@@ -340,10 +339,17 @@ internal class EmbraceApiServiceTest {
     ) {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
-        apiService.initForDelivery(
-            mockCacheManager,
-            testScheduledExecutor,
-            networkConnectivityService
+        apiService = EmbraceApiService(
+            apiClient = mockApiClient,
+            urlBuilder = mockApiUrlBuilder,
+            serializer = EmbraceSerializer(),
+            cachedConfigProvider = { _, _ -> cachedConfig },
+            logger = mockk(relaxed = true),
+            metadataService = metadataService,
+            userService = userService,
+            scheduledExecutorService = testScheduledExecutor,
+            networkConnectivityService = networkConnectivityService,
+            cacheManager = mockCacheManager
         )
 
         failedApiCalls.clear()

@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Build
-import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
@@ -50,11 +47,6 @@ internal interface DataCaptureServiceModule {
      * Captures intervals where power save mode was enabled
      */
     val powerSaveModeService: PowerSaveModeService
-
-    /**
-     * Captures intervals where the network was/wasn't connected
-     */
-    val networkConnectivityService: NetworkConnectivityService
 
     /**
      * Captures information from webviews
@@ -116,20 +108,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             )
         } else {
             NoOpPowerSaveModeService()
-        }
-    }
-
-    override val networkConnectivityService: NetworkConnectivityService by singleton {
-        if (configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
-            EmbraceNetworkConnectivityService(
-                coreModule.context,
-                initModule.clock,
-                backgroundExecutorService,
-                coreModule.logger,
-                systemServiceModule.connectivityManager
-            )
-        } else {
-            NoOpNetworkConnectivityService()
         }
     }
 

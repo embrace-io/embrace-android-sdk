@@ -256,7 +256,7 @@ final class EmbraceImpl {
         DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
 
     @NonNull
-    private final Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule, DeliveryModule>
+    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
         deliveryModuleSupplier;
 
     //variable pointing to the composeActivityListener instance obtained using reflection
@@ -273,7 +273,7 @@ final class EmbraceImpl {
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
-                @NonNull Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule,
+                @NonNull Function3<CoreModule, EssentialServiceModule, WorkerThreadModule,
                     DeliveryModule> deliveryModuleSupplier) {
         initModule = initModuleSupplier.invoke();
         sdkClock = initModule.getClock();
@@ -446,13 +446,11 @@ final class EmbraceImpl {
         serviceRegistry.registerService(exceptionsService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
-        serviceRegistry.registerService(dataCaptureServiceModule.getNetworkConnectivityService());
+        serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
 
         final DeliveryModule deliveryModule = deliveryModuleSupplier.invoke(
-            initModule,
             coreModule,
             essentialServiceModule,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
 
@@ -484,7 +482,6 @@ final class EmbraceImpl {
             essentialServiceModule,
             deliveryModule,
             sessionProperties,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
         remoteLogger = customerLogModule.getRemoteLogger();

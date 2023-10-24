@@ -26,7 +26,7 @@ internal class EmbraceDeliveryServiceTest {
     private val executor = MoreExecutors.newDirectExecutorService()
 
     companion object {
-        private lateinit var mockDeliveryCacheManager: DeliveryCacheManager
+        private lateinit var mockDeliveryCacheManager: EmbraceDeliveryCacheManager
         private lateinit var apiService: ApiService
         private lateinit var logger: InternalEmbraceLogger
 

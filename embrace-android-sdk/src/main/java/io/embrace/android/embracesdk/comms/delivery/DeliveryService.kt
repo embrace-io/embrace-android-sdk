@@ -25,4 +25,3 @@ internal interface DeliveryService {
     fun sendEvent(eventMessage: EventMessage)
     fun sendEventAndWait(eventMessage: EventMessage)
 }
-

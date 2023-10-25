@@ -10,6 +10,8 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.clock.Clock;
+import io.embrace.android.embracesdk.clock.SystemClock;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.EmbraceHttpPathOverride;
@@ -59,12 +61,16 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
 
     final Embrace embrace;
 
+    // A clock that mirrors the one used by OkHttp to get timestamps
+    final Clock systemClock;
+
     public EmbraceOkHttp3NetworkInterceptor() {
-        this(Embrace.getInstance());
+        this(Embrace.getInstance(), new SystemClock());
     }
 
-    EmbraceOkHttp3NetworkInterceptor(Embrace embrace) {
+    EmbraceOkHttp3NetworkInterceptor(Embrace embrace, Clock systemClock) {
         this.embrace = embrace;
+        this.systemClock = systemClock;
     }
 
     @Override
@@ -75,6 +81,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             return chain.proceed(originalRequest);
         }
 
+        long offset = sdkClockOffset();
         boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
 
         String traceparent = null;
@@ -156,8 +163,8 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             EmbraceNetworkRequest.fromCompletedRequest(
                 EmbraceHttpPathOverride.getURLString(new EmbraceOkHttp3PathOverrideRequest(request)),
                 HttpMethod.fromString(request.method()),
-                response.sentRequestAtMillis(),
-                response.receivedResponseAtMillis(),
+                response.sentRequestAtMillis() + offset,
+                response.receivedResponseAtMillis() + offset,
                 request.body() != null ? request.body().contentLength() : 0,
                 contentLength,
                 response.code(),
@@ -248,5 +255,13 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             logDebug("Failed to capture okhttp request body.", e);
         }
         return null;
+    }
+
+    /**
+     * Get the difference between the SDK clock time and the time System.currentTimeMillis() returns, which is used by OkHttp for
+     * determining client-side timestamps.
+     */
+    private long sdkClockOffset() {
+        return embrace.getInternalInterface().getSdkCurrentTime() - systemClock.now();
     }
 }

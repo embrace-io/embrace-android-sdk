@@ -343,8 +343,8 @@ internal class NetworkRequestApiTest {
     companion object {
         private const val URL = "https://embrace.io"
         private const val DISABLED_URL = "https://dontlogmebro.pizza/yum"
-        private const val START_TIME = 1692201601L
-        private const val END_TIME = 1692202600L
+        private const val START_TIME = 1692201601000L
+        private const val END_TIME = 1692201603000L
         private const val BYTES_SENT = 100L
         private const val BYTES_RECEIVED = 500L
         private const val TRACE_ID = "rAnDoM-traceId"

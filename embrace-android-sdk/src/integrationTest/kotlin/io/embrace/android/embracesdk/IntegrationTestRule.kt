@@ -190,7 +190,7 @@ internal class IntegrationTestRule(
     )
 
     companion object {
-        const val DEFAULT_SDK_START_TIME_MS = 1692201600L
+        const val DEFAULT_SDK_START_TIME_MS = 169220160000L
 
         fun newHarness(startImmediately: Boolean) = Harness(startImmediately = startImmediately)
 

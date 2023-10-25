@@ -2,13 +2,15 @@ package io.embrace.android.embracesdk.capture.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
-import android.os.Build
+import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
@@ -20,13 +22,14 @@ import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
-@RequiresApi(Build.VERSION_CODES.R)
+@RequiresApi(VERSION_CODES.R)
 internal class EmbraceApplicationExitInfoService constructor(
     private val executorService: ExecutorService,
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
-    private val deliveryService: DeliveryService
+    private val deliveryService: DeliveryService,
+    private val buildVersionChecker: VersionChecker = BuildVersionChecker
 ) : ApplicationExitInfoService, ConfigListener {
 
     companion object {
@@ -53,7 +56,11 @@ internal class EmbraceApplicationExitInfoService constructor(
                 try {
                     processApplicationExitInfo()
                 } catch (exc: Throwable) {
-                    logWarningWithException("AEI - Failed to process AEIs due to unexpected error", exc, true)
+                    logWarningWithException(
+                        "AEI - Failed to process AEIs due to unexpected error",
+                        exc,
+                        true
+                    )
                 }
             }
         } catch (exc: RejectedExecutionException) {
@@ -101,7 +108,8 @@ internal class EmbraceApplicationExitInfoService constructor(
         val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
 
         var historicalProcessExitReasons: List<ApplicationExitInfo> =
-            activityManager?.getHistoricalProcessExitReasons(null, pid, maxNum) ?: return emptyList()
+            activityManager?.getHistoricalProcessExitReasons(null, pid, maxNum)
+                ?: return emptyList()
 
         if (historicalProcessExitReasons.size > SDK_AEI_SEND_LIMIT) {
             logInfoWithException("AEI - size greater than $SDK_AEI_SEND_LIMIT")
@@ -133,7 +141,11 @@ internal class EmbraceApplicationExitInfoService constructor(
     }
 
     @VisibleForTesting
-    fun buildSessionAppExitInfoData(appExitInfo: ApplicationExitInfo, trace: String?, traceStatus: String?): AppExitInfoData {
+    fun buildSessionAppExitInfoData(
+        appExitInfo: ApplicationExitInfo,
+        trace: String?,
+        traceStatus: String?
+    ): AppExitInfoData {
         val sessionId = String(appExitInfo.processStateSummary ?: ByteArray(0))
 
         return AppExitInfoData(
@@ -175,13 +187,12 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {
         try {
-            val bytes = appExitInfo.traceInputStream?.readBytes()
+            val trace = readTraceAsString(appExitInfo)
 
-            if (bytes == null) {
+            if (trace == null) {
                 logDebug("AEI - No info trace collected")
                 return null
             }
-            val trace = bytesToUTF8String(bytes)
 
             val traceMaxLimit = configService.appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
@@ -202,9 +213,32 @@ internal class EmbraceApplicationExitInfoService constructor(
         }
     }
 
+    private fun readTraceAsString(appExitInfo: ApplicationExitInfo): String? {
+        if (appExitInfo.isNdkProtobufFile()) {
+            val bytes = appExitInfo.traceInputStream?.readBytes()
+
+            if (bytes == null) {
+                logDebug("AEI - No info trace collected")
+                return null
+            }
+            return bytesToUTF8String(bytes)
+        } else {
+            return appExitInfo.traceInputStream?.bufferedReader()?.readText()
+        }
+    }
+
+    /**
+     * NDK protobuf files are only available on Android 12 and above for AEI with
+     * the REASON_CRASH_NATIVE reason.
+     */
+    private fun ApplicationExitInfo.isNdkProtobufFile(): Boolean {
+        return buildVersionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
+    }
+
     /**
      * Converts a byte array to a UTF-8 string, escaping non-encodable bytes as
-     * \Uxxxx characters. This allows us to send arbitrary binary data from the NDK
+     * 2-byte UTF-8 sequences, which will later be converted into \uXXXX by JSON marshalling.
+     * This allows us to send arbitrary binary data from the NDK
      * protobuf file without needing to encode it as Base64 (which compresses poorly).
      */
     private fun bytesToUTF8String(bytes: ByteArray): String {
@@ -238,7 +272,8 @@ internal class EmbraceApplicationExitInfoService constructor(
     }
 
     override fun getCapturedData() =
-        sessionApplicationExitInfoData.takeIf { isSessionApplicationExitInfoDataReady.get() } ?: emptyList()
+        sessionApplicationExitInfoData.takeIf { isSessionApplicationExitInfoDataReady.get() }
+            ?: emptyList()
 
     override fun onConfigChange(configService: ConfigService) {
         if (backgroundExecution == null && configService.isAppExitInfoCaptureEnabled()) {
@@ -253,7 +288,10 @@ internal class EmbraceApplicationExitInfoService constructor(
             backgroundExecution?.cancel(true)
             backgroundExecution = null
         } catch (t: Throwable) {
-            logWarningWithException("AEI - Failed to disable EmbraceApplicationExitInfoService work", t)
+            logWarningWithException(
+                "AEI - Failed to disable EmbraceApplicationExitInfoService work",
+                t
+            )
         }
     }
 }

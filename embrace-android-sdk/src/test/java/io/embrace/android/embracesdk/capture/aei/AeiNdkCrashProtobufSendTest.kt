@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.capture.aei
 
 import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.gson.Gson
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +25,8 @@ import java.io.InputStream
 internal class AeiNdkCrashProtobufSendTest {
 
     companion object {
-        private const val FILE_NAME = "aei_ndk_crash.protobuf"
+        private const val NDK_FILE_NAME = "aei_ndk_crash.protobuf"
+        private const val ANR_FILE_NAME = "fake_anr_trace"
     }
 
     /**
@@ -32,7 +35,7 @@ internal class AeiNdkCrashProtobufSendTest {
      */
     @Test
     fun testLocalProtobufIsReadable() {
-        val stream = ResourceReader.readResource(FILE_NAME)
+        val stream = ResourceReader.readResource(NDK_FILE_NAME)
         assertProtobufIsReadable(stream)
     }
 
@@ -43,7 +46,7 @@ internal class AeiNdkCrashProtobufSendTest {
     @Test
     fun testReadProtobufFromPayload() {
         val deliveryService = FakeDeliveryService()
-        createAeiService(deliveryService)
+        createAeiService(deliveryService, true)
 
         // sending through the delivery service does not corrupt the protobuf
         val obj = deliveryService.getAeiObject()
@@ -54,6 +57,19 @@ internal class AeiNdkCrashProtobufSendTest {
         val aei = Gson().fromJson(json, AppExitInfoData::class.java)
         val byteStream = aei.asStream()
         assertProtobufIsReadable(byteStream)
+    }
+
+    @Test
+    fun testSendAeiObj() {
+        val deliveryService = FakeDeliveryService()
+        createAeiService(deliveryService, false)
+
+        // sending through the delivery service does not corrupt the protobuf
+        val obj = deliveryService.getAeiObject()
+
+        // JSON serialization does not corrupt the protobuf
+        val expected = ResourceReader.readResourceAsText(ANR_FILE_NAME)
+        assertEquals(expected, obj.trace)
     }
 
     /**
@@ -107,9 +123,20 @@ internal class AeiNdkCrashProtobufSendTest {
         assertEquals("SIGSEGV", tombstone.signalInfo.name)
     }
 
-    private fun createAeiService(deliveryService: FakeDeliveryService) {
-        val stream = ResourceReader.readResource(FILE_NAME)
-        val activityManager = createMockActivityManager(stream)
+    private fun createAeiService(deliveryService: FakeDeliveryService, ndkTraceFile: Boolean) {
+        val resName = when {
+            ndkTraceFile -> NDK_FILE_NAME
+            else -> ANR_FILE_NAME
+        }
+        val reason = when {
+            ndkTraceFile -> ApplicationExitInfo.REASON_CRASH_NATIVE
+            else -> ApplicationExitInfo.REASON_ANR
+        }
+        val stream = ResourceReader.readResource(resName)
+        val activityManager = createMockActivityManager(
+            stream,
+            reason
+        )
         EmbraceApplicationExitInfoService(
             MoreExecutors.newDirectExecutorService(),
             FakeConfigService(
@@ -121,11 +148,12 @@ internal class AeiNdkCrashProtobufSendTest {
             ),
             activityManager,
             FakePreferenceService(),
-            deliveryService
+            deliveryService,
+            VersionChecker { ndkTraceFile }
         )
     }
 
-    private fun createMockActivityManager(stream: InputStream): ActivityManager {
+    private fun createMockActivityManager(stream: InputStream, code: Int): ActivityManager {
         return mockk(relaxed = true) {
             every {
                 getHistoricalProcessExitReasons(
@@ -136,6 +164,7 @@ internal class AeiNdkCrashProtobufSendTest {
             } returns listOf(
                 mockk(relaxed = true) {
                     every { traceInputStream } returns stream
+                    every { reason } returns code
                 }
             )
         }

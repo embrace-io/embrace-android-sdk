@@ -16,7 +16,6 @@ import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.InputStream
-import java.util.Base64
 
 /**
  * Verifies that the protobuf file containing the NDK crash details can be sent by our SDK.
@@ -38,21 +37,6 @@ internal class AeiNdkCrashProtobufSendTest {
     }
 
     /**
-     * Sends the protobuf file to the delivery service. This involves the protobuf file being read
-     * and included into the payload. It is not a full test of how JSON is serialized & received
-     * by our server.
-     */
-    @Test
-    fun testDeliveredProtobufIsReadable() {
-        val deliveryService = FakeDeliveryService()
-        createAeiService(deliveryService)
-
-        val obj = deliveryService.getAeiObject()
-        val byteStream = obj.asStream()
-        assertProtobufIsReadable(byteStream)
-    }
-
-    /**
      * Serializes then deserializes a protobuf in the payload. This ensures that information is
      * not lost when encoding the protobuf into JSON that is sent to the server.
      */
@@ -61,8 +45,11 @@ internal class AeiNdkCrashProtobufSendTest {
         val deliveryService = FakeDeliveryService()
         createAeiService(deliveryService)
 
-        // serialize then deserialize to/from JSON
+        // sending through the delivery service does not corrupt the protobuf
         val obj = deliveryService.getAeiObject()
+        assertProtobufIsReadable(obj.asStream())
+
+        // JSON serialization does not corrupt the protobuf
         val json = Gson().toJson(obj)
         val aei = Gson().fromJson(json, AppExitInfoData::class.java)
         val byteStream = aei.asStream()
@@ -73,9 +60,36 @@ internal class AeiNdkCrashProtobufSendTest {
      * Gets an inputstream of the protobuf file that was encoded in the AEI object
      */
     private fun AppExitInfoData.asStream(): InputStream {
-        val decoder = Base64.getDecoder()
-        val contents = decoder.decode(trace)
-        return contents.inputStream()
+        val contents = trace ?: error("No trace found")
+        return utf8StringToBytes(contents).inputStream()
+    }
+
+    /**
+     * Decodes a UTF-8 string with arbitrary binary data encoded in \Uxxxx characters.
+     */
+    private fun utf8StringToBytes(utf8String: String): ByteArray {
+        val encoded = utf8String.toByteArray(Charsets.UTF_8)
+        val decoded = ByteArray(encoded.size)
+
+        var decodedIndex = 0
+        var k = 0
+        while (k < encoded.size) {
+            val u = encoded[k].toInt() and 0xFF
+            if (u < 128) {
+                decoded[decodedIndex++] = u.toByte()
+                k++
+            } else {
+                val a = u and 0x1F
+                k++
+                if (k >= encoded.size) {
+                    error("Invalid UTF-8 encoding")
+                }
+                val b = encoded[k].toInt() and 0x3F
+                k++
+                decoded[decodedIndex++] = ((a shl 6) or b).toByte()
+            }
+        }
+        return decoded.copyOf(decodedIndex)
     }
 
     /**

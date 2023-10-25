@@ -10,6 +10,8 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.clock.Clock;
+import io.embrace.android.embracesdk.clock.SystemClock;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.EmbraceHttpPathOverride;
@@ -59,12 +61,16 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
 
     final Embrace embrace;
 
+    // A clock that mirrors the one used by OkHttp to get timestamps
+    final Clock systemClock;
+
     public EmbraceOkHttp3NetworkInterceptor() {
-        this(Embrace.getInstance());
+        this(Embrace.getInstance(), new SystemClock());
     }
 
-    EmbraceOkHttp3NetworkInterceptor(Embrace embrace) {
+    EmbraceOkHttp3NetworkInterceptor(Embrace embrace, Clock systemClock) {
         this.embrace = embrace;
+        this.systemClock = systemClock;
     }
 
     @Override
@@ -75,7 +81,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             return chain.proceed(originalRequest);
         }
 
-        long preRequestClockOffset = sdkClockOffset();
+        long offset = sdkClockOffset();
         boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
 
         String traceparent = null;
@@ -87,7 +93,6 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             originalRequest : originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, traceparent).build();
 
         Response networkResponse = chain.proceed(request);
-        long postResponseClockOffset = sdkClockOffset();
         Response.Builder responseBuilder = networkResponse.newBuilder().request(request);
 
         Long contentLength = null;
@@ -154,14 +159,12 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             networkCaptureData = getNetworkCaptureData(request, response);
         }
 
-
-
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
                 EmbraceHttpPathOverride.getURLString(new EmbraceOkHttp3PathOverrideRequest(request)),
                 HttpMethod.fromString(request.method()),
-                response.sentRequestAtMillis() + preRequestClockOffset,
-                response.receivedResponseAtMillis() + postResponseClockOffset,
+                response.sentRequestAtMillis() + offset,
+                response.receivedResponseAtMillis() + offset,
                 request.body() != null ? request.body().contentLength() : 0,
                 contentLength,
                 response.code(),
@@ -259,6 +262,6 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
      * determining client-side timestamps.
      */
     private long sdkClockOffset() {
-        return embrace.getInternalInterface().getSdkCurrentTime() - System.currentTimeMillis();
+        return embrace.getInternalInterface().getSdkCurrentTime() - systemClock.now();
     }
 }

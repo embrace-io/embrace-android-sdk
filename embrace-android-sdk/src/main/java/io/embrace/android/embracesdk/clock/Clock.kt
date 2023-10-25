@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk.clock
 
-internal fun interface Clock {
+import io.embrace.android.embracesdk.InternalApi
+
+@InternalApi
+public fun interface Clock {
 
     /**
      * Returns the current milliseconds from epoch.
      */
-    fun now(): Long
+    public fun now(): Long
 }

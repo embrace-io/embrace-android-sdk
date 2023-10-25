@@ -177,6 +177,15 @@ public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/clock/Clock {
+	public abstract fun now ()J
+}
+
+public final class io/embrace/android/embracesdk/clock/SystemClock : io/embrace/android/embracesdk/clock/Clock {
+	public fun <init> ()V
+	public fun now ()J
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
 	public abstract fun getSdkCurrentTime ()J
 	public abstract fun isNetworkSpanForwardingEnabled ()Z

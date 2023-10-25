@@ -31,6 +31,7 @@ internal class EmbraceUrlConnectionOverrideTest {
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
     private lateinit var embraceUrlConnectionOverride: EmbraceUrlConnectionOverride<HttpsURLConnection>
     private lateinit var embraceUrlConnectionOverrideUnwrapped: EmbraceUrlConnectionOverride<HttpsURLConnection>
+    private var fakeTimeMs = REQUEST_TIME
     private var shouldCaptureNetworkBody = false
     private var isNetworkSpanForwardingEnabled = false
 
@@ -38,6 +39,7 @@ internal class EmbraceUrlConnectionOverrideTest {
     fun setup() {
         mockEmbrace = mockk(relaxed = true)
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
+        fakeTimeMs = REQUEST_TIME
         shouldCaptureNetworkBody = false
         isNetworkSpanForwardingEnabled = false
         capturedCallId = mutableListOf()
@@ -48,6 +50,7 @@ internal class EmbraceUrlConnectionOverrideTest {
             mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest))
         } answers { }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        every { mockInternalInterface.getSdkCurrentTime() } answers { fakeTimeMs }
         mockConnection = createMockConnection()
         embraceUrlConnectionOverride = EmbraceUrlConnectionOverride(mockConnection, true, mockEmbrace)
         embraceUrlConnectionOverrideUnwrapped = EmbraceUrlConnectionOverride(mockConnection, false, mockEmbrace)
@@ -59,6 +62,8 @@ internal class EmbraceUrlConnectionOverrideTest {
         verifyTwoCallsRecordedWithSameCallId()
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(HttpMethod.POST.name, httpMethod)
+            assertEquals(REQUEST_TIME, startTime)
+            assertEquals(REQUEST_TIME, endTime)
             assertEquals(HTTP_OK, responseCode)
             assertEquals(requestBodySize.toLong(), bytesSent)
             assertEquals(responseBodySize.toLong(), bytesReceived)
@@ -248,6 +253,7 @@ internal class EmbraceUrlConnectionOverrideTest {
     companion object {
         private const val TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
         private const val HTTP_OK = 200
+        private const val REQUEST_TIME = 1692201601000L
         private val requestBody = "test".toByteArray()
         private val requestBodySize = requestBody.size
         private val responseBody = "responseresponse".toByteArray()

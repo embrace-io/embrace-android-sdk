@@ -102,14 +102,14 @@ jobs:
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --author "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>" --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.release.tag_name }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.release.tag_name }}' docs/
           git push --force origin gh-pages
 
       - name: Record SDK Version History (${{ github.event.inputs.current_version }})
         run: |
           curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.current_version }}"}'
 
-      - name: Set next version
+      - name: Set next SDK version
         run: |
           git checkout master
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties

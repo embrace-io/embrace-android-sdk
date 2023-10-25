@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.create
 import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.createStopMessage
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.utils.submitSafe
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -277,29 +279,35 @@ internal class EmbraceBackgroundActivityService(
             val startTime = backgroundActivity.startTime ?: 0L
             val endTime = backgroundActivity.endTime ?: clock.now()
             val isCrash = backgroundActivity.crashReportId != null
+            val breadcrumbs: Breadcrumbs
+            val spans: List<EmbraceSpanData>?
+            if (isBackgroundActivityEnd) {
+                breadcrumbs = breadcrumbService.flushBreadcrumbs()
+                spans = spansService.flushSpans(
+                    if (isCrash) {
+                        EmbraceAttributes.AppTerminationCause.CRASH
+                    } else {
+                        null
+                    }
+                )
+            } else {
+                breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime)
+                spans = spansService.completedSpans()
+            }
+
             return BackgroundActivityMessage(
-                backgroundActivity,
-                backgroundActivity.user,
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                performanceInfoService.getSessionPerformanceInfo(
+                backgroundActivity = backgroundActivity,
+                userInfo = backgroundActivity.user,
+                appInfo = metadataService.getAppInfo(),
+                deviceInfo = metadataService.getDeviceInfo(),
+                performanceInfo = performanceInfoService.getSessionPerformanceInfo(
                     startTime,
                     endTime,
                     java.lang.Boolean.TRUE == backgroundActivity.isColdStart,
                     null
                 ),
-                breadcrumbService.flushBreadcrumbs(),
-                if (isBackgroundActivityEnd) {
-                    spansService.flushSpans(
-                        if (isCrash) {
-                            EmbraceAttributes.AppTerminationCause.CRASH
-                        } else {
-                            null
-                        }
-                    )
-                } else {
-                    spansService.completedSpans()
-                }
+                breadcrumbs = breadcrumbs,
+                spans = spans
             )
         }
         return null

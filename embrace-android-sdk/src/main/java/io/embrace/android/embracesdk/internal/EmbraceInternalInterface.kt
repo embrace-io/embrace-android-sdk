@@ -126,6 +126,12 @@ public interface EmbraceInternalInterface {
      * Whether the Network Span Forwarding feature is enabled
      */
     public fun isNetworkSpanForwardingEnabled(): Boolean
+
+    /**
+     * Return internal time the SDK is using in milliseconds. It is equivalent to [System.currentTimeMillis] assuming the system clock did
+     * not change after the SDK has started.
+     */
+    public fun getSdkCurrentTime(): Long
 }
 
 internal val defaultImpl = object : EmbraceInternalInterface {
@@ -185,4 +191,6 @@ internal val defaultImpl = object : EmbraceInternalInterface {
     override fun setProcessStartedByNotification() { }
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
+
+    override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
 }

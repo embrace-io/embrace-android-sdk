@@ -612,6 +612,7 @@ final class EmbraceImpl {
 
         // initialize internal interfaces
         InternalInterfaceModuleImpl internalInterfaceModule = new InternalInterfaceModuleImpl(
+            initModule,
             coreModule,
             androidServicesModule,
             essentialServiceModule,

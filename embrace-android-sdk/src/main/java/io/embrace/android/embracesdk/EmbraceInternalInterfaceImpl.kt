@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.util.Pair
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -8,7 +9,8 @@ import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 internal class EmbraceInternalInterfaceImpl(
-    private val embraceImpl: EmbraceImpl
+    private val embraceImpl: EmbraceImpl,
+    private val initModule: InitModule
 ) : EmbraceInternalInterface {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
@@ -173,4 +175,6 @@ internal class EmbraceInternalInterfaceImpl(
     override fun isNetworkSpanForwardingEnabled(): Boolean {
         return embraceImpl.configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() ?: false
     }
+
+    override fun getSdkCurrentTime(): Long = initModule.clock.now()
 }

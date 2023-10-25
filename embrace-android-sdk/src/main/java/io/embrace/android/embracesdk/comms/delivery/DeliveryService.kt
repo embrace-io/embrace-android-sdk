@@ -26,11 +26,3 @@ internal interface DeliveryService {
     fun sendEventAndWait(eventMessage: EventMessage)
 }
 
-// internal interface DeliveryServiceNetwork {
-//    fun sendLogs(eventMessage: EventMessage)
-//    fun sendNetworkCall(networkEvent: NetworkEvent)
-//    fun sendEvent(eventMessage: EventMessage)
-//    fun sendEventAndWait(eventMessage: EventMessage)
-//    fun sendCrash(crash: EventMessage)
-//    fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>)
-// }

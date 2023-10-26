@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.session
 
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger

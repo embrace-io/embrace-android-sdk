@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AnrInterval

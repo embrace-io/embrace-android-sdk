@@ -4,10 +4,10 @@ import android.app.Activity
 import android.text.TextUtils
 import android.util.Pair
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb

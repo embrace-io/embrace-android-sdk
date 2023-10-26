@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 
 /**
  * Describes an Exception Error with a count of occurrences and a list of exceptions (causes).

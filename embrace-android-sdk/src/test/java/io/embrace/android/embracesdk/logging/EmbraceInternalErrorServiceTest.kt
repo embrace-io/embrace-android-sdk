@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.logging
 
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
+import io.embrace.android.embracesdk.internal.clock.Clock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

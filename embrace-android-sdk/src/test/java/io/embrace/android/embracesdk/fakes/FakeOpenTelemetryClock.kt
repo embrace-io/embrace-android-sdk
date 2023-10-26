@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.clock.Clock
 
 /**
  * An OpenTelemetry-compatible clock used for tests that calculates the elapsed time using the difference between the current time and when

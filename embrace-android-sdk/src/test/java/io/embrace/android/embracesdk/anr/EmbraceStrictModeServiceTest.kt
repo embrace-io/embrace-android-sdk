@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.anr
 import android.os.strictmode.Violation
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.strictmode.EmbraceStrictModeService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals

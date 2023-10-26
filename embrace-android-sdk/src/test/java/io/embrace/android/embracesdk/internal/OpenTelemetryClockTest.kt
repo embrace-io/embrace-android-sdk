@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.clock.Clock
-import io.embrace.android.embracesdk.clock.NormalizedIntervalClock
-import io.embrace.android.embracesdk.clock.SystemClock
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.clock.SystemClock
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -20,7 +20,7 @@ internal class OpenTelemetryClockTest {
 
     @Before
     fun setup() {
-        embraceClock = NormalizedIntervalClock(systemClock = SystemClock())
+        embraceClock = NormalizedIntervalClock(systemClock = io.embrace.android.embracesdk.internal.clock.SystemClock())
         openTelemetryClock = OpenTelemetryClock(embraceClock = embraceClock)
     }
 

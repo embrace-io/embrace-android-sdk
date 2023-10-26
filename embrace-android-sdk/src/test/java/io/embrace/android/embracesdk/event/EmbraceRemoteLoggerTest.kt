@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.MessageType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage

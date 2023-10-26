@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.clock
+package io.embrace.android.embracesdk.internal.clock
 
 /**
  * A clock which uses [android.os.SystemClock.elapsedRealtime] that is normalized

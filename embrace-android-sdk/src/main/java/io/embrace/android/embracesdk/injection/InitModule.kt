@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.clock.Clock
-import io.embrace.android.embracesdk.clock.NormalizedIntervalClock
-import io.embrace.android.embracesdk.clock.SystemClock
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.SpansService
 
@@ -23,6 +22,6 @@ internal interface InitModule {
 }
 
 internal class InitModuleImpl(
-    override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
+    override val clock: Clock = NormalizedIntervalClock(systemClock = io.embrace.android.embracesdk.internal.clock.SystemClock()),
     override val spansService: SpansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
 ) : InitModule

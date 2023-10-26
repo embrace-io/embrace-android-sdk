@@ -5,8 +5,8 @@ import android.app.Application
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.payload.ActivityLifecycleBreadcrumb
 import io.embrace.android.embracesdk.payload.ActivityLifecycleData
 import io.embrace.android.embracesdk.payload.ActivityLifecycleState

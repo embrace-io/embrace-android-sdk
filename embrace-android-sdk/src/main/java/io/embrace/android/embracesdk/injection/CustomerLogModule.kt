@@ -25,7 +25,6 @@ internal class CustomerLogModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     sessionProperties: EmbraceSessionProperties,
-    dataCaptureServiceModule: DataCaptureServiceModule,
     workerThreadModule: WorkerThreadModule
 ) : CustomerLogModule {
 
@@ -57,7 +56,7 @@ internal class CustomerLogModuleImpl(
             coreModule.logger,
             initModule.clock,
             essentialServiceModule.gatingService,
-            dataCaptureServiceModule.networkConnectivityService,
+            essentialServiceModule.networkConnectivityService,
             workerThreadModule.backgroundExecutor(ExecutorName.REMOTE_LOGGING)
         )
     }

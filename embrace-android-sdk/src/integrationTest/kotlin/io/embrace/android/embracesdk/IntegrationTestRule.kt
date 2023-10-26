@@ -103,7 +103,7 @@ internal class IntegrationTestRule(
                 { _, _, _ -> androidServicesModule },
                 { _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
-                { _, _, _, _, _ -> fakeDeliveryModule }
+                { _, _, _ -> fakeDeliveryModule }
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
@@ -180,11 +180,7 @@ internal class IntegrationTestRule(
             ),
         val fakeDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
-                initModule = initModule,
-                coreModule = fakeCoreModule,
-                essentialServiceModule = essentialServiceModule,
-                dataCaptureServiceModule = dataCaptureServiceModule,
-                workerThreadModule = workerThreadModule
+                deliveryService = FakeDeliveryService(),
             ),
         val startImmediately: Boolean = true
     )

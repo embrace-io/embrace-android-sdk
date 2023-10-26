@@ -4,9 +4,9 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -30,12 +30,12 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.nio.charset.Charset
 
-internal class DeliveryCacheManagerTest {
+internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
     private val executor = MoreExecutors.newDirectExecutorService()
-    private lateinit var deliveryCacheManager: DeliveryCacheManager
+    private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var cacheService: CacheService
     private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var fakeClock: FakeClock
@@ -65,7 +65,7 @@ internal class DeliveryCacheManagerTest {
     }
 
     private fun initializeSessionCacheManager() {
-        deliveryCacheManager = DeliveryCacheManager(
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
             executor,
             logger,
@@ -229,13 +229,13 @@ internal class DeliveryCacheManagerTest {
                 )
             }
         }
-        for (i in 0..(99 - DeliveryCacheManager.MAX_SESSIONS_CACHED)) {
+        for (i in 0..(99 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)) {
             verify(exactly = 1) { cacheService.deleteFile("$prefix.${clockInit + i}.test$i.json") }
         }
 
         val cachedSessions = deliveryCacheManager.getAllCachedSessionIds()
-        assertEquals(DeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
-        for (i in (100 - DeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
+        assertEquals(EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
+        for (i in (100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
             assertTrue(cachedSessions.contains("test$i"))
         }
     }
@@ -338,6 +338,6 @@ internal class DeliveryCacheManagerTest {
     }
 
     private fun getCachedSessionName(sessionId: String, timestamp: Long): String {
-        return DeliveryCacheManager.CachedSession(sessionId, timestamp).filename
+        return EmbraceDeliveryCacheManager.CachedSession(sessionId, timestamp).filename
     }
 }

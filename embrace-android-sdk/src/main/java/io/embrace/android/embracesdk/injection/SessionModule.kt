@@ -37,7 +37,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.configService,
             androidServicesModule.preferencesService,
             essentialServiceModule.userService,
-            dataCaptureServiceModule.networkConnectivityService,
+            essentialServiceModule.networkConnectivityService,
             essentialServiceModule.metadataService,
             essentialServiceModule.gatingService,
             dataCaptureServiceModule.breadcrumbService,

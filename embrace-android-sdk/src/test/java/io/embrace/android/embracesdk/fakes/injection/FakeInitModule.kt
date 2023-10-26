@@ -9,6 +9,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.SpansService
 
 internal class FakeInitModule(
-    override val clock: Clock = NormalizedIntervalClock(systemClock = io.embrace.android.embracesdk.internal.clock.SystemClock()),
+    override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     override val spansService: SpansService = EmbraceSpansService(clock = FakeOpenTelemetryClock(embraceClock = clock))
 ) : InitModule

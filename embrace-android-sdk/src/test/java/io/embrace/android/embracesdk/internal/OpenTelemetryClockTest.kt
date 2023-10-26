@@ -20,7 +20,7 @@ internal class OpenTelemetryClockTest {
 
     @Before
     fun setup() {
-        embraceClock = NormalizedIntervalClock(systemClock = io.embrace.android.embracesdk.internal.clock.SystemClock())
+        embraceClock = NormalizedIntervalClock(systemClock = SystemClock())
         openTelemetryClock = OpenTelemetryClock(embraceClock = embraceClock)
     }
 

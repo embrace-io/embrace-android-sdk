@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.network.http;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -63,7 +63,7 @@ public class EmbraceHttpPathOverride {
                 path, RELATIVE_PATH_MAX_LENGTH));
             return false;
         }
-        if (!Charset.forName("US-ASCII").newEncoder().canEncode(path)) {
+        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(path)) {
             InternalStaticEmbraceLogger.logError("Relative path must not contain unicode " +
                     "characters. Relative path " + path + " will be ignored.");
             return false;

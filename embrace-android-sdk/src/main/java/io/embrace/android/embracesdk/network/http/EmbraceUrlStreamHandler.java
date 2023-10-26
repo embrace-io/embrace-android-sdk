@@ -31,12 +31,12 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     /**
      * Method that corresponds to URLStreamHandler.openConnection(URL).
      */
-    private Method methodOpenConnection1;
+    private final Method methodOpenConnection1;
 
     /**
      * Method that corresponds to URLStreamHandler.openConnection(URL, Proxy).
      */
-    private Method methodOpenConnection2;
+    private final Method methodOpenConnection2;
 
     /**
      * This enables or disables automatic gzip decompression

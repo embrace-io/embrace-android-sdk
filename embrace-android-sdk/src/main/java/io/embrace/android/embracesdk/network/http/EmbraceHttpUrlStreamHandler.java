@@ -59,11 +59,11 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
             // This disables automatic gzip decompression by HttpUrlConnection so that we can
             // accurately count the number of bytes. We handle the decompression ourselves.
             connection.setRequestProperty("Accept-Encoding", "gzip");
-            return new EmbraceHttpUrlConnection<>((HttpURLConnection) connection, true);
+            return new EmbraceHttpUrlConnectionImpl<>((HttpURLConnection) connection, true);
         } else {
             // Do not transparently decompress if the user has specified an encoding themselves.
             // Even if they pass in 'gzip', we should return them the compressed response.
-            return new EmbraceHttpUrlConnection<>((HttpURLConnection) connection, false);
+            return new EmbraceHttpUrlConnectionImpl<>((HttpURLConnection) connection, false);
         }
     }
 }

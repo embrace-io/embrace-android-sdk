@@ -182,9 +182,9 @@ class StreamHandlerFactoryInstaller {
                             transparentGzip = true;
                         }
                         if (parentConnection instanceof HttpsURLConnection) {
-                            return new EmbraceHttpsUrlConnection<>((HttpsURLConnection) parentConnection, transparentGzip);
+                            return new EmbraceHttpsUrlConnectionImpl<>((HttpsURLConnection) parentConnection, transparentGzip);
                         } else {
-                            return new EmbraceHttpUrlConnection<>((HttpURLConnection) parentConnection, transparentGzip);
+                            return new EmbraceHttpUrlConnectionImpl<>((HttpURLConnection) parentConnection, transparentGzip);
 
                         }
                     } else {

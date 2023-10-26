@@ -197,11 +197,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/clock/Clo
 	public abstract fun now ()J
 }
 
-public final class io/embrace/android/embracesdk/internal/clock/SystemClock : io/embrace/android/embracesdk/internal/clock/Clock {
-	public fun <init> ()V
-	public fun now ()J
-}
-
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;

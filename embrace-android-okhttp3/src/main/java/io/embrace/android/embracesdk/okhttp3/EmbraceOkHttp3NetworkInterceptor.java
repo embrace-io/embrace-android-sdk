@@ -10,9 +10,8 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
-import io.embrace.android.embracesdk.clock.Clock;
-import io.embrace.android.embracesdk.clock.SystemClock;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
+import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.EmbraceHttpPathOverride;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
@@ -65,7 +64,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
     final Clock systemClock;
 
     public EmbraceOkHttp3NetworkInterceptor() {
-        this(Embrace.getInstance(), new SystemClock());
+        this(Embrace.getInstance(), System::currentTimeMillis);
     }
 
     EmbraceOkHttp3NetworkInterceptor(Embrace embrace, Clock systemClock) {

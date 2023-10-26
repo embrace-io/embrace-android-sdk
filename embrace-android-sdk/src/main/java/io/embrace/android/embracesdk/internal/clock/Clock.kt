@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.clock
+package io.embrace.android.embracesdk.internal.clock
 
 import io.embrace.android.embracesdk.InternalApi
 

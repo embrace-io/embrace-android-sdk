@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
 import android.os.SystemClock
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.utils.BuildVersionChecker
 import java.util.concurrent.TimeUnit
 

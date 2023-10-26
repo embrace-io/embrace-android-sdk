@@ -4,8 +4,8 @@ import android.app.ActivityManager
 import android.os.Process
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.util.NavigableMap

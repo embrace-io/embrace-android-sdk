@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.anr
 
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample

@@ -1,10 +1,12 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-import io.embrace.android.embracesdk.HttpPathOverrideRequest;
 import io.embrace.android.embracesdk.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
@@ -28,13 +30,15 @@ public class EmbraceHttpPathOverride {
     private static final Pattern RELATIVE_PATH_PATTERN = Pattern.compile("[A-Za-z0-9-._~:/\\[\\]@!$&'()*+,;=]+");
 
     @SuppressWarnings("AbbreviationAsWordInNameCheck")
-    public static String getURLString(HttpPathOverrideRequest request) {
+    @NonNull
+    public static String getURLString(@NonNull HttpPathOverrideRequest request) {
         return getURLString(request, request.getHeaderByName(PATH_OVERRIDE));
     }
 
     @SuppressWarnings("AbbreviationAsWordInNameCheck")
     @InternalApi
-    public static String getURLString(HttpPathOverrideRequest request, String pathOverride) {
+    @NonNull
+    public static String getURLString(@NonNull HttpPathOverrideRequest request, @Nullable String pathOverride) {
         String url;
         try {
             if (pathOverride != null && validatePathOverride(pathOverride)) {
@@ -65,7 +69,7 @@ public class EmbraceHttpPathOverride {
         }
         if (!StandardCharsets.US_ASCII.newEncoder().canEncode(path)) {
             InternalStaticEmbraceLogger.logError("Relative path must not contain unicode " +
-                    "characters. Relative path " + path + " will be ignored.");
+                "characters. Relative path " + path + " will be ignored.");
             return false;
         }
         if (!path.startsWith("/")) {
@@ -74,7 +78,7 @@ public class EmbraceHttpPathOverride {
         }
         if (!RELATIVE_PATH_PATTERN.matcher(path).matches()) {
             InternalStaticEmbraceLogger.logError("Relative path contains invalid chars. " +
-                    "Relative path " + path + " will be ignored.");
+                "Relative path " + path + " will be ignored.");
             return false;
         }
 

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
 
@@ -36,6 +36,7 @@ import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
+import io.embrace.android.embracesdk.network.http.HttpMethod;
 import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
 

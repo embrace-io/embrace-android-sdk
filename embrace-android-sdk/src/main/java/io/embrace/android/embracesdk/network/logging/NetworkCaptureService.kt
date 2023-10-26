@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 
 internal interface NetworkCaptureService {
 

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import android.annotation.TargetApi;
 
@@ -27,8 +27,7 @@ import javax.net.ssl.SSLSocketFactory;
  */
 class EmbraceHttpsUrlConnectionImpl<T extends HttpsURLConnection> extends HttpsURLConnection {
 
-    private final EmbraceHttpsUrlConnection embraceHttpsUrlConnectionService;
-
+    private final EmbraceHttpsUrlConnection embraceHttpsUrlConnectionDelegate;
 
     /**
      * Wraps an existing {@link HttpsURLConnection} with the Embrace network logic.
@@ -38,318 +37,318 @@ class EmbraceHttpsUrlConnectionImpl<T extends HttpsURLConnection> extends HttpsU
      */
     public EmbraceHttpsUrlConnectionImpl(T connection, boolean enableWrapIoStreams) {
         super(connection.getURL());
-        embraceHttpsUrlConnectionService = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
+        embraceHttpsUrlConnectionDelegate = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
     }
 
     @Override
     public void addRequestProperty(String key, String value) {
-        this.embraceHttpsUrlConnectionService.addRequestProperty(key, value);
+        this.embraceHttpsUrlConnectionDelegate.addRequestProperty(key, value);
     }
 
     @Override
     public void connect() throws IOException {
-        this.embraceHttpsUrlConnectionService.connect();
+        this.embraceHttpsUrlConnectionDelegate.connect();
     }
 
     @Override
     public void disconnect() {
-        this.embraceHttpsUrlConnectionService.disconnect();
+        this.embraceHttpsUrlConnectionDelegate.disconnect();
     }
 
     @Override
     public boolean getAllowUserInteraction() {
-        return this.embraceHttpsUrlConnectionService.getAllowUserInteraction();
+        return this.embraceHttpsUrlConnectionDelegate.getAllowUserInteraction();
     }
 
     @Override
     public void setAllowUserInteraction(boolean allowUserInteraction) {
-        this.embraceHttpsUrlConnectionService.setAllowUserInteraction(allowUserInteraction);
+        this.embraceHttpsUrlConnectionDelegate.setAllowUserInteraction(allowUserInteraction);
     }
 
     @Override
     public int getConnectTimeout() {
-        return this.embraceHttpsUrlConnectionService.getConnectTimeout();
+        return this.embraceHttpsUrlConnectionDelegate.getConnectTimeout();
     }
 
     @Override
     public void setConnectTimeout(int timeout) {
-        this.embraceHttpsUrlConnectionService.setConnectTimeout(timeout);
+        this.embraceHttpsUrlConnectionDelegate.setConnectTimeout(timeout);
     }
 
     @Override
     public Object getContent() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getContent();
+        return this.embraceHttpsUrlConnectionDelegate.getContent();
     }
 
     @Override
     public Object getContent(Class[] classes) throws IOException {
-        return this.embraceHttpsUrlConnectionService.getContent(classes);
+        return this.embraceHttpsUrlConnectionDelegate.getContent(classes);
     }
 
     @Override
     public String getContentEncoding() {
-        return this.embraceHttpsUrlConnectionService.getContentEncoding();
+        return this.embraceHttpsUrlConnectionDelegate.getContentEncoding();
     }
 
     @Override
     public int getContentLength() {
-        return this.embraceHttpsUrlConnectionService.getContentLength();
+        return this.embraceHttpsUrlConnectionDelegate.getContentLength();
     }
 
     @Override
     @TargetApi(24)
     public long getContentLengthLong() {
-        return this.embraceHttpsUrlConnectionService.getContentLengthLong();
+        return this.embraceHttpsUrlConnectionDelegate.getContentLengthLong();
     }
 
     @Override
     public String getContentType() {
-        return this.embraceHttpsUrlConnectionService.getContentType();
+        return this.embraceHttpsUrlConnectionDelegate.getContentType();
     }
 
     @Override
     public long getDate() {
-        return this.embraceHttpsUrlConnectionService.getDate();
+        return this.embraceHttpsUrlConnectionDelegate.getDate();
     }
 
     @Override
     public boolean getDefaultUseCaches() {
-        return this.embraceHttpsUrlConnectionService.getDefaultUseCaches();
+        return this.embraceHttpsUrlConnectionDelegate.getDefaultUseCaches();
     }
 
     @Override
     public void setDefaultUseCaches(boolean defaultUseCaches) {
-        this.embraceHttpsUrlConnectionService.setDefaultUseCaches(defaultUseCaches);
+        this.embraceHttpsUrlConnectionDelegate.setDefaultUseCaches(defaultUseCaches);
     }
 
     @Override
     public boolean getDoInput() {
-        return this.embraceHttpsUrlConnectionService.getDoInput();
+        return this.embraceHttpsUrlConnectionDelegate.getDoInput();
     }
 
     @Override
     public void setDoInput(boolean doInput) {
-        this.embraceHttpsUrlConnectionService.setDoInput(doInput);
+        this.embraceHttpsUrlConnectionDelegate.setDoInput(doInput);
     }
 
     @Override
     public boolean getDoOutput() {
-        return this.embraceHttpsUrlConnectionService.getDoOutput();
+        return this.embraceHttpsUrlConnectionDelegate.getDoOutput();
     }
 
     @Override
     public void setDoOutput(boolean doOutput) {
-        this.embraceHttpsUrlConnectionService.setDoOutput(doOutput);
+        this.embraceHttpsUrlConnectionDelegate.setDoOutput(doOutput);
     }
 
     @Override
     public InputStream getErrorStream() {
-        return this.embraceHttpsUrlConnectionService.getErrorStream();
+        return this.embraceHttpsUrlConnectionDelegate.getErrorStream();
     }
 
     @Override
     public String getHeaderField(int n) {
-        return this.embraceHttpsUrlConnectionService.getHeaderField(n);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderField(n);
     }
 
     @Override
     public String getHeaderField(String name) {
-        return this.embraceHttpsUrlConnectionService.getHeaderField(name);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderField(name);
     }
 
     @Override
     public long getHeaderFieldDate(String name, long defaultValue) {
-        return this.embraceHttpsUrlConnectionService.getHeaderFieldDate(name, defaultValue);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderFieldDate(name, defaultValue);
     }
 
     @Override
     public int getHeaderFieldInt(String name, int defaultValue) {
-        return this.embraceHttpsUrlConnectionService.getHeaderFieldInt(name, defaultValue);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderFieldInt(name, defaultValue);
     }
 
     @Override
     public String getHeaderFieldKey(int n) {
-        return this.embraceHttpsUrlConnectionService.getHeaderFieldKey(n);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderFieldKey(n);
     }
 
     @Override
     @TargetApi(24)
     public long getHeaderFieldLong(String name, long defaultValue) {
-        return this.embraceHttpsUrlConnectionService.getHeaderFieldLong(name, defaultValue);
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderFieldLong(name, defaultValue);
     }
 
     @Override
     public Map<String, List<String>> getHeaderFields() {
-        return this.embraceHttpsUrlConnectionService.getHeaderFields();
+        return this.embraceHttpsUrlConnectionDelegate.getHeaderFields();
     }
 
     @Override
     public long getIfModifiedSince() {
-        return this.embraceHttpsUrlConnectionService.getIfModifiedSince();
+        return this.embraceHttpsUrlConnectionDelegate.getIfModifiedSince();
     }
 
     @Override
     public void setIfModifiedSince(long ifModifiedSince) {
-        this.embraceHttpsUrlConnectionService.setIfModifiedSince(ifModifiedSince);
+        this.embraceHttpsUrlConnectionDelegate.setIfModifiedSince(ifModifiedSince);
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getInputStream();
+        return this.embraceHttpsUrlConnectionDelegate.getInputStream();
     }
 
     @Override
     public boolean getInstanceFollowRedirects() {
-        return this.embraceHttpsUrlConnectionService.getInstanceFollowRedirects();
+        return this.embraceHttpsUrlConnectionDelegate.getInstanceFollowRedirects();
     }
 
     @Override
     public void setInstanceFollowRedirects(boolean followRedirects) {
-        this.embraceHttpsUrlConnectionService.setInstanceFollowRedirects(followRedirects);
+        this.embraceHttpsUrlConnectionDelegate.setInstanceFollowRedirects(followRedirects);
     }
 
     @Override
     public long getLastModified() {
-        return this.embraceHttpsUrlConnectionService.getLastModified();
+        return this.embraceHttpsUrlConnectionDelegate.getLastModified();
     }
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getOutputStream();
+        return this.embraceHttpsUrlConnectionDelegate.getOutputStream();
     }
 
     @Override
     public Permission getPermission() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getPermission();
+        return this.embraceHttpsUrlConnectionDelegate.getPermission();
     }
 
     @Override
     public int getReadTimeout() {
-        return this.embraceHttpsUrlConnectionService.getReadTimeout();
+        return this.embraceHttpsUrlConnectionDelegate.getReadTimeout();
     }
 
     @Override
     public void setReadTimeout(int timeout) {
-        this.embraceHttpsUrlConnectionService.setReadTimeout(timeout);
+        this.embraceHttpsUrlConnectionDelegate.setReadTimeout(timeout);
     }
 
     @Override
     public String getRequestMethod() {
-        return this.embraceHttpsUrlConnectionService.getRequestMethod();
+        return this.embraceHttpsUrlConnectionDelegate.getRequestMethod();
     }
 
     @Override
     public void setRequestMethod(String method) throws ProtocolException {
-        this.embraceHttpsUrlConnectionService.setRequestMethod(method);
+        this.embraceHttpsUrlConnectionDelegate.setRequestMethod(method);
     }
 
     @Override
     public Map<String, List<String>> getRequestProperties() {
-        return this.embraceHttpsUrlConnectionService.getRequestProperties();
+        return this.embraceHttpsUrlConnectionDelegate.getRequestProperties();
     }
 
     @Override
     public String getRequestProperty(String key) {
-        return this.embraceHttpsUrlConnectionService.getRequestProperty(key);
+        return this.embraceHttpsUrlConnectionDelegate.getRequestProperty(key);
     }
 
     @Override
     public int getResponseCode() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getResponseCode();
+        return this.embraceHttpsUrlConnectionDelegate.getResponseCode();
     }
 
     @Override
     public String getResponseMessage() throws IOException {
-        return this.embraceHttpsUrlConnectionService.getResponseMessage();
+        return this.embraceHttpsUrlConnectionDelegate.getResponseMessage();
     }
 
     @Override
     public URL getURL() {
-        return this.embraceHttpsUrlConnectionService.getUrl();
+        return this.embraceHttpsUrlConnectionDelegate.getUrl();
     }
 
     @Override
     public boolean getUseCaches() {
-        return this.embraceHttpsUrlConnectionService.getUseCaches();
+        return this.embraceHttpsUrlConnectionDelegate.getUseCaches();
     }
 
     @Override
     public void setUseCaches(boolean useCaches) {
-        this.embraceHttpsUrlConnectionService.setUseCaches(useCaches);
+        this.embraceHttpsUrlConnectionDelegate.setUseCaches(useCaches);
     }
 
     @Override
     public void setChunkedStreamingMode(int chunkLen) {
-        this.embraceHttpsUrlConnectionService.setChunkedStreamingMode(chunkLen);
+        this.embraceHttpsUrlConnectionDelegate.setChunkedStreamingMode(chunkLen);
     }
 
     @Override
     public void setFixedLengthStreamingMode(int contentLength) {
-        this.embraceHttpsUrlConnectionService.setFixedLengthStreamingMode(contentLength);
+        this.embraceHttpsUrlConnectionDelegate.setFixedLengthStreamingMode(contentLength);
     }
 
     @Override
     public void setFixedLengthStreamingMode(long contentLength) {
-        this.embraceHttpsUrlConnectionService.setFixedLengthStreamingMode(contentLength);
+        this.embraceHttpsUrlConnectionDelegate.setFixedLengthStreamingMode(contentLength);
     }
 
     @Override
     public void setRequestProperty(String key, String value) {
-        this.embraceHttpsUrlConnectionService.setRequestProperty(key, value);
+        this.embraceHttpsUrlConnectionDelegate.setRequestProperty(key, value);
     }
 
     @Override
     public String toString() {
-        return this.embraceHttpsUrlConnectionService.toString();
+        return this.embraceHttpsUrlConnectionDelegate.toString();
     }
 
     @Override
     public boolean usingProxy() {
-        return this.embraceHttpsUrlConnectionService.usingProxy();
+        return this.embraceHttpsUrlConnectionDelegate.usingProxy();
     }
 
     @Override
     public String getCipherSuite() {
-        return this.embraceHttpsUrlConnectionService.getCipherSuite();
+        return this.embraceHttpsUrlConnectionDelegate.getCipherSuite();
     }
 
     @Override
     public Certificate[] getLocalCertificates() {
-        return this.embraceHttpsUrlConnectionService.getLocalCertificates();
+        return this.embraceHttpsUrlConnectionDelegate.getLocalCertificates();
     }
 
     @Override
     public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
-        return this.embraceHttpsUrlConnectionService.getServerCertificates();
+        return this.embraceHttpsUrlConnectionDelegate.getServerCertificates();
     }
 
     @Override
     public SSLSocketFactory getSSLSocketFactory() {
-        return this.embraceHttpsUrlConnectionService.getSslSocketFactory();
+        return this.embraceHttpsUrlConnectionDelegate.getSslSocketFactory();
     }
 
     @Override
     public void setSSLSocketFactory(SSLSocketFactory factory) {
-        this.embraceHttpsUrlConnectionService.setSslSocketFactory(factory);
+        this.embraceHttpsUrlConnectionDelegate.setSslSocketFactory(factory);
     }
 
     @Override
     public HostnameVerifier getHostnameVerifier() {
-        return this.embraceHttpsUrlConnectionService.getHostnameVerifier();
+        return this.embraceHttpsUrlConnectionDelegate.getHostnameVerifier();
     }
 
     @Override
     public void setHostnameVerifier(HostnameVerifier verifier) {
-        this.embraceHttpsUrlConnectionService.setHostnameVerifier(verifier);
+        this.embraceHttpsUrlConnectionDelegate.setHostnameVerifier(verifier);
     }
 
 
     public Principal getLocalPrincipal() {
-        return embraceHttpsUrlConnectionService.getLocalPrincipal();
+        return embraceHttpsUrlConnectionDelegate.getLocalPrincipal();
     }
 
 
     public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-        return embraceHttpsUrlConnectionService.getPeerPrincipal();
+        return embraceHttpsUrlConnectionDelegate.getPeerPrincipal();
     }
 }

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import android.annotation.TargetApi;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 
 class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLConnection {
 
-    private final EmbraceHttpUrlConnection embraceConnectionService;
+    private final EmbraceHttpUrlConnection embraceHttpUrlConnectionDelegate;
 
     /**
      * Wraps an existing {@link HttpURLConnection} with the Embrace network logic.
@@ -24,273 +24,273 @@ class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLC
      */
     public EmbraceHttpUrlConnectionImpl(T connection, boolean enableWrapIoStreams) {
         super(connection.getURL());
-        embraceConnectionService = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
+        embraceHttpUrlConnectionDelegate = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
     }
 
     @Override
     public void addRequestProperty(String key, String value) {
-        embraceConnectionService.addRequestProperty(key, value);
+        embraceHttpUrlConnectionDelegate.addRequestProperty(key, value);
     }
 
     @Override
     public void connect() throws IOException {
-        embraceConnectionService.connect();
+        embraceHttpUrlConnectionDelegate.connect();
     }
 
     @Override
     public void disconnect() {
-        embraceConnectionService.disconnect();
+        embraceHttpUrlConnectionDelegate.disconnect();
     }
 
     @Override
     public boolean getAllowUserInteraction() {
-        return embraceConnectionService.getAllowUserInteraction();
+        return embraceHttpUrlConnectionDelegate.getAllowUserInteraction();
     }
 
     @Override
     public void setAllowUserInteraction(boolean allowUserInteraction) {
-        embraceConnectionService.setAllowUserInteraction(allowUserInteraction);
+        embraceHttpUrlConnectionDelegate.setAllowUserInteraction(allowUserInteraction);
     }
 
     @Override
     public int getConnectTimeout() {
-        return embraceConnectionService.getConnectTimeout();
+        return embraceHttpUrlConnectionDelegate.getConnectTimeout();
     }
 
     @Override
     public void setConnectTimeout(int timeout) {
-        embraceConnectionService.setConnectTimeout(timeout);
+        embraceHttpUrlConnectionDelegate.setConnectTimeout(timeout);
     }
 
     @Override
     public Object getContent() throws IOException {
-        return embraceConnectionService.getContent();
+        return embraceHttpUrlConnectionDelegate.getContent();
     }
 
     @Override
     public Object getContent(Class[] classes) throws IOException {
-        return embraceConnectionService.getContent(classes);
+        return embraceHttpUrlConnectionDelegate.getContent(classes);
     }
 
     @Override
     public String getContentEncoding() {
-        return embraceConnectionService.getContentEncoding();
+        return embraceHttpUrlConnectionDelegate.getContentEncoding();
     }
 
     @Override
     public int getContentLength() {
-        return embraceConnectionService.getContentLength();
+        return embraceHttpUrlConnectionDelegate.getContentLength();
     }
 
     @Override
     @TargetApi(24)
     public long getContentLengthLong() {
-        return embraceConnectionService.getContentLengthLong();
+        return embraceHttpUrlConnectionDelegate.getContentLengthLong();
     }
 
     @Override
     public String getContentType() {
-        return embraceConnectionService.getContentType();
+        return embraceHttpUrlConnectionDelegate.getContentType();
     }
 
     @Override
     public long getDate() {
-        return embraceConnectionService.getDate();
+        return embraceHttpUrlConnectionDelegate.getDate();
     }
 
     @Override
     public boolean getDefaultUseCaches() {
-        return embraceConnectionService.getDefaultUseCaches();
+        return embraceHttpUrlConnectionDelegate.getDefaultUseCaches();
     }
 
     @Override
     public void setDefaultUseCaches(boolean defaultUseCaches) {
-        embraceConnectionService.setDefaultUseCaches(defaultUseCaches);
+        embraceHttpUrlConnectionDelegate.setDefaultUseCaches(defaultUseCaches);
     }
 
     @Override
     public boolean getDoInput() {
-        return embraceConnectionService.getDoInput();
+        return embraceHttpUrlConnectionDelegate.getDoInput();
     }
 
     @Override
     public void setDoInput(boolean doInput) {
-        embraceConnectionService.setDoInput(doInput);
+        embraceHttpUrlConnectionDelegate.setDoInput(doInput);
     }
 
     @Override
     public boolean getDoOutput() {
-        return embraceConnectionService.getDoOutput();
+        return embraceHttpUrlConnectionDelegate.getDoOutput();
     }
 
     @Override
     public void setDoOutput(boolean doOutput) {
-        embraceConnectionService.setDoOutput(doOutput);
+        embraceHttpUrlConnectionDelegate.setDoOutput(doOutput);
     }
 
     @Override
     public InputStream getErrorStream() {
-        return embraceConnectionService.getErrorStream();
+        return embraceHttpUrlConnectionDelegate.getErrorStream();
     }
 
     @Override
     public String getHeaderField(int n) {
-        return embraceConnectionService.getHeaderField(n);
+        return embraceHttpUrlConnectionDelegate.getHeaderField(n);
     }
 
     @Override
     public String getHeaderField(String name) {
-        return embraceConnectionService.getHeaderField(name);
+        return embraceHttpUrlConnectionDelegate.getHeaderField(name);
     }
 
     @Override
     public long getHeaderFieldDate(String name, long defaultValue) {
-        return embraceConnectionService.getHeaderFieldDate(name, defaultValue);
+        return embraceHttpUrlConnectionDelegate.getHeaderFieldDate(name, defaultValue);
     }
 
     @Override
     public int getHeaderFieldInt(String name, int defaultValue) {
-        return embraceConnectionService.getHeaderFieldInt(name, defaultValue);
+        return embraceHttpUrlConnectionDelegate.getHeaderFieldInt(name, defaultValue);
     }
 
     @Override
     public String getHeaderFieldKey(int n) {
-        return embraceConnectionService.getHeaderFieldKey(n);
+        return embraceHttpUrlConnectionDelegate.getHeaderFieldKey(n);
     }
 
     @Override
     @TargetApi(24)
     public long getHeaderFieldLong(String name, long defaultValue) {
-        return embraceConnectionService.getHeaderFieldLong(name, defaultValue);
+        return embraceHttpUrlConnectionDelegate.getHeaderFieldLong(name, defaultValue);
     }
 
     @Override
     public Map<String, List<String>> getHeaderFields() {
-        return embraceConnectionService.getHeaderFields();
+        return embraceHttpUrlConnectionDelegate.getHeaderFields();
     }
 
     @Override
     public long getIfModifiedSince() {
-        return embraceConnectionService.getIfModifiedSince();
+        return embraceHttpUrlConnectionDelegate.getIfModifiedSince();
     }
 
     @Override
     public void setIfModifiedSince(long ifModifiedSince) {
-        embraceConnectionService.setIfModifiedSince(ifModifiedSince);
+        embraceHttpUrlConnectionDelegate.setIfModifiedSince(ifModifiedSince);
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return embraceConnectionService.getInputStream();
+        return embraceHttpUrlConnectionDelegate.getInputStream();
     }
 
     @Override
     public boolean getInstanceFollowRedirects() {
-        return embraceConnectionService.getInstanceFollowRedirects();
+        return embraceHttpUrlConnectionDelegate.getInstanceFollowRedirects();
     }
 
     @Override
     public void setInstanceFollowRedirects(boolean followRedirects) {
-        embraceConnectionService.setInstanceFollowRedirects(followRedirects);
+        embraceHttpUrlConnectionDelegate.setInstanceFollowRedirects(followRedirects);
     }
 
     @Override
     public long getLastModified() {
-        return embraceConnectionService.getLastModified();
+        return embraceHttpUrlConnectionDelegate.getLastModified();
     }
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        return embraceConnectionService.getOutputStream();
+        return embraceHttpUrlConnectionDelegate.getOutputStream();
     }
 
     @Override
     public Permission getPermission() throws IOException {
-        return embraceConnectionService.getPermission();
+        return embraceHttpUrlConnectionDelegate.getPermission();
     }
 
     @Override
     public int getReadTimeout() {
-        return embraceConnectionService.getReadTimeout();
+        return embraceHttpUrlConnectionDelegate.getReadTimeout();
     }
 
     @Override
     public void setReadTimeout(int timeout) {
-        embraceConnectionService.setReadTimeout(timeout);
+        embraceHttpUrlConnectionDelegate.setReadTimeout(timeout);
     }
 
     @Override
     public String getRequestMethod() {
-        return embraceConnectionService.getRequestMethod();
+        return embraceHttpUrlConnectionDelegate.getRequestMethod();
     }
 
     @Override
     public void setRequestMethod(String method) throws ProtocolException {
-        embraceConnectionService.setRequestMethod(method);
+        embraceHttpUrlConnectionDelegate.setRequestMethod(method);
     }
 
     @Override
     public Map<String, List<String>> getRequestProperties() {
-        return embraceConnectionService.getRequestProperties();
+        return embraceHttpUrlConnectionDelegate.getRequestProperties();
     }
 
     @Override
     public String getRequestProperty(String key) {
-        return embraceConnectionService.getRequestProperty(key);
+        return embraceHttpUrlConnectionDelegate.getRequestProperty(key);
     }
 
     @Override
     public int getResponseCode() throws IOException {
-        return embraceConnectionService.getResponseCode();
+        return embraceHttpUrlConnectionDelegate.getResponseCode();
     }
 
     @Override
     public String getResponseMessage() throws IOException {
-        return embraceConnectionService.getResponseMessage();
+        return embraceHttpUrlConnectionDelegate.getResponseMessage();
     }
 
     @Override
     public URL getURL() {
-        return embraceConnectionService.getUrl();
+        return embraceHttpUrlConnectionDelegate.getUrl();
     }
 
     @Override
     public boolean getUseCaches() {
-        return embraceConnectionService.getUseCaches();
+        return embraceHttpUrlConnectionDelegate.getUseCaches();
     }
 
     @Override
     public void setUseCaches(boolean useCaches) {
-        embraceConnectionService.setUseCaches(useCaches);
+        embraceHttpUrlConnectionDelegate.setUseCaches(useCaches);
     }
 
     @Override
     public void setChunkedStreamingMode(int chunkLen) {
-        embraceConnectionService.setChunkedStreamingMode(chunkLen);
+        embraceHttpUrlConnectionDelegate.setChunkedStreamingMode(chunkLen);
     }
 
     @Override
     public void setFixedLengthStreamingMode(int contentLength) {
-        embraceConnectionService.setFixedLengthStreamingMode(contentLength);
+        embraceHttpUrlConnectionDelegate.setFixedLengthStreamingMode(contentLength);
     }
 
     @Override
     public void setFixedLengthStreamingMode(long contentLength) {
-        embraceConnectionService.setFixedLengthStreamingMode(contentLength);
+        embraceHttpUrlConnectionDelegate.setFixedLengthStreamingMode(contentLength);
     }
 
     @Override
     public void setRequestProperty(String key, String value) {
-        embraceConnectionService.setRequestProperty(key, value);
+        embraceHttpUrlConnectionDelegate.setRequestProperty(key, value);
     }
 
     @Override
     public String toString() {
-        return embraceConnectionService.toString();
+        return embraceHttpUrlConnectionDelegate.toString();
     }
 
     @Override
     public boolean usingProxy() {
-        return embraceConnectionService.usingProxy();
+        return embraceHttpUrlConnectionDelegate.usingProxy();
     }
 }

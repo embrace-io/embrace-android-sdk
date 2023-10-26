@@ -1,9 +1,10 @@
-package io.embrace.android.embracesdk.network.http
+package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk

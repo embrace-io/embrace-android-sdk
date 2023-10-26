@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http
+package io.embrace.android.embracesdk.internal.network.http
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4

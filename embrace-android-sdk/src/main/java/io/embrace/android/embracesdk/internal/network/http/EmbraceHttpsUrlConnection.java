@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

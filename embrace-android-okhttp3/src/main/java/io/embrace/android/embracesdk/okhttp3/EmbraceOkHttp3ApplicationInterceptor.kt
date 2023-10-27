@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.okhttp3
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.InternalApi
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
-import io.embrace.android.embracesdk.internal.utils.causeMessage
-import io.embrace.android.embracesdk.internal.utils.causeName
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.Interceptor
@@ -92,5 +90,21 @@ public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
         const val TRACEPARENT_HEADER_NAME = "traceparent"
         const val UNKNOWN_EXCEPTION = "Unknown"
         const val UNKNOWN_MESSAGE = "An error occurred during the execution of this network request"
+
+        /**
+         * Return the canonical name of the cause of a [Throwable]. Handles null elements throughout,
+         * including the throwable and its cause, in which case [defaultName] is returned
+         */
+        fun causeName(throwable: Throwable?, defaultName: String = ""): String {
+            return throwable?.cause?.javaClass?.canonicalName ?: defaultName
+        }
+
+        /**
+         * Return the message of the cause of a [Throwable]. Handles null elements throughout,
+         * including the throwable and its cause, in which case [defaultMessage] is returned
+         */
+        fun causeMessage(throwable: Throwable?, defaultMessage: String = ""): String {
+            return throwable?.cause?.message ?: defaultMessage
+        }
     }
 }

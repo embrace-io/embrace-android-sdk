@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.UNKNOWN_EXCEPTION
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.UNKNOWN_MESSAGE
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.causeMessage
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.causeName
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_ENCODING_HEADER_NAME
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_LENGTH_HEADER_NAME
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_TYPE_EVENT_STREAM
@@ -420,6 +422,48 @@ internal class EmbraceOkHttp3InterceptorsTest {
         assertThrows(SocketException::class.java) { runPostRequest() }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+    }
+
+    @Test
+    fun `test throwableName`() {
+        assertEquals("name should be empty string if the Throwable is null", causeName(null), "")
+        assertEquals(
+            "name should be empty string if the Throwable's cause is null",
+            causeName(RuntimeException("message", null)),
+            ""
+        )
+        assertEquals(
+            "name is unexpected",
+            causeName(
+                RuntimeException("message", IllegalArgumentException())
+            ),
+            IllegalArgumentException::class.qualifiedName
+        )
+    }
+
+    @Test
+    fun `test throwableMessage`() {
+        assertEquals(
+            "message should be empty string if Throwable is null",
+            causeMessage(null),
+            ""
+        )
+        assertEquals(
+            "message should be empty string if the Throwable's cause is null",
+            causeMessage(RuntimeException("message", null)),
+            ""
+        )
+        assertEquals(
+            "message should be empty string if the Throwable's cause's message is null",
+            causeMessage(RuntimeException("message", IllegalArgumentException())),
+            ""
+        )
+        val message = "this is a message"
+        assertEquals(
+            "message is unexpected",
+            causeMessage(RuntimeException("message", IllegalArgumentException(message))),
+            message
+        )
     }
 
     private fun createBaseMockResponse(httpStatus: Int = 200) =

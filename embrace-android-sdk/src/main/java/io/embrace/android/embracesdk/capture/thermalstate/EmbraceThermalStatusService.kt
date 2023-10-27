@@ -4,7 +4,7 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.ThermalState
 import java.util.LinkedList

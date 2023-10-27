@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.orientation.EmbraceOrientationService
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

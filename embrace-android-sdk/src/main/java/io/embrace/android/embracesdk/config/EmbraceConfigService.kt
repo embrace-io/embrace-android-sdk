@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.config
 
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
@@ -22,6 +21,7 @@ import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.ActivityListener

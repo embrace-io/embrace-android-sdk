@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -27,7 +28,7 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService;
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
-import io.embrace.android.embracesdk.clock.Clock;
+import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
@@ -53,12 +54,16 @@ import io.embrace.android.embracesdk.injection.InitModule;
 import io.embrace.android.embracesdk.injection.InitModuleImpl;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
+import io.embrace.android.embracesdk.injection.SessionModule;
+import io.embrace.android.embracesdk.injection.SessionModuleImpl;
 import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.BuildInfo;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -87,8 +92,6 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService;
 import io.embrace.android.embracesdk.session.EmbraceActivityService;
 import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.EmbraceSessionService;
-import io.embrace.android.embracesdk.injection.SessionModule;
-import io.embrace.android.embracesdk.injection.SessionModuleImpl;
 import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
@@ -256,7 +259,7 @@ final class EmbraceImpl {
         DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
 
     @NonNull
-    private final Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule, DeliveryModule>
+    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
         deliveryModuleSupplier;
 
     //variable pointing to the composeActivityListener instance obtained using reflection
@@ -273,7 +276,7 @@ final class EmbraceImpl {
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
-                @NonNull Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule,
+                @NonNull Function3<CoreModule, EssentialServiceModule, WorkerThreadModule,
                     DeliveryModule> deliveryModuleSupplier) {
         initModule = initModuleSupplier.invoke();
         sdkClock = initModule.getClock();
@@ -304,7 +307,7 @@ final class EmbraceImpl {
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
      * <p>
-     * See <a href="https://docs.embrace.io/docs/android-integration-guide">Embrace Docs</a> for
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
      * integration instructions. For compatibility with other networking SDKs such as Akamai,
      * the Embrace SDK must be initialized after any other SDK.
      *
@@ -446,13 +449,11 @@ final class EmbraceImpl {
         serviceRegistry.registerService(exceptionsService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
-        serviceRegistry.registerService(dataCaptureServiceModule.getNetworkConnectivityService());
+        serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
 
         final DeliveryModule deliveryModule = deliveryModuleSupplier.invoke(
-            initModule,
             coreModule,
             essentialServiceModule,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
 
@@ -484,7 +485,6 @@ final class EmbraceImpl {
             essentialServiceModule,
             deliveryModule,
             sessionProperties,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
         remoteLogger = customerLogModule.getRemoteLogger();
@@ -609,6 +609,7 @@ final class EmbraceImpl {
 
         // initialize internal interfaces
         InternalInterfaceModuleImpl internalInterfaceModule = new InternalInterfaceModuleImpl(
+            initModule,
             coreModule,
             androidServicesModule,
             essentialServiceModule,
@@ -1010,9 +1011,9 @@ final class EmbraceImpl {
      * <p>
      * The length of time a moment takes to execute is recorded.
      *
-     * @param name            a name identifying the moment
-     * @param identifier      an identifier distinguishing between multiple moments with the same name
-     * @param properties      custom key-value pairs to provide with the moment
+     * @param name       a name identifying the moment
+     * @param identifier an identifier distinguishing between multiple moments with the same name
+     * @param properties custom key-value pairs to provide with the moment
      */
     public void startMoment(@NonNull String name,
                             @Nullable String identifier,
@@ -1071,14 +1072,19 @@ final class EmbraceImpl {
     }
 
     public void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        internalEmbraceLogger.logDeveloper("Embrace", "recordNetworkRequest()");
+        if (isStarted() && embraceInternalInterface != null) {
+            embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
+        }
+    }
 
+    public void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
         if (request == null) {
             internalEmbraceLogger.logDeveloper("Embrace", "Request is null");
             return;
         }
 
         logNetworkRequestImpl(
+            callId,
             request.getNetworkCaptureData(),
             request.getUrl(),
             request.getHttpMethod(),
@@ -1094,7 +1100,8 @@ final class EmbraceImpl {
         );
     }
 
-    private void logNetworkRequestImpl(@Nullable NetworkCaptureData networkCaptureData,
+    private void logNetworkRequestImpl(@NonNull String callId,
+                                       @Nullable NetworkCaptureData networkCaptureData,
                                        String url,
                                        String httpMethod,
                                        Long startTime,
@@ -1117,6 +1124,7 @@ final class EmbraceImpl {
                 !errorType.isEmpty() &&
                 !errorMessage.isEmpty()) {
                 networkLoggingService.logNetworkError(
+                    callId,
                     url,
                     httpMethod,
                     startTime,
@@ -1128,6 +1136,7 @@ final class EmbraceImpl {
                     networkCaptureData);
             } else {
                 networkLoggingService.logNetworkCall(
+                    callId,
                     url,
                     httpMethod,
                     responseCode != null ? responseCode : 0,
@@ -1558,7 +1567,12 @@ final class EmbraceImpl {
      */
     @NonNull
     EmbraceInternalInterface getEmbraceInternalInterface() {
-        return embraceInternalInterface;
+        if (isStarted() && embraceInternalInterface != null) {
+            return embraceInternalInterface;
+        } else {
+            return EmbraceInternalInterfaceKt.getDefaultImpl();
+        }
+
     }
 
     /**
@@ -1653,8 +1667,13 @@ final class EmbraceImpl {
         }
     }
 
-    public boolean shouldCaptureNetworkCall(String url, String method) {
-        return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+    public boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
+        if (isStarted() && networkCaptureService != null) {
+            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+        } else {
+            internalEmbraceLogger.logSDKNotInitialized("Embrace SDK is not initialized yet, cannot check for capture rules.");
+            return false;
+        }
     }
 
     public void setProcessStartedByNotification() {

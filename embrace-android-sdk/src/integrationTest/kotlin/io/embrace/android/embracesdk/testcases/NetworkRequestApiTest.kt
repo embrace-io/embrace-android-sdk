@@ -14,6 +14,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.util.UUID
 import kotlin.math.max
 
 @RunWith(AndroidJUnit4::class)
@@ -202,6 +203,81 @@ internal class NetworkRequestApiTest {
         }
     }
 
+    @Test
+    fun `ensure calls with same callId but different start times are deduped`() {
+        val expectedStartTime = START_TIME + 1
+        with(testRule) {
+            harness.recordSession {
+                harness.fakeConfigService.updateListeners()
+                harness.fakeClock.tick(5)
+
+                val callId = UUID.randomUUID().toString()
+                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
+                    callId,
+                    EmbraceNetworkRequest.fromCompletedRequest(
+                        "$URL/bad",
+                        HttpMethod.GET,
+                        START_TIME,
+                        END_TIME,
+                        BYTES_SENT,
+                        BYTES_RECEIVED,
+                        200
+                    )
+                )
+                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
+                    callId,
+                    EmbraceNetworkRequest.fromCompletedRequest(
+                        URL,
+                        HttpMethod.GET,
+                        expectedStartTime,
+                        expectedStartTime + 1,
+                        BYTES_SENT,
+                        BYTES_RECEIVED,
+                        200
+                    )
+                )
+            }
+
+            val networkCall = validateAndReturnExpectedNetworkCall()
+            assertEquals(URL, networkCall.url)
+            assertEquals(expectedStartTime, networkCall.startTime)
+        }
+    }
+
+    /**
+     * This reproduces the bug that will be fixed. Uncomment when ready.
+     */
+    @Test
+    fun `ensure network calls with the same start time are recorded properly`() {
+        with(testRule) {
+            harness.recordSession {
+                harness.fakeConfigService.updateListeners()
+                harness.fakeClock.tick(5)
+
+                val request = EmbraceNetworkRequest.fromCompletedRequest(
+                    URL,
+                    HttpMethod.GET,
+                    START_TIME,
+                    END_TIME,
+                    BYTES_SENT,
+                    BYTES_RECEIVED,
+                    200
+                )
+
+                embrace.recordNetworkRequest(request)
+                embrace.recordNetworkRequest(request)
+            }
+
+            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            assertEquals(
+                "Unexpected number of requests in sent session: ${requests.size}",
+                2,
+                requests.size
+            )
+        }
+    }
+
     private fun assertSingleNetworkRequestInSession(
         expectedRequest: EmbraceNetworkRequest,
         completed: Boolean = true
@@ -267,8 +343,8 @@ internal class NetworkRequestApiTest {
     companion object {
         private const val URL = "https://embrace.io"
         private const val DISABLED_URL = "https://dontlogmebro.pizza/yum"
-        private const val START_TIME = 1692201601L
-        private const val END_TIME = 1692202600L
+        private const val START_TIME = 1692201601000L
+        private const val END_TIME = 1692201603000L
         private const val BYTES_SENT = 100L
         private const val BYTES_RECEIVED = 500L
         private const val TRACE_ID = "rAnDoM-traceId"

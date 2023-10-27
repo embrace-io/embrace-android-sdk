@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
@@ -21,7 +19,6 @@ import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 
 internal class FakeDataCaptureServiceModule(
-    override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val strictModeService: StrictModeService = NoOpStrictModeService(),
     override val thermalStatusService: ThermalStatusService = NoOpThermalStatusService(),
     override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? = null,

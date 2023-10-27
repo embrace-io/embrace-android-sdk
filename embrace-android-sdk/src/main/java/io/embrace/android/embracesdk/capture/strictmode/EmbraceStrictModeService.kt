@@ -5,8 +5,8 @@ import android.os.StrictMode
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.embrace.android.embracesdk.payload.StrictModeViolation
 import java.util.concurrent.Executor

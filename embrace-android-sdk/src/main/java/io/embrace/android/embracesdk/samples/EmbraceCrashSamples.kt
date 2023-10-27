@@ -76,9 +76,10 @@ internal object EmbraceCrashSamples {
     fun triggerLongAnr() {
         isSdkStarted()
         checkAnrDetectionEnabled()
-        val start = System.currentTimeMillis()
+        val embrace = Embrace.getInstance()
+        val start = embrace.internalInterface.getSdkCurrentTime()
         while (true) {
-            if (System.currentTimeMillis() - start >= LONG_ANR_LENGTH) {
+            if (embrace.internalInterface.getSdkCurrentTime() - start >= LONG_ANR_LENGTH) {
                 break
             }
         }

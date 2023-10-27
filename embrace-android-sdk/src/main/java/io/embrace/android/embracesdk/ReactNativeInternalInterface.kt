@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 /**
  * Provides an internal interface to Embrace that is intended for use by React Native as its

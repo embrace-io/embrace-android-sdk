@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.UNKNOWN_EXCEPTION
@@ -55,6 +57,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
         private const val TRACEPARENT_HEADER = "traceparent"
         private const val CUSTOM_TRACEPARENT = "00-b583a45b2c7c813e0ebc6aa0835b9d98-b5475c618bb98e67-01"
         private const val GENERATED_TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
+        private const val FAKE_SDK_TIME = 1692201601000L
+        private const val CLOCK_DRIFT = 5000L
+        private const val FAKE_SYSTEM_TIME = FAKE_SDK_TIME + CLOCK_DRIFT
     }
 
     private lateinit var server: MockWebServer
@@ -64,10 +69,11 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private lateinit var postNetworkInterceptorTestInterceptor: Interceptor
     private lateinit var okHttpClient: OkHttpClient
     private lateinit var mockEmbrace: Embrace
-    private lateinit var mockSdkFacade: SdkFacade
+    private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
+    private lateinit var mockSystemClock: Clock
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request = { request -> request }
     private var preNetworkInterceptorAfterResponseSupplier: (Response) -> Response = { response -> response }
     private var postNetworkInterceptorBeforeRequestSupplier: (Request) -> Request = { request -> request }
@@ -79,13 +85,19 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun setup() {
         server = MockWebServer()
         mockEmbrace = mockk(relaxed = true)
-        mockSdkFacade = mockk(relaxed = true)
-        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace, mockSdkFacade)
+        mockInternalInterface = mockk(relaxed = true)
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
+        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
+        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        every { mockInternalInterface.getSdkCurrentTime() } answers { FAKE_SDK_TIME }
+        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> preNetworkInterceptorAfterResponseSupplier.invoke(response) }
         )
-        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockSdkFacade)
+        mockSystemClock = mockk(relaxed = true)
+        every { mockSystemClock.now() } answers { FAKE_SYSTEM_TIME }
+        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockSystemClock)
         postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> postNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> postNetworkInterceptorAfterResponseSupplier.invoke(response) }
@@ -106,11 +118,11 @@ internal class EmbraceOkHttp3InterceptorsTest {
             .header(requestHeaderName, requestHeaderValue)
         capturedEmbraceNetworkRequest = slot()
         every { mockEmbrace.isStarted } answers { isSDKStarted }
-        every { mockEmbrace.shouldCaptureNetworkBody(any(), "POST") } answers { true }
-        every { mockEmbrace.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
-        every { mockSdkFacade.isNetworkSpanForwardingEnabled } answers { isNetworkSpanForwardingEnabled }
+        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
+        isSDKStarted = true
+        isNetworkSpanForwardingEnabled = false
     }
 
     @After
@@ -184,8 +196,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
         isSDKStarted = false
         server.enqueue(createBaseMockResponse())
         runGetRequest()
-        verify(exactly = 0) { mockSdkFacade.isNetworkSpanForwardingEnabled }
-        verify(exactly = 0) { mockEmbrace.shouldCaptureNetworkBody(any(), any()) }
+        verify(exactly = 0) { mockInternalInterface.isNetworkSpanForwardingEnabled() }
+        verify(exactly = 0) { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) }
     }
 
     @Test
@@ -420,28 +432,36 @@ internal class EmbraceOkHttp3InterceptorsTest {
         expectedPath: String = defaultPath,
         expectedHttpStatus: Int = 200
     ) {
+        val realSystemClockStartTime = System.currentTimeMillis()
         runPostRequest()
+        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = expectedPath,
             httpStatus = expectedHttpStatus,
             responseBodySize = expectedResponseBodySize,
             httpMethod = "POST",
             requestSize = requestBodySize,
-            responseBody = responseBody
+            responseBody = responseBody,
+            realSystemClockStartTime = realSystemClockStartTime,
+            realSystemClockEndTime = realSystemClockEndTime
         )
     }
 
     private fun runAndValidateGetRequest(
         expectedResponseBodySize: Int
     ) {
+        val realSystemClockStartTime = System.currentTimeMillis()
         runGetRequest()
+        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = defaultPath,
             httpStatus = 200,
             httpMethod = "GET",
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
-            responseBody = null
+            responseBody = null,
+            realSystemClockStartTime = realSystemClockStartTime,
+            realSystemClockEndTime = realSystemClockEndTime
         )
     }
 
@@ -449,6 +469,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
 
     private fun runGetRequest() = assertNotNull(okHttpClient.newCall(getRequestBuilder.build()).execute())
 
+    @Suppress("LongParameterList")
     private fun validateWholeRequest(
         path: String,
         httpMethod: String,
@@ -459,16 +480,17 @@ internal class EmbraceOkHttp3InterceptorsTest {
         errorMessage: String? = null,
         traceId: String? = null,
         w3cTraceparent: String? = null,
-        responseBody: String?
+        responseBody: String?,
+        realSystemClockStartTime: Long,
+        realSystemClockEndTime: Long
     ) {
         with(capturedEmbraceNetworkRequest) {
             assertTrue(captured.url.endsWith("$path?$defaultQueryString"))
             assertEquals(httpMethod, captured.httpMethod)
-
-            // assert expected start/end times when we fix the issue of not using a custom clock instance.
-            assertTrue(captured.startTime > 0)
-            assertTrue(captured.endTime > 0)
-
+            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= captured.startTime)
+            assertTrue(realSystemClockStartTime > captured.startTime)
+            assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= captured.endTime)
+            assertTrue(realSystemClockEndTime > captured.endTime)
             assertEquals(httpStatus, captured.responseCode)
             assertEquals(requestSize.toLong(), captured.bytesOut)
             assertEquals(responseBodySize.toLong(), captured.bytesIn)

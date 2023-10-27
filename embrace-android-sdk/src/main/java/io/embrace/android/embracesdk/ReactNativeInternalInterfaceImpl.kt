@@ -4,6 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.prefs.PreferencesService

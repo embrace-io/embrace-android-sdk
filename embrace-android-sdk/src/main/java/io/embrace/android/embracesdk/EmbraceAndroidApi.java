@@ -16,7 +16,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
      * <p>
-     * See <a href="https://docs.embrace.io/docs/android-integration-guide">Embrace Docs</a> for
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
      * integration instructions. For compatibility with other networking SDKs such as Akamai,
      * the Embrace SDK must be initialized after any other SDK.
      *
@@ -28,7 +28,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
      * <p>
-     * See <a href="https://docs.embrace.io/docs/android-integration-guide">Embrace Docs</a> for
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
      * integration instructions. For compatibility with other networking SDKs such as Akamai,
      * the Embrace SDK must be initialized after any other SDK.
      *
@@ -45,7 +45,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
      * <p>
-     * See <a href="https://docs.embrace.io/docs/android-integration-guide">Embrace Docs</a> for
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
      * integration instructions. For compatibility with other networking SDKs such as Akamai,
      * the Embrace SDK must be initialized after any other SDK.
      *

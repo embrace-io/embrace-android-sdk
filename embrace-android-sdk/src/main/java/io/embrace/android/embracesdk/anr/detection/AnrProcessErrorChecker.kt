@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.anr.detection
 import android.app.ActivityManager
 import android.os.Process
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 
 private const val DATA_LIMIT_BYTES = 16 * 1024
 

@@ -38,20 +38,17 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
     static final String UNKNOWN_MESSAGE = "An error occurred during the execution of this network request";
     final Embrace embrace;
 
-    private final SdkFacade sdkFacade;
-
     public EmbraceOkHttp3ApplicationInterceptor() {
-        this(Embrace.getInstance(), new SdkFacade());
+        this(Embrace.getInstance());
     }
 
-    EmbraceOkHttp3ApplicationInterceptor(Embrace embrace, SdkFacade sdkFacade) {
+    EmbraceOkHttp3ApplicationInterceptor(Embrace embrace) {
         this.embrace = embrace;
-        this.sdkFacade = sdkFacade;
     }
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         Request request = chain.request();
         try {
             // we are not interested in response, just proceed
@@ -65,11 +62,11 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         urlString,
                         HttpMethod.fromString(request.method()),
                         startTime,
-                        System.currentTimeMillis(),
+                        embrace.getInternalInterface().getSdkCurrentTime(),
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
                         request.header(embrace.getTraceIdHeader()),
-                        sdkFacade.isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
+                        embrace.getInternalInterface().isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
                         null
                     )
                 );
@@ -87,11 +84,11 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
                         urlString,
                         HttpMethod.fromString(request.method()),
                         startTime,
-                        System.currentTimeMillis(),
+                        embrace.getInternalInterface().getSdkCurrentTime(),
                         errorType != null ? errorType : UNKNOWN_EXCEPTION,
                         errorMessage != null ? errorMessage : UNKNOWN_MESSAGE,
                         request.header(embrace.getTraceIdHeader()),
-                        sdkFacade.isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
+                        embrace.getInternalInterface().isNetworkSpanForwardingEnabled() ? request.header(TRACEPARENT_HEADER_NAME) : null,
                         null
                     )
                 );

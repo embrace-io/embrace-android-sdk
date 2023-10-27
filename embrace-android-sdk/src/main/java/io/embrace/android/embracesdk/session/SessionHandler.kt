@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.ConfigService
@@ -18,6 +17,7 @@ import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.MessageType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService

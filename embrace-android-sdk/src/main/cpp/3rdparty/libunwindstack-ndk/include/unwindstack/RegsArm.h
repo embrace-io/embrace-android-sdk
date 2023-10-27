@@ -43,6 +43,7 @@ class RegsArm : public RegsImpl<uint32_t> {
 
   uint64_t pc() override;
   uint64_t sp() override;
+  uint64_t lr() override;
 
   void set_pc(uint64_t pc) override;
   void set_sp(uint64_t sp) override;

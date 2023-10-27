@@ -21,6 +21,7 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,7 +36,6 @@ import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
-import io.embrace.android.embracesdk.utils.NetworkUtils;
 import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
 
@@ -59,7 +59,7 @@ import kotlin.jvm.functions.Function0;
  */
 @InternalApi
 class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
-        implements EmbraceUrlConnectionService, EmbraceSslUrlConnectionService {
+    implements EmbraceUrlConnectionService, EmbraceSslUrlConnectionService {
 
     /**
      * The content encoding HTTP header.
@@ -90,6 +90,9 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      * Reference to the SDK that is mockable and fakeable in tests
      */
     private final Embrace embrace;
+
+    @NonNull
+    private final String callId;
 
     /**
      * A reference to the output stream wrapped in a counter, so we can determine the bytes sent.
@@ -154,9 +157,10 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     EmbraceUrlConnectionOverride(@NonNull T connection, boolean enableWrapIoStreams,
                                  @NonNull Embrace embrace) {
         this.connection = connection;
-        this.createdTime = System.currentTimeMillis();
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.embrace = embrace;
+        this.createdTime = embrace.getInternalInterface().getSdkCurrentTime();
+        this.callId = UUID.randomUUID().toString();
     }
 
     @Override
@@ -168,7 +172,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     public void connect() throws IOException {
         identifyTraceId();
         try {
-            if (NetworkUtils.isNetworkSpanForwardingEnabled(embrace.getConfigService())) {
+            if (embrace.getInternalInterface().isNetworkSpanForwardingEnabled()) {
                 traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
             }
         } catch (Exception e) {
@@ -233,7 +237,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @TargetApi(24)
     public long getContentLengthLong() {
         return (shouldUncompressGzip() || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) ?
-                -1 : this.connection.getContentLengthLong();
+            -1 : this.connection.getContentLengthLong();
     }
 
     @Override
@@ -294,8 +298,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     public String getHeaderField(int n) {
         String key = this.connection.getHeaderFieldKey(n);
         return retrieveHeaderField(key,
-                null,
-                () -> connection.getHeaderField(n)
+            null,
+            () -> connection.getHeaderField(n)
         );
     }
 
@@ -303,8 +307,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Nullable
     public String getHeaderField(@Nullable String name) {
         return retrieveHeaderField(name,
-                null,
-                () -> connection.getHeaderField(name)
+            null,
+            () -> connection.getHeaderField(name)
         );
     }
 
@@ -313,16 +317,16 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     public String getHeaderFieldKey(int n) {
         String key = this.connection.getHeaderFieldKey(n);
         return retrieveHeaderField(key,
-                null,
-                () -> key
+            null,
+            () -> key
         );
     }
 
     @Override
     public long getHeaderFieldDate(@NonNull String name, long defaultValue) {
         Long result = retrieveHeaderField(name,
-                defaultValue,
-                () -> connection.getHeaderFieldDate(name, defaultValue)
+            defaultValue,
+            () -> connection.getHeaderFieldDate(name, defaultValue)
         );
 
         return result != null ? result : defaultValue;
@@ -331,8 +335,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Override
     public int getHeaderFieldInt(@NonNull String name, int defaultValue) {
         Integer result = retrieveHeaderField(name,
-                defaultValue,
-                () -> connection.getHeaderFieldInt(name, defaultValue)
+            defaultValue,
+            () -> connection.getHeaderFieldInt(name, defaultValue)
         );
 
         return result != null ? result : defaultValue;
@@ -343,9 +347,9 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @TargetApi(24)
     public long getHeaderFieldLong(@NonNull String name, long defaultValue) {
         Long result = retrieveHeaderField(name,
-                defaultValue,
-                () -> Build.VERSION.SDK_INT < Build.VERSION_CODES.N ? -1 :
-                        this.connection.getHeaderFieldLong(name, defaultValue)
+            defaultValue,
+            () -> Build.VERSION.SDK_INT < Build.VERSION_CODES.N ? -1 :
+                this.connection.getHeaderFieldLong(name, defaultValue)
 
         );
         return result != null ? result : defaultValue;
@@ -354,7 +358,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Override
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         cacheResponseData();
         internalLogNetworkCall(startTime);
         return headerFields.get();
@@ -367,7 +371,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         if (name == null) {
             return null;
         }
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         if (shouldInterceptHeaderRetrieval(name)) {
             // Strip the content encoding and length headers, as we transparently ungzip the content
             return defaultValue;
@@ -467,9 +471,9 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     }
 
     @Override
-    public int getResponseCode() throws IOException {
+    public int getResponseCode() {
         identifyTraceId();
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         cacheResponseData();
         internalLogNetworkCall(startTime);
         return responseCode.get();
@@ -479,7 +483,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Nullable
     public String getResponseMessage() throws IOException {
         identifyTraceId();
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         String responseMsg = this.connection.getResponseMessage();
         cacheResponseData();
         internalLogNetworkCall(startTime);
@@ -544,7 +548,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      * ignored.
      */
     synchronized void internalLogNetworkCall(long startTime) {
-        internalLogNetworkCall(startTime, System.currentTimeMillis(), false, null);
+        internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime(), false, null);
     }
 
     /**
@@ -568,7 +572,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
                 long contentLength = bytesIn == null ? Math.max(0, responseSize.get()) : bytesIn;
 
                 if (inputStreamAccessException == null && lastConnectionAccessException == null && responseCode.get() != 0) {
-                    embrace.recordNetworkRequest(
+                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
+                        callId,
                         EmbraceNetworkRequest.fromCompletedRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -598,7 +603,8 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
                     String errorType = exceptionClass != null ? exceptionClass : "UnknownState";
                     String errorMessage = exceptionMessage != null ? exceptionMessage : "HTTP response state unknown";
 
-                    embrace.recordNetworkRequest(
+                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
+                        callId,
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -680,14 +686,13 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      *
      * @return true if we should decompress the response, false otherwise
      * @see <a href="https://developer.android.com/reference/java/net/HttpURLConnection#performance">Android Docs</a>
-     * @see
-     * <a href="https://android.googlesource.com/platform/external/okhttp/+/master/okhttp/src/main/java/com/squareup/okhttp/internal/http/HttpEngine.java">Android Source Code</a>
+     * @see <a href="https://android.googlesource.com/platform/external/okhttp/+/master/okhttp/src/main/java/com/squareup/okhttp/internal/http/HttpEngine.java">Android Source Code</a>
      */
     private boolean shouldUncompressGzip() {
         String contentEncoding = this.connection.getContentEncoding();
         return enableWrapIoStreams &&
-                contentEncoding != null &&
-                contentEncoding.equalsIgnoreCase("gzip");
+            contentEncoding != null &&
+            contentEncoding.equalsIgnoreCase("gzip");
     }
 
     private void identifyTraceId() {
@@ -787,7 +792,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        long startTime = System.currentTimeMillis();
+        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
 
         InputStream in = null;
         if (shouldUncompressGzip()) {
@@ -801,7 +806,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
 
         if (in == null) {
             in = enableWrapIoStreams ?
-                    countingInputStream(new BufferedInputStream(connectionInputStream)) : connectionInputStream;
+                countingInputStream(new BufferedInputStream(connectionInputStream)) : connectionInputStream;
         }
 
         cacheResponseData();
@@ -816,7 +821,7 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
         String url = this.connection.getURL().toString();
         String method = this.connection.getRequestMethod();
 
-        return embrace.shouldCaptureNetworkBody(url, method);
+        return embrace.getInternalInterface().shouldCaptureNetworkBody(url, method);
     }
 
     /**

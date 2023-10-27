@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.capture.orientation
 
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.Orientation
 import java.util.LinkedList

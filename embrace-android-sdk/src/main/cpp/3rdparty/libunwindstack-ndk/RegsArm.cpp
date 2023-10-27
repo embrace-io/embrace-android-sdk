@@ -43,6 +43,10 @@ uint64_t RegsArm::sp() {
   return regs_[ARM_REG_SP];
 }
 
+uint64_t RegsArm::lr() {
+  return regs_[ARM_REG_LR];
+}
+
 void RegsArm::set_pc(uint64_t pc) {
   regs_[ARM_REG_PC] = pc;
 }

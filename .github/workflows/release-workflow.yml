@@ -104,6 +104,9 @@ jobs:
           echo ${{ github.sha }} >> docs/version.txt
           echo ${{ github.event.release.tag_name }} >> docs/version.txt
           git add -f docs
+          git config --global user.name "embrace-ci"
+          git config --global user.email "embrace-ci@users.noreply.github.com"
+          git commit --author "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>" --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.release.tag_name }}' docs/
           git push --force origin gh-pages
 
       - name: Record SDK Version History (${{ github.event.inputs.current_version }})

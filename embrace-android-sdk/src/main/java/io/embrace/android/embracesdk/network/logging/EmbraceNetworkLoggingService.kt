@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
@@ -32,12 +31,14 @@ internal class EmbraceNetworkLoggingService(
     private val networkCaptureService: NetworkCaptureService
 ) : NetworkLoggingService, MemoryCleanerListener {
 
+    private val callsStorageLastUpdate = AtomicInteger(0)
+
     /**
      * Network calls per domain prepared for the session.
      */
-    private val sessionNetworkCalls = ConcurrentSkipListMap<Long, NetworkCallV2>()
+    private val sessionNetworkCalls = ConcurrentHashMap<String, NetworkCallV2>()
 
-    private val networkCallCache = CacheableValue<List<NetworkCallV2>>(sessionNetworkCalls::size)
+    private val networkCallCache = CacheableValue<List<NetworkCallV2>> { callsStorageLastUpdate.get() }
 
     private val domainSettings = ConcurrentHashMap<String, DomainSettings>()
 
@@ -47,7 +48,9 @@ internal class EmbraceNetworkLoggingService(
 
     override fun getNetworkCallsForSession(): NetworkSessionV2 {
         val calls = networkCallCache.value {
-            ArrayList(sessionNetworkCalls.values)
+            synchronized(callsStorageLastUpdate) {
+                sessionNetworkCalls.values.toList()
+            }
         }
 
         val storedCallsSize = sessionNetworkCalls.size
@@ -71,6 +74,7 @@ internal class EmbraceNetworkLoggingService(
     }
 
     override fun logNetworkCall(
+        callId: String,
         url: String,
         httpMethod: String,
         statusCode: Int,
@@ -109,11 +113,12 @@ internal class EmbraceNetworkLoggingService(
             )
         }
 
-        processNetworkCall(startTime, networkCall)
+        processNetworkCall(callId, networkCall)
         storeSettings(url)
     }
 
     override fun logNetworkError(
+        callId: String,
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -150,19 +155,17 @@ internal class EmbraceNetworkLoggingService(
                 errorMessage
             )
         }
-        processNetworkCall(startTime, networkCall)
+        processNetworkCall(callId, networkCall)
         storeSettings(url)
     }
 
     /**
      * Process network calls to be ready when the session requests them.
      *
-     * @param startTime   is the time when the network call was captured
+     * @param callId      the unique ID that identifies the specific network call instance being recorded
      * @param networkCall that is going to be captured
      */
-    private fun processNetworkCall(startTime: Long, networkCall: NetworkCallV2) {
-        logger.logDeveloper("EmbraceNetworkLoggingService", "processNetworkCall at: $startTime")
-
+    private fun processNetworkCall(callId: String, networkCall: NetworkCallV2) {
         // Get the domain, if it can be successfully parsed
         val domain = networkCall.url?.let {
             getDomain(it)
@@ -182,7 +185,7 @@ internal class EmbraceNetworkLoggingService(
             if (ipAddressCount.getAndIncrement() < captureLimit) {
                 // only capture if the ipAddressCount has not exceeded defaultLimit
                 logger.logDeveloper("EmbraceNetworkLoggingService", "capturing network call")
-                sessionNetworkCalls[startTime] = networkCall
+                storeNetworkCall(callId, networkCall)
             } else {
                 logger.logDeveloper("EmbraceNetworkLoggingService", "capture limit exceeded")
             }
@@ -192,7 +195,7 @@ internal class EmbraceNetworkLoggingService(
         val settings = domainSettings[domain]
         if (settings == null) {
             logger.logDeveloper("EmbraceNetworkLoggingService", "no domain settings")
-            sessionNetworkCalls[startTime] = networkCall
+            storeNetworkCall(callId, networkCall)
         } else {
             val suffix = settings.suffix
             val limit = settings.limit
@@ -204,7 +207,7 @@ internal class EmbraceNetworkLoggingService(
 
             // Exclude if the network call exceeds the limit
             if (count.requestCount < limit) {
-                sessionNetworkCalls[startTime] = networkCall
+                storeNetworkCall(callId, networkCall)
             } else {
                 logger.logDeveloper("EmbraceNetworkLoggingService", "capture limit exceeded")
             }
@@ -248,10 +251,24 @@ internal class EmbraceNetworkLoggingService(
         }
     }
 
+    private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
+        synchronized(callsStorageLastUpdate) {
+            callsStorageLastUpdate.incrementAndGet()
+            sessionNetworkCalls[callId] = networkCall
+        }
+    }
+
+    private fun clearNetworkCalls() {
+        synchronized(callsStorageLastUpdate) {
+            callsStorageLastUpdate.set(0)
+            sessionNetworkCalls.clear()
+        }
+    }
+
     override fun cleanCollections() {
         domainSettings.clear()
         callsPerDomain.clear()
-        sessionNetworkCalls.clear()
+        clearNetworkCalls()
         // reset counters
         ipAddressCount.set(0)
         logger.logDeveloper("EmbraceNetworkLoggingService", "Collections cleaned")

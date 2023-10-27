@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**

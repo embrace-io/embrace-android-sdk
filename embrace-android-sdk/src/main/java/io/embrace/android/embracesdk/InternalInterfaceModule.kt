@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.singleton
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 internal interface InternalInterfaceModule {
     val embraceInternalInterface: EmbraceInternalInterface
@@ -14,6 +16,7 @@ internal interface InternalInterfaceModule {
 }
 
 internal class InternalInterfaceModuleImpl(
+    initModule: InitModule,
     coreModule: CoreModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
@@ -22,7 +25,7 @@ internal class InternalInterfaceModuleImpl(
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(embrace)
+        EmbraceInternalInterfaceImpl(embrace, initModule)
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {

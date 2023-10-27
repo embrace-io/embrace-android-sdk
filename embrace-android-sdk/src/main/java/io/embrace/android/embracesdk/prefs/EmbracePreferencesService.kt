@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.prefs
 
 import android.content.SharedPreferences
 import com.google.gson.reflect.TypeToken
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.ActivityListener

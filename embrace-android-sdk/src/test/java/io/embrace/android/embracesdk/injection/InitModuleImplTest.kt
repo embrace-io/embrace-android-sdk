@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import org.junit.Assert.assertSame

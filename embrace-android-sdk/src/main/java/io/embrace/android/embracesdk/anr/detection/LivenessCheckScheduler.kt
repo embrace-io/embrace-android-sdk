@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.anr.detection
 import android.os.Message
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger

@@ -12,7 +12,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper

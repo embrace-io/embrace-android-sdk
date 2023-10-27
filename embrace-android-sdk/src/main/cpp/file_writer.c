@@ -258,6 +258,8 @@ char *emb_crash_to_json(emb_crash *crash) {
         json_array_append_value(frames_object, frame_value);
         emb_log_frame_dbg_info(i, &frame);
     }
+    EMB_LOGDEV("Signal handler was invoked %d times", crash->unhandled_count);
+
     EMB_LOGDEV("Finished serializing stackframes.");
 
     json_object_set_value(crash_object, kFramesKey, frames_value);

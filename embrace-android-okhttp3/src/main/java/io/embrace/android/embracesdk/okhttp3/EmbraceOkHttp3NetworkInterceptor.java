@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.okhttp3;
 
-import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logDebug;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -10,12 +7,11 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
-import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.clock.Clock;
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride;
-import io.embrace.android.embracesdk.network.http.HttpMethod;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
+import io.embrace.android.embracesdk.network.http.HttpMethod;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -50,6 +46,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
     static final String CONTENT_ENCODING_HEADER_NAME = "Content-Encoding";
     static final String CONTENT_TYPE_HEADER_NAME = "Content-Type";
     static final String CONTENT_TYPE_EVENT_STREAM = "text/event-stream";
+    static final String TRACEPARENT_HEADER_NAME = "traceparent";
     private static final String[] networkCallDataParts = new String[]{
         "Response Headers",
         "Request Headers",
@@ -76,7 +73,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         final Request originalRequest = chain.request();
 
-        if (ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED || !embrace.isStarted()) {
+        if (!embrace.isStarted() || embrace.getInternalInterface().isInternalNetworkCaptureDisabled()) {
             return chain.proceed(originalRequest);
         }
 
@@ -96,9 +93,10 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
 
         Long contentLength = null;
         // Try to get the content length from the header
-        if (networkResponse.header(CONTENT_LENGTH_HEADER_NAME) != null) {
+        String contentLengthHeaderValue = networkResponse.header(CONTENT_LENGTH_HEADER_NAME);
+        if (contentLengthHeaderValue != null) {
             try {
-                contentLength = Long.parseLong(networkResponse.header(CONTENT_LENGTH_HEADER_NAME));
+                contentLength = Long.parseLong(contentLengthHeaderValue);
             } catch (Exception ex) {
                 // Ignore
             }
@@ -114,9 +112,12 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
 
         if (!serverSentEvent && contentLength == null) {
             try {
-                BufferedSource source = networkResponse.body().source();
-                source.request(Long.MAX_VALUE);
-                contentLength = source.buffer().size();
+                ResponseBody body = networkResponse.body();
+                if (body != null) {
+                    BufferedSource source = body.source();
+                    source.request(Long.MAX_VALUE);
+                    contentLength = source.getBuffer().size();
+                }
             } catch (Exception ex) {
                 // Ignore
             }
@@ -211,7 +212,9 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
             }
 
             dataCaptureErrorMessage = "There were errors in capturing the following part(s) of the network call: %s" + errors;
-            logDebug("Failure during the building of NetworkCaptureData. " + dataCaptureErrorMessage, e);
+            embrace.logInternalError(
+                new RuntimeException("Failure during the building of NetworkCaptureData. " + dataCaptureErrorMessage, e)
+            );
         }
 
         return new NetworkCaptureData(
@@ -251,7 +254,7 @@ public final class EmbraceOkHttp3NetworkInterceptor implements Interceptor {
                 return buffer.readByteArray();
             }
         } catch (final IOException e) {
-            logDebug("Failed to capture okhttp request body.", e);
+            embrace.logInternalError("Failed to capture okhttp request body.", e.getClass().toString());
         }
         return null;
     }

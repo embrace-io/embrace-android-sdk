@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.okhttp3;
 
-import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
 import static io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt.causeMessage;
 import static io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt.causeName;
 
@@ -34,6 +33,7 @@ import okhttp3.Response;
  */
 @InternalApi
 public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
+    static final String TRACEPARENT_HEADER_NAME = "traceparent";
     static final String UNKNOWN_EXCEPTION = "Unknown";
     static final String UNKNOWN_MESSAGE = "An error occurred during the execution of this network request";
     final Embrace embrace;
@@ -54,7 +54,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
             // we are not interested in response, just proceed
             return chain.proceed(request);
         } catch (EmbraceCustomPathException e) {
-            if (embrace.isStarted()) {
+            if (embrace.isStarted() && !embrace.getInternalInterface().isInternalNetworkCaptureDisabled()) {
                 String urlString = EmbraceHttpPathOverride.getURLString(new EmbraceOkHttp3PathOverrideRequest(request), e.getCustomPath());
 
                 embrace.recordNetworkRequest(
@@ -74,7 +74,7 @@ public class EmbraceOkHttp3ApplicationInterceptor implements Interceptor {
             throw e;
         } catch (Exception e) {
             // we are interested in errors.
-            if (embrace.isStarted()) {
+            if (embrace.isStarted() && !embrace.getInternalInterface().isInternalNetworkCaptureDisabled()) {
                 String urlString = EmbraceHttpPathOverride.getURLString(new EmbraceOkHttp3PathOverrideRequest(request));
                 String errorType = e.getClass().getCanonicalName();
                 String errorMessage = e.getMessage();

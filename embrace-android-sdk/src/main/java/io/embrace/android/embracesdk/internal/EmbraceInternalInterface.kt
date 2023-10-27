@@ -132,6 +132,8 @@ public interface EmbraceInternalInterface {
      * not change after the SDK has started.
      */
     public fun getSdkCurrentTime(): Long
+
+    public fun isInternalNetworkCaptureDisabled(): Boolean = ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED
 }
 
 internal val defaultImpl = object : EmbraceInternalInterface {

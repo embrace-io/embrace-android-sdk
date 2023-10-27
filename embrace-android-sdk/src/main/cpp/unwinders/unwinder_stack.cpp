@@ -28,7 +28,10 @@ emb_process_stack(emb_env *env, siginfo_t *info, void *user_context) {
     if (unwindSuccessful) {
         int i = 0;
         for (const auto &frame: android_unwinder_data.frames) {
-            stacktrace[i++].frame_addr = frame.pc;
+            emb_sframe *data = &stacktrace[i++];
+            data->frame_addr = frame.pc;
+            const auto map_info = frame.map_info;
+            emb_strncpy(data->build_id, map_info->GetPrintableBuildID().c_str(), EMB_BUILD_ID_SIZE);
         }
     } else {
         return 0;

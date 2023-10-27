@@ -62,6 +62,10 @@
 #define EMB_SESSION_ID_SIZE 256
 #endif
 
+#ifndef EMB_BUILD_ID_SIZE
+#define EMB_BUILD_ID_SIZE 512
+#endif
+
 #ifndef EMB_PATH_SIZE
 #define EMB_PATH_SIZE 512
 #endif
@@ -69,6 +73,7 @@
 typedef struct {
     char filename[256];
     char method[256];
+    char build_id[EMB_BUILD_ID_SIZE];
 
     uintptr_t frame_addr;
     uintptr_t offset_addr;

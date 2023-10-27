@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
@@ -15,9 +13,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
-import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.utils.exceptions.Unchecked
@@ -36,11 +32,11 @@ internal class EmbraceApiService(
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
-    private val metadataService: MetadataService,
-    private val userService: UserService,
     private val scheduledExecutorService: ScheduledExecutorService,
     networkConnectivityService: NetworkConnectivityService,
     private val cacheManager: DeliveryCacheManager,
+    private val deviceId: Lazy<String>,
+    private val appId: Lazy<String>
 ) : ApiService, NetworkConnectivityListener {
 
     private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
@@ -171,10 +167,10 @@ internal class EmbraceApiService(
     /**
      * Sends an Application Exit Info (AEI) blob message to the API.
      *
-     * @param appExitInfoData the Application exit info list to send
+     * @param blobMessage the blob message containing the AEI data
      * @return a future containing the response body from the server
      */
-    override fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>) {
+    override fun sendAEIBlob(blobMessage: BlobMessage) {
         logger.logDeveloper(TAG, "send BlobMessage")
         val url = Unchecked.wrap {
             EmbraceUrl.getUrl(
@@ -182,22 +178,14 @@ internal class EmbraceApiService(
             )
         }
         val request: ApiRequest = eventBuilder(url).copy(
-            deviceId = metadataService.getDeviceId(),
-            appId = metadataService.getAppId(),
+            deviceId = deviceId.value,
+            appId = appId.value,
             url = url,
             httpMethod = HttpMethod.POST,
             contentEncoding = "gzip"
         )
 
-        val blob = BlobMessage(
-            metadataService.getAppInfo(),
-            appExitInfoData,
-            metadataService.getDeviceInfo(),
-            BlobSession(metadataService.activeSessionId),
-            userService.getUserInfo()
-        )
-
-        postAEIBlob(blob, request)
+        postAEIBlob(blobMessage, request)
     }
 
     /**
@@ -257,7 +245,7 @@ internal class EmbraceApiService(
         }
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onComplete: (() -> Unit)?): Future<*> {
+    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
         logger.logDeveloper(TAG, "sendSession")
         val url = Unchecked.wrap {
             EmbraceUrl.getUrl(
@@ -265,14 +253,14 @@ internal class EmbraceApiService(
             )
         }
         val request: ApiRequest = eventBuilder(url).copy(
-            deviceId = metadataService.getDeviceId(),
-            appId = metadataService.getAppId(),
+            deviceId = deviceId.value,
+            appId = appId.value,
             url = url,
             httpMethod = HttpMethod.POST,
             contentEncoding = "gzip"
         )
 
-        return postOnExecutor(sessionPayload, request, true, onComplete)
+        return postOnExecutor(sessionPayload, request, true, onFinish)
     }
 
     /**
@@ -390,8 +378,8 @@ internal class EmbraceApiService(
         return ApiRequest(
             url = url,
             httpMethod = HttpMethod.POST,
-            appId = metadataService.getAppId(),
-            deviceId = metadataService.getDeviceId(),
+            appId = appId.value,
+            deviceId = deviceId.value,
             contentEncoding = "gzip"
         )
     }

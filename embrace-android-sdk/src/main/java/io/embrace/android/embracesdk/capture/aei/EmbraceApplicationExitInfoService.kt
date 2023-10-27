@@ -5,6 +5,8 @@ import android.app.ApplicationExitInfo
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
@@ -13,6 +15,8 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Compani
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.payload.BlobMessage
+import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import java.io.BufferedReader
 import java.io.IOException
@@ -27,7 +31,9 @@ internal class EmbraceApplicationExitInfoService constructor(
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
-    private val deliveryService: DeliveryService
+    private val deliveryService: DeliveryService,
+    private val metadataService: MetadataService,
+    private val userService: UserService
 ) : ApplicationExitInfoService, ConfigListener {
 
     companion object {
@@ -170,7 +176,14 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
         if (appExitInfoWithTraces.isNotEmpty()) {
-            deliveryService.sendAEIBlob(appExitInfoWithTraces)
+            val blob = BlobMessage(
+                metadataService.getAppInfo(),
+                appExitInfoWithTraces,
+                metadataService.getDeviceInfo(),
+                BlobSession(metadataService.activeSessionId),
+                userService.getUserInfo()
+            )
+            deliveryService.sendAEIBlob(blob)
         }
     }
 

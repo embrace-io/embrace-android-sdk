@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
@@ -166,8 +166,8 @@ internal class EmbraceDeliveryService(
         apiService.sendCrash(crash)
     }
 
-    override fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>) {
-        apiService.sendAEIBlob(appExitInfoData)
+    override fun sendAEIBlob(blobMessage: BlobMessage) {
+        apiService.sendAEIBlob(blobMessage)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {

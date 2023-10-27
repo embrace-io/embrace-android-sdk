@@ -1,32 +1,58 @@
 package io.embrace.android.embracesdk
 
+import android.content.Context
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
-import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.mockk.unmockkAll
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 
 internal class ApiUrlBuilderTest {
 
-    private val configService = FakeConfigService()
-    private val metadataService = FakeAndroidMetadataService()
+    private lateinit var preferenceService: PreferencesService
+    private lateinit var context: Context
+    private lateinit var apiUrlBuilder: ApiUrlBuilder
+
+    @Before
+    fun setup() {
+        preferenceService = FakePreferenceService(
+            deviceIdentifier = DEVICE_ID
+        )
+        context = FakeCoreModule().context
+        apiUrlBuilder = ApiUrlBuilder(
+            enableIntegrationTesting = false,
+            isDebug = false,
+            sdkEndpointBehavior = fakeSdkEndpointBehavior(localCfg = { BaseUrlLocalConfig() }),
+            appId = lazy { APP_ID },
+            deviceId = lazy { DEVICE_ID },
+            context = context,
+        )
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
 
     @Test
     fun testUrls() {
-        val builder = ApiUrlBuilder(
-            configService = configService,
-            metadataService = metadataService,
-            enableIntegrationTesting = false,
-            isDebug = false
+        assertEquals(
+            "https://a-$APP_ID.config.emb-api.com/v2/config?appId=o0o0o&osVersion=0.0.0" +
+                "&appVersion=1.0.0&deviceId=$DEVICE_ID",
+            apiUrlBuilder.getConfigUrl()
         )
         assertEquals(
-            "https://a-o0o0o.config.emb-api.com/v2/config?appId=o0o0o&osVersion=0.0.0" +
-                "&appVersion=1.0.0&deviceId=07D85B44E4E245F4A30E559BFC0D07FF",
-            builder.getConfigUrl()
-        )
-        assertEquals(
-            "https://a-o0o0o.data.emb-api.com/v1/log/suffix",
-            builder.getEmbraceUrlWithSuffix("suffix")
+            "https://a-$APP_ID.data.emb-api.com/v1/log/suffix",
+            apiUrlBuilder.getEmbraceUrlWithSuffix("suffix")
         )
     }
 }
+
+private const val APP_ID = "o0o0o"
+private const val DEVICE_ID = "07D85B44E4E245F4A30E559BFC0D07FF"

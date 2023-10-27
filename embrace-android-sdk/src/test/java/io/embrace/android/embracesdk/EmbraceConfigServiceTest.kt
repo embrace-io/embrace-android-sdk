@@ -305,7 +305,7 @@ internal class EmbraceConfigServiceTest {
     private fun createService(executorService: ExecutorService): EmbraceConfigService =
         EmbraceConfigService(
             localConfig,
-            { mockApiService },
+            mockApiService,
             fakePreferenceService,
             fakeClock,
             logger,

@@ -23,6 +23,9 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
+import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
+import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
+import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
@@ -76,6 +79,21 @@ internal class EssentialServiceModuleImpl(
     override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
 ) : EssentialServiceModule {
 
+    private val localConfig =
+        LocalConfig.fromResources(
+            coreModule.resources,
+            coreModule.context.packageName,
+            customAppId,
+            coreModule.jsonSerializer
+        )
+
+    private val appId = lazy { localConfig.appId }
+
+    private val deviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
+
+    private val thresholdCheck: BehaviorThresholdCheck =
+        BehaviorThresholdCheck(androidServicesModule.preferencesService::deviceIdentifier)
+
     private val backgroundExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
 
@@ -101,14 +119,15 @@ internal class EssentialServiceModuleImpl(
     override val configService: ConfigService by singleton {
         configServiceProvider.invoke()
             ?: EmbraceConfigService(
-                LocalConfig.fromResources(coreModule.resources, coreModule.context.packageName, customAppId, coreModule.jsonSerializer),
-                { apiService },
+                localConfig,
+                apiService,
                 androidServicesModule.preferencesService,
                 initModule.clock,
                 coreModule.logger,
                 backgroundExecutorService,
                 coreModule.isDebug,
-                configStopAction
+                configStopAction,
+                thresholdCheck
             )
     }
 
@@ -139,11 +158,18 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val urlBuilder by singleton {
+        val sdkEndpointBehavior = SdkEndpointBehavior(
+            thresholdCheck = thresholdCheck,
+            localSupplier = localConfig.sdkConfig::baseUrls,
+        )
+
         ApiUrlBuilder(
-            configService,
-            metadataService,
-            enableIntegrationTesting,
-            coreModule.isDebug
+            enableIntegrationTesting = enableIntegrationTesting,
+            isDebug = coreModule.isDebug,
+            sdkEndpointBehavior = sdkEndpointBehavior,
+            appId = appId,
+            deviceId = deviceId,
+            context = coreModule.context,
         )
     }
 
@@ -166,7 +192,12 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
-        if (configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
+        val autoDataCaptureBehavior = AutoDataCaptureBehavior(
+            thresholdCheck = thresholdCheck,
+            localSupplier = { localConfig },
+            remoteSupplier = { null }
+        )
+        if (autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
                 initModule.clock,
@@ -200,11 +231,11 @@ internal class EssentialServiceModuleImpl(
             coreModule.jsonSerializer,
             { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
             coreModule.logger,
-            metadataService,
-            userService,
             apiRetryExecutor,
             networkConnectivityService,
-            deliveryCacheManager
+            deliveryCacheManager,
+            deviceId,
+            appId
         )
     }
 

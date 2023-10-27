@@ -47,7 +47,9 @@ internal class DataContainerModuleImpl(
                 essentialServiceModule.configService,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
-                deliveryModule.deliveryService
+                deliveryModule.deliveryService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.userService
             )
         } else {
             NoOpApplicationExitInfoService()

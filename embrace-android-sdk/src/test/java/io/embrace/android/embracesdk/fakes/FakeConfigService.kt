@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.behavior.SpansBehavior
@@ -37,6 +38,7 @@ internal class FakeConfigService(
     override val startupBehavior: StartupBehavior = fakeStartupBehavior(),
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = fakeDataCaptureEventBehavior(),
     override val sdkModeBehavior: SdkModeBehavior = fakeSdkModeBehavior(),
+    override val sdkEndpointBehavior: SdkEndpointBehavior = fakeSdkEndpointBehavior(),
     override val webViewVitalsBehavior: WebViewVitalsBehavior = fakeWebViewVitalsBehavior(),
     override val appExitInfoBehavior: AppExitInfoBehavior = fakeAppExitInfoBehavior(),
     override val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(),

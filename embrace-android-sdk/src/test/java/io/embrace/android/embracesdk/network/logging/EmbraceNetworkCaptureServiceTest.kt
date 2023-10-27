@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
@@ -29,7 +28,6 @@ internal class EmbraceNetworkCaptureServiceTest {
         private val metadataService: FakeAndroidMetadataService = FakeAndroidMetadataService()
         private val mockRemoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
         private val configService: ConfigService = mockk(relaxed = true)
-        private val coreConfigService: CoreConfigService = mockk(relaxed = true)
         private val mockPreferenceService: EmbracePreferencesService = mockk(relaxed = true)
         private lateinit var mockLocalConfig: LocalConfig
 
@@ -59,7 +57,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         clearAllMocks()
         metadataService.setActiveSessionId("session-123")
         every { configService.networkBehavior } returns fakeNetworkBehavior { cfg }
-        every { coreConfigService.sdkEndpointBehavior } returns fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
+        every { configService.sdkEndpointBehavior } returns fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
     }
 
     @Test
@@ -192,7 +190,6 @@ internal class EmbraceNetworkCaptureServiceTest {
         metadataService,
         mockPreferenceService,
         mockRemoteLogger,
-        coreConfigService,
         configService,
         EmbraceSerializer()
     )

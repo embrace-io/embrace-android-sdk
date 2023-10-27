@@ -98,7 +98,7 @@ internal class IntegrationTestRule(
                 { workerThreadModule },
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
-                { _, _, _, _, _, _, _, _, _, _,_ , _ -> essentialServiceModule },
+                { _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
                 { _, _, _, _, _ -> fakeDeliveryModule }
             )

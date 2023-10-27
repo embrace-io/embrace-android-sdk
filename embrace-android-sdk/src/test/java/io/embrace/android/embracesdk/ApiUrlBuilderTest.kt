@@ -1,27 +1,20 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
-import io.embrace.android.embracesdk.fakes.FakeCoreConfigService
-import io.embrace.android.embracesdk.fakes.fakeSdkAppBehavior
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class ApiUrlBuilderTest {
 
-    private val coreConfigService = FakeCoreConfigService(
-        sdkAppBehavior = fakeSdkAppBehavior(
-            localCfg = { LocalConfig("o0o0o", false, SdkLocalConfig()) },
-        )
-    )
+    private val configService = FakeConfigService()
     private val metadataService = FakeAndroidMetadataService()
 
     @Test
     fun testUrls() {
         val builder = ApiUrlBuilder(
-            coreConfigService = coreConfigService,
+            configService = configService,
             metadataService = metadataService,
             enableIntegrationTesting = false,
             isDebug = false

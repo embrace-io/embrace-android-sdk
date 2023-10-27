@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -49,7 +48,6 @@ internal class EmbraceMetadataService private constructor(
     private val storageStatsManager: StorageStatsManager?,
     private val activityManager: ActivityManager?,
     private val buildInfo: BuildInfo,
-    private val coreConfigService: CoreConfigService,
     private val configService: ConfigService,
     private val applicationInfo: ApplicationInfo,
     private val deviceId: Lazy<String>,
@@ -367,7 +365,7 @@ internal class EmbraceMetadataService private constructor(
         embraceFlutterSdkVersion ?: preferencesService.embraceFlutterSdkVersion
 
     override fun getAppId(): String {
-        return coreConfigService.sdkAppBehavior.appId
+        return configService.sdkModeBehavior.appId
     }
 
     override fun isAppUpdated(): Boolean = appUpdated.value
@@ -522,7 +520,6 @@ internal class EmbraceMetadataService private constructor(
         fun ofContext(
             context: Context,
             buildInfo: BuildInfo,
-            coreConfigService: CoreConfigService,
             configService: ConfigService,
             appFramework: AppFramework,
             preferencesService: PreferencesService,
@@ -649,7 +646,6 @@ internal class EmbraceMetadataService private constructor(
                 storageStatsManager,
                 activityManager,
                 buildInfo,
-                coreConfigService,
                 configService,
                 context.applicationInfo,
                 deviceIdentifier,

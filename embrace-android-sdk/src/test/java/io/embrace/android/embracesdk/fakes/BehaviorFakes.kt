@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.config.behavior.SdkAppBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
@@ -130,14 +129,6 @@ internal fun fakeSdkModeBehavior(
     localCfg: () -> LocalConfig? = { null },
     remoteCfg: () -> RemoteConfig? = { null }
 ) = SdkModeBehavior(isDebug, thresholdCheck, localCfg, remoteCfg)
-
-/**
- * A fake [SdkAppBehavior] that returns default values.
- */
-internal fun fakeSdkAppBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> LocalConfig? = { null },
-) = SdkAppBehavior(thresholdCheck, localCfg)
 
 /**
  * A fake [SdkModeBehavior] that returns default values.

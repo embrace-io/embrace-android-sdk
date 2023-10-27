@@ -15,9 +15,7 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
-import io.embrace.android.embracesdk.config.EmbraceCoreConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
@@ -42,7 +40,6 @@ internal interface EssentialServiceModule {
     val orientationService: OrientationService
     val activityService: ActivityService
     val metadataService: MetadataService
-    val coreConfigService: CoreConfigService
     val configService: ConfigService
     val gatingService: GatingService
     val userService: UserService
@@ -65,20 +62,12 @@ internal class EssentialServiceModuleImpl(
     customAppId: String?,
     enableIntegrationTesting: Boolean,
     private val configStopAction: () -> Unit,
-    private val coreConfigServiceProvider: () -> CoreConfigService? = { null },
     private val configServiceProvider: () -> ConfigService? = { null },
     override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
 ) : EssentialServiceModule {
 
     private val backgroundExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-
-    private val localConfig = LocalConfig.fromResources(
-        coreModule.resources,
-        coreModule.context.packageName,
-        customAppId,
-        coreModule.jsonSerializer
-    )
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -93,19 +82,10 @@ internal class EssentialServiceModuleImpl(
         EmbraceActivityService(coreModule.application, orientationService, initModule.clock)
     }
 
-    override val coreConfigService: CoreConfigService by singleton {
-        coreConfigServiceProvider.invoke()
-            ?: EmbraceCoreConfigService(
-                localConfig,
-                androidServicesModule.preferencesService,
-                coreModule.logger
-            )
-    }
-
     override val configService: ConfigService by singleton {
         configServiceProvider.invoke()
             ?: EmbraceConfigService(
-                localConfig,
+                LocalConfig.fromResources(coreModule.resources, coreModule.context.packageName, customAppId, coreModule.jsonSerializer),
                 { apiService },
                 androidServicesModule.preferencesService,
                 initModule.clock,
@@ -128,7 +108,6 @@ internal class EssentialServiceModuleImpl(
         EmbraceMetadataService.ofContext(
             coreModule.context,
             buildInfo,
-            coreConfigService,
             configService,
             coreModule.appFramework,
             androidServicesModule.preferencesService,
@@ -145,7 +124,7 @@ internal class EssentialServiceModuleImpl(
 
     override val urlBuilder by singleton {
         ApiUrlBuilder(
-            coreConfigService,
+            configService,
             metadataService,
             enableIntegrationTesting,
             coreModule.isDebug

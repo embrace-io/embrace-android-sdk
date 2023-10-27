@@ -7,11 +7,9 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.CoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCoreConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -37,7 +35,6 @@ internal class EmbraceMetadataReactNativeTest {
     private lateinit var assetManager: AssetManager
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
-    private lateinit var coreConfigService: CoreConfigService
     private var appFramework: Embrace.AppFramework = Embrace.AppFramework.REACT_NATIVE
     private lateinit var preferencesService: PreferencesService
     private lateinit var activityService: ActivityService
@@ -54,7 +51,6 @@ internal class EmbraceMetadataReactNativeTest {
         assetManager = mockk(relaxed = true)
         buildInfo = BuildInfo("device-id", null, null)
         configService = FakeConfigService()
-        coreConfigService = FakeCoreConfigService()
         preferencesService = FakePreferenceService()
         activityService = FakeActivityService()
         preferencesService.javaScriptBundleURL = null
@@ -67,7 +63,6 @@ internal class EmbraceMetadataReactNativeTest {
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
         buildInfo,
-        coreConfigService,
         configService,
         appFramework,
         preferencesService,

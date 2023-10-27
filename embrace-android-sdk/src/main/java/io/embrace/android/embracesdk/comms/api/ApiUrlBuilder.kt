@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.comms.api
 import android.os.Build
 import android.os.Debug
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.config.CoreConfigService
+import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 
 internal class ApiUrlBuilder(
-    private val coreConfigService: CoreConfigService,
+    private val configService: ConfigService,
     private val metadataService: MetadataService,
     private val enableIntegrationTesting: Boolean,
     private val isDebug: Boolean
@@ -20,7 +20,7 @@ internal class ApiUrlBuilder(
     }
 
     private val baseUrls: SdkEndpointBehavior
-        get() = coreConfigService.sdkEndpointBehavior
+        get() = configService.sdkEndpointBehavior
 
     private fun getConfigBaseUrl() = buildUrl(baseUrls.getConfig(getAppId()), CONFIG_API_VERSION, "config")
     private fun getOperatingSystemCode() = Build.VERSION.SDK_INT.toString() + ".0.0"
@@ -33,7 +33,7 @@ internal class ApiUrlBuilder(
 
     private fun getAppVersion(): String = metadataService.getAppVersionName()
 
-    private fun getAppId() = coreConfigService.sdkAppBehavior.appId
+    private fun getAppId() = metadataService.getAppId()
 
     private fun isDebugBuild(): Boolean {
         return isDebug && enableIntegrationTesting &&

@@ -233,6 +233,13 @@ public final class io/embrace/android/embracesdk/internal/network/http/NetworkCa
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/embrace/android/embracesdk/internal/utils/ThrowableUtilsKt {
+	public static final fun causeMessage (Ljava/lang/Throwable;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun causeMessage$default (Ljava/lang/Throwable;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun causeName (Ljava/lang/Throwable;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun causeName$default (Ljava/lang/Throwable;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+}
+
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;

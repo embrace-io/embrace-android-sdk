@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.InternalApi;
 
 @InternalApi
 public interface HttpPathOverrideRequest {
 
-    @NonNull
+    @Nullable
     String getHeaderByName(@NonNull String name);
 
     @NonNull

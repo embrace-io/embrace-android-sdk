@@ -23,7 +23,7 @@ internal fun Throwable.getSafeStackTrace(): Array<StackTraceElement>? {
  * including the throwable and its cause, in which case [defaultName] is returned
  */
 @InternalApi
-internal fun causeName(throwable: Throwable?, defaultName: String = ""): String {
+public fun causeName(throwable: Throwable?, defaultName: String = ""): String {
     return throwable?.cause?.javaClass?.canonicalName ?: defaultName
 }
 
@@ -32,6 +32,6 @@ internal fun causeName(throwable: Throwable?, defaultName: String = ""): String 
  * including the throwable and its cause, in which case [defaultMessage] is returned
  */
 @InternalApi
-internal fun causeMessage(throwable: Throwable?, defaultMessage: String = ""): String {
+public fun causeMessage(throwable: Throwable?, defaultMessage: String = ""): String {
     return throwable?.cause?.message ?: defaultMessage
 }

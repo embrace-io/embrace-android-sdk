@@ -18,14 +18,12 @@ import okio.buffer
 import java.io.IOException
 
 /**
- * Custom OkHttp3 Interceptor implementation that will log the results of the network call
+ * Custom OkHttp Interceptor implementation that will log the results of the network call
  * to Embrace.io.
  *
- *
  * This interceptor will only intercept network request and responses from client app.
- * OkHttp3 network interceptors are added almost at the end of stack, they are closer to "Wire"
+ * OkHttp network interceptors are added almost at the end of stack, they are closer to "Wire"
  * so they are able to see catch "real requests".
- *
  *
  * Network Interceptors
  * - Able to operate on intermediate responses like redirects and retries.
@@ -35,7 +33,9 @@ import java.io.IOException
  */
 @InternalApi
 public class EmbraceOkHttp3NetworkInterceptor internal constructor(
-    private val embrace: Embrace, // A clock that mirrors the one used by OkHttp to get timestamps
+    private val embrace: Embrace,
+
+    // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock
 ) : Interceptor {
     public constructor() : this(Embrace.getInstance(), Clock { System.currentTimeMillis() })
@@ -218,12 +218,12 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
     }
 
     internal companion object {
-        const val ENCODING_GZIP = "gzip"
-        const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
-        const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
-        const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
-        const val CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
-        const val TRACEPARENT_HEADER_NAME = "traceparent"
+        internal const val ENCODING_GZIP = "gzip"
+        internal const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
+        internal const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
+        internal const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
+        internal const val CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
+        internal const val TRACEPARENT_HEADER_NAME = "traceparent"
         private val networkCallDataParts = arrayOf(
             "Response Headers",
             "Request Headers",

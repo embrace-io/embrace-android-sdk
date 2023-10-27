@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.okhttp3
 
+import io.embrace.android.embracesdk.InternalApi
 import java.io.IOException
 
 /**
  * We use the EmbraceCustomPathException to capture the custom path added in the
  * intercept chain process for client errors.
  */
-internal class EmbraceCustomPathException(val customPath: String, cause: Throwable?) : IOException(cause)
+@InternalApi
+public class EmbraceCustomPathException(public val customPath: String, cause: Throwable?) : IOException(cause)

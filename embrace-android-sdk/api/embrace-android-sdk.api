@@ -188,10 +188,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 }
 
-public final class io/embrace/android/embracesdk/internal/EmbraceInternalInterface$DefaultImpls {
-	public static fun isInternalNetworkCaptureDisabled (Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;)Z
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {
 	public abstract fun now ()J
 }

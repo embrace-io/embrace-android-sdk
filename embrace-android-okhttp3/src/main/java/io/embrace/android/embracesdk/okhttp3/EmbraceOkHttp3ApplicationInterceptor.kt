@@ -13,22 +13,13 @@ import java.io.IOException
 /**
  * This interceptor will only intercept errors that client app experiences.
  *
- *
- * We used OkHttp3 application interceptor in this case because this interceptor
+ * We used OkHttp application interceptor in this case because this interceptor
  * will be added first in the OkHttp3 interceptors stack. This allows us to catch network errors.
- * OkHttp3 network interceptors are added almost at the end of stack, they are closer to "Wire"
+ * OkHttp network interceptors are added almost at the end of stack, they are closer to "the wire"
  * so they are not able to see network errors.
  *
- *
- * Application interceptors: - Don't need to worry about intermediate responses like
- * redirects and retries. - Are always invoked once, even if the HTTP response is served
- * from the cache. - Observe the application's original intent. Unconcerned with OkHttp-injected
- * headers like If-None-Match. - Permitted to short-circuit and not call
- * Chain.proceed(). - Permitted to retry and make multiple calls to Chain.proceed().
- *
- *
- * We used the EmbraceGraphQLException to capture the custom path added in the intercept
- * chain process for client errors on graphql requests.
+ * We used the [EmbraceCustomPathException] to capture the custom path added in the interceptor
+ * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
  */
 @InternalApi
 public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
@@ -87,15 +78,15 @@ public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
     }
 
     internal companion object {
-        const val TRACEPARENT_HEADER_NAME = "traceparent"
-        const val UNKNOWN_EXCEPTION = "Unknown"
-        const val UNKNOWN_MESSAGE = "An error occurred during the execution of this network request"
+        internal const val TRACEPARENT_HEADER_NAME = "traceparent"
+        internal const val UNKNOWN_EXCEPTION = "Unknown"
+        internal const val UNKNOWN_MESSAGE = "An error occurred during the execution of this network request"
 
         /**
          * Return the canonical name of the cause of a [Throwable]. Handles null elements throughout,
          * including the throwable and its cause, in which case [defaultName] is returned
          */
-        fun causeName(throwable: Throwable?, defaultName: String = ""): String {
+        internal fun causeName(throwable: Throwable?, defaultName: String = ""): String {
             return throwable?.cause?.javaClass?.canonicalName ?: defaultName
         }
 
@@ -103,7 +94,7 @@ public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
          * Return the message of the cause of a [Throwable]. Handles null elements throughout,
          * including the throwable and its cause, in which case [defaultMessage] is returned
          */
-        fun causeMessage(throwable: Throwable?, defaultMessage: String = ""): String {
+        internal fun causeMessage(throwable: Throwable?, defaultMessage: String = ""): String {
             return throwable?.cause?.message ?: defaultMessage
         }
     }

@@ -7,12 +7,14 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.getSentLogMessages
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +34,11 @@ internal class EmbraceInternalInterfaceTest {
             IntegrationTestRule.newHarness(startImmediately = false)
         }
     )
+
+    @Before
+    fun setup() {
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
+    }
 
     @Test
     fun `no NPEs when SDK not started`() {
@@ -93,6 +100,7 @@ internal class EmbraceInternalInterfaceTest {
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
             getSdkCurrentTime()
+            assertFalse(isInternalNetworkCaptureDisabled())
         }
     }
 
@@ -249,6 +257,16 @@ internal class EmbraceInternalInterfaceTest {
             assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
             harness.fakeClock.tick()
             assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
+        }
+    }
+
+    @Test
+    fun `test isInternalNetworkCaptureDisabled`() {
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
+        with(testRule) {
+            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+            embrace.start(harness.fakeCoreModule.context)
+            assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
         }
     }
 

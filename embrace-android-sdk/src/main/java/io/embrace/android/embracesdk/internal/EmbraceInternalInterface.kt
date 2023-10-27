@@ -133,7 +133,10 @@ public interface EmbraceInternalInterface {
      */
     public fun getSdkCurrentTime(): Long
 
-    public fun isInternalNetworkCaptureDisabled(): Boolean = ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED
+    /**
+     * Whether network capture has been disabled through an internal, not-publicly supported means
+     */
+    public fun isInternalNetworkCaptureDisabled(): Boolean
 }
 
 internal val defaultImpl = object : EmbraceInternalInterface {
@@ -195,4 +198,6 @@ internal val defaultImpl = object : EmbraceInternalInterface {
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
 
     override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
+
+    override fun isInternalNetworkCaptureDisabled(): Boolean = false
 }

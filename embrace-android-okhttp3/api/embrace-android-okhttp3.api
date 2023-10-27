@@ -1,18 +1,14 @@
+public final class io/embrace/android/embracesdk/okhttp3/EmbraceCustomPathException : java/io/IOException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun getCustomPath ()Ljava/lang/String;
+}
+
 public final class io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3ApplicationInterceptor : okhttp3/Interceptor {
-	public static final field TRACEPARENT_HEADER_NAME Ljava/lang/String;
-	public static final field UNKNOWN_EXCEPTION Ljava/lang/String;
-	public static final field UNKNOWN_MESSAGE Ljava/lang/String;
 	public fun <init> ()V
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 }
 
 public final class io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3NetworkInterceptor : okhttp3/Interceptor {
-	public static final field CONTENT_ENCODING_HEADER_NAME Ljava/lang/String;
-	public static final field CONTENT_LENGTH_HEADER_NAME Ljava/lang/String;
-	public static final field CONTENT_TYPE_EVENT_STREAM Ljava/lang/String;
-	public static final field CONTENT_TYPE_HEADER_NAME Ljava/lang/String;
-	public static final field ENCODING_GZIP Ljava/lang/String;
-	public static final field TRACEPARENT_HEADER_NAME Ljava/lang/String;
 	public fun <init> ()V
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 }

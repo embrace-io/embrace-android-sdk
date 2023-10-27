@@ -17,7 +17,7 @@ class EmbraceOkHttp3PathOverrideRequest implements HttpPathOverrideRequest {
     }
 
     @Override
-    public String getOverriddenURL( String pathOverride) {
+    public String getOverriddenURL(String pathOverride) {
         return request.url().newBuilder().encodedPath(pathOverride).build().toString();
     }
 

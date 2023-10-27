@@ -1,28 +1,29 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import io.embrace.android.embracesdk.Embrace;
 
 /**
- * HTTP-specific implementation of EmbraceURLStreamHandler.
+ * HTTPS-specific implementation of EmbraceUrlStreamHandler.
  */
-final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
-    static final int PORT = 80;
+final class EmbraceHttpsUrlStreamHandler extends EmbraceUrlStreamHandler {
+    static final int PORT = 443;
 
     /**
      * Given the base URLStreamHandler that will be wrapped, constructs the instance.
      */
-    public EmbraceHttpUrlStreamHandler(URLStreamHandler handler) {
+    public EmbraceHttpsUrlStreamHandler(URLStreamHandler handler) {
         super(handler);
     }
 
-    EmbraceHttpUrlStreamHandler(URLStreamHandler handler, Embrace embrace) {
+    EmbraceHttpsUrlStreamHandler(URLStreamHandler handler, Embrace embrace) {
         super(handler, embrace);
     }
 
@@ -33,7 +34,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected Method getMethodOpenConnection(Class<URL> url) throws NoSuchMethodException {
-        Method method = this.handler.getClass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url);
+        Method method = this.handler.getClass().getSuperclass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url);
 
         method.setAccessible(true);
         return method;
@@ -41,7 +42,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected Method getMethodOpenConnection(Class<URL> url, Class<Proxy> proxy) throws NoSuchMethodException {
-        Method method = this.handler.getClass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url, proxy);
+        Method method = this.handler.getClass().getSuperclass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url, proxy);
 
         method.setAccessible(true);
         return method;
@@ -49,7 +50,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected URLConnection newEmbraceUrlConnection(URLConnection connection) {
-        if (!(connection instanceof HttpURLConnection)) {
+        if (!(connection instanceof HttpsURLConnection)) {
             return connection;
         }
 
@@ -59,11 +60,11 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
             // This disables automatic gzip decompression by HttpUrlConnection so that we can
             // accurately count the number of bytes. We handle the decompression ourselves.
             connection.setRequestProperty("Accept-Encoding", "gzip");
-            return new EmbraceHttpUrlConnection<>((HttpURLConnection) connection, true);
+            return new EmbraceHttpsUrlConnectionImpl<>((HttpsURLConnection) connection, true);
         } else {
             // Do not transparently decompress if the user has specified an encoding themselves.
             // Even if they pass in 'gzip', we should return them the compressed response.
-            return new EmbraceHttpUrlConnection<>((HttpURLConnection) connection, false);
+            return new EmbraceHttpsUrlConnectionImpl<>((HttpsURLConnection) connection, false);
         }
     }
 }

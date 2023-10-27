@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http
+package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.InternalApi
 

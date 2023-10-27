@@ -9,7 +9,7 @@ import java.io.IOException;
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
-import io.embrace.android.embracesdk.network.http.EmbraceHttpPathOverride;
+import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
 import okhttp3.Interceptor;
 import okhttp3.Request;

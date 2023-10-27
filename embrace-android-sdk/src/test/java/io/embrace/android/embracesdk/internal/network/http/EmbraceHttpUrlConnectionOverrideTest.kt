@@ -1,9 +1,10 @@
-package io.embrace.android.embracesdk.network.http
+package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
@@ -22,15 +23,15 @@ import java.io.InputStream
 import java.util.concurrent.TimeoutException
 import javax.net.ssl.HttpsURLConnection
 
-internal class EmbraceUrlConnectionOverrideTest {
+internal class EmbraceHttpUrlConnectionOverrideTest {
 
     private lateinit var mockEmbrace: Embrace
     private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var mockConnection: HttpsURLConnection
     private lateinit var capturedCallId: MutableList<String>
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private lateinit var embraceUrlConnectionOverride: EmbraceUrlConnectionOverride<HttpsURLConnection>
-    private lateinit var embraceUrlConnectionOverrideUnwrapped: EmbraceUrlConnectionOverride<HttpsURLConnection>
+    private lateinit var embraceUrlConnectionDelegate: EmbraceUrlConnectionDelegate<HttpsURLConnection>
+    private lateinit var embraceUrlConnectionDelegateUnwrapped: EmbraceUrlConnectionDelegate<HttpsURLConnection>
     private var fakeTimeMs = REQUEST_TIME
     private var shouldCaptureNetworkBody = false
     private var isNetworkSpanForwardingEnabled = false
@@ -52,8 +53,10 @@ internal class EmbraceUrlConnectionOverrideTest {
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         every { mockInternalInterface.getSdkCurrentTime() } answers { fakeTimeMs }
         mockConnection = createMockConnection()
-        embraceUrlConnectionOverride = EmbraceUrlConnectionOverride(mockConnection, true, mockEmbrace)
-        embraceUrlConnectionOverrideUnwrapped = EmbraceUrlConnectionOverride(mockConnection, false, mockEmbrace)
+        embraceUrlConnectionDelegate =
+            EmbraceUrlConnectionDelegate(mockConnection, true, mockEmbrace)
+        embraceUrlConnectionDelegateUnwrapped =
+            EmbraceUrlConnectionDelegate(mockConnection, false, mockEmbrace)
     }
 
     @Test
@@ -88,7 +91,7 @@ internal class EmbraceUrlConnectionOverrideTest {
 
     @Test
     fun `completed network call logged exactly once with no request size if connection connected with unwrapped output stream`() {
-        executeRequest(embraceOverride = embraceUrlConnectionOverrideUnwrapped)
+        executeRequest(embraceOverride = embraceUrlConnectionDelegateUnwrapped)
         verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
         assertTrue(capturedCallId[0].isNotBlank())
         with(capturedEmbraceNetworkRequest.captured) {
@@ -119,7 +122,7 @@ internal class EmbraceUrlConnectionOverrideTest {
 
     @Test
     fun `disconnect called with uninitialized connection results in error request capture and no response access`() {
-        embraceUrlConnectionOverride.disconnect()
+        embraceUrlConnectionDelegate.disconnect()
         verifyIncompleteRequestLogged()
         verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
         assertEquals(1, capturedCallId.size)
@@ -213,7 +216,7 @@ internal class EmbraceUrlConnectionOverrideTest {
     }
 
     private fun executeRequest(
-        embraceOverride: EmbraceUrlConnectionOverride<HttpsURLConnection> = embraceUrlConnectionOverride,
+        embraceOverride: EmbraceUrlConnectionDelegate<HttpsURLConnection> = embraceUrlConnectionDelegate,
         exceptionOnInputStream: Boolean = false
     ) {
         with(embraceOverride) {

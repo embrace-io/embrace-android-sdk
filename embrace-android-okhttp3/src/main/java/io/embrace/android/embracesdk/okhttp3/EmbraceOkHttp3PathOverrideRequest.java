@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.okhttp3;
 
-import io.embrace.android.embracesdk.HttpPathOverrideRequest;
+import io.embrace.android.embracesdk.internal.network.http.HttpPathOverrideRequest;
 import okhttp3.Request;
 
 class EmbraceOkHttp3PathOverrideRequest implements HttpPathOverrideRequest {

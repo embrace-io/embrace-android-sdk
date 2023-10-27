@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
 
@@ -36,9 +36,9 @@ import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
+import io.embrace.android.embracesdk.network.http.HttpMethod;
 import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
-
 
 /**
  * Wraps @{link HttpUrlConnection} to log network calls to Embrace. The wrapper also wraps the
@@ -58,8 +58,7 @@ import kotlin.jvm.functions.Function0;
  * flag to prevent duplication of calls.
  */
 @InternalApi
-class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
-    implements EmbraceUrlConnectionService, EmbraceSslUrlConnectionService {
+class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements EmbraceHttpsUrlConnection {
 
     /**
      * The content encoding HTTP header.
@@ -150,11 +149,11 @@ class EmbraceUrlConnectionOverride<T extends HttpURLConnection>
      * @param connection          the connection to wrap
      * @param enableWrapIoStreams true if we should transparently ungzip the response, else false
      */
-    public EmbraceUrlConnectionOverride(@NonNull T connection, boolean enableWrapIoStreams) {
+    public EmbraceUrlConnectionDelegate(@NonNull T connection, boolean enableWrapIoStreams) {
         this(connection, enableWrapIoStreams, Embrace.getInstance());
     }
 
-    EmbraceUrlConnectionOverride(@NonNull T connection, boolean enableWrapIoStreams,
+    EmbraceUrlConnectionDelegate(@NonNull T connection, boolean enableWrapIoStreams,
                                  @NonNull Embrace embrace) {
         this.connection = connection;
         this.enableWrapIoStreams = enableWrapIoStreams;

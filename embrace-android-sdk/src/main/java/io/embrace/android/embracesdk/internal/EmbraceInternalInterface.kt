@@ -4,8 +4,8 @@ import android.util.Pair
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.InternalApi
 import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 
 /**
  * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their sole source of communication

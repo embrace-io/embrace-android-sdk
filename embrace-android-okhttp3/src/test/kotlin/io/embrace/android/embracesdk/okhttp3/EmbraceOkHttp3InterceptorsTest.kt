@@ -39,6 +39,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
 internal class EmbraceOkHttp3InterceptorsTest {
@@ -464,6 +465,81 @@ internal class EmbraceOkHttp3InterceptorsTest {
             causeMessage(RuntimeException("message", IllegalArgumentException(message))),
             message
         )
+    }
+
+    @Test
+    fun `check various clock drifts produce expected start and end times`() {
+        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
+        clockDrifts.forEach { clockDrift ->
+            every { mockSystemClock.now() } answers { FAKE_SDK_TIME + clockDrift }
+            server.enqueue(createBaseMockResponse().setBody(responseBody))
+            val realSystemClockStartTime = System.currentTimeMillis()
+            runGetRequest()
+            val realSystemClockEndTime = System.currentTimeMillis()
+            with(capturedEmbraceNetworkRequest) {
+                assertTrue(
+                    "Unexpected start time when clock drift is $clockDrift",
+                    realSystemClockStartTime - clockDrift <= captured.startTime
+                )
+                assertTrue(
+                    "Unexpected end time when clock drift is $clockDrift",
+                    realSystemClockEndTime - clockDrift >= captured.endTime
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `check tick overs round down the expected drift`() {
+        val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
+        val extraDrifts = listOf(-1L, 1L)
+        clockDrifts.forEach { clockDrift ->
+            val realDrift = AtomicLong(clockDrift)
+            extraDrifts.forEach { extraDrift ->
+                every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+                server.enqueue(createBaseMockResponse().setBody(responseBody))
+                val realSystemClockStartTime = System.currentTimeMillis()
+                runGetRequest()
+                val realSystemClockEndTime = System.currentTimeMillis()
+                val returnedOffset = ((clockDrift + realDrift.get()) / 2)
+                with(capturedEmbraceNetworkRequest) {
+                    assertTrue(
+                        "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
+                        realSystemClockStartTime - returnedOffset <= captured.startTime
+                    )
+                    assertTrue(
+                        "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
+                        realSystemClockEndTime - returnedOffset >= captured.endTime
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `check various changing clock drifts produce expected start and end times`() {
+        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
+        val extraDrifts = listOf(-200L, -2L, 2L, 200L)
+        clockDrifts.forEach { clockDrift ->
+            val realDrift = AtomicLong(clockDrift)
+            extraDrifts.forEach { extraDrift ->
+                every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+                server.enqueue(createBaseMockResponse().setBody(responseBody))
+                val realSystemClockStartTime = System.currentTimeMillis()
+                runGetRequest()
+                val realSystemClockEndTime = System.currentTimeMillis()
+                with(capturedEmbraceNetworkRequest) {
+                    assertTrue(
+                        "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
+                        realSystemClockStartTime <= captured.startTime
+                    )
+                    assertTrue(
+                        "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
+                        realSystemClockEndTime >= captured.endTime
+                    )
+                }
+            }
+        }
     }
 
     private fun createBaseMockResponse(httpStatus: Int = 200) =

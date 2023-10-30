@@ -11,8 +11,8 @@ internal class EmbraceApiUrlBuilder(
     private val enableIntegrationTesting: Boolean,
     private val isDebug: Boolean,
     private val sdkEndpointBehavior: SdkEndpointBehavior,
-    private val appId: Lazy<String>,
-    private val deviceId: Lazy<String>,
+    private val lazyAppId: Lazy<String>,
+    private val lazyDeviceId: Lazy<String>,
     context: Context,
 ) : ApiUrlBuilder {
     companion object {
@@ -30,14 +30,14 @@ internal class EmbraceApiUrlBuilder(
     }
 
     private fun getConfigBaseUrl() =
-        buildUrl(sdkEndpointBehavior.getConfig(appId.value), CONFIG_API_VERSION, "config")
+        buildUrl(sdkEndpointBehavior.getConfig(lazyAppId.value), CONFIG_API_VERSION, "config")
 
     private fun getOperatingSystemCode() = Build.VERSION.SDK_INT.toString() + ".0.0"
 
     private fun getCoreBaseUrl(): String = if (isDebugBuild()) {
-        sdkEndpointBehavior.getDataDev(appId.value)
+        sdkEndpointBehavior.getDataDev(lazyAppId.value)
     } else {
-        sdkEndpointBehavior.getData(appId.value)
+        sdkEndpointBehavior.getData(lazyAppId.value)
     }
 
     private fun isDebugBuild(): Boolean {
@@ -49,8 +49,8 @@ internal class EmbraceApiUrlBuilder(
     }
 
     override fun getConfigUrl(): String {
-        return "${getConfigBaseUrl()}?appId=${appId.value}&osVersion=${getOperatingSystemCode()}" +
-            "&appVersion=$appVersionName&deviceId=${deviceId.value}"
+        return "${getConfigBaseUrl()}?appId=${lazyAppId.value}&osVersion=${getOperatingSystemCode()}" +
+            "&appVersion=$appVersionName&deviceId=${lazyDeviceId.value}"
     }
 
     override fun getEmbraceUrlWithSuffix(suffix: String): String {

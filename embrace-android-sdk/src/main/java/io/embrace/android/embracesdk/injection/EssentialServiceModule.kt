@@ -88,9 +88,9 @@ internal class EssentialServiceModuleImpl(
             coreModule.jsonSerializer
         )
 
-    private val appId = lazy { localConfig.appId }
+    private val lazyAppId = lazy { localConfig.appId }
 
-    private val deviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
+    private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
 
     private val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck(androidServicesModule.preferencesService::deviceIdentifier)
@@ -168,8 +168,8 @@ internal class EssentialServiceModuleImpl(
             enableIntegrationTesting = enableIntegrationTesting,
             isDebug = coreModule.isDebug,
             sdkEndpointBehavior = sdkEndpointBehavior,
-            appId = appId,
-            deviceId = deviceId,
+            lazyAppId = lazyAppId,
+            lazyDeviceId = lazyDeviceId,
             context = coreModule.context,
         )
     }
@@ -235,8 +235,8 @@ internal class EssentialServiceModuleImpl(
             apiRetryExecutor,
             networkConnectivityService,
             deliveryCacheManager,
-            deviceId,
-            appId
+            lazyDeviceId,
+            lazyAppId
         )
     }
 

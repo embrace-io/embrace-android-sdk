@@ -30,8 +30,8 @@ internal class EmbraceApiUrlBuilderTest {
             enableIntegrationTesting = false,
             isDebug = false,
             sdkEndpointBehavior = fakeSdkEndpointBehavior(localCfg = { BaseUrlLocalConfig() }),
-            appId = lazy { APP_ID },
-            deviceId = lazy { preferenceService.deviceIdentifier },
+            lazyAppId = lazy { APP_ID },
+            lazyDeviceId = lazy { preferenceService.deviceIdentifier },
             context = context,
         )
     }

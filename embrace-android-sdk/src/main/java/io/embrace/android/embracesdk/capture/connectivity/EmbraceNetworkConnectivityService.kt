@@ -23,7 +23,8 @@ internal class EmbraceNetworkConnectivityService(
     private val clock: Clock,
     private val registrationExecutorService: ExecutorService,
     private val logger: InternalEmbraceLogger,
-    private val connectivityManager: ConnectivityManager?
+    private val connectivityManager: ConnectivityManager?,
+    private val isNetworkCaptureEnabled: Boolean
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -56,8 +57,10 @@ internal class EmbraceNetworkConnectivityService(
         try {
             logger.logDeveloper("EmbraceNetworkConnectivityService", "handleNetworkStatus")
             val networkStatus = getCurrentNetworkStatus()
-            val savedStatus = saveStatus(timestamp, networkStatus)
-            if (savedStatus && notifyListeners) {
+            if (isNetworkCaptureEnabled) {
+                saveStatus(timestamp, networkStatus)
+            }
+            if (notifyListeners) {
                 logger.logInfo("Network status changed to: " + networkStatus.name)
                 notifyNetworkConnectivityListeners(networkStatus)
             }
@@ -109,14 +112,12 @@ internal class EmbraceNetworkConnectivityService(
         return networkStatus
     }
 
-    private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus): Boolean {
+    private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus) {
         synchronized(this) {
             if (networkReachable.isEmpty() || networkReachable.lastEntry()?.value != networkStatus) {
                 networkReachable[timestamp] = networkStatus
-                return true
             }
         }
-        return false
     }
 
     private fun registerConnectivityActionReceiver() {

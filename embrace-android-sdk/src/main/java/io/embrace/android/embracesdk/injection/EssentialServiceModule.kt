@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
@@ -198,17 +197,14 @@ internal class EssentialServiceModuleImpl(
             localSupplier = { localConfig },
             remoteSupplier = { null }
         )
-        if (autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
-            EmbraceNetworkConnectivityService(
-                coreModule.context,
-                initModule.clock,
-                backgroundExecutorService,
-                coreModule.logger,
-                systemServiceModule.connectivityManager
-            )
-        } else {
-            NoOpNetworkConnectivityService()
-        }
+        EmbraceNetworkConnectivityService(
+            coreModule.context,
+            initModule.clock,
+            backgroundExecutorService,
+            coreModule.logger,
+            systemServiceModule.connectivityManager,
+            autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+        )
     }
 
     override val cacheService: CacheService by singleton {

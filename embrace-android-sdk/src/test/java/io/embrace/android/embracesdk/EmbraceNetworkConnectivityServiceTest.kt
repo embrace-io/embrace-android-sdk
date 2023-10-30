@@ -73,7 +73,8 @@ internal class EmbraceNetworkConnectivityServiceTest {
             fakeClock,
             executor,
             logger,
-            mockConnectivityManager
+            mockConnectivityManager,
+            true
         )
     }
 
@@ -99,11 +100,9 @@ internal class EmbraceNetworkConnectivityServiceTest {
     @Test
     fun `test onReceive with no connection creates an interval`() {
         val mockIntent = mockk<Intent>()
-        val startTime = fakeClock.now()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
         service.onReceive(mockContext, mockIntent)
         fakeClock.tick(2000)
-        val endTime = fakeClock.now()
         val intervals = service.getCapturedData()
 
         assertEquals(1, intervals.size)
@@ -164,7 +163,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
     fun `test cleanCollections and getCapturedData returns no intervals`() {
         val startTime = fakeClock.now()
         fakeClock.tick(2000)
-        val endTime = fakeClock.now()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
 
         service.networkStatusOnSessionStarted(startTime)

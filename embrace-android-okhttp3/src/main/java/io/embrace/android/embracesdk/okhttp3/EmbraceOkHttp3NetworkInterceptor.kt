@@ -16,6 +16,7 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
+import kotlin.math.abs
 
 /**
  * Custom OkHttp Interceptor implementation that will log the results of the network call
@@ -232,11 +233,30 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
     }
 
     /**
-     * Get the difference between the SDK clock time and the time System.currentTimeMillis() returns, which is used by OkHttp for
-     * determining client-side timestamps.
+     * Estimate the difference between the current time returned by the SDK clock and the system clock, the latter of which is used by
+     * OkHttp to determine timestamps
      */
     private fun sdkClockOffset(): Long {
-        return embrace.internalInterface.getSdkCurrentTime() - systemClock.now()
+        // To ensure that the offset is the result of clock drift, we take two samples and ensure that their difference is less than 1ms
+        // before we use the value. A 1 ms difference between the samples is possible given it could be the result of the time
+        // "ticking over" to the next millisecond, but given the calls take the order of microseconds, it should not go beyond that.
+        //
+        // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
+        // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
+
+        val sdkTime1 = embrace.internalInterface.getSdkCurrentTime()
+        val systemTime1 = systemClock.now()
+        val sdkTime2 = embrace.internalInterface.getSdkCurrentTime()
+        val systemTime2 = systemClock.now()
+
+        val diff1 = sdkTime1 - systemTime1
+        val diff2 = sdkTime2 - systemTime2
+
+        return if (abs(diff1 - diff2) <= 1L) {
+            (diff1 + diff2) / 2
+        } else {
+            0L
+        }
     }
 
     internal companion object {

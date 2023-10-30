@@ -5,6 +5,7 @@ import android.webkit.URLUtil
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.defaultImpl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -14,6 +15,7 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -32,6 +34,7 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock)
         impl = EmbraceInternalInterfaceImpl(embrace, initModule)
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test
@@ -195,9 +198,17 @@ internal class EmbraceInternalInterfaceImplTest {
     }
 
     @Test
-    fun `check default implementation`() {
+    fun `check default SDK time implementation`() {
         assertTrue(beforeObjectInitTime < defaultImpl.getSdkCurrentTime())
         assertTrue(defaultImpl.getSdkCurrentTime() <= System.currentTimeMillis())
+    }
+
+    @Test
+    fun `test isInternalNetworkCaptureDisabled`() {
+        assertFalse(impl.isInternalNetworkCaptureDisabled())
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
+        assertTrue(impl.isInternalNetworkCaptureDisabled())
+        assertFalse(defaultImpl.isInternalNetworkCaptureDisabled())
     }
 
     companion object {

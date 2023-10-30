@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.CacheableValue
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2

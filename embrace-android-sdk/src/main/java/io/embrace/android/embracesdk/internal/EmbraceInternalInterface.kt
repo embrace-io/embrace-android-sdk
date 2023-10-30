@@ -4,8 +4,8 @@ import android.util.Pair
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.InternalApi
 import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 
 /**
  * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their sole source of communication
@@ -132,6 +132,11 @@ public interface EmbraceInternalInterface {
      * not change after the SDK has started.
      */
     public fun getSdkCurrentTime(): Long
+
+    /**
+     * Whether network capture has been disabled through an internal, not-publicly supported means
+     */
+    public fun isInternalNetworkCaptureDisabled(): Boolean
 }
 
 internal val defaultImpl = object : EmbraceInternalInterface {
@@ -193,4 +198,6 @@ internal val defaultImpl = object : EmbraceInternalInterface {
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
 
     override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
+
+    override fun isInternalNetworkCaptureDisabled(): Boolean = false
 }

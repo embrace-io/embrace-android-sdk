@@ -1,5 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
-
+package io.embrace.android.embracesdk.internal.network.http;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,9 +10,9 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
- * Additional methods for Https network calls
+ * Additional methods for HTTPS network calls
  */
-interface EmbraceSslUrlConnectionService extends EmbraceUrlConnectionService {
+interface EmbraceHttpsUrlConnection extends EmbraceHttpUrlConnection {
 
     @Nullable
     String getCipherSuite();

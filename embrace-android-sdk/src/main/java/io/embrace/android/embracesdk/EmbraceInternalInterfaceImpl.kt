@@ -2,10 +2,11 @@ package io.embrace.android.embracesdk
 
 import android.util.Pair
 import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 internal class EmbraceInternalInterfaceImpl(
@@ -177,4 +178,6 @@ internal class EmbraceInternalInterfaceImpl(
     }
 
     override fun getSdkCurrentTime(): Long = initModule.clock.now()
+
+    override fun isInternalNetworkCaptureDisabled(): Boolean = ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED
 }

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.http;
+package io.embrace.android.embracesdk.internal.network.http;
 
 import android.annotation.TargetApi;
 
@@ -17,7 +17,7 @@ import java.util.Map;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-interface EmbraceUrlConnectionService {
+interface EmbraceHttpUrlConnection {
 
     void addRequestProperty(@NonNull String key, @Nullable String value);
 

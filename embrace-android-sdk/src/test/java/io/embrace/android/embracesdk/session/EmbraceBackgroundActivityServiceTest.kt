@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
+import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -42,7 +42,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: PerformanceInfoService
     private lateinit var metadataService: MetadataService
-    private lateinit var breadcrumbService: FakeBreadcrumbService
+    private lateinit var mockBreadcrumbService: BreadcrumbService
     private lateinit var activityService: FakeActivityService
     private lateinit var eventService: EventService
     private lateinit var remoteLogger: EmbraceRemoteLogger
@@ -61,7 +61,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         clock = FakeClock(10000L)
         performanceInfoService = mockk()
         metadataService = FakeAndroidMetadataService()
-        breadcrumbService = FakeBreadcrumbService()
+        mockBreadcrumbService = mockk(relaxed = true)
         activityService = FakeActivityService(isInBackground = true)
         eventService = mockk()
         remoteLogger = mockk()
@@ -301,11 +301,29 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
+    @Test
+    fun `foregrounding background activity flushes breadcrumbs`() {
+        service = createService()
+        clock.tick(1000L)
+        service.onForeground(false, 0, clock.now())
+        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        verify(exactly = 1) { mockBreadcrumbService.flushBreadcrumbs() }
+    }
+
+    @Test
+    fun `saving background activity in the background will not flush breadcrumbs`() {
+        service = createService()
+        clock.tick(1000L)
+        service.save()
+        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        verify(exactly = 0) { mockBreadcrumbService.flushBreadcrumbs() }
+    }
+
     private fun createService(): EmbraceBackgroundActivityService {
         return EmbraceBackgroundActivityService(
             performanceInfoService,
             metadataService,
-            breadcrumbService,
+            mockBreadcrumbService,
             activityService,
             eventService,
             remoteLogger,

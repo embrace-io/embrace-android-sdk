@@ -14,10 +14,10 @@ import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeApiService
+import io.embrace.android.embracesdk.fakes.FakeApiUrlBuilder
 import io.embrace.android.embracesdk.fakes.FakeCacheService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -51,19 +50,9 @@ internal class FakeEssentialServiceModule(
     override val apiService: ApiService = FakeApiService(),
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val cacheService: CacheService = FakeCacheService(),
-    override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager()
+    override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager(),
+    override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder()
 ) : EssentialServiceModule {
-
-    private val fakeCoreModule = FakeCoreModule()
-
-    override val urlBuilder: ApiUrlBuilder = ApiUrlBuilder(
-        enableIntegrationTesting = true,
-        isDebug = false,
-        context = fakeCoreModule.context,
-        sdkEndpointBehavior = fakeSdkEndpointBehavior { BaseUrlLocalConfig() },
-        appId = lazy { "o0o0o" },
-        deviceId = lazy { "07D85B44E4E245F4A30E559BFC0D07FF" }
-    )
 
     override val cache: ApiResponseCache
         get() = throw UnsupportedOperationException()

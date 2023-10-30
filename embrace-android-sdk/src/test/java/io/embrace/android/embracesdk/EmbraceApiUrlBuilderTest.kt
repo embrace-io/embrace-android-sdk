@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.content.Context
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
@@ -13,7 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class ApiUrlBuilderTest {
+internal class EmbraceApiUrlBuilderTest {
 
     private lateinit var preferenceService: PreferencesService
     private lateinit var context: Context
@@ -25,7 +26,7 @@ internal class ApiUrlBuilderTest {
             deviceIdentifier = DEVICE_ID
         )
         context = FakeCoreModule().context
-        apiUrlBuilder = ApiUrlBuilder(
+        apiUrlBuilder = EmbraceApiUrlBuilder(
             enableIntegrationTesting = false,
             isDebug = false,
             sdkEndpointBehavior = fakeSdkEndpointBehavior(localCfg = { BaseUrlLocalConfig() }),

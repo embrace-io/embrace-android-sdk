@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService
+import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
@@ -163,7 +164,7 @@ internal class EssentialServiceModuleImpl(
             localSupplier = localConfig.sdkConfig::baseUrls,
         )
 
-        ApiUrlBuilder(
+        EmbraceApiUrlBuilder(
             enableIntegrationTesting = enableIntegrationTesting,
             isDebug = coreModule.isDebug,
             sdkEndpointBehavior = sdkEndpointBehavior,

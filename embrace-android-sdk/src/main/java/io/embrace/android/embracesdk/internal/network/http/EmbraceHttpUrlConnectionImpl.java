@@ -12,6 +12,9 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An implementation of HttpURLConnection that forwards calls to an {@link EmbraceUrlConnectionDelegate}
+ */
 class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLConnection {
 
     private final EmbraceHttpUrlConnection embraceHttpUrlConnectionDelegate;

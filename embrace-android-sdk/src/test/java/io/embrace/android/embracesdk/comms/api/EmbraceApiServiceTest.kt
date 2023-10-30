@@ -345,7 +345,7 @@ internal class EmbraceApiServiceTest {
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
             lazyDeviceId = lazy { "07D85B44E4E245F4A30E559BFC0D07FF" },
-            lazyAppId = lazy { "o0o0o" },
+            appId = "o0o0o",
         )
 
         failedApiCalls.clear()

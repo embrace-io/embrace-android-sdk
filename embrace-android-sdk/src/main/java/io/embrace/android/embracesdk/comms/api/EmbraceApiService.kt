@@ -36,7 +36,7 @@ internal class EmbraceApiService(
     networkConnectivityService: NetworkConnectivityService,
     private val cacheManager: DeliveryCacheManager,
     private val lazyDeviceId: Lazy<String>,
-    private val lazyAppId: Lazy<String>
+    private val appId: String
 ) : ApiService, NetworkConnectivityListener {
 
     private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
@@ -179,7 +179,7 @@ internal class EmbraceApiService(
         }
         val request: ApiRequest = eventBuilder(url).copy(
             deviceId = lazyDeviceId.value,
-            appId = lazyAppId.value,
+            appId = appId,
             url = url,
             httpMethod = HttpMethod.POST,
             contentEncoding = "gzip"
@@ -254,7 +254,7 @@ internal class EmbraceApiService(
         }
         val request: ApiRequest = eventBuilder(url).copy(
             deviceId = lazyDeviceId.value,
-            appId = lazyAppId.value,
+            appId = appId,
             url = url,
             httpMethod = HttpMethod.POST,
             contentEncoding = "gzip"
@@ -378,7 +378,7 @@ internal class EmbraceApiService(
         return ApiRequest(
             url = url,
             httpMethod = HttpMethod.POST,
-            appId = lazyAppId.value,
+            appId = appId,
             deviceId = lazyDeviceId.value,
             contentEncoding = "gzip"
         )

@@ -88,7 +88,7 @@ internal class EssentialServiceModuleImpl(
             coreModule.jsonSerializer
         )
 
-    private val lazyAppId = lazy { localConfig.appId }
+    private val appId = localConfig.appId
 
     private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
 
@@ -168,7 +168,7 @@ internal class EssentialServiceModuleImpl(
             enableIntegrationTesting = enableIntegrationTesting,
             isDebug = coreModule.isDebug,
             sdkEndpointBehavior = sdkEndpointBehavior,
-            lazyAppId = lazyAppId,
+            appId = appId,
             lazyDeviceId = lazyDeviceId,
             context = coreModule.context,
         )
@@ -236,7 +236,7 @@ internal class EssentialServiceModuleImpl(
             networkConnectivityService,
             deliveryCacheManager,
             lazyDeviceId,
-            lazyAppId
+            appId
         )
     }
 

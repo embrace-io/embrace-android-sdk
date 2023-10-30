@@ -31,7 +31,6 @@ import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -468,76 +467,41 @@ internal class EmbraceOkHttp3InterceptorsTest {
     }
 
     @Test
-    fun `check various clock drifts produce expected start and end times`() {
+    fun `check consistent offsets produce expected start and end times`() {
         val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
         clockDrifts.forEach { clockDrift ->
-            every { mockSystemClock.now() } answers { FAKE_SDK_TIME + clockDrift }
-            server.enqueue(createBaseMockResponse().setBody(responseBody))
-            val realSystemClockStartTime = System.currentTimeMillis()
-            runGetRequest()
-            val realSystemClockEndTime = System.currentTimeMillis()
-            with(capturedEmbraceNetworkRequest) {
-                assertTrue(
-                    "Unexpected start time when clock drift is $clockDrift",
-                    realSystemClockStartTime - clockDrift <= captured.startTime
-                )
-                assertTrue(
-                    "Unexpected end time when clock drift is $clockDrift",
-                    realSystemClockEndTime - clockDrift >= captured.endTime
-                )
-            }
+            runAndValidateTimestamps(
+                clockDrift = clockDrift,
+                extraDrift = 0L
+            )
         }
     }
 
     @Test
-    fun `check tick overs round down the expected drift`() {
+    fun `check tick overs round to the lowest absolute value for the offset`() {
         val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
         val extraDrifts = listOf(-1L, 1L)
         clockDrifts.forEach { clockDrift ->
-            val realDrift = AtomicLong(clockDrift)
             extraDrifts.forEach { extraDrift ->
-                every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
-                server.enqueue(createBaseMockResponse().setBody(responseBody))
-                val realSystemClockStartTime = System.currentTimeMillis()
-                runGetRequest()
-                val realSystemClockEndTime = System.currentTimeMillis()
-                val returnedOffset = ((clockDrift + realDrift.get()) / 2)
-                with(capturedEmbraceNetworkRequest) {
-                    assertTrue(
-                        "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
-                        realSystemClockStartTime - returnedOffset <= captured.startTime
-                    )
-                    assertTrue(
-                        "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
-                        realSystemClockEndTime - returnedOffset >= captured.endTime
-                    )
-                }
+                runAndValidateTimestamps(
+                    clockDrift = clockDrift,
+                    extraDrift = extraDrift,
+                )
             }
         }
     }
 
     @Test
-    fun `check various changing clock drifts produce expected start and end times`() {
+    fun `check big differences in offset samples will result in no offset being used`() {
         val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
         val extraDrifts = listOf(-200L, -2L, 2L, 200L)
         clockDrifts.forEach { clockDrift ->
-            val realDrift = AtomicLong(clockDrift)
             extraDrifts.forEach { extraDrift ->
-                every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
-                server.enqueue(createBaseMockResponse().setBody(responseBody))
-                val realSystemClockStartTime = System.currentTimeMillis()
-                runGetRequest()
-                val realSystemClockEndTime = System.currentTimeMillis()
-                with(capturedEmbraceNetworkRequest) {
-                    assertTrue(
-                        "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
-                        realSystemClockStartTime <= captured.startTime
-                    )
-                    assertTrue(
-                        "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}",
-                        realSystemClockEndTime >= captured.endTime
-                    )
-                }
+                runAndValidateTimestamps(
+                    clockDrift = clockDrift,
+                    extraDrift = extraDrift,
+                    expectedOffset = 0L
+                )
             }
         }
     }
@@ -598,9 +562,40 @@ internal class EmbraceOkHttp3InterceptorsTest {
         )
     }
 
-    private fun runPostRequest() = assertNotNull(okHttpClient.newCall(postRequestBuilder.build()).execute())
+    private fun runAndValidateTimestamps(
+        clockDrift: Long,
+        extraDrift: Long = 0L,
+        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L
+    ) {
+        val realDrift = AtomicLong(clockDrift)
+        every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+        server.enqueue(createBaseMockResponse().setBody(responseBody))
+        val response = runGetRequest()
+        val realSystemClockStartTime = response.sentRequestAtMillis
+        val realSystemClockEndTime = response.receivedResponseAtMillis
+        with(capturedEmbraceNetworkRequest) {
+            assertEquals(
+                "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}:\n" +
+                    "Unadjusted time: $realSystemClockStartTime with expected offset $expectedOffset\n" +
+                    "Expected time: ${realSystemClockStartTime - expectedOffset}\n" +
+                    "Captured time: ${captured.startTime}",
+                realSystemClockStartTime - expectedOffset,
+                captured.startTime
+            )
+            assertEquals(
+                "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}\n" +
+                    "Unadjusted time: $realSystemClockEndTime with expected offset $expectedOffset\n" +
+                    "Expected time: ${realSystemClockEndTime - expectedOffset}\n" +
+                    "Captured time: ${captured.endTime}",
+                realSystemClockEndTime - expectedOffset,
+                captured.endTime
+            )
+        }
+    }
 
-    private fun runGetRequest() = assertNotNull(okHttpClient.newCall(getRequestBuilder.build()).execute())
+    private fun runPostRequest(): Response = checkNotNull(okHttpClient.newCall(postRequestBuilder.build()).execute())
+
+    private fun runGetRequest(): Response = checkNotNull(okHttpClient.newCall(getRequestBuilder.build()).execute())
 
     @Suppress("LongParameterList")
     private fun validateWholeRequest(

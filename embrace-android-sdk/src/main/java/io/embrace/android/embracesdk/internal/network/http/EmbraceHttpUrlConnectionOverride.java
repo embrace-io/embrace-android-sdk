@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -16,7 +17,7 @@ class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
         this.connection = connection;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public String getHeaderByName(@NonNull String name) {
         return connection.getRequestProperty(name);

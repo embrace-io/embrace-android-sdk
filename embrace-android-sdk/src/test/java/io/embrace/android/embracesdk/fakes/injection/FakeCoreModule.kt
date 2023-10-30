@@ -23,7 +23,7 @@ internal class FakeCoreModule(
     override val application: Application =
         if (RuntimeEnvironment.getApplication() == null) mockk(relaxed = true) else RuntimeEnvironment.getApplication(),
     override val context: Context =
-        if (isMockKMock(application)) mockk(relaxed = true) else application.applicationContext,
+        if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val appFramework: AppFramework = AppFramework.NATIVE,
     override val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
@@ -32,19 +32,18 @@ internal class FakeCoreModule(
     override val isDebug: Boolean =
         if (isMockKMock(context)) false else context.applicationInfo.isDebug()
 ) : CoreModule {
-    init {
-        if (isMockKMock(context)) {
-            initContext()
+
+    companion object {
+        fun getMockedContext(): Context {
+            val packageInfo = PackageInfo()
+            packageInfo.versionName = "1.0.0"
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode = 10
+
+            val mockContext = mockk<Context>(relaxed = true)
+            every { mockContext.packageName }.returns("package-info")
+            every { mockContext.packageManager.getPackageInfo("package-info", 0) }.returns(packageInfo)
+            return mockContext
         }
-    }
-
-    private fun initContext() {
-        val packageInfo = PackageInfo()
-        packageInfo.versionName = "1.0.0"
-        @Suppress("DEPRECATION")
-        packageInfo.versionCode = 10
-
-        every { context.packageName }.returns("package-info")
-        every { context.packageManager.getPackageInfo("package-info", 0) }.returns(packageInfo)
     }
 }

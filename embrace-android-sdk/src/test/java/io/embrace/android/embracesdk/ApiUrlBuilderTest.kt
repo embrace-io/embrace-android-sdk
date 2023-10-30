@@ -30,7 +30,7 @@ internal class ApiUrlBuilderTest {
             isDebug = false,
             sdkEndpointBehavior = fakeSdkEndpointBehavior(localCfg = { BaseUrlLocalConfig() }),
             appId = lazy { APP_ID },
-            deviceId = lazy { DEVICE_ID },
+            deviceId = lazy { preferenceService.deviceIdentifier },
             context = context,
         )
     }
@@ -44,7 +44,7 @@ internal class ApiUrlBuilderTest {
     fun testUrls() {
         assertEquals(
             "https://a-$APP_ID.config.emb-api.com/v2/config?appId=o0o0o&osVersion=0.0.0" +
-                "&appVersion=1.0.0&deviceId=$DEVICE_ID",
+                "&appVersion=1.0.0&deviceId=${preferenceService.deviceIdentifier}",
             apiUrlBuilder.getConfigUrl()
         )
         assertEquals(

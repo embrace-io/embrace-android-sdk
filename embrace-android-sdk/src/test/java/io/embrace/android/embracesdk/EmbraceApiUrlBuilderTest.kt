@@ -26,10 +26,12 @@ internal class EmbraceApiUrlBuilderTest {
             deviceIdentifier = DEVICE_ID
         )
         context = FakeCoreModule().context
+
+        val baseUrlLocalConfig = fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
+
         apiUrlBuilder = EmbraceApiUrlBuilder(
-            enableIntegrationTesting = false,
-            isDebug = false,
-            sdkEndpointBehavior = fakeSdkEndpointBehavior(localCfg = { BaseUrlLocalConfig() }),
+            coreBaseUrl = baseUrlLocalConfig.getData(APP_ID),
+            configBaseUrl = baseUrlLocalConfig.getConfig(APP_ID),
             appId = APP_ID,
             lazyDeviceId = lazy { preferenceService.deviceIdentifier },
             context = context,

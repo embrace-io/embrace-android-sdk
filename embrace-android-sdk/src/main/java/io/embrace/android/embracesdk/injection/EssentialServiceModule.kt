@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import android.os.Debug
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
@@ -158,15 +159,28 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val urlBuilder by singleton {
+        // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
+        // but we want to access behaviors from ConfigService when possible.
         val sdkEndpointBehavior = SdkEndpointBehavior(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig.sdkConfig::baseUrls,
         )
 
+        val isDebug = coreModule.isDebug &&
+            enableIntegrationTesting &&
+            (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
+
+        val coreBaseUrl = if (isDebug) {
+            sdkEndpointBehavior.getDataDev(appId)
+        } else {
+            sdkEndpointBehavior.getData(appId)
+        }
+
+        val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
+
         EmbraceApiUrlBuilder(
-            enableIntegrationTesting = enableIntegrationTesting,
-            isDebug = coreModule.isDebug,
-            sdkEndpointBehavior = sdkEndpointBehavior,
+            coreBaseUrl = coreBaseUrl,
+            configBaseUrl = configBaseUrl,
             appId = appId,
             lazyDeviceId = lazyDeviceId,
             context = coreModule.context,

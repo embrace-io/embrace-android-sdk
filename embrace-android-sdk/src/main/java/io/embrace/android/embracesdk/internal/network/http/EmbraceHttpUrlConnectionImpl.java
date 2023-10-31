@@ -26,8 +26,12 @@ class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLC
      * @param enableWrapIoStreams true if we should transparently ungzip the response, else false
      */
     public EmbraceHttpUrlConnectionImpl(T connection, boolean enableWrapIoStreams) {
+        this(connection, new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams));
+    }
+
+    EmbraceHttpUrlConnectionImpl(T connection, EmbraceUrlConnectionDelegate<T> delegate) {
         super(connection.getURL());
-        embraceHttpUrlConnectionDelegate = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
+        embraceHttpUrlConnectionDelegate = delegate;
     }
 
     @Override

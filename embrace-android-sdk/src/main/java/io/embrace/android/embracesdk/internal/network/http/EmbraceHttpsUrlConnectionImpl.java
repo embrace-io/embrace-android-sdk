@@ -36,8 +36,12 @@ class EmbraceHttpsUrlConnectionImpl<T extends HttpsURLConnection> extends HttpsU
      * @param enableWrapIoStreams true if we should transparently ungzip the response, else false
      */
     public EmbraceHttpsUrlConnectionImpl(T connection, boolean enableWrapIoStreams) {
+        this(connection, new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams));
+    }
+
+    EmbraceHttpsUrlConnectionImpl(T connection, EmbraceUrlConnectionDelegate<T> delegate) {
         super(connection.getURL());
-        embraceHttpsUrlConnectionDelegate = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
+        embraceHttpsUrlConnectionDelegate = delegate;
     }
 
     @Override
@@ -342,12 +346,12 @@ class EmbraceHttpsUrlConnectionImpl<T extends HttpsURLConnection> extends HttpsU
         this.embraceHttpsUrlConnectionDelegate.setHostnameVerifier(verifier);
     }
 
-
+    @Override
     public Principal getLocalPrincipal() {
         return embraceHttpsUrlConnectionDelegate.getLocalPrincipal();
     }
 
-
+    @Override
     public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
         return embraceHttpsUrlConnectionDelegate.getPeerPrincipal();
     }

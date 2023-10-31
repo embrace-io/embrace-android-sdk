@@ -23,7 +23,7 @@ import java.io.InputStream
 import java.util.concurrent.TimeoutException
 import javax.net.ssl.HttpsURLConnection
 
-internal class EmbraceHttpUrlConnectionOverrideTest {
+internal class EmbraceUrlConnectionDelegateTest {
 
     private lateinit var mockEmbrace: Embrace
     private lateinit var mockInternalInterface: EmbraceInternalInterface
@@ -91,7 +91,7 @@ internal class EmbraceHttpUrlConnectionOverrideTest {
 
     @Test
     fun `completed network call logged exactly once with no request size if connection connected with unwrapped output stream`() {
-        executeRequest(embraceOverride = embraceUrlConnectionDelegateUnwrapped)
+        executeRequest(delegate = embraceUrlConnectionDelegateUnwrapped)
         verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
         assertTrue(capturedCallId[0].isNotBlank())
         with(capturedEmbraceNetworkRequest.captured) {
@@ -216,10 +216,10 @@ internal class EmbraceHttpUrlConnectionOverrideTest {
     }
 
     private fun executeRequest(
-        embraceOverride: EmbraceUrlConnectionDelegate<HttpsURLConnection> = embraceUrlConnectionDelegate,
+        delegate: EmbraceUrlConnectionDelegate<HttpsURLConnection> = embraceUrlConnectionDelegate,
         exceptionOnInputStream: Boolean = false
     ) {
-        with(embraceOverride) {
+        with(delegate) {
             connect()
             outputStream?.write(requestBody)
             if (exceptionOnInputStream) {

@@ -1,13 +1,9 @@
 package io.embrace.android.embracesdk
 
-import android.content.Context
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -15,26 +11,18 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceApiUrlBuilderTest {
-
-    private lateinit var preferenceService: PreferencesService
-    private lateinit var context: Context
     private lateinit var apiUrlBuilder: ApiUrlBuilder
 
     @Before
     fun setup() {
-        preferenceService = FakePreferenceService(
-            deviceIdentifier = DEVICE_ID
-        )
-        context = FakeCoreModule().context
-
         val baseUrlLocalConfig = fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
 
         apiUrlBuilder = EmbraceApiUrlBuilder(
             coreBaseUrl = baseUrlLocalConfig.getData(APP_ID),
             configBaseUrl = baseUrlLocalConfig.getConfig(APP_ID),
             appId = APP_ID,
-            lazyDeviceId = lazy { preferenceService.deviceIdentifier },
-            context = context,
+            lazyDeviceId = lazy { DEVICE_ID },
+            lazyAppVersionName = lazy { APP_VERSION_NAME },
         )
     }
 
@@ -46,8 +34,8 @@ internal class EmbraceApiUrlBuilderTest {
     @Test
     fun testUrls() {
         assertEquals(
-            "https://a-$APP_ID.config.emb-api.com/v2/config?appId=o0o0o&osVersion=0.0.0" +
-                "&appVersion=1.0.0&deviceId=${preferenceService.deviceIdentifier}",
+            "https://a-$APP_ID.config.emb-api.com/v2/config?appId=$APP_ID&osVersion=0.0.0" +
+                "&appVersion=$APP_VERSION_NAME&deviceId=$DEVICE_ID",
             apiUrlBuilder.getConfigUrl()
         )
         assertEquals(
@@ -58,4 +46,5 @@ internal class EmbraceApiUrlBuilderTest {
 }
 
 private const val APP_ID = "o0o0o"
+private const val APP_VERSION_NAME = "1.0.0"
 private const val DEVICE_ID = "07D85B44E4E245F4A30E559BFC0D07FF"

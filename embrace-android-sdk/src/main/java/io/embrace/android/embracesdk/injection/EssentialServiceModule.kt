@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.EmbraceActivityService
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
@@ -77,7 +78,7 @@ internal class EssentialServiceModuleImpl(
     enableIntegrationTesting: Boolean,
     private val configStopAction: () -> Unit,
     private val configServiceProvider: () -> ConfigService? = { null },
-    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
+    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl(),
 ) : EssentialServiceModule {
 
     private val localConfig =
@@ -87,6 +88,29 @@ internal class EssentialServiceModuleImpl(
             customAppId,
             coreModule.jsonSerializer
         )
+
+    private val lazyPackageInfo = lazy {
+        coreModule.context.packageManager.getPackageInfo(coreModule.context.packageName, 0)
+    }
+
+    private val lazyAppVersionName = lazy {
+        try {
+            // some customers have trailing white-space for the app version.
+            lazyPackageInfo.value.versionName.toString().trim { it <= ' ' }
+        } catch (e: Exception) {
+            logDeveloper("EssentialServiceModule", "Cannot set appVersionName, setting UNKNOWN_VALUE", e)
+            UNKNOWN_VALUE
+        }
+    }
+
+    private val lazyAppVersionCode: Lazy<String> = lazy {
+        try {
+            lazyPackageInfo.value.versionCode.toString()
+        } catch (e: Exception) {
+            logDeveloper("EssentialServiceModule", "Cannot set appVersionCode, setting UNKNOWN_VALUE", e)
+            UNKNOWN_VALUE
+        }
+    }
 
     private val appId = localConfig.appId
 
@@ -154,7 +178,9 @@ internal class EssentialServiceModuleImpl(
             systemServiceModule.activityManager,
             initModule.clock,
             cpuInfoDelegate,
-            deviceArchitecture
+            deviceArchitecture,
+            lazyAppVersionName,
+            lazyAppVersionCode
         )
     }
 
@@ -183,7 +209,7 @@ internal class EssentialServiceModuleImpl(
             configBaseUrl = configBaseUrl,
             appId = appId,
             lazyDeviceId = lazyDeviceId,
-            context = coreModule.context,
+            lazyAppVersionName = lazyAppVersionName
         )
     }
 
@@ -256,3 +282,8 @@ internal class EssentialServiceModuleImpl(
         )
     }
 }
+
+/**
+ * Default string value for app info missing strings
+ */
+private const val UNKNOWN_VALUE = "UNKNOWN"

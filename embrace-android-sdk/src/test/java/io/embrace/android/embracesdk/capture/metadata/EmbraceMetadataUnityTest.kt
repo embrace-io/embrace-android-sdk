@@ -33,6 +33,7 @@ internal class EmbraceMetadataUnityTest {
     companion object {
         private val fakeClock = FakeClock()
         private lateinit var context: Context
+        private val packageInfo = PackageInfo()
         private lateinit var buildInfo: BuildInfo
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
@@ -66,7 +67,6 @@ internal class EmbraceMetadataUnityTest {
         }
 
         private fun initContext() {
-            val packageInfo = PackageInfo()
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
@@ -110,7 +110,9 @@ internal class EmbraceMetadataUnityTest {
         mockk(),
         fakeClock,
         cpuInfoDelegate,
-        deviceArchitecture
+        deviceArchitecture,
+        lazy { packageInfo.versionName },
+        lazy { packageInfo.versionCode.toString() }
     )
 
     @Test

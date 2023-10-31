@@ -73,7 +73,9 @@ internal class EmbraceMetadataReactNativeTest {
         mockk(),
         fakeClock,
         cpuInfoDelegate,
-        deviceArchitecture
+        deviceArchitecture,
+        mockk(),
+        mockk()
     )
 
     @Test

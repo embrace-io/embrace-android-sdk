@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.annotation
 
 /**
  * Classes and methods marked with this annotation are part of Embrace's Internal API

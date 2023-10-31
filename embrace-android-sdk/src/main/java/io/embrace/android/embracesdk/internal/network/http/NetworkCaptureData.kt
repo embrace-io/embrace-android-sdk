@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * The additional data captured if network body capture is enabled for the URL

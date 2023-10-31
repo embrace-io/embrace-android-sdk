@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
 import android.os.Trace
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Shim to add custom events to system traces if running in the applicable API versions. Basic alternative to using androidx.tracing.

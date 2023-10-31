@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Utilities to handle edge cases related to working with Throwables

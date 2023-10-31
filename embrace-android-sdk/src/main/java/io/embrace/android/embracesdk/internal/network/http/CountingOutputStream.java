@@ -5,8 +5,6 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import io.embrace.android.embracesdk.InternalApi;
-
 /**
  * Counts the number of bytes written to the output stream, also captures the request body.
  */

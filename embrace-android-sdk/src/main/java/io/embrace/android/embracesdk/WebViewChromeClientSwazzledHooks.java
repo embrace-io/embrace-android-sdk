@@ -6,6 +6,8 @@ import android.webkit.ConsoleMessage;
 
 import androidx.annotation.NonNull;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
+
 @InternalApi
 public final class WebViewChromeClientSwazzledHooks {
 

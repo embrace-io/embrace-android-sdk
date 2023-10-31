@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.anr.AnrService;
 import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerServiceKt;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;

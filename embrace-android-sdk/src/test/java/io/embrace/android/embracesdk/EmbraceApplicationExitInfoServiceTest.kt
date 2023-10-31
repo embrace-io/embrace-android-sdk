@@ -284,7 +284,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then no null traces should be sent
-        assertTrue(deliveryService.appExitInfoRequests.isEmpty())
+        assertTrue(deliveryService.blobMessages.isEmpty())
     }
 
     @Test
@@ -388,7 +388,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then a null trace should be sent
-        assertTrue(deliveryService.appExitInfoRequests.isEmpty())
+        assertTrue(deliveryService.blobMessages.isEmpty())
     }
 
     @Test
@@ -405,9 +405,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        val payloads = checkNotNull(deliveryService.appExitInfoRequests)
+        val payloads = checkNotNull(deliveryService.blobMessages)
         assertEquals(32, payloads.size)
     }
 
-    private fun getLastAeiRequest() = deliveryService.appExitInfoRequests.single().applicationExits.single()
+    private fun getLastAeiRequest() = deliveryService.blobMessages.single().applicationExits.single()
 }

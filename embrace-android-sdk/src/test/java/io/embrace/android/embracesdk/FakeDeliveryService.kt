@@ -28,7 +28,7 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentCachedSession: String? = null
     var lastSavedSession: SessionMessage? = null
     val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
-    var appExitInfoRequests: MutableList<BlobMessage> = mutableListOf()
+    var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
     override fun saveSession(sessionMessage: SessionMessage) {
         lastSavedSession = sessionMessage
@@ -85,6 +85,6 @@ internal class FakeDeliveryService : DeliveryService {
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        this.appExitInfoRequests.add(blobMessage)
+        blobMessages.add(blobMessage)
     }
 }

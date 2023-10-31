@@ -10,7 +10,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
- * Additional methods for HTTPS network calls
+ * {@link EmbraceHttpUrlConnection} plus additional methods for HTTPS network calls
  */
 interface EmbraceHttpsUrlConnection extends EmbraceHttpUrlConnection {
 

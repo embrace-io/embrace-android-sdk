@@ -153,7 +153,7 @@ class InternalEmbracePlugin : Plugin<Project> {
             testOptions {
                 unitTests {
                     all { test ->
-                        test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2) + 1
+                        test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
                     }
                 }
             }

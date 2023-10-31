@@ -102,6 +102,8 @@ dependencies {
     testImplementation "org.robolectric:robolectric:4.10.3"
     testImplementation project(path: ":embrace-android-sdk")
     testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    testImplementation("com.google.protobuf:protobuf-java:3.24.0")
+    testImplementation("com.google.protobuf:protobuf-java-util:3.24.0")
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
 }

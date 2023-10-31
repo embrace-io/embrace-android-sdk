@@ -74,6 +74,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           file: embrace-android-sdk/build/reports/kover/reportRelease.xml
+          
+      - name: Run SonarCloud
+        run: ./gradlew sonar
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

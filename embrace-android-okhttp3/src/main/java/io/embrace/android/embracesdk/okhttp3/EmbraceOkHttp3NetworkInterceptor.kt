@@ -16,6 +16,7 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
+import kotlin.math.abs
 
 /**
  * Custom OkHttp Interceptor implementation that will log the results of the network call
@@ -40,14 +41,14 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
 ) : Interceptor {
     public constructor() : this(Embrace.getInstance(), Clock { System.currentTimeMillis() })
 
-    @Suppress("ComplexMethod")
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
+        // If the SDK has not started, don't do anything
         val originalRequest: Request = chain.request()
         if (!embrace.isStarted || embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
             return chain.proceed(originalRequest)
         }
-        val offset = sdkClockOffset()
+
         val networkSpanForwardingEnabled = embrace.internalInterface.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
@@ -55,66 +56,54 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
         }
         val request =
             if (traceparent == null) originalRequest else originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, traceparent).build()
+
+        // Take a snapshot of the difference in the system and SDK clocks and send the request along the chain
+        val offset = sdkClockOffset()
         val networkResponse: Response = chain.proceed(request)
-        val responseBuilder: Response.Builder = networkResponse.newBuilder().request(request)
-        var contentLength: Long? = null
-        // Try to get the content length from the header
-        val contentLengthHeaderValue = networkResponse.header(CONTENT_LENGTH_HEADER_NAME)
-        if (contentLengthHeaderValue != null) {
-            try {
-                contentLength = contentLengthHeaderValue.toLong()
-            } catch (ex: Exception) {
-                // Ignore
-            }
-        }
 
-        // If we get the body for a server-sent events stream, then we will wait forever
-        val contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME)
+        // Get response and determine the size of the body
+        var contentLength: Long? = getContentLengthFromHeader(networkResponse)
 
-        // Tolerant of a charset specified in header,
-        // e.g. Content-Type: text/event-stream;charset=UTF-8
-        val serverSentEvent = contentType != null && contentType.startsWith(CONTENT_TYPE_EVENT_STREAM)
-        if (!serverSentEvent && contentLength == null) {
-            try {
-                val body = networkResponse.body
-                if (body != null) {
-                    val source = body.source()
-                    source.request(Long.MAX_VALUE)
-                    contentLength = source.buffer.size
-                }
-            } catch (ex: Exception) {
-                // Ignore
-            }
-        }
         if (contentLength == null) {
-            // Otherwise default to zero
+            // If we get the body for a server-sent events stream, then we will wait forever
+            contentLength = getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME))
+        }
+
+        if (contentLength == null) {
+            // Set the content length to 0 if we can't determine it
             contentLength = 0L
         }
-        val shouldCaptureNetworkData = embrace.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
-        if (shouldCaptureNetworkData &&
-            ENCODING_GZIP.equals(networkResponse.header(CONTENT_ENCODING_HEADER_NAME), ignoreCase = true) &&
-            networkResponse.promisesBody()
-        ) {
-            val body = networkResponse.body
-            if (body != null) {
-                val strippedHeaders = networkResponse.headers.newBuilder()
-                    .removeAll(CONTENT_ENCODING_HEADER_NAME)
-                    .removeAll(CONTENT_LENGTH_HEADER_NAME)
-                    .build()
-                val realResponseBody = RealResponseBody(
-                    contentType,
-                    -1L,
-                    GzipSource(body.source()).buffer()
-                )
-                responseBuilder.headers(strippedHeaders)
-                responseBuilder.body(realResponseBody)
-            }
-        }
-        val response: Response = responseBuilder.build()
+
+        var response: Response = networkResponse
         var networkCaptureData: NetworkCaptureData? = null
+        val shouldCaptureNetworkData = embrace.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
+
+        // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
+            if (ENCODING_GZIP.equals(networkResponse.header(CONTENT_ENCODING_HEADER_NAME), ignoreCase = true) &&
+                networkResponse.promisesBody()
+            ) {
+                val body = networkResponse.body
+                if (body != null) {
+                    val strippedHeaders = networkResponse.headers.newBuilder()
+                        .removeAll(CONTENT_ENCODING_HEADER_NAME)
+                        .removeAll(CONTENT_LENGTH_HEADER_NAME)
+                        .build()
+                    val realResponseBody = RealResponseBody(
+                        networkResponse.header(CONTENT_TYPE_HEADER_NAME),
+                        -1L,
+                        GzipSource(body.source()).buffer()
+                    )
+                    val responseBuilder = networkResponse.newBuilder().request(request)
+                    responseBuilder.headers(strippedHeaders)
+                    responseBuilder.body(realResponseBody)
+                    response = responseBuilder.build()
+                }
+            }
+
             networkCaptureData = getNetworkCaptureData(request, response)
         }
+
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
                 EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
@@ -130,6 +119,40 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
             )
         )
         return response
+    }
+
+    private fun getContentLengthFromHeader(networkResponse: Response): Long? {
+        var contentLength: Long? = null
+        val contentLengthHeaderValue = networkResponse.header(CONTENT_LENGTH_HEADER_NAME)
+        if (contentLengthHeaderValue != null) {
+            try {
+                contentLength = contentLengthHeaderValue.toLong()
+            } catch (ex: Exception) {
+                // Ignore
+            }
+        }
+        return contentLength
+    }
+
+    private fun getContentLengthFromBody(networkResponse: Response, contentType: String?): Long? {
+        var contentLength: Long? = null
+
+        // Tolerant of a charset specified in header, e.g. Content-Type: text/event-stream;charset=UTF-8
+        val serverSentEvent = contentType != null && contentType.startsWith(CONTENT_TYPE_EVENT_STREAM)
+        if (!serverSentEvent) {
+            try {
+                val body = networkResponse.body
+                if (body != null) {
+                    val source = body.source()
+                    source.request(Long.MAX_VALUE)
+                    contentLength = source.buffer.size
+                }
+            } catch (ex: Exception) {
+                // Ignore
+            }
+        }
+
+        return contentLength
     }
 
     private fun getNetworkCaptureData(request: Request, response: Response): NetworkCaptureData {
@@ -210,11 +233,30 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
     }
 
     /**
-     * Get the difference between the SDK clock time and the time System.currentTimeMillis() returns, which is used by OkHttp for
-     * determining client-side timestamps.
+     * Estimate the difference between the current time returned by the SDK clock and the system clock, the latter of which is used by
+     * OkHttp to determine timestamps
      */
     private fun sdkClockOffset(): Long {
-        return embrace.internalInterface.getSdkCurrentTime() - systemClock.now()
+        // To ensure that the offset is the result of clock drift, we take two samples and ensure that their difference is less than 1ms
+        // before we use the value. A 1 ms difference between the samples is possible given it could be the result of the time
+        // "ticking over" to the next millisecond, but given the calls take the order of microseconds, it should not go beyond that.
+        //
+        // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
+        // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
+
+        val sdkTime1 = embrace.internalInterface.getSdkCurrentTime()
+        val systemTime1 = systemClock.now()
+        val sdkTime2 = embrace.internalInterface.getSdkCurrentTime()
+        val systemTime2 = systemClock.now()
+
+        val diff1 = sdkTime1 - systemTime1
+        val diff2 = sdkTime2 - systemTime2
+
+        return if (abs(diff1 - diff2) <= 1L) {
+            (diff1 + diff2) / 2
+        } else {
+            0L
+        }
     }
 
     internal companion object {

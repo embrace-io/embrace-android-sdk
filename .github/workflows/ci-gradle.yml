@@ -52,12 +52,21 @@ jobs:
           export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
           ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
 
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
-        run: ./gradlew assembleRelease check --stacktrace
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew assembleRelease check sonar --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -75,9 +84,6 @@ jobs:
           fail_ci_if_error: false
           file: embrace-android-sdk/build/reports/kover/reportRelease.xml
           
-      - name: Run SonarCloud
-        run: ./gradlew sonar
-
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.

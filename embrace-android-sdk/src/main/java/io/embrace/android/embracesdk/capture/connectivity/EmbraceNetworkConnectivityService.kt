@@ -58,8 +58,7 @@ internal class EmbraceNetworkConnectivityService(
         try {
             logger.logDeveloper("EmbraceNetworkConnectivityService", "handleNetworkStatus")
             val networkStatus = getCurrentNetworkStatus()
-            val didStatusChange = didNetworkStatusChange(networkStatus)
-            if (didStatusChange) {
+            if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
                 if (isNetworkCaptureEnabled) {
                     saveStatus(timestamp, networkStatus)

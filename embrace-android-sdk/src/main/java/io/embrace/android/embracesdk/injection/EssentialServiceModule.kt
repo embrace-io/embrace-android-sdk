@@ -78,7 +78,7 @@ internal class EssentialServiceModuleImpl(
     enableIntegrationTesting: Boolean,
     private val configStopAction: () -> Unit,
     private val configServiceProvider: () -> ConfigService? = { null },
-    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl(),
+    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
 ) : EssentialServiceModule {
 
     private val localConfig =

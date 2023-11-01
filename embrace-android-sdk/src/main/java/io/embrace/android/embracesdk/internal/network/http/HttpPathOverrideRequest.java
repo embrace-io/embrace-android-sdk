@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.network.http;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.annotation.InternalApi;
 
 @InternalApi
 public interface HttpPathOverrideRequest {

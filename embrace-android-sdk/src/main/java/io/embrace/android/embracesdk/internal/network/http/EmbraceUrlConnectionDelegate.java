@@ -33,7 +33,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
@@ -41,7 +41,7 @@ import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
 
 /**
- * Wraps @{link HttpUrlConnection} to log network calls to Embrace. The wrapper also wraps the
+ * Wraps {@link HttpURLConnection} to log network calls to Embrace. The wrapper also wraps the
  * InputStream to get an accurate count of bytes received if a Content-Length is not provided by
  * the server.
  * <p>

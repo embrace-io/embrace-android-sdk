@@ -117,31 +117,10 @@ dokkaHtml {
                 reportUndocumented.set(true) // Emit warnings about not documented members
                 includeNonPublic.set(false)
 
-                // Match all packages and suppress them
-                perPackageOption {
-                    matchingRegex.set(".*.networking.*?")
-                    suppress.set(true)
-                }
-
-                perPackageOption {
-                    matchingRegex.set(".*.network.*?")
-                    suppress.set(true)
-                }
-
-                perPackageOption {
-                    matchingRegex.set(".*.utils.*?")
-                    suppress.set(true)
-                }
-
+                // Suppress files in the internal package
                 perPackageOption {
                     matchingRegex.set(".*.internal.*?")
                     suppress.set(true)
-                }
-
-                // unsuppress only the ones that we care about
-                perPackageOption {
-                    matchingRegex.set("embrace-android-sdk")
-                    suppress.set(false)
                 }
             }
         }
@@ -149,6 +128,7 @@ dokkaHtml {
             noAndroidSdkLink.set(false)
         }
     }
+    suppressObviousFunctions.set(true)
 }
 
 task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }

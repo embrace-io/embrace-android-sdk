@@ -81,6 +81,8 @@ internal class EssentialServiceModuleImpl(
     override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
 ) : EssentialServiceModule {
 
+    // Many of these properties are temporarily here to break a circular dependency between services.
+    // When possible, we should try to move them into a new service or module.
     private val localConfig =
         LocalConfig.fromResources(
             coreModule.resources,

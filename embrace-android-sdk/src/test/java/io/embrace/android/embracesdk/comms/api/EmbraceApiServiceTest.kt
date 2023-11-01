@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
-import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.mockk.clearMocks
 import io.mockk.every
@@ -31,8 +29,6 @@ import java.util.concurrent.TimeUnit
 internal class EmbraceApiServiceTest {
 
     companion object {
-        private val metadataService = FakeAndroidMetadataService()
-        private val userService = FakeUserService()
         private val connectedNetworkStatuses =
             NetworkStatus.values().filter { it != NetworkStatus.NOT_REACHABLE }
 
@@ -345,11 +341,11 @@ internal class EmbraceApiServiceTest {
             serializer = EmbraceSerializer(),
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = mockk(relaxed = true),
-            metadataService = metadataService,
-            userService = userService,
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
-            cacheManager = mockCacheManager
+            cacheManager = mockCacheManager,
+            lazyDeviceId = lazy { "07D85B44E4E245F4A30E559BFC0D07FF" },
+            appId = "o0o0o",
         )
 
         failedApiCalls.clear()

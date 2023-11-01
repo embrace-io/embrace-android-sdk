@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeApiService
+import io.embrace.android.embracesdk.fakes.FakeApiUrlBuilder
 import io.embrace.android.embracesdk.fakes.FakeCacheService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
@@ -40,12 +41,6 @@ internal class FakeEssentialServiceModule(
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),
     override val gatingService: GatingService = FakeGatingService(),
     override val orientationService: OrientationService = NoOpOrientationService(),
-    override val urlBuilder: ApiUrlBuilder = ApiUrlBuilder(
-        configService = configService,
-        metadataService = metadataService,
-        enableIntegrationTesting = true,
-        isDebug = false
-    ),
     override val apiClient: ApiClient = ApiClient(
         InternalEmbraceLogger()
     ),
@@ -55,7 +50,8 @@ internal class FakeEssentialServiceModule(
     override val apiService: ApiService = FakeApiService(),
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val cacheService: CacheService = FakeCacheService(),
-    override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager()
+    override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager(),
+    override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder()
 ) : EssentialServiceModule {
 
     override val cache: ApiResponseCache

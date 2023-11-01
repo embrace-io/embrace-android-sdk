@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
@@ -52,8 +51,8 @@ internal class EmbraceMetadataService private constructor(
     private val applicationInfo: ApplicationInfo,
     private val deviceId: Lazy<String>,
     private val packageName: String,
-    private val appVersionName: String,
-    private val appVersionCode: String,
+    private val lazyAppVersionName: Lazy<String>,
+    private val lazyAppVersionCode: Lazy<String>,
     private val appFramework: AppFramework,
     /**
      * This field is defined during instantiation as by the end of the startup
@@ -257,9 +256,9 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getDeviceId(): String = deviceId.value
 
-    override fun getAppVersionCode(): String = appVersionCode
+    override fun getAppVersionCode(): String = lazyAppVersionCode.value
 
-    override fun getAppVersionName(): String = appVersionName
+    override fun getAppVersionName(): String = lazyAppVersionName.value
 
     override fun getDeviceInfo(): DeviceInfo = getDeviceInfo(true)
 
@@ -320,7 +319,7 @@ internal class EmbraceMetadataService private constructor(
             hostedSdkVersion = getEmbraceFlutterSdkVersion()
         }
         return AppInfo(
-            appVersionName,
+            lazyAppVersionName.value,
             appFramework.value,
             buildInfo.buildId,
             buildInfo.buildType,
@@ -334,7 +333,7 @@ internal class EmbraceMetadataService private constructor(
                 populateAllFields -> appUpdated.value
                 else -> false
             },
-            appVersionCode,
+            lazyAppVersionCode.value,
             when {
                 populateAllFields -> osUpdated.value
                 else -> false
@@ -501,11 +500,6 @@ internal class EmbraceMetadataService private constructor(
     companion object {
 
         /**
-         * Default string value for app info missing strings
-         */
-        private const val UNKNOWN_VALUE = "UNKNOWN"
-
-        /**
          * Creates an instance of the [EmbraceMetadataService] from the device's [Context]
          * for creating Android system services.
          *
@@ -530,35 +524,15 @@ internal class EmbraceMetadataService private constructor(
             activityManager: ActivityManager?,
             clock: Clock,
             embraceCpuInfoDelegate: CpuInfoDelegate,
-            deviceArchitecture: DeviceArchitecture
+            deviceArchitecture: DeviceArchitecture,
+            lazyAppVersionName: Lazy<String>,
+            lazyAppVersionCode: Lazy<String>
         ): EmbraceMetadataService {
-            val packageInfo: PackageInfo
-            var appVersionName: String
-            var appVersionCode: String
-            val packageManager = context.packageManager
-            try {
-                packageInfo = packageManager.getPackageInfo(context.packageName, 0)
-                // some customers have trailing white-space for the app version. remove this.
-                appVersionName = packageInfo.versionName.toString().trim { it <= ' ' }
-                appVersionCode = packageInfo.versionCode.toString()
-                logDeveloper(
-                    "EmbraceMetadataService",
-                    "App version name: $appVersionName - App version code: $appVersionCode"
-                )
-            } catch (e: Exception) {
-                logDeveloper(
-                    "EmbraceMetadataService",
-                    "Cannot set appVersionName and appVersionCode, setting UNKNOWN_VALUE", e
-                )
-                appVersionName = UNKNOWN_VALUE
-                appVersionCode = UNKNOWN_VALUE
-            }
-            val finalAppVersionName = appVersionName
             val isAppUpdated = lazy {
                 val lastKnownAppVersion = preferencesService.appVersion
                 val appUpdated = (
                     lastKnownAppVersion != null &&
-                        !lastKnownAppVersion.equals(finalAppVersionName, ignoreCase = true)
+                        !lastKnownAppVersion.equals(lazyAppVersionName.value, ignoreCase = true)
                     )
                 logDeveloper("EmbraceMetadataService", "App updated: $appUpdated")
                 appUpdated
@@ -642,7 +616,7 @@ internal class EmbraceMetadataService private constructor(
             }
             return EmbraceMetadataService(
                 windowManager,
-                packageManager,
+                context.packageManager,
                 storageStatsManager,
                 activityManager,
                 buildInfo,
@@ -650,8 +624,8 @@ internal class EmbraceMetadataService private constructor(
                 context.applicationInfo,
                 deviceIdentifier,
                 context.packageName,
-                appVersionName,
-                appVersionCode,
+                lazyAppVersionName,
+                lazyAppVersionCode,
                 appFramework,
                 isAppUpdated,
                 isOsUpdated,

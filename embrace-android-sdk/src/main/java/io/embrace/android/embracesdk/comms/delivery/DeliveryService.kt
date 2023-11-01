@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -21,7 +21,7 @@ internal interface DeliveryService {
     fun sendLogs(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendCrash(crash: EventMessage)
-    fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>)
+    fun sendAEIBlob(blobMessage: BlobMessage)
     fun sendEvent(eventMessage: EventMessage)
     fun sendEventAndWait(eventMessage: EventMessage)
 }

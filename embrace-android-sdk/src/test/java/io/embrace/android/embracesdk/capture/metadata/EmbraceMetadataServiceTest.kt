@@ -39,6 +39,7 @@ internal class EmbraceMetadataServiceTest {
 
     companion object {
         private val context: Context = mockk(relaxed = true)
+        private val packageInfo = PackageInfo()
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
         private val cpuInfoDelegate: EmbraceCpuInfoDelegate = mockk(relaxed = true)
@@ -63,7 +64,6 @@ internal class EmbraceMetadataServiceTest {
         }
 
         private fun initContext() {
-            val packageInfo = PackageInfo()
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
@@ -125,7 +125,9 @@ internal class EmbraceMetadataServiceTest {
             mockk(),
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         ).apply { precomputeValues() }
 
     private fun getReactNativeMetadataService() =
@@ -142,7 +144,9 @@ internal class EmbraceMetadataServiceTest {
             mockk(),
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         )
 
     @Test
@@ -182,7 +186,7 @@ internal class EmbraceMetadataServiceTest {
 
         val expectedInfo = ResourceReader.readResourceAsText("metadata_appinfo_expected.json")
             .replace("{versionName}", BuildConfig.VERSION_NAME)
-            .replace("{versionCode}", BuildConfig.VERSION_CODE.toString())
+            .replace("{versionCode}", BuildConfig.VERSION_CODE)
             .filter { !it.isWhitespace() }
 
         val appInfo = getMetadataService().getAppInfo().toJson()
@@ -276,7 +280,9 @@ internal class EmbraceMetadataServiceTest {
             mockk(),
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         )
 
         val deviceInfo = metadataService.getDeviceInfo().toJson()

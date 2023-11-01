@@ -8,8 +8,10 @@ import com.google.gson.Gson
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
+import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -112,7 +114,7 @@ internal class AeiNdkCrashProtobufSendTest {
      * Gets the AEI object that was sent to the delivery service
      */
     private fun FakeDeliveryService.getAeiObject(): AppExitInfoData {
-        val requests: List<AppExitInfoData> = appExitInfoRequests.single()
+        val requests: List<AppExitInfoData> = blobMessages.single().applicationExits
         return requests.single()
     }
 
@@ -149,6 +151,8 @@ internal class AeiNdkCrashProtobufSendTest {
             activityManager,
             FakePreferenceService(),
             deliveryService,
+            FakeAndroidMetadataService(),
+            FakeUserService(),
             VersionChecker { ndkTraceFile }
         )
     }

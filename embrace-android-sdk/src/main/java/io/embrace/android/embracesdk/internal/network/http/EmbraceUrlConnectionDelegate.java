@@ -33,7 +33,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;

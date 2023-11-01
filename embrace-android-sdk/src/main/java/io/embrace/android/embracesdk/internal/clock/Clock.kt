@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.clock
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 @InternalApi
 public fun interface Clock {

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
+
 @InternalApi
 public final class WebViewClientSwazzledHooks {
 

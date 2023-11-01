@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.spans
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.BetaApi
+import io.embrace.android.embracesdk.annotation.BetaApi
 
 /**
  * Represents an Event in an [EmbraceSpan]

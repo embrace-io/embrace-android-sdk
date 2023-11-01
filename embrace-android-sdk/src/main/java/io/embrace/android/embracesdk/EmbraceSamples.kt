@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.samples.EmbraceCrashSamples
 
 /**
@@ -7,6 +8,7 @@ import io.embrace.android.embracesdk.samples.EmbraceCrashSamples
  * it allows users to execute code that automatically verifies the integration by calling the verifyIntegration method.
  * It also provides example code to generate ANR and JVM/NDK crashes
  */
+@InternalApi
 public object EmbraceSamples {
 
     private val embraceCrashSamples = EmbraceCrashSamples

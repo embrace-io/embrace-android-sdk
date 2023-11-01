@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 
 @InternalApi

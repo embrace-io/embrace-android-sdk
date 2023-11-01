@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk;
 
 import android.util.Pair;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 

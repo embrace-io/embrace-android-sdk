@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.concurrency
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.fakes.FakeClock
 import java.util.LinkedList
 import java.util.concurrent.AbstractExecutorService

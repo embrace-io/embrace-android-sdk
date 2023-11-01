@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.remote
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Configuration values for the spans feature

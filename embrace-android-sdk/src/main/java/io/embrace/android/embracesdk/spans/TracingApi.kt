@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.BetaApi
+import io.embrace.android.embracesdk.annotation.BetaApi
 
 /**
  * The public API used to add traces to your application. Use [isTracingAvailable] to determine if the SDK is ready log traces. Note that

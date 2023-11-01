@@ -1,6 +1,3 @@
-public abstract interface annotation class io/embrace/android/embracesdk/BetaApi : java/lang/annotation/Annotation {
-}
-
 public final class io/embrace/android/embracesdk/BuildConfig {
 	public static final field BUILD_TYPE Ljava/lang/String;
 	public static final field DEBUG Z
@@ -122,9 +119,6 @@ public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final fun verifyIntegration ()V
 }
 
-public abstract interface annotation class io/embrace/android/embracesdk/InternalApi : java/lang/annotation/Annotation {
-}
-
 public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
 	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
 	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
@@ -166,6 +160,12 @@ public final class io/embrace/android/embracesdk/WebViewChromeClientSwazzledHook
 
 public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/BetaApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {

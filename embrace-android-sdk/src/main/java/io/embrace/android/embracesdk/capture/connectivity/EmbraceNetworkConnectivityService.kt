@@ -29,6 +29,7 @@ internal class EmbraceNetworkConnectivityService(
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private val networkReachable: NavigableMap<Long, NetworkStatus> = TreeMap()
+    private var lastNetworkStatus: NetworkStatus? = null
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     override val ipAddress by lazy { calculateIpAddress() }
 
@@ -57,12 +58,16 @@ internal class EmbraceNetworkConnectivityService(
         try {
             logger.logDeveloper("EmbraceNetworkConnectivityService", "handleNetworkStatus")
             val networkStatus = getCurrentNetworkStatus()
-            if (isNetworkCaptureEnabled) {
-                saveStatus(timestamp, networkStatus)
-            }
-            if (notifyListeners) {
-                logger.logInfo("Network status changed to: " + networkStatus.name)
-                notifyNetworkConnectivityListeners(networkStatus)
+            val didStatusChange = didNetworkStatusChange(networkStatus)
+            if (didStatusChange) {
+                lastNetworkStatus = networkStatus
+                if (isNetworkCaptureEnabled) {
+                    saveStatus(timestamp, networkStatus)
+                }
+                if (notifyListeners) {
+                    logger.logInfo("Network status changed to: " + networkStatus.name)
+                    notifyNetworkConnectivityListeners(networkStatus)
+                }
             }
         } catch (ex: Exception) {
             logger.logDebug("Failed to record network connectivity", ex)
@@ -114,11 +119,12 @@ internal class EmbraceNetworkConnectivityService(
 
     private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus) {
         synchronized(this) {
-            if (networkReachable.isEmpty() || networkReachable.lastEntry()?.value != networkStatus) {
-                networkReachable[timestamp] = networkStatus
-            }
+            networkReachable[timestamp] = networkStatus
         }
     }
+
+    private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) =
+        lastNetworkStatus == null || lastNetworkStatus != newNetworkStatus
 
     private fun registerConnectivityActionReceiver() {
         registrationExecutorService.submit(

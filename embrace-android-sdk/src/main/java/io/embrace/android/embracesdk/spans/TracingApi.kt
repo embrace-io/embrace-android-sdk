@@ -9,21 +9,21 @@ import io.embrace.android.embracesdk.annotation.BetaApi
  * will not work until [isTracingAvailable] returns true.
  */
 @BetaApi
-public interface TracingApi {
+internal interface TracingApi {
     /**
      * Returns true if the tracing API is fully initialized so that [createSpan] and [recordSpan] methods will work. This is different than
-     * what [Embrace.isEnabled] returned as the tracing service is initialized asynchronously shortly after the SDK is initialized. Until
+     * what [Embrace.isStarted] returned as the tracing service is initialized asynchronously shortly after the SDK is initialized. Until
      * this returns true, the [recordCompletedSpan] method can be used as invocations to it will be buffered and replayed when tracing
      * service is ready to be used.
      */
     @BetaApi
-    public fun isTracingAvailable(): Boolean
+    fun isTracingAvailable(): Boolean
     /**
      * Create an [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the [EmbraceSpan] cannot
      * be created given the current conditions of the SDK or an invalid name.
      */
     @BetaApi
-    public fun createSpan(
+    fun createSpan(
         name: String
     ): EmbraceSpan?
 
@@ -33,7 +33,7 @@ public interface TracingApi {
      * the name is invalid, or some other factor due to the current conditions of the SDK.
      */
     @BetaApi
-    public fun createSpan(
+    fun createSpan(
         name: String,
         parent: EmbraceSpan?
     ): EmbraceSpan?
@@ -44,7 +44,7 @@ public interface TracingApi {
      * [Throwable] will be rethrown.
      */
     @BetaApi
-    public fun <T> recordSpan(
+    fun <T> recordSpan(
         name: String,
         code: () -> T
     ): T
@@ -56,7 +56,7 @@ public interface TracingApi {
      * [Throwable] will be rethrown.
      */
     @BetaApi
-    public fun <T> recordSpan(
+    fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
         code: () -> T
@@ -66,7 +66,7 @@ public interface TracingApi {
      * Record a span with the given name as well as start and end times, which will be the root span of a new trace.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long
@@ -78,7 +78,7 @@ public interface TracingApi {
      * circumstances.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long,
@@ -90,7 +90,7 @@ public interface TracingApi {
      * in a new trace with the new span as its root.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long,
@@ -103,7 +103,7 @@ public interface TracingApi {
      * was ended unsuccessfully under the stated circumstances.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long,
@@ -117,7 +117,7 @@ public interface TracingApi {
      * used as the events of the recorded span.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long,
@@ -132,7 +132,7 @@ public interface TracingApi {
      * the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be used as the events of the recorded span.
      */
     @BetaApi
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeNanos: Long,
         endTimeNanos: Long,

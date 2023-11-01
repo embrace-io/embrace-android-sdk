@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.samples.EmbraceCrashSamples
  * Helps to verify and test embrace SDK integration.
  * it allows users to execute code that automatically verifies the integration by calling the verifyIntegration method.
  * It also provides example code to generate ANR and JVM/NDK crashes
+ *
+ * @suppress
  */
 @InternalApi
 public object EmbraceSamples {

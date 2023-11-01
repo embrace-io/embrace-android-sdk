@@ -567,6 +567,10 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getLastRunEndState();
     }
 
+    /**
+     * Get internal interface for the intra-Embrace, not-publicly-supported API
+     * @hide
+     */
     @NonNull
     @InternalApi
     public EmbraceInternalInterface getInternalInterface() {
@@ -575,6 +579,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void logInternalError(@Nullable String message, @Nullable String details) {
@@ -583,12 +588,16 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void logInternalError(@NonNull Throwable error) {
         impl.logInternalError(error);
     }
 
+    /**
+     * @hide
+     */
     @Nullable
     @InternalApi
     public ConfigService getConfigService() {
@@ -598,6 +607,7 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for React Native.
+     * @hide
      */
     @Nullable
     @InternalApi
@@ -607,6 +617,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs a React Native Redux Action - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void logRnAction(@NonNull String name, long startTime, long endTime,
@@ -621,6 +632,7 @@ public final class Embrace implements EmbraceAndroidApi {
      * <p>
      * If the previously logged view has the same name, a duplicate view breadcrumb will not be
      * logged.
+     * @hide
      *
      * @param screen the name of the view to log
      */
@@ -632,6 +644,7 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Gets the {@link UnityInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Unity.
+     * @hide
      */
     @Nullable
     @InternalApi
@@ -647,6 +660,7 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Flutter.
+     * @hide
      */
     @Nullable
     @InternalApi
@@ -656,6 +670,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void setEmbraceFlutterSdkVersion(@Nullable String version) {
@@ -664,6 +679,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Sets the Dart version - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void setDartVersion(@Nullable String version) {
@@ -672,6 +688,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void logHandledDartException(
@@ -686,6 +703,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
+     * @hide
      */
     @InternalApi
     public void logUnhandledDartException(
@@ -698,6 +716,9 @@ public final class Embrace implements EmbraceAndroidApi {
         impl.logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED);
     }
 
+    /**
+     * @hide
+     */
     @InternalApi
     public void sampleCurrentThreadDuringAnrs() {
         impl.sampleCurrentThreadDuringAnrs();

@@ -14,6 +14,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
         classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detekt}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
+        classpath("org.jetbrains.dokka:android-documentation-plugin:${Versions.dokka}")
     }
 }
 

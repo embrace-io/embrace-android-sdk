@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 
+/**
+ * @hide
+ */
 @InternalApi
 public final class WebViewClientSwazzledHooks {
 

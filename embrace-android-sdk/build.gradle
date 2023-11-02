@@ -105,7 +105,8 @@ dependencies {
     testImplementation("com.google.protobuf:protobuf-java:3.24.0")
     testImplementation("com.google.protobuf:protobuf-java-util:3.24.0")
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:${Versions.dokka}")
+    dokkaHtmlPlugin("org.jetbrains.dokka:android-documentation-plugin:${Versions.dokka}")
 }
 
 dokkaHtml {

@@ -1,9 +1,8 @@
 <p align="center">
   <a href="https://embrace.io/?utm_source=github&utm_medium=logo" target="_blank">
     <picture>
-      <source srcset="https://embrace.io/docs/images/embrace_logo_white-text_transparent-bg_400x200.svg" media="(prefers-color-scheme: dark)" />
-      <source srcset="https://embrace.io/docs/images/embrace_logo_black-text_transparent-bg_400x200.svg" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" />
-      <img src="https://embrace.io/docs/images/embrace_logo_black-text_transparent-bg_400x200.svg" alt="Embrace">
+      ![Embrace logo]([./dark.png](https://embrace.io/docs/images/embrace_logo_white-text_transparent-bg_400x200.svg)#gh-dark-mode-only)
+      ![Embrace logo]([./light.png](https://embrace.io/docs/images/embrace_logo_black-text_transparent-bg_400x200.svg)#gh-light-mode-only)
     </picture>
   </a>
 </p>

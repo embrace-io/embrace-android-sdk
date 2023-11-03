@@ -36,4 +36,6 @@ The Embrace Android SDK gives you performance and stability insights into the us
 
 # License
 
-See the [LICENSE](https://github.com/embrace-io/embrace-android-sdk/blob/master/LICENSE) for details.
+[![AGPLv3](https://img.shields.io/github/license/suitecrm/suitecrm.svg)](./LICENSE.txt)
+
+Android Embrace SDK is published under the AGPLv3 license.

@@ -10,7 +10,7 @@ on:
 
 jobs:
   gradle-test:
-    runs-on: ubuntu-22.04-4cores
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         jdk-version: ["11"]

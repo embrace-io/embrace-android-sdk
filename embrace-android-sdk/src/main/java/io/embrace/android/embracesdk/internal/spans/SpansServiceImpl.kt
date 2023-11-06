@@ -187,7 +187,7 @@ internal class SpansServiceImpl(
         synchronized(completedSpans) {
             if (appTerminationCause == null) {
                 currentSessionSpan.get().endSpan()
-                currentSessionSpan.set(startSessionSpan(TimeUnit.MILLISECONDS.toNanos(clock.now())))
+                currentSessionSpan.set(startSessionSpan(clock.now()))
             } else {
                 currentSessionSpan.get()?.let {
                     it.setAttribute(appTerminationCause.keyName(), appTerminationCause.name)

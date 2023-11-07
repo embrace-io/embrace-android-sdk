@@ -20,8 +20,10 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryRetryManager
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
@@ -65,6 +67,7 @@ internal interface EssentialServiceModule {
     val networkConnectivityService: NetworkConnectivityService
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
+    val deliveryRetryManager: DeliveryRetryManager
 }
 
 internal class EssentialServiceModuleImpl(
@@ -263,6 +266,14 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
+    override val deliveryRetryManager: DeliveryRetryManager by singleton {
+        EmbraceDeliveryRetryManager(
+            networkConnectivityService,
+            apiRetryExecutor,
+            deliveryCacheManager
+        )
+    }
+
     override val apiService: ApiService by singleton {
         EmbraceApiService(
             apiClient,
@@ -273,6 +284,7 @@ internal class EssentialServiceModuleImpl(
             apiRetryExecutor,
             networkConnectivityService,
             deliveryCacheManager,
+            deliveryRetryManager,
             lazyDeviceId,
             appId
         )

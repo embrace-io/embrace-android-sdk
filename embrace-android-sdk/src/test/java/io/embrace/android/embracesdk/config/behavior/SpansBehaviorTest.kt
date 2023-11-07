@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -14,7 +13,7 @@ internal class SpansBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeSpansBehavior()) {
-            assertFalse(isSpansEnabled())
+            assertTrue(isSpansEnabled())
         }
     }
 

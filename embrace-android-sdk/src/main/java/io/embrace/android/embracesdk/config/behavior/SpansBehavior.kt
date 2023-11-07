@@ -11,7 +11,7 @@ internal class SpansBehavior(
     remoteSupplier
 ) {
     companion object {
-        private const val DEFAULT_PCT_ENABLED = 0.0f
+        private const val DEFAULT_PCT_ENABLED = 100.0f
     }
 
     fun isSpansEnabled(): Boolean {

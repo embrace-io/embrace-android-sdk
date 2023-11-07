@@ -105,5 +105,6 @@
     "un": "John Doe",
     "per": ["first_day"]
   },
+  "spans": "__EMBRACE_TEST_IGNORE__",
   "v": 13
 }

@@ -234,7 +234,9 @@ internal class EmbraceEventService(
                 sessionProperties
             )
             if (isStartupEvent(name)) {
-                logStartupSpan()
+                if (!late) {
+                    logStartupSpan()
+                }
                 logDeveloper("EmbraceEventService", "Ending Startup Ending")
                 startupEventInfo = eventHandler.buildStartupEventInfo(
                     originEventDescription.event,

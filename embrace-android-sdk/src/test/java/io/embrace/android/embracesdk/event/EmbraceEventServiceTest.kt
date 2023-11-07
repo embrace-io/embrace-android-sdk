@@ -115,7 +115,7 @@ internal class EmbraceEventServiceTest {
             configService
         )
         gatingService = FakeGatingService(configService)
-        fakeWorkerThreadModule = FakeWorkerThreadModule(blockingMode = true)
+        fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
         spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = fakeClock))
         configService.addListener(spansService)
         eventHandler = EventHandler(
@@ -431,9 +431,9 @@ internal class EmbraceEventServiceTest {
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        assertEquals(1, spansService.completedSpans()?.size)
-        val startupSpan = spansService.completedSpans()!![0]
-        with(startupSpan) {
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(1, completedSpans.size)
+        with(completedSpans[0]) {
             assertEquals("emb-startup-moment", name)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(10), endTimeNanos)
@@ -453,18 +453,37 @@ internal class EmbraceEventServiceTest {
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        assertEquals(0, spansService.completedSpans()?.size)
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(0, completedSpans.size)
 
         fakeClock.setCurrentTime(20L)
         eventService.endEvent(STARTUP_EVENT_NAME)
         executor.runCurrentlyBlocked()
-        assertEquals(1, spansService.completedSpans()?.size)
+        val completedSpansAgain = checkNotNull(spansService.completedSpans())
+        assertEquals(1, completedSpansAgain.size)
 
-        val startupSpan = spansService.completedSpans()!![0]
-        with(startupSpan) {
+        with(completedSpansAgain[0]) {
             assertEquals("emb-startup-moment", name)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(20), endTimeNanos)
         }
+    }
+
+    @Test
+    fun `startup not logged as span if startup moment is ended via a timeout`() {
+        spansService.initializeService(
+            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1),
+            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(3)
+        )
+        configService.updateListeners()
+        spansService.flushSpans()
+        eventService.sendStartupMoment()
+        assertNull(eventService.getStartupMomentInfo())
+        fakeClock.tick(10000L)
+        fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
+        fakeWorkerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION).runCurrentlyBlocked()
+        assertNotNull(eventService.getStartupMomentInfo())
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(0, completedSpans.size)
     }
 }

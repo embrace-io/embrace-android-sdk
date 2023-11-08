@@ -20,7 +20,20 @@ on:
         required: true
 
 jobs:
+  functional:
+    name: Run Functional Tests
+    uses: ./.github/workflows/functional-tests.yml
+    secrets:
+      token: ${{ secrets.CD_GITHUB_TOKEN }}
+  baseline-profile:
+    name: Update Baseline Profile
+    uses: ./.github/workflows/generate_baseline_profile.yml
+    secrets:
+      token:
+        ${{ secrets.CD_GITHUB_TOKEN }}
   release:
+    name: Release
+    needs: [ functional, baseline-profile ] # swazzlertests,
     runs-on: ubuntu-latest
     strategy:
       matrix:

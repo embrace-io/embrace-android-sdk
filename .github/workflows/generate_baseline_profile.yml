@@ -86,8 +86,7 @@ jobs:
       - name: Move & Rename Baseline Profiles
         # TODO add cd ./android-sdk-benchmark
         run:  |
-          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt
-          mv -f /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/
+          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
       # Commits the generated Baseline Profile to your origin/remote
       - name: Commit Baseline Profiles
         run: |
@@ -95,7 +94,7 @@ jobs:
           git config --global user.email 'github@actions'
           git add .
           git commit -m "Generate baseline profiles"
-          git push --set-upstream origin baseline-profiles
+          git push
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

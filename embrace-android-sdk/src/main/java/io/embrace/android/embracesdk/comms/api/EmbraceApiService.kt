@@ -231,7 +231,7 @@ internal class EmbraceApiService(
             contentEncoding = "gzip"
         )
 
-        return postOnExecutor(sessionPayload, request, true, onFinish)
+        return postOnExecutor(sessionPayload, request, onFinish)
     }
 
     private fun createRequest(eventMessage: EventMessage): ApiRequest {
@@ -269,7 +269,7 @@ internal class EmbraceApiService(
 
         bytes?.let {
             logger.logDeveloper(TAG, "Post event")
-            return postOnExecutor(it, request, true, onComplete)
+            return postOnExecutor(it, request, onComplete)
         }
         logger.logError("Failed to serialize event")
         return null
@@ -283,7 +283,7 @@ internal class EmbraceApiService(
 
         bytes?.let {
             logger.logDeveloper(TAG, "Post Network Event")
-            return postOnExecutor(it, request, true, null)
+            return postOnExecutor(it, request, null)
         }
         logger.logError("Failed to serialize event")
         return null
@@ -297,7 +297,7 @@ internal class EmbraceApiService(
 
         bytes?.let {
             logger.logDeveloper(TAG, "Post AEI Blob message")
-            return postOnExecutor(it, request, true, null)
+            return postOnExecutor(it, request, null)
         }
         logger.logError("Failed to serialize event")
         return null
@@ -306,17 +306,12 @@ internal class EmbraceApiService(
     private fun postOnExecutor(
         payload: ByteArray,
         request: ApiRequest,
-        compress: Boolean,
         onComplete: (() -> Any)?
     ): Future<*> {
         return scheduledExecutorService.submit {
             try {
                 if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                    if (compress) {
-                        executePost(request, payload)
-                    } else {
-                        executeRawPost(request, payload)
-                    }
+                    executePost(request, payload)
                 } else {
                     deliveryRetryManager.scheduleForRetry(request, payload)
                     logger.logWarning("No connection available. Request was queued to retry later.")
@@ -359,11 +354,7 @@ internal class EmbraceApiService(
     }
 
     private fun executePost(request: ApiRequest, payload: ByteArray) {
-        apiClient.post(request, payload)
-    }
-
-    private fun executeRawPost(request: ApiRequest, payload: ByteArray) {
-        apiClient.rawPost(request, payload)
+        apiClient.executePost(request, payload)
     }
 }
 

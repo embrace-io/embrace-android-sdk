@@ -65,12 +65,13 @@ internal class ApiClient @JvmOverloads constructor(
     /**
      * Posts a payload according to the ApiRequest parameter. The payload will be gzip compressed.
      */
-    fun post(request: ApiRequest, payload: ByteArray): String = rawPost(request, gzip(payload))
+    fun executePost(request: ApiRequest, payloadToCompress: ByteArray): String =
+        rawPost(request, gzip(payloadToCompress))
 
     /**
      * Posts a payload according to the ApiRequest parameter. The payload will not be gzip compressed.
      */
-    fun rawPost(request: ApiRequest, payload: ByteArray?): String {
+    private fun rawPost(request: ApiRequest, payload: ByteArray?): String {
         logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
         logger.logDeveloper("ApiClient", "Request details: $request")
 

@@ -48,27 +48,13 @@ internal class ApiClientTest {
     fun testUnreachableHost() {
         // attempt some unreachable port
         val request = ApiRequest(url = EmbraceUrl.getUrl("http://localhost:1565"))
-        apiClient.post(request, "Hello world".toByteArray())
-    }
-
-    @Test
-    fun test200ResponseUncompressed() {
-        server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY))
-        val result = apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
-
-        // assert on result parsed by ApiClient
-        Assert.assertEquals(DEFAULT_RESPONSE_BODY, result)
-
-        // assert on request received by mock server
-        val delivered = server.takeRequest()
-        assertRequestContents(delivered)
-        Assert.assertEquals(DEFAULT_REQUEST_BODY, delivered.body.readUtf8())
+        apiClient.executePost(request, "Hello world".toByteArray())
     }
 
     @Test
     fun test200ResponseCompressed() {
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY))
-        val result = apiClient.post(request, DEFAULT_REQUEST_BODY.toByteArray())
+        val result = apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
 
         // assert on result parsed by ApiClient
         Assert.assertEquals(DEFAULT_RESPONSE_BODY, result)
@@ -82,19 +68,19 @@ internal class ApiClientTest {
     @Test(expected = RuntimeException::class)
     fun test400Response() {
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY).setResponseCode(400))
-        apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
     }
 
     @Test(expected = RuntimeException::class)
     fun test500Response() {
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY).setResponseCode(500))
-        apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
     }
 
     @Test(expected = RuntimeException::class)
     fun testClientSideConnectionTimeout() {
         apiClient.timeoutMs = 1000
-        apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
     }
 
     /**
@@ -106,7 +92,7 @@ internal class ApiClientTest {
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY))
 
         val payload = createLargeSessionPayload()
-        val result = apiClient.post(request, payload.toByteArray())
+        val result = apiClient.executePost(request, payload.toByteArray())
 
         // assert on result parsed by ApiClient
         Assert.assertEquals(DEFAULT_RESPONSE_BODY, result)
@@ -130,7 +116,7 @@ internal class ApiClientTest {
         }, 25, TimeUnit.MILLISECONDS)
 
         // fire off the api request
-        apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
     }
 
     @Test
@@ -148,7 +134,7 @@ internal class ApiClientTest {
             EmbraceUrl.getUrl(baseUrl)
         )
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY))
-        apiClient.rawPost(request, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
 
         // assert all request headers were set
         val delivered = server.takeRequest()

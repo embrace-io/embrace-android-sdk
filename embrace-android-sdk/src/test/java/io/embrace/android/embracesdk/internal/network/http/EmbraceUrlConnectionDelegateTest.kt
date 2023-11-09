@@ -26,7 +26,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.TimeoutException
-import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
 
@@ -455,7 +454,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         extraRequestHeaders: Map<String, List<String>> = emptyMap()
     ): HttpsURLConnection {
         return createMockConnection(
-            inputStream = GZIPInputStream(ByteArrayInputStream(gzippedResponseBodyBytes)),
+            inputStream = ByteArrayInputStream(gzippedResponseBodyBytes),
             extraRequestHeaders = extraRequestHeaders,
             expectedResponseSize = gzippedResponseBodySize,
             expectedResponseCode = expectedResponseCode,
@@ -510,6 +509,10 @@ internal class EmbraceUrlConnectionDelegateTest {
         every { mockConnection.getRequestProperty(PATH_OVERRIDE) } answers {
             requestHeaders[PATH_OVERRIDE]?.get(0)
         }
+        every { mockConnection.getRequestProperty(CONTENT_ENCODING) } answers {
+            requestHeaders[CONTENT_ENCODING]?.get(0)
+        }
+        every { mockConnection.contentEncoding } answers { responseHeaders[CONTENT_ENCODING]?.get(0) }
         every { mockConnection.requestMethod } answers { HttpMethod.POST.name }
         every { mockConnection.responseCode } answers { expectedResponseCode }
 
@@ -614,14 +617,10 @@ internal class EmbraceUrlConnectionDelegateTest {
     }
 
     companion object {
-        private fun ByteArray.toGzipByteArray(): ByteArray {
-            return ByteArrayOutputStream().use { byteArrayStream ->
-                GZIPOutputStream(byteArrayStream).use { gzipStream ->
-                    gzipStream.write(this)
-                    gzipStream.finish()
-                }
-                byteArrayStream.toByteArray()
-            }
+        private fun String.toGzipByteArray(): ByteArray {
+            val outputStream = ByteArrayOutputStream()
+            GZIPOutputStream(outputStream).bufferedWriter(Charsets.UTF_8).use { it.write(this) }
+            return outputStream.toByteArray()
         }
 
         private const val TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
@@ -645,7 +644,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         private val requestBodySize = requestBodyBytes.size
         private val responseBodyBytes = responseBodyText.toByteArray()
         private val responseBodySize = responseBodyBytes.size
-        private val gzippedResponseBodyBytes = responseBodyBytes.toGzipByteArray()
+        private val gzippedResponseBodyBytes = responseBodyText.toGzipByteArray()
         private val gzippedResponseBodySize = gzippedResponseBodyBytes.size
         private val IO_ERROR = checkNotNull(IOException::class.java.canonicalName)
         private val TIMEOUT_ERROR = checkNotNull(TimeoutException::class.java.canonicalName)

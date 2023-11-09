@@ -54,6 +54,7 @@ internal class DataCaptureServiceModuleImplTest {
         assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
         assertTrue(module.activityLifecycleBreadcrumbService is EmbraceActivityLifecycleBreadcrumbService)
         assertNotNull(module.pushNotificationService)
+        assertNotNull(module.componentCallbackService)
     }
 
     @Test

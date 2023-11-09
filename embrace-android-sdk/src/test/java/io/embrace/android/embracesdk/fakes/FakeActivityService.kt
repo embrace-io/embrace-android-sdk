@@ -18,18 +18,6 @@ internal class FakeActivityService(
         listeners.add(listener)
     }
 
-    override fun onConfigurationChanged(config: Configuration) {
-        this.config = config
-    }
-
-    override fun onLowMemory() {
-        TODO("Not yet implemented")
-    }
-
-    override fun onTrimMemory(memoryTrimLevel: Int) {
-        TODO("Not yet implemented")
-    }
-
     override fun onActivityCreated(p0: Activity, p1: Bundle?) {
         TODO("Not yet implemented")
     }

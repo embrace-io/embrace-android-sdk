@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import android.app.Activity
 import android.app.Application
-import android.content.ComponentCallbacks2
 import androidx.lifecycle.LifecycleObserver
 import java.io.Closeable
 
@@ -10,7 +9,6 @@ import java.io.Closeable
  * Service which handles Android activity lifecycle callbacks.
  */
 internal interface ActivityService :
-    ComponentCallbacks2,
     LifecycleObserver,
     Application.ActivityLifecycleCallbacks,
     Closeable {

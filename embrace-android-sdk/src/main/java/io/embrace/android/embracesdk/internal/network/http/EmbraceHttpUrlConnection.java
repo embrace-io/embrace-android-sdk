@@ -73,8 +73,6 @@ interface EmbraceHttpUrlConnection {
     @Nullable
     InputStream getErrorStream();
 
-    boolean shouldInterceptHeaderRetrieval(@Nullable String key);
-
     @Nullable
     String getHeaderField(int n);
 

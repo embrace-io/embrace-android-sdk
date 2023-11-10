@@ -211,7 +211,7 @@ internal class EmbraceDeliveryRetryManager(
     }
 }
 
-private const val TAG = "DeliveryRetryManager"
+private const val TAG = "EmbraceDeliveryRetryManager"
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
 private const val MAX_FAILED_CALLS = 200 // Max number of failed calls that will be cached for retry

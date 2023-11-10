@@ -59,7 +59,7 @@ internal class EmbraceApiServiceTest {
     @Before
     fun setUp() {
         mockApiClient = mockk {
-            every { post(any(), any()) } returns ""
+            every { executePost(any(), any()) } returns ""
         }
         cachedConfig = CachedConfig(
             config = null,

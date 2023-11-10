@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
 import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
+import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
@@ -405,11 +406,11 @@ final class EmbraceImpl {
 
         webViewService = dataCaptureServiceModule.getWebviewService();
         MemoryService memoryService = dataCaptureServiceModule.getMemoryService();
-        ((EmbraceActivityService) essentialServiceModule.getActivityService())
-            .setMemoryService(dataCaptureServiceModule.getMemoryService());
+        ComponentCallbackService componentCallbackService = dataCaptureServiceModule.getComponentCallbackService();
         serviceRegistry.registerServices(
             webViewService,
-            memoryService
+            memoryService,
+            componentCallbackService
         );
 
         /*

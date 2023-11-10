@@ -2,15 +2,12 @@ package io.embrace.android.embracesdk.session
 
 import android.app.Activity
 import android.app.Application
-import android.content.ComponentCallbacks2
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.annotation.StartupActivity
-import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -46,11 +43,6 @@ internal class EmbraceActivityService(
 ) : ActivityService {
 
     /**
-     * The memory service, it's provided on the instantiation of the service.
-     */
-    private var memoryService: MemoryService? = null
-
-    /**
      * List of listeners that subscribe to activity events.
      */
     @VisibleForTesting
@@ -84,7 +76,6 @@ internal class EmbraceActivityService(
 
     init {
         application.registerActivityLifecycleCallbacks(this)
-        application.applicationContext.registerComponentCallbacks(this)
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
         ThreadUtils.runOnMainThread(
@@ -227,30 +218,6 @@ internal class EmbraceActivityService(
     }
 
     /**
-     * Called when the OS has determined that it is a good time for a process to trim unneeded
-     * memory.
-     *
-     * @param trimLevel the context of the trim, giving a hint of the amount of trimming.
-     */
-    override fun onTrimMemory(trimLevel: Int) {
-        logDeveloper("EmbraceActivityService", "onTrimMemory(). TrimLevel: $trimLevel")
-        if (trimLevel == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
-            try {
-                memoryService?.onMemoryWarning()
-            } catch (ex: Exception) {
-                logDebug("Failed to handle onTrimMemory (low memory) event", ex)
-            }
-        }
-    }
-
-    fun setMemoryService(memoryService: MemoryService?) {
-        this.memoryService = memoryService
-    }
-
-    override fun onConfigurationChanged(configuration: Configuration) {}
-    override fun onLowMemory() {}
-
-    /**
      * Returns the current activity instance
      */
     override val foregroundActivity: Activity?
@@ -284,7 +251,6 @@ internal class EmbraceActivityService(
     override fun close() {
         try {
             logDebug("Shutting down EmbraceActivityService")
-            application.applicationContext.unregisterComponentCallbacks(this)
             application.unregisterActivityLifecycleCallbacks(this)
             listeners.clear()
         } catch (ex: Exception) {

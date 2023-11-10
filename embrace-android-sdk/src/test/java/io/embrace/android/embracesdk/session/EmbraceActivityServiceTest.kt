@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import android.app.Activity
 import android.app.Application
-import android.content.ComponentCallbacks2
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
@@ -10,7 +9,6 @@ import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.mockk.Called
@@ -38,7 +36,6 @@ internal class EmbraceActivityServiceTest {
         private lateinit var mockLifeCycleOwner: LifecycleOwner
         private lateinit var mockLifecycle: Lifecycle
         private lateinit var mockApplication: Application
-        private lateinit var mockMemoryService: MemoryService
         private lateinit var mockOrientationService: OrientationService
         private val fakeClock = FakeClock()
 
@@ -51,7 +48,6 @@ internal class EmbraceActivityServiceTest {
             mockkStatic(Looper::class)
             mockkStatic(ProcessLifecycleOwner::class)
             mockApplication = mockk(relaxed = true)
-            mockMemoryService = mockk()
             mockOrientationService = mockk()
 
             fakeClock.setCurrentTime(1234)
@@ -63,6 +59,7 @@ internal class EmbraceActivityServiceTest {
             every { mockLifecycle.addObserver(any()) } returns Unit
         }
 
+        @JvmStatic
         @AfterClass
         fun tearDown() {
             unmockkAll()
@@ -83,13 +80,11 @@ internal class EmbraceActivityServiceTest {
             mockOrientationService,
             fakeClock
         )
-        activityService.setMemoryService(mockMemoryService)
     }
 
     @Test
     fun `test we are adding lifecycle observer on constructor`() {
         verify { mockApplication.registerActivityLifecycleCallbacks(activityService) }
-        verify { mockApplication.applicationContext.registerComponentCallbacks(activityService) }
     }
 
     @Test
@@ -209,20 +204,6 @@ internal class EmbraceActivityServiceTest {
     }
 
     @Test
-    fun `verify on trim on level not running low does not do anything`() {
-        activityService.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE)
-
-        verify { mockMemoryService wasNot Called }
-    }
-
-    @Test
-    fun `verify on trim on level running low triggers memory warning`() {
-        activityService.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
-
-        verify { mockMemoryService.onMemoryWarning() }
-    }
-
-    @Test
     fun `verify isInBackground returns true by default`() {
         assertTrue(activityService.isInBackground)
     }
@@ -309,7 +290,6 @@ internal class EmbraceActivityServiceTest {
 
         activityService.close()
 
-        verify { mockApplication.applicationContext.unregisterComponentCallbacks(activityService) }
         verify { mockApplication.unregisterActivityLifecycleCallbacks(activityService) }
         assertTrue(activityService.listeners.isEmpty())
     }

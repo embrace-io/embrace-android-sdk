@@ -134,8 +134,6 @@ internal class EmbraceCrashService(
             // End, cache and send the session
             sessionService.handleCrash(crash.crashId)
             backgroundActivityService?.handleCrash(crash.crashId)
-            // Send the crash
-            deliveryService.sendCrash(crashEvent)
             // Indicate that a crash happened so we can know that in the next launch
             crashMarker.mark()
         }

@@ -498,10 +498,10 @@ internal class SessionHandlerTest {
         verify { mockAutomaticSessionStopper wasNot Called }
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertNull(deliveryService.lastSavedSession)
+        assertTrue(deliveryService.lastSentSessions.isEmpty())
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
 
-        val session = checkNotNull(deliveryService.lastSentSessions.single().first.session)
+        val session = checkNotNull(deliveryService.lastSavedSession).session
 
         with(session) {
             assertFalse(checkNotNull(isEndedCleanly))
@@ -592,7 +592,7 @@ internal class SessionHandlerTest {
             listOf(testSpan)
         )
 
-        assertSpanInSessionMessage(deliveryService.lastSentSessions.single().first)
+        assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
     @Test

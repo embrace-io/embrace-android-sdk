@@ -464,6 +464,9 @@ internal class SessionHandler(
             return
         }
 
+        // let's not overwrite the crash info with the periodic caching
+        stopPeriodicSessionCaching()
+
         val fullEndSessionMessage = buildEndSessionMessage(
             originSession,
             endedCleanly = false,
@@ -483,8 +486,7 @@ internal class SessionHandler(
             "SessionHandler",
             "Sanitized End session message=$sanitizedSessionMessage"
         )
-
-        deliveryService.sendSession(sanitizedSessionMessage, SessionMessageState.END_WITH_CRASH)
+        deliveryService.saveSessionOnCrash(sanitizedSessionMessage)
     }
 
     /**

@@ -57,11 +57,19 @@ internal class EmbraceDeliveryCacheManager(
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
     override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
+        return saveSessionImpl(sessionMessage)
+    }
+
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+        saveSessionImpl(sessionMessage, true)
+    }
+
+    private fun saveSessionImpl(sessionMessage: SessionMessage, writeSync: Boolean = false): ByteArray {
         if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
             deleteOldestSessions()
         }
         val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-        saveBytes(sessionMessage.session.sessionId, sessionBytes)
+        saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
         return sessionBytes
     }
 
@@ -230,23 +238,31 @@ internal class EmbraceDeliveryCacheManager(
             .forEach { deleteSession(it.sessionId) }
     }
 
-    private fun saveBytes(sessionId: String, bytes: ByteArray) {
-        executorService.submit {
-            try {
-                val cachedSession = cachedSessions.getOrElse(sessionId) {
-                    CachedSession(
-                        sessionId,
-                        clock.now()
-                    )
-                }
-                cacheService.cacheBytes(cachedSession.filename, bytes)
-                if (!cachedSessions.containsKey(cachedSession.sessionId)) {
-                    cachedSessions[cachedSession.sessionId] = cachedSession
-                }
-                logger.logDeveloper(TAG, "Session message successfully cached.")
-            } catch (ex: Exception) {
-                logger.logError("Failed to cache current active session", ex)
+    private fun saveBytes(sessionId: String, bytes: ByteArray, writeSync: Boolean = false) {
+        if (writeSync) {
+            saveBytesImpl(sessionId, bytes)
+        } else {
+            executorService.submit {
+                saveBytesImpl(sessionId, bytes)
             }
+        }
+    }
+
+    private fun saveBytesImpl(sessionId: String, bytes: ByteArray) {
+        try {
+            val cachedSession = cachedSessions.getOrElse(sessionId) {
+                CachedSession(
+                    sessionId,
+                    clock.now()
+                )
+            }
+            cacheService.cacheBytes(cachedSession.filename, bytes)
+            if (!cachedSessions.containsKey(cachedSession.sessionId)) {
+                cachedSessions[cachedSession.sessionId] = cachedSession
+            }
+            logger.logDeveloper(TAG, "Session message successfully cached.")
+        } catch (ex: Exception) {
+            logger.logError("Failed to cache current active session", ex)
         }
     }
 

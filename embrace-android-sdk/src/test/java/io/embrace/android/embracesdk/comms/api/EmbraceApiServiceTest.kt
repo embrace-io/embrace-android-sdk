@@ -25,7 +25,10 @@ import java.util.concurrent.ScheduledExecutorService
 internal class EmbraceApiServiceTest {
 
     companion object {
-        private lateinit var mockApiUrlBuilder: ApiUrlBuilder
+        private const val appId = "A1B2C"
+        private const val fakeDeviceId = "A1B2C"
+        private const val fakeAppVersionName = "6.1.0"
+        private lateinit var apiUrlBuilder: ApiUrlBuilder
         private lateinit var mockApiClient: ApiClient
         private lateinit var mockCacheManager: DeliveryCacheManager
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
@@ -37,10 +40,13 @@ internal class EmbraceApiServiceTest {
         @BeforeClass
         @JvmStatic
         fun setupBeforeAll() {
-            mockApiUrlBuilder = mockk(relaxUnitFun = true) {
-                every { getEmbraceUrlWithSuffix(any()) } returns "http://fake.url"
-                every { getConfigUrl() } returns "https://config.url"
-            }
+            apiUrlBuilder = EmbraceApiUrlBuilder(
+                coreBaseUrl = "https://a-$appId.data.emb-api.com",
+                configBaseUrl = "https://a-$appId.config.emb-api.com",
+                appId = appId,
+                lazyDeviceId = lazy { fakeDeviceId },
+                lazyAppVersionName = lazy { fakeAppVersionName }
+            )
             networkConnectivityService = mockk(relaxUnitFun = true)
             blockingScheduledExecutorService = BlockingScheduledExecutorService()
             testScheduledExecutor = blockingScheduledExecutorService
@@ -118,20 +124,27 @@ internal class EmbraceApiServiceTest {
         assertSame(cfg, remoteConfig)
     }
 
+    @Test
+    fun `validate all API endpoint URLs`() {
+        EmbraceApiService.Companion.Endpoint.values().forEach {
+            assertEquals("https://a-$appId.data.emb-api.com/v1/log/${it.path}", apiUrlBuilder.getEmbraceUrlWithSuffix(it.path))
+        }
+    }
+
     private fun initApiService(status: NetworkStatus = NetworkStatus.NOT_REACHABLE) {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
         apiService = EmbraceApiService(
             apiClient = mockApiClient,
-            urlBuilder = mockApiUrlBuilder,
+            urlBuilder = apiUrlBuilder,
             serializer = EmbraceSerializer(),
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = mockk(relaxed = true),
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
-            lazyDeviceId = lazy { "07D85B44E4E245F4A30E559BFC0D07FF" },
-            appId = "o0o0o",
+            lazyDeviceId = lazy { fakeDeviceId },
+            appId = appId,
             deliveryRetryManager = mockk(relaxed = true)
         )
     }

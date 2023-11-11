@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.embrace.android.embracesdk.utils.exceptions.Unchecked
 import java.io.StringReader
 import java.net.HttpURLConnection
 import java.util.concurrent.Future
@@ -119,16 +118,8 @@ internal class EmbraceApiService(
      * @return a future containing the response body from the server
      */
     override fun sendLogs(eventMessage: EventMessage) {
-        logger.logDeveloper(TAG, "sendLogs")
-        checkNotNull(eventMessage.event) { "event must be set" }
         val event = eventMessage.event
-        checkNotNull(event.type) { "event type must be set" }
-        checkNotNull(event.eventId) { "event ID must be set" }
-        val url = Unchecked.wrap {
-            EmbraceUrl.getUrl(
-                urlBuilder.getEmbraceUrlWithSuffix("logging")
-            )
-        }
+        val url = getApiUrl(endpoint = Endpoint.LOGGING)
         val abbreviation = event.type.abbreviation
         val logIdentifier = abbreviation + ":" + event.messageId
         val request: ApiRequest = eventBuilder(url).copy(logId = logIdentifier)
@@ -143,11 +134,7 @@ internal class EmbraceApiService(
      */
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         logger.logDeveloper(TAG, "send BlobMessage")
-        val url = Unchecked.wrap {
-            EmbraceUrl.getUrl(
-                urlBuilder.getEmbraceUrlWithSuffix("blobs")
-            )
-        }
+        val url = getApiUrl(endpoint = Endpoint.BLOBS)
         val request: ApiRequest = eventBuilder(url).copy(
             deviceId = lazyDeviceId.value,
             appId = appId,
@@ -166,12 +153,7 @@ internal class EmbraceApiService(
      */
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         logger.logDeveloper(TAG, "sendNetworkCall")
-
-        val url = Unchecked.wrap {
-            EmbraceUrl.getUrl(
-                urlBuilder.getEmbraceUrlWithSuffix("network")
-            )
-        }
+        val url = getApiUrl(endpoint = Endpoint.NETWORK)
         val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
         val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
 
@@ -217,12 +199,7 @@ internal class EmbraceApiService(
     }
 
     override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        logger.logDeveloper(TAG, "sendSession")
-        val url = Unchecked.wrap {
-            EmbraceUrl.getUrl(
-                urlBuilder.getEmbraceUrlWithSuffix("sessions")
-            )
-        }
+        val url = getApiUrl(endpoint = Endpoint.SESSIONS)
         val request: ApiRequest = eventBuilder(url).copy(
             deviceId = lazyDeviceId.value,
             appId = appId,
@@ -235,18 +212,8 @@ internal class EmbraceApiService(
     }
 
     private fun createRequest(eventMessage: EventMessage): ApiRequest {
-        logger.logDeveloper(TAG, "sendEvent")
-        checkNotNull(eventMessage.event) { "event must be set" }
         val event = eventMessage.event
-        logger.logDeveloper(TAG, "sendEvent - event: " + event.name)
-        logger.logDeveloper(TAG, "sendEvent - event: " + event.type)
-        checkNotNull(event.type) { "event type must be set" }
-        checkNotNull(event.eventId) { "event ID must be set" }
-        val url = Unchecked.wrap {
-            EmbraceUrl.getUrl(
-                urlBuilder.getEmbraceUrlWithSuffix("events")
-            )
-        }
+        val url = getApiUrl(endpoint = Endpoint.EVENTS)
         val abbreviation = event.type.abbreviation
         val eventIdentifier: String = if (event.type == EmbraceEvent.Type.CRASH) {
             createCrashActiveEventsHeader(abbreviation, event.activeEventIds)
@@ -355,6 +322,21 @@ internal class EmbraceApiService(
 
     private fun executePost(request: ApiRequest, payload: ByteArray) {
         apiClient.executePost(request, payload)
+    }
+
+    private fun getApiUrl(endpoint: Endpoint): EmbraceUrl =
+        EmbraceUrl.getUrl(
+            urlBuilder.getEmbraceUrlWithSuffix(endpoint.path)
+        )
+
+    companion object {
+        enum class Endpoint(val path: String) {
+            EVENTS("events"),
+            BLOBS("blobs"),
+            LOGGING("logging"),
+            NETWORK("network"),
+            SESSIONS("sessions")
+        }
     }
 }
 

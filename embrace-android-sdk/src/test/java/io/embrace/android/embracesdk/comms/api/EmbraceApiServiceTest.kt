@@ -26,7 +26,7 @@ internal class EmbraceApiServiceTest {
 
     companion object {
         private const val appId = "A1B2C"
-        private const val fakeDeviceId = "A1B2C"
+        private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
         private lateinit var apiUrlBuilder: ApiUrlBuilder
         private lateinit var mockApiClient: ApiClient
@@ -136,16 +136,16 @@ internal class EmbraceApiServiceTest {
 
         apiService = EmbraceApiService(
             apiClient = mockApiClient,
-            urlBuilder = apiUrlBuilder,
             serializer = EmbraceSerializer(),
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = mockk(relaxed = true),
             scheduledExecutorService = testScheduledExecutor,
-            networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = appId,
-            deliveryRetryManager = mockk(relaxed = true)
+            deliveryRetryManager = mockk(relaxed = true),
+            urlBuilder = apiUrlBuilder,
+            networkConnectivityService = networkConnectivityService
         )
     }
 }

@@ -23,22 +23,23 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
-    private val urlBuilder: ApiUrlBuilder,
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
     private val scheduledExecutorService: ScheduledExecutorService,
-    networkConnectivityService: NetworkConnectivityService,
     private val cacheManager: DeliveryCacheManager,
     private val deliveryRetryManager: DeliveryRetryManager,
     private val lazyDeviceId: Lazy<String>,
-    private val appId: String
+    private val appId: String,
+    urlBuilder: ApiUrlBuilder,
+    networkConnectivityService: NetworkConnectivityService
 ) : ApiService, NetworkConnectivityListener {
 
+    private val configUrl = urlBuilder.getConfigUrl()
+    private val apiUrls = Endpoint.values().associateWith { EmbraceUrl.create(urlBuilder.getEmbraceUrlWithSuffix(it.path)) }
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
     init {
-        logger.logDeveloper(TAG, "start")
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
         deliveryRetryManager.setPostExecutor(this::executePost)
@@ -54,9 +55,8 @@ internal class EmbraceApiService(
      */
     @Throws(IllegalStateException::class)
     override fun getConfig(): RemoteConfig? {
-        val url = urlBuilder.getConfigUrl()
-        var request = prepareConfigRequest(url)
-        val cachedResponse = cachedConfigProvider(url, request)
+        var request = prepareConfigRequest(configUrl)
+        val cachedResponse = cachedConfigProvider(configUrl, request)
 
         if (cachedResponse.isValid()) { // only bother if we have a useful response.
             request = request.copy(eTag = cachedResponse.eTag)
@@ -66,16 +66,15 @@ internal class EmbraceApiService(
     }
 
     override fun getCachedConfig(): CachedConfig {
-        val url = urlBuilder.getConfigUrl()
-        val request = prepareConfigRequest(url)
-        return cachedConfigProvider(url, request)
+        val request = prepareConfigRequest(configUrl)
+        return cachedConfigProvider(configUrl, request)
     }
 
     private fun prepareConfigRequest(url: String) = ApiRequest(
         contentType = "application/json",
         userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
         accept = "application/json",
-        url = EmbraceUrl.getUrl(url),
+        url = EmbraceUrl.create(url),
         httpMethod = HttpMethod.GET,
     )
 
@@ -118,12 +117,13 @@ internal class EmbraceApiService(
      * @return a future containing the response body from the server
      */
     override fun sendLogs(eventMessage: EventMessage) {
-        val event = eventMessage.event
-        val url = getApiUrl(endpoint = Endpoint.LOGGING)
-        val abbreviation = event.type.abbreviation
-        val logIdentifier = abbreviation + ":" + event.messageId
-        val request: ApiRequest = eventBuilder(url).copy(logId = logIdentifier)
-        postEvent(eventMessage, request)
+        apiUrls[Endpoint.LOGGING]?.let { url ->
+            val event = eventMessage.event
+            val abbreviation = event.type.abbreviation
+            val logIdentifier = abbreviation + ":" + event.messageId
+            val request: ApiRequest = eventBuilder(url).copy(logId = logIdentifier)
+            postEvent(eventMessage, request)
+        }
     }
 
     /**
@@ -133,17 +133,17 @@ internal class EmbraceApiService(
      * @return a future containing the response body from the server
      */
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        logger.logDeveloper(TAG, "send BlobMessage")
-        val url = getApiUrl(endpoint = Endpoint.BLOBS)
-        val request: ApiRequest = eventBuilder(url).copy(
-            deviceId = lazyDeviceId.value,
-            appId = appId,
-            url = url,
-            httpMethod = HttpMethod.POST,
-            contentEncoding = "gzip"
-        )
+        apiUrls[Endpoint.BLOBS]?.let { url ->
+            val request: ApiRequest = eventBuilder(url).copy(
+                deviceId = lazyDeviceId.value,
+                appId = appId,
+                url = url,
+                httpMethod = HttpMethod.POST,
+                contentEncoding = "gzip"
+            )
 
-        postAEIBlob(blobMessage, request)
+            postAEIBlob(blobMessage, request)
+        }
     }
 
     /**
@@ -152,15 +152,12 @@ internal class EmbraceApiService(
      * @param networkEvent the event containing the network call information
      */
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        logger.logDeveloper(TAG, "sendNetworkCall")
-        val url = getApiUrl(endpoint = Endpoint.NETWORK)
-        val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
-        val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
-
-        logger.logDeveloper(TAG, "network call to: $url - abbreviation: $abbreviation")
-
-        val request: ApiRequest = eventBuilder(url).copy(logId = networkIdentifier)
-        postNetworkEvent(networkEvent, request)
+        apiUrls[Endpoint.NETWORK]?.let { url ->
+            val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
+            val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
+            val request: ApiRequest = eventBuilder(url).copy(logId = networkIdentifier)
+            postNetworkEvent(networkEvent, request)
+        }
     }
 
     /**
@@ -169,7 +166,9 @@ internal class EmbraceApiService(
      * @param eventMessage the event message containing the event
      */
     override fun sendEvent(eventMessage: EventMessage) {
-        postEvent(eventMessage, createRequest(eventMessage))
+        createRequest(eventMessage)?.let { request ->
+            postEvent(eventMessage, request)
+        }
     }
 
     /**
@@ -178,7 +177,9 @@ internal class EmbraceApiService(
      * @param eventMessage the event message containing the event
      */
     override fun sendEventAndWait(eventMessage: EventMessage) {
-        postEvent(eventMessage, createRequest(eventMessage))?.get()
+        createRequest(eventMessage)?.let { request ->
+            postEvent(eventMessage, request)?.get()
+        }
     }
 
     /**
@@ -187,40 +188,46 @@ internal class EmbraceApiService(
      * @param crash the event message containing the crash
      */
     override fun sendCrash(crash: EventMessage) {
-        val request = createRequest(crash)
-        try {
-            postEvent(crash, request) { cacheManager.deleteCrash() }?.get(
-                CRASH_TIMEOUT,
-                TimeUnit.SECONDS
+        createRequest(crash)?.let { request ->
+            try {
+                postEvent(crash, request) { cacheManager.deleteCrash() }?.get(
+                    CRASH_TIMEOUT,
+                    TimeUnit.SECONDS
+                )
+            } catch (e: Exception) {
+                logger.logError("The crash report request has timed out.")
+            }
+        }
+    }
+
+    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>? {
+        apiUrls[Endpoint.SESSIONS]?.let { url ->
+            val request: ApiRequest = eventBuilder(url).copy(
+                deviceId = lazyDeviceId.value,
+                appId = appId,
+                url = url,
+                httpMethod = HttpMethod.POST,
+                contentEncoding = "gzip"
             )
-        } catch (e: Exception) {
-            logger.logError("The crash report request has timed out.")
+            return postOnExecutor(sessionPayload, request, onFinish)
         }
+
+        return null
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        val url = getApiUrl(endpoint = Endpoint.SESSIONS)
-        val request: ApiRequest = eventBuilder(url).copy(
-            deviceId = lazyDeviceId.value,
-            appId = appId,
-            url = url,
-            httpMethod = HttpMethod.POST,
-            contentEncoding = "gzip"
-        )
-
-        return postOnExecutor(sessionPayload, request, onFinish)
-    }
-
-    private fun createRequest(eventMessage: EventMessage): ApiRequest {
-        val event = eventMessage.event
-        val url = getApiUrl(endpoint = Endpoint.EVENTS)
-        val abbreviation = event.type.abbreviation
-        val eventIdentifier: String = if (event.type == EmbraceEvent.Type.CRASH) {
-            createCrashActiveEventsHeader(abbreviation, event.activeEventIds)
-        } else {
-            abbreviation + ":" + event.eventId
+    private fun createRequest(eventMessage: EventMessage): ApiRequest? {
+        apiUrls[Endpoint.EVENTS]?.let { url ->
+            val event = eventMessage.event
+            val abbreviation = event.type.abbreviation
+            val eventIdentifier: String = if (event.type == EmbraceEvent.Type.CRASH) {
+                createCrashActiveEventsHeader(abbreviation, event.activeEventIds)
+            } else {
+                abbreviation + ":" + event.eventId
+            }
+            return eventBuilder(url).copy(eventId = eventIdentifier)
         }
-        return eventBuilder(url).copy(eventId = eventIdentifier)
+
+        return null
     }
 
     private fun postEvent(eventMessage: EventMessage, request: ApiRequest): Future<*>? {
@@ -323,11 +330,6 @@ internal class EmbraceApiService(
     private fun executePost(request: ApiRequest, payload: ByteArray) {
         apiClient.executePost(request, payload)
     }
-
-    private fun getApiUrl(endpoint: Endpoint): EmbraceUrl =
-        EmbraceUrl.getUrl(
-            urlBuilder.getEmbraceUrlWithSuffix(endpoint.path)
-        )
 
     companion object {
         enum class Endpoint(val path: String) {

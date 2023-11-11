@@ -15,5 +15,5 @@ internal interface ApiService {
     fun sendEventAndWait(eventMessage: EventMessage)
     fun sendCrash(crash: EventMessage)
     fun sendAEIBlob(blobMessage: BlobMessage)
-    fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>
+    fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>?
 }

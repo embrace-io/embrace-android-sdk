@@ -276,17 +276,17 @@ internal class EssentialServiceModuleImpl(
 
     override val apiService: ApiService by singleton {
         EmbraceApiService(
-            apiClient,
-            urlBuilder,
-            coreModule.jsonSerializer,
-            { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
-            coreModule.logger,
-            apiRetryExecutor,
-            networkConnectivityService,
-            deliveryCacheManager,
-            deliveryRetryManager,
-            lazyDeviceId,
-            appId
+            apiClient = apiClient,
+            serializer = coreModule.jsonSerializer,
+            cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
+            logger = coreModule.logger,
+            scheduledExecutorService = apiRetryExecutor,
+            cacheManager = deliveryCacheManager,
+            deliveryRetryManager = deliveryRetryManager,
+            lazyDeviceId = lazyDeviceId,
+            appId = appId,
+            urlBuilder = urlBuilder,
+            networkConnectivityService = networkConnectivityService
         )
     }
 

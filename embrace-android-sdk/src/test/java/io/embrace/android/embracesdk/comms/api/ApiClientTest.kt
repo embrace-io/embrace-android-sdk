@@ -36,7 +36,7 @@ internal class ApiClientTest {
         server = MockWebServer()
         server.start()
         baseUrl = server.url("test").toString()
-        request = ApiRequest(url = EmbraceUrl.getUrl(baseUrl))
+        request = ApiRequest(url = EmbraceUrl.create(baseUrl))
     }
 
     @After
@@ -47,7 +47,7 @@ internal class ApiClientTest {
     @Test(expected = RuntimeException::class)
     fun testUnreachableHost() {
         // attempt some unreachable port
-        val request = ApiRequest(url = EmbraceUrl.getUrl("http://localhost:1565"))
+        val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
         apiClient.executePost(request, "Hello world".toByteArray())
     }
 
@@ -131,7 +131,7 @@ internal class ApiClientTest {
             "test_did",
             "test_eid",
             "test_lid",
-            EmbraceUrl.getUrl(baseUrl)
+            EmbraceUrl.create(baseUrl)
         )
         server.enqueue(MockResponse().setBody(DEFAULT_RESPONSE_BODY))
         apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())

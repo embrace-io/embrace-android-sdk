@@ -21,7 +21,7 @@ internal class ApiRequestTest {
         "test_did",
         "test_eid",
         "test_lid",
-        EmbraceUrl.getUrl("https://google.com"),
+        EmbraceUrl.create("https://google.com"),
         HttpMethod.GET,
         "d800f828fec4409dcabc7f5252e7ce71"
     )
@@ -47,7 +47,7 @@ internal class ApiRequestTest {
 
     @Test
     fun testMinimalHeaders() {
-        val minimal = ApiRequest(url = EmbraceUrl.getUrl("https://google.com"))
+        val minimal = ApiRequest(url = EmbraceUrl.create("https://google.com"))
         Assert.assertEquals(
             mapOf(
                 "Accept" to "application/json",

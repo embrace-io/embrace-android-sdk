@@ -121,7 +121,7 @@ internal class EmbraceApiService(
             val event = eventMessage.event
             val abbreviation = event.type.abbreviation
             val logIdentifier = abbreviation + ":" + event.messageId
-            val request: ApiRequest = eventBuilder(url).copy(logId = logIdentifier)
+            val request: ApiRequest = buildRequest(url).copy(logId = logIdentifier)
             postEvent(eventMessage, request)
         }
     }
@@ -134,7 +134,7 @@ internal class EmbraceApiService(
      */
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         apiUrls[Endpoint.BLOBS]?.let { url ->
-            val request: ApiRequest = eventBuilder(url).copy(
+            val request: ApiRequest = buildRequest(url).copy(
                 deviceId = lazyDeviceId.value,
                 appId = appId,
                 url = url,
@@ -155,7 +155,7 @@ internal class EmbraceApiService(
         apiUrls[Endpoint.NETWORK]?.let { url ->
             val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
             val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
-            val request: ApiRequest = eventBuilder(url).copy(logId = networkIdentifier)
+            val request: ApiRequest = buildRequest(url).copy(logId = networkIdentifier)
             postNetworkEvent(networkEvent, request)
         }
     }
@@ -202,7 +202,7 @@ internal class EmbraceApiService(
 
     override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>? {
         apiUrls[Endpoint.SESSIONS]?.let { url ->
-            val request: ApiRequest = eventBuilder(url).copy(
+            val request: ApiRequest = buildRequest(url).copy(
                 deviceId = lazyDeviceId.value,
                 appId = appId,
                 url = url,
@@ -224,7 +224,7 @@ internal class EmbraceApiService(
             } else {
                 abbreviation + ":" + event.eventId
             }
-            return eventBuilder(url).copy(eventId = eventIdentifier)
+            return buildRequest(url).copy(eventId = eventIdentifier)
         }
 
         return null
@@ -300,7 +300,7 @@ internal class EmbraceApiService(
         }
     }
 
-    private fun eventBuilder(url: EmbraceUrl): ApiRequest {
+    private fun buildRequest(url: EmbraceUrl): ApiRequest {
         logger.logDeveloper(TAG, "eventBuilder")
         return ApiRequest(
             url = url,

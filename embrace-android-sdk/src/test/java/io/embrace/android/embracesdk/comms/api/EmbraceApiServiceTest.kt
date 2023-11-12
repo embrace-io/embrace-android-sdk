@@ -1,18 +1,15 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeApiClient
+import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
-import io.mockk.clearMocks
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.unmockkAll
-import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -29,11 +26,11 @@ internal class EmbraceApiServiceTest {
         private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
         private lateinit var apiUrlBuilder: ApiUrlBuilder
-        private lateinit var mockApiClient: ApiClient
-        private lateinit var mockCacheManager: DeliveryCacheManager
+        private lateinit var fakeApiClient: FakeApiClient
+        private lateinit var fakeCacheManager: DeliveryCacheManager
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var testScheduledExecutor: ScheduledExecutorService
-        private lateinit var networkConnectivityService: NetworkConnectivityService
+        private lateinit var networkConnectivityService: FakeNetworkConnectivityService
         private lateinit var cachedConfig: CachedConfig
         private lateinit var apiService: EmbraceApiService
 
@@ -47,46 +44,31 @@ internal class EmbraceApiServiceTest {
                 lazyDeviceId = lazy { fakeDeviceId },
                 lazyAppVersionName = lazy { fakeAppVersionName }
             )
-            networkConnectivityService = mockk(relaxUnitFun = true)
+            networkConnectivityService = FakeNetworkConnectivityService()
             blockingScheduledExecutorService = BlockingScheduledExecutorService()
             testScheduledExecutor = blockingScheduledExecutorService
-        }
-
-        /**
-         * Setup after all tests get executed. Un-mock all here.
-         */
-        @AfterClass
-        @JvmStatic
-        fun tearDownAfterAll() {
-            unmockkAll()
         }
     }
 
     @Before
     fun setUp() {
-        mockApiClient = mockk {
-            every { executePost(any(), any()) } returns ""
-        }
+        fakeApiClient = FakeApiClient()
         cachedConfig = CachedConfig(
             config = null,
             eTag = null
         )
-        mockCacheManager = mockk(relaxUnitFun = true)
-    }
-
-    @After
-    fun tearDown() {
-        clearMocks(mockApiClient)
-        clearMocks(mockCacheManager)
+        fakeCacheManager = FakeDeliveryCacheManager()
     }
 
     @Test
     fun `test getConfig returns correct values in Response`() {
         val json = ResourceReader.readResourceAsText("remote_config_response.json")
-        every { mockApiClient.executeGet(any()) } returns ApiResponse(
-            statusCode = 200,
-            body = json,
-            headers = emptyMap()
+        fakeApiClient.queueResponse(
+            ApiResponse(
+                statusCode = 200,
+                body = json,
+                headers = emptyMap()
+            )
         )
         initApiService(
             status = NetworkStatus.NOT_REACHABLE
@@ -102,7 +84,6 @@ internal class EmbraceApiServiceTest {
 
     @Test(expected = IllegalStateException::class)
     fun `test getConfig rethrows an exception thrown by apiClient`() {
-        every { mockApiClient.executeGet(any()) } throws IllegalStateException("Test exception message")
         initApiService(
             status = NetworkStatus.NOT_REACHABLE
         )
@@ -114,10 +95,12 @@ internal class EmbraceApiServiceTest {
     fun testGetConfigWithMatchingEtag() {
         val cfg = RemoteConfig()
         cachedConfig = CachedConfig(cfg, "my_etag")
-        every { mockApiClient.executeGet(any()) } returns ApiResponse(
-            statusCode = 304,
-            body = "",
-            headers = emptyMap()
+        fakeApiClient.queueResponse(
+            ApiResponse(
+                statusCode = 304,
+                body = "",
+                headers = emptyMap()
+            )
         )
         initApiService()
         val remoteConfig = apiService.getConfig()
@@ -132,15 +115,14 @@ internal class EmbraceApiServiceTest {
     }
 
     private fun initApiService(status: NetworkStatus = NetworkStatus.NOT_REACHABLE) {
-        every { networkConnectivityService.getCurrentNetworkStatus() } returns status
-
+        networkConnectivityService.networkStatus = status
         apiService = EmbraceApiService(
-            apiClient = mockApiClient,
+            apiClient = fakeApiClient,
             serializer = EmbraceSerializer(),
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = mockk(relaxed = true),
             scheduledExecutorService = testScheduledExecutor,
-            cacheManager = mockCacheManager,
+            cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = appId,
             deliveryRetryManager = mockk(relaxed = true),

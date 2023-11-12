@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
+import io.embrace.android.embracesdk.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
@@ -290,8 +291,8 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    override val apiClient by singleton {
-        ApiClient(
+    override val apiClient: ApiClient by singleton {
+        ApiClientImpl(
             coreModule.logger
         )
     }

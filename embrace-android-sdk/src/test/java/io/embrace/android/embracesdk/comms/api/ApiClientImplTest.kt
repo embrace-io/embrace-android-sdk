@@ -8,7 +8,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.Executors
@@ -19,16 +19,16 @@ import java.util.zip.GZIPInputStream
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
  * robustly handles various scenarios.
  */
-internal class ApiClientTest {
+internal class ApiClientImplTest {
 
     private lateinit var request: ApiRequest
-    private lateinit var apiClient: ApiClient
+    private lateinit var apiClient: ApiClientImpl
     private lateinit var server: MockWebServer
     private lateinit var baseUrl: String
 
     @Before
     fun setUp() {
-        apiClient = ApiClient(
+        apiClient = ApiClientImpl(
             InternalEmbraceLogger()
         )
 
@@ -57,12 +57,12 @@ internal class ApiClientTest {
         val result = apiClient.executePost(request, DEFAULT_REQUEST_BODY.toByteArray())
 
         // assert on result parsed by ApiClient
-        Assert.assertEquals(DEFAULT_RESPONSE_BODY, result)
+        assertEquals(DEFAULT_RESPONSE_BODY, result.body)
 
         // assert on request received by mock server
         val delivered = server.takeRequest()
         assertRequestContents(delivered)
-        Assert.assertEquals(DEFAULT_REQUEST_BODY, delivered.readCompressedRequestBody())
+        assertEquals(DEFAULT_REQUEST_BODY, delivered.readCompressedRequestBody())
     }
 
     @Test(expected = RuntimeException::class)
@@ -95,12 +95,12 @@ internal class ApiClientTest {
         val result = apiClient.executePost(request, payload.toByteArray())
 
         // assert on result parsed by ApiClient
-        Assert.assertEquals(DEFAULT_RESPONSE_BODY, result)
+        assertEquals(DEFAULT_RESPONSE_BODY, result.body)
 
         // assert on request received by mock server
         val delivered = server.takeRequest()
         val observed = delivered.readCompressedRequestBody()
-        Assert.assertEquals(payload, observed)
+        assertEquals(payload, observed)
     }
 
     /**
@@ -140,7 +140,7 @@ internal class ApiClientTest {
         val delivered = server.takeRequest()
         val headers = delivered.headers.toMap()
             .minus("Host")
-        Assert.assertEquals(
+        assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "User-Agent" to "Embrace/a/1",
@@ -164,11 +164,11 @@ internal class ApiClientTest {
     }
 
     private fun assertRequestContents(delivered: RecordedRequest) {
-        Assert.assertEquals("POST", delivered.method)
-        Assert.assertEquals("/test", delivered.path)
+        assertEquals("POST", delivered.method)
+        assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
-        Assert.assertEquals(
+        assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",

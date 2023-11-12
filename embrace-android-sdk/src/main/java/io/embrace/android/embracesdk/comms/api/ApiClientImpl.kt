@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
+import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -21,15 +21,8 @@ import java.util.zip.GZIPOutputStream
  * testing is enabled when calling [Embrace.start()].
  */
 internal class ApiClientImpl(
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : ApiClient {
-
-    var timeoutMs = 60 * 1000
-
-    private fun setTimeouts(connection: EmbraceConnection) {
-        connection.setConnectTimeout(timeoutMs)
-        connection.setReadTimeout(timeoutMs)
-    }
 
     override fun executeGet(request: ApiRequest): ApiResponse<String> {
         var connection: EmbraceConnection? = null
@@ -67,12 +60,10 @@ internal class ApiClientImpl(
                 connection.outputStream?.write(payload)
                 connection.connect()
             }
-            val response = executeHttpRequest(connection)
 
+            val response = executeHttpRequest(connection)
             // pre-existing behavior. handle this better in future.
-            if (response.statusCode != HttpURLConnection.HTTP_OK) {
-                @Suppress("UseCheckOrError") throw IllegalStateException("Failed to retrieve from Embrace server.")
-            }
+            check(response.statusCode == HttpURLConnection.HTTP_OK) { "Failed to retrieve from Embrace server." }
             response
         } catch (ex: Throwable) {
             throw IllegalStateException(ex.localizedMessage ?: "", ex)
@@ -81,6 +72,11 @@ internal class ApiClientImpl(
                 connection?.inputStream?.close()
             }
         }
+    }
+
+    private fun setTimeouts(connection: EmbraceConnection) {
+        connection.setConnectTimeout(defaultTimeoutMs)
+        connection.setReadTimeout(defaultTimeoutMs)
     }
 
     /**

@@ -19,5 +19,7 @@ internal interface ApiClient {
         const val MESSAGE_VERSION = 13
 
         const val NO_HTTP_RESPONSE = -1
+
+        const val defaultTimeoutMs = 60 * 1000
     }
 }

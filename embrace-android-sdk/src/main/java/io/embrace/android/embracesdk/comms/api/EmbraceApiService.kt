@@ -36,7 +36,7 @@ internal class EmbraceApiService(
 ) : ApiService, NetworkConnectivityListener {
 
     private val configUrl = urlBuilder.getConfigUrl()
-    private val apiUrls = Endpoint.values().associateWith { EmbraceUrl.create(urlBuilder.getEmbraceUrlWithSuffix(it.path)) }
+    private val apiUrlBuilders = Endpoint.values().associateWith { urlBuilder.getEmbraceUrlWithSuffix(it.path) }
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
     init {
@@ -117,11 +117,11 @@ internal class EmbraceApiService(
      * @return a future containing the response body from the server
      */
     override fun sendLogs(eventMessage: EventMessage) {
-        apiUrls[Endpoint.LOGGING]?.let { url ->
+        apiUrlBuilders[Endpoint.LOGGING]?.let { url ->
             val event = eventMessage.event
             val abbreviation = event.type.abbreviation
             val logIdentifier = abbreviation + ":" + event.messageId
-            val request: ApiRequest = buildRequest(url).copy(logId = logIdentifier)
+            val request: ApiRequest = buildRequest(EmbraceUrl.create(url)).copy(logId = logIdentifier)
             postEvent(eventMessage, request)
         }
     }
@@ -133,11 +133,13 @@ internal class EmbraceApiService(
      * @return a future containing the response body from the server
      */
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        apiUrls[Endpoint.BLOBS]?.let { url ->
-            val request: ApiRequest = buildRequest(url).copy(
+        apiUrlBuilders[Endpoint.BLOBS]?.let { url ->
+            val embraceUrl = EmbraceUrl.create(url)
+            // TODO: remove seemingly unnecessary parameters once this is better tested
+            val request: ApiRequest = buildRequest(embraceUrl).copy(
                 deviceId = lazyDeviceId.value,
                 appId = appId,
-                url = url,
+                url = embraceUrl,
                 httpMethod = HttpMethod.POST,
                 contentEncoding = "gzip"
             )
@@ -152,10 +154,10 @@ internal class EmbraceApiService(
      * @param networkEvent the event containing the network call information
      */
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        apiUrls[Endpoint.NETWORK]?.let { url ->
+        apiUrlBuilders[Endpoint.NETWORK]?.let { url ->
             val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
             val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
-            val request: ApiRequest = buildRequest(url).copy(logId = networkIdentifier)
+            val request: ApiRequest = buildRequest(EmbraceUrl.create(url)).copy(logId = networkIdentifier)
             postNetworkEvent(networkEvent, request)
         }
     }
@@ -201,11 +203,13 @@ internal class EmbraceApiService(
     }
 
     override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>? {
-        apiUrls[Endpoint.SESSIONS]?.let { url ->
-            val request: ApiRequest = buildRequest(url).copy(
+        apiUrlBuilders[Endpoint.SESSIONS]?.let { url ->
+            val embraceUrl = EmbraceUrl.create(url)
+            // TODO: remove seemingly unnecessary parameters once this is better tested
+            val request: ApiRequest = buildRequest(embraceUrl).copy(
                 deviceId = lazyDeviceId.value,
                 appId = appId,
-                url = url,
+                url = embraceUrl,
                 httpMethod = HttpMethod.POST,
                 contentEncoding = "gzip"
             )
@@ -216,7 +220,7 @@ internal class EmbraceApiService(
     }
 
     private fun createRequest(eventMessage: EventMessage): ApiRequest? {
-        apiUrls[Endpoint.EVENTS]?.let { url ->
+        apiUrlBuilders[Endpoint.EVENTS]?.let { url ->
             val event = eventMessage.event
             val abbreviation = event.type.abbreviation
             val eventIdentifier: String = if (event.type == EmbraceEvent.Type.CRASH) {
@@ -224,7 +228,7 @@ internal class EmbraceApiService(
             } else {
                 abbreviation + ":" + event.eventId
             }
-            return buildRequest(url).copy(eventId = eventIdentifier)
+            return buildRequest(EmbraceUrl.create(url)).copy(eventId = eventIdentifier)
         }
 
         return null
@@ -301,7 +305,6 @@ internal class EmbraceApiService(
     }
 
     private fun buildRequest(url: EmbraceUrl): ApiRequest {
-        logger.logDeveloper(TAG, "eventBuilder")
         return ApiRequest(
             url = url,
             httpMethod = HttpMethod.POST,

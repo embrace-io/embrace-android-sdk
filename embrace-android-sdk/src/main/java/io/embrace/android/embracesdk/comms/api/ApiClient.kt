@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.comms.api
 
+/**
+ * A simple interface to make internal HTTP requests to the Embrace API
+ */
 internal interface ApiClient {
     /**
      * Executes [ApiRequest] as a GET, returning the response as a [ApiResponse]

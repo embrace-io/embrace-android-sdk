@@ -4,6 +4,7 @@ import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -48,7 +49,7 @@ internal class EmbraceDeliveryCacheManager(
         private const val TAG = "DeliveryCacheManager"
     }
 
-    private val sessionMessageSerializer by lazy {
+    private val sessionMessageSerializer by threadLocal {
         SessionMessageSerializer(serializer)
     }
 

@@ -31,7 +31,8 @@ internal class ApiClientImpl(
             connection = request.toConnection()
             setTimeouts(connection)
             connection.connect()
-            executeHttpRequest(connection)
+            val response = executeHttpRequest(connection)
+            response
         } catch (ex: Throwable) {
             ApiResponse.Error(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {

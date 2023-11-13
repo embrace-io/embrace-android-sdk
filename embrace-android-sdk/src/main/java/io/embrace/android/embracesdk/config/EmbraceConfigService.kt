@@ -196,7 +196,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     fun loadConfigFromCache() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to load config from cache")
         val cachedConfig = apiService.getCachedConfig()
-        val obj = cachedConfig.config
+        val obj = cachedConfig.remoteConfig
 
         if (obj != null) {
             val oldConfig = configProp

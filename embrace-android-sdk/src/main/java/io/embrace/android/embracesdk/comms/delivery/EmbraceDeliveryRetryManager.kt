@@ -20,7 +20,7 @@ internal class EmbraceDeliveryRetryManager(
     private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
     private var lastRetryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private lateinit var postExecutor: (request: ApiRequest, payload: ByteArray) -> Unit
+    private lateinit var retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
 
     init {
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
@@ -32,10 +32,10 @@ internal class EmbraceDeliveryRetryManager(
     }
 
     /**
-     * Sets the executor that will be used to retry failed API calls.
+     * Sets the method to execute to retry requests
      */
-    override fun setPostExecutor(postExecutor: (request: ApiRequest, payload: ByteArray) -> Unit) {
-        this.postExecutor = postExecutor
+    override fun setRetryMethod(retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit) {
+        this.retryMethod = retryMethod
     }
 
     /**
@@ -175,7 +175,7 @@ internal class EmbraceDeliveryRetryManager(
         if (payload != null) {
             try {
                 logger.logDeveloper(TAG, "Retrying failed API call")
-                postExecutor(call.apiRequest, payload)
+                retryMethod(call.apiRequest, payload)
                 cacheManager.deletePayload(call.cachedPayload)
             } catch (ex: Exception) {
                 logger.logDeveloper(

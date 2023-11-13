@@ -31,7 +31,7 @@ internal class EmbraceDeliveryRetryManagerTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var failedApiCalls: DeliveryFailedApiCalls
         private lateinit var deliveryRetryManager: EmbraceDeliveryRetryManager
-        private lateinit var mockPostExecutor: (request: ApiRequest, payload: ByteArray) -> Unit
+        private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
 
         @BeforeClass
         @JvmStatic
@@ -54,7 +54,7 @@ internal class EmbraceDeliveryRetryManagerTest {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
         failedApiCalls = DeliveryFailedApiCalls()
-        mockPostExecutor = mockk(relaxUnitFun = true)
+        mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
         every { mockCacheManager.loadPayload("cached_payload_1") } returns "{payload 1}".toByteArray()
@@ -105,7 +105,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     @Test
     fun `retryTask will be scheduled again if retry fails`() {
         connectedNetworkStatuses.forEach { status ->
-            every { mockPostExecutor(any(), any()) } throws Exception()
+            every { mockRetryMethod(any(), any()) } throws Exception()
             initDeliveryRetryManager(status = status, runRetryJobAfterScheduling = true)
             retryTaskActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
@@ -133,7 +133,7 @@ internal class EmbraceDeliveryRetryManagerTest {
             blockingScheduledExecutorService.runCurrentlyBlocked()
 
             // Let the next retry succeed
-            every { mockPostExecutor(any(), any()) } returns Unit
+            every { mockRetryMethod(any(), any()) } returns Unit
 
             // Second failure will result in another retry in double the last time, 240 seconds
             // Go most of the way to check it didn't run, then go all the way to check that it did.
@@ -237,7 +237,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     @Test
     fun `queue size should be bounded`() {
         initDeliveryRetryManager(status = NetworkStatus.WIFI, loadFailedRequest = false)
-        every { mockPostExecutor(any(), any()) } throws Exception()
+        every { mockRetryMethod(any(), any()) } throws Exception()
 
         assertEquals(0, deliveryRetryManager.pendingRetriesCount())
 
@@ -250,7 +250,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     }
 
     private fun clearApiPipeline() {
-        clearMocks(mockPostExecutor, answers = false)
+        clearMocks(mockRetryMethod, answers = false)
         failedApiCalls.clear()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
@@ -269,7 +269,7 @@ internal class EmbraceDeliveryRetryManagerTest {
             cacheManager = mockCacheManager
         )
 
-        deliveryRetryManager.setPostExecutor(mockPostExecutor)
+        deliveryRetryManager.setRetryMethod(mockRetryMethod)
 
         failedApiCalls.clear()
 
@@ -293,10 +293,10 @@ internal class EmbraceDeliveryRetryManagerTest {
     }
 
     private fun checkRequestSendAttempt(count: Int = 1) {
-        verify(exactly = count) { mockPostExecutor(any(), "{payload 1}".toByteArray()) }
+        verify(exactly = count) { mockRetryMethod(any(), "{payload 1}".toByteArray()) }
     }
 
     private fun checkNoApiRequestSent() {
-        verify(exactly = 0) { mockPostExecutor(any(), any()) }
+        verify(exactly = 0) { mockRetryMethod(any(), any()) }
     }
 }

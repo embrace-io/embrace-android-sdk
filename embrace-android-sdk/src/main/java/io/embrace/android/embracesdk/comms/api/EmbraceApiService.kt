@@ -42,7 +42,7 @@ internal class EmbraceApiService(
     init {
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
-        deliveryRetryManager.setPostExecutor(this::executePost)
+        deliveryRetryManager.setRetryMethod(this::executePost)
     }
 
     /**
@@ -57,12 +57,32 @@ internal class EmbraceApiService(
     override fun getConfig(): RemoteConfig? {
         var request = prepareConfigRequest(configUrl)
         val cachedResponse = cachedConfigProvider(configUrl, request)
-
         if (cachedResponse.isValid()) { // only bother if we have a useful response.
             request = request.copy(eTag = cachedResponse.eTag)
         }
         val response = apiClient.executeGet(request)
-        return handleRemoteConfigResponse(response, cachedResponse.config)
+        return when (response.statusCode) {
+            HttpURLConnection.HTTP_OK -> {
+                logger.logInfo("Fetched new config successfully.")
+                val jsonReader = JsonReader(StringReader(response.body))
+                serializer.loadObject(jsonReader, RemoteConfig::class.java)
+            }
+
+            HttpURLConnection.HTTP_NOT_MODIFIED -> {
+                logger.logInfo("Confirmed config has not been modified.")
+                cachedResponse.remoteConfig
+            }
+
+            ApiClient.NO_HTTP_RESPONSE -> {
+                logger.logInfo("Failed to fetch config (no response).")
+                null
+            }
+
+            else -> {
+                logger.logWarning("Unexpected status code when fetching config: ${response.statusCode}")
+                null
+            }
+        }
     }
 
     override fun getCachedConfig(): CachedConfig {
@@ -77,34 +97,6 @@ internal class EmbraceApiService(
         url = EmbraceUrl.create(url),
         httpMethod = HttpMethod.GET,
     )
-
-    private fun handleRemoteConfigResponse(
-        response: ApiResponse<String>,
-        cachedConfig: RemoteConfig?
-    ): RemoteConfig? {
-        return when (response.statusCode) {
-            HttpURLConnection.HTTP_OK -> {
-                logger.logInfo("Fetched new config successfully.")
-                val jsonReader = JsonReader(StringReader(response.body))
-                serializer.loadObject(jsonReader, RemoteConfig::class.java)
-            }
-
-            HttpURLConnection.HTTP_NOT_MODIFIED -> {
-                logger.logInfo("Confirmed config has not been modified.")
-                cachedConfig
-            }
-
-            ApiClient.NO_HTTP_RESPONSE -> {
-                logger.logInfo("Failed to fetch config (no response).")
-                null
-            }
-
-            else -> {
-                logger.logWarning("Unexpected status code when fetching config: ${response.statusCode}")
-                null
-            }
-        }
-    }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         lastNetworkStatus = status

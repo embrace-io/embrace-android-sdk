@@ -60,27 +60,32 @@ internal class EmbraceApiService(
         if (cachedResponse.isValid()) { // only bother if we have a useful response.
             request = request.copy(eTag = cachedResponse.eTag)
         }
-        val response = apiClient.executeGet(request)
-        return when (response.statusCode) {
-            HttpURLConnection.HTTP_OK -> {
+        return when (val response = apiClient.executeGet(request)) {
+            is ApiResponse.Success<String> -> {
                 logger.logInfo("Fetched new config successfully.")
                 val jsonReader = JsonReader(StringReader(response.body))
                 serializer.loadObject(jsonReader, RemoteConfig::class.java)
             }
+            is ApiResponse.Failure -> {
+                when (response.code) {
+                    HttpURLConnection.HTTP_NOT_MODIFIED -> {
+                        logger.logInfo("Confirmed config has not been modified.")
+                        cachedResponse.remoteConfig
+                    }
 
-            HttpURLConnection.HTTP_NOT_MODIFIED -> {
-                logger.logInfo("Confirmed config has not been modified.")
-                cachedResponse.remoteConfig
+                    ApiClient.NO_HTTP_RESPONSE -> {
+                        logger.logInfo("Failed to fetch config (no response).")
+                        null
+                    }
+                    else -> {
+                        logger.logWarning("Unexpected status code when fetching config: ${response.code}")
+                        null
+                    }
+                }
             }
-
-            ApiClient.NO_HTTP_RESPONSE -> {
-                logger.logInfo("Failed to fetch config (no response).")
-                null
-            }
-
-            else -> {
-                logger.logWarning("Unexpected status code when fetching config: ${response.statusCode}")
-                null
+            is ApiResponse.Error -> {
+                logger.logWarning("Failed to fetch config.", response.exception)
+                throw response.exception
             }
         }
     }
@@ -322,8 +327,23 @@ internal class EmbraceApiService(
         return "$abbreviation:$stories"
     }
 
+    @Throws(IllegalStateException::class)
     private fun executePost(request: ApiRequest, payload: ByteArray) {
-        apiClient.executePost(request, payload)
+        when (val response = apiClient.executePost(request, payload)) {
+            is ApiResponse.Success -> {
+                logger.logInfo("Post successful")
+            }
+            is ApiResponse.Failure -> {
+                // Temporarily, we just throw an exception. In the future, we will handle this.
+                logger.logWarning("Post failed with code: ${response.code}")
+                throw IllegalStateException("Failed to retrieve from Embrace server.")
+            }
+            is ApiResponse.Error -> {
+                // Temporarily, we just throw an exception. In the future, we will handle this.
+                logger.logError("Post failed with exception: ${response.exception.message}")
+                throw IllegalStateException("Failed to retrieve from Embrace server.")
+            }
+        }
     }
 
     companion object {

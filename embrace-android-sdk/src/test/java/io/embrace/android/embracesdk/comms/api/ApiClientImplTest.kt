@@ -12,12 +12,14 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import kotlin.IllegalStateException
 
 /**
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
@@ -42,65 +44,81 @@ internal class ApiClientImplTest {
         server.shutdown()
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testUnreachableHost() {
         // attempt some unreachable port
         val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
-        apiClient.executePost(request, "Hello world".toByteArray())
+        val response = apiClient.executePost(request, "Hello world".toByteArray())
+        check(response is ApiResponse.Error)
+        assertTrue(response.exception is IllegalStateException)
     }
 
     @Test
     fun testGet200Response() {
         server.enqueue(response200)
-        val result = runGetRequest()
+        val response = runGetRequest()
 
         assertGetRequest(server.takeRequest())
-        assertEquals(DEFAULT_RESPONSE_BODY, result.body)
+        check(response is ApiResponse.Success)
+        assertEquals(DEFAULT_RESPONSE_BODY, response.body)
     }
 
     @Test
     fun testPost200ResponseCompressed() {
         server.enqueue(response200)
-        val result = runPostRequest()
-        assertEquals(DEFAULT_RESPONSE_BODY, result.body)
+        val response = runPostRequest()
+        check(response is ApiResponse.Success<String>)
+        assertEquals(DEFAULT_RESPONSE_BODY, response.body)
 
         val delivered = server.takeRequest()
         assertPostRequest(delivered)
         assertEquals(DEFAULT_REQUEST_BODY, delivered.readCompressedRequestBody())
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testGet400Response() {
         server.enqueue(response400)
-        runGetRequest()
+        val response = runGetRequest()
+        check(response is ApiResponse.Failure)
+        assertEquals(response.code, 400)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testPost400Response() {
         server.enqueue(response400)
-        runPostRequest()
+        val response = runPostRequest()
+        check(response is ApiResponse.Failure)
+        assertEquals(response.code, 400)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testGet500Response() {
         server.enqueue(response500)
-        runGetRequest()
+        val response = runGetRequest()
+        check(response is ApiResponse.Failure)
+        assertEquals(response.code, 500)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testPost500Response() {
         server.enqueue(response500)
-        runPostRequest()
+        val response = runPostRequest()
+        check(response is ApiResponse.Failure)
+        assertEquals(response.code, 500)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testGetConnectionThrows() {
-        apiClient.executeGet(createThrowingRequest())
+        val response = apiClient.executeGet(createThrowingRequest())
+        check(response is ApiResponse.Error)
+        assertTrue(response.exception is java.lang.IllegalStateException)
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testPostConnectionThrows() {
-        apiClient.executePost(createThrowingRequest(), DEFAULT_REQUEST_BODY.toByteArray())
+        val response = apiClient.executePost(createThrowingRequest(), DEFAULT_REQUEST_BODY.toByteArray())
+        check(response is ApiResponse.Error)
+        assertTrue(response.exception is java.lang.IllegalStateException)
     }
 
     /**
@@ -114,6 +132,7 @@ internal class ApiClientImplTest {
         val payload = createLargeSessionPayload()
         val result = runPostRequest(payload = payload.toByteArray())
 
+        check(result is ApiResponse.Success)
         // assert on result parsed by ApiClient
         assertEquals(DEFAULT_RESPONSE_BODY, result.body)
 
@@ -126,7 +145,7 @@ internal class ApiClientImplTest {
     /**
      * Simulates an I/O exception midway through a request.
      */
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun testIoExceptionMidRequest() {
         server.enqueue(MockResponse().throttleBody(1, 1000, TimeUnit.MILLISECONDS))
 
@@ -136,7 +155,9 @@ internal class ApiClientImplTest {
         }, 25, TimeUnit.MILLISECONDS)
 
         // fire off the api request
-        runPostRequest()
+        val response = runPostRequest()
+        check(response is ApiResponse.Failure)
+        assertEquals(-1, response.code)
     }
 
     @Test

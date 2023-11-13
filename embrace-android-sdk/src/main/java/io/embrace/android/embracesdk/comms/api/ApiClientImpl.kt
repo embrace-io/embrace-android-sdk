@@ -27,13 +27,13 @@ internal class ApiClientImpl(
     override fun executeGet(request: ApiRequest): ApiResponse<String> {
         var connection: EmbraceConnection? = null
 
-        try {
+        return try {
             connection = request.toConnection()
             setTimeouts(connection)
             connection.connect()
-            return executeHttpRequest(connection)
+            executeHttpRequest(connection)
         } catch (ex: Throwable) {
-            throw IllegalStateException(ex.localizedMessage ?: "", ex)
+            ApiResponse.Error(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -60,13 +60,10 @@ internal class ApiClientImpl(
                 connection.outputStream?.write(payload)
                 connection.connect()
             }
-
             val response = executeHttpRequest(connection)
-            // pre-existing behavior. handle this better in future.
-            check(response.statusCode == HttpURLConnection.HTTP_OK) { "Failed to retrieve from Embrace server." }
             response
         } catch (ex: Throwable) {
-            throw IllegalStateException(ex.localizedMessage ?: "", ex)
+            ApiResponse.Error(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -84,16 +81,21 @@ internal class ApiClientImpl(
      * server as a string.
      */
     private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse<String> {
-        try {
+        return try {
             val responseCode = readHttpResponseCode(connection)
-            val headers = readHttpResponseHeaders(connection)
-            return ApiResponse(
-                responseCode,
-                headers,
-                readResponseBodyAsString(connection.inputStream)
-            )
+
+            val responseHeaders = readHttpResponseHeaders(connection)
+            return if (responseCode == HttpURLConnection.HTTP_OK) {
+                val responseBody = readResponseBodyAsString(connection.inputStream)
+                ApiResponse.Success(responseBody, responseHeaders)
+            } else {
+                val errorMessage = connection.errorStream?.let {
+                    readResponseBodyAsString(it)
+                }
+                ApiResponse.Failure(errorMessage, responseCode, responseHeaders)
+            }
         } catch (exc: Throwable) {
-            throw IllegalStateException("Error occurred during HTTP request execution", exc)
+            ApiResponse.Error(IllegalStateException("Error occurred during HTTP request execution", exc))
         }
     }
 

@@ -36,6 +36,10 @@ internal class EmbraceDeliveryService(
         cacheManager.saveSession(sessionMessage)
     }
 
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+        cacheManager.saveSessionOnCrash(sessionMessage)
+    }
+
     /**
      * Caches and sends over the network a session message
      *

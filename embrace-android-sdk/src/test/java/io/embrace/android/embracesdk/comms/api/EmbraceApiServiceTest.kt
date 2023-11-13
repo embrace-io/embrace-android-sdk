@@ -1,78 +1,76 @@
 package io.embrace.android.embracesdk.comms.api
 
+import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
+import io.embrace.android.embracesdk.fakes.FakeDeliveryRetryManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.BlobMessage
+import io.embrace.android.embracesdk.payload.Event
+import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
+import java.net.SocketException
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
-
-    companion object {
-        private const val appId = "A1B2C"
-        private const val fakeDeviceId = "ajflkadsflkadslkfjds"
-        private const val fakeAppVersionName = "6.1.0"
-        private lateinit var apiUrlBuilder: ApiUrlBuilder
-        private lateinit var fakeApiClient: FakeApiClient
-        private lateinit var fakeCacheManager: DeliveryCacheManager
-        private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
-        private lateinit var testScheduledExecutor: ScheduledExecutorService
-        private lateinit var networkConnectivityService: FakeNetworkConnectivityService
-        private lateinit var cachedConfig: CachedConfig
-        private lateinit var apiService: EmbraceApiService
-
-        @BeforeClass
-        @JvmStatic
-        fun setupBeforeAll() {
-            apiUrlBuilder = EmbraceApiUrlBuilder(
-                coreBaseUrl = "https://a-$appId.data.emb-api.com",
-                configBaseUrl = "https://a-$appId.config.emb-api.com",
-                appId = appId,
-                lazyDeviceId = lazy { fakeDeviceId },
-                lazyAppVersionName = lazy { fakeAppVersionName }
-            )
-            networkConnectivityService = FakeNetworkConnectivityService()
-            blockingScheduledExecutorService = BlockingScheduledExecutorService()
-            testScheduledExecutor = blockingScheduledExecutorService
-        }
-    }
+    private lateinit var apiUrlBuilder: ApiUrlBuilder
+    private lateinit var fakeApiClient: FakeApiClient
+    private lateinit var fakeCacheManager: DeliveryCacheManager
+    private lateinit var testScheduledExecutor: ScheduledExecutorService
+    private lateinit var networkConnectivityService: FakeNetworkConnectivityService
+    private lateinit var cachedConfig: CachedConfig
+    private lateinit var apiService: EmbraceApiService
+    private lateinit var fakeDeliveryRetryManager: FakeDeliveryRetryManager
 
     @Before
     fun setUp() {
+        apiUrlBuilder = EmbraceApiUrlBuilder(
+            coreBaseUrl = "https://a-$fakeAppId.data.emb-api.com",
+            configBaseUrl = "https://a-$fakeAppId.config.emb-api.com",
+            appId = fakeAppId,
+            lazyDeviceId = lazy { fakeDeviceId },
+            lazyAppVersionName = lazy { fakeAppVersionName }
+        )
         fakeApiClient = FakeApiClient()
         cachedConfig = CachedConfig(
-            config = null,
-            eTag = null
+            remoteConfig = RemoteConfig()
         )
+        networkConnectivityService = FakeNetworkConnectivityService()
+        testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
+        fakeDeliveryRetryManager = FakeDeliveryRetryManager()
+        initApiService()
     }
 
     @Test
     fun `test getConfig returns correct values in Response`() {
-        val json = ResourceReader.readResourceAsText("remote_config_response.json")
         fakeApiClient.queueResponse(
             ApiResponse(
                 statusCode = 200,
-                body = json,
-                headers = emptyMap()
+                headers = emptyMap(),
+                body = defaultConfigResponseBody
             )
         )
-        initApiService(
-            status = NetworkStatus.NOT_REACHABLE
-        )
+
         val remoteConfig = apiService.getConfig()
 
         // verify a few fields were serialized correctly.
@@ -82,13 +80,48 @@ internal class EmbraceApiServiceTest {
         assertEquals(100, remoteConfig.threshold)
     }
 
-    @Test(expected = IllegalStateException::class)
-    fun `test getConfig rethrows an exception thrown by apiClient`() {
-        initApiService(
-            status = NetworkStatus.NOT_REACHABLE
-        )
-        // exception will be thrown and caught by this test's annotation
+    @Test(expected = SocketException::class)
+    fun `getConfig rethrows an exception thrown by apiClient`() {
+        val killerResponse: ApiResponse<String> = mockk(relaxed = true)
+        every { killerResponse.statusCode } answers { throw SocketException() }
+        fakeApiClient.queueResponse(killerResponse)
         apiService.getConfig()
+    }
+
+    @Test
+    fun `cached remote config returned when 304 received`() {
+        fakeApiClient.queueResponse(
+            ApiResponse(
+                statusCode = 304,
+                headers = emptyMap(),
+                body = null,
+            )
+        )
+        assertEquals(cachedConfig.remoteConfig, apiService.getConfig())
+    }
+
+    @Test
+    fun `getConfig did not complete returns a null config`() {
+        fakeApiClient.queueResponse(
+            ApiResponse(
+                statusCode = NO_HTTP_RESPONSE,
+                headers = emptyMap(),
+                body = null
+            )
+        )
+        assertNull(apiService.getConfig())
+    }
+
+    @Test
+    fun `getConfig results in unexpected response code returns a null config`() {
+        fakeApiClient.queueResponse(
+            ApiResponse(
+                statusCode = 400,
+                headers = emptyMap(),
+                body = null
+            )
+        )
+        assertNull(apiService.getConfig())
     }
 
     @Test
@@ -98,36 +131,171 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(
             ApiResponse(
                 statusCode = 304,
-                body = "",
-                headers = emptyMap()
+                headers = emptyMap(),
+                body = null
             )
         )
-        initApiService()
         val remoteConfig = apiService.getConfig()
         assertSame(cfg, remoteConfig)
     }
 
     @Test
-    fun `validate all API endpoint URLs`() {
-        EmbraceApiService.Companion.Endpoint.values().forEach {
-            assertEquals("https://a-$appId.data.emb-api.com/v1/log/${it.path}", apiUrlBuilder.getEmbraceUrlWithSuffix(it.path))
+    fun `getCacheConfig returns what the provider provides`() {
+        assertEquals(apiService.getCachedConfig(), cachedConfig)
+    }
+
+    @Test
+    fun `send log request is as expected`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        apiService.sendLogs(event)
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+        )
+    }
+
+    @Test
+    fun `send application exit info request is as expected`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val blob = BlobMessage()
+        apiService.sendAEIBlob(blob)
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/blobs",
+            expectedPayload = serializer.bytesFromPayload(blob, BlobMessage::class.java)
+        )
+    }
+
+    @Test
+    fun `send network request is as expected`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val networkEvent: NetworkEvent = mockk(relaxed = true)
+        every { networkEvent.eventId } answers { "network-event-id" }
+        apiService.sendNetworkCall(networkEvent)
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/network",
+            expectedLogId = "n:network-event-id",
+            expectedPayload = serializer.bytesFromPayload(networkEvent, NetworkEvent::class.java)
+        )
+    }
+
+    @Test
+    fun `send event request is as expected`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                type = EmbraceEvent.Type.END
+            )
+        )
+        apiService.sendEvent(event)
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
+            expectedEventId = "e:event-id",
+            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+        )
+    }
+
+    @Test
+    fun `send crash request is as expected`() {
+        val crash = EventMessage(
+            event = Event(
+                eventId = "crash-id",
+                activeEventIdsList = listOf("event-1", "event-2"),
+                type = EmbraceEvent.Type.CRASH
+            )
+        )
+        apiService.sendCrash(crash)
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
+            expectedEventId = "c:event-1,event-2",
+            expectedPayload = serializer.bytesFromPayload(crash, EventMessage::class.java)
+        )
+    }
+
+    @Test
+    fun `send session is as expected`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val payload = "{}".toByteArray(Charsets.UTF_8)
+        var finished = false
+        apiService.sendSession(payload) { finished = true }
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
+            expectedPayload = payload
+        )
+        assertTrue(finished)
+    }
+
+    private fun verifyOnlyRequest(
+        expectedUrl: String,
+        expectedMethod: HttpMethod = HttpMethod.POST,
+        expectedEventId: String? = null,
+        expectedLogId: String? = null,
+        expectedEtag: String? = null,
+        expectedPayload: ByteArray? = null
+    ) {
+        assertEquals(1, fakeApiClient.sentRequests.size)
+        with(fakeApiClient.sentRequests[0].first) {
+            assertEquals("application/json", contentType)
+            assertEquals("application/json", accept)
+            assertNull(acceptEncoding)
+            assertEquals("gzip", contentEncoding)
+            assertEquals(fakeAppId, appId)
+            assertEquals(fakeDeviceId, deviceId)
+            assertEquals(expectedEventId, eventId)
+            assertEquals(expectedLogId, logId)
+            assertEquals(expectedUrl, url.toString())
+            assertEquals(expectedMethod, httpMethod)
+            assertEquals(expectedEtag, eTag)
+        }
+
+        // TODO: verify exact payload, e.g. assertEquals(expectedPayload, fakeApiClient.sentRequests[0].second)
+        if (expectedPayload != null) {
+            assertNotNull(fakeApiClient.sentRequests[0].second)
         }
     }
 
-    private fun initApiService(status: NetworkStatus = NetworkStatus.NOT_REACHABLE) {
-        networkConnectivityService.networkStatus = status
+    @Test
+    fun `validate all API endpoint URLs`() {
+        EmbraceApiService.Companion.Endpoint.values().forEach {
+            assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}", apiUrlBuilder.getEmbraceUrlWithSuffix(it.path))
+        }
+    }
+
+    private fun initApiService() {
+        networkConnectivityService.networkStatus = NetworkStatus.WIFI
         apiService = EmbraceApiService(
             apiClient = fakeApiClient,
-            serializer = EmbraceSerializer(),
+            serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
-            logger = mockk(relaxed = true),
+            logger = InternalEmbraceLogger(),
             scheduledExecutorService = testScheduledExecutor,
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
-            appId = appId,
-            deliveryRetryManager = mockk(relaxed = true),
+            appId = fakeAppId,
+            deliveryRetryManager = fakeDeliveryRetryManager,
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )
+    }
+
+    companion object {
+        private const val fakeAppId = "A1B2C"
+        private const val fakeDeviceId = "ajflkadsflkadslkfjds"
+        private const val fakeAppVersionName = "6.1.0"
+        private val defaultConfigResponseBody = ResourceReader.readResourceAsText("remote_config_response.json")
+        private val successfulPostResponse = ApiResponse(
+            statusCode = 200,
+            headers = emptyMap(),
+            body = ""
+        )
+        private val serializer = EmbraceSerializer()
     }
 }

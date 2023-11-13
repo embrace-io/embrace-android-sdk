@@ -13,7 +13,7 @@ internal interface DeliveryRetryManager {
     fun scheduleForRetry(request: ApiRequest, payload: ByteArray)
 
     /**
-     * Sets the executor that will be used to retry failed API calls.
+     * Sets the method to run to retry an [ApiRequest]
      */
-    fun setPostExecutor(postExecutor: (request: ApiRequest, payload: ByteArray) -> Unit)
+    fun setRetryMethod(retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit)
 }

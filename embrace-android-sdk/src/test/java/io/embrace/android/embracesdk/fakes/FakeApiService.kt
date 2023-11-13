@@ -18,7 +18,7 @@ internal class FakeApiService : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun sendLogs(eventMessage: EventMessage) {
+    override fun sendLog(eventMessage: EventMessage) {
         TODO("Not yet implemented")
     }
 

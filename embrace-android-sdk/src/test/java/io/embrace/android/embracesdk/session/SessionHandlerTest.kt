@@ -211,7 +211,7 @@ internal class SessionHandlerTest {
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
         // verify automatic session stopper has been scheduled
         verify {
-            mockAutomaticSessionStopper.scheduleAtFixedRate(
+            mockAutomaticSessionStopper.scheduleWithFixedDelay(
                 mockAutomaticSessionStopperRunnable,
                 maxSessionSeconds.toLong(),
                 maxSessionSeconds.toLong(),
@@ -220,7 +220,7 @@ internal class SessionHandlerTest {
         }
         // verify periodic caching worker has been scheduled
         verify {
-            mockSessionPeriodicCacheExecutorService.scheduleAtFixedRate(
+            mockSessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
                 mockPeriodicCachingRunnable,
                 0,
                 SESSION_CACHING_INTERVAL.toLong(),

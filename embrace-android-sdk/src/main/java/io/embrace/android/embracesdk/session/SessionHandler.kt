@@ -544,7 +544,7 @@ internal class SessionHandler(
         }
 
         try {
-            this.automaticSessionStopper.scheduleAtFixedRate(
+            this.automaticSessionStopper.scheduleWithFixedDelay(
                 automaticSessionStopperCallback,
                 maxSessionSeconds.toLong(),
                 maxSessionSeconds.toLong(),
@@ -592,7 +592,7 @@ internal class SessionHandler(
      */
     private fun startPeriodicCaching(cacheCallback: Runnable) {
         try {
-            scheduledFuture = this.sessionPeriodicCacheExecutorService.scheduleAtFixedRate(
+            scheduledFuture = this.sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
                 cacheCallback,
                 0,
                 SESSION_CACHING_INTERVAL.toLong(),

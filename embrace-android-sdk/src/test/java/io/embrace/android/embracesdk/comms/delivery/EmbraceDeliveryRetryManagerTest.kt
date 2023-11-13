@@ -1,8 +1,13 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.payload.Event
+import io.embrace.android.embracesdk.payload.EventMessage
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -241,12 +246,53 @@ internal class EmbraceDeliveryRetryManagerTest {
 
         assertEquals(0, deliveryRetryManager.pendingRetriesCount())
 
-        val mockApiRequest = mockk<ApiRequest>()
+        val mockApiRequest = mockk<ApiRequest>(relaxed = true)
         repeat(201) {
             deliveryRetryManager.scheduleForRetry(mockApiRequest, "{ dummy_payload }".toByteArray())
             blockingScheduledExecutorService.runCurrentlyBlocked()
         }
         assertEquals(200, deliveryRetryManager.pendingRetriesCount())
+    }
+
+    @Test
+    fun `queue prioritises keeping sessions when saturated`() {
+        initDeliveryRetryManager(status = NetworkStatus.WIFI, loadFailedRequest = false)
+
+        // populate queue with logs up to max of 200 items
+        val mapper = ApiRequestMapper(
+            EmbraceApiUrlBuilder(
+                "https://data.emb-api.com",
+                "https://config.emb-api.com",
+                "appId",
+                lazy { "deviceId" },
+                lazy { "appVersionName" }
+            ),
+            lazy { "deviceId" }, "appId"
+        )
+        repeat(250) { k ->
+            val request = mapper.logRequest(
+                EventMessage(
+                    Event(
+                        type = EmbraceEvent.Type.INFO_LOG,
+                        eventId = "eventId",
+                        messageId = "message_id_$k"
+                    )
+                )
+            )
+            deliveryRetryManager.scheduleForRetry(request, ByteArray(0))
+        }
+
+        // verify logs were added to the queue, and that most recently added requests are dropped
+        assertEquals(200, failedApiCalls.size)
+        assertEquals("il:message_id_0", failedApiCalls.first().apiRequest.logId)
+        assertEquals("il:message_id_199", failedApiCalls.last().apiRequest.logId)
+
+        // now add some sessions for retry
+        deliveryRetryManager.scheduleForRetry(mapper.sessionRequest(), ByteArray(0))
+        assertEquals(201, failedApiCalls.size)
+        assertEquals("il:message_id_0", failedApiCalls.first().apiRequest.logId)
+        val request = failedApiCalls.last().apiRequest
+        assertTrue(request.url.toString().endsWith("/sessions"))
     }
 
     private fun clearApiPipeline() {

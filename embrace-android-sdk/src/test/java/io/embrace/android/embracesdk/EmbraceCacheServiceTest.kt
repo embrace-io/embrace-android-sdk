@@ -184,7 +184,7 @@ internal class EmbraceCacheServiceTest {
     fun `test DeliveryFailedApiCalls can be cached`() {
         val apiRequest = ApiRequest(
             httpMethod = HttpMethod.GET,
-            url = EmbraceUrl.getUrl("http://fake.url")
+            url = EmbraceUrl.create("http://fake.url")
         )
         val failedApiCalls = DeliveryFailedApiCalls()
         failedApiCalls.add(DeliveryFailedApiCall(apiRequest, "payload_id"))

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
+import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeApiUrlBuilder
 import io.embrace.android.embracesdk.fakes.FakeCacheService
@@ -32,7 +33,6 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 
@@ -43,9 +43,7 @@ internal class FakeEssentialServiceModule(
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),
     override val gatingService: GatingService = FakeGatingService(),
     override val orientationService: OrientationService = NoOpOrientationService(),
-    override val apiClient: ApiClient = ApiClient(
-        InternalEmbraceLogger()
-    ),
+    override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
     override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(),
     override val deviceArchitecture: DeviceArchitecture = FakeDeviceArchitecture(),

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -234,7 +235,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendEventAsync() {
         initializeDeliveryService()
-        val obj = EventMessage(Event())
+        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
         deliveryService.sendEventAsync(obj)
         verify(exactly = 1) { apiService.sendEvent(obj) }
     }
@@ -242,7 +243,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSaveCrash() {
         initializeDeliveryService()
-        val obj = EventMessage(Event())
+        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.CRASH))
         deliveryService.saveCrash(obj)
         verify(exactly = 1) { mockDeliveryCacheManager.saveCrash(obj) }
     }

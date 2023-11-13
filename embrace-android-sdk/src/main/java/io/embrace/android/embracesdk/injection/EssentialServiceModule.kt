@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
+import io.embrace.android.embracesdk.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
@@ -276,22 +277,22 @@ internal class EssentialServiceModuleImpl(
 
     override val apiService: ApiService by singleton {
         EmbraceApiService(
-            apiClient,
-            urlBuilder,
-            coreModule.jsonSerializer,
-            { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
-            coreModule.logger,
-            apiRetryExecutor,
-            networkConnectivityService,
-            deliveryCacheManager,
-            deliveryRetryManager,
-            lazyDeviceId,
-            appId
+            apiClient = apiClient,
+            serializer = coreModule.jsonSerializer,
+            cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
+            logger = coreModule.logger,
+            scheduledExecutorService = apiRetryExecutor,
+            cacheManager = deliveryCacheManager,
+            deliveryRetryManager = deliveryRetryManager,
+            lazyDeviceId = lazyDeviceId,
+            appId = appId,
+            urlBuilder = urlBuilder,
+            networkConnectivityService = networkConnectivityService
         )
     }
 
-    override val apiClient by singleton {
-        ApiClient(
+    override val apiClient: ApiClient by singleton {
+        ApiClientImpl(
             coreModule.logger
         )
     }

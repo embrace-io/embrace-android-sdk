@@ -67,7 +67,7 @@ internal class EmbraceDeliveryService(
                         apiService.sendSession(
                             session,
                             onFinish
-                        )[SEND_SESSION_TIMEOUT, TimeUnit.SECONDS]
+                        )?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
                         logger.logDeveloper(TAG, "Session message sent.")
                     } else {
                         // perform session request asynchronously

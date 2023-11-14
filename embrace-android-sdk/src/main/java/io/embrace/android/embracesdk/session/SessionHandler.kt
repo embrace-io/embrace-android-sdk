@@ -62,6 +62,8 @@ internal class SessionHandler(
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
 
+    private val sharedPrefLock = Any()
+
     @VisibleForTesting
     var scheduledFuture: ScheduledFuture<*>? = null
 
@@ -506,12 +508,15 @@ internal class SessionHandler(
     }
 
     /**
-     * @return session number incremented by 1
+     * Increments the session ordinal number and saves it to shared preferences. This is used
+     * in our telemetry to track session loss %.
      */
     private fun incrementAndGetSessionNumber(): Int {
-        val sessionNumber = preferencesService.sessionNumber + 1
-        preferencesService.sessionNumber = sessionNumber
-        return sessionNumber
+        synchronized(sharedPrefLock) {
+            val sessionNumber = preferencesService.sessionNumber + 1
+            preferencesService.sessionNumber = sessionNumber
+            return sessionNumber
+        }
     }
 
     /**

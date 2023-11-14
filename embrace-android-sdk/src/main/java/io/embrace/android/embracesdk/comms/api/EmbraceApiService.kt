@@ -214,6 +214,7 @@ internal class EmbraceApiService(
         }
     }
 
+    @Suppress("UseCheckOrError")
     private fun executePost(request: ApiRequest, payload: ByteArray) {
         when (val response = apiClient.executePost(request, payload)) {
             is ApiResponse.Success -> {

@@ -1,8 +1,6 @@
-package io.embrace.android.embracesdk.networking
+package io.embrace.android.embracesdk.comms.api
 
 import com.google.gson.GsonBuilder
-import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

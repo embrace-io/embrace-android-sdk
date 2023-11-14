@@ -22,6 +22,7 @@ internal class DeliveryModuleImpl(
         EmbraceDeliveryService(
             essentialServiceModule.deliveryCacheManager,
             essentialServiceModule.apiService,
+            essentialServiceModule.gatingService,
             cachedSessionsExecutorService,
             sendSessionsExecutorService,
             coreModule.logger

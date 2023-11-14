@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -43,7 +42,6 @@ internal class SessionHandler(
     private val userService: UserService,
     private val networkConnectivityService: NetworkConnectivityService,
     private val metadataService: MetadataService,
-    private val gatingService: GatingService,
     private val breadcrumbService: BreadcrumbService,
     private val activityService: ActivityService,
     private val ndkService: NdkService,
@@ -100,11 +98,7 @@ internal class SessionHandler(
 
         metadataService.setActiveSessionId(session.sessionId)
 
-        // sanitize start session message before send it to backend
-        val sanitizedSession = gatingService.gateSessionMessage(sessionMessage)
-        logger.logDebug("Start session successfully sanitized.")
-
-        deliveryService.sendSession(sanitizedSession, SessionMessageState.START)
+        deliveryService.sendSession(sessionMessage, SessionMessageState.START)
         logger.logDebug("Start session successfully sent.")
 
         handleAutomaticSessionStopper(automaticSessionCloserCallback)
@@ -412,16 +406,9 @@ internal class SessionHandler(
         metadataService.removeActiveSessionId(originSession.sessionId)
         logger.logDebug("Services collections successfully cleaned.")
 
-        // Sanitize session message
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(fullEndSessionMessage)
-        logger.logDeveloper(
-            "SessionHandler",
-            "Sanitized End session message=$sanitizedSessionMessage"
-        )
-
         sessionProperties.clearTemporary()
         logger.logDebug("Session properties successfully temporary cleared.")
-        deliveryService.sendSession(sanitizedSessionMessage, SessionMessageState.END)
+        deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
     }
 
     /**
@@ -463,14 +450,7 @@ internal class SessionHandler(
             completedSpans
         )
         logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-
-        // Sanitize session message
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(fullEndSessionMessage)
-        logger.logDeveloper(
-            "SessionHandler",
-            "Sanitized End session message=$sanitizedSessionMessage"
-        )
-        deliveryService.saveSessionOnCrash(sanitizedSessionMessage)
+        deliveryService.saveSessionOnCrash(fullEndSessionMessage)
     }
 
     /**

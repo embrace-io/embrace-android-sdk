@@ -155,7 +155,6 @@ internal class SessionHandlerTest {
             mockUserService,
             mockNetworkConnectivityService,
             metadataService,
-            gatingService,
             mockBreadcrumbService,
             activityService,
             mockNdkService,
@@ -205,8 +204,6 @@ internal class SessionHandlerTest {
         verify { mockNetworkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify active session is set
         assertEquals(sessionUuid, metadataService.activeSessionId)
-        // verify session is being sanitized
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
         // verify automatic session stopper has been scheduled
         verify {
             mockAutomaticSessionStopper.scheduleWithFixedDelay(
@@ -366,8 +363,6 @@ internal class SessionHandlerTest {
                 mockExceptionService
             )
         }
-        // verify we are sanitizing session message
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
         // verify current session is removed from cache
         verify { mockSessionProperties.clearTemporary() }
     }
@@ -497,7 +492,6 @@ internal class SessionHandlerTest {
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
         assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
 
         val session = checkNotNull(deliveryService.lastSavedSession).session
 

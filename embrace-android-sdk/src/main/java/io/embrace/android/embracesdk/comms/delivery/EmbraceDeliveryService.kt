@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
+import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
+    private val gatingService: GatingService,
     private val cachedSessionsExecutorService: ExecutorService,
     private val sendSessionsExecutorService: ExecutorService,
     private val logger: InternalEmbraceLogger
@@ -33,11 +35,13 @@ internal class EmbraceDeliveryService(
      * point.
      */
     override fun saveSession(sessionMessage: SessionMessage) {
-        cacheManager.saveSession(sessionMessage)
+        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
+        cacheManager.saveSession(sanitizedSessionMessage)
     }
 
     override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        cacheManager.saveSessionOnCrash(sessionMessage)
+        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
+        cacheManager.saveSessionOnCrash(sanitizedSessionMessage)
     }
 
     /**
@@ -50,40 +54,50 @@ internal class EmbraceDeliveryService(
         logger.logDeveloper(TAG, "Sending session message")
 
         sendSessionsExecutorService.submit {
-            logger.logDeveloper(TAG, "Sending session message - background job started")
-            val sessionBytes = cacheManager.saveSession(sessionMessage)
+            // sanitize start session message before send it to backend
+            val sanitizedSession = gatingService.gateSessionMessage(sessionMessage)
+            logger.logDebug("Session successfully sanitized.")
+            sendSessionImpl(sanitizedSession, state)
+        }
+    }
 
-            sessionBytes?.also { session ->
-                logger.logDeveloper(TAG, "Serialized session message ready to be sent")
+    private fun sendSessionImpl(
+        sessionMessage: SessionMessage,
+        state: SessionMessageState
+    ) {
+        logger.logDeveloper(TAG, "Sending session message - background job started")
+        val sessionBytes = cacheManager.saveSession(sessionMessage)
 
-                try {
-                    var onFinish: (() -> Unit)? = null
-                    if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
-                        onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
-                    }
+        sessionBytes?.also { session ->
+            logger.logDeveloper(TAG, "Serialized session message ready to be sent")
 
-                    if (state == SessionMessageState.END_WITH_CRASH) {
-                        // perform session request synchronously
-                        apiService.sendSession(
-                            session,
-                            onFinish
-                        )?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
-                        logger.logDeveloper(TAG, "Session message sent.")
-                    } else {
-                        // perform session request asynchronously
-                        apiService.sendSession(session, onFinish)
-                        logger.logDeveloper(TAG, "Session message queued to be sent.")
-                    }
-                    logger.logDeveloper(
-                        TAG,
-                        "Current session has been successfully removed from cache."
-                    )
-                } catch (ex: Exception) {
-                    logger.logInfo(
-                        "Failed to send session end message. Embrace will store the " +
-                            "session message and attempt to deliver it at a future date."
-                    )
+            try {
+                var onFinish: (() -> Unit)? = null
+                if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
+                    onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
                 }
+
+                if (state == SessionMessageState.END_WITH_CRASH) {
+                    // perform session request synchronously
+                    apiService.sendSession(
+                        session,
+                        onFinish
+                    )?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
+                    logger.logDeveloper(TAG, "Session message sent.")
+                } else {
+                    // perform session request asynchronously
+                    apiService.sendSession(session, onFinish)
+                    logger.logDeveloper(TAG, "Session message queued to be sent.")
+                }
+                logger.logDeveloper(
+                    TAG,
+                    "Current session has been successfully removed from cache."
+                )
+            } catch (ex: Exception) {
+                logger.logInfo(
+                    "Failed to send session end message. Embrace will store the " +
+                        "session message and attempt to deliver it at a future date."
+                )
             }
         }
     }

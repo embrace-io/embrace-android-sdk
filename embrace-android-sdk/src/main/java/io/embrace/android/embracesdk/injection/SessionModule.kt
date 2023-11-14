@@ -39,7 +39,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.userService,
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.metadataService,
-            essentialServiceModule.gatingService,
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.activityService,
             nativeModule.ndkService,

@@ -23,6 +23,8 @@ internal interface ApiClient {
 
         const val NO_HTTP_RESPONSE = -1
 
+        const val TOO_MANY_REQUESTS = 429
+
         const val defaultTimeoutMs = 60 * 1000
     }
 }

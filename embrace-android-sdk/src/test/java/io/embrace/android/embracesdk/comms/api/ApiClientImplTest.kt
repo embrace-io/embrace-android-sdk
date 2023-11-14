@@ -156,8 +156,8 @@ internal class ApiClientImplTest {
 
         // fire off the api request
         val response = runPostRequest()
-        check(response is ApiResponse.Failure)
-        assertEquals(-1, response.code)
+        check(response is ApiResponse.Incomplete)
+        assertTrue(response.exception is IllegalStateException)
     }
 
     @Test

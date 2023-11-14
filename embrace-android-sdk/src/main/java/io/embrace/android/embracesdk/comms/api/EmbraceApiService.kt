@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.io.StringReader
-import java.net.HttpURLConnection
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -53,6 +52,7 @@ internal class EmbraceApiService(
      * @return a future containing the configuration.
      */
     @Throws(IllegalStateException::class)
+    @Suppress("UseCheckOrError")
     override fun getConfig(): RemoteConfig? {
         var request = prepareConfigRequest(configUrl)
         val cachedResponse = cachedConfigProvider(configUrl, request)
@@ -66,26 +66,26 @@ internal class EmbraceApiService(
                 val jsonReader = JsonReader(StringReader(response.body))
                 serializer.loadObject(jsonReader, RemoteConfig::class.java)
             }
+            is ApiResponse.NotModified -> {
+                logger.logInfo("Confirmed config has not been modified.")
+                cachedResponse.remoteConfig
+            }
+            is ApiResponse.TooManyRequests -> {
+                // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
+                logger.logWarning("Too many requests. ")
+                throw IllegalStateException("Too many requests.")
+            }
             is ApiResponse.Failure -> {
-                when (response.code) {
-                    HttpURLConnection.HTTP_NOT_MODIFIED -> {
-                        logger.logInfo("Confirmed config has not been modified.")
-                        cachedResponse.remoteConfig
-                    }
-
-                    ApiClient.NO_HTTP_RESPONSE -> {
-                        logger.logInfo("Failed to fetch config (no response).")
-                        null
-                    }
-                    else -> {
-                        logger.logWarning("Unexpected status code when fetching config: ${response.code}")
-                        null
-                    }
-                }
+                logger.logInfo("Failed to fetch config (no response).")
+                null
             }
             is ApiResponse.Incomplete -> {
                 logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
+            }
+            ApiResponse.PayloadTooLarge -> {
+                // Not expected to receive a 413 response for a GET request.
+                null
             }
         }
     }
@@ -217,18 +217,27 @@ internal class EmbraceApiService(
     @Suppress("UseCheckOrError")
     private fun executePost(request: ApiRequest, payload: ByteArray) {
         when (val response = apiClient.executePost(request, payload)) {
-            is ApiResponse.Success -> {
-                logger.logInfo("Post successful")
+            is ApiResponse.Success -> {}
+            is ApiResponse.TooManyRequests -> {
+                // Temporarily, we just throw an exception. In the future,
+                // we will use the retryAfter to schedule a retry.
+                val retryAfter = response.retryAfter ?: 3
+                throw IllegalStateException("Too many requests. Will retry after $retryAfter seconds.")
+            }
+            is ApiResponse.PayloadTooLarge -> {
+                // We don't want to retry on PayloadTooLarge error, so we just log the error.
+                logger.logError("Payload too large. Dropping event.")
             }
             is ApiResponse.Failure -> {
-                // Temporarily, we just throw an exception. In the future, we will handle this.
-                logger.logWarning("Post failed with code: ${response.code}")
-                throw IllegalStateException("Failed to retrieve from Embrace server.")
+                // We don't want to retry on 4xx or 5xx errors, so we just log the error.
+                logger.logError("Failed to retrieve from Embrace server. Status code: ${response.code}")
             }
             is ApiResponse.Incomplete -> {
-                // Temporarily, we just throw an exception. In the future, we will handle this.
-                logger.logError("Post failed with exception: ${response.exception.message}")
+                // Retry on incomplete response.
                 throw IllegalStateException("Failed to retrieve from Embrace server.")
+            }
+            is ApiResponse.NotModified -> {
+                // Not expected to receive a 304 response for a POST request.
             }
         }
     }

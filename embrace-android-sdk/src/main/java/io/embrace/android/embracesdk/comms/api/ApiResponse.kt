@@ -5,14 +5,29 @@ package io.embrace.android.embracesdk.comms.api
  */
 internal sealed class ApiResponse {
     /**
-     * Represents a successful API call (status code 200-299)
+     * Represents an API call that returned a 200 OK status code.
      */
     data class Success(val body: String?, val headers: Map<String, String>?) : ApiResponse()
 
     /**
+     * Represents an API call that returned a 304 Not Modified status code.
+     */
+    object NotModified : ApiResponse()
+
+    /**
+     * Represents an API call that returned a 413 Payload Too Large status code.
+     */
+    object PayloadTooLarge : ApiResponse()
+
+    /**
+     * Represents an API call that returned a 429 Too Many Requests status code.
+     */
+    data class TooManyRequests(val retryAfter: Long?) : ApiResponse()
+
+    /**
      * Represents a failed API call. (status code 400-499 or 500-599)
      */
-    data class Failure(val errorMessage: String?, val code: Int, val headers: Map<String, String>?) : ApiResponse()
+    data class Failure(val code: Int, val headers: Map<String, String>?) : ApiResponse()
 
     /**
      * Represents an exception thrown while making the API call.

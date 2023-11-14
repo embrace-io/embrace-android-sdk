@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
+import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.net.HttpURLConnection
+import java.net.HttpURLConnection.HTTP_ENTITY_TOO_LARGE
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.net.HttpURLConnection.HTTP_OK
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -84,16 +87,29 @@ internal class ApiClientImpl(
     private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse {
         return try {
             val responseCode = readHttpResponseCode(connection)
-
             val responseHeaders = readHttpResponseHeaders(connection)
-            return if (responseCode == HttpURLConnection.HTTP_OK) {
-                val responseBody = readResponseBodyAsString(connection.inputStream)
-                ApiResponse.Success(responseBody, responseHeaders)
-            } else {
-                val errorMessage = connection.errorStream?.let {
-                    readResponseBodyAsString(it)
+
+            return when (responseCode) {
+                HTTP_OK -> {
+                    val responseBody = readResponseBodyAsString(connection.inputStream)
+                    ApiResponse.Success(responseBody, responseHeaders)
                 }
-                ApiResponse.Failure(errorMessage, responseCode, responseHeaders)
+                HTTP_NOT_MODIFIED -> {
+                    ApiResponse.NotModified
+                }
+                HTTP_ENTITY_TOO_LARGE -> {
+                    ApiResponse.PayloadTooLarge
+                }
+                TOO_MANY_REQUESTS -> {
+                    val retryAfter = responseHeaders["Retry-After"]?.toLongOrNull()
+                    ApiResponse.TooManyRequests(retryAfter)
+                }
+                NO_HTTP_RESPONSE -> {
+                    ApiResponse.Incomplete(IllegalStateException("Connection failed or unexpected response code"))
+                }
+                else -> {
+                    ApiResponse.Failure(responseCode, responseHeaders)
+                }
             }
         } catch (exc: Throwable) {
             ApiResponse.Incomplete(IllegalStateException("Error occurred during HTTP request execution", exc))

@@ -159,7 +159,7 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendLogs(eventMessage: EventMessage) {
-        apiService.sendLogs(eventMessage)
+        apiService.sendLog(eventMessage)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

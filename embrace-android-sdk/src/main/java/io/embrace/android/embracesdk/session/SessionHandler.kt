@@ -31,7 +31,6 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -60,8 +59,7 @@ internal class SessionHandler(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val clock: Clock,
     private val automaticSessionStopper: ScheduledExecutorService,
-    private val sessionPeriodicCacheExecutorService: ScheduledExecutorService,
-    private val sessionExecutorService: ExecutorService
+    private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
 
     @VisibleForTesting
@@ -131,27 +129,14 @@ internal class SessionHandler(
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         logger.logDebug("Will try to run end session full.")
-        if (configService.sessionBehavior.isAsyncEndEnabled()) {
-            sessionExecutorService.submit {
-                runEndSessionFull(
-                    endType,
-                    originSession,
-                    sessionProperties,
-                    sdkStartupDuration,
-                    endTime,
-                    completedSpans
-                )
-            }
-        } else {
-            runEndSessionFull(
-                endType,
-                originSession,
-                sessionProperties,
-                sdkStartupDuration,
-                endTime,
-                completedSpans
-            )
-        }
+        runEndSessionFull(
+            endType,
+            originSession,
+            sessionProperties,
+            sdkStartupDuration,
+            endTime,
+            completedSpans
+        )
     }
 
     /**
@@ -434,10 +419,9 @@ internal class SessionHandler(
             "Sanitized End session message=$sanitizedSessionMessage"
         )
 
-        deliveryService.sendSession(sanitizedSessionMessage, SessionMessageState.END)
-
         sessionProperties.clearTemporary()
         logger.logDebug("Session properties successfully temporary cleared.")
+        deliveryService.sendSession(sanitizedSessionMessage, SessionMessageState.END)
     }
 
     /**

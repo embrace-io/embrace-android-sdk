@@ -40,7 +40,6 @@ internal enum class ExecutorName(internal val threadName: String) {
     NATIVE_STARTUP("native-startup"),
     SESSION_CACHE_EXECUTOR("session-cache"),
     REMOTE_LOGGING("remote-logging"),
-    SESSION("session"),
     SESSION_CLOSER("session-closer"),
     SESSION_CACHING("session-caching"),
 }

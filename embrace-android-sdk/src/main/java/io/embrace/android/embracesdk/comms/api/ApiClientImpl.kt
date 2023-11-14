@@ -24,7 +24,7 @@ internal class ApiClientImpl(
     private val logger: InternalEmbraceLogger
 ) : ApiClient {
 
-    override fun executeGet(request: ApiRequest): ApiResponse<String> {
+    override fun executeGet(request: ApiRequest): ApiResponse {
         var connection: EmbraceConnection? = null
 
         return try {
@@ -42,13 +42,13 @@ internal class ApiClientImpl(
         }
     }
 
-    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse<String> =
+    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse =
         executeRawPost(request, gzip(payloadToCompress))
 
     /**
      * Posts a payload according to the ApiRequest parameter. The payload will not be gzip compressed.
      */
-    private fun executeRawPost(request: ApiRequest, payload: ByteArray?): ApiResponse<String> {
+    private fun executeRawPost(request: ApiRequest, payload: ByteArray?): ApiResponse {
         logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
         logger.logDeveloper("ApiClient", "Request details: $request")
 
@@ -81,7 +81,7 @@ internal class ApiClientImpl(
      * Executes a HTTP call using the specified connection, returning the response from the
      * server as a string.
      */
-    private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse<String> {
+    private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse {
         return try {
             val responseCode = readHttpResponseCode(connection)
 

@@ -7,13 +7,13 @@ internal interface ApiClient {
     /**
      * Executes [ApiRequest] as a GET, returning the response as a [ApiResponse]
      */
-    fun executeGet(request: ApiRequest): ApiResponse<String>
+    fun executeGet(request: ApiRequest): ApiResponse
 
     /**
      * Executes [ApiRequest] as a POST with the given body defined by [payloadToCompress], returning the response as a [ApiResponse].
      * The body will be gzip compressed.
      */
-    fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse<String>
+    fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse
 
     companion object {
         /**

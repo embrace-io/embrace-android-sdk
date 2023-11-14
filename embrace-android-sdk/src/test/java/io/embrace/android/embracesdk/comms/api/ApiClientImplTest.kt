@@ -67,7 +67,7 @@ internal class ApiClientImplTest {
     fun testPost200ResponseCompressed() {
         server.enqueue(response200)
         val response = runPostRequest()
-        check(response is ApiResponse.Success<String>)
+        check(response is ApiResponse.Success)
         assertEquals(DEFAULT_RESPONSE_BODY, response.body)
 
         val delivered = server.takeRequest()
@@ -199,7 +199,7 @@ internal class ApiClientImplTest {
         )
     }
 
-    private fun runGetRequest(): ApiResponse<String> =
+    private fun runGetRequest(): ApiResponse =
         apiClient.executeGet(
             ApiRequest(
                 url = EmbraceUrl.create(baseUrl),
@@ -209,7 +209,7 @@ internal class ApiClientImplTest {
 
     private fun runPostRequest(
         payload: ByteArray = DEFAULT_REQUEST_BODY.toByteArray()
-    ): ApiResponse<String> =
+    ): ApiResponse =
         apiClient.executePost(
             ApiRequest(
                 url = EmbraceUrl.create(baseUrl),

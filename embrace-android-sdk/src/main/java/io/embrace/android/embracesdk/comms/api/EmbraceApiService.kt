@@ -61,7 +61,7 @@ internal class EmbraceApiService(
         }
 
         return when (val response = apiClient.executeGet(request)) {
-            is ApiResponse.Success<String> -> {
+            is ApiResponse.Success -> {
                 logger.logInfo("Fetched new config successfully.")
                 val jsonReader = JsonReader(StringReader(response.body))
                 serializer.loadObject(jsonReader, RemoteConfig::class.java)

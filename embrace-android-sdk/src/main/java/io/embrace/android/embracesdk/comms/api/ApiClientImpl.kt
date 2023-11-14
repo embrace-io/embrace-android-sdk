@@ -34,7 +34,7 @@ internal class ApiClientImpl(
             val response = executeHttpRequest(connection)
             response
         } catch (ex: Throwable) {
-            ApiResponse.Error(IllegalStateException(ex.localizedMessage ?: "", ex))
+            ApiResponse.Incomplete(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -64,7 +64,7 @@ internal class ApiClientImpl(
             val response = executeHttpRequest(connection)
             response
         } catch (ex: Throwable) {
-            ApiResponse.Error(IllegalStateException(ex.localizedMessage ?: "", ex))
+            ApiResponse.Incomplete(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -96,7 +96,7 @@ internal class ApiClientImpl(
                 ApiResponse.Failure(errorMessage, responseCode, responseHeaders)
             }
         } catch (exc: Throwable) {
-            ApiResponse.Error(IllegalStateException("Error occurred during HTTP request execution", exc))
+            ApiResponse.Incomplete(IllegalStateException("Error occurred during HTTP request execution", exc))
         }
     }
 

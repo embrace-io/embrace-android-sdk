@@ -17,5 +17,5 @@ internal sealed class ApiResponse<out T> {
     /**
      * Represents an exception thrown while making the API call.
      */
-    data class Error(val exception: Throwable) : ApiResponse<Nothing>()
+    data class Incomplete(val exception: Throwable) : ApiResponse<Nothing>()
 }

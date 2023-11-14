@@ -83,7 +83,7 @@ internal class EmbraceApiService(
                     }
                 }
             }
-            is ApiResponse.Error -> {
+            is ApiResponse.Incomplete -> {
                 logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
             }
@@ -224,7 +224,7 @@ internal class EmbraceApiService(
                 logger.logWarning("Post failed with code: ${response.code}")
                 throw IllegalStateException("Failed to retrieve from Embrace server.")
             }
-            is ApiResponse.Error -> {
+            is ApiResponse.Incomplete -> {
                 // Temporarily, we just throw an exception. In the future, we will handle this.
                 logger.logError("Post failed with exception: ${response.exception.message}")
                 throw IllegalStateException("Failed to retrieve from Embrace server.")

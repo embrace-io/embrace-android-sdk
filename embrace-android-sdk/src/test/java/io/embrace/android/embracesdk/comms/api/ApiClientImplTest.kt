@@ -49,7 +49,7 @@ internal class ApiClientImplTest {
         // attempt some unreachable port
         val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
         val response = apiClient.executePost(request, "Hello world".toByteArray())
-        check(response is ApiResponse.Error)
+        check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is IllegalStateException)
     }
 
@@ -110,14 +110,14 @@ internal class ApiClientImplTest {
     @Test
     fun testGetConnectionThrows() {
         val response = apiClient.executeGet(createThrowingRequest())
-        check(response is ApiResponse.Error)
+        check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is java.lang.IllegalStateException)
     }
 
     @Test
     fun testPostConnectionThrows() {
         val response = apiClient.executePost(createThrowingRequest(), DEFAULT_REQUEST_BODY.toByteArray())
-        check(response is ApiResponse.Error)
+        check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is java.lang.IllegalStateException)
     }
 

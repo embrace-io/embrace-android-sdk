@@ -20,9 +20,9 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -256,10 +256,9 @@ internal class EmbraceApiServiceTest {
             assertEquals(expectedEtag, eTag)
         }
 
-        // TODO: verify exact payload, e.g. assertEquals(expectedPayload, fakeApiClient.sentRequests[0].second)
-        if (expectedPayload != null) {
-            assertNotNull(fakeApiClient.sentRequests[0].second)
-        }
+        expectedPayload?.let {
+            assertArrayEquals(it, fakeApiClient.sentRequests[0].second)
+        } ?: assertNull(fakeApiClient.sentRequests[0].second)
     }
 
     @Test

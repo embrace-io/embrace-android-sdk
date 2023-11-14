@@ -153,7 +153,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        apiService.sendLogs(event)
+        apiService.sendLog(event)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",

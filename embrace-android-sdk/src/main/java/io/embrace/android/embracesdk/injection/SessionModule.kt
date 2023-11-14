@@ -55,8 +55,7 @@ internal class SessionModuleImpl(
             nativeModule.nativeThreadSamplerService,
             initModule.clock,
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CLOSER),
-            workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING),
-            workerThreadModule.backgroundExecutor(ExecutorName.SESSION)
+            workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING)
         )
     }
 

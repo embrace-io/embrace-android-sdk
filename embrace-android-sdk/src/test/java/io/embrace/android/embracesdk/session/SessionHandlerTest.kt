@@ -56,7 +56,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.Locale
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -172,8 +171,7 @@ internal class SessionHandlerTest {
             null,
             clock,
             automaticSessionStopper = mockAutomaticSessionStopper,
-            sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService,
-            Executors.newSingleThreadExecutor()
+            sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService
         )
     }
 

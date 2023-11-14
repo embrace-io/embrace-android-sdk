@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
@@ -16,7 +16,7 @@ internal class EmbracePreferencesService(
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: EmbraceSerializer
-) : PreferencesService, ActivityListener {
+) : PreferencesService, ActivityLifecycleListener {
 
     private val preferences: Future<SharedPreferences>
     private val registrationExecutorService: ExecutorService

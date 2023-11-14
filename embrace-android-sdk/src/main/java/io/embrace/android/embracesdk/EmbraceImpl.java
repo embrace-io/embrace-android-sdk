@@ -89,9 +89,10 @@ import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.ActivityService;
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker;
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.EmbraceActivityService;
 import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.EmbraceSessionService;
 import io.embrace.android.embracesdk.session.SessionService;
@@ -169,7 +170,10 @@ final class EmbraceImpl {
     private volatile MetadataService metadataService;
 
     @Nullable
-    private volatile ActivityService activityService;
+    private volatile ProcessStateService processStateService;
+
+    @Nullable
+    private volatile ActivityTracker activityTracker;
 
     @Nullable
     private volatile NetworkLoggingService networkLoggingService;
@@ -379,18 +383,21 @@ final class EmbraceImpl {
             () -> null,
             new DeviceArchitectureImpl());
 
-        final ActivityService nonNullActivityService = essentialServiceModule.getActivityService();
-        activityService = nonNullActivityService;
+        final ProcessStateService nonNullProcessStateService = essentialServiceModule.getProcessStateService();
+        processStateService = nonNullProcessStateService;
         final MetadataService nonNullMetadataService = essentialServiceModule.getMetadataService();
         metadataService = nonNullMetadataService;
         final ConfigService nonNullConfigService = essentialServiceModule.getConfigService();
         configService = nonNullConfigService;
 
         // example usage.
+        ActivityTracker nonNullLifecycleTracker = essentialServiceModule.getActivityLifecycleTracker();
+        this.activityTracker = nonNullLifecycleTracker;
         serviceRegistry.registerServices(
-            activityService,
+            processStateService,
             metadataService,
-            configService
+            configService,
+            nonNullLifecycleTracker
         );
 
         // only call after ConfigService has initialized.
@@ -652,14 +659,15 @@ final class EmbraceImpl {
         // no more services can be added to the registry. It sets listeners for any services that were
         // registered.
         serviceRegistry.closeRegistration();
-        serviceRegistry.registerActivityListeners(nonNullActivityService);
+        serviceRegistry.registerActivityListeners(nonNullProcessStateService);
         serviceRegistry.registerConfigListeners(nonNullConfigService);
         serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.getMemoryCleanerService());
+        serviceRegistry.registerActivityLifecycleListeners(nonNullLifecycleTracker);
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
-        if (!nonNullActivityService.isInBackground()) {
+        if (!nonNullProcessStateService.isInBackground()) {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             nonNullEventService.sendStartupMoment();
         }
@@ -1518,8 +1526,13 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    ActivityService getActivityService() {
-        return activityService;
+    ProcessStateService getActivityService() {
+        return processStateService;
+    }
+
+    @Nullable
+    ActivityTracker getActivityLifecycleTracker() {
+        return activityTracker;
     }
 
     @Nullable

@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import java.io.Closeable
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
@@ -45,7 +46,7 @@ internal class SessionHandler(
     private val metadataService: MetadataService,
     private val gatingService: GatingService,
     private val breadcrumbService: BreadcrumbService,
-    private val activityService: ActivityService,
+    private val activityLifecycleTracker: ActivityTracker,
     private val ndkService: NdkService,
     private val eventService: EventService,
     private val remoteLogger: EmbraceRemoteLogger,
@@ -553,7 +554,7 @@ internal class SessionHandler(
         if (screen != null) {
             breadcrumbService.replaceFirstSessionView(screen, startTime)
         } else {
-            val foregroundActivity = activityService.foregroundActivity
+            val foregroundActivity = activityLifecycleTracker.foregroundActivity
             if (foregroundActivity != null) {
                 breadcrumbService.forceLogView(
                     foregroundActivity.localClassName,

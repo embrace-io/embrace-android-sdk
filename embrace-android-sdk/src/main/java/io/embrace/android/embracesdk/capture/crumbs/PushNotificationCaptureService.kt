@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
 /**
  * In charge of handling all notifications related functionality.
@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.session.ActivityListener
 internal class PushNotificationCaptureService(
     private val breadCrumbService: BreadcrumbService,
     private val logger: InternalEmbraceLogger
-) : ActivityListener {
+) : ActivityLifecycleListener {
 
     @VisibleForTesting
     companion object Utils {

@@ -11,13 +11,13 @@ import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceEventService.Companion.STARTUP_EVENT_NAME
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
@@ -26,9 +26,9 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -64,7 +64,7 @@ internal class EmbraceEventServiceTest {
         private lateinit var preferenceService: PreferencesService
         private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
-        private lateinit var activityService: ActivityService
+        private lateinit var processStateService: ProcessStateService
         private lateinit var mockMemoryCleanerService: MemoryCleanerService
         private lateinit var logger: InternalEmbraceLogger
 
@@ -74,7 +74,7 @@ internal class EmbraceEventServiceTest {
             metadataService = FakeAndroidMetadataService()
             preferenceService = FakePreferenceService()
             performanceInfoService = FakePerformanceInfoService()
-            activityService = FakeActivityService()
+            processStateService = FakeProcessStateService()
             mockMemoryCleanerService = mockk(relaxUnitFun = true)
             logger = InternalEmbraceLogger()
             userService = EmbraceUserService(

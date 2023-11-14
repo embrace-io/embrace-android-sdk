@@ -31,7 +31,7 @@ internal class NativeModuleImpl(
         EmbraceNdkService(
             coreModule.context,
             essentialServiceModule.metadataService,
-            essentialServiceModule.activityService,
+            essentialServiceModule.processStateService,
             essentialServiceModule.configService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,

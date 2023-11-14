@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -70,7 +70,7 @@ internal class SessionHandlerTest {
         private val mockNetworkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
         private val mockBreadcrumbService: BreadcrumbService = mockk(relaxed = true)
-        private val activityService = FakeActivityService()
+        private val activityLifecycleTracker = FakeActivityTracker()
         private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
         private val mockEventService: EventService = mockk(relaxed = true)
         private val mockRemoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
@@ -157,7 +157,7 @@ internal class SessionHandlerTest {
             metadataService,
             gatingService,
             mockBreadcrumbService,
-            activityService,
+            activityLifecycleTracker,
             mockNdkService,
             mockEventService,
             mockRemoteLogger,
@@ -321,7 +321,7 @@ internal class SessionHandlerTest {
         every { mockBreadcrumbService.getLastViewBreadcrumbScreenName() } returns null
         val mockActivity: Activity = mockk()
         // let's return a foreground activity
-        activityService.foregroundActivity = mockActivity
+        activityLifecycleTracker.foregroundActivity = mockActivity
         val activityClassName = "activity-class-name"
         every { mockActivity.localClassName } returns activityClassName
         val sessionStartType = Session.SessionLifeEventType.STATE

@@ -1,13 +1,3 @@
-# WIP. This is still in progress.
-# The main idea is:
-# - run the emulator
-# - run the app with appropriate variants and pointing to correct version of sdk and swazzler. (check functional-tests workflow in sdk)
-# - run adb root
-# - run the test that generates the profile.
-# - get the file and filter the embrace entries.
-# - generate a new baseline-prof.txt file with that results. 
-# - make that file available to be downloaded as an artifact or create a new PR in the SDK repository. 
-
 name: Generate Baseline Profile
 
 on:
@@ -86,13 +76,13 @@ jobs:
       - name: Move & Rename Baseline Profiles
         # TODO add cd ./android-sdk-benchmark
         run:  |
-          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
+          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk3/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
       # Commits the generated Baseline Profile to your origin/remote
       - name: Commit Baseline Profiles
         run: |
           git config --global user.name 'Baseline Profiles - GitHub Actions'
           git config --global user.email 'github@actions'
-          git add .
+          git add embrace-android-sdk/src/main/baseline-prof.txt
           git commit -m "Generate baseline profiles"
           git push
 

@@ -73,7 +73,7 @@ internal class EmbraceApiService(
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
                 logger.logWarning("Too many requests. ")
-                throw IllegalStateException("Too many requests.")
+                null
             }
             is ApiResponse.Failure -> {
                 logger.logInfo("Failed to fetch config (no response).")

@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionMessageCollator
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -76,7 +76,7 @@ internal class SessionModuleImpl(
     }
 
     override val sessionPropertiesService: SessionPropertiesService by singleton {
-        SessionPropertiesServiceImpl(
+        EmbraceSessionPropertiesService(
             nativeModule.ndkService,
             sessionProperties
         )

@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionPropertiesServiceImplTest {
+internal class EmbraceSessionPropertiesServiceTest {
 
     private lateinit var service: SessionPropertiesService
     private lateinit var props: EmbraceSessionProperties
@@ -17,7 +17,7 @@ internal class SessionPropertiesServiceImplTest {
     fun setUp() {
         props = EmbraceSessionProperties(FakePreferenceService(), FakeConfigService())
         ndkService = FakeNdkService()
-        service = SessionPropertiesServiceImpl(ndkService, props)
+        service = EmbraceSessionPropertiesService(ndkService, props)
     }
 
     @Test

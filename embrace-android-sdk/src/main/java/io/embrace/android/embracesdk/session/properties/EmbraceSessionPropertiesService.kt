@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 
-internal class SessionPropertiesServiceImpl(
+internal class EmbraceSessionPropertiesService(
     private val ndkService: NdkService,
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger

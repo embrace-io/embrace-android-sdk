@@ -57,7 +57,8 @@ internal class EmbraceSessionService(
      * The currently active session.
      */
     @Volatile
-    private var activeSession: Session? = null
+    @VisibleForTesting
+    internal var activeSession: Session? = null
 
     init {
         if (!this.processStateService.isInBackground) {
@@ -219,9 +220,5 @@ internal class EmbraceSessionService(
     override fun close() {
         logger.logInfo("Shutting down EmbraceSessionService")
         sessionHandler.close()
-    }
-
-    fun getActiveSession(): Session? {
-        return activeSession
     }
 }

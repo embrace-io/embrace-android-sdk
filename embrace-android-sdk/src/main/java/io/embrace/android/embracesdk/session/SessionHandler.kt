@@ -76,6 +76,11 @@ internal class SessionHandler(
     var scheduledFuture: ScheduledFuture<*>? = null
 
     /**
+     * Guards session state changes.
+     */
+    private val lock = Any()
+
+    /**
      * It performs all corresponding operations in order to start a session.
      */
     fun onSessionStarted(
@@ -86,10 +91,11 @@ internal class SessionHandler(
         automaticSessionCloserCallback: Runnable,
         cacheCallback: Runnable
     ): SessionMessage? {
-        if (!isAllowedToStart()) {
-            logger.logDebug("Session not allowed to start.")
-            return null
-        }
+        synchronized(lock) {
+            if (!isAllowedToStart()) {
+                logger.logDebug("Session not allowed to start.")
+                return null
+            }
 
         logDeveloper("SessionHandler", "Session Started")
         val session = Session.buildStartSession(
@@ -103,24 +109,25 @@ internal class SessionHandler(
         )
         logDeveloper("SessionHandler", "SessionId = ${session.sessionId}")
 
-        // Record the connection type at the start of the session.
-        networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
+            // Record the connection type at the start of the session.
+            networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
 
-        val sessionMessage = sessionMessageCollator.buildStartSessionMessage(session)
+            val sessionMessage = sessionMessageCollator.buildStartSessionMessage(session)
 
-        metadataService.setActiveSessionId(session.sessionId)
+            metadataService.setActiveSessionId(session.sessionId)
 
-        deliveryService.sendSession(sessionMessage, SessionMessageState.START)
-        logger.logDebug("Start session successfully sent.")
+            deliveryService.sendSession(sessionMessage, SessionMessageState.START)
+            logger.logDebug("Start session successfully sent.")
 
-        handleAutomaticSessionStopper(automaticSessionCloserCallback)
-        addFirstViewBreadcrumbForSession(startTime)
-        startPeriodicCaching(cacheCallback)
-        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            ndkService.updateSessionId(session.sessionId)
+            handleAutomaticSessionStopper(automaticSessionCloserCallback)
+            addFirstViewBreadcrumbForSession(startTime)
+            startPeriodicCaching(cacheCallback)
+            if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                ndkService.updateSessionId(session.sessionId)
+            }
+
+            return sessionMessage
         }
-
-        return sessionMessage
     }
 
     /**
@@ -134,27 +141,29 @@ internal class SessionHandler(
         endTime: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
-        logger.logDebug("Will try to run end session full.")
-        if (originSession == null) {
-            return
-        }
-        val fullEndSessionMessage = runEndSessionImpl(
-            SessionEndType.NORMAL_END,
-            originSession,
-            sessionProperties,
-            sdkStartupDuration,
-            completedSpans,
-            endType,
-            endTime
-        ) ?: return
+        synchronized(lock) {
+            logger.logDebug("Will try to run end session full.")
+            if (originSession == null) {
+                return
+            }
+            val fullEndSessionMessage = runEndSessionImpl(
+                SessionEndType.NORMAL_END,
+                originSession,
+                sessionProperties,
+                sdkStartupDuration,
+                completedSpans,
+                endType,
+                endTime
+            ) ?: return
 
-        // Clean every collection of those services which have collections in memory.
-        memoryCleanerService.cleanServicesCollections(exceptionService)
-        metadataService.removeActiveSessionId(originSession.sessionId)
-        logger.logDebug("Services collections successfully cleaned.")
-        sessionProperties.clearTemporary()
-        logger.logDebug("Session properties successfully temporary cleared.")
-        deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+            // Clean every collection of those services which have collections in memory.
+            memoryCleanerService.cleanServicesCollections(exceptionService)
+            metadataService.removeActiveSessionId(originSession.sessionId)
+            logger.logDebug("Services collections successfully cleaned.")
+            sessionProperties.clearTemporary()
+            logger.logDebug("Session properties successfully temporary cleared.")
+            deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+        }
     }
 
     /**
@@ -168,18 +177,20 @@ internal class SessionHandler(
         sdkStartupDuration: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
-        logger.logDebug("Will try to run end session for crash.")
-        val fullEndSessionMessage = runEndSessionImpl(
-            SessionEndType.JVM_CRASH_END,
-            originSession,
-            sessionProperties,
-            sdkStartupDuration,
-            completedSpans,
-            SessionLifeEventType.STATE,
-            clock.now(),
-            crashId,
-        )
-        fullEndSessionMessage?.let(deliveryService::saveSessionOnCrash)
+        synchronized(lock) {
+            logger.logDebug("Will try to run end session for crash.")
+            val fullEndSessionMessage = runEndSessionImpl(
+                SessionEndType.JVM_CRASH_END,
+                originSession,
+                sessionProperties,
+                sdkStartupDuration,
+                completedSpans,
+                SessionLifeEventType.STATE,
+                clock.now(),
+                crashId,
+            )
+            fullEndSessionMessage?.let(deliveryService::saveSessionOnCrash)
+        }
     }
 
     /**
@@ -188,26 +199,27 @@ internal class SessionHandler(
      *
      * Note that the session message will not be sent to our servers.
      */
-    fun getActiveSessionEndMessage(
+    fun onPeriodicCacheActiveSession(
         activeSession: Session?,
         sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ): SessionMessage? {
-        return activeSession?.let {
-            logger.logDebug("Will try to run end session for caching.")
-            runEndSessionImpl(
-                SessionEndType.CACHED_END,
-                activeSession,
-                sessionProperties,
-                sdkStartupDuration,
-                completedSpans,
-                SessionLifeEventType.STATE,
-                clock.now()
-            )
-        } ?: kotlin.run {
-            logger.logDebug("Will no perform active session caching because there is no active session available.")
-            null
+        synchronized(lock) {
+            val msg = activeSession?.let {
+                logger.logDebug("Will try to run end session for caching.")
+                runEndSessionImpl(
+                    SessionEndType.CACHED_END,
+                    activeSession,
+                    sessionProperties,
+                    sdkStartupDuration,
+                    completedSpans,
+                    SessionLifeEventType.STATE,
+                    clock.now()
+                )
+            }
+            msg?.let(deliveryService::saveSession)
+            return msg
         }
     }
 

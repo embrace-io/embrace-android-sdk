@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.UserInfo
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every

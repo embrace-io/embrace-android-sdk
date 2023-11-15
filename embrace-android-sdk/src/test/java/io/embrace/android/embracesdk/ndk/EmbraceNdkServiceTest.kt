@@ -28,8 +28,8 @@ import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk

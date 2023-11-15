@@ -4,12 +4,14 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.NativeCrashData
 
 internal class FakeNdkService : NdkService {
+    val propUpdates = mutableListOf<Map<String, String>>()
+
     override fun updateSessionId(newSessionId: String) {
         TODO("Not yet implemented")
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
-        TODO("Not yet implemented")
+        propUpdates.add(properties)
     }
 
     override fun onUserInfoUpdate() {

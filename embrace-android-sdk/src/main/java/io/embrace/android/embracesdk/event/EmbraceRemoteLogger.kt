@@ -23,8 +23,8 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Stacktraces
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.sql.Timestamp
 import java.util.NavigableMap
 import java.util.concurrent.Callable

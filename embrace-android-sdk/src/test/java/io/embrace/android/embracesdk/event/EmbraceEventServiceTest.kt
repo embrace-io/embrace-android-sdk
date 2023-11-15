@@ -26,9 +26,9 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -111,8 +111,8 @@ internal class EmbraceEventServiceTest {
         )
         sessionProperties = EmbraceSessionProperties(
             FakePreferenceService(),
-            logger,
-            configService
+            configService,
+            logger
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)

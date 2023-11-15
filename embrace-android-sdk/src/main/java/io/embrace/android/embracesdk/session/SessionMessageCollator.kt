@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class SessionMessageCollator(
     private val configService: ConfigService,

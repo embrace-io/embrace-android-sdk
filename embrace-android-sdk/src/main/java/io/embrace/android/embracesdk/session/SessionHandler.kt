@@ -47,6 +47,32 @@ internal class SessionHandler(
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
 
+    /**
+     * Defines the states in which a session can end.
+     */
+    private enum class SessionEndType(
+        val endedCleanly: Boolean,
+        val forceQuit: Boolean,
+        val shouldStopCaching: Boolean
+    ) {
+
+        /**
+         * The end session happened in the normal way (i.e. process state changes or manual/timed end).
+         */
+        NORMAL_END(true, false, true),
+
+        /**
+         * The end session is being constructed so that it can be periodically cached. This avoids
+         * the scenario of data loss in the event of NDK crashes.
+         */
+        CACHED_END(false, true, false),
+
+        /**
+         * The end session is being constructed because of a JVM crash.
+         */
+        JVM_CRASH_END(false, false, true);
+    }
+
     var scheduledFuture: ScheduledFuture<*>? = null
 
     /**
@@ -109,14 +135,26 @@ internal class SessionHandler(
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         logger.logDebug("Will try to run end session full.")
-        runEndSessionFull(
-            endType,
+        if (originSession == null) {
+            return
+        }
+        val fullEndSessionMessage = runEndSessionImpl(
+            SessionEndType.NORMAL_END,
             originSession,
             sessionProperties,
             sdkStartupDuration,
-            endTime,
-            completedSpans
-        )
+            completedSpans,
+            endType,
+            endTime
+        ) ?: return
+
+        // Clean every collection of those services which have collections in memory.
+        memoryCleanerService.cleanServicesCollections(exceptionService)
+        metadataService.removeActiveSessionId(originSession.sessionId)
+        logger.logDebug("Services collections successfully cleaned.")
+        sessionProperties.clearTemporary()
+        logger.logDebug("Session properties successfully temporary cleared.")
+        deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
     }
 
     /**
@@ -131,13 +169,17 @@ internal class SessionHandler(
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         logger.logDebug("Will try to run end session for crash.")
-        runEndSessionForCrash(
+        val fullEndSessionMessage = runEndSessionImpl(
+            SessionEndType.JVM_CRASH_END,
             originSession,
-            crashId,
             sessionProperties,
             sdkStartupDuration,
-            completedSpans
+            completedSpans,
+            SessionLifeEventType.STATE,
+            clock.now(),
+            crashId,
         )
+        fullEndSessionMessage?.let(deliveryService::saveSessionOnCrash)
     }
 
     /**
@@ -154,11 +196,14 @@ internal class SessionHandler(
     ): SessionMessage? {
         return activeSession?.let {
             logger.logDebug("Will try to run end session for caching.")
-            runEndSessionForCaching(
+            runEndSessionImpl(
+                SessionEndType.CACHED_END,
                 activeSession,
                 sessionProperties,
                 sdkStartupDuration,
-                completedSpans
+                completedSpans,
+                SessionLifeEventType.STATE,
+                clock.now()
             )
         } ?: kotlin.run {
             logger.logDebug("Will no perform active session caching because there is no active session available.")
@@ -208,6 +253,7 @@ internal class SessionHandler(
                 logger.logDebug("Session is STATE, it is always allowed to end.")
                 true
             }
+
             SessionLifeEventType.MANUAL, SessionLifeEventType.TIMED -> {
                 logger.logDebug("Session is either MANUAL or TIMED.")
                 if (!configService.sessionBehavior.isSessionControlEnabled()) {
@@ -231,126 +277,44 @@ internal class SessionHandler(
     }
 
     /**
-     * It builds an end active session message, it sanitizes it, it performs all types of memory cleaning,
-     * it updates cache and it sends it to our servers.
-     * It also stops periodic caching and automatic session stopper.
+     * 'Ends' the active session. Note that this logic is also used for caching the session
+     * periodically so the session won't always end. The behavior is controlled by the
+     * [SessionEndType] passed to this function.
      */
-    private fun runEndSessionFull(
-        endType: SessionLifeEventType,
-        originSession: Session?,
-        sessionProperties: EmbraceSessionProperties,
-        sdkStartupDuration: Long,
-        endTime: Long,
-        completedSpans: List<EmbraceSpanData>?
-    ) {
-        if (!isAllowedToEnd(endType, originSession)) {
-            logger.logDebug("Session not allowed to end.")
-            return
-        }
-
-        stopPeriodicSessionCaching()
-
-        if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
-            logger.logWarning("Session messages disabled. Ignoring all Sessions.")
-            return
-        }
-
-        val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
-            /* we are previously checking in allowSessionToEnd that originSession != null */
-            originSession!!,
-            endedCleanly = true,
-            forceQuit = false,
-            null,
-            endType,
-            sessionProperties,
-            sdkStartupDuration,
-            endTime,
-            completedSpans
-        )
-
-        logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-
-        // Clean every collection of those services which have collections in memory.
-        memoryCleanerService.cleanServicesCollections(exceptionService)
-        metadataService.removeActiveSessionId(originSession.sessionId)
-        logger.logDebug("Services collections successfully cleaned.")
-
-        sessionProperties.clearTemporary()
-        logger.logDebug("Session properties successfully temporary cleared.")
-        deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
-    }
-
-    /**
-     * It builds an end active session message, it sanitizes it, it updates cache and it sends it to our servers synchronously.
-     *
-     * This is because when a crash happens, we do not have the ability to start a background
-     * thread because the JVM will soon kill the process. So we force the request to be performed
-     * in main thread.
-     *
-     * Note that this may cause ANRs. In the future we should come up with a better approach.
-     *
-     * Also note that we do not perform any memory cleaning because since the app is about to crash,
-     * we do not to waste time on those things.
-     */
-    private fun runEndSessionForCrash(
-        originSession: Session,
-        crashId: String,
-        sessionProperties: EmbraceSessionProperties,
-        sdkStartupDuration: Long,
-        completedSpans: List<EmbraceSpanData>?
-    ) {
-        if (!isAllowedToEnd(SessionLifeEventType.STATE, originSession)) {
-            logger.logDebug("Session not allowed to end.")
-            return
-        }
-
-        // let's not overwrite the crash info with the periodic caching
-        stopPeriodicSessionCaching()
-
-        val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
-            originSession,
-            endedCleanly = false,
-            forceQuit = false,
-            crashId,
-            SessionLifeEventType.STATE,
-            sessionProperties,
-            sdkStartupDuration,
-            clock.now(),
-            completedSpans
-        )
-        logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-        deliveryService.saveSessionOnCrash(fullEndSessionMessage)
-    }
-
-    /**
-     * It builds an end active session message and it updates cache.
-     *
-     * Note that it does not send the session to our servers.
-     */
-    private fun runEndSessionForCaching(
+    private fun runEndSessionImpl(
+        endType: SessionEndType,
         activeSession: Session,
         sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,
-        completedSpans: List<EmbraceSpanData>?
+        completedSpans: List<EmbraceSpanData>?,
+        lifeEventType: SessionLifeEventType,
+        endTime: Long,
+        crashId: String? = null,
     ): SessionMessage? {
-        if (!isAllowedToEnd(SessionLifeEventType.STATE, activeSession)) {
+        if (endType.shouldStopCaching) {
+            stopPeriodicSessionCaching()
+        }
+        if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
+            logger.logWarning("Session messages disabled. Ignoring all Sessions.")
+            return null
+        }
+        if (!isAllowedToEnd(lifeEventType, activeSession)) {
             logger.logDebug("Session not allowed to end.")
             return null
         }
 
         val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
             activeSession,
-            endedCleanly = false,
-            forceQuit = true,
-            null,
-            SessionLifeEventType.STATE,
+            endedCleanly = endType.endedCleanly,
+            forceQuit = endType.forceQuit,
+            crashId,
+            lifeEventType,
             sessionProperties,
             sdkStartupDuration,
-            clock.now(),
+            endTime,
             completedSpans
         )
         logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-
         return fullEndSessionMessage
     }
 

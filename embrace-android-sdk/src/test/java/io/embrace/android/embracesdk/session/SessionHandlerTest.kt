@@ -533,7 +533,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
             mockActiveSession,
             mockSessionProperties,
             /* any duration */2
@@ -552,7 +552,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onPeriodicCacheActiveSession does not cache if there is no active session`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
             null,
             mockSessionProperties,
             /* any duration */2
@@ -599,7 +599,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `periodically cached sessions included currently completed spans`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
             mockActiveSession,
             mockSessionProperties,
             10L,

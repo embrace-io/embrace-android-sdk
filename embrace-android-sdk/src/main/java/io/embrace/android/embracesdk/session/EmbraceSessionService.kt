@@ -18,7 +18,7 @@ internal class EmbraceSessionService(
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger,
     private val sessionHandler: SessionHandler,
-    private val deliveryService: DeliveryService,
+    deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
     private val clock: Clock,
     private val spansService: SpansService
@@ -42,11 +42,6 @@ internal class EmbraceSessionService(
          */
         const val SESSION_CACHING_INTERVAL = 2
     }
-
-    /**
-     * Synchronization lock.
-     */
-    private val lock = Any()
 
     /**
      * SDK startup time. Only set for cold start sessions.
@@ -87,10 +82,8 @@ internal class EmbraceSessionService(
     override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
         val automaticSessionCloserCallback = Runnable {
             try {
-                synchronized(lock) {
-                    logger.logInfo("Automatic session closing triggered.")
-                    triggerStatelessSessionEnd(Session.SessionLifeEventType.TIMED)
-                }
+                logger.logInfo("Automatic session closing triggered.")
+                triggerStatelessSessionEnd(Session.SessionLifeEventType.TIMED)
             } catch (ex: Exception) {
                 logger.logError("Error while trying to close the session automatically", ex)
             }
@@ -118,15 +111,13 @@ internal class EmbraceSessionService(
         logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
 
         activeSession?.also {
-            synchronized(lock) {
-                sessionHandler.onCrash(
-                    it,
-                    crashId,
-                    sessionProperties,
-                    sdkStartupDuration,
-                    spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
-                )
-            }
+            sessionHandler.onCrash(
+                it,
+                crashId,
+                sessionProperties,
+                sdkStartupDuration,
+                spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
+            )
         } ?: logger.logDeveloper(TAG, "Active session is NULL")
     }
 
@@ -136,17 +127,12 @@ internal class EmbraceSessionService(
     @VisibleForTesting
     fun onPeriodicCacheActiveSession() {
         try {
-            synchronized(lock) {
-                val activeSessionInfo = sessionHandler.getActiveSessionEndMessage(
-                    activeSession,
-                    sessionProperties,
-                    sdkStartupDuration,
-                    spansService.completedSpans()
-                )
-                activeSessionInfo?.let {
-                    deliveryService.saveSession(it)
-                }
-            }
+            sessionHandler.onPeriodicCacheActiveSession(
+                activeSession,
+                sessionProperties,
+                sdkStartupDuration,
+                spansService.completedSpans()
+            )
         } catch (ex: Exception) {
             logger.logDebug("Error while caching active session", ex)
         }
@@ -159,9 +145,7 @@ internal class EmbraceSessionService(
 
     private fun startStateSession(coldStart: Boolean, endTime: Long) {
         logger.logDeveloper(TAG, "Start state session. Is cold start: $coldStart")
-        synchronized(lock) {
-            startSession(coldStart, Session.SessionLifeEventType.STATE, endTime)
-        }
+        startSession(coldStart, Session.SessionLifeEventType.STATE, endTime)
     }
 
     override fun onBackground(timestamp: Long) {
@@ -201,21 +185,19 @@ internal class EmbraceSessionService(
      * @param endType the origin of the event that ends the session.
      */
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
-        synchronized(lock) {
-            logger.logDebug("Will try to end session.")
-            sessionHandler.onSessionEnded(
-                endType,
-                activeSession,
-                sessionProperties,
-                sdkStartupDuration,
-                endTime,
-                spansService.flushSpans()
-            )
+        logger.logDebug("Will try to end session.")
+        sessionHandler.onSessionEnded(
+            endType,
+            activeSession,
+            sessionProperties,
+            sdkStartupDuration,
+            endTime,
+            spansService.flushSpans()
+        )
 
-            // clear active session
-            activeSession = null
-            logger.logDeveloper(TAG, "Active session cleared")
-        }
+        // clear active session
+        activeSession = null
+        logger.logDeveloper(TAG, "Active session cleared")
     }
 
     override fun close() {

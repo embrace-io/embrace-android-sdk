@@ -316,17 +316,16 @@ internal class EmbraceSessionServiceTest {
     fun `verify periodic caching`() {
         initializeSessionService()
 
+        service.startSession(true, SessionLifeEventType.STATE, clock.now())
         service.onPeriodicCacheActiveSession()
 
         verify {
-            mockSessionHandler.getActiveSessionEndMessage(
-                /* either null active session or valid active session, same test */ null,
+            mockSessionHandler.onPeriodicCacheActiveSession(
+                any(),
                 mockSessionProperties,
                 0
             )
         }
-
-        assertNotNull(deliveryService.lastSavedSession)
     }
 
     @Test

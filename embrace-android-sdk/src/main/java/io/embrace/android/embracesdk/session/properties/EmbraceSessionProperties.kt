@@ -1,13 +1,14 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
-    private val logger: InternalEmbraceLogger,
-    private val configService: ConfigService
+    private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private var permanent: MutableMap<String, String>

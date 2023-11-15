@@ -21,18 +21,6 @@ internal class FakeSessionService : SessionService {
         TODO("Not yet implemented")
     }
 
-    override fun addProperty(key: String, value: String, permanent: Boolean): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun removeProperty(key: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun getProperties(): Map<String, String> {
-        TODO("Not yet implemented")
-    }
-
     override fun close() {
         TODO("Not yet implemented")
     }

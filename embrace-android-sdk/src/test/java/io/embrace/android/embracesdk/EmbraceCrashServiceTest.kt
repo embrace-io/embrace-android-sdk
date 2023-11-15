@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.utils.at
 import io.mockk.every
 import io.mockk.mockk
@@ -40,6 +41,7 @@ internal class EmbraceCrashServiceTest {
 
     private lateinit var embraceCrashService: EmbraceCrashService
     private lateinit var sessionService: SessionService
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var metadataService: FakeAndroidMetadataService
     private lateinit var deliveryService: EmbraceDeliveryService
     private lateinit var userService: UserService
@@ -60,6 +62,7 @@ internal class EmbraceCrashServiceTest {
         mockkObject(Crash.Companion)
 
         sessionService = mockk(relaxed = true)
+        sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeAndroidMetadataService()
         deliveryService = mockk(relaxUnitFun = true)
         userService = mockk(relaxed = true)
@@ -94,6 +97,7 @@ internal class EmbraceCrashServiceTest {
         embraceCrashService = EmbraceCrashService(
             configService,
             sessionService,
+            sessionPropertiesService,
             metadataService,
             deliveryService,
             userService,

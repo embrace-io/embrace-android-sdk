@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
  * Intercepts uncaught Java exceptions and forwards them to the Embrace API.
@@ -28,6 +29,7 @@ import io.embrace.android.embracesdk.session.SessionService
 internal class EmbraceCrashService(
     configService: ConfigService,
     private val sessionService: SessionService,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
@@ -106,7 +108,7 @@ internal class EmbraceCrashService(
                 null,
                 metadataService.getAppState(),
                 null,
-                sessionService.getProperties(),
+                sessionPropertiesService.getProperties(),
                 eventService.getActiveEventIds(),
                 null,
                 null,

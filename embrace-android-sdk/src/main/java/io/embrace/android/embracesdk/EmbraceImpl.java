@@ -89,13 +89,13 @@ import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.EmbraceSessionService;
 import io.embrace.android.embracesdk.session.SessionService;
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
@@ -162,6 +162,9 @@ final class EmbraceImpl {
 
     @Nullable
     private volatile SessionService sessionService;
+
+    @Nullable
+    private volatile SessionPropertiesService sessionPropertiesService;
 
     @Nullable
     private volatile BackgroundActivityService backgroundActivityService;
@@ -470,8 +473,8 @@ final class EmbraceImpl {
 
         final EmbraceSessionProperties sessionProperties = new EmbraceSessionProperties(
             androidServicesModule.getPreferencesService(),
-            coreModule.getLogger(),
-            essentialServiceModule.getConfigService());
+            essentialServiceModule.getConfigService(), coreModule.getLogger()
+        );
 
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
             internalEmbraceLogger.logInfo("the SDK is disabled");
@@ -575,6 +578,7 @@ final class EmbraceImpl {
 
         final SessionService nonNullSessionService = sessionModule.getSessionService();
         sessionService = nonNullSessionService;
+        sessionPropertiesService = sessionModule.getSessionPropertiesService();
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
@@ -942,7 +946,7 @@ final class EmbraceImpl {
      */
     public boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
         if (isStarted()) {
-            return sessionService.addProperty(key, value, permanent);
+            return sessionPropertiesService.addProperty(key, value, permanent);
         }
         internalEmbraceLogger.logSDKNotInitialized("cannot add session property");
         return false;
@@ -953,7 +957,7 @@ final class EmbraceImpl {
      */
     public boolean removeSessionProperty(@NonNull String key) {
         if (isStarted()) {
-            return sessionService.removeProperty(key);
+            return sessionPropertiesService.removeProperty(key);
         }
 
         internalEmbraceLogger.logSDKNotInitialized("remove session property");
@@ -966,7 +970,7 @@ final class EmbraceImpl {
     @Nullable
     public Map<String, String> getSessionProperties() {
         if (isStarted()) {
-            return sessionService.getProperties();
+            return sessionPropertiesService.getProperties();
         }
 
         internalEmbraceLogger.logSDKNotInitialized("gets session properties");

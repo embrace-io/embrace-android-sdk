@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every

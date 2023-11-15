@@ -10,15 +10,16 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class EmbraceSessionService(
     private val processStateService: ProcessStateService,
-    private val ndkService: NdkService,
+    ndkService: NdkService,
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger,
     private val sessionHandler: SessionHandler,
     private val deliveryService: DeliveryService,
-    private val isNdkEnabled: Boolean,
+    isNdkEnabled: Boolean,
     private val clock: Clock,
     private val spansService: SpansService
 ) : SessionService, ProcessStateListener {
@@ -56,7 +57,8 @@ internal class EmbraceSessionService(
      * The currently active session.
      */
     @Volatile
-    private var activeSession: Session? = null
+    @VisibleForTesting
+    internal var activeSession: Session? = null
 
     init {
         if (!this.processStateService.isInBackground) {
@@ -219,34 +221,4 @@ internal class EmbraceSessionService(
         logger.logInfo("Shutting down EmbraceSessionService")
         sessionHandler.close()
     }
-
-    fun getActiveSession(): Session? {
-        return activeSession
-    }
-
-    override fun addProperty(key: String, value: String, permanent: Boolean): Boolean {
-        logger.logDeveloper(TAG, "Add Property: $key - $value")
-        val added = sessionProperties.add(key, value, permanent)
-        if (added) {
-            logger.logDeveloper(TAG, "Session properties updated")
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
-        } else {
-            logger.logDeveloper(TAG, "Cannot add property: $key")
-        }
-        return added
-    }
-
-    override fun removeProperty(key: String): Boolean {
-        logger.logDeveloper(TAG, "Remove Property: $key")
-        val removed = sessionProperties.remove(key)
-        if (removed) {
-            logger.logDeveloper(TAG, "Session properties updated")
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
-        } else {
-            logger.logDeveloper(TAG, "Cannot remove property: $key")
-        }
-        return removed
-    }
-
-    override fun getProperties(): Map<String, String> = sessionProperties.get()
 }

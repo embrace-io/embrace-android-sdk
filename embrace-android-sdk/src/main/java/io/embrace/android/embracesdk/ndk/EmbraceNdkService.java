@@ -51,7 +51,7 @@ import io.embrace.android.embracesdk.payload.NativeCrashMetadata;
 import io.embrace.android.embracesdk.payload.NativeSymbols;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.SessionService;
 import kotlin.Lazy;
 import kotlin.LazyKt;

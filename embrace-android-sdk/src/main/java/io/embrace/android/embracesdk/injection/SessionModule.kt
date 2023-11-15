@@ -3,11 +3,13 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionMessageCollator
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -16,6 +18,7 @@ internal interface SessionModule {
     val sessionService: SessionService
     val backgroundActivityService: BackgroundActivityService?
     val sessionMessageCollator: SessionMessageCollator
+    val sessionPropertiesService: SessionPropertiesService
 }
 
 internal class SessionModuleImpl(
@@ -69,6 +72,13 @@ internal class SessionModuleImpl(
             initModule.clock,
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CLOSER),
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING)
+        )
+    }
+
+    override val sessionPropertiesService: SessionPropertiesService by singleton {
+        EmbraceSessionPropertiesService(
+            nativeModule.ndkService,
+            sessionProperties
         )
     }
 

@@ -200,21 +200,22 @@ internal class EmbraceSessionService(
      *
      * @param endType the origin of the event that ends the session.
      */
-    @Synchronized
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
-        logger.logDebug("Will try to end session.")
-        sessionHandler.onSessionEnded(
-            endType,
-            activeSession,
-            sessionProperties,
-            sdkStartupDuration,
-            endTime,
-            spansService.flushSpans()
-        )
+        synchronized(lock) {
+            logger.logDebug("Will try to end session.")
+            sessionHandler.onSessionEnded(
+                endType,
+                activeSession,
+                sessionProperties,
+                sdkStartupDuration,
+                endTime,
+                spansService.flushSpans()
+            )
 
-        // clear active session
-        activeSession = null
-        logger.logDeveloper(TAG, "Active session cleared")
+            // clear active session
+            activeSession = null
+            logger.logDeveloper(TAG, "Active session cleared")
+        }
     }
 
     override fun close() {

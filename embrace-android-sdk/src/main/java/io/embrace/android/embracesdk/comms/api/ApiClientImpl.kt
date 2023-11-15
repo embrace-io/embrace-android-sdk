@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
+import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.net.HttpURLConnection
+import java.net.HttpURLConnection.HTTP_ENTITY_TOO_LARGE
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.net.HttpURLConnection.HTTP_OK
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -24,16 +27,17 @@ internal class ApiClientImpl(
     private val logger: InternalEmbraceLogger
 ) : ApiClient {
 
-    override fun executeGet(request: ApiRequest): ApiResponse<String> {
+    override fun executeGet(request: ApiRequest): ApiResponse {
         var connection: EmbraceConnection? = null
 
-        try {
+        return try {
             connection = request.toConnection()
             setTimeouts(connection)
             connection.connect()
-            return executeHttpRequest(connection)
+            val response = executeHttpRequest(connection)
+            response
         } catch (ex: Throwable) {
-            throw IllegalStateException(ex.localizedMessage ?: "", ex)
+            ApiResponse.Incomplete(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -41,13 +45,13 @@ internal class ApiClientImpl(
         }
     }
 
-    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse<String> =
+    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse =
         executeRawPost(request, gzip(payloadToCompress))
 
     /**
      * Posts a payload according to the ApiRequest parameter. The payload will not be gzip compressed.
      */
-    private fun executeRawPost(request: ApiRequest, payload: ByteArray?): ApiResponse<String> {
+    private fun executeRawPost(request: ApiRequest, payload: ByteArray?): ApiResponse {
         logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
         logger.logDeveloper("ApiClient", "Request details: $request")
 
@@ -60,13 +64,10 @@ internal class ApiClientImpl(
                 connection.outputStream?.write(payload)
                 connection.connect()
             }
-
             val response = executeHttpRequest(connection)
-            // pre-existing behavior. handle this better in future.
-            check(response.statusCode == HttpURLConnection.HTTP_OK) { "Failed to retrieve from Embrace server." }
             response
         } catch (ex: Throwable) {
-            throw IllegalStateException(ex.localizedMessage ?: "", ex)
+            ApiResponse.Incomplete(IllegalStateException(ex.localizedMessage ?: "", ex))
         } finally {
             runCatching {
                 connection?.inputStream?.close()
@@ -83,17 +84,35 @@ internal class ApiClientImpl(
      * Executes a HTTP call using the specified connection, returning the response from the
      * server as a string.
      */
-    private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse<String> {
-        try {
+    private fun executeHttpRequest(connection: EmbraceConnection): ApiResponse {
+        return try {
             val responseCode = readHttpResponseCode(connection)
-            val headers = readHttpResponseHeaders(connection)
-            return ApiResponse(
-                responseCode,
-                headers,
-                readResponseBodyAsString(connection.inputStream)
-            )
+            val responseHeaders = readHttpResponseHeaders(connection)
+
+            return when (responseCode) {
+                HTTP_OK -> {
+                    val responseBody = readResponseBodyAsString(connection.inputStream)
+                    ApiResponse.Success(responseBody, responseHeaders)
+                }
+                HTTP_NOT_MODIFIED -> {
+                    ApiResponse.NotModified
+                }
+                HTTP_ENTITY_TOO_LARGE -> {
+                    ApiResponse.PayloadTooLarge
+                }
+                TOO_MANY_REQUESTS -> {
+                    val retryAfter = responseHeaders["Retry-After"]?.toLongOrNull()
+                    ApiResponse.TooManyRequests(retryAfter)
+                }
+                NO_HTTP_RESPONSE -> {
+                    ApiResponse.Incomplete(IllegalStateException("Connection failed or unexpected response code"))
+                }
+                else -> {
+                    ApiResponse.Failure(responseCode, responseHeaders)
+                }
+            }
         } catch (exc: Throwable) {
-            throw IllegalStateException("Error occurred during HTTP request execution", exc)
+            ApiResponse.Incomplete(IllegalStateException("Error occurred during HTTP request execution", exc))
         }
     }
 

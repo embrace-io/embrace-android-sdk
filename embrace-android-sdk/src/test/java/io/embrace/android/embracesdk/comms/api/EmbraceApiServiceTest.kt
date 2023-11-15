@@ -28,7 +28,6 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.net.SocketException
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
@@ -64,8 +63,7 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `test getConfig returns correct values in Response`() {
         fakeApiClient.queueResponse(
-            ApiResponse(
-                statusCode = 200,
+            ApiResponse.Success(
                 headers = emptyMap(),
                 body = defaultConfigResponseBody
             )
@@ -80,22 +78,19 @@ internal class EmbraceApiServiceTest {
         assertEquals(100, remoteConfig.threshold)
     }
 
-    @Test(expected = SocketException::class)
-    fun `getConfig rethrows an exception thrown by apiClient`() {
-        val killerResponse: ApiResponse<String> = mockk(relaxed = true)
-        every { killerResponse.statusCode } answers { throw SocketException() }
-        fakeApiClient.queueResponse(killerResponse)
+    @Test(expected = IllegalStateException::class)
+    fun `getConfig throws an exception when receiving ApiResponse_Incomplete`() {
+        val incompleteResponse: ApiResponse.Incomplete = ApiResponse.Incomplete(
+            IllegalStateException("Connection failed")
+        )
+        fakeApiClient.queueResponse(incompleteResponse)
         apiService.getConfig()
     }
 
     @Test
     fun `cached remote config returned when 304 received`() {
         fakeApiClient.queueResponse(
-            ApiResponse(
-                statusCode = 304,
-                headers = emptyMap(),
-                body = null,
-            )
+            ApiResponse.NotModified
         )
         assertEquals(cachedConfig.remoteConfig, apiService.getConfig())
     }
@@ -103,10 +98,9 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `getConfig did not complete returns a null config`() {
         fakeApiClient.queueResponse(
-            ApiResponse(
-                statusCode = NO_HTTP_RESPONSE,
-                headers = emptyMap(),
-                body = null
+            ApiResponse.Failure(
+                code = NO_HTTP_RESPONSE,
+                headers = emptyMap()
             )
         )
         assertNull(apiService.getConfig())
@@ -115,10 +109,9 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `getConfig results in unexpected response code returns a null config`() {
         fakeApiClient.queueResponse(
-            ApiResponse(
-                statusCode = 400,
-                headers = emptyMap(),
-                body = null
+            ApiResponse.Failure(
+                code = 400,
+                headers = emptyMap()
             )
         )
         assertNull(apiService.getConfig())
@@ -129,11 +122,7 @@ internal class EmbraceApiServiceTest {
         val cfg = RemoteConfig()
         cachedConfig = CachedConfig(cfg, "my_etag")
         fakeApiClient.queueResponse(
-            ApiResponse(
-                statusCode = 304,
-                headers = emptyMap(),
-                body = null
-            )
+            ApiResponse.NotModified
         )
         val remoteConfig = apiService.getConfig()
         assertSame(cfg, remoteConfig)
@@ -290,8 +279,7 @@ internal class EmbraceApiServiceTest {
         private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
         private val defaultConfigResponseBody = ResourceReader.readResourceAsText("remote_config_response.json")
-        private val successfulPostResponse = ApiResponse(
-            statusCode = 200,
+        private val successfulPostResponse = ApiResponse.Success(
             headers = emptyMap(),
             body = ""
         )

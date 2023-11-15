@@ -8,17 +8,17 @@ import java.util.Queue
 
 internal class FakeApiClient : ApiClient {
     val sentRequests: MutableList<Pair<ApiRequest, ByteArray?>> = mutableListOf()
-    private val queuedResponses: Queue<ApiResponse<String>> = LinkedList()
+    private val queuedResponses: Queue<ApiResponse> = LinkedList()
 
-    override fun executeGet(request: ApiRequest): ApiResponse<String> = getNext(request, null)
+    override fun executeGet(request: ApiRequest): ApiResponse = getNext(request, null)
 
-    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse<String> = getNext(request, payloadToCompress)
+    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse = getNext(request, payloadToCompress)
 
-    fun queueResponse(response: ApiResponse<String>) {
+    fun queueResponse(response: ApiResponse) {
         queuedResponses.add(response)
     }
 
-    private fun getNext(request: ApiRequest, bytes: ByteArray?): ApiResponse<String> {
+    private fun getNext(request: ApiRequest, bytes: ByteArray?): ApiResponse {
         sentRequests.add(Pair(request, bytes))
         return checkNotNull(queuedResponses.poll()) { "No response" }
     }

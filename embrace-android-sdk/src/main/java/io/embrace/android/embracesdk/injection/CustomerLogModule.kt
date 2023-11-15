@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureServic
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 

@@ -47,6 +47,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionHandler)
         assertNotNull(module.sessionService)
         assertNotNull(module.sessionMessageCollator)
+        assertNotNull(module.sessionPropertiesService)
         assertNull(module.backgroundActivityService)
     }
 
@@ -69,6 +70,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionHandler)
         assertNotNull(module.sessionService)
         assertNotNull(module.sessionMessageCollator)
+        assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.backgroundActivityService)
     }
 

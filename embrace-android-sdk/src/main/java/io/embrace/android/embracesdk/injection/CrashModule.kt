@@ -41,6 +41,7 @@ internal class CrashModuleImpl(
         EmbraceCrashService(
             essentialServiceModule.configService,
             sessionModule.sessionService,
+            sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,

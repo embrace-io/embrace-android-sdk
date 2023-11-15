@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -22,10 +23,8 @@ import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -311,75 +310,6 @@ internal class EmbraceSessionServiceTest {
         service.close()
 
         verify { mockSessionHandler.close() }
-    }
-
-    @Test
-    fun `add property successfully`() {
-        initializeSessionService()
-        val key = "key"
-        val value = "value"
-        val permanent = true
-        val properties = mapOf<String, String>()
-        every { mockSessionProperties.add(key, value, permanent) } returns true
-        every { mockSessionProperties.get() } returns properties
-
-        val added = service.addProperty(key, value, permanent)
-
-        assertTrue(added)
-        verify { mockSessionProperties.add(key, value, permanent) }
-        verify { mockNdkService.onSessionPropertiesUpdate(properties) }
-    }
-
-    @Test
-    fun `if add property failed, then it should not notify ndk service`() {
-        initializeSessionService()
-        val key = "key"
-        val value = "value"
-        val permanent = true
-        every { mockSessionProperties.add(key, value, permanent) } returns false
-
-        val added = service.addProperty(key, value, permanent)
-
-        assertFalse(added)
-        verify { mockSessionProperties.add(key, value, permanent) }
-        verify { mockNdkService wasNot Called }
-    }
-
-    @Test
-    fun `remove property successfully`() {
-        initializeSessionService()
-        val key = "key"
-        val properties = mapOf<String, String>()
-        every { mockSessionProperties.remove(key) } returns true
-        every { mockSessionProperties.get() } returns properties
-
-        val removed = service.removeProperty(key)
-
-        assertTrue(removed)
-        verify { mockSessionProperties.remove(key) }
-        verify { mockNdkService.onSessionPropertiesUpdate(properties) }
-    }
-
-    @Test
-    fun `if remove property failed, then it should not notify ndk service`() {
-        initializeSessionService()
-        val key = "key"
-        every { mockSessionProperties.remove(key) } returns false
-
-        val removed = service.removeProperty(key)
-
-        assertFalse(removed)
-        verify { mockSessionProperties.remove(key) }
-        verify { mockNdkService wasNot Called }
-    }
-
-    @Test
-    fun `get embrace session properties`() {
-        val properties = mapOf<String, String>()
-        every { mockSessionProperties.get() } returns properties
-
-        initializeSessionService()
-        assertEquals(properties, service.getProperties())
     }
 
     @Test

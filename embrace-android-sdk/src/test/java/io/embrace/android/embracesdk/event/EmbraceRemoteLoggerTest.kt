@@ -21,8 +21,8 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk

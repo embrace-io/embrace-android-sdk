@@ -12,11 +12,11 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -43,7 +43,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var performanceInfoService: PerformanceInfoService
     private lateinit var metadataService: MetadataService
     private lateinit var mockBreadcrumbService: BreadcrumbService
-    private lateinit var activityService: FakeActivityService
+    private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
     private lateinit var remoteLogger: EmbraceRemoteLogger
     private lateinit var userService: UserService
@@ -62,7 +62,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         performanceInfoService = mockk()
         metadataService = FakeAndroidMetadataService()
         mockBreadcrumbService = mockk(relaxed = true)
-        activityService = FakeActivityService(isInBackground = true)
+        activityService = FakeProcessStateService(isInBackground = true)
         eventService = mockk()
         remoteLogger = mockk()
         exceptionService = mockk()

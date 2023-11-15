@@ -8,9 +8,11 @@ import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class EmbraceSessionService(
-    private val activityService: ActivityService,
+    private val processStateService: ProcessStateService,
     private val ndkService: NdkService,
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger,
@@ -19,7 +21,7 @@ internal class EmbraceSessionService(
     private val isNdkEnabled: Boolean,
     private val clock: Clock,
     private val spansService: SpansService
-) : SessionService, ActivityListener {
+) : SessionService, ProcessStateListener {
 
     companion object {
         private const val TAG = "EmbraceSessionService"
@@ -57,7 +59,7 @@ internal class EmbraceSessionService(
     private var activeSession: Session? = null
 
     init {
-        if (!this.activityService.isInBackground) {
+        if (!this.processStateService.isInBackground) {
             // If the app goes to foreground before the SDK finishes its startup,
             // the session service will not be registered to the activity listener and will not
             // start the cold session.
@@ -182,7 +184,7 @@ internal class EmbraceSessionService(
         endSession(endType, clock.now())
 
         // Starts a new session.
-        if (!activityService.isInBackground) {
+        if (!processStateService.isInBackground) {
             logger.logDeveloper(TAG, "Activity is not in background, starting session.")
             startSession(false, endType, clock.now())
         } else {

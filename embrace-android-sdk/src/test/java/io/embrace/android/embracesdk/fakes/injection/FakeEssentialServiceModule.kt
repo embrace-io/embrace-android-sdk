@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeApiService
@@ -28,16 +28,19 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryRetryManager
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class FakeEssentialServiceModule(
-    override val activityService: ActivityService = FakeActivityService(),
+    override val processStateService: ProcessStateService = FakeProcessStateService(),
+    override val activityLifecycleTracker: ActivityTracker = FakeActivityTracker(),
     override val metadataService: MetadataService = FakeAndroidMetadataService(),
     override val configService: ConfigService = FakeConfigService(),
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),

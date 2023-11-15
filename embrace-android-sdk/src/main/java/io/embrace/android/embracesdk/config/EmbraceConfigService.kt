@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
@@ -45,7 +45,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     isDebug: Boolean,
     private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
-) : ConfigService, ActivityListener {
+) : ConfigService, ProcessStateListener {
 
     /**
      * The listeners subscribed to configuration changes.

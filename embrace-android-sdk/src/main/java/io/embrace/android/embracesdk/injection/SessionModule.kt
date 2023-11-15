@@ -40,7 +40,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.metadataService,
             dataCaptureServiceModule.breadcrumbService,
-            essentialServiceModule.activityService,
+            essentialServiceModule.activityLifecycleTracker,
             nativeModule.ndkService,
             dataContainerModule.eventService,
             customerLogModule.remoteLogger,
@@ -60,7 +60,7 @@ internal class SessionModuleImpl(
 
     override val sessionService: SessionService by singleton {
         EmbraceSessionService(
-            essentialServiceModule.activityService,
+            essentialServiceModule.processStateService,
             nativeModule.ndkService,
             sessionProperties,
             coreModule.logger,
@@ -78,7 +78,7 @@ internal class SessionModuleImpl(
                 dataContainerModule.performanceInfoService,
                 essentialServiceModule.metadataService,
                 dataCaptureServiceModule.breadcrumbService,
-                essentialServiceModule.activityService,
+                essentialServiceModule.processStateService,
                 dataContainerModule.eventService,
                 customerLogModule.remoteLogger,
                 essentialServiceModule.userService,

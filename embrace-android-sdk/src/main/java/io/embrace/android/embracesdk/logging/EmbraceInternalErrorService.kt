@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.ExceptionError
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.net.BindException
 import java.net.ConnectException
 import java.net.HttpRetryException
@@ -21,7 +21,7 @@ import java.net.UnknownServiceException
  * Intercepts Embrace SDK's exceptions errors and forwards them to the Embrace API.
  */
 internal class EmbraceInternalErrorService(
-    private val activityService: ActivityService,
+    private val processStateService: ProcessStateService,
     private val clock: Clock,
     private val logStrictMode: Boolean
 ) {
@@ -118,7 +118,7 @@ internal class EmbraceInternalErrorService(
     }
 
     private fun getApplicationState(): String = when {
-        activityService.isInBackground -> APPLICATION_STATE_BACKGROUND
+        processStateService.isInBackground -> APPLICATION_STATE_BACKGROUND
         else -> APPLICATION_STATE_ACTIVE
     }
 

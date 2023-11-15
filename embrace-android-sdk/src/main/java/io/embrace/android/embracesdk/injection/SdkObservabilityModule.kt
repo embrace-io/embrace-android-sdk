@@ -24,7 +24,7 @@ internal class SdkObservabilityModuleImpl(
     }
 
     override val exceptionService: EmbraceInternalErrorService by singleton {
-        EmbraceInternalErrorService(essentialServiceModule.activityService, initModule.clock, logStrictMode)
+        EmbraceInternalErrorService(essentialServiceModule.processStateService, initModule.clock, logStrictMode)
     }
 
     override val internalErrorLogger: InternalErrorLogger by singleton {

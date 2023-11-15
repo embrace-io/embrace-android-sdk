@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -40,7 +40,7 @@ internal class EmbraceSessionServiceTest {
 
     companion object {
 
-        private val activityService = FakeActivityService()
+        private val activityService = FakeProcessStateService()
         private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
         private val mockSession: Session = mockk(relaxed = true)
         private val mockSessionMessage: SessionMessage = mockk(relaxed = true)

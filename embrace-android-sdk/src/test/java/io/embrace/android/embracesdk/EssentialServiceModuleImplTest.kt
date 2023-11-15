@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.session.EmbraceActivityService
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockk
@@ -46,12 +46,13 @@ internal class EssentialServiceModuleImplTest {
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
         assertTrue(module.orientationService is NoOpOrientationService)
-        assertTrue(module.activityService is EmbraceActivityService)
+        assertTrue(module.processStateService is EmbraceProcessStateService)
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.urlBuilder)
         assertNotNull(module.cache)
         assertNotNull(module.apiClient)
         assertNotNull(module.apiService)
+        assertNotNull(module.activityLifecycleTracker)
         assertTrue(module.configService is EmbraceConfigService)
         assertTrue(module.gatingService is EmbraceGatingService)
     }

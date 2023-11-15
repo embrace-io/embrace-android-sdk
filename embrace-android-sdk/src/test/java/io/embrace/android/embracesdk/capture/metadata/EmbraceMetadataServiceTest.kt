@@ -13,10 +13,10 @@ import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -86,7 +86,7 @@ internal class EmbraceMetadataServiceTest {
     }
 
     private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free")
-    private val activityService = FakeActivityService()
+    private val activityService = FakeProcessStateService()
     private val configService: ConfigService =
         FakeConfigService(
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(

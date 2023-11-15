@@ -11,6 +11,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -20,16 +22,15 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
-internal class EmbraceActivityServiceTest {
+internal class ActivityLifecycleTrackerTest {
 
-    private lateinit var activityService: EmbraceActivityService
+    private lateinit var activityLifecycleTracker: ActivityLifecycleTracker
 
     companion object {
         private lateinit var mockLooper: Looper
@@ -75,24 +76,23 @@ internal class EmbraceActivityServiceTest {
             staticMocks = false
         )
 
-        activityService = EmbraceActivityService(
+        activityLifecycleTracker = ActivityLifecycleTracker(
             mockApplication,
             mockOrientationService,
-            fakeClock
         )
     }
 
     @Test
     fun `test we are adding lifecycle observer on constructor`() {
-        verify { mockApplication.registerActivityLifecycleCallbacks(activityService) }
+        verify { mockApplication.registerActivityLifecycleCallbacks(activityLifecycleTracker) }
     }
 
     @Test
     fun `test on activity created updates state and orientation`() {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
         val mockResources = mockk<Resources>()
         val orientation = 1
@@ -104,11 +104,11 @@ internal class EmbraceActivityServiceTest {
         every { mockResources.configuration } returns mockConfiguration
         val bundle = Bundle()
 
-        activityService.onActivityCreated(mockActivity, bundle)
+        activityLifecycleTracker.onActivityCreated(mockActivity, bundle)
 
-        assertEquals(mockActivity, activityService.foregroundActivity)
+        assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
         verify { mockOrientationService.onOrientationChanged(orientation) }
-        verify { mockActivityListener.onActivityCreated(mockActivity, bundle) }
+        verify { mockActivityLifecycleListener.onActivityCreated(mockActivity, bundle) }
     }
 
     @Test
@@ -116,110 +116,56 @@ internal class EmbraceActivityServiceTest {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
 
-        activityService.onActivityStarted(mockActivity)
+        activityLifecycleTracker.onActivityStarted(mockActivity)
         every { mockActivity.isFinishing } returns false
 
-        assertEquals(mockActivity, activityService.foregroundActivity)
+        assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
     }
 
     @Test
     fun `test on activity started with activity listener`() {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
         every { mockActivity.isFinishing } returns false
 
-        activityService.onActivityStarted(mockActivity)
+        activityLifecycleTracker.onActivityStarted(mockActivity)
 
-        verify { mockActivityListener.onView(mockActivity) }
-        assertEquals(mockActivity, activityService.foregroundActivity)
+        verify { mockActivityLifecycleListener.onView(mockActivity) }
+        assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
     }
 
     @Test
     fun `verify on activity resumed for a StartupActivity does not trigger listeners`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        activityService.onActivityResumed(TestStartupActivity())
+        activityLifecycleTracker.onActivityResumed(TestStartupActivity())
 
-        verify { mockActivityListener wasNot Called }
+        verify { mockActivityLifecycleListener wasNot Called }
     }
 
     @Test
     fun `verify on activity resumed for a non StartupActivity does trigger listeners`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        activityService.onActivityResumed(TestNonStartupActivity())
+        activityLifecycleTracker.onActivityResumed(TestNonStartupActivity())
 
-        verify { mockActivityListener.applicationStartupComplete() }
+        verify { mockActivityLifecycleListener.applicationStartupComplete() }
     }
 
     @Test
     fun `verify on activity stopped triggers listeners`() {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        activityService.onActivityStopped(mockActivity)
+        activityLifecycleTracker.onActivityStopped(mockActivity)
 
-        verify { mockActivityListener.onViewClose(mockActivity) }
-    }
-
-    @Test
-    fun `verify on activity foreground for cold start triggers listeners`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
-
-        activityService.onForeground()
-
-        verify { mockActivityListener.onForeground(true, fakeClock.now(), fakeClock.now()) }
-    }
-
-    @Test
-    fun `verify on activity foreground called twice is not a cold start`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
-
-        with(activityService) {
-            onForeground()
-            // repeat so it's not a cold start
-            onForeground()
-        }
-
-        verify { mockActivityListener.onForeground(true, fakeClock.now(), fakeClock.now()) }
-        verify { mockActivityListener.onForeground(true, fakeClock.now(), fakeClock.now()) }
-    }
-
-    @Test
-    fun `verify on activity background triggers listeners`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
-
-        activityService.onBackground()
-
-        verify { mockActivityListener.onBackground(any()) }
-    }
-
-    @Test
-    fun `verify isInBackground returns true by default`() {
-        assertTrue(activityService.isInBackground)
-    }
-
-    @Test
-    fun `verify isInBackground returns false if it was previously on foreground`() {
-        activityService.onForeground()
-
-        assertFalse(activityService.isInBackground)
-    }
-
-    @Test
-    fun `verify isInBackground returns true if it was previously on background`() {
-        activityService.onBackground()
-
-        assertTrue(activityService.isInBackground)
+        verify { mockActivityLifecycleListener.onViewClose(mockActivity) }
     }
 
     @Test
@@ -227,9 +173,9 @@ internal class EmbraceActivityServiceTest {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
         every { mockActivity.isFinishing } returns false
-        activityService.updateStateWithActivity(mockActivity)
+        activityLifecycleTracker.updateStateWithActivity(mockActivity)
 
-        assertEquals(mockActivity, activityService.foregroundActivity)
+        assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
     }
 
     @Test
@@ -237,61 +183,61 @@ internal class EmbraceActivityServiceTest {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
         every { mockActivity.isFinishing } returns true
-        activityService.updateStateWithActivity(mockActivity)
+        activityLifecycleTracker.updateStateWithActivity(mockActivity)
 
-        assertNull(activityService.foregroundActivity)
+        assertNull(activityLifecycleTracker.foregroundActivity)
     }
 
     @Test
     fun `get foreground activity for a non existing activity should return absent`() {
-        activityService.updateStateWithActivity(null)
-        assertNull(activityService.foregroundActivity)
+        activityLifecycleTracker.updateStateWithActivity(null)
+        assertNull(activityLifecycleTracker.foregroundActivity)
     }
 
     @Test
     fun `verify a listener is added`() {
         // assert empty list first
-        assertEquals(0, activityService.listeners.size)
+        assertEquals(0, activityLifecycleTracker.listeners.size)
 
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        assertEquals(1, activityService.listeners.size)
+        assertEquals(1, activityLifecycleTracker.listeners.size)
     }
 
     @Test
     fun `verify if listener is already present, then it does not add anything`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
         // add it for a 2nd time
-        activityService.addListener(mockActivityListener)
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        assertEquals(1, activityService.listeners.size)
+        assertEquals(1, activityLifecycleTracker.listeners.size)
     }
 
     @Test
     fun `verify a listener is added with priority`() {
-        val mockActivityListener = mockk<ActivityListener>()
-        val mockActivityListener2 = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        val mockActivityLifecycleListener2 = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        activityService.addListener(mockActivityListener2)
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener2)
 
-        assertEquals(2, activityService.listeners.size)
-        assertEquals(mockActivityListener2, activityService.listeners[1])
+        assertEquals(2, activityLifecycleTracker.listeners.size)
+        assertEquals(mockActivityLifecycleListener2, activityLifecycleTracker.listeners[1])
     }
 
     @Test
     fun `verify close cleans everything`() {
         // add a listener first, so we then check that listener have been cleared
-        val mockActivityListener = mockk<ActivityListener>()
-        activityService.addListener(mockActivityListener)
-        every { mockApplication.unregisterActivityLifecycleCallbacks(activityService) } returns Unit
+        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
+        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
+        every { mockApplication.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) } returns Unit
 
-        activityService.close()
+        activityLifecycleTracker.close()
 
-        verify { mockApplication.unregisterActivityLifecycleCallbacks(activityService) }
-        assertTrue(activityService.listeners.isEmpty())
+        verify { mockApplication.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) }
+        assertTrue(activityLifecycleTracker.listeners.isEmpty())
     }
 
     @io.embrace.android.embracesdk.annotation.StartupActivity

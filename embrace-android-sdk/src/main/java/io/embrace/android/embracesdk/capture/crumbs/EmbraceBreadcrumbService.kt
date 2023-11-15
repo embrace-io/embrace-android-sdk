@@ -19,8 +19,8 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
-import io.embrace.android.embracesdk.session.ActivityListener
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.utils.filter
 import java.util.Collections
 import java.util.Deque
@@ -42,7 +42,7 @@ internal class EmbraceBreadcrumbService(
     clock: Clock,
     configService: ConfigService,
     logger: InternalEmbraceLogger
-) : BreadcrumbService, ActivityListener, MemoryCleanerListener {
+) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     /**
      * Clock used by the service

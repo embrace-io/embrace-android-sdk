@@ -25,7 +25,7 @@ internal sealed class ApiResponse {
     data class TooManyRequests(val retryAfter: Long?) : ApiResponse()
 
     /**
-     * Represents a failed API call. (status code 400-499 or 500-599)
+     * Represents a failed API call. (status code 400-499 or 500-599 except 413 and 429)
      */
     data class Failure(val code: Int, val headers: Map<String, String>?) : ApiResponse()
 

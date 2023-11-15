@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.SessionHandler
+import io.embrace.android.embracesdk.session.SessionMessageCollator
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -14,6 +15,7 @@ internal interface SessionModule {
     val sessionHandler: SessionHandler
     val sessionService: SessionService
     val backgroundActivityService: BackgroundActivityService?
+    val sessionMessageCollator: SessionMessageCollator
 }
 
 internal class SessionModuleImpl(
@@ -31,6 +33,24 @@ internal class SessionModuleImpl(
     workerThreadModule: WorkerThreadModule
 ) : SessionModule {
 
+    override val sessionMessageCollator: SessionMessageCollator by singleton {
+        SessionMessageCollator(
+            essentialServiceModule.configService,
+            essentialServiceModule.metadataService,
+            dataContainerModule.eventService,
+            customerLogModule.remoteLogger,
+            sdkObservabilityModule.exceptionService,
+            dataContainerModule.performanceInfoService,
+            dataCaptureServiceModule.webviewService,
+            dataCaptureServiceModule.activityLifecycleBreadcrumbService,
+            dataCaptureServiceModule.thermalStatusService,
+            nativeModule.nativeThreadSamplerService,
+            dataCaptureServiceModule.breadcrumbService,
+            essentialServiceModule.userService,
+            initModule.clock
+        )
+    }
+
     override val sessionHandler: SessionHandler by singleton {
         SessionHandler(
             coreModule.logger,
@@ -42,16 +62,10 @@ internal class SessionModuleImpl(
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.activityLifecycleTracker,
             nativeModule.ndkService,
-            dataContainerModule.eventService,
-            customerLogModule.remoteLogger,
             sdkObservabilityModule.exceptionService,
-            dataContainerModule.performanceInfoService,
             essentialServiceModule.memoryCleanerService,
             deliveryModule.deliveryService,
-            dataCaptureServiceModule.webviewService,
-            dataCaptureServiceModule.activityLifecycleBreadcrumbService,
-            dataCaptureServiceModule.thermalStatusService,
-            nativeModule.nativeThreadSamplerService,
+            sessionMessageCollator,
             initModule.clock,
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CLOSER),
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING)

@@ -148,6 +148,21 @@ internal class SessionHandlerTest {
         )
         gatingService = FakeGatingService(configService = configService)
         deliveryService = FakeDeliveryService()
+        val sessionMessageCollator = SessionMessageCollator(
+            configService,
+            metadataService,
+            mockEventService,
+            mockRemoteLogger,
+            mockExceptionService,
+            mockPerformanceInfoService,
+            mockWebViewservice,
+            null,
+            NoOpThermalStatusService(),
+            null,
+            mockBreadcrumbService,
+            mockUserService,
+            clock
+        )
         sessionHandler = SessionHandler(
             logger,
             configService,
@@ -158,16 +173,10 @@ internal class SessionHandlerTest {
             mockBreadcrumbService,
             activityLifecycleTracker,
             mockNdkService,
-            mockEventService,
-            mockRemoteLogger,
             mockExceptionService,
-            mockPerformanceInfoService,
             mockMemoryCleanerService,
             deliveryService,
-            mockWebViewservice,
-            null,
-            NoOpThermalStatusService(),
-            null,
+            sessionMessageCollator,
             clock,
             automaticSessionStopper = mockAutomaticSessionStopper,
             sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService

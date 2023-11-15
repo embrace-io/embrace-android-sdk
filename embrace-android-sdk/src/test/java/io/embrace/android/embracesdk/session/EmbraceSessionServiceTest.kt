@@ -116,7 +116,7 @@ internal class EmbraceSessionServiceTest {
 
         service.startSession(coldStart, type, startTime)
 
-        assertEquals(mockSession, service.getActiveSession())
+        assertEquals(mockSession, service.activeSession)
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
@@ -127,7 +127,7 @@ internal class EmbraceSessionServiceTest {
                 any()
             )
         }
-        assertEquals(mockSession, service.getActiveSession())
+        assertEquals(mockSession, service.activeSession)
     }
 
     @Test
@@ -149,7 +149,7 @@ internal class EmbraceSessionServiceTest {
         val startTime = clock.now()
         service.startSession(coldStart, type, startTime)
 
-        assertNull(service.getActiveSession())
+        assertNull(service.activeSession)
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
@@ -249,7 +249,7 @@ internal class EmbraceSessionServiceTest {
             )
         }
         // verify active session has been reset
-        assertNull(service.getActiveSession())
+        assertNull(service.activeSession)
     }
 
     @Test

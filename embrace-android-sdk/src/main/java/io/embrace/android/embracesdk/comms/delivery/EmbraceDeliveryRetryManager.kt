@@ -43,7 +43,11 @@ internal class EmbraceDeliveryRetryManager(
      */
     override fun scheduleForRetry(request: ApiRequest, payload: ByteArray) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
-        if (pendingRetriesCount() < MAX_FAILED_CALLS || request.isSessionRequest()) {
+        val limit = when { // temporary limit: remove when we have separate queues for different messages.
+            request.isSessionRequest() -> MAX_FAILED_SESSION_CALLS
+            else -> MAX_FAILED_CALLS
+        }
+        if (pendingRetriesCount() < limit) {
             val scheduleJob = retryQueue.isEmpty()
             val cachedPayloadName = cacheManager.savePayload(payload)
             val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName)
@@ -215,3 +219,4 @@ private const val TAG = "EmbraceDeliveryRetryManager"
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
 private const val MAX_FAILED_CALLS = 200 // Max number of failed calls that will be cached for retry
+private const val MAX_FAILED_SESSION_CALLS = 250 // Temporary: max limit when the request is a session message

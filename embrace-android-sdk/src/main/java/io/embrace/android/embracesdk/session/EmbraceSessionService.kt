@@ -126,8 +126,9 @@ internal class EmbraceSessionService(
 
     fun onPeriodicCacheActiveSession() {
         try {
+            val session = activeSession ?: return
             sessionHandler.onPeriodicCacheActiveSession(
-                activeSession,
+                session,
                 sessionProperties,
                 sdkStartupDuration,
                 spansService.completedSpans()
@@ -185,9 +186,10 @@ internal class EmbraceSessionService(
      */
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
         logger.logDebug("Will try to end session.")
+        val session = activeSession ?: return
         sessionHandler.onSessionEnded(
             endType,
-            activeSession,
+            session,
             sessionProperties,
             sdkStartupDuration,
             endTime,

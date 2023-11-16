@@ -50,9 +50,21 @@ internal class SessionHandler(
     /**
      * Defines the states in which a session can end.
      */
-    private enum class SessionEndType(
+    private enum class SessionSnapshotType(
+
+        /**
+         * Whether the session ended cleanly (i.e. not because of a crash).
+         */
         val endedCleanly: Boolean,
+
+        /**
+         * Whether the session process experienced a force quit/unexpected termination.
+         */
         val forceQuit: Boolean,
+
+        /**
+         * Whether periodic caching of the session should stop or not.
+         */
         val shouldStopCaching: Boolean
     ) {
 
@@ -65,12 +77,12 @@ internal class SessionHandler(
          * The end session is being constructed so that it can be periodically cached. This avoids
          * the scenario of data loss in the event of NDK crashes.
          */
-        CACHED_END(false, true, false),
+        PERIODIC_CACHE(false, true, false),
 
         /**
          * The end session is being constructed because of a JVM crash.
          */
-        JVM_CRASH_END(false, false, true);
+        JVM_CRASH(false, false, true);
     }
 
     var scheduledFuture: ScheduledFuture<*>? = null
@@ -97,17 +109,17 @@ internal class SessionHandler(
                 return null
             }
 
-        logDeveloper("SessionHandler", "Session Started")
-        val session = Session.buildStartSession(
-            Uuid.getEmbUuid(),
-            coldStart,
-            startType,
-            startTime,
-            preferencesService.getIncrementAndGetSessionNumber(),
-            userService.loadUserInfoFromDisk(),
-            sessionProperties.get()
-        )
-        logDeveloper("SessionHandler", "SessionId = ${session.sessionId}")
+            logDeveloper("SessionHandler", "Session Started")
+            val session = Session.buildStartSession(
+                Uuid.getEmbUuid(),
+                coldStart,
+                startType,
+                startTime,
+                preferencesService.getIncrementAndGetSessionNumber(),
+                userService.loadUserInfoFromDisk(),
+                sessionProperties.get()
+            )
+            logDeveloper("SessionHandler", "SessionId = ${session.sessionId}")
 
             // Record the connection type at the start of the session.
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
@@ -135,7 +147,7 @@ internal class SessionHandler(
      */
     fun onSessionEnded(
         endType: SessionLifeEventType,
-        originSession: Session?,
+        originSession: Session,
         sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,
         endTime: Long,
@@ -143,11 +155,8 @@ internal class SessionHandler(
     ) {
         synchronized(lock) {
             logger.logDebug("Will try to run end session full.")
-            if (originSession == null) {
-                return
-            }
-            val fullEndSessionMessage = runEndSessionImpl(
-                SessionEndType.NORMAL_END,
+            val fullEndSessionMessage = createSessionSnapshot(
+                SessionSnapshotType.NORMAL_END,
                 originSession,
                 sessionProperties,
                 sdkStartupDuration,
@@ -179,8 +188,8 @@ internal class SessionHandler(
     ) {
         synchronized(lock) {
             logger.logDebug("Will try to run end session for crash.")
-            val fullEndSessionMessage = runEndSessionImpl(
-                SessionEndType.JVM_CRASH_END,
+            val fullEndSessionMessage = createSessionSnapshot(
+                SessionSnapshotType.JVM_CRASH,
                 originSession,
                 sessionProperties,
                 sdkStartupDuration,
@@ -208,8 +217,8 @@ internal class SessionHandler(
         synchronized(lock) {
             val msg = activeSession?.let {
                 logger.logDebug("Will try to run end session for caching.")
-                runEndSessionImpl(
-                    SessionEndType.CACHED_END,
+                createSessionSnapshot(
+                    SessionSnapshotType.PERIODIC_CACHE,
                     activeSession,
                     sessionProperties,
                     sdkStartupDuration,
@@ -253,12 +262,7 @@ internal class SessionHandler(
     /**
      * It determines if we are allowed to build an end session message.
      */
-    private fun isAllowedToEnd(endType: SessionLifeEventType, activeSession: Session?): Boolean {
-        if (activeSession == null) {
-            logger.logDebug("No active session found. Session is not allowed to end.")
-            return false
-        }
-
+    private fun isAllowedToEnd(endType: SessionLifeEventType, activeSession: Session): Boolean {
         return when (endType) {
             SessionLifeEventType.STATE -> {
                 // state sessions are always allowed to be ended
@@ -289,12 +293,11 @@ internal class SessionHandler(
     }
 
     /**
-     * 'Ends' the active session. Note that this logic is also used for caching the session
-     * periodically so the session won't always end. The behavior is controlled by the
-     * [SessionEndType] passed to this function.
+     * Snapshots the active session. The behavior is controlled by the
+     * [SessionSnapshotType] passed to this function.
      */
-    private fun runEndSessionImpl(
-        endType: SessionEndType,
+    private fun createSessionSnapshot(
+        endType: SessionSnapshotType,
         activeSession: Session,
         sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,

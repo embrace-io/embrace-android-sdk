@@ -5,22 +5,21 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class EmbraceSessionService(
     private val processStateService: ProcessStateService,
     ndkService: NdkService,
-    private val sessionProperties: EmbraceSessionProperties,
-    private val logger: InternalEmbraceLogger,
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
     private val clock: Clock,
-    private val spansService: SpansService
+    private val spansService: SpansService,
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService, ProcessStateListener {
 
     companion object {
@@ -92,7 +91,6 @@ internal class EmbraceSessionService(
             coldStart,
             startType,
             startTime,
-            sessionProperties,
             automaticSessionCloserCallback,
             this::onPeriodicCacheActiveSession
         )
@@ -113,7 +111,6 @@ internal class EmbraceSessionService(
             sessionHandler.onCrash(
                 it,
                 crashId,
-                sessionProperties,
                 sdkStartupDuration,
                 spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
             )
@@ -129,7 +126,6 @@ internal class EmbraceSessionService(
             val session = activeSession ?: return
             sessionHandler.onPeriodicCacheActiveSession(
                 session,
-                sessionProperties,
                 sdkStartupDuration,
                 spansService.completedSpans()
             )
@@ -190,7 +186,6 @@ internal class EmbraceSessionService(
         sessionHandler.onSessionEnded(
             endType,
             session,
-            sessionProperties,
             sdkStartupDuration,
             endTime,
             spansService.flushSpans()

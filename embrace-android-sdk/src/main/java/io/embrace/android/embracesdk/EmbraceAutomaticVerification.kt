@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
@@ -40,16 +39,12 @@ internal class EmbraceAutomaticVerification(
 
     private var foregroundEventTriggered = false
 
-    @VisibleForTesting
     internal lateinit var activityLifecycleTracker: ActivityTracker
 
-    @VisibleForTesting
     internal lateinit var processStateService: ProcessStateService
 
-    @VisibleForTesting
     var automaticVerificationChecker = AutomaticVerificationChecker()
 
-    @VisibleForTesting
     var verificationActions = VerificationActions(Embrace.getInstance(), automaticVerificationChecker)
 
     /**
@@ -72,7 +67,6 @@ internal class EmbraceAutomaticVerification(
         instance.runVerifyIntegration()
     }
 
-    @VisibleForTesting
     fun setActivityListener() {
         if (!::activityLifecycleTracker.isInitialized) {
             activityLifecycleTracker = checkNotNull(Embrace.getImpl().activityLifecycleTracker)
@@ -101,7 +95,6 @@ internal class EmbraceAutomaticVerification(
         }
     }
 
-    @VisibleForTesting
     fun startVerification() {
         val activity = activityLifecycleTracker.foregroundActivity
         if (activity != null) {
@@ -144,7 +137,6 @@ internal class EmbraceAutomaticVerification(
         }
     }
 
-    @VisibleForTesting
     fun runEndSession() {
         Embrace.getInstance().endSession()
         logger.logInfo("$TAG End session manually")

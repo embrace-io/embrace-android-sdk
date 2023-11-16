@@ -4,7 +4,6 @@ import android.os.Build
 import android.os.StrictMode
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.payload.ExceptionInfo
@@ -25,7 +24,6 @@ internal class EmbraceStrictModeService(
         addStrictModeListener(executorService, StrictMode.OnThreadViolationListener(::addViolation))
     }
 
-    @VisibleForTesting
     internal fun addViolation(violation: Violation) {
         if (violations.size < configService.anrBehavior.getStrictModeViolationLimit()) {
             val exceptionInfo = ExceptionInfo.ofThrowable(violation)

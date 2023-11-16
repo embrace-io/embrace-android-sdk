@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -48,7 +47,6 @@ internal class SessionHandler(
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
 
-    @VisibleForTesting
     var scheduledFuture: ScheduledFuture<*>? = null
 
     /**

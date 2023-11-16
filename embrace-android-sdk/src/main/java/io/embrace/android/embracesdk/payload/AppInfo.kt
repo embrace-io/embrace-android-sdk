@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.internal.utils.MessageUtils
 
@@ -107,7 +106,6 @@ internal data class AppInfo(
      * The version number of the platform (e.g. Unity 2021)
      */
     @SerializedName("unv")
-    @get:VisibleForTesting
     val hostedPlatformVersion: String? = null,
 
     /**
@@ -120,7 +118,6 @@ internal data class AppInfo(
      * The version number of the hosted SDK (e.g. Embrace Unity 1.7.0)
      */
     @SerializedName("usv")
-    @get:VisibleForTesting
     val hostedSdkVersion: String? = null,
 ) {
     fun toJson(): String {

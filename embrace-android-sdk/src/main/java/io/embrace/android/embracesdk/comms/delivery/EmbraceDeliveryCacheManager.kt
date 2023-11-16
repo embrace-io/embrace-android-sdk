@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -43,7 +42,6 @@ internal class EmbraceDeliveryCacheManager(
          */
         private const val FAILED_API_CALLS_FILE_NAME = "failed_api_calls.json"
 
-        @VisibleForTesting
         const val MAX_SESSIONS_CACHED = 64
 
         private const val TAG = "DeliveryCacheManager"
@@ -267,7 +265,6 @@ internal class EmbraceDeliveryCacheManager(
         }
     }
 
-    @VisibleForTesting
     data class CachedSession(
         val filename: String,
         val sessionId: String,

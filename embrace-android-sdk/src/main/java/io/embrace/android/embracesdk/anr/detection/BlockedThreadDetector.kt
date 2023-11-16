@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import android.os.Debug
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -105,7 +104,7 @@ internal class BlockedThreadDetector constructor(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-    @VisibleForTesting
+
     internal fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
@@ -118,7 +117,7 @@ internal class BlockedThreadDetector constructor(
      *
      * This defaults to the main thread not having processed a message within 1s.
      */
-    @VisibleForTesting
+
     internal fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
         enforceThread(anrMonitorThread)
 

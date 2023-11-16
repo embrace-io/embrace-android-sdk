@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.thermalstate
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.ThermalState
@@ -33,7 +32,6 @@ internal class EmbraceThermalStatusService(
         }
     }
 
-    @VisibleForTesting
     fun handleThermalStateChange(status: Int?) {
         if (status == null) {
             logger.logDeveloper("ThermalStatusService", "Null thermal status, no-oping.")

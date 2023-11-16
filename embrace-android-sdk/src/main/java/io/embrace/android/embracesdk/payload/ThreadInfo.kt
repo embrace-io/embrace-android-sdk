@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.payload
 
-import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
 
 /**
  * Represents thread information at a given point in time.
  */
-internal data class ThreadInfo @VisibleForTesting internal constructor(
+internal data class ThreadInfo internal constructor(
 
     /**
      * The thread ID

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.anr.sigquit
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -56,7 +55,6 @@ internal class SigquitDetectionService(
         }
     }
 
-    @VisibleForTesting
     fun setupGoogleAnrHandler() {
         logger.logDeveloper("EmbraceAnrService", "Setting up Google ANR Handler")
         // TODO: split up the ANR tracking and NDK crash reporter libs

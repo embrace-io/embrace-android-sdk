@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.user
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.UserInfo.Companion.ofStored
@@ -14,7 +13,7 @@ internal class EmbraceUserService(
 ) : ProcessStateListener, UserService {
 
     @Volatile
-    @VisibleForTesting
+
     internal var info: UserInfo = ofStored(preferencesService)
 
     override fun loadUserInfoFromDisk(): UserInfo? {

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.lifecycle
 
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -23,7 +22,7 @@ internal class EmbraceProcessStateService(
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-    @VisibleForTesting
+
     val listeners = CopyOnWriteArrayList<ProcessStateListener>()
 
     /**

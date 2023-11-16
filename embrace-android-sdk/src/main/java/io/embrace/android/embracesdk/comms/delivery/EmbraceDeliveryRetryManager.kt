@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
@@ -87,7 +86,7 @@ internal class EmbraceDeliveryRetryManager(
     /**
      * Returns true if there is an active pending retry task
      */
-    @VisibleForTesting
+
     fun isRetryTaskActive(): Boolean =
         lastRetryTask?.let { task ->
             !task.isCancelled && !task.isDone
@@ -96,7 +95,7 @@ internal class EmbraceDeliveryRetryManager(
     /**
      * Returns the number of failed API calls that will be retried
      */
-    @VisibleForTesting
+
     fun pendingRetriesCount() = retryQueue.size
 
     /**

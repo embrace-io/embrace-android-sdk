@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.view.WindowManager
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
@@ -227,7 +226,6 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataRetrieveExecutorService.submit(
             Callable<Any?> {
@@ -251,7 +249,6 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value
 
     override fun getDeviceId(): String = deviceId.value

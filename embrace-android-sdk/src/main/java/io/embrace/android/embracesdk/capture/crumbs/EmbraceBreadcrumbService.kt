@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.text.TextUtils
 import android.util.Pair
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
@@ -60,7 +59,6 @@ internal class EmbraceBreadcrumbService(
     private val viewBreadcrumbs = LinkedBlockingDeque<ViewBreadcrumb?>()
     private val tapBreadcrumbs = LinkedBlockingDeque<TapBreadcrumb?>()
 
-    @VisibleForTesting
     val customBreadcrumbs = LinkedBlockingDeque<CustomBreadcrumb?>()
     private val rnActionBreadcrumbs = LinkedBlockingDeque<RnActionBreadcrumb?>()
     val webViewBreadcrumbs = LinkedBlockingDeque<WebViewBreadcrumb?>()

@@ -49,7 +49,6 @@ internal class EmbraceAnrService(
     private val sigquitDetectionService: SigquitDetectionService
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
-    @VisibleForTesting
     val listeners = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
@@ -151,7 +150,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    @VisibleForTesting
     internal fun processAnrTick(timestamp: Long) {
         // Check if ANR capture is enabled
         if (!configService.anrBehavior.isAnrCaptureEnabled()) {

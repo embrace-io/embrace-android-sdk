@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
@@ -57,7 +56,7 @@ internal class EmbraceSessionService(
      * The currently active session.
      */
     @Volatile
-    @VisibleForTesting
+
     internal var activeSession: Session? = null
 
     init {
@@ -133,7 +132,7 @@ internal class EmbraceSessionService(
     /**
      * Caches the session, with performance information generated up to the current point.
      */
-    @VisibleForTesting
+
     fun onPeriodicCacheActiveSession() {
         try {
             synchronized(lock) {

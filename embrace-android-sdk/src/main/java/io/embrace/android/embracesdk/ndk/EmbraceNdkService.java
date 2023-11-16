@@ -264,7 +264,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
         }
     }
 
-    @VisibleForTesting
+    
     void checkSignalHandlersOverwritten() {
         if (configService.getAutoDataCaptureBehavior().isSigHandlerDetectionEnabled()) {
             String culprit = delegate._checkForOverwrittenHandlers();

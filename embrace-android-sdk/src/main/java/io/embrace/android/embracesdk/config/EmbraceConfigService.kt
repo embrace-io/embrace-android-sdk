@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.config
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
@@ -53,11 +52,9 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val listeners: MutableSet<ConfigListener> = CopyOnWriteArraySet()
     private val lock = Any()
 
-    @VisibleForTesting
     @Volatile
     private var configProp = RemoteConfig()
 
-    @VisibleForTesting
     @Volatile
     var lastUpdated: Long = 0
 
@@ -192,7 +189,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     /**
      * Load Config from cache if present.
      */
-    @VisibleForTesting
+
     fun loadConfigFromCache() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to load config from cache")
         val cachedConfig = apiService.getCachedConfig()

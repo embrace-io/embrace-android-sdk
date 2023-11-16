@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session.lifecycle
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -29,7 +28,7 @@ internal class ActivityLifecycleTracker(
     /**
      * List of listeners that subscribe to activity events.
      */
-    @VisibleForTesting
+
     val listeners = CopyOnWriteArrayList<ActivityLifecycleListener>()
 
     /**
@@ -43,7 +42,7 @@ internal class ActivityLifecycleTracker(
      *
      * @param activity the activity involved in the state change.
      */
-    @VisibleForTesting
+
     @Synchronized
     fun updateStateWithActivity(activity: Activity?) {
         logger.logDeveloper(

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -61,12 +60,11 @@ internal class EmbraceBackgroundActivityService(
     /**
      * The active background activity session.
      */
-    @VisibleForTesting
+
     @Volatile
     var backgroundActivity: BackgroundActivity? = null
     private val manualBkgSessionsSent = AtomicInteger(0)
 
-    @VisibleForTesting
     var lastSendAttempt: Long
     private var isEnabled = true
 

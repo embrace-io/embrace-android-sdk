@@ -41,7 +41,7 @@ internal class NetworkBehaviorTest {
                 )
             ),
             disabledUrlPatterns = listOf("google.com"),
-            defaultCaptureLimit = 220,
+            defaultCaptureLimit = 720,
         ),
         capturePublicKey = "test"
     )
@@ -86,10 +86,29 @@ internal class NetworkBehaviorTest {
             assertTrue(isRequestContentLengthCaptureEnabled())
             assertFalse(isNativeNetworkingMonitoringEnabled())
             assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomain())
-            assertEquals(220, getNetworkCaptureLimit())
+            assertEquals(720, getNetworkCaptureLimit())
             assertFalse(isUrlEnabled("google.com"))
             assertTrue(isCaptureBodyEncryptionEnabled())
             assertEquals("test", getCapturePublicKey())
+        }
+    }
+
+    @Test
+    fun testRemoteOnly() {
+        with(fakeNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
+            assertEquals(409, getNetworkCaptureLimit())
+            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomain())
+            assertTrue(isUrlEnabled("google.com"))
+            assertFalse(isUrlEnabled("example.com"))
+            assertEquals(
+                NetworkCaptureRuleRemoteConfig(
+                    "test",
+                    5000,
+                    "GET",
+                    "google.com",
+                ),
+                getNetworkCaptureRules().single()
+            )
         }
     }
 

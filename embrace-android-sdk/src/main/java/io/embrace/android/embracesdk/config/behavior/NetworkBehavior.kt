@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import java.util.regex.Pattern
+import kotlin.math.min
 
 /**
  * Provides the behavior that functionality relating to network call capture should follow.
@@ -68,28 +69,27 @@ internal class NetworkBehavior(
      * List of domains to be limited for tracking.
      */
     fun getNetworkCallLimitsPerDomain(): Map<String, Int> {
-        return remote?.networkConfig?.domainLimits
-            ?: transformLocalDomainCfg()
-            ?: HashMap()
-    }
+        val limitCeiling = getLimitCeiling()
+        val domainLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
 
-    private fun transformLocalDomainCfg(): Map<String, Int>? {
-        val mergedLimits: MutableMap<String, Int> = HashMap()
-        for (domain in local?.networking?.domains ?: return null) {
-            if (domain.domain != null && domain.limit != null) {
-                mergedLimits[domain.domain] = domain.limit
+        local?.networking?.domains?.forEach { localDomainLimit ->
+            if (localDomainLimit.domain != null && localDomainLimit.limit != null) {
+                domainLimits[localDomainLimit.domain] =
+                    domainLimits[localDomainLimit.domain]?.let { remoteLimit ->
+                        min(remoteLimit, localDomainLimit.limit)
+                    } ?: min(limitCeiling, localDomainLimit.limit)
             }
         }
-        return mergedLimits
+
+        return domainLimits
     }
 
     /**
-     * Gets the capture limit for network calls.
+     * Gets the default limit for network calls for all domains where the limit is not specified.
      */
     fun getNetworkCaptureLimit(): Int {
-        return remote?.networkConfig?.defaultCaptureLimit
-            ?: local?.networking?.defaultCaptureLimit
-            ?: DEFAULT_NETWORK_CALL_LIMIT
+        val remoteDefault = getLimitCeiling()
+        return min(remoteDefault, local?.networking?.defaultCaptureLimit ?: remoteDefault)
     }
 
     /**
@@ -129,4 +129,9 @@ internal class NetworkBehavior(
      * Gets the rules for capturing network call bodies
      */
     fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> = remote?.networkCaptureRules ?: emptySet()
+
+    /**
+     * Cap the limit at the default limit set on the remote config
+     */
+    private fun getLimitCeiling(): Int = remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT
 }

@@ -66,22 +66,28 @@ internal class NetworkBehavior(
         local?.networking?.enableNativeMonitoring ?: ENABLE_NATIVE_MONITORING_DEFAULT
 
     /**
-     * List of domains to be limited for tracking.
+     * Map of limits being enforced for each domain suffix for the maximum number of requests that are logged given that suffix. The
+     * algorithm to generate the limits for each domain suffix is as follows:
+     *
+     * - Use the domain-suffix-specific settings defined in the remote config as a base.
+     * - For suffixes where there is both local and remote entries, use the local limit if it is smaller than the remote one
+     * - For suffixes with only a local entry, apply the local limit or the ceiling defined by the default limit on the remote,
+     *   which ever is smaller.
      */
-    fun getNetworkCallLimitsPerDomain(): Map<String, Int> {
+    fun getNetworkCallLimitsPerDomainSuffix(): Map<String, Int> {
         val limitCeiling = getLimitCeiling()
-        val domainLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
+        val domainSuffixLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
 
-        local?.networking?.domains?.forEach { localDomainLimit ->
-            if (localDomainLimit.domain != null && localDomainLimit.limit != null) {
-                domainLimits[localDomainLimit.domain] =
-                    domainLimits[localDomainLimit.domain]?.let { remoteLimit ->
-                        min(remoteLimit, localDomainLimit.limit)
-                    } ?: min(limitCeiling, localDomainLimit.limit)
+        local?.networking?.domains?.forEach { localLimit ->
+            if (localLimit.domain != null && localLimit.limit != null) {
+                domainSuffixLimits[localLimit.domain] =
+                    domainSuffixLimits[localLimit.domain]?.let { remoteLimit ->
+                        min(remoteLimit, localLimit.limit)
+                    } ?: min(limitCeiling, localLimit.limit)
             }
         }
 
-        return domainLimits
+        return domainSuffixLimits
     }
 
     /**
@@ -131,7 +137,7 @@ internal class NetworkBehavior(
     fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> = remote?.networkCaptureRules ?: emptySet()
 
     /**
-     * Cap the limit at the default limit set on the remote config
+     * Cap the default limit at whatever the default limit is that is set or implied by the remote config
      */
     private fun getLimitCeiling(): Int = remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT
 }

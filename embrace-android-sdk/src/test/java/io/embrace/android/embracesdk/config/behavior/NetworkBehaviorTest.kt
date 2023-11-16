@@ -71,7 +71,7 @@ internal class NetworkBehaviorTest {
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertTrue(isNativeNetworkingMonitoringEnabled())
             assertEquals(1000, getNetworkCaptureLimit())
-            assertEquals(emptyMap<String, Int>(), getNetworkCallLimitsPerDomain())
+            assertEquals(emptyMap<String, Int>(), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
             assertNull(getCapturePublicKey())
@@ -85,7 +85,7 @@ internal class NetworkBehaviorTest {
             assertEquals("x-custom-trace", getTraceIdHeader())
             assertTrue(isRequestContentLengthCaptureEnabled())
             assertFalse(isNativeNetworkingMonitoringEnabled())
-            assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomain())
+            assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomainSuffix())
             assertEquals(720, getNetworkCaptureLimit())
             assertFalse(isUrlEnabled("google.com"))
             assertTrue(isCaptureBodyEncryptionEnabled())
@@ -97,7 +97,7 @@ internal class NetworkBehaviorTest {
     fun testRemoteOnly() {
         with(fakeNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
             assertEquals(409, getNetworkCaptureLimit())
-            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomain())
+            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
             assertEquals(
@@ -116,7 +116,7 @@ internal class NetworkBehaviorTest {
     fun testRemoteAndLocal() {
         with(fakeNetworkBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertEquals(409, getNetworkCaptureLimit())
-            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomain())
+            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
             assertEquals(

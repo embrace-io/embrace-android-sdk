@@ -42,15 +42,15 @@ internal class EmbraceNetworkLoggingService(
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
 
-    private val callsPerDomain = hashMapOf<String, DomainCount>()
+    private val callsPerDomainSuffix = hashMapOf<String, DomainCount>()
 
     private val ipAddressNetworkCallCount = AtomicInteger(0)
 
     private val untrackedNetworkCallCount = AtomicInteger(0)
 
-    private var defaultPerDomainCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
+    private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
 
-    private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomain()
+    private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
     override fun getNetworkCallsForSession(): NetworkSessionV2 {
         val calls = networkCallCache.value {
@@ -63,7 +63,7 @@ internal class EmbraceNetworkLoggingService(
         val cachedCallsSize = calls.size
 
         val overLimit = hashMapOf<String, DomainCount>()
-        for ((key, value) in callsPerDomain) {
+        for ((key, value) in callsPerDomainSuffix) {
             if (value.requestCount > value.captureLimit) {
                 overLimit[key] = value
             }
@@ -174,7 +174,7 @@ internal class EmbraceNetworkLoggingService(
         } ?: return
 
         if (isIpAddress(domain)) {
-            if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainCallLimit) {
+            if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
                 storeNetworkCall(callId, networkCall)
             }
             return
@@ -185,13 +185,13 @@ internal class EmbraceNetworkLoggingService(
         val settings = domainSetting[domain]
         if (settings == null) {
             // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
-            if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainCallLimit) {
+            if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
                 storeNetworkCall(callId, networkCall)
             }
         } else {
             val suffix = settings.suffix
             val limit = settings.limit
-            var countPerSuffix = callsPerDomain[suffix]
+            var countPerSuffix = callsPerDomainSuffix[suffix]
 
             if (countPerSuffix == null) {
                 countPerSuffix = DomainCount(0, limit)
@@ -206,7 +206,7 @@ internal class EmbraceNetworkLoggingService(
 
             // Track the number of calls for each domain (or configured suffix)
             suffix?.let {
-                callsPerDomain[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
+                callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
                 logger.logDeveloper(
                     "EmbraceNetworkLoggingService",
                     "Call per domain $domain ${countPerSuffix.requestCount + 1}"
@@ -224,7 +224,7 @@ internal class EmbraceNetworkLoggingService(
             }
 
             if (!domainSetting.containsKey(domain)) {
-                domainSetting[domain] = DomainSettings(defaultPerDomainCallLimit, domain)
+                domainSetting[domain] = DomainSettings(defaultPerDomainSuffixCallLimit, domain)
             }
         } catch (ex: Exception) {
             logger.logDebug("Failed to determine limits for domain: $domain", ex)
@@ -247,12 +247,12 @@ internal class EmbraceNetworkLoggingService(
 
     override fun cleanCollections() {
         domainSetting.clear()
-        callsPerDomain.clear()
+        callsPerDomainSuffix.clear()
         ipAddressNetworkCallCount.set(0)
         untrackedNetworkCallCount.set(0)
         clearNetworkCalls()
         // re-fetch limits in case they changed since they last time they were fetched
-        defaultPerDomainCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomain()
+        defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
+        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
     }
 }

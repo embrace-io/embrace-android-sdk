@@ -226,9 +226,11 @@ internal class EmbracePreferencesService(
         get() = prefs.getBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, false)
         set(value) = prefs.setBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, value)
 
-    override var sessionNumber: Int
-        get() = prefs.getIntegerPreference(LAST_SESSION_NUMBER_KEY) ?: 0
-        set(value) = prefs.setIntegerPreference(LAST_SESSION_NUMBER_KEY, value)
+    override fun getIncrementAndGetSessionNumber(): Int {
+        val sessionNumber = (prefs.getIntegerPreference(LAST_SESSION_NUMBER_KEY) ?: 0) + 1
+        prefs.setIntegerPreference(LAST_SESSION_NUMBER_KEY, sessionNumber)
+        return sessionNumber
+    }
 
     override var javaScriptBundleURL: String?
         get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY)

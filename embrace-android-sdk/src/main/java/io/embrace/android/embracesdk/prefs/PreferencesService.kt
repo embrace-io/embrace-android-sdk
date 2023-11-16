@@ -84,9 +84,11 @@ internal interface PreferencesService {
     var userMessageNeedsRetry: Boolean
 
     /**
-     * Last session number. Increments by one.
+     * Increments and returns the session number ordinal. This is an integer that increments
+     * at the start of every session. This allows us to check the % of sessions that didn't get
+     * delivered to the backend.
      */
-    var sessionNumber: Int
+    fun getIncrementAndGetSessionNumber(): Int
 
     /**
      * Last javaScript bundle string url.

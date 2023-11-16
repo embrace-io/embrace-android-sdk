@@ -216,29 +216,9 @@ internal class EmbraceApiService(
 
     @Suppress("UseCheckOrError")
     private fun executePost(request: ApiRequest, payload: ByteArray) {
-        when (val response = apiClient.executePost(request, payload)) {
-            is ApiResponse.Success -> {}
-            is ApiResponse.TooManyRequests -> {
-                // Temporarily, we just throw an exception. In the future,
-                // we will use the retryAfter to schedule a retry.
-                val retryAfter = response.retryAfter ?: 3
-                throw IllegalStateException("Too many requests. Will retry after $retryAfter seconds.")
-            }
-            is ApiResponse.PayloadTooLarge -> {
-                // We don't want to retry on PayloadTooLarge error, so we just log the error.
-                logger.logError("Payload too large. Dropping event.")
-            }
-            is ApiResponse.Failure -> {
-                // We don't want to retry on 4xx or 5xx errors, so we just log the error.
-                logger.logError("Failed to retrieve from Embrace server. Status code: ${response.code}")
-            }
-            is ApiResponse.Incomplete -> {
-                // Retry on incomplete response.
-                throw IllegalStateException("Failed to retrieve from Embrace server.")
-            }
-            is ApiResponse.NotModified -> {
-                // Not expected to receive a 304 response for a POST request.
-            }
+        val response = apiClient.executePost(request, payload)
+        if (response !is ApiResponse.Success) {
+            throw IllegalStateException("Failed to retrieve from Embrace server.")
         }
     }
 

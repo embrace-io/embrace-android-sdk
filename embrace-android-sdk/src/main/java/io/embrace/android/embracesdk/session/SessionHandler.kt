@@ -71,7 +71,7 @@ internal class SessionHandler(
             coldStart,
             startType,
             startTime,
-            incrementAndGetSessionNumber(),
+            preferencesService.getIncrementAndGetSessionNumber(),
             userService.loadUserInfoFromDisk(),
             sessionProperties.get()
         )
@@ -352,15 +352,6 @@ internal class SessionHandler(
         logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
 
         return fullEndSessionMessage
-    }
-
-    /**
-     * @return session number incremented by 1
-     */
-    private fun incrementAndGetSessionNumber(): Int {
-        val sessionNumber = preferencesService.sessionNumber + 1
-        preferencesService.sessionNumber = sessionNumber
-        return sessionNumber
     }
 
     /**

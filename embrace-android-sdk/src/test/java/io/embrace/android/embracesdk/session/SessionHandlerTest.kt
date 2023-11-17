@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
@@ -36,6 +35,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
@@ -66,7 +66,7 @@ internal class SessionHandlerTest {
 
     companion object {
         private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
-        private val preferencesService: FakePreferenceService = FakePreferenceService()
+        private val preferencesService: PreferencesService = mockk(relaxed = true)
         private val mockUserService: FakeUserService = FakeUserService()
         private val mockNetworkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
@@ -86,7 +86,7 @@ internal class SessionHandlerTest {
         private val mockSessionPeriodicCacheExecutorService: ScheduledExecutorService = mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
         private const val now = 123L
-        private const val sessionNumber = 5
+        private var sessionNumber = 5
         private val mockSessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
         private val mockUserInfo: UserInfo = mockk()
@@ -123,7 +123,6 @@ internal class SessionHandlerTest {
     @Before
     fun before() {
         mockActiveSession = mockk(relaxed = true)
-        preferencesService.sessionNumber = sessionNumber
         every { mockSessionProperties.get() } returns emptyMapSessionProperties
 
         metadataService = FakeAndroidMetadataService()
@@ -238,7 +237,6 @@ internal class SessionHandlerTest {
         with(checkNotNull(sessionMessage?.session)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
-            assertEquals(sessionNumber + 1, number)
             assertTrue(isColdStart)
             assertEquals(sessionStartType, startType)
             assertEquals(emptyMapSessionProperties, properties)
@@ -251,6 +249,7 @@ internal class SessionHandlerTest {
             assertEquals(metadataService.getDeviceInfo(), deviceInfo)
             assertEquals(metadataService.getAppInfo(), appInfo)
         }
+        verify(exactly = 1) { preferencesService.getIncrementAndGetSessionNumber() }
     }
 
     @Test
@@ -280,7 +279,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
-        preferencesService.sessionNumber = 0
+        sessionNumber = 0
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 5, asyncEnd = false)
         every { mockBreadcrumbService.getLastViewBreadcrumbScreenName() } returns "screen"
         val sessionStartType = Session.SessionLifeEventType.STATE
@@ -295,7 +294,7 @@ internal class SessionHandlerTest {
             mockPeriodicCachingRunnable
         )
 
-        assertEquals(1, preferencesService.sessionNumber)
+        verify(exactly = 1) { preferencesService.getIncrementAndGetSessionNumber() }
         assertNotNull(sessionMessage)
         assertNotNull(sessionMessage!!.session)
         // no need to verify anything else because it's already verified in another test case

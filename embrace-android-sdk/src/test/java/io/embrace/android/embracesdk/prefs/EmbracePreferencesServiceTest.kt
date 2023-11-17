@@ -188,13 +188,10 @@ internal class EmbracePreferencesServiceTest {
 
     @Test
     fun `test session number is saved`() {
-        assertEquals(0, service.sessionNumber)
-
-        service.sessionNumber = 1234
-        assertEquals(1234, service.sessionNumber)
-
-        service.sessionNumber = -1
-        assertEquals(0, service.sessionNumber)
+        assertEquals(1, service.getIncrementAndGetSessionNumber())
+        assertEquals(2, service.getIncrementAndGetSessionNumber())
+        assertEquals(3, service.getIncrementAndGetSessionNumber())
+        assertEquals(4, service.getIncrementAndGetSessionNumber())
     }
 
     @Test

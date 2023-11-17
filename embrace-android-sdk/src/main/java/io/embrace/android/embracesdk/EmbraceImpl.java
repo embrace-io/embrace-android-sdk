@@ -762,6 +762,7 @@ final class EmbraceImpl {
                 serviceRegistry.close();
                 internalEmbraceLogger.logDeveloper("Embrace", "Services closed");
                 workerThreadModule.close();
+                processStateService.close();
             } catch (Exception ex) {
                 internalEmbraceLogger.logError("Error while shutting down Embrace SDK", ex);
             }

@@ -77,7 +77,7 @@ internal class SessionHandler(
                 coldStart,
                 startType,
                 startTime,
-                preferencesService.getIncrementAndGetSessionNumber(),
+                preferencesService.incrementAndGetSessionNumber(),
                 userService.loadUserInfoFromDisk(),
                 sessionProperties.get()
             )

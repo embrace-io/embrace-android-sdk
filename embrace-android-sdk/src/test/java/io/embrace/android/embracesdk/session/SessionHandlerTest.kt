@@ -249,7 +249,7 @@ internal class SessionHandlerTest {
             assertEquals(metadataService.getDeviceInfo(), deviceInfo)
             assertEquals(metadataService.getAppInfo(), appInfo)
         }
-        verify(exactly = 1) { preferencesService.getIncrementAndGetSessionNumber() }
+        verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
     }
 
     @Test
@@ -292,7 +292,7 @@ internal class SessionHandlerTest {
             mockPeriodicCachingRunnable
         )
 
-        verify(exactly = 1) { preferencesService.getIncrementAndGetSessionNumber() }
+        verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
         assertNotNull(sessionMessage)
         assertNotNull(sessionMessage!!.session)
         // no need to verify anything else because it's already verified in another test case

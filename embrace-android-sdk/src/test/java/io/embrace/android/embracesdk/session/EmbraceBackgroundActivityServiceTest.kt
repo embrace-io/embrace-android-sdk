@@ -53,6 +53,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var configService: FakeConfigService
     private lateinit var localConfig: LocalConfig
     private lateinit var spansService: EmbraceSpansService
+    private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var spansRemoteConfig: SpansRemoteConfig
 
@@ -68,8 +69,9 @@ internal class EmbraceBackgroundActivityServiceTest {
         exceptionService = mockk()
         deliveryService = FakeDeliveryService()
         ndkService = mockk(relaxed = true)
+        preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = EmbraceUserService(
-            FakePreferenceService(backgroundActivityEnabled = true),
+            preferencesService,
             mockk()
         )
         spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
@@ -121,13 +123,10 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         service.onBackground(clock.now())
 
-        assertNotNull(service.backgroundActivity)
-        assertEquals(
-            BackgroundActivity.LifeEventType.BKGND_STATE,
-            service.backgroundActivity?.startType
-        )
-
-        assertEquals(service.backgroundActivity?.sessionId, metadataService.activeSessionId)
+        val payload = checkNotNull(service.backgroundActivity)
+        assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, payload.startType)
+        assertEquals(5, payload.number)
+        assertEquals(payload.sessionId, metadataService.activeSessionId)
     }
 
     @Test
@@ -142,6 +141,8 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
+        val payload = checkNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertEquals(5, payload.backgroundActivity.number)
     }
 
     @Test
@@ -332,6 +333,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             deliveryService,
             configService,
             ndkService,
+            preferencesService,
             clock,
             spansService,
             lazy { blockableExecutorService }

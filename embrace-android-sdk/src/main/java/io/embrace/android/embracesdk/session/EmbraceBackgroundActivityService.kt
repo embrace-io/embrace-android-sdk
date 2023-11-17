@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.create
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.Breadcrumbs
+import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.submitSafe
@@ -44,6 +45,7 @@ internal class EmbraceBackgroundActivityService(
     private val deliveryService: DeliveryService,
     private val configService: ConfigService,
     private val ndkService: NdkService,
+    private val preferencesService: PreferencesService,
     /**
      * Embrace service dependencies of the background activity session service.
      */
@@ -184,7 +186,8 @@ internal class EmbraceBackgroundActivityService(
             coldStart,
             startType,
             APPLICATION_STATE_BACKGROUND,
-            userService.loadUserInfoFromDisk()
+            userService.loadUserInfoFromDisk(),
+            preferencesService
         )
         backgroundActivity = activity
         metadataService.setActiveSessionId(activity.sessionId)

@@ -34,7 +34,8 @@ internal class FakePreferenceService(
     override var applicationExitInfoHistory: Set<String>? = null,
     override var cpuName: String? = null,
     override var egl: String? = null,
-    val sessionNumber: () -> Int = { 0 }
+    val sessionNumber: () -> Int = { 0 },
+    val bgActivityNumber: () -> Int = { 5 }
 ) : PreferencesService {
 
     var networkCaptureRuleOver = false
@@ -47,7 +48,9 @@ internal class FakePreferenceService(
     override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
     }
 
-    override fun getIncrementAndGetSessionNumber(): Int = sessionNumber()
+    override fun incrementAndGetSessionNumber(): Int = sessionNumber()
+
+    override fun incrementAndGetBackgroundActivityNumber(): Int = bgActivityNumber()
 
     override fun isUsersFirstDay(): Boolean = firstDay
 }

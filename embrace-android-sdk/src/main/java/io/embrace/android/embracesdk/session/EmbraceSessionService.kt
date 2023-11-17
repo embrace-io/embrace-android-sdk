@@ -41,15 +41,9 @@ internal class EmbraceSessionService(
     }
 
     /**
-     * SDK startup time. Only set for cold start sessions.
-     */
-    private var sdkStartupDuration: Long = 0
-
-    /**
      * The currently active session.
      */
     @Volatile
-
     internal var activeSession: Session? = null
 
     init {
@@ -64,16 +58,6 @@ internal class EmbraceSessionService(
 
         // Send any sessions that were cached and not yet sent.
         deliveryService.sendCachedSessions(isNdkEnabled, ndkService, activeSession?.sessionId)
-    }
-
-    /**
-     * record the time taken to initialize the SDK
-     *
-     * @param sdkStartupDuration the time taken to initialize the SDK in milliseconds
-     */
-    fun setSdkStartupDuration(sdkStartupDuration: Long) {
-        logger.logDeveloper(TAG, "Setting startup duration: $sdkStartupDuration")
-        this.sdkStartupDuration = sdkStartupDuration
     }
 
     override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
@@ -110,7 +94,6 @@ internal class EmbraceSessionService(
             sessionHandler.onCrash(
                 it,
                 crashId,
-                sdkStartupDuration,
                 spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
             )
         } ?: logger.logDeveloper(TAG, "Active session is NULL")
@@ -125,7 +108,6 @@ internal class EmbraceSessionService(
             val session = activeSession ?: return
             sessionHandler.onPeriodicCacheActiveSession(
                 session,
-                sdkStartupDuration,
                 spansService.completedSpans()
             )
         } catch (ex: Exception) {
@@ -185,7 +167,6 @@ internal class EmbraceSessionService(
         sessionHandler.onSessionEnded(
             endType,
             session,
-            sdkStartupDuration,
             endTime,
             spansService.flushSpans()
         )

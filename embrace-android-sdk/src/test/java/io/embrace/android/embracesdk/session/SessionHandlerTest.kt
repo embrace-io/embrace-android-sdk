@@ -356,7 +356,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             /* any type */ Session.SessionLifeEventType.STATE,
             mockActiveSession,
-            /* any duration */ 2,
             1000
         )
 
@@ -376,7 +375,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
             mockActiveSession,
-            /* any duration */ 2,
             1000
         )
 
@@ -393,7 +391,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.TIMED,
             mockActiveSession,
-            /* any duration */ 2,
             1000
         )
 
@@ -415,7 +412,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
             mockActiveSession,
-            /* any duration */ 2,
             1000
         )
 
@@ -437,7 +433,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             /* any type */ Session.SessionLifeEventType.STATE,
             mockActiveSession,
-            /* any duration */ 2,
             1000
         )
 
@@ -461,8 +456,7 @@ internal class SessionHandlerTest {
 
         sessionHandler.onCrash(
             mockActiveSession,
-            crashId,
-            /* any duration */sdkStartupDuration
+            crashId
         )
 
         // when crashing, the following calls should not be made, this is because since we're
@@ -504,8 +498,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
         val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
-            mockActiveSession,
-            /* any duration */2
+            mockActiveSession
         )
 
         assertNotNull(sessionMessage)
@@ -531,7 +524,6 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
             originSession = mockActiveSession,
-            sdkStartupDuration = 1L,
             endTime = 10L,
             listOf(testSpan)
         )
@@ -544,7 +536,6 @@ internal class SessionHandlerTest {
         sessionHandler.onCrash(
             mockActiveSession,
             "fakeCrashId",
-            10L,
             listOf(testSpan)
         )
 
@@ -555,7 +546,6 @@ internal class SessionHandlerTest {
     fun `periodically cached sessions included currently completed spans`() {
         val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
             mockActiveSession,
-            10L,
             listOf(testSpan)
         )
 

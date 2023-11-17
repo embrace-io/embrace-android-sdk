@@ -56,6 +56,11 @@ internal class SessionHandler(
     private val lock = Any()
 
     /**
+     * SDK startup time. Only set for cold start sessions.
+     */
+    var sdkStartupDuration: Long = 0
+
+    /**
      * It performs all corresponding operations in order to start a session.
      */
     fun onSessionStarted(
@@ -110,7 +115,6 @@ internal class SessionHandler(
     fun onSessionEnded(
         endType: SessionLifeEventType,
         originSession: Session,
-        sdkStartupDuration: Long,
         endTime: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
@@ -120,7 +124,6 @@ internal class SessionHandler(
                 SessionSnapshotType.NORMAL_END,
                 originSession,
                 sessionProperties,
-                sdkStartupDuration,
                 completedSpans,
                 endType,
                 endTime
@@ -143,7 +146,6 @@ internal class SessionHandler(
     fun onCrash(
         originSession: Session,
         crashId: String,
-        sdkStartupDuration: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         synchronized(lock) {
@@ -152,7 +154,6 @@ internal class SessionHandler(
                 SessionSnapshotType.JVM_CRASH,
                 originSession,
                 sessionProperties,
-                sdkStartupDuration,
                 completedSpans,
                 SessionLifeEventType.STATE,
                 clock.now(),
@@ -170,7 +171,6 @@ internal class SessionHandler(
      */
     fun onPeriodicCacheActiveSession(
         activeSession: Session?,
-        sdkStartupDuration: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ): SessionMessage? {
         synchronized(lock) {
@@ -180,7 +180,6 @@ internal class SessionHandler(
                     SessionSnapshotType.PERIODIC_CACHE,
                     activeSession,
                     sessionProperties,
-                    sdkStartupDuration,
                     completedSpans,
                     SessionLifeEventType.STATE,
                     clock.now()
@@ -259,7 +258,6 @@ internal class SessionHandler(
         endType: SessionSnapshotType,
         activeSession: Session,
         sessionProperties: EmbraceSessionProperties,
-        sdkStartupDuration: Long,
         completedSpans: List<EmbraceSpanData>?,
         lifeEventType: SessionLifeEventType,
         endTime: Long,

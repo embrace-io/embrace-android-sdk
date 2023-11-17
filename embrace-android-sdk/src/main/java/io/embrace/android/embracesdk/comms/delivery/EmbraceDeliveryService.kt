@@ -172,7 +172,7 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    override fun sendLogs(eventMessage: EventMessage) {
+    override fun sendLog(eventMessage: EventMessage) {
         apiService.sendLog(eventMessage)
     }
 
@@ -186,14 +186,6 @@ internal class EmbraceDeliveryService(
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         apiService.sendAEIBlob(blobMessage)
-    }
-
-    override fun sendEvent(eventMessage: EventMessage) {
-        apiService.sendEvent(eventMessage)
-    }
-
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        apiService.sendEventAndWait(eventMessage)
     }
 
     override fun sendCachedSessions(
@@ -292,5 +284,9 @@ internal class EmbraceDeliveryService(
         sendSessionsExecutorService.submit {
             apiService.sendEvent(eventMessage)
         }
+    }
+
+    override fun sendEventAndWait(eventMessage: EventMessage) {
+        apiService.sendEventAndWait(eventMessage)
     }
 }

@@ -315,7 +315,7 @@ internal class EmbraceRemoteLogger constructor(
                     // Sanitize log event
                     val logEvent = gatingService.gateEventMessage(eventMessage)
                     logDeveloper("EmbraceRemoteLogger", "Attempt to Send log Event")
-                    deliveryService.sendLogs(logEvent)
+                    deliveryService.sendLog(logEvent)
                     logDeveloper("EmbraceRemoteLogger", "LogEvent api call running in background job")
                 }
                 null

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -44,7 +43,6 @@ internal class EmbraceSessionServiceTest {
         private val mockSession: Session = mockk(relaxed = true)
         private val mockSessionMessage: SessionMessage = mockk(relaxed = true)
         private val mockSessionHandler: SessionHandler = mockk(relaxed = true)
-        private val mockSessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val clock = FakeClock()
 
         @BeforeClass
@@ -89,7 +87,6 @@ internal class EmbraceSessionServiceTest {
                 /* automatically detecting a cold start */ true,
                 SessionLifeEventType.STATE,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -106,7 +103,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 type,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -122,7 +118,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 type,
                 startTime,
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -140,7 +135,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 type,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -155,7 +149,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 type,
                 startTime,
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -173,7 +166,6 @@ internal class EmbraceSessionServiceTest {
                 true,
                 SessionLifeEventType.STATE,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -182,7 +174,7 @@ internal class EmbraceSessionServiceTest {
 
         service.handleCrash(crashId)
 
-        verify { mockSessionHandler.onCrash(mockSession, crashId, mockSessionProperties, 0) }
+        verify { mockSessionHandler.onCrash(mockSession, crashId, 0) }
     }
 
     @Test
@@ -200,7 +192,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 SessionLifeEventType.STATE,
                 456,
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -221,7 +212,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 SessionLifeEventType.STATE,
                 456,
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -243,7 +233,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.STATE,
                 mockSession,
-                mockSessionProperties,
                 sdkStartupDuration,
                 456
             )
@@ -265,7 +254,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.MANUAL,
                 mockSession,
-                mockSessionProperties,
                 0,
                 any()
             )
@@ -282,14 +270,13 @@ internal class EmbraceSessionServiceTest {
         service.triggerStatelessSessionEnd(endType)
 
         // verify session is ended
-        verify { mockSessionHandler.onSessionEnded(endType, mockSession, mockSessionProperties, 0, any()) }
+        verify { mockSessionHandler.onSessionEnded(endType, mockSession, 0, any()) }
         // verify that a MANUAL session is started
         verify {
             mockSessionHandler.onSessionStarted(
                 false,
                 endType,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )
@@ -322,7 +309,6 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onPeriodicCacheActiveSession(
                 any(),
-                mockSessionProperties,
                 0
             )
         }
@@ -347,7 +333,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 endType = any(),
                 originSession = any(),
-                sessionProperties = any(),
                 sdkStartupDuration = any(),
                 endTime = any(),
                 completedSpans = match {
@@ -373,7 +358,6 @@ internal class EmbraceSessionServiceTest {
                 mockSessionHandler.onSessionEnded(
                     endType = any(),
                     originSession = any(),
-                    sessionProperties = any(),
                     sdkStartupDuration = any(),
                     endTime = any(),
                     completedSpans = match {
@@ -399,7 +383,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onCrash(
                 originSession = any(),
                 crashId = any(),
-                sessionProperties = any(),
                 sdkStartupDuration = any(),
                 completedSpans = match {
                     it.size == 2
@@ -429,8 +412,6 @@ internal class EmbraceSessionServiceTest {
         service = EmbraceSessionService(
             activityService,
             mockNdkService,
-            mockSessionProperties,
-            mockk(relaxed = true),
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
@@ -445,7 +426,6 @@ internal class EmbraceSessionServiceTest {
                 true,
                 SessionLifeEventType.STATE,
                 any(),
-                mockSessionProperties,
                 any(),
                 any()
             )

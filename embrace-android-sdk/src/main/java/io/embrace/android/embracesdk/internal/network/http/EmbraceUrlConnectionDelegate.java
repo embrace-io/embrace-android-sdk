@@ -659,11 +659,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         return new CountingInputStreamWithCallback(
             inputStream,
             hasNetworkCaptureRules(),
-            (bytesCount, responseBody) -> {
+            (responseBody) -> {
                 if (startTime != null && endTime != null) {
                     cacheNetworkCallData(responseBody);
-                    internalLogNetworkCall(startTime, endTime,true);
+                    internalLogNetworkCall(startTime, endTime, true);
                 }
+                return null;
             });
     }
 

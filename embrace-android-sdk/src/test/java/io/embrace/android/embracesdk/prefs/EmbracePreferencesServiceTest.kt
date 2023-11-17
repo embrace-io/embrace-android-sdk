@@ -188,10 +188,24 @@ internal class EmbracePreferencesServiceTest {
 
     @Test
     fun `test session number is saved`() {
-        assertEquals(1, service.getIncrementAndGetSessionNumber())
-        assertEquals(2, service.getIncrementAndGetSessionNumber())
-        assertEquals(3, service.getIncrementAndGetSessionNumber())
-        assertEquals(4, service.getIncrementAndGetSessionNumber())
+        assertEquals(1, service.incrementAndGetSessionNumber())
+        assertEquals(2, service.incrementAndGetSessionNumber())
+        assertEquals(3, service.incrementAndGetSessionNumber())
+        assertEquals(4, service.incrementAndGetSessionNumber())
+
+        // bg activity uses independent key
+        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
+    }
+
+    @Test
+    fun `test bg activity number is saved`() {
+        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(2, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(3, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(4, service.incrementAndGetBackgroundActivityNumber())
+
+        // session uses independent key
+        assertEquals(1, service.incrementAndGetSessionNumber())
     }
 
     @Test

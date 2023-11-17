@@ -226,10 +226,18 @@ internal class EmbracePreferencesService(
         get() = prefs.getBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, false)
         set(value) = prefs.setBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, value)
 
-    override fun getIncrementAndGetSessionNumber(): Int {
-        val sessionNumber = (prefs.getIntegerPreference(LAST_SESSION_NUMBER_KEY) ?: 0) + 1
-        prefs.setIntegerPreference(LAST_SESSION_NUMBER_KEY, sessionNumber)
-        return sessionNumber
+    override fun incrementAndGetSessionNumber(): Int {
+        return incrementAndGetOrdinal(LAST_SESSION_NUMBER_KEY)
+    }
+
+    override fun incrementAndGetBackgroundActivityNumber(): Int {
+        return incrementAndGetOrdinal(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
+    }
+
+    private fun incrementAndGetOrdinal(key: String): Int {
+        val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
+        prefs.setIntegerPreference(key, ordinal)
+        return ordinal
     }
 
     override var javaScriptBundleURL: String?
@@ -339,6 +347,7 @@ internal class EmbracePreferencesService(
         private const val CUSTOM_PERSONAS_KEY = "io.embrace.custompersonas"
         private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
+        private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
         private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"

@@ -110,6 +110,7 @@ internal class SessionModuleImpl(
                 deliveryModule.deliveryService,
                 essentialServiceModule.configService,
                 nativeModule.ndkService,
+                androidServicesModule.preferencesService,
                 initModule.clock,
                 initModule.spansService,
                 lazy { workerThreadModule.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR) }

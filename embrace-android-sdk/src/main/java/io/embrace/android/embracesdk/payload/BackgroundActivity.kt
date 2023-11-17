@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
+import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
  * Represents a particular user's session within the app.
@@ -32,7 +33,7 @@ internal data class BackgroundActivity(
     val endTime: Long? = null,
 
     /**
-     * The ordinal of the session, starting from 1.
+     * The ordinal of the background activity, starting from 1.
      */
     @SerializedName("sn")
     val number: Int? = null,
@@ -124,14 +125,16 @@ internal data class BackgroundActivity(
             coldStart: Boolean,
             startType: LifeEventType,
             applicationState: String,
-            userInfo: UserInfo?
+            userInfo: UserInfo?,
+            preferencesService: PreferencesService
         ) = BackgroundActivity(
             sessionId = embUuid,
             startTime = startTime,
             appState = applicationState,
             isColdStart = coldStart,
             startType = startType,
-            user = userInfo
+            user = userInfo,
+            number = preferencesService.incrementAndGetBackgroundActivityNumber()
         )
 
         @JvmStatic

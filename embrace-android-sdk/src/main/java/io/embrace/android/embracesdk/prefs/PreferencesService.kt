@@ -88,7 +88,14 @@ internal interface PreferencesService {
      * at the start of every session. This allows us to check the % of sessions that didn't get
      * delivered to the backend.
      */
-    fun getIncrementAndGetSessionNumber(): Int
+    fun incrementAndGetSessionNumber(): Int
+
+    /**
+     * Increments and returns the background activity number ordinal. This is an integer that
+     * increments at the start of every background activity. This allows us to check the % of
+     * requests that didn't get delivered to the backend.
+     */
+    fun incrementAndGetBackgroundActivityNumber(): Int
 
     /**
      * Last javaScript bundle string url.

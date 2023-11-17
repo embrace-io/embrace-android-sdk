@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class EmbraceSessionService(
@@ -20,7 +19,7 @@ internal class EmbraceSessionService(
     private val clock: Clock,
     private val spansService: SpansService,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
-) : SessionService, ProcessStateListener {
+) : SessionService {
 
     companion object {
         private const val TAG = "EmbraceSessionService"

@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.submitSafe
 import java.util.concurrent.Callable
@@ -52,7 +51,7 @@ internal class EmbraceBackgroundActivityService(
     private val clock: Clock,
     private val spansService: SpansService,
     private val executorServiceSupplier: Lazy<ExecutorService>
-) : BackgroundActivityService, ProcessStateListener, ConfigListener {
+) : BackgroundActivityService, ConfigListener {
 
     @get:Synchronized
     private val cacheExecutorService: ExecutorService by lazy { executorServiceSupplier.value }

@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.io.Closeable
 
-internal interface SessionService : Closeable {
+internal interface SessionService : ProcessStateListener, Closeable {
 
     /**
      * Starts a new session.

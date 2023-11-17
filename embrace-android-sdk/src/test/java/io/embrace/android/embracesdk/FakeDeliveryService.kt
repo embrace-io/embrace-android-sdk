@@ -68,16 +68,12 @@ internal class FakeDeliveryService : DeliveryService {
         sendBackgroundActivitiesInvokedCount++
     }
 
-    override fun sendLogs(eventMessage: EventMessage) {
+    override fun sendLog(eventMessage: EventMessage) {
         lastSentLogs.add(eventMessage)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         lastSentNetworkCall = networkEvent
-    }
-
-    override fun sendEvent(eventMessage: EventMessage) {
-        lastSentEvent = eventMessage
     }
 
     override fun sendEventAndWait(eventMessage: EventMessage) {

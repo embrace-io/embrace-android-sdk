@@ -75,7 +75,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             endTime = REQUEST_TIME,
             httpMethod = HttpMethod.POST.name,
             httpStatus = HTTP_OK,
-            responseBodySize = responseBodySize,
+            responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
             responseBody = responseBodyText
@@ -227,7 +227,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             endTime = REQUEST_TIME,
             httpMethod = HttpMethod.POST.name,
             httpStatus = 500,
-            responseBodySize = responseBodySize,
+            responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
             responseBody = responseBodyText
@@ -246,7 +246,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             endTime = REQUEST_TIME,
             httpMethod = HttpMethod.POST.name,
             httpStatus = HTTP_OK,
-            responseBodySize = responseBodySize,
+            responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
             responseBody = responseBodyText

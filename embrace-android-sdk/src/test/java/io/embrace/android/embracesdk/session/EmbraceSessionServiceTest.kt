@@ -87,7 +87,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 /* automatically detecting a cold start */ true,
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 any(),
                 mockSessionProperties,
                 any(),
@@ -100,7 +100,7 @@ internal class EmbraceSessionServiceTest {
     fun `start session successfully`() {
         initializeSessionService()
         val coldStart = /* same for false */ true
-        val type = /* could be any type */ Session.SessionLifeEventType.STATE
+        val type = /* could be any type */ SessionLifeEventType.STATE
         every {
             mockSessionHandler.onSessionStarted(
                 coldStart,
@@ -134,7 +134,7 @@ internal class EmbraceSessionServiceTest {
     fun `start session if not allowed then session handler will return a null session`() {
         initializeSessionService()
         val coldStart = /* same for false */ true
-        val type = /* could be any type */ Session.SessionLifeEventType.STATE
+        val type = /* could be any type */ SessionLifeEventType.STATE
         every {
             mockSessionHandler.onSessionStarted(
                 coldStart,
@@ -171,14 +171,14 @@ internal class EmbraceSessionServiceTest {
         every {
             mockSessionHandler.onSessionStarted(
                 true,
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 any(),
                 mockSessionProperties,
                 any(),
                 any()
             )
         } returns mockSessionMessage
-        service.startSession(true, Session.SessionLifeEventType.STATE, clock.now())
+        service.startSession(true, SessionLifeEventType.STATE, clock.now())
 
         service.handleCrash(crashId)
 
@@ -198,7 +198,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 456,
                 mockSessionProperties,
                 any(),
@@ -219,7 +219,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 456,
                 mockSessionProperties,
                 any(),
@@ -241,7 +241,7 @@ internal class EmbraceSessionServiceTest {
         // verify session is ended
         verify {
             mockSessionHandler.onSessionEnded(
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 mockSession,
                 mockSessionProperties,
                 sdkStartupDuration,
@@ -258,12 +258,12 @@ internal class EmbraceSessionServiceTest {
         // let's start session first so we have an active session
         startDefaultSession()
 
-        service.triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL)
+        service.triggerStatelessSessionEnd(SessionLifeEventType.MANUAL)
 
         // verify session is ended
         verify {
             mockSessionHandler.onSessionEnded(
-                Session.SessionLifeEventType.MANUAL,
+                SessionLifeEventType.MANUAL,
                 mockSession,
                 mockSessionProperties,
                 0,
@@ -277,7 +277,7 @@ internal class EmbraceSessionServiceTest {
         initializeSessionService(isActivityInBackground = false)
         // let's start session first so we have an active session
         startDefaultSession()
-        val endType = Session.SessionLifeEventType.MANUAL
+        val endType = SessionLifeEventType.MANUAL
 
         service.triggerStatelessSessionEnd(endType)
 
@@ -299,7 +299,7 @@ internal class EmbraceSessionServiceTest {
     @Test
     fun `trigger stateless end session for a STATE session end type should not do anything`() {
         initializeSessionService()
-        service.triggerStatelessSessionEnd(Session.SessionLifeEventType.STATE)
+        service.triggerStatelessSessionEnd(SessionLifeEventType.STATE)
 
         verify { mockSessionHandler wasNot Called }
     }
@@ -316,17 +316,16 @@ internal class EmbraceSessionServiceTest {
     fun `verify periodic caching`() {
         initializeSessionService()
 
+        service.startSession(true, SessionLifeEventType.STATE, clock.now())
         service.onPeriodicCacheActiveSession()
 
         verify {
-            mockSessionHandler.getActiveSessionEndMessage(
-                /* either null active session or valid active session, same test */ null,
+            mockSessionHandler.onPeriodicCacheActiveSession(
+                any(),
                 mockSessionProperties,
                 0
             )
         }
-
-        assertNotNull(deliveryService.lastSavedSession)
     }
 
     @Test
@@ -444,13 +443,13 @@ internal class EmbraceSessionServiceTest {
         every {
             mockSessionHandler.onSessionStarted(
                 true,
-                Session.SessionLifeEventType.STATE,
+                SessionLifeEventType.STATE,
                 any(),
                 mockSessionProperties,
                 any(),
                 any()
             )
         } returns mockSessionMessage
-        service.startSession(true, Session.SessionLifeEventType.STATE, clock.now())
+        service.startSession(true, SessionLifeEventType.STATE, clock.now())
     }
 }

@@ -75,19 +75,14 @@ internal class SpansServiceImpl(
      */
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
 
+    private var appAttributesRecorded = false
+
     init {
         Systrace.trace("log-sdk-init") {
-            val events = EmbraceSpanEvent.create(
-                name = "start-time",
-                timestampNanos = sdkInitStartTimeNanos,
-                attributes = null
-            )?.let { listOf(it) } ?: emptyList()
-
             recordCompletedSpan(
                 name = "sdk-init",
                 startTimeNanos = sdkInitStartTimeNanos,
-                endTimeNanos = sdkInitEndTimeNanos,
-                events = events
+                endTimeNanos = sdkInitEndTimeNanos
             )
         }
         Systrace.end()
@@ -186,6 +181,10 @@ internal class SpansServiceImpl(
     override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
         synchronized(completedSpans) {
             if (appTerminationCause == null) {
+                if (!appAttributesRecorded) {
+                    currentSessionSpan.get().addAppAttributes()
+                    appAttributesRecorded = true
+                }
                 currentSessionSpan.get().endSpan()
                 currentSessionSpan.set(startSessionSpan(clock.now()))
             } else {

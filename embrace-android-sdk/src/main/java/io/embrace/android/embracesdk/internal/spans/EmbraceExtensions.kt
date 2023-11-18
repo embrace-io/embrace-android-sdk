@@ -122,6 +122,29 @@ internal fun Span.setSequenceId(id: Long): Span {
 }
 
 /**
+ * Add in interesting attributes about the running app environment to the span as private Embrace attributes
+ */
+internal fun Span.addAppAttributes(): Span {
+    var hasOkHttp3 = true
+    try {
+        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
+    } catch (t: Throwable) {
+        hasOkHttp3 = false
+    }
+    setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
+
+    var kotlinStdLibVersion = "0.0.0"
+    try {
+        kotlinStdLibVersion = KotlinVersion.CURRENT.toString()
+    } catch (t: Throwable) {
+        // just write the default version to indicate this failed
+    }
+    setAttribute("kotlin_stdlib".toEmbraceAttributeName(), kotlinStdLibVersion)
+
+    return this
+}
+
+/**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
  */
@@ -166,6 +189,11 @@ internal fun EmbraceSpanData.isPrivate(): Boolean = attributes[PRIVATE_SPAN_ATTR
  * Return the appropriate internal Embrace Span name given the current value
  */
 internal fun String.toEmbraceSpanName(): String = EMBRACE_SPAN_NAME_PREFIX + this
+
+/**
+ * Return the appropriate internal Embrace attribute name given the current string
+ */
+internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PREFIX + this
 
 /**
  * Contains the set of attributes (i.e. implementers of the [Attribute] interface) set on a [Span] by the SDK that has special meaning

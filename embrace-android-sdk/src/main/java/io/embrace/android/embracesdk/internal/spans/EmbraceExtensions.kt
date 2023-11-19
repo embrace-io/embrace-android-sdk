@@ -125,13 +125,17 @@ internal fun Span.setSequenceId(id: Long): Span {
  * Add in interesting attributes about the running app environment to the span as private Embrace attributes
  */
 internal fun Span.addAppAttributes(): Span {
-    var hasOkHttp3 = true
+    var hasOkHttp3 = false
+    var okhttpVersion: String? = null
     try {
-        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
+        val okhttp = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
+        hasOkHttp3 = true
+        okhttpVersion = okhttp.getField("VERSION").get(okhttp)?.toString()
     } catch (t: Throwable) {
-        hasOkHttp3 = false
+        // only write the version if the call to obtain it doesn't throw
     }
     setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
+    okhttpVersion?.let { setAttribute("okhttp3_version".toEmbraceAttributeName(), it) }
 
     var kotlinStdLibVersion = "0.0.0"
     try {

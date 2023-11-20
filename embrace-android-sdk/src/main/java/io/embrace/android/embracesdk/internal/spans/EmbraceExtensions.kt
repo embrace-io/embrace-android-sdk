@@ -128,22 +128,24 @@ internal fun Span.addAppAttributes(): Span {
     var hasOkHttp3 = false
     var okhttpVersion: String? = null
     try {
-        val okhttp = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
+        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
         hasOkHttp3 = true
-        okhttpVersion = okhttp.getField("VERSION").get(okhttp)?.toString()
+        val okhttpObject = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
+        okhttpVersion = okhttpObject.getField("VERSION").get(okhttpObject)?.toString()
     } catch (t: Throwable) {
         // only write the version if the call to obtain it doesn't throw
     }
     setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
-    okhttpVersion?.let { setAttribute("okhttp3_version".toEmbraceAttributeName(), it) }
+    okhttpVersion?.let { setAttribute("okhttp3_on_classpath".toEmbraceAttributeName(), it) }
 
-    var kotlinStdLibVersion = "0.0.0"
+    var kotlinStdLibVersion = "unknown"
     try {
         kotlinStdLibVersion = KotlinVersion.CURRENT.toString()
     } catch (t: Throwable) {
-        // just write the default version to indicate this failed
+        // Use the default if this fails. Given that Embrace requires some version to be on the classpath, this might indicate a change
+        // in how Kotlin exposes its version at runtime, or something odd going on in general.
     }
-    setAttribute("kotlin_stdlib".toEmbraceAttributeName(), kotlinStdLibVersion)
+    setAttribute("kotlin_on_classpath".toEmbraceAttributeName(), kotlinStdLibVersion)
 
     return this
 }

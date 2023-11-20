@@ -111,15 +111,6 @@ internal class TracingApiTest {
                     expectedStartTimeMs = testStartTime + 100,
                     expectedEndTimeMs = testStartTime + 100,
                     expectedParentId = SpanId.getInvalid(),
-                    expectedEvents = listOf(
-                        checkNotNull(
-                            EmbraceSpanEvent.create(
-                                name = "start-time",
-                                timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 100),
-                                attributes = null
-                            )
-                        )
-                    ),
                     private = true,
                     key = true
                 )

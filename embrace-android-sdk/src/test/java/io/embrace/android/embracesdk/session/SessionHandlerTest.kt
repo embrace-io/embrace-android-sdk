@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
@@ -25,8 +26,12 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.MessageType
+import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -82,7 +87,8 @@ internal class SessionHandlerTest {
         }
         private val clock = FakeClock()
         private val mockAutomaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
-        private val mockSessionPeriodicCacheExecutorService: ScheduledExecutorService = mockk(relaxed = true)
+        private val mockSessionPeriodicCacheExecutorService: ScheduledExecutorService =
+            mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
         private const val now = 123L
         private var sessionNumber = 5
@@ -90,7 +96,6 @@ internal class SessionHandlerTest {
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
         private val mockUserInfo: UserInfo = mockk()
         private val mockAutomaticSessionStopperRunnable: Runnable = mockk()
-        private val mockPeriodicCachingRunnable: Runnable = mockk()
         private var mockActiveSession: Session = mockk(relaxed = true)
 
         @BeforeClass
@@ -118,6 +123,7 @@ internal class SessionHandlerTest {
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
+    private lateinit var spansService: EmbraceSpansService
 
     @Before
     fun before() {
@@ -143,6 +149,9 @@ internal class SessionHandlerTest {
             ),
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior(
                 remoteCfg = { remoteConfig }
+            ),
+            spansBehavior = fakeSpansBehavior(
+                remoteConfig = { SpansRemoteConfig(100f) }
             )
         )
         gatingService = FakeGatingService(configService = configService)
@@ -162,6 +171,8 @@ internal class SessionHandlerTest {
             mockUserService,
             clock
         )
+        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock))
+        spansService.onConfigChange(configService)
         sessionHandler = SessionHandler(
             logger,
             configService,
@@ -178,6 +189,7 @@ internal class SessionHandlerTest {
             sessionMessageCollator,
             mockSessionProperties,
             clock,
+            spansService,
             automaticSessionStopper = mockAutomaticSessionStopper,
             sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService
         )
@@ -204,8 +216,7 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify record connection type
@@ -224,7 +235,7 @@ internal class SessionHandlerTest {
         // verify periodic caching worker has been scheduled
         verify {
             mockSessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
-                mockPeriodicCachingRunnable,
+                any(),
                 0,
                 SESSION_CACHING_INTERVAL.toLong(),
                 TimeUnit.SECONDS
@@ -261,8 +272,7 @@ internal class SessionHandlerTest {
             true,
             /* any event type */ Session.SessionLifeEventType.STATE,
             now,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         assertNull(sessionMessage)
@@ -287,8 +297,7 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
@@ -307,8 +316,7 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify automatic session stopper has not been scheduled
@@ -332,12 +340,11 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify we are forcing log view with foreground activity class name
-        verify { mockBreadcrumbService.forceLogView(activityClassName, clock.now()) }
+        verify(exactly = 1) { mockBreadcrumbService.forceLogView(activityClassName, now) }
         assertNotNull(sessionMessage)
         assertNotNull(sessionMessage!!.session)
         // no need to verify anything else because it's already verified in another test case
@@ -464,7 +471,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
         startFakeSession()
-        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession()
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSessionImpl()
 
         assertNotNull(sessionMessage)
 
@@ -486,31 +493,36 @@ internal class SessionHandlerTest {
     @Test
     fun `endSession includes completed spans in message`() {
         startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        spansService.recordSpan("test-span") {
+            // do nothing
+        }
+        clock.tick(30000)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            endTime = 10L,
-            listOf(testSpan)
+            endTime = 10L
         )
-
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
     @Test
     fun `crashes includes completed spans in message`() {
         startFakeSession()
-        sessionHandler.onCrash(
-            "fakeCrashId",
-            listOf(testSpan)
-        )
-
+        spansService.initializeService(now, now + 5L)
+        spansService.recordSpan("test-span") {
+            // do nothing
+        }
+        sessionHandler.onCrash("fakeCrashId")
         assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
     @Test
     fun `periodically cached sessions included currently completed spans`() {
         startFakeSession()
-        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(listOf(testSpan))
-        assertSpanInSessionMessage(sessionMessage)
+        spansService.initializeService(now, now + 5L)
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSessionImpl(listOf(testSpan))
+        val spans = checkNotNull(sessionMessage?.spans)
+        assertEquals(testSpan, spans.single())
     }
 
     @Test
@@ -520,20 +532,58 @@ internal class SessionHandlerTest {
         assertNotNull(sessionHandler.getSessionId())
     }
 
+    @Test
+    fun `verify periodic caching`() {
+        startFakeSession()
+        sessionHandler.onPeriodicCacheActiveSessionImpl()
+        val session = checkNotNull(deliveryService.lastSavedSession).session
+        assertEquals(false, session.isEndedCleanly)
+        assertEquals(true, session.isReceivedTermination)
+    }
+
+    @Test
+    fun `backgrounding flushes completed spans`() {
+        startFakeSession()
+
+        spansService.initializeService(now, now + 5L)
+        assertEquals(1, spansService.completedSpans()?.size)
+
+        clock.tick(15000L)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.STATE,
+            endTime = clock.now()
+        )
+
+        val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
+        val spans = checkNotNull(sessionMessage.spans)
+        assertEquals(2, spans.size)
+        assertEquals(0, spansService.completedSpans()?.size)
+    }
+
+    @Test
+    fun `crash ending flushes completed spans`() {
+        startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        assertEquals(1, spansService.completedSpans()?.size)
+
+        sessionHandler.onCrash("crashId")
+        assertEquals(0, spansService.completedSpans()?.size)
+    }
+
     private fun startFakeSession() {
         sessionHandler.onSessionStarted(
             coldStart = true,
             startType = Session.SessionLifeEventType.STATE,
-            startTime = 0L,
-            automaticSessionCloserCallback = mockAutomaticSessionStopperRunnable,
-            cacheCallback = { mockPeriodicCachingRunnable }
+            startTime = clock.now(),
+            automaticSessionCloserCallback = mockAutomaticSessionStopperRunnable
         )
     }
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage?.spans)
-        assertEquals(1, sessionMessage?.spans?.size)
-        assertEquals(testSpan, sessionMessage?.spans!![0])
+        val spans = checkNotNull(sessionMessage?.spans)
+        assertEquals(3, spans.size)
+        val expectedSpans = listOf("emb-sdk-init", "emb-test-span", "emb-session-span")
+        assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
     }
 }

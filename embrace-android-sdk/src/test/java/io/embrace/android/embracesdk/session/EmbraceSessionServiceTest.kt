@@ -174,7 +174,7 @@ internal class EmbraceSessionServiceTest {
 
         service.handleCrash(crashId)
 
-        verify { mockSessionHandler.onCrash(mockSession, crashId, 0) }
+        verify { mockSessionHandler.onCrash(mockSession, crashId) }
     }
 
     @Test
@@ -219,10 +219,8 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `on background ends a state session for a previously existing session, with an sdkStarupDuration = 5`() {
+    fun `on background ends a state session for a previously existing session`() {
         initializeSessionService()
-        val sdkStartupDuration = 5L
-        service.setSdkStartupDuration(sdkStartupDuration)
         // let's start session first so we have an active session
         startDefaultSession()
 
@@ -233,7 +231,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.STATE,
                 mockSession,
-                sdkStartupDuration,
                 456
             )
         }
@@ -306,12 +303,7 @@ internal class EmbraceSessionServiceTest {
         service.startSession(true, SessionLifeEventType.STATE, clock.now())
         service.onPeriodicCacheActiveSession()
 
-        verify {
-            mockSessionHandler.onPeriodicCacheActiveSession(
-                any(),
-                0
-            )
-        }
+        verify { mockSessionHandler.onPeriodicCacheActiveSession(any()) }
     }
 
     @Test
@@ -333,7 +325,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 endType = any(),
                 originSession = any(),
-                sdkStartupDuration = any(),
                 endTime = any(),
                 completedSpans = match {
                     it.size == 2
@@ -358,7 +349,6 @@ internal class EmbraceSessionServiceTest {
                 mockSessionHandler.onSessionEnded(
                     endType = any(),
                     originSession = any(),
-                    sdkStartupDuration = any(),
                     endTime = any(),
                     completedSpans = match {
                         it.size == 2
@@ -383,7 +373,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onCrash(
                 originSession = any(),
                 crashId = any(),
-                sdkStartupDuration = any(),
                 completedSpans = match {
                     it.size == 2
                 }

@@ -656,7 +656,7 @@ final class EmbraceImpl {
         });
 
         long startupDuration = endTime - startTime;
-        ((EmbraceSessionService) nonNullSessionService).setSdkStartupDuration(startupDuration);
+        sessionModule.getSessionHandler().setSdkStartupDuration(startupDuration);
         internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + startupDuration + " millis");
 
         // Sets up the registered services. This method is called after the SDK has been started and

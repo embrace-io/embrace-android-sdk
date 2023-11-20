@@ -79,13 +79,8 @@ internal class SessionHandler(
         startType: SessionLifeEventType,
         startTime: Long,
         automaticSessionCloserCallback: Runnable
-    ): SessionMessage? {
+    ): SessionMessage {
         synchronized(lock) {
-            if (!isAllowedToStart()) {
-                logger.logDebug("Session not allowed to start.")
-                return null
-            }
-
             logDeveloper("SessionHandler", "Session Started")
             val session = Session.buildStartSession(
                 Uuid.getEmbUuid(),
@@ -353,16 +348,6 @@ internal class SessionHandler(
                     startTime
                 )
             }
-        }
-    }
-
-    private fun isAllowedToStart(): Boolean {
-        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
-            logger.logWarning("Session messages disabled. Ignoring all sessions.")
-            false
-        } else {
-            logger.logDebug("Session is allowed to start.")
-            true
         }
     }
 

@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -35,6 +37,9 @@ internal class EmbraceSessionServiceTest {
     private lateinit var configService: FakeConfigService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var spansService: EmbraceSpansService
+    private val disabledSessionBehavior = fakeDataCaptureEventBehavior {
+        RemoteConfig(disabledMessageTypes = setOf("session"))
+    }
 
     companion object {
 
@@ -212,6 +217,30 @@ internal class EmbraceSessionServiceTest {
         assertNull(spansService.completedSpans())
     }
 
+    @Test
+    fun `session cannot be started when config is disabled`() {
+        configService = FakeConfigService(dataCaptureEventBehavior = disabledSessionBehavior)
+        initializeSessionService()
+        service.startSession(true, SessionLifeEventType.STATE, clock.now())
+        assertTrue(deliveryService.lastSentSessions.isEmpty())
+    }
+
+    @Test
+    fun `session cannot be ended when config is disabled`() {
+        configService = FakeConfigService(dataCaptureEventBehavior = disabledSessionBehavior)
+        initializeSessionService()
+        service.onBackground(clock.now())
+        assertTrue(deliveryService.lastSentSessions.isEmpty())
+    }
+
+    @Test
+    fun `session cannot be written in crash when config is disabled`() {
+        configService = FakeConfigService(dataCaptureEventBehavior = disabledSessionBehavior)
+        initializeSessionService()
+        service.handleCrash("my-crash-id")
+        assertNull(deliveryService.lastSavedSession)
+    }
+
     private fun initializeSessionService(
         ndkEnabled: Boolean = false,
         isActivityInBackground: Boolean = true
@@ -224,6 +253,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
+            configService,
             clock
         )
     }

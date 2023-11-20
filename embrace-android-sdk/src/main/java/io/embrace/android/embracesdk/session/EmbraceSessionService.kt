@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -14,6 +16,7 @@ internal class EmbraceSessionService(
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
+    private val configService: ConfigService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService {
@@ -52,6 +55,11 @@ internal class EmbraceSessionService(
     }
 
     override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
+        if (!isAllowedToStart()) {
+            logger.logDebug("Session not allowed to start.")
+            return
+        }
+
         val automaticSessionCloserCallback = Runnable {
             try {
                 logger.logInfo("Automatic session closing triggered.")
@@ -61,21 +69,21 @@ internal class EmbraceSessionService(
             }
         }
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             coldStart,
             startType,
             startTime,
             automaticSessionCloserCallback
         )
 
-        if (sessionMessage != null) {
-            logger.logDeveloper(TAG, "Session Message is created")
-        } else {
-            logger.logDeveloper(TAG, "Session Message is NULL")
-        }
+        logger.logDeveloper(TAG, "Session Message is created")
     }
 
     override fun handleCrash(crashId: String) {
+        if (!isAllowedToStart()) {
+            logger.logDebug("Session not allowed to start.")
+            return
+        }
         logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
         sessionHandler.onCrash(crashId)
     }
@@ -127,9 +135,23 @@ internal class EmbraceSessionService(
      * @param endType the origin of the event that ends the session.
      */
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
+        if (!isAllowedToStart()) {
+            logger.logDebug("Session not allowed to start.")
+            return
+        }
         logger.logDebug("Will try to end session.")
         sessionHandler.onSessionEnded(endType, endTime)
         logger.logDeveloper(TAG, "Active session cleared")
+    }
+
+    private fun isAllowedToStart(): Boolean {
+        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
+            logger.logWarning("Session messages disabled. Ignoring all sessions.")
+            false
+        } else {
+            logger.logDebug("Session is allowed to start.")
+            true
+        }
     }
 
     override fun close() {

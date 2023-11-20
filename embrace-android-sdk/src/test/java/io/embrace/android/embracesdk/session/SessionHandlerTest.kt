@@ -244,7 +244,7 @@ internal class SessionHandlerTest {
         // verify session id gets updated if ndk enabled
         verify { mockNdkService.updateSessionId(sessionUuid) }
         // verify session is correctly built
-        with(checkNotNull(sessionMessage?.session)) {
+        with(checkNotNull(sessionMessage.session)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
             assertTrue(isColdStart)
@@ -260,28 +260,6 @@ internal class SessionHandlerTest {
             assertEquals(metadataService.getAppInfo(), appInfo)
         }
         verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
-    }
-
-    @Test
-    fun `onSession if it's not allowed to start should not do anything`() {
-        remoteConfig = RemoteConfig(
-            disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
-        )
-
-        val sessionMessage = sessionHandler.onSessionStarted(
-            true,
-            /* any event type */ Session.SessionLifeEventType.STATE,
-            now,
-            mockAutomaticSessionStopperRunnable
-        )
-
-        assertNull(sessionMessage)
-        verify { mockNetworkConnectivityService wasNot Called }
-        assertNull(metadataService.activeSessionId)
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-        verify { mockAutomaticSessionStopper wasNot Called }
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockNdkService wasNot Called }
     }
 
     @Test
@@ -302,7 +280,7 @@ internal class SessionHandlerTest {
 
         verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -322,7 +300,7 @@ internal class SessionHandlerTest {
         // verify automatic session stopper has not been scheduled
         verify { mockAutomaticSessionStopper wasNot Called }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -346,7 +324,7 @@ internal class SessionHandlerTest {
         // verify we are forcing log view with foreground activity class name
         verify(exactly = 1) { mockBreadcrumbService.forceLogView(activityClassName, now) }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 

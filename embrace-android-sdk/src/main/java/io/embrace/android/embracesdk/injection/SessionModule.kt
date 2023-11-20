@@ -91,6 +91,7 @@ internal class SessionModuleImpl(
             sessionHandler,
             deliveryModule.deliveryService,
             essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled(),
+            essentialServiceModule.configService,
             initModule.clock,
             coreModule.logger
         )

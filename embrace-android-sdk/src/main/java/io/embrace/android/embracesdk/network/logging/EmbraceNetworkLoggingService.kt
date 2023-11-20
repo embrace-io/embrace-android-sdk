@@ -52,7 +52,7 @@ internal class EmbraceNetworkLoggingService(
 
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
-    override fun getNetworkCallsForSession(): NetworkSessionV2 {
+    override fun getNetworkCallsSnapshot(): NetworkSessionV2 {
         var storedCallsSize: Int? = null
         var cachedCallsSize: Int? = null
 

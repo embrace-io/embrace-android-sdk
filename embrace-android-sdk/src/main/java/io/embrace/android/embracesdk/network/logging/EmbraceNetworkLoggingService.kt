@@ -53,28 +53,33 @@ internal class EmbraceNetworkLoggingService(
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
     override fun getNetworkCallsForSession(): NetworkSessionV2 {
-        val calls = networkCallCache.value {
+        var storedCallsSize: Int? = null
+        var cachedCallsSize: Int? = null
+
+        try {
             synchronized(callsStorageLastUpdate) {
-                sessionNetworkCalls.values.toList()
+                val calls = networkCallCache.value {
+                    sessionNetworkCalls.values.toList()
+                }
+
+                storedCallsSize = sessionNetworkCalls.size
+                cachedCallsSize = calls.size
+
+                val overLimit = hashMapOf<String, DomainCount>()
+                for ((key, value) in callsPerDomainSuffix) {
+                    if (value.requestCount > value.captureLimit) {
+                        overLimit[key] = value
+                    }
+                }
+
+                return NetworkSessionV2(calls, overLimit)
+            }
+        } finally {
+            if (cachedCallsSize != storedCallsSize) {
+                val msg = "Cached network call count different than expected: $cachedCallsSize instead of $storedCallsSize"
+                logger.logError(msg, IllegalStateException(msg), true)
             }
         }
-
-        val storedCallsSize = sessionNetworkCalls.size
-        val cachedCallsSize = calls.size
-
-        val overLimit = hashMapOf<String, DomainCount>()
-        for ((key, value) in callsPerDomainSuffix) {
-            if (value.requestCount > value.captureLimit) {
-                overLimit[key] = value
-            }
-        }
-
-        if (cachedCallsSize != storedCallsSize) {
-            val msg = "Cached network call count different than expected: $cachedCallsSize instead of $storedCallsSize"
-            logger.logError(msg, IllegalStateException(msg), true)
-        }
-
-        return NetworkSessionV2(calls, overLimit)
     }
 
     override fun logNetworkCall(
@@ -161,6 +166,13 @@ internal class EmbraceNetworkLoggingService(
         processNetworkCall(callId, networkCall)
     }
 
+    override fun cleanCollections() {
+        clearNetworkCalls()
+        // re-fetch limits in case they changed since they last time they were fetched
+        defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
+        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+    }
+
     /**
      * Process network calls to be ready when the session requests them.
      *
@@ -173,44 +185,45 @@ internal class EmbraceNetworkLoggingService(
             getDomain(it)
         } ?: return
 
-        if (isIpAddress(domain)) {
-            if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                storeNetworkCall(callId, networkCall)
-            }
-            return
-        } else if (!domainSetting.containsKey(domain)) {
-            createLimitForDomain(domain)
-        }
-
-        val settings = domainSetting[domain]
-        if (settings == null) {
-            // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
-            if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                storeNetworkCall(callId, networkCall)
-            }
-        } else {
-            val suffix = settings.suffix
-            val limit = settings.limit
-            var countPerSuffix = callsPerDomainSuffix[suffix]
-
-            if (countPerSuffix == null) {
-                countPerSuffix = DomainCount(0, limit)
+        synchronized(callsStorageLastUpdate) {
+            if (isIpAddress(domain)) {
+                if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
+                    storeNetworkCall(callId, networkCall)
+                }
+                return
+            } else if (!domainSetting.containsKey(domain)) {
+                createLimitForDomain(domain)
             }
 
-            // Exclude if the network call exceeds the limit
-            if (countPerSuffix.requestCount < limit) {
-                storeNetworkCall(callId, networkCall)
+            val settings = domainSetting[domain]
+            if (settings == null) {
+                // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
+                if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
+                    storeNetworkCall(callId, networkCall)
+                }
+                return
             } else {
-                logger.logDeveloper("EmbraceNetworkLoggingService", "capture limit exceeded")
-            }
+                val suffix = settings.suffix
+                val limit = settings.limit
+                var countPerSuffix = callsPerDomainSuffix[suffix]
 
-            // Track the number of calls for each domain (or configured suffix)
-            suffix?.let {
-                callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
-                logger.logDeveloper(
-                    "EmbraceNetworkLoggingService",
-                    "Call per domain $domain ${countPerSuffix.requestCount + 1}"
-                )
+                if (countPerSuffix == null) {
+                    countPerSuffix = DomainCount(0, limit)
+                }
+
+                // Exclude if the network call exceeds the limit
+                if (countPerSuffix.requestCount < limit) {
+                    storeNetworkCall(callId, networkCall)
+                }
+
+                // Track the number of calls for each domain (or configured suffix)
+                suffix?.let {
+                    callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
+                    logger.logDeveloper(
+                        "EmbraceNetworkLoggingService",
+                        "Call per domain $domain ${countPerSuffix.requestCount + 1}"
+                    )
+                }
             }
         }
     }
@@ -232,27 +245,18 @@ internal class EmbraceNetworkLoggingService(
     }
 
     private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
-        synchronized(callsStorageLastUpdate) {
-            callsStorageLastUpdate.incrementAndGet()
-            sessionNetworkCalls[callId] = networkCall
-        }
+        callsStorageLastUpdate.incrementAndGet()
+        sessionNetworkCalls[callId] = networkCall
     }
 
     private fun clearNetworkCalls() {
         synchronized(callsStorageLastUpdate) {
+            domainSetting.clear()
+            callsPerDomainSuffix.clear()
+            ipAddressNetworkCallCount.set(0)
+            untrackedNetworkCallCount.set(0)
             callsStorageLastUpdate.set(0)
             sessionNetworkCalls.clear()
         }
-    }
-
-    override fun cleanCollections() {
-        domainSetting.clear()
-        callsPerDomainSuffix.clear()
-        ipAddressNetworkCallCount.set(0)
-        untrackedNetworkCallCount.set(0)
-        clearNetworkCalls()
-        // re-fetch limits in case they changed since they last time they were fetched
-        defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
     }
 }

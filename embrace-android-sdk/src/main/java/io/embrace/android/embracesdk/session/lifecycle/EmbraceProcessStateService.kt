@@ -4,7 +4,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.utils.ThreadUtils
@@ -65,11 +64,7 @@ internal class EmbraceProcessStateService(
         isInBackground = false
         val timestamp = clock.now()
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
-            try {
-                listener.onForeground(coldStart, startTime, timestamp)
-            } catch (ex: Exception) {
-                logDebug(ERROR_FAILED_TO_NOTIFY, ex)
-            }
+            invokeCallbackSafely { listener.onForeground(coldStart, startTime, timestamp) }
         }
         coldStart = false
     }
@@ -84,12 +79,15 @@ internal class EmbraceProcessStateService(
         isInBackground = true
         val timestamp = clock.now()
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
-            try {
-                InternalStaticEmbraceLogger.logger.logWarning("onBackground() listener: $listener")
-                listener.onBackground(timestamp)
-            } catch (ex: Exception) {
-                logDebug(ERROR_FAILED_TO_NOTIFY, ex)
-            }
+            invokeCallbackSafely { listener.onBackground(timestamp) }
+        }
+    }
+
+    private inline fun invokeCallbackSafely(action: () -> Unit) {
+        try {
+            action()
+        } catch (ex: Exception) {
+            logDebug(ERROR_FAILED_TO_NOTIFY, ex)
         }
     }
 

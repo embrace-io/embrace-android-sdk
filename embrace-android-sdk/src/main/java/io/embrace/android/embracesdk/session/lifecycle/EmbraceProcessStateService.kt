@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.session.lifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
+import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.utils.ThreadUtils
 import io.embrace.android.embracesdk.utils.stream
@@ -23,6 +25,9 @@ internal class EmbraceProcessStateService(
      */
 
     val listeners = CopyOnWriteArrayList<ProcessStateListener>()
+
+    private var sessionService: SessionService? = null
+    private var backgroundActivityService: BackgroundActivityService? = null
 
     /**
      * States if the foreground phase comes from a cold start or not.
@@ -63,8 +68,14 @@ internal class EmbraceProcessStateService(
         logDebug("AppState: App entered foreground.")
         isInBackground = false
         val timestamp = clock.now()
+
+        invokeCallbackSafely { backgroundActivityService?.onForeground(coldStart, startTime, timestamp) }
+        invokeCallbackSafely { sessionService?.onForeground(coldStart, startTime, timestamp) }
+
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
-            invokeCallbackSafely { listener.onForeground(coldStart, startTime, timestamp) }
+            invokeCallbackSafely {
+                listener.onForeground(coldStart, startTime, timestamp)
+            }
         }
         coldStart = false
     }
@@ -78,8 +89,13 @@ internal class EmbraceProcessStateService(
         logDebug("AppState: App entered background")
         isInBackground = true
         val timestamp = clock.now()
+        invokeCallbackSafely { sessionService?.onBackground(timestamp) }
+        invokeCallbackSafely { backgroundActivityService?.onBackground(timestamp) }
+
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
-            invokeCallbackSafely { listener.onBackground(timestamp) }
+            invokeCallbackSafely {
+                listener.onBackground(timestamp)
+            }
         }
     }
 
@@ -92,16 +108,10 @@ internal class EmbraceProcessStateService(
     }
 
     override fun addListener(listener: ProcessStateListener) {
-        // assumption: we always need to run the Session service first, then everything else,
-        // because otherwise the session envelope will not be created. The ActivityListener
-        // could use separating from session handling, but that's a bigger change.
-        val priority = listener is SessionService
-        if (!listeners.contains(listener)) {
-            if (priority) {
-                listeners.add(0, listener)
-            } else {
-                listeners.addIfAbsent(listener)
-            }
+        when (listener) {
+            is SessionService -> sessionService = listener
+            is BackgroundActivityService -> backgroundActivityService = listener
+            else -> listeners.addIfAbsent(listener)
         }
     }
 
@@ -109,6 +119,8 @@ internal class EmbraceProcessStateService(
         try {
             logDebug("Shutting down EmbraceProcessStateService")
             listeners.clear()
+            backgroundActivityService = null
+            sessionService = null
         } catch (ex: Exception) {
             logDebug("Error when closing EmbraceProcessStateService", ex)
         }

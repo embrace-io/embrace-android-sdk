@@ -177,9 +177,9 @@ internal class EmbraceProcessStateServiceTest {
         // verify on foreground follows specific call order
         stateService.onForeground()
         val foregroundExpected = listOf(
+            "DecoratedBackgroundActivityService",
             "DecoratedSessionService",
-            "DecoratedListener",
-            "DecoratedBackgroundActivityService"
+            "DecoratedListener"
         )
         assertEquals(foregroundExpected, invocations)
 
@@ -188,8 +188,8 @@ internal class EmbraceProcessStateServiceTest {
         stateService.onBackground()
         val backgroundExpected = listOf(
             "DecoratedSessionService",
-            "DecoratedListener",
             "DecoratedBackgroundActivityService",
+            "DecoratedListener"
         )
         assertEquals(backgroundExpected, invocations)
     }

@@ -87,7 +87,6 @@ internal class EmbraceSessionServiceTest {
                 /* automatically detecting a cold start */ true,
                 SessionLifeEventType.STATE,
                 any(),
-                any(),
                 any()
             )
         }
@@ -103,7 +102,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 true,
                 SessionLifeEventType.STATE,
-                any(),
                 any(),
                 any()
             )
@@ -130,7 +128,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 SessionLifeEventType.STATE,
                 456,
-                any(),
                 any()
             )
         }
@@ -150,7 +147,6 @@ internal class EmbraceSessionServiceTest {
                 coldStart,
                 SessionLifeEventType.STATE,
                 456,
-                any(),
                 any()
             )
         }
@@ -168,8 +164,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.MANUAL,
-                0,
-                any()
+                0
             )
         }
     }
@@ -184,13 +179,12 @@ internal class EmbraceSessionServiceTest {
         service.triggerStatelessSessionEnd(endType)
 
         // verify session is ended
-        verify { mockSessionHandler.onSessionEnded(endType, 0, any()) }
+        verify { mockSessionHandler.onSessionEnded(endType, 0) }
         // verify that a MANUAL session is started
         verify {
             mockSessionHandler.onSessionStarted(
                 false,
                 endType,
-                any(),
                 any(),
                 any()
             )
@@ -213,96 +207,9 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `verify periodic caching`() {
-        initializeSessionService()
-
-        service.startSession(true, SessionLifeEventType.STATE, clock.now())
-        service.onPeriodicCacheActiveSession()
-
-        verify { mockSessionHandler.onPeriodicCacheActiveSession(any()) }
-    }
-
-    @Test
     fun `spanService that is not initialized will not result in any complete spans`() {
         initializeSessionService()
         assertNull(spansService.completedSpans())
-    }
-
-    @Test
-    fun `backgrounding flushes completed spans`() {
-        initializeSessionService()
-        startDefaultSession()
-        val now = clock.now()
-        spansService.initializeService(now, now + 5L)
-        assertEquals(1, spansService.completedSpans()?.size)
-        service.onBackground(now)
-        // expect 2 spans to be flushed: session span and sdk init span
-        verify {
-            mockSessionHandler.onSessionEnded(
-                endType = any(),
-                endTime = any(),
-                completedSpans = match {
-                    it.size == 2
-                }
-            )
-        }
-        assertEquals(0, spansService.completedSpans()?.size)
-    }
-
-    @Test
-    fun `stateless session ends flushes completed spans`() {
-        listOf(SessionLifeEventType.MANUAL, SessionLifeEventType.TIMED).forEach {
-            before()
-            initializeSessionService()
-            startDefaultSession()
-            val now = clock.now()
-            spansService.initializeService(now, now + 5L)
-            assertEquals(1, spansService.completedSpans()?.size)
-            service.triggerStatelessSessionEnd(it)
-            // expect 2 spans to be flushed: session span and sdk init span
-            verify {
-                mockSessionHandler.onSessionEnded(
-                    endType = any(),
-                    endTime = any(),
-                    completedSpans = match {
-                        it.size == 2
-                    }
-                )
-            }
-            assertEquals(0, spansService.completedSpans()?.size)
-            after()
-        }
-    }
-
-    @Test
-    fun `crash ending flushes completed spans`() {
-        initializeSessionService()
-        startDefaultSession()
-        val now = clock.now()
-        spansService.initializeService(now, now + 5L)
-        assertEquals(1, spansService.completedSpans()?.size)
-        service.handleCrash("crashId")
-        // expect 2 spans to be flushed: session span and sdk init span
-        verify {
-            mockSessionHandler.onCrash(
-                crashId = any(),
-                completedSpans = match {
-                    it.size == 2
-                }
-            )
-        }
-        assertEquals(0, spansService.completedSpans()?.size)
-    }
-
-    @Test
-    fun `periodic caching caches completed spans but doesn't flush them`() {
-        initializeSessionService()
-        startDefaultSession()
-        val now = clock.now()
-        spansService.initializeService(now, now + 5L)
-        assertEquals(1, spansService.completedSpans()?.size)
-        service.onPeriodicCacheActiveSession()
-        assertEquals(1, spansService.completedSpans()?.size)
     }
 
     private fun initializeSessionService(
@@ -317,8 +224,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
-            clock,
-            spansService
+            clock
         )
     }
 
@@ -327,7 +233,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 true,
                 SessionLifeEventType.STATE,
-                any(),
                 any(),
                 any()
             )

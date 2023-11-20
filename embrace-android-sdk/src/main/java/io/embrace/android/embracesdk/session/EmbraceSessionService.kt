@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
-import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -17,7 +15,6 @@ internal class EmbraceSessionService(
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
     private val clock: Clock,
-    private val spansService: SpansService,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService {
 
@@ -68,8 +65,7 @@ internal class EmbraceSessionService(
             coldStart,
             startType,
             startTime,
-            automaticSessionCloserCallback,
-            this::onPeriodicCacheActiveSession
+            automaticSessionCloserCallback
         )
 
         if (sessionMessage != null) {
@@ -81,22 +77,7 @@ internal class EmbraceSessionService(
 
     override fun handleCrash(crashId: String) {
         logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
-        sessionHandler.onCrash(
-            crashId,
-            spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
-        )
-    }
-
-    /**
-     * Caches the session, with performance information generated up to the current point.
-     */
-
-    fun onPeriodicCacheActiveSession() {
-        try {
-            sessionHandler.onPeriodicCacheActiveSession(spansService.completedSpans())
-        } catch (ex: Exception) {
-            logger.logDebug("Error while caching active session", ex)
-        }
+        sessionHandler.onCrash(crashId)
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
@@ -147,11 +128,7 @@ internal class EmbraceSessionService(
      */
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
         logger.logDebug("Will try to end session.")
-        sessionHandler.onSessionEnded(
-            endType,
-            endTime,
-            spansService.flushSpans()
-        )
+        sessionHandler.onSessionEnded(endType, endTime)
         logger.logDeveloper(TAG, "Active session cleared")
     }
 

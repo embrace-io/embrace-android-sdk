@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -44,6 +46,7 @@ internal class SessionHandler(
     private val sessionMessageCollator: SessionMessageCollator,
     private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
+    private val spansService: SpansService,
     private val automaticSessionStopper: ScheduledExecutorService,
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
@@ -75,8 +78,7 @@ internal class SessionHandler(
         coldStart: Boolean,
         startType: SessionLifeEventType,
         startTime: Long,
-        automaticSessionCloserCallback: Runnable,
-        cacheCallback: Runnable
+        automaticSessionCloserCallback: Runnable
     ): SessionMessage? {
         synchronized(lock) {
             if (!isAllowedToStart()) {
@@ -109,7 +111,7 @@ internal class SessionHandler(
 
             handleAutomaticSessionStopper(automaticSessionCloserCallback)
             addFirstViewBreadcrumbForSession(startTime)
-            startPeriodicCaching(cacheCallback)
+            startPeriodicCaching { onPeriodicCacheActiveSession() }
             if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
                 ndkService.updateSessionId(session.sessionId)
             }
@@ -121,11 +123,7 @@ internal class SessionHandler(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    fun onSessionEnded(
-        endType: SessionLifeEventType,
-        endTime: Long,
-        completedSpans: List<EmbraceSpanData>? = null
-    ) {
+    fun onSessionEnded(endType: SessionLifeEventType, endTime: Long) {
         synchronized(lock) {
             val session = activeSession ?: return
 
@@ -134,7 +132,7 @@ internal class SessionHandler(
                 SessionSnapshotType.NORMAL_END,
                 session,
                 sessionProperties,
-                completedSpans,
+                spansService.flushSpans(),
                 endType,
                 endTime
             ) ?: return
@@ -156,10 +154,7 @@ internal class SessionHandler(
      * Called when a regular crash happens. It will build a session message with associated crashId,
      * and send it to our servers.
      */
-    fun onCrash(
-        crashId: String,
-        completedSpans: List<EmbraceSpanData>? = null
-    ) {
+    fun onCrash(crashId: String) {
         synchronized(lock) {
             val session = activeSession ?: return
             logger.logDebug("Will try to run end session for crash.")
@@ -167,7 +162,7 @@ internal class SessionHandler(
                 SessionSnapshotType.JVM_CRASH,
                 session,
                 sessionProperties,
-                completedSpans,
+                spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH),
                 SessionLifeEventType.STATE,
                 clock.now(),
                 crashId,
@@ -177,12 +172,23 @@ internal class SessionHandler(
     }
 
     /**
+     * Caches the session, with performance information generated up to the current point.
+     */
+    private fun onPeriodicCacheActiveSession() {
+        try {
+            onPeriodicCacheActiveSessionImpl(spansService.completedSpans())
+        } catch (ex: Exception) {
+            logger.logDebug("Error while caching active session", ex)
+        }
+    }
+
+    /**
      * Called when periodic cache update needs to be performed.
      * It will update current session 's cache state.
      *
      * Note that the session message will not be sent to our servers.
      */
-    fun onPeriodicCacheActiveSession(
+    fun onPeriodicCacheActiveSessionImpl(
         completedSpans: List<EmbraceSpanData>? = null
     ): SessionMessage? {
         synchronized(lock) {

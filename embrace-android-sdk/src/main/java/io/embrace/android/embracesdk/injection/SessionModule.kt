@@ -71,6 +71,7 @@ internal class SessionModuleImpl(
             sessionMessageCollator,
             sessionProperties,
             initModule.clock,
+            initModule.spansService,
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CLOSER),
             workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING)
         )
@@ -91,7 +92,6 @@ internal class SessionModuleImpl(
             deliveryModule.deliveryService,
             essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled(),
             initModule.clock,
-            initModule.spansService,
             coreModule.logger
         )
     }

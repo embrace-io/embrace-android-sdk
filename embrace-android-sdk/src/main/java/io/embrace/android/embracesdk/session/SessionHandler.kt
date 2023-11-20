@@ -48,6 +48,14 @@ internal class SessionHandler(
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
 
+    /**
+     * The currently active session.
+     */
+    @Volatile
+    private var activeSession: Session? = null
+
+    internal fun getSessionId(): String? = activeSession?.sessionId
+
     var scheduledFuture: ScheduledFuture<*>? = null
 
     /**
@@ -86,6 +94,7 @@ internal class SessionHandler(
                 userService.loadUserInfoFromDisk(),
                 sessionProperties.get()
             )
+            activeSession = session
             logDeveloper("SessionHandler", "SessionId = ${session.sessionId}")
 
             // Record the connection type at the start of the session.
@@ -114,15 +123,16 @@ internal class SessionHandler(
      */
     fun onSessionEnded(
         endType: SessionLifeEventType,
-        originSession: Session,
         endTime: Long,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         synchronized(lock) {
+            val session = activeSession ?: return
+
             logger.logDebug("Will try to run end session full.")
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.NORMAL_END,
-                originSession,
+                session,
                 sessionProperties,
                 completedSpans,
                 endType,
@@ -131,11 +141,14 @@ internal class SessionHandler(
 
             // Clean every collection of those services which have collections in memory.
             memoryCleanerService.cleanServicesCollections(exceptionService)
-            metadataService.removeActiveSessionId(originSession.sessionId)
+            metadataService.removeActiveSessionId(session.sessionId)
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()
             logger.logDebug("Session properties successfully temporary cleared.")
             deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+
+            // clear active session
+            activeSession = null
         }
     }
 
@@ -144,15 +157,15 @@ internal class SessionHandler(
      * and send it to our servers.
      */
     fun onCrash(
-        originSession: Session,
         crashId: String,
         completedSpans: List<EmbraceSpanData>? = null
     ) {
         synchronized(lock) {
+            val session = activeSession ?: return
             logger.logDebug("Will try to run end session for crash.")
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.JVM_CRASH,
-                originSession,
+                session,
                 sessionProperties,
                 completedSpans,
                 SessionLifeEventType.STATE,
@@ -170,21 +183,19 @@ internal class SessionHandler(
      * Note that the session message will not be sent to our servers.
      */
     fun onPeriodicCacheActiveSession(
-        activeSession: Session?,
         completedSpans: List<EmbraceSpanData>? = null
     ): SessionMessage? {
         synchronized(lock) {
-            val msg = activeSession?.let {
-                logger.logDebug("Will try to run end session for caching.")
-                createSessionSnapshot(
-                    SessionSnapshotType.PERIODIC_CACHE,
-                    activeSession,
-                    sessionProperties,
-                    completedSpans,
-                    SessionLifeEventType.STATE,
-                    clock.now()
-                )
-            }
+            logger.logDebug("Will try to run end session for caching.")
+            val session = activeSession ?: return null
+            val msg = createSessionSnapshot(
+                SessionSnapshotType.PERIODIC_CACHE,
+                session,
+                sessionProperties,
+                completedSpans,
+                SessionLifeEventType.STATE,
+                clock.now()
+            )
             msg?.let(deliveryService::saveSession)
             return msg
         }

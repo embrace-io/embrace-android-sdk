@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +23,7 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -94,68 +94,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `start session successfully`() {
-        initializeSessionService()
-        val coldStart = /* same for false */ true
-        val type = /* could be any type */ SessionLifeEventType.STATE
-        every {
-            mockSessionHandler.onSessionStarted(
-                coldStart,
-                type,
-                any(),
-                any(),
-                any()
-            )
-        } returns mockSessionMessage
-
-        val startTime = clock.now()
-
-        service.startSession(coldStart, type, startTime)
-
-        assertEquals(mockSession, service.activeSession)
-        verify {
-            mockSessionHandler.onSessionStarted(
-                coldStart,
-                type,
-                startTime,
-                any(),
-                any()
-            )
-        }
-        assertEquals(mockSession, service.activeSession)
-    }
-
-    @Test
-    fun `start session if not allowed then session handler will return a null session`() {
-        initializeSessionService()
-        val coldStart = /* same for false */ true
-        val type = /* could be any type */ SessionLifeEventType.STATE
-        every {
-            mockSessionHandler.onSessionStarted(
-                coldStart,
-                type,
-                any(),
-                any(),
-                any()
-            )
-        } returns null
-
-        val startTime = clock.now()
-        service.startSession(coldStart, type, startTime)
-
-        assertNull(service.activeSession)
-        verify {
-            mockSessionHandler.onSessionStarted(
-                coldStart,
-                type,
-                startTime,
-                any(),
-                any()
-            )
-        }
-    }
-
-    @Test
     fun `handle crash successfully`() {
         initializeSessionService()
         val crashId = "crash-id"
@@ -174,7 +112,7 @@ internal class EmbraceSessionServiceTest {
 
         service.handleCrash(crashId)
 
-        verify { mockSessionHandler.onCrash(mockSession, crashId) }
+        verify { mockSessionHandler.onCrash(crashId) }
     }
 
     @Test
@@ -184,7 +122,7 @@ internal class EmbraceSessionServiceTest {
         val startTime = 123L
 
         service.onForeground(coldStart, startTime, 456)
-        assertNull(deliveryService.lastSentCachedSession)
+        assertEquals("", deliveryService.lastSentCachedSession)
 
         // verify that a STATE session is started
         verify {
@@ -219,26 +157,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `on background ends a state session for a previously existing session`() {
-        initializeSessionService()
-        // let's start session first so we have an active session
-        startDefaultSession()
-
-        service.onBackground(456)
-
-        // verify session is ended
-        verify {
-            mockSessionHandler.onSessionEnded(
-                SessionLifeEventType.STATE,
-                mockSession,
-                456
-            )
-        }
-        // verify active session has been reset
-        assertNull(service.activeSession)
-    }
-
-    @Test
     fun `trigger stateless end session successfully for activity in background`() {
         initializeSessionService()
         // let's start session first so we have an active session
@@ -250,7 +168,6 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.MANUAL,
-                mockSession,
                 0,
                 any()
             )
@@ -267,7 +184,7 @@ internal class EmbraceSessionServiceTest {
         service.triggerStatelessSessionEnd(endType)
 
         // verify session is ended
-        verify { mockSessionHandler.onSessionEnded(endType, mockSession, 0, any()) }
+        verify { mockSessionHandler.onSessionEnded(endType, 0, any()) }
         // verify that a MANUAL session is started
         verify {
             mockSessionHandler.onSessionStarted(
@@ -284,8 +201,7 @@ internal class EmbraceSessionServiceTest {
     fun `trigger stateless end session for a STATE session end type should not do anything`() {
         initializeSessionService()
         service.triggerStatelessSessionEnd(SessionLifeEventType.STATE)
-
-        verify { mockSessionHandler wasNot Called }
+        assertTrue(deliveryService.lastSentSessions.isEmpty())
     }
 
     @Test
@@ -324,7 +240,6 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionEnded(
                 endType = any(),
-                originSession = any(),
                 endTime = any(),
                 completedSpans = match {
                     it.size == 2
@@ -348,7 +263,6 @@ internal class EmbraceSessionServiceTest {
             verify {
                 mockSessionHandler.onSessionEnded(
                     endType = any(),
-                    originSession = any(),
                     endTime = any(),
                     completedSpans = match {
                         it.size == 2
@@ -371,7 +285,6 @@ internal class EmbraceSessionServiceTest {
         // expect 2 spans to be flushed: session span and sdk init span
         verify {
             mockSessionHandler.onCrash(
-                originSession = any(),
                 crashId = any(),
                 completedSpans = match {
                     it.size == 2

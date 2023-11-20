@@ -40,12 +40,6 @@ internal class EmbraceSessionService(
         const val SESSION_CACHING_INTERVAL = 2
     }
 
-    /**
-     * The currently active session.
-     */
-    @Volatile
-    internal var activeSession: Session? = null
-
     init {
         if (!this.processStateService.isInBackground) {
             // If the app goes to foreground before the SDK finishes its startup,
@@ -57,7 +51,7 @@ internal class EmbraceSessionService(
         }
 
         // Send any sessions that were cached and not yet sent.
-        deliveryService.sendCachedSessions(isNdkEnabled, ndkService, activeSession?.sessionId)
+        deliveryService.sendCachedSessions(isNdkEnabled, ndkService, sessionHandler.getSessionId())
     }
 
     override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
@@ -80,8 +74,6 @@ internal class EmbraceSessionService(
 
         if (sessionMessage != null) {
             logger.logDeveloper(TAG, "Session Message is created")
-            activeSession = sessionMessage.session
-            logger.logDeveloper(TAG, "Active session: " + activeSession?.sessionId)
         } else {
             logger.logDeveloper(TAG, "Session Message is NULL")
         }
@@ -89,14 +81,10 @@ internal class EmbraceSessionService(
 
     override fun handleCrash(crashId: String) {
         logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
-
-        activeSession?.also {
-            sessionHandler.onCrash(
-                it,
-                crashId,
-                spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
-            )
-        } ?: logger.logDeveloper(TAG, "Active session is NULL")
+        sessionHandler.onCrash(
+            crashId,
+            spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
+        )
     }
 
     /**
@@ -105,11 +93,7 @@ internal class EmbraceSessionService(
 
     fun onPeriodicCacheActiveSession() {
         try {
-            val session = activeSession ?: return
-            sessionHandler.onPeriodicCacheActiveSession(
-                session,
-                spansService.completedSpans()
-            )
+            sessionHandler.onPeriodicCacheActiveSession(spansService.completedSpans())
         } catch (ex: Exception) {
             logger.logDebug("Error while caching active session", ex)
         }
@@ -163,16 +147,11 @@ internal class EmbraceSessionService(
      */
     private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
         logger.logDebug("Will try to end session.")
-        val session = activeSession ?: return
         sessionHandler.onSessionEnded(
             endType,
-            session,
             endTime,
             spansService.flushSpans()
         )
-
-        // clear active session
-        activeSession = null
         logger.logDeveloper(TAG, "Active session cleared")
     }
 

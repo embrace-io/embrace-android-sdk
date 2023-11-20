@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.MessageType
-import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -345,36 +344,9 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `onSession ended successfully, with session duration less than 5 seconds, with cold start, with startup event info`() {
-        // since now=123, then duration will be less than 5 seconds
-        val startTime = 120L
-        every { mockActiveSession.startTime } returns startTime
-        every { mockActiveSession.isColdStart } returns true
-        val mockStartupEventInfo: StartupEventInfo = mockk(relaxed = true)
-        every { mockEventService.getStartupMomentInfo() } returns mockStartupEventInfo
-
-        sessionHandler.onSessionEnded(
-            /* any type */ Session.SessionLifeEventType.STATE,
-            mockActiveSession,
-            1000
-        )
-
-        assertEquals(deliveryService.lastSentSessions.single().second, SessionMessageState.END)
-        // verify cleaning is being performed
-        verify {
-            mockMemoryCleanerService.cleanServicesCollections(
-                mockExceptionService
-            )
-        }
-        // verify current session is removed from cache
-        verify { mockSessionProperties.clearTemporary() }
-    }
-
-    @Test
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            mockActiveSession,
             1000
         )
 
@@ -390,7 +362,6 @@ internal class SessionHandlerTest {
     fun `onSession not allowed to end because session control is disabled for TIMED event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.TIMED,
-            mockActiveSession,
             1000
         )
 
@@ -411,7 +382,6 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            mockActiveSession,
             1000
         )
 
@@ -425,6 +395,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `if session messages are disabled don't end session but end periodic cache and session automatic stopper`() {
+        startFakeSession()
         remoteConfig = RemoteConfig(
             disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
         )
@@ -432,20 +403,20 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             /* any type */ Session.SessionLifeEventType.STATE,
-            mockActiveSession,
             1000
         )
 
         // verify automatic session stopper was called
         verify { sessionHandler.scheduledFuture?.cancel(false) }
         verify { mockMemoryCleanerService wasNot Called }
-        verify { mockSessionProperties wasNot Called }
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
     fun `onCrash ended session successfully`() {
+        startFakeSession()
+
         val crashId = "crash-id"
         val startTime = 120L
         val sdkStartupDuration = 2L
@@ -454,18 +425,13 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        sessionHandler.onCrash(
-            mockActiveSession,
-            crashId
-        )
+        sessionHandler.onCrash(crashId)
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockAutomaticSessionStopper wasNot Called }
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
 
         val session = checkNotNull(deliveryService.lastSavedSession).session
 
@@ -497,23 +463,21 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
-        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
-            mockActiveSession
-        )
+        startFakeSession()
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession()
 
         assertNotNull(sessionMessage)
 
         // when periodic caching, the following calls should not be made
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockAutomaticSessionStopper wasNot Called }
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
     fun `verify close stops everything successfully`() {
+        startFakeSession()
         sessionHandler.scheduledFuture = mockk(relaxed = true)
         sessionHandler.close()
         verify { sessionHandler.scheduledFuture?.cancel(false) }
@@ -521,20 +485,20 @@ internal class SessionHandlerTest {
 
     @Test
     fun `endSession includes completed spans in message`() {
+        startFakeSession()
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            originSession = mockActiveSession,
             endTime = 10L,
             listOf(testSpan)
         )
 
-        assertSpanInSessionMessage(deliveryService.lastSentSessions.single().first)
+        assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
     @Test
     fun `crashes includes completed spans in message`() {
+        startFakeSession()
         sessionHandler.onCrash(
-            mockActiveSession,
             "fakeCrashId",
             listOf(testSpan)
         )
@@ -544,12 +508,26 @@ internal class SessionHandlerTest {
 
     @Test
     fun `periodically cached sessions included currently completed spans`() {
-        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(
-            mockActiveSession,
-            listOf(testSpan)
-        )
-
+        startFakeSession()
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSession(listOf(testSpan))
         assertSpanInSessionMessage(sessionMessage)
+    }
+
+    @Test
+    fun `start session successfully`() {
+        assertNull(sessionHandler.getSessionId())
+        startFakeSession()
+        assertNotNull(sessionHandler.getSessionId())
+    }
+
+    private fun startFakeSession() {
+        sessionHandler.onSessionStarted(
+            coldStart = true,
+            startType = Session.SessionLifeEventType.STATE,
+            startTime = 0L,
+            automaticSessionCloserCallback = mockAutomaticSessionStopperRunnable,
+            cacheCallback = { mockPeriodicCachingRunnable }
+        )
     }
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {

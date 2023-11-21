@@ -46,6 +46,7 @@ public class ConfigHooks {
 
     static SessionRemoteConfig getSessionConfig() {
         return new SessionRemoteConfig(true,
+            100f,
             false,
             null,
             null);

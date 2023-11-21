@@ -106,7 +106,9 @@ internal class SessionHandler(
 
             metadataService.setActiveSessionId(session.sessionId)
 
-            deliveryService.sendSession(sessionMessage, SessionMessageState.START)
+            if (configService.sessionBehavior.isStartMessageEnabled()) {
+                deliveryService.sendSession(sessionMessage, SessionMessageState.START)
+            }
             logger.logDebug("Start session successfully sent.")
 
             handleAutomaticSessionStopper(automaticSessionCloserCallback)

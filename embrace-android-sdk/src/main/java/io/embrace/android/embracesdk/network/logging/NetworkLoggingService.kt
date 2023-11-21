@@ -14,7 +14,7 @@ internal interface NetworkLoggingService {
      *
      * @return the network calls for the given session
      */
-    fun getNetworkCallsForSession(): NetworkSessionV2
+    fun getNetworkCallsSnapshot(): NetworkSessionV2
 
     /**
      * Logs a HTTP network call.

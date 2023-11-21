@@ -37,7 +37,7 @@ internal class EmbracePerformanceInfoService(
             "EmbracePerformanceInfoService",
             "Session performance info start time: $sessionStart"
         )
-        val requests = NetworkRequests(networkLoggingService.getNetworkCallsForSession())
+        val requests = NetworkRequests(networkLoggingService.getNetworkCallsSnapshot())
         val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
 
         return info.copy(

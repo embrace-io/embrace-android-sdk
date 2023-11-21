@@ -50,7 +50,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkCall("www.example3.com", 300, 400)
         logNetworkCall("www.example4.com", 400, 500)
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(4, result.requests.size)
 
         val sortedRequests = result.requests.sortedBy { it.startTime }
@@ -67,7 +67,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         }
         logNetworkCall("www.overLimit2.com")
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
         assertEquals(1001, result.requests.size)
         assertEquals(DomainCount(1005, 1000), result.requestCounts["overLimit1.com"])
@@ -88,7 +88,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.overLimit1.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(2, result.requests.size)
         assertEquals(DomainCount(3, 2), result.requestCounts["overLimit1.com"])
     }
@@ -109,7 +109,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         logNetworkCall("www.overLimit2.com")
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(3, result.requests.size)
         assertEquals(DomainCount(4, 2), result.requestCounts["overLimit1.com"])
         assertNull(result.requestCounts["overLimit2.com"])
@@ -138,7 +138,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.overLimit3.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(7, result.requests.size)
         assertEquals(DomainCount(4, 3), result.requestCounts["overLimit1.com"])
         assertEquals(DomainCount(3, 2), result.requestCounts["overLimit2.com"])
@@ -168,7 +168,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.verylimited.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(15, result.requests.size)
         assertEquals(DomainCount(30, 10), result.requestCounts["limited.org"])
         assertEquals(DomainCount(30, 5), result.requestCounts["verylimited.com"])
@@ -196,7 +196,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.verylimited.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(10, result.requests.size)
         assertEquals(DomainCount(30, 5), result.requestCounts["limited.org"])
         assertEquals(DomainCount(30, 5), result.requestCounts["verylimited.com"])
@@ -224,7 +224,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.defaultlimit.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(25, result.requests.size)
         assertEquals(DomainCount(30, 10), result.requestCounts["limited.org"])
         assertEquals(DomainCount(30, 15), result.requestCounts["defaultlimit.com"])
@@ -246,7 +246,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.verylimited.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(2000, result.requests.size)
         assertEquals(DomainCount(2001, 1000), result.requestCounts["limited.org"])
         assertEquals(DomainCount(2001, 1000), result.requestCounts["verylimited.com"])
@@ -270,7 +270,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("woopwoop.com")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(23, result.requests.size)
         assertEquals(1, result.requestCounts.size)
         assertEquals(DomainCount(24, 15), result.requestCounts["limited.org"])
@@ -290,13 +290,13 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.limited.org")
         }
 
-        networkLoggingService.getNetworkCallsForSession()
+        networkLoggingService.getNetworkCallsSnapshot()
 
         repeat(6) {
             logNetworkCall("www.limited.org")
         }
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(5, result.requests.size)
         assertEquals(DomainCount(12, 5), result.requestCounts["limited.org"])
     }
@@ -315,7 +315,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.limited.org")
         }
 
-        val firstSession = networkLoggingService.getNetworkCallsForSession()
+        val firstSession = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(5, firstSession.requests.size)
         assertEquals(DomainCount(10, 5), firstSession.requestCounts["limited.org"])
 
@@ -325,7 +325,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkCall("www.limited.org")
         }
 
-        val secondSession = networkLoggingService.getNetworkCallsForSession()
+        val secondSession = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(5, secondSession.requests.size)
         assertEquals(DomainCount(6, 5), secondSession.requestCounts["limited.org"])
     }
@@ -350,7 +350,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             null
         )
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
         assertEquals(url, result.requests.at(0)?.url)
     }
@@ -420,7 +420,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         networkLoggingService.cleanCollections()
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
         assertEquals(0, result.requests.size)
         assertEquals(0, result.requestCounts.size)
@@ -438,7 +438,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkError(url = "https://embrace.io", startTime = startTime)
         }
 
-        assertEquals(4, networkLoggingService.getNetworkCallsForSession().requests.size)
+        assertEquals(4, networkLoggingService.getNetworkCallsSnapshot().requests.size)
     }
 
     @Test
@@ -452,7 +452,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkError(url = "https://embrace.io", startTime = 50, callId = callId)
         logNetworkCall(url = expectedUrl, startTime = expectedStartTime, endTime = expectedEndTime, callId = callId)
 
-        val result = networkLoggingService.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(1, result.requests.size)
         with(result.requests[0]) {
             assertEquals(1, result.requests.size)

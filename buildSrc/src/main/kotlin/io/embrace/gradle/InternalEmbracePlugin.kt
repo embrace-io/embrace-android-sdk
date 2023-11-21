@@ -120,7 +120,7 @@ class InternalEmbracePlugin : Plugin<Project> {
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
                 aarMetadata {
-                    minCompileSdk = 16
+                    minCompileSdk = Versions.minSdk
                 }
             }
 

@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService;
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
-import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
@@ -68,7 +67,10 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
+import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
+import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
@@ -80,8 +82,6 @@ import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
-import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService;
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
@@ -89,12 +89,11 @@ import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
+import io.embrace.android.embracesdk.session.BackgroundActivityService;
+import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
-import io.embrace.android.embracesdk.session.BackgroundActivityService;
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
-import io.embrace.android.embracesdk.session.EmbraceSessionService;
-import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
@@ -576,8 +575,7 @@ final class EmbraceImpl {
             nonNullWorkerThreadModule
         );
 
-        final SessionService nonNullSessionService = sessionModule.getSessionService();
-        sessionService = nonNullSessionService;
+        sessionService = sessionModule.getSessionService();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
@@ -616,7 +614,7 @@ final class EmbraceImpl {
             serviceRegistry.registerService(collector);
         }
 
-        if (configService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
+        if (nonNullConfigService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule);
         }
 
@@ -1526,11 +1524,6 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    EventService getEventService() {
-        return eventService;
-    }
-
-    @Nullable
     ProcessStateService getActivityService() {
         return processStateService;
     }
@@ -1541,11 +1534,6 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    EmbraceRemoteLogger getRemoteLogger() {
-        return remoteLogger;
-    }
-
-    @Nullable
     EmbraceInternalErrorService getExceptionsService() {
         return exceptionsService;
     }
@@ -1553,11 +1541,6 @@ final class EmbraceImpl {
     @Nullable
     MetadataService getMetadataService() {
         return metadataService;
-    }
-
-    @Nullable
-    SessionService getSessionService() {
-        return sessionService;
     }
 
     @Nullable

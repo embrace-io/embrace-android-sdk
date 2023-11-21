@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.view.WindowManager
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
@@ -25,8 +24,8 @@ import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.eagerLazyLoad
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
@@ -60,7 +59,7 @@ internal class EmbraceMetadataService private constructor(
     private val appUpdated: Lazy<Boolean>,
     private val osUpdated: Lazy<Boolean>,
     private val preferencesService: PreferencesService,
-    private val activityService: ActivityService,
+    private val processStateService: ProcessStateService,
     reactNativeBundleId: Lazy<String?>,
     javaScriptPatchNumber: String?,
     reactNativeVersion: String?,
@@ -72,7 +71,7 @@ internal class EmbraceMetadataService private constructor(
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture
-) : MetadataService, ActivityListener {
+) : MetadataService, ActivityLifecycleListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
     private val javaScriptPatchNumber: String?
@@ -227,7 +226,6 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataRetrieveExecutorService.submit(
             Callable<Any?> {
@@ -251,7 +249,6 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value
 
     override fun getDeviceId(): String = deviceId.value
@@ -406,7 +403,7 @@ internal class EmbraceMetadataService private constructor(
     }
 
     override fun getAppState(): String {
-        return if (activityService.isInBackground) {
+        return if (processStateService.isInBackground) {
             logDeveloper("EmbraceMetadataService", "App state: BACKGROUND")
             "background"
         } else {
@@ -517,7 +514,7 @@ internal class EmbraceMetadataService private constructor(
             configService: ConfigService,
             appFramework: AppFramework,
             preferencesService: PreferencesService,
-            activityService: ActivityService,
+            processStateService: ProcessStateService,
             metadataRetrieveExecutorService: ExecutorService,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
@@ -630,7 +627,7 @@ internal class EmbraceMetadataService private constructor(
                 isAppUpdated,
                 isOsUpdated,
                 preferencesService,
-                activityService,
+                processStateService,
                 reactNativeBundleId,
                 javaScriptPatchNumber,
                 reactNativeVersion,

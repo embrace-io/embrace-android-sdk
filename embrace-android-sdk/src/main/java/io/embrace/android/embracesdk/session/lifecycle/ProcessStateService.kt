@@ -1,19 +1,12 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.lifecycle
 
-import android.app.Activity
-import android.app.Application
-import android.content.ComponentCallbacks2
 import androidx.lifecycle.LifecycleObserver
 import java.io.Closeable
 
 /**
- * Service which handles Android activity lifecycle callbacks.
+ * Service which handles Android process lifecycle callbacks.
  */
-internal interface ActivityService :
-    ComponentCallbacks2,
-    LifecycleObserver,
-    Application.ActivityLifecycleCallbacks,
-    Closeable {
+internal interface ProcessStateService : LifecycleObserver, Closeable {
 
     /**
      * Whether the application is in the background.
@@ -23,18 +16,11 @@ internal interface ActivityService :
     val isInBackground: Boolean
 
     /**
-     * Gets the activity which is currently in the foreground.
-     *
-     * @return an optional of the activity currently in the foreground
-     */
-    val foregroundActivity: Activity?
-
-    /**
-     * Adds an observer of the application's lifecycle activity events.
+     * Adds an observer of the application's process lifecycle events.
      *
      * @param listener the observer to register
      */
-    fun addListener(listener: ActivityListener)
+    fun addListener(listener: ProcessStateListener)
 
     /**
      * This function should be automatically invoked when the process lifecycle

@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
@@ -42,7 +41,6 @@ internal class EmbraceApplicationExitInfoService constructor(
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 
-    @VisibleForTesting
     @Volatile
     var backgroundExecution: Future<*>? = null
 
@@ -146,7 +144,6 @@ internal class EmbraceApplicationExitInfoService constructor(
         return unsentAeiObjects
     }
 
-    @VisibleForTesting
     fun buildSessionAppExitInfoData(
         appExitInfo: ApplicationExitInfo,
         trace: String?,

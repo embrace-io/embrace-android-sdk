@@ -63,12 +63,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     /**
      * The content encoding HTTP header.
      */
-    private static final String CONTENT_ENCODING = "Content-Encoding";
+    static final String CONTENT_ENCODING = "Content-Encoding";
 
     /**
      * The content length HTTP header.
      */
-    private static final String CONTENT_LENGTH = "Content-Length";
+    static final String CONTENT_LENGTH = "Content-Length";
 
     /**
      * Reference to the wrapped connection.
@@ -140,8 +140,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private volatile String traceparent = null;
 
-    @Nullable
-    private volatile byte[] responseBody = null;
+    private final boolean isSDKStarted;
 
     /**
      * Wraps an existing {@link HttpURLConnection} with the Embrace network logic.
@@ -160,6 +159,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         this.embrace = embrace;
         this.createdTime = embrace.getInternalInterface().getSdkCurrentTime();
         this.callId = UUID.randomUUID().toString();
+        this.isSDKStarted = embrace.isStarted();
     }
 
     @Override
@@ -169,13 +169,15 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
 
     @Override
     public void connect() throws IOException {
-        identifyTraceId();
-        try {
-            if (embrace.getInternalInterface().isNetworkSpanForwardingEnabled()) {
-                traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
+        if (isSDKStarted) {
+            identifyTraceId();
+            try {
+                if (embrace.getInternalInterface().isNetworkSpanForwardingEnabled()) {
+                    traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
+                }
+            } catch (Exception e) {
+                // Ignore traceparent if there was a problem obtaining it
             }
-        } catch (Exception e) {
-            // Ignore traceparent if there was a problem obtaining it
         }
         this.connection.connect();
     }
@@ -183,7 +185,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     public void disconnect() {
         // The network call must be logged before we close the transport
-        internalLogNetworkCall(this.createdTime);
+        internalLogNetworkCall(createdTime);
         this.connection.disconnect();
     }
 
@@ -287,8 +289,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         return getWrappedInputStream(this.connection.getErrorStream());
     }
 
-    @Override
-    public boolean shouldInterceptHeaderRetrieval(@Nullable String key) {
+    private boolean shouldInterceptHeaderRetrieval(@Nullable String key) {
         return shouldUncompressGzip() && key != null && (key.equalsIgnoreCase(CONTENT_ENCODING) || key.equalsIgnoreCase(CONTENT_LENGTH));
     }
 
@@ -358,7 +359,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
         final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheResponseData();
+        cacheNetworkCallData();
         internalLogNetworkCall(startTime);
         return headerFields.get();
     }
@@ -377,7 +378,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         }
 
         R result = action.invoke();
-        cacheResponseData();
+        cacheNetworkCallData();
         internalLogNetworkCall(startTime);
         return result;
     }
@@ -473,7 +474,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     public int getResponseCode() {
         identifyTraceId();
         long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheResponseData();
+        cacheNetworkCallData();
         internalLogNetworkCall(startTime);
         return responseCode.get();
     }
@@ -484,7 +485,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         identifyTraceId();
         long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         String responseMsg = this.connection.getResponseMessage();
-        cacheResponseData();
+        cacheNetworkCallData();
         internalLogNetworkCall(startTime);
         return responseMsg;
     }
@@ -547,16 +548,18 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * ignored.
      */
     synchronized void internalLogNetworkCall(long startTime) {
-        internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime(), false, null);
+        if (isSDKStarted) {
+            internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime(), false);
+        }
     }
 
     /**
      * Given a start time and end time (in milliseconds), logs the network call to Embrace.
      * <p>
-     * If the network call has already been logged for this HttpURLConnection, this method is a no-op and is effectively
-     * ignored.
+     * If this delegate has already logged the call it represents, this method is a no-op unless "overwrite" is true, in which
+     * case it will overwrite the previously logged call with new data (basically the network capture information if it's turned on)
      */
-    synchronized void internalLogNetworkCall(long startTime, long endTime, boolean overwrite, Long bytesIn) {
+    synchronized void internalLogNetworkCall(long startTime, long endTime, boolean overwrite) {
         if (!this.didLogNetworkCall || overwrite) {
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
@@ -568,7 +571,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
 
             try {
                 long bytesOut = this.outputStream == null ? 0 : Math.max(this.outputStream.getCount(), 0);
-                long contentLength = bytesIn == null ? Math.max(0, responseSize.get()) : bytesIn;
+                long contentLength = Math.max(0, responseSize.get());
 
                 if (inputStreamAccessException == null && lastConnectionAccessException == null && responseCode.get() != 0) {
                     embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
@@ -656,16 +659,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         return new CountingInputStreamWithCallback(
             inputStream,
             hasNetworkCaptureRules(),
-            (bytesCount, responseBody) -> {
-                if (this.startTime != null && this.endTime != null) {
-                    this.responseBody = responseBody;
-                    cacheResponseData();
-                    internalLogNetworkCall(
-                        this.startTime,
-                        this.endTime,
-                        true,
-                        bytesCount);
+            (responseBody) -> {
+                if (startTime != null && endTime != null) {
+                    cacheNetworkCallData(responseBody);
+                    internalLogNetworkCall(startTime, endTime, true);
                 }
+                return null;
             });
     }
 
@@ -695,7 +694,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private void identifyTraceId() {
-        if (traceId == null) {
+        if (isSDKStarted && traceId == null) {
             try {
                 traceId = getRequestProperty(embrace.getTraceIdHeader());
             } catch (Exception e) {
@@ -808,13 +807,13 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 countingInputStream(new BufferedInputStream(connectionInputStream)) : connectionInputStream;
         }
 
-        cacheResponseData();
+        cacheNetworkCallData();
         internalLogNetworkCall(startTime);
         return in;
     }
 
     private boolean hasNetworkCaptureRules() {
-        if (this.connection.getURL() == null) {
+        if (!isSDKStarted || this.connection.getURL() == null) {
             return false;
         }
         String url = this.connection.getURL().toString();
@@ -823,11 +822,17 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         return embrace.getInternalInterface().shouldCaptureNetworkBody(url, method);
     }
 
+    private void cacheNetworkCallData() {
+        if (isSDKStarted) {
+            cacheNetworkCallData(null);
+        }
+    }
+
     /**
      * Cache values from response at the first point of availability so that we won't try to retrieve these values when the response
      * is not available.
      */
-    private void cacheResponseData() {
+    private void cacheNetworkCallData(@Nullable byte[] responseBody) {
         if (headerFields.get() == null) {
             synchronized (headerFields) {
                 if (headerFields.get() == null) {
@@ -874,26 +879,42 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             }
         }
 
-        if (shouldCaptureNetworkData() && networkCaptureData.get() == null) {
+        if (shouldCaptureNetworkData()) {
             // If we don't have network capture rules, it's unnecessary to save these values
             synchronized (networkCaptureData) {
-                if (shouldCaptureNetworkData() && networkCaptureData.get() == null) {
+                if (shouldCaptureNetworkData()) {
                     try {
-                        Map<String, String> requestHeaders = this.requestHeaders;
-                        String requestQueryParams = connection.getURL().getQuery();
-                        byte[] requestBody = this.outputStream != null ? this.outputStream.getRequestBody() : null;
-                        Map<String, String> responseHeaders = getProcessedHeaders(headerFields.get());
+                        NetworkCaptureData existingData = networkCaptureData.get();
+                        if (existingData == null) {
+                            Map<String, String> requestHeaders = this.requestHeaders;
+                            String requestQueryParams = connection.getURL().getQuery();
+                            byte[] requestBody = this.outputStream != null ? this.outputStream.getRequestBody() : null;
+                            Map<String, String> responseHeaders = getProcessedHeaders(headerFields.get());
 
-                        networkCaptureData.set(
-                            new NetworkCaptureData(
-                                requestHeaders,
-                                requestQueryParams,
-                                requestBody,
-                                responseHeaders,
-                                responseBody,
-                                null
-                            )
-                        );
+                            networkCaptureData.set(
+                                new NetworkCaptureData(
+                                    requestHeaders,
+                                    requestQueryParams,
+                                    requestBody,
+                                    responseHeaders,
+                                    responseBody,
+                                    null
+                                )
+                            );
+                        } else if (responseBody != null) {
+                            // Update the response body field in the cached networkCaptureData object if a subsequent call
+                            // is update to update the network logging with this data.
+                            networkCaptureData.set(
+                                new NetworkCaptureData(
+                                    existingData.getRequestHeaders(),
+                                    existingData.getRequestQueryParams(),
+                                    existingData.getCapturedRequestBody(),
+                                    existingData.getResponseHeaders(),
+                                    responseBody,
+                                    null
+                                )
+                            );
+                        }
                     } catch (Exception e) {
                         lastConnectionAccessException = e;
                     }
@@ -903,6 +924,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private boolean shouldCaptureNetworkData() {
-        return hasNetworkCaptureRules() && (enableWrapIoStreams || inputStreamAccessException != null);
+        return (hasNetworkCaptureRules() && (enableWrapIoStreams || inputStreamAccessException != null)) &&
+            (networkCaptureData.get() == null || networkCaptureData.get().getCapturedResponseBody() == null);
     }
 }

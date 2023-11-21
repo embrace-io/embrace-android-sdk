@@ -11,12 +11,12 @@ import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -37,7 +37,7 @@ internal class EmbraceMetadataUnityTest {
         private lateinit var buildInfo: BuildInfo
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
-        private lateinit var activityService: ActivityService
+        private lateinit var processStateService: ProcessStateService
         private lateinit var cacheService: EmbraceCacheService
         private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
         private val deviceArchitecture = FakeDeviceArchitecture()
@@ -53,7 +53,7 @@ internal class EmbraceMetadataUnityTest {
             buildInfo = mockk()
             configService = mockk(relaxed = true)
             preferencesService = FakePreferenceService()
-            activityService = FakeActivityService()
+            processStateService = FakeProcessStateService()
             cacheService = mockk()
             cpuInfoDelegate = mockk(relaxed = true)
 
@@ -103,7 +103,7 @@ internal class EmbraceMetadataUnityTest {
         configService,
         Embrace.AppFramework.UNITY,
         preferencesService,
-        activityService,
+        processStateService,
         MoreExecutors.newDirectExecutorService(),
         mockk(),
         mockk(),

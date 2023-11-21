@@ -15,8 +15,8 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -28,8 +28,8 @@ import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.session.ActivityService
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -56,7 +56,7 @@ internal class EmbraceNdkServiceTest {
         private lateinit var context: Context
         private lateinit var metadataService: MetadataService
         private lateinit var configService: ConfigService
-        private lateinit var activityService: FakeActivityService
+        private lateinit var activityService: FakeProcessStateService
         private lateinit var localConfig: LocalConfig
         private lateinit var mockDeliveryService: EmbraceDeliveryService
         private lateinit var userService: UserService
@@ -79,7 +79,7 @@ internal class EmbraceNdkServiceTest {
             context = mockk(relaxed = true)
             metadataService = mockk(relaxed = true)
             configService = mockk(relaxed = true)
-            activityService = FakeActivityService()
+            activityService = FakeProcessStateService()
             localConfig = mockk(relaxed = true)
             mockDeliveryService = mockk()
             userService = mockk(relaxed = true)
@@ -549,7 +549,7 @@ internal class EmbraceNdkServiceTest {
     private class TestEmbraceNdkService(
         context: Context,
         metadataService: MetadataService,
-        activityService: ActivityService,
+        processStateService: ProcessStateService,
         deliveryService: DeliveryService,
         userService: UserService,
         sessionProperties: EmbraceSessionProperties,
@@ -563,7 +563,7 @@ internal class EmbraceNdkServiceTest {
     ) : EmbraceNdkService(
         context,
         metadataService,
-        activityService,
+        processStateService,
         configService,
         deliveryService,
         userService,

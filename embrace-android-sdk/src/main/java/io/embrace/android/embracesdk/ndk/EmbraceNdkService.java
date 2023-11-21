@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.ndk;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -51,14 +49,14 @@ import io.embrace.android.embracesdk.payload.NativeCrashData;
 import io.embrace.android.embracesdk.payload.NativeCrashDataError;
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata;
 import io.embrace.android.embracesdk.payload.NativeSymbols;
-import io.embrace.android.embracesdk.session.ActivityListener;
-import io.embrace.android.embracesdk.session.ActivityService;
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener;
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.SessionService;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 
-class EmbraceNdkService implements NdkService, ActivityListener {
+class EmbraceNdkService implements NdkService, ProcessStateListener {
 
     /**
      * Signals to the API that the application was in the foreground.
@@ -135,7 +133,7 @@ class EmbraceNdkService implements NdkService, ActivityListener {
     EmbraceNdkService(
         @NonNull Context context,
         @NonNull MetadataService metadataService,
-        @NonNull ActivityService activityService,
+        @NonNull ProcessStateService processStateService,
         @NonNull ConfigService configService,
         @NonNull DeliveryService deliveryService,
         @NonNull UserService userService,
@@ -175,7 +173,7 @@ class EmbraceNdkService implements NdkService, ActivityListener {
         this.ndkStartupExecutorService = ndkStartupExecutorService;
 
         if (configService.getAutoDataCaptureBehavior().isNdkEnabled()) {
-            activityService.addListener(this);
+            processStateService.addListener(this);
             this.gson = LazyKt.lazy(Gson::new);
 
             if (appFramework == Embrace.AppFramework.UNITY) {
@@ -266,7 +264,7 @@ class EmbraceNdkService implements NdkService, ActivityListener {
         }
     }
 
-    @VisibleForTesting
+    
     void checkSignalHandlersOverwritten() {
         if (configService.getAutoDataCaptureBehavior().isSigHandlerDetectionEnabled()) {
             String culprit = delegate._checkForOverwrittenHandlers();
@@ -716,21 +714,5 @@ class EmbraceNdkService implements NdkService, ActivityListener {
 
     private void testCrashCpp() {
         delegate._testNativeCrash_CPP();
-    }
-
-    @Override
-    public void applicationStartupComplete() {
-    }
-
-    @Override
-    public void onView(@NonNull Activity activity) {
-    }
-
-    @Override
-    public void onViewClose(@NonNull Activity activity) {
-    }
-
-    @Override
-    public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
     }
 }

@@ -81,7 +81,7 @@ koverReport {
 dependencies {
     androidTestImplementation project(":test-server")
     androidTestImplementation "androidx.test.ext:junit:1.1.3"
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.3"
     androidTestImplementation project(path: ":embrace-android-sdk")
 
     implementation "androidx.lifecycle:lifecycle-common-java8:2.5.0"
@@ -101,7 +101,7 @@ dependencies {
     testImplementation "androidx.test.ext:junit:1.1.3"
     testImplementation "org.robolectric:robolectric:4.10.3"
     testImplementation project(path: ":embrace-android-sdk")
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.3"
     testImplementation("com.google.protobuf:protobuf-java:3.24.0")
     testImplementation("com.google.protobuf:protobuf-java-util:3.24.0")
 

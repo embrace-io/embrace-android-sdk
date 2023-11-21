@@ -8,17 +8,17 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.TapsLocalConfig
 import io.embrace.android.embracesdk.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
-import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.mockk
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -32,7 +32,7 @@ import java.util.concurrent.CountDownLatch
 internal class EmbraceBreadcrumbServiceTest {
 
     private lateinit var configService: ConfigService
-    private lateinit var activityService: ActivityService
+    private lateinit var processStateService: ProcessStateService
     private lateinit var memoryCleanerService: EmbraceMemoryCleanerService
     private lateinit var activity: Activity
     private val logger = InternalEmbraceLogger()
@@ -54,7 +54,7 @@ internal class EmbraceBreadcrumbServiceTest {
                 }
             )
         )
-        activityService = FakeActivityService()
+        processStateService = FakeProcessStateService()
         activity = mockk()
         memoryCleanerService = EmbraceMemoryCleanerService()
         clock.setCurrentTime(MILLIS_FOR_2020_01_01)

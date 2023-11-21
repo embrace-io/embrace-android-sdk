@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.config
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
@@ -24,7 +23,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
@@ -45,7 +44,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     isDebug: Boolean,
     private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
-) : ConfigService, ActivityListener {
+) : ConfigService, ProcessStateListener {
 
     /**
      * The listeners subscribed to configuration changes.
@@ -53,11 +52,9 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val listeners: MutableSet<ConfigListener> = CopyOnWriteArraySet()
     private val lock = Any()
 
-    @VisibleForTesting
     @Volatile
     private var configProp = RemoteConfig()
 
-    @VisibleForTesting
     @Volatile
     var lastUpdated: Long = 0
 
@@ -192,11 +189,11 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     /**
      * Load Config from cache if present.
      */
-    @VisibleForTesting
+
     fun loadConfigFromCache() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to load config from cache")
         val cachedConfig = apiService.getCachedConfig()
-        val obj = cachedConfig.config
+        val obj = cachedConfig.remoteConfig
 
         if (obj != null) {
             val oldConfig = configProp

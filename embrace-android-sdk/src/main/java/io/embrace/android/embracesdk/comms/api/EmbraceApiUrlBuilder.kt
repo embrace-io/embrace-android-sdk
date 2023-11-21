@@ -15,13 +15,9 @@ internal class EmbraceApiUrlBuilder(
         private const val CONFIG_API_VERSION = 2
     }
 
-    private fun getConfigBaseUrl() = buildUrl(configBaseUrl, CONFIG_API_VERSION, "config")
+    private fun getConfigBaseUrl() = "$configBaseUrl/v$CONFIG_API_VERSION/${"config"}"
 
     private fun getOperatingSystemCode() = Build.VERSION.SDK_INT.toString() + ".0.0"
-
-    private fun buildUrl(config: String, configApiVersion: Int, path: String): String {
-        return "$config/v$configApiVersion/$path"
-    }
 
     override fun getConfigUrl(): String {
         return "${getConfigBaseUrl()}?appId=$appId&osVersion=${getOperatingSystemCode()}" +

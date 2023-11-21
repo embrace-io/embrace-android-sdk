@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -44,7 +44,7 @@ internal class EmbraceConfigServiceTest {
         private lateinit var localConfig: LocalConfig
         private lateinit var mockConfig: RemoteConfig
         private lateinit var mockApiService: ApiService
-        private lateinit var activityService: ActivityService
+        private lateinit var processStateService: ProcessStateService
         private lateinit var mockCacheService: CacheService
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var fakeClock: FakeClock
@@ -61,7 +61,7 @@ internal class EmbraceConfigServiceTest {
             localConfig = createLocalConfig()
             mockConfig = RemoteConfig()
             mockApiService = mockk()
-            activityService = FakeActivityService()
+            processStateService = FakeProcessStateService()
             mockCacheService = mockk(relaxed = true)
             fakeClock = FakeClock()
             logger = InternalEmbraceLogger()

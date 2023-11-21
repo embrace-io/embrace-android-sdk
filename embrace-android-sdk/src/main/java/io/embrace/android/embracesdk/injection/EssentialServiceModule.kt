@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
+import io.embrace.android.embracesdk.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
@@ -37,10 +38,12 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.session.ActivityService
-import io.embrace.android.embracesdk.session.EmbraceActivityService
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.io.File
@@ -52,7 +55,8 @@ import java.io.File
 internal interface EssentialServiceModule {
     val memoryCleanerService: MemoryCleanerService
     val orientationService: OrientationService
-    val activityService: ActivityService
+    val processStateService: ProcessStateService
+    val activityLifecycleTracker: ActivityTracker
     val metadataService: MetadataService
     val configService: ConfigService
     val gatingService: GatingService
@@ -142,8 +146,12 @@ internal class EssentialServiceModuleImpl(
         NoOpOrientationService()
     }
 
-    override val activityService: ActivityService by singleton {
-        EmbraceActivityService(coreModule.application, orientationService, initModule.clock)
+    override val processStateService: ProcessStateService by singleton {
+        EmbraceProcessStateService(initModule.clock)
+    }
+
+    override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
+        ActivityLifecycleTracker(coreModule.application, orientationService)
     }
 
     override val configService: ConfigService by singleton {
@@ -176,7 +184,7 @@ internal class EssentialServiceModuleImpl(
             configService,
             coreModule.appFramework,
             androidServicesModule.preferencesService,
-            activityService,
+            processStateService,
             backgroundExecutorService,
             systemServiceModule.storageManager,
             systemServiceModule.windowManager,
@@ -276,22 +284,22 @@ internal class EssentialServiceModuleImpl(
 
     override val apiService: ApiService by singleton {
         EmbraceApiService(
-            apiClient,
-            urlBuilder,
-            coreModule.jsonSerializer,
-            { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
-            coreModule.logger,
-            apiRetryExecutor,
-            networkConnectivityService,
-            deliveryCacheManager,
-            deliveryRetryManager,
-            lazyDeviceId,
-            appId
+            apiClient = apiClient,
+            serializer = coreModule.jsonSerializer,
+            cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
+            logger = coreModule.logger,
+            scheduledExecutorService = apiRetryExecutor,
+            cacheManager = deliveryCacheManager,
+            deliveryRetryManager = deliveryRetryManager,
+            lazyDeviceId = lazyDeviceId,
+            appId = appId,
+            urlBuilder = urlBuilder,
+            networkConnectivityService = networkConnectivityService
         )
     }
 
-    override val apiClient by singleton {
-        ApiClient(
+    override val apiClient: ApiClient by singleton {
+        ApiClientImpl(
             coreModule.logger
         )
     }

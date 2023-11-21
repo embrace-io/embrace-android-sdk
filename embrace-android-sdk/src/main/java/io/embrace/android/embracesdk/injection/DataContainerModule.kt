@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.capture.aei.NoOpApplicationExitInfoService
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule

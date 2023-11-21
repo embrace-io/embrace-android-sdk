@@ -21,8 +21,8 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -136,23 +136,23 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger.log("Hello errors", EmbraceEvent.Type.ERROR_LOG, null)
 
         verify {
-            deliveryService.sendLogs(
-                withArg {
-                    Assert.assertEquals("Hello world", it.event.name)
-                    Assert.assertNotNull(it.event.timestamp)
-                    Assert.assertEquals(EmbraceEvent.Type.INFO_LOG, it.event.type)
-                    Assert.assertEquals(props, it.event.customPropertiesMap)
-                    Assert.assertNotNull(it.event.messageId)
-                    Assert.assertNotNull(it.event.eventId)
-                    Assert.assertNotNull(it.event.sessionId)
-                    it.event.screenshotTaken?.let { Assert.assertFalse(it) }
-                    Assert.assertEquals(LogExceptionType.NONE.value, it.event.logExceptionType)
+            deliveryService.sendLog(
+                withArg { eventMessage ->
+                    Assert.assertEquals("Hello world", eventMessage.event.name)
+                    Assert.assertNotNull(eventMessage.event.timestamp)
+                    Assert.assertEquals(EmbraceEvent.Type.INFO_LOG, eventMessage.event.type)
+                    Assert.assertEquals(props, eventMessage.event.customPropertiesMap)
+                    Assert.assertNotNull(eventMessage.event.messageId)
+                    Assert.assertNotNull(eventMessage.event.eventId)
+                    Assert.assertNotNull(eventMessage.event.sessionId)
+                    eventMessage.event.screenshotTaken?.let { Assert.assertFalse(it) }
+                    Assert.assertEquals(LogExceptionType.NONE.value, eventMessage.event.logExceptionType)
                 }
             )
         }
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertEquals("Warning world", it.event.name)
                     Assert.assertEquals(EmbraceEvent.Type.WARNING_LOG, it.event.type)
@@ -167,16 +167,16 @@ internal class EmbraceRemoteLoggerTest {
         }
 
         verify {
-            deliveryService.sendLogs(
-                withArg {
-                    Assert.assertEquals("Hello errors", it.event.name)
-                    Assert.assertEquals(EmbraceEvent.Type.ERROR_LOG, it.event.type)
-                    Assert.assertNull(it.event.customPropertiesMap)
-                    Assert.assertNotNull(it.event.messageId)
-                    Assert.assertNotNull(it.event.eventId)
-                    Assert.assertNotNull(it.event.sessionId)
-                    it.event.screenshotTaken?.let { Assert.assertFalse(it) }
-                    Assert.assertEquals(LogExceptionType.NONE.value, it.event.logExceptionType)
+            deliveryService.sendLog(
+                withArg { eventMessage ->
+                    Assert.assertEquals("Hello errors", eventMessage.event.name)
+                    Assert.assertEquals(EmbraceEvent.Type.ERROR_LOG, eventMessage.event.type)
+                    Assert.assertNull(eventMessage.event.customPropertiesMap)
+                    Assert.assertNotNull(eventMessage.event.messageId)
+                    Assert.assertNotNull(eventMessage.event.eventId)
+                    Assert.assertNotNull(eventMessage.event.sessionId)
+                    eventMessage.event.screenshotTaken?.let { Assert.assertFalse(it) }
+                    Assert.assertEquals(LogExceptionType.NONE.value, eventMessage.event.logExceptionType)
                 }
             )
         }
@@ -208,7 +208,7 @@ internal class EmbraceRemoteLoggerTest {
         )
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertEquals("Hello world", it.event.name)
                     Assert.assertEquals(EmbraceEvent.Type.ERROR_LOG, it.event.type)
@@ -265,7 +265,7 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger.log("Hi".repeat(65), EmbraceEvent.Type.INFO_LOG, null)
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Hi".repeat(62) + "H...")
                 }
@@ -282,7 +282,7 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger.log("Hi".repeat(50), EmbraceEvent.Type.INFO_LOG, null)
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Hi".repeat(23) + "H...")
                 }
@@ -291,7 +291,7 @@ internal class EmbraceRemoteLoggerTest {
     }
 
     @Test
-    fun testLogMessageEabled() {
+    fun testLogMessageEnabled() {
         every { configService.dataCaptureEventBehavior.isLogMessageEnabled("Hello World") } returns false
         remoteLogger = getRemoteLogger()
 
@@ -299,7 +299,7 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger.log("Another", EmbraceEvent.Type.INFO_LOG, null)
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Another")
                 }
@@ -307,7 +307,7 @@ internal class EmbraceRemoteLoggerTest {
         }
 
         verify(exactly = 0) {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Hello World")
                 }
@@ -322,7 +322,7 @@ internal class EmbraceRemoteLoggerTest {
 
         remoteLogger.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
 
-        verify(exactly = 0) { deliveryService.sendLogs(any()) }
+        verify(exactly = 0) { deliveryService.sendLog(any()) }
     }
 
     @Test
@@ -362,7 +362,7 @@ internal class EmbraceRemoteLoggerTest {
         )
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Unity".repeat(1000)) // log limit higher on unity
                     Assert.assertTrue(it.stacktraces?.unityStacktrace == "my stacktrace")
@@ -393,7 +393,7 @@ internal class EmbraceRemoteLoggerTest {
         )
 
         verify {
-            deliveryService.sendLogs(
+            deliveryService.sendLog(
                 withArg {
                     Assert.assertTrue(it.event.name == "Unity".repeat(1000)) // log limit higher on unity
                     Assert.assertTrue(it.stacktraces?.unityStacktrace == "my stacktrace")
@@ -425,7 +425,7 @@ internal class EmbraceRemoteLoggerTest {
         executor.awaitTermination(1, TimeUnit.SECONDS)
 
         val action = slot<EventMessage>()
-        verify(exactly = 1) { deliveryService.sendLogs(capture(action)) }
+        verify(exactly = 1) { deliveryService.sendLog(capture(action)) }
         val msg = action.captured
         Assert.assertEquals("Dart error name", msg.event.exceptionName)
         Assert.assertEquals("Dart error message", msg.event.exceptionMessage)
@@ -438,10 +438,7 @@ internal class EmbraceRemoteLoggerTest {
     @Test
     fun testIfShouldGateInfoLog() {
         remoteLogger = getRemoteLogger()
-        cfg = buildCustomRemoteConfig(
-            setOf(),
-            null
-        )
+        cfg = buildCustomRemoteConfig(setOf())
         Assert.assertTrue(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
         Assert.assertTrue(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
     }
@@ -450,20 +447,19 @@ internal class EmbraceRemoteLoggerTest {
     fun testIfShouldNotGateInfoLog() {
         remoteLogger = getRemoteLogger()
         cfg = buildCustomRemoteConfig(
-            setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN),
-            null
+            setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN)
         )
         Assert.assertFalse(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
         Assert.assertFalse(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
     }
 
-    private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>?) =
+    private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =
         RemoteConfig(
             sessionConfig = SessionRemoteConfig(
-                true,
-                false,
-                components,
-                fullSessionEvents
+                isEnabled = true,
+                endAsync = false,
+                sessionComponents = components,
+                fullSessionEvents = fullSessionEvents
             )
         )
 }

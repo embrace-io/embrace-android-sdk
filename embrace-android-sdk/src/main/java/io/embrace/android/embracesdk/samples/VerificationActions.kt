@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.samples
 
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceAutomaticVerification
@@ -133,7 +132,6 @@ internal class VerificationActions(
         )
     }
 
-    @VisibleForTesting
     private fun executeMoment() {
         val momentName = "Verify Integration Moment"
         val momentIdentifier = "Verify Integration identifier"
@@ -143,7 +141,6 @@ internal class VerificationActions(
         }, MOMENT_DURATION_MILLIS)
     }
 
-    @VisibleForTesting
     fun executeNetworkHttpGETRequest() {
         val connection = URL(networkingGetUrl).openConnection() as HttpURLConnection
         connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
@@ -172,7 +169,6 @@ internal class VerificationActions(
         }
     }
 
-    @VisibleForTesting
     private fun executeNetworkHttpPOSTRequest() {
         val connection = URL(networkingPostUrl).openConnection() as HttpURLConnection
         connection.doOutput = true
@@ -185,7 +181,6 @@ internal class VerificationActions(
         }
     }
 
-    @VisibleForTesting
     private fun executeNetworkHttpWrongRequest() {
         val connection = URL(networkingWrongUrl).openConnection() as HttpURLConnection
         val result = connection.responseCode
@@ -199,7 +194,6 @@ internal class VerificationActions(
         InternalStaticEmbraceLogger.logger.logInfo("${EmbraceAutomaticVerification.TAG} ANR Finished")
     }
 
-    @VisibleForTesting
     private fun throwAnException() {
         handler.postDelayed({
             throw VerifyIntegrationException("Forced Exception to verify integration")

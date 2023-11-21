@@ -8,13 +8,14 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -33,18 +34,17 @@ import kotlin.system.exitProcess
  */
 internal class EmbraceAutomaticVerification(
     private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-) : ActivityListener {
+) : ActivityLifecycleListener, ProcessStateListener {
     private val handler = Handler(Looper.getMainLooper())
 
     private var foregroundEventTriggered = false
 
-    @VisibleForTesting
-    internal lateinit var activityService: ActivityService
+    internal lateinit var activityLifecycleTracker: ActivityTracker
 
-    @VisibleForTesting
+    internal lateinit var processStateService: ProcessStateService
+
     var automaticVerificationChecker = AutomaticVerificationChecker()
 
-    @VisibleForTesting
     var verificationActions = VerificationActions(Embrace.getInstance(), automaticVerificationChecker)
 
     /**
@@ -67,12 +67,15 @@ internal class EmbraceAutomaticVerification(
         instance.runVerifyIntegration()
     }
 
-    @VisibleForTesting
     fun setActivityListener() {
-        if (!::activityService.isInitialized) {
-            activityService = checkNotNull(Embrace.getImpl().activityService)
+        if (!::activityLifecycleTracker.isInitialized) {
+            activityLifecycleTracker = checkNotNull(Embrace.getImpl().activityLifecycleTracker)
         }
-        activityService.addListener(this)
+        if (!::processStateService.isInitialized) {
+            processStateService = checkNotNull(Embrace.getImpl().activityService)
+        }
+        activityLifecycleTracker.addListener(this)
+        processStateService.addListener(this)
     }
 
     /**
@@ -92,9 +95,8 @@ internal class EmbraceAutomaticVerification(
         }
     }
 
-    @VisibleForTesting
     fun startVerification() {
-        val activity = activityService.foregroundActivity
+        val activity = activityLifecycleTracker.foregroundActivity
         if (activity != null) {
             try {
                 if (automaticVerificationChecker.createFile(activity)) {
@@ -135,7 +137,6 @@ internal class EmbraceAutomaticVerification(
         }
     }
 
-    @VisibleForTesting
     fun runEndSession() {
         Embrace.getInstance().endSession()
         logger.logInfo("$TAG End session manually")
@@ -189,7 +190,7 @@ internal class EmbraceAutomaticVerification(
      */
     fun restartAppFromPendingIntent() {
         val exitStatus = 2
-        val activity = activityService.foregroundActivity
+        val activity = activityLifecycleTracker.foregroundActivity
         if (activity != null) {
             val intent = activity.intent
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -207,7 +208,7 @@ internal class EmbraceAutomaticVerification(
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
         foregroundEventTriggered = true
-        val activity = activityService.foregroundActivity
+        val activity = activityLifecycleTracker.foregroundActivity
 
         if (activity != null) {
             val fromVerification = activity.intent.getBooleanExtra("from_verification", false)
@@ -265,7 +266,7 @@ internal class EmbraceAutomaticVerification(
     }
 
     private fun showSuccessDialog() {
-        val activity = activityService.foregroundActivity
+        val activity = activityLifecycleTracker.foregroundActivity
         if (activity != null) {
             val dialogBuilder = AlertDialog.Builder(activity)
             dialogBuilder
@@ -282,7 +283,7 @@ internal class EmbraceAutomaticVerification(
     }
 
     private fun showDialogWithError(errorMessage: Int? = null) {
-        val activity = activityService.foregroundActivity
+        val activity = activityLifecycleTracker.foregroundActivity
         if (activity != null) {
             val exceptions = automaticVerificationChecker.getExceptions().map { it.message }.toMutableList()
 

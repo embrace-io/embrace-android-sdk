@@ -17,6 +17,7 @@ internal class SessionLocalConfig(
      * End session messages are sent asynchronously.
      */
     @SerializedName("async_end")
+    @Deprecated("This flag is obsolete and is no longer respected.")
     val asyncEnd: Boolean? = null,
 
     /**

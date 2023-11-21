@@ -34,7 +34,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-common:2.5.1"
     implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
     implementation "com.google.code.gson:gson:2.9.0"
-    implementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    implementation "com.squareup.okhttp3:mockwebserver:4.9.3"
 
     compileOnly project(":embrace-android-sdk")
 }

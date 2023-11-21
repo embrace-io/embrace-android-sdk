@@ -9,11 +9,11 @@ import java.util.concurrent.Future
 internal interface ApiService {
     fun getConfig(): RemoteConfig?
     fun getCachedConfig(): CachedConfig
-    fun sendLogs(eventMessage: EventMessage)
+    fun sendLog(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendEvent(eventMessage: EventMessage)
     fun sendEventAndWait(eventMessage: EventMessage)
     fun sendCrash(crash: EventMessage)
     fun sendAEIBlob(blobMessage: BlobMessage)
-    fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>
+    fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>?
 }

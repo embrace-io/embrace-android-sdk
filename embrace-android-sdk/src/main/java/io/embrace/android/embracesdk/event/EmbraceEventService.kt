@@ -14,9 +14,10 @@ import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.stream
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -46,7 +47,7 @@ internal class EmbraceEventService(
     workerThreadModule: WorkerThreadModule,
     private val clock: Clock,
     private val spansService: SpansService
-) : EventService, ActivityListener, MemoryCleanerListener {
+) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
     private val executorService: ExecutorService
 
     /**

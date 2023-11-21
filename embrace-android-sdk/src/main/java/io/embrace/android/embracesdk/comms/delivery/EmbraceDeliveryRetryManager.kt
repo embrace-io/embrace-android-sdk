@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
@@ -20,7 +19,7 @@ internal class EmbraceDeliveryRetryManager(
     private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
     private var lastRetryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private lateinit var postExecutor: (request: ApiRequest, payload: ByteArray) -> Unit
+    private lateinit var retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
 
     init {
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
@@ -32,10 +31,10 @@ internal class EmbraceDeliveryRetryManager(
     }
 
     /**
-     * Sets the executor that will be used to retry failed API calls.
+     * Sets the method to execute to retry requests
      */
-    override fun setPostExecutor(postExecutor: (request: ApiRequest, payload: ByteArray) -> Unit) {
-        this.postExecutor = postExecutor
+    override fun setRetryMethod(retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit) {
+        this.retryMethod = retryMethod
     }
 
     /**
@@ -43,7 +42,7 @@ internal class EmbraceDeliveryRetryManager(
      */
     override fun scheduleForRetry(request: ApiRequest, payload: ByteArray) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
-        if (pendingRetriesCount() < MAX_FAILED_CALLS) {
+        if (pendingRetriesCount() < MAX_FAILED_CALLS || request.isSessionRequest()) {
             val scheduleJob = retryQueue.isEmpty()
             val cachedPayloadName = cacheManager.savePayload(payload)
             val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName)
@@ -87,7 +86,7 @@ internal class EmbraceDeliveryRetryManager(
     /**
      * Returns true if there is an active pending retry task
      */
-    @VisibleForTesting
+
     fun isRetryTaskActive(): Boolean =
         lastRetryTask?.let { task ->
             !task.isCancelled && !task.isDone
@@ -96,7 +95,7 @@ internal class EmbraceDeliveryRetryManager(
     /**
      * Returns the number of failed API calls that will be retried
      */
-    @VisibleForTesting
+
     fun pendingRetriesCount() = retryQueue.size
 
     /**
@@ -175,7 +174,7 @@ internal class EmbraceDeliveryRetryManager(
         if (payload != null) {
             try {
                 logger.logDeveloper(TAG, "Retrying failed API call")
-                postExecutor(call.apiRequest, payload)
+                retryMethod(call.apiRequest, payload)
                 cacheManager.deletePayload(call.cachedPayload)
             } catch (ex: Exception) {
                 logger.logDeveloper(
@@ -211,7 +210,7 @@ internal class EmbraceDeliveryRetryManager(
     }
 }
 
-private const val TAG = "DeliveryRetryManager"
+private const val TAG = "EmbraceDeliveryRetryManager"
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
 private const val MAX_FAILED_CALLS = 200 // Max number of failed calls that will be cached for retry

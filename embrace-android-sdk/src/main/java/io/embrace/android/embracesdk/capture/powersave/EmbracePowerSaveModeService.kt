@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.PowerModeInterval
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.util.concurrent.ExecutorService
 
 internal class EmbracePowerSaveModeService(
@@ -19,7 +19,7 @@ internal class EmbracePowerSaveModeService(
     private val executorService: ExecutorService,
     private val clock: Clock,
     private val powerManager: PowerManager?
-) : BroadcastReceiver(), PowerSaveModeService, ActivityListener {
+) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
 
     private val tag = "EmbracePowerSaveModeService"
 

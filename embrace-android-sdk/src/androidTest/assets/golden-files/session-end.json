@@ -114,13 +114,7 @@
         "emb.type": "PERFORMANCE"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "events": [
-        {
-          "attributes": {},
-          "name": "start-time",
-          "time_unix_nano": "__EMBRACE_TEST_IGNORE__"
-        }
-      ],
+      "events": [],
       "name": "emb-sdk-init",
       "parent_span_id": "0000000000000000",
       "span_id": "__EMBRACE_TEST_IGNORE__",
@@ -147,7 +141,10 @@
       "attributes": {
         "emb.sequence_id": "1",
         "emb.private": "true",
-        "emb.type": "SESSION"
+        "emb.type": "SESSION",
+        "emb.okhttp3": "true",
+        "emb.okhttp3_on_classpath": "4.9.3",
+        "emb.kotlin_on_classpath": "1.4.32"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],

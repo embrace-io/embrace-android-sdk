@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.fakeBackgroundActivity
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
@@ -14,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.BeforeClass
 import org.junit.Test
@@ -28,6 +31,7 @@ internal class EmbraceDeliveryServiceTest {
     companion object {
         private lateinit var mockDeliveryCacheManager: EmbraceDeliveryCacheManager
         private lateinit var apiService: ApiService
+        private lateinit var gatingService: FakeGatingService
         private lateinit var logger: InternalEmbraceLogger
 
         @BeforeClass
@@ -37,6 +41,7 @@ internal class EmbraceDeliveryServiceTest {
             every { mockDeliveryCacheManager.loadCrash() } returns null
             every { mockDeliveryCacheManager.getAllCachedSessionIds() } returns emptyList()
             apiService = mockk(relaxed = true)
+            gatingService = FakeGatingService()
             logger = InternalEmbraceLogger()
         }
     }
@@ -45,12 +50,14 @@ internal class EmbraceDeliveryServiceTest {
     fun after() {
         clearAllMocks()
         executor.shutdown()
+        gatingService.sessionMessagesFiltered.clear()
     }
 
     private fun initializeDeliveryService() {
         deliveryService = EmbraceDeliveryService(
             mockDeliveryCacheManager,
             apiService,
+            gatingService,
             executor,
             executor,
             logger
@@ -67,7 +74,8 @@ internal class EmbraceDeliveryServiceTest {
 
         deliveryService.saveSession(mockSessionMessage)
 
-        verify { mockDeliveryCacheManager.saveSession(mockSessionMessage) }
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage) }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -163,6 +171,7 @@ internal class EmbraceDeliveryServiceTest {
             )
         }
         verify { mockFuture wasNot Called }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -187,6 +196,7 @@ internal class EmbraceDeliveryServiceTest {
             )
         }
         verify { mockFuture wasNot Called }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -213,6 +223,7 @@ internal class EmbraceDeliveryServiceTest {
         verify(exactly = 1) {
             mockFuture.get(1L, TimeUnit.SECONDS)
         }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -234,7 +245,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendEventAsync() {
         initializeDeliveryService()
-        val obj = EventMessage(Event())
+        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
         deliveryService.sendEventAsync(obj)
         verify(exactly = 1) { apiService.sendEvent(obj) }
     }
@@ -242,7 +253,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSaveCrash() {
         initializeDeliveryService()
-        val obj = EventMessage(Event())
+        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.CRASH))
         deliveryService.saveCrash(obj)
         verify(exactly = 1) { mockDeliveryCacheManager.saveCrash(obj) }
     }

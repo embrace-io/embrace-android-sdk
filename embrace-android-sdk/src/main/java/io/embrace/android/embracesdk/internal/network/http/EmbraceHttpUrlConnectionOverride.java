@@ -28,7 +28,7 @@ class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
     public String getOverriddenURL(@NonNull String pathOverride) {
         try {
             return new URL(connection.getURL().getProtocol(), connection.getURL().getHost(),
-                connection.getURL().getPort(), pathOverride).toString();
+                connection.getURL().getPort(), pathOverride + "?" + connection.getURL().getQuery()).toString();
         } catch (MalformedURLException e) {
             InternalStaticEmbraceLogger.logError("Failed to override path of " +
                 connection.getURL() + " with " + pathOverride);

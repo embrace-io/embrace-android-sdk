@@ -19,7 +19,6 @@ internal class FakePreferenceService(
     @Deprecated("") override var customPersonas: Set<String>? = null,
     override var lastConfigFetchDate: Long? = null,
     override var userMessageNeedsRetry: Boolean = false,
-    override var sessionNumber: Int = 0,
     override var reactNativeVersionNumber: String? = null,
     override var unityVersionNumber: String? = null,
     override var unityBuildIdNumber: String? = null,
@@ -34,7 +33,9 @@ internal class FakePreferenceService(
     override var jailbroken: Boolean? = null,
     override var applicationExitInfoHistory: Set<String>? = null,
     override var cpuName: String? = null,
-    override var egl: String? = null
+    override var egl: String? = null,
+    val sessionNumber: () -> Int = { 0 },
+    val bgActivityNumber: () -> Int = { 5 }
 ) : PreferencesService {
 
     var networkCaptureRuleOver = false
@@ -46,6 +47,10 @@ internal class FakePreferenceService(
 
     override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
     }
+
+    override fun incrementAndGetSessionNumber(): Int = sessionNumber()
+
+    override fun incrementAndGetBackgroundActivityNumber(): Int = bgActivityNumber()
 
     override fun isUsersFirstDay(): Boolean = firstDay
 }

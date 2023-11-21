@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
+import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
@@ -25,9 +26,11 @@ internal class FakeDataCaptureServiceModule(
     override val powerSaveModeService: PowerSaveModeService = NoOpPowerSaveModeService(),
     override val memoryService: MemoryService = FakeMemoryService(),
     override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),
-    override val webviewService: WebViewService = EmbraceWebViewService(FakeConfigService(), EmbraceSerializer())
+    override val webviewService: WebViewService = EmbraceWebViewService(FakeConfigService(), EmbraceSerializer()),
 ) : DataCaptureServiceModule {
 
     override val pushNotificationService: PushNotificationCaptureService
+        get() = TODO("Not yet implemented")
+    override val componentCallbackService: ComponentCallbackService
         get() = TODO("Not yet implemented")
 }

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import androidx.annotation.CheckResult
-import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -20,28 +19,24 @@ internal data class AnrInterval @JvmOverloads constructor(
      * The last time the thread was alive.
      */
     @SerializedName("lk")
-    @get:VisibleForTesting
     val lastKnownTime: Long? = null,
 
     /**
      * The time the application started responding.
      */
     @SerializedName("en")
-    @get:VisibleForTesting
     val endTime: Long? = null,
 
     /**
      * The component of the application which stopped responding.
      */
     @SerializedName("v")
-    @get:VisibleForTesting
     val type: Type = Type.UI,
 
     /**
      * The captured stacktraces of the anr interval.
      */
     @SerializedName("se")
-    @get:VisibleForTesting
     val anrSampleList: AnrSampleList? = null,
 
     /**

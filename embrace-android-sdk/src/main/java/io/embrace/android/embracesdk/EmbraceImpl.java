@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.anr.AnrService;
 import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerServiceKt;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
@@ -23,6 +24,7 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
 import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
+import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
@@ -87,12 +89,13 @@ import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.ActivityService;
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.EmbraceActivityService;
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.EmbraceSessionService;
 import io.embrace.android.embracesdk.session.SessionService;
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
@@ -161,13 +164,19 @@ final class EmbraceImpl {
     private volatile SessionService sessionService;
 
     @Nullable
+    private volatile SessionPropertiesService sessionPropertiesService;
+
+    @Nullable
     private volatile BackgroundActivityService backgroundActivityService;
 
     @Nullable
     private volatile MetadataService metadataService;
 
     @Nullable
-    private volatile ActivityService activityService;
+    private volatile ProcessStateService processStateService;
+
+    @Nullable
+    private volatile ActivityTracker activityTracker;
 
     @Nullable
     private volatile NetworkLoggingService networkLoggingService;
@@ -377,18 +386,21 @@ final class EmbraceImpl {
             () -> null,
             new DeviceArchitectureImpl());
 
-        final ActivityService nonNullActivityService = essentialServiceModule.getActivityService();
-        activityService = nonNullActivityService;
+        final ProcessStateService nonNullProcessStateService = essentialServiceModule.getProcessStateService();
+        processStateService = nonNullProcessStateService;
         final MetadataService nonNullMetadataService = essentialServiceModule.getMetadataService();
         metadataService = nonNullMetadataService;
         final ConfigService nonNullConfigService = essentialServiceModule.getConfigService();
         configService = nonNullConfigService;
 
         // example usage.
+        ActivityTracker nonNullLifecycleTracker = essentialServiceModule.getActivityLifecycleTracker();
+        this.activityTracker = nonNullLifecycleTracker;
         serviceRegistry.registerServices(
-            activityService,
+            processStateService,
             metadataService,
-            configService
+            configService,
+            nonNullLifecycleTracker
         );
 
         // only call after ConfigService has initialized.
@@ -404,11 +416,11 @@ final class EmbraceImpl {
 
         webViewService = dataCaptureServiceModule.getWebviewService();
         MemoryService memoryService = dataCaptureServiceModule.getMemoryService();
-        ((EmbraceActivityService) essentialServiceModule.getActivityService())
-            .setMemoryService(dataCaptureServiceModule.getMemoryService());
+        ComponentCallbackService componentCallbackService = dataCaptureServiceModule.getComponentCallbackService();
         serviceRegistry.registerServices(
             webViewService,
-            memoryService
+            memoryService,
+            componentCallbackService
         );
 
         /*
@@ -461,8 +473,8 @@ final class EmbraceImpl {
 
         final EmbraceSessionProperties sessionProperties = new EmbraceSessionProperties(
             androidServicesModule.getPreferencesService(),
-            coreModule.getLogger(),
-            essentialServiceModule.getConfigService());
+            essentialServiceModule.getConfigService(), coreModule.getLogger()
+        );
 
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
             internalEmbraceLogger.logInfo("the SDK is disabled");
@@ -566,6 +578,7 @@ final class EmbraceImpl {
 
         final SessionService nonNullSessionService = sessionModule.getSessionService();
         sessionService = nonNullSessionService;
+        sessionPropertiesService = sessionModule.getSessionPropertiesService();
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
@@ -643,21 +656,22 @@ final class EmbraceImpl {
         });
 
         long startupDuration = endTime - startTime;
-        ((EmbraceSessionService) nonNullSessionService).setSdkStartupDuration(startupDuration);
+        sessionModule.getSessionHandler().setSdkStartupDuration(startupDuration);
         internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + startupDuration + " millis");
 
         // Sets up the registered services. This method is called after the SDK has been started and
         // no more services can be added to the registry. It sets listeners for any services that were
         // registered.
         serviceRegistry.closeRegistration();
-        serviceRegistry.registerActivityListeners(nonNullActivityService);
+        serviceRegistry.registerActivityListeners(nonNullProcessStateService);
         serviceRegistry.registerConfigListeners(nonNullConfigService);
         serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.getMemoryCleanerService());
+        serviceRegistry.registerActivityLifecycleListeners(nonNullLifecycleTracker);
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
-        if (!nonNullActivityService.isInBackground()) {
+        if (!nonNullProcessStateService.isInBackground()) {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             nonNullEventService.sendStartupMoment();
         }
@@ -748,6 +762,7 @@ final class EmbraceImpl {
                 serviceRegistry.close();
                 internalEmbraceLogger.logDeveloper("Embrace", "Services closed");
                 workerThreadModule.close();
+                processStateService.close();
             } catch (Exception ex) {
                 internalEmbraceLogger.logError("Error while shutting down Embrace SDK", ex);
             }
@@ -932,7 +947,7 @@ final class EmbraceImpl {
      */
     public boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
         if (isStarted()) {
-            return sessionService.addProperty(key, value, permanent);
+            return sessionPropertiesService.addProperty(key, value, permanent);
         }
         internalEmbraceLogger.logSDKNotInitialized("cannot add session property");
         return false;
@@ -943,7 +958,7 @@ final class EmbraceImpl {
      */
     public boolean removeSessionProperty(@NonNull String key) {
         if (isStarted()) {
-            return sessionService.removeProperty(key);
+            return sessionPropertiesService.removeProperty(key);
         }
 
         internalEmbraceLogger.logSDKNotInitialized("remove session property");
@@ -956,7 +971,7 @@ final class EmbraceImpl {
     @Nullable
     public Map<String, String> getSessionProperties() {
         if (isStarted()) {
-            return sessionService.getProperties();
+            return sessionPropertiesService.getProperties();
         }
 
         internalEmbraceLogger.logSDKNotInitialized("gets session properties");
@@ -1516,8 +1531,13 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    ActivityService getActivityService() {
-        return activityService;
+    ProcessStateService getActivityService() {
+        return processStateService;
+    }
+
+    @Nullable
+    ActivityTracker getActivityLifecycleTracker() {
+        return activityTracker;
     }
 
     @Nullable

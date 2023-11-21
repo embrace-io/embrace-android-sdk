@@ -12,6 +12,7 @@ internal data class SessionRemoteConfig(
     val isEnabled: Boolean? = null,
 
     @SerializedName("async_end")
+    @Deprecated("This flag is obsolete and is no longer respected.")
     val endAsync: Boolean? = null,
 
     /**

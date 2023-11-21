@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.anr
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -24,7 +23,6 @@ internal class AnrStacktraceSampler(
     private val anrExecutorService: ExecutorService
 ) : BlockedThreadListener, MemoryCleanerListener {
 
-    @VisibleForTesting
     internal val anrIntervals = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
     private var lastUnblockedMs: Long = 0
@@ -90,7 +88,7 @@ internal class AnrStacktraceSampler(
      * intervals with samples has been reached & the SDK needs to discard samples. We attempt
      * to pick the least valuable interval in this case.
      */
-    @VisibleForTesting
+
     internal fun findLeastValuableIntervalWithSamples() =
         findIntervalsWithSamples().minByOrNull(AnrInterval::duration)
 
@@ -101,7 +99,6 @@ internal class AnrStacktraceSampler(
         }
     }
 
-    @VisibleForTesting
     internal fun reachedAnrStacktraceCaptureLimit(): Boolean {
         val limit = configService.anrBehavior.getMaxAnrIntervalsPerSession()
         val count = findIntervalsWithSamples().size

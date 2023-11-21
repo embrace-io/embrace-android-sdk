@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.EmbraceEvent.Type
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Wraps the event [Type]. This class is purely used for backwards-compatibility.

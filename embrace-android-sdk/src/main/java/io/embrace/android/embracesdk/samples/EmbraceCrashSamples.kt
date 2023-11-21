@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.samples
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
@@ -13,13 +12,12 @@ internal object EmbraceCrashSamples {
 
     private val logger = InternalEmbraceLogger()
 
-    @VisibleForTesting
     val ndkCrashSamplesNdkDelegate = EmbraceCrashSamplesNdkDelegateImpl()
 
     /**
      * Verifies if Embrace is initialized
      */
-    @VisibleForTesting
+
     fun isSdkStarted() {
         if (!Embrace.getInstance().isStarted) {
             val e = EmbraceSampleCodeException(
@@ -35,7 +33,7 @@ internal object EmbraceCrashSamples {
     /**
      * verifies if ANR detection is enabled
      */
-    @VisibleForTesting
+
     fun checkAnrDetectionEnabled() {
         if (Embrace.getInstance().configService?.anrBehavior?.isAnrCaptureEnabled() == false) {
             val e = EmbraceSampleCodeException(
@@ -88,7 +86,7 @@ internal object EmbraceCrashSamples {
     /**
      * verifies if NDK detection is enabled
      */
-    @VisibleForTesting
+
     fun checkNdkDetectionEnabled() {
         // First verifies is Embrace SDK is initialized
         isSdkStarted()

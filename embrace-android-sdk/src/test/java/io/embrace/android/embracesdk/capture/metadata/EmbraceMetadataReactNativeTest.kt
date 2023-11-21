@@ -7,16 +7,16 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -37,7 +37,7 @@ internal class EmbraceMetadataReactNativeTest {
     private lateinit var configService: ConfigService
     private var appFramework: Embrace.AppFramework = Embrace.AppFramework.REACT_NATIVE
     private lateinit var preferencesService: PreferencesService
-    private lateinit var activityService: ActivityService
+    private lateinit var processStateService: ProcessStateService
     private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
     private lateinit var mockSharedObjectLoader: SharedObjectLoader
     private val deviceArchitecture = FakeDeviceArchitecture()
@@ -52,7 +52,7 @@ internal class EmbraceMetadataReactNativeTest {
         buildInfo = BuildInfo("device-id", null, null)
         configService = FakeConfigService()
         preferencesService = FakePreferenceService()
-        activityService = FakeActivityService()
+        processStateService = FakeProcessStateService()
         preferencesService.javaScriptBundleURL = null
         preferencesService.javaScriptPatchNumber = "patch-number"
         preferencesService.reactNativeVersionNumber = "rn-version-number"
@@ -66,14 +66,16 @@ internal class EmbraceMetadataReactNativeTest {
         configService,
         appFramework,
         preferencesService,
-        activityService,
+        processStateService,
         MoreExecutors.newDirectExecutorService(),
         mockk(),
         mockk(),
         mockk(),
         fakeClock,
         cpuInfoDelegate,
-        deviceArchitecture
+        deviceArchitecture,
+        mockk(),
+        mockk()
     )
 
     @Test

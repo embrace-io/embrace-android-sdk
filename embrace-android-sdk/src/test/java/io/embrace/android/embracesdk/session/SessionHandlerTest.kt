@@ -13,22 +13,25 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.MessageType
-import io.embrace.android.embracesdk.internal.StartupEventInfo
+import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -36,7 +39,9 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -56,7 +61,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.Locale
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -66,12 +70,12 @@ internal class SessionHandlerTest {
 
     companion object {
         private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
-        private val preferencesService: FakePreferenceService = FakePreferenceService()
+        private val preferencesService: PreferencesService = mockk(relaxed = true)
         private val mockUserService: FakeUserService = FakeUserService()
         private val mockNetworkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
         private val mockBreadcrumbService: BreadcrumbService = mockk(relaxed = true)
-        private val activityService = FakeActivityService()
+        private val activityLifecycleTracker = FakeActivityTracker()
         private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
         private val mockEventService: EventService = mockk(relaxed = true)
         private val mockRemoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
@@ -83,15 +87,15 @@ internal class SessionHandlerTest {
         }
         private val clock = FakeClock()
         private val mockAutomaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
-        private val mockSessionPeriodicCacheExecutorService: ScheduledExecutorService = mockk(relaxed = true)
+        private val mockSessionPeriodicCacheExecutorService: ScheduledExecutorService =
+            mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
         private const val now = 123L
-        private const val sessionNumber = 5
+        private var sessionNumber = 5
         private val mockSessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
         private val mockUserInfo: UserInfo = mockk()
         private val mockAutomaticSessionStopperRunnable: Runnable = mockk()
-        private val mockPeriodicCachingRunnable: Runnable = mockk()
         private var mockActiveSession: Session = mockk(relaxed = true)
 
         @BeforeClass
@@ -119,11 +123,11 @@ internal class SessionHandlerTest {
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
+    private lateinit var spansService: EmbraceSpansService
 
     @Before
     fun before() {
         mockActiveSession = mockk(relaxed = true)
-        preferencesService.sessionNumber = sessionNumber
         every { mockSessionProperties.get() } returns emptyMapSessionProperties
 
         metadataService = FakeAndroidMetadataService()
@@ -145,10 +149,30 @@ internal class SessionHandlerTest {
             ),
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior(
                 remoteCfg = { remoteConfig }
+            ),
+            spansBehavior = fakeSpansBehavior(
+                remoteConfig = { SpansRemoteConfig(100f) }
             )
         )
         gatingService = FakeGatingService(configService = configService)
         deliveryService = FakeDeliveryService()
+        val sessionMessageCollator = SessionMessageCollator(
+            configService,
+            metadataService,
+            mockEventService,
+            mockRemoteLogger,
+            mockExceptionService,
+            mockPerformanceInfoService,
+            mockWebViewservice,
+            null,
+            NoOpThermalStatusService(),
+            null,
+            mockBreadcrumbService,
+            mockUserService,
+            clock
+        )
+        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock))
+        spansService.onConfigChange(configService)
         sessionHandler = SessionHandler(
             logger,
             configService,
@@ -156,24 +180,18 @@ internal class SessionHandlerTest {
             mockUserService,
             mockNetworkConnectivityService,
             metadataService,
-            gatingService,
             mockBreadcrumbService,
-            activityService,
+            activityLifecycleTracker,
             mockNdkService,
-            mockEventService,
-            mockRemoteLogger,
             mockExceptionService,
-            mockPerformanceInfoService,
             mockMemoryCleanerService,
             deliveryService,
-            mockWebViewservice,
-            null,
-            NoOpThermalStatusService(),
-            null,
+            sessionMessageCollator,
+            mockSessionProperties,
             clock,
+            spansService,
             automaticSessionStopper = mockAutomaticSessionStopper,
-            sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService,
-            Executors.newSingleThreadExecutor()
+            sessionPeriodicCacheExecutorService = mockSessionPeriodicCacheExecutorService
         )
     }
 
@@ -198,20 +216,16 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockSessionProperties,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify record connection type
         verify { mockNetworkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify active session is set
         assertEquals(sessionUuid, metadataService.activeSessionId)
-        // verify session is being sanitized
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
         // verify automatic session stopper has been scheduled
         verify {
-            mockAutomaticSessionStopper.scheduleAtFixedRate(
+            mockAutomaticSessionStopper.scheduleWithFixedDelay(
                 mockAutomaticSessionStopperRunnable,
                 maxSessionSeconds.toLong(),
                 maxSessionSeconds.toLong(),
@@ -220,8 +234,8 @@ internal class SessionHandlerTest {
         }
         // verify periodic caching worker has been scheduled
         verify {
-            mockSessionPeriodicCacheExecutorService.scheduleAtFixedRate(
-                mockPeriodicCachingRunnable,
+            mockSessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
+                any(),
                 0,
                 SESSION_CACHING_INTERVAL.toLong(),
                 TimeUnit.SECONDS
@@ -233,7 +247,6 @@ internal class SessionHandlerTest {
         with(checkNotNull(sessionMessage?.session)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
-            assertEquals(sessionNumber + 1, number)
             assertTrue(isColdStart)
             assertEquals(sessionStartType, startType)
             assertEquals(emptyMapSessionProperties, properties)
@@ -246,6 +259,7 @@ internal class SessionHandlerTest {
             assertEquals(metadataService.getDeviceInfo(), deviceInfo)
             assertEquals(metadataService.getAppInfo(), appInfo)
         }
+        verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
     }
 
     @Test
@@ -258,9 +272,7 @@ internal class SessionHandlerTest {
             true,
             /* any event type */ Session.SessionLifeEventType.STATE,
             now,
-            mockSessionProperties,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         assertNull(sessionMessage)
@@ -275,7 +287,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
-        preferencesService.sessionNumber = 0
+        sessionNumber = 0
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 5, asyncEnd = false)
         every { mockBreadcrumbService.getLastViewBreadcrumbScreenName() } returns "screen"
         val sessionStartType = Session.SessionLifeEventType.STATE
@@ -285,12 +297,10 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockSessionProperties,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
-        assertEquals(1, preferencesService.sessionNumber)
+        verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
         assertNotNull(sessionMessage)
         assertNotNull(sessionMessage!!.session)
         // no need to verify anything else because it's already verified in another test case
@@ -306,9 +316,7 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockSessionProperties,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify automatic session stopper has not been scheduled
@@ -323,7 +331,7 @@ internal class SessionHandlerTest {
         every { mockBreadcrumbService.getLastViewBreadcrumbScreenName() } returns null
         val mockActivity: Activity = mockk()
         // let's return a foreground activity
-        activityService.foregroundActivity = mockActivity
+        activityLifecycleTracker.foregroundActivity = mockActivity
         val activityClassName = "activity-class-name"
         every { mockActivity.localClassName } returns activityClassName
         val sessionStartType = Session.SessionLifeEventType.STATE
@@ -332,74 +340,20 @@ internal class SessionHandlerTest {
             true,
             sessionStartType,
             now,
-            mockSessionProperties,
-            mockAutomaticSessionStopperRunnable,
-            mockPeriodicCachingRunnable
+            mockAutomaticSessionStopperRunnable
         )
 
         // verify we are forcing log view with foreground activity class name
-        verify { mockBreadcrumbService.forceLogView(activityClassName, clock.now()) }
+        verify(exactly = 1) { mockBreadcrumbService.forceLogView(activityClassName, now) }
         assertNotNull(sessionMessage)
         assertNotNull(sessionMessage!!.session)
         // no need to verify anything else because it's already verified in another test case
     }
 
     @Test
-    fun `onSession ended successfully, with session duration less than 5 seconds, with cold start, with startup event info`() {
-        // since now=123, then duration will be less than 5 seconds
-        val startTime = 120L
-        every { mockActiveSession.startTime } returns startTime
-        every { mockActiveSession.isColdStart } returns true
-        val mockStartupEventInfo: StartupEventInfo = mockk(relaxed = true)
-        every { mockEventService.getStartupMomentInfo() } returns mockStartupEventInfo
-
-        sessionHandler.onSessionEnded(
-            /* any type */ Session.SessionLifeEventType.STATE,
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */ 2,
-            1000
-        )
-
-        assertEquals(deliveryService.lastSentSessions.single().second, SessionMessageState.END)
-        // verify cleaning is being performed
-        verify {
-            mockMemoryCleanerService.cleanServicesCollections(
-                mockExceptionService
-            )
-        }
-        // verify we are sanitizing session message
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
-        // verify current session is removed from cache
-        verify { mockSessionProperties.clearTemporary() }
-    }
-
-    @Test
-    fun `onSession not allowed to end because no active session available`() {
-        sessionHandler.onSessionEnded(
-            /* any type */ Session.SessionLifeEventType.STATE,
-            null,
-            mockSessionProperties,
-            /* any duration */ 2,
-            1000
-        )
-
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockAutomaticSessionStopper wasNot Called }
-        verify { mockMemoryCleanerService wasNot Called }
-        verify { mockSessionProperties wasNot Called }
-
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */ 2,
             1000
         )
 
@@ -415,9 +369,6 @@ internal class SessionHandlerTest {
     fun `onSession not allowed to end because session control is disabled for TIMED event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.TIMED,
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */ 2,
             1000
         )
 
@@ -438,9 +389,6 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */ 2,
             1000
         )
 
@@ -454,6 +402,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `if session messages are disabled don't end session but end periodic cache and session automatic stopper`() {
+        startFakeSession()
         remoteConfig = RemoteConfig(
             disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
         )
@@ -461,22 +410,20 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             /* any type */ Session.SessionLifeEventType.STATE,
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */ 2,
             1000
         )
 
         // verify automatic session stopper was called
         verify { sessionHandler.scheduledFuture?.cancel(false) }
         verify { mockMemoryCleanerService wasNot Called }
-        verify { mockSessionProperties wasNot Called }
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
     fun `onCrash ended session successfully`() {
+        startFakeSession()
+
         val crashId = "crash-id"
         val startTime = 120L
         val sdkStartupDuration = 2L
@@ -485,23 +432,15 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        sessionHandler.onCrash(
-            mockActiveSession,
-            crashId,
-            mockSessionProperties,
-            /* any duration */sdkStartupDuration
-        )
+        sessionHandler.onCrash(crashId)
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockAutomaticSessionStopper wasNot Called }
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertNull(deliveryService.lastSavedSession)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
 
-        val session = checkNotNull(deliveryService.lastSentSessions.single().first.session)
+        val session = checkNotNull(deliveryService.lastSavedSession).session
 
         with(session) {
             assertFalse(checkNotNull(isEndedCleanly))
@@ -531,38 +470,21 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
-            mockActiveSession,
-            mockSessionProperties,
-            /* any duration */2
-        )
+        startFakeSession()
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSessionImpl()
 
         assertNotNull(sessionMessage)
 
         // when periodic caching, the following calls should not be made
-        verify { mockSessionPeriodicCacheExecutorService wasNot Called }
-        verify { mockAutomaticSessionStopper wasNot Called }
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
+        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
-    fun `onPeriodicCacheActiveSession does not cache if there is no active session`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
-            null,
-            mockSessionProperties,
-            /* any duration */2
-        )
-
-        assertNull(sessionMessage)
-
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-    }
-
-    @Test
     fun `verify close stops everything successfully`() {
+        startFakeSession()
         sessionHandler.scheduledFuture = mockk(relaxed = true)
         sessionHandler.close()
         verify { sessionHandler.scheduledFuture?.cancel(false) }
@@ -570,47 +492,98 @@ internal class SessionHandlerTest {
 
     @Test
     fun `endSession includes completed spans in message`() {
+        startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        spansService.recordSpan("test-span") {
+            // do nothing
+        }
+        clock.tick(30000)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            originSession = mockActiveSession,
-            sessionProperties = mockSessionProperties,
-            sdkStartupDuration = 1L,
-            endTime = 10L,
-            listOf(testSpan)
+            endTime = 10L
         )
-
-        assertSpanInSessionMessage(deliveryService.lastSentSessions.single().first)
+        assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
     @Test
     fun `crashes includes completed spans in message`() {
-        sessionHandler.onCrash(
-            mockActiveSession,
-            "fakeCrashId",
-            mockSessionProperties,
-            10L,
-            listOf(testSpan)
-        )
-
-        assertSpanInSessionMessage(deliveryService.lastSentSessions.single().first)
+        startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        spansService.recordSpan("test-span") {
+            // do nothing
+        }
+        sessionHandler.onCrash("fakeCrashId")
+        assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
     @Test
     fun `periodically cached sessions included currently completed spans`() {
-        val sessionMessage = sessionHandler.getActiveSessionEndMessage(
-            mockActiveSession,
-            mockSessionProperties,
-            10L,
-            listOf(testSpan)
+        startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        val sessionMessage = sessionHandler.onPeriodicCacheActiveSessionImpl(listOf(testSpan))
+        val spans = checkNotNull(sessionMessage?.spans)
+        assertEquals(testSpan, spans.single())
+    }
+
+    @Test
+    fun `start session successfully`() {
+        assertNull(sessionHandler.getSessionId())
+        startFakeSession()
+        assertNotNull(sessionHandler.getSessionId())
+    }
+
+    @Test
+    fun `verify periodic caching`() {
+        startFakeSession()
+        sessionHandler.onPeriodicCacheActiveSessionImpl()
+        val session = checkNotNull(deliveryService.lastSavedSession).session
+        assertEquals(false, session.isEndedCleanly)
+        assertEquals(true, session.isReceivedTermination)
+    }
+
+    @Test
+    fun `backgrounding flushes completed spans`() {
+        startFakeSession()
+
+        spansService.initializeService(now, now + 5L)
+        assertEquals(1, spansService.completedSpans()?.size)
+
+        clock.tick(15000L)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.STATE,
+            endTime = clock.now()
         )
 
-        assertSpanInSessionMessage(sessionMessage)
+        val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
+        val spans = checkNotNull(sessionMessage.spans)
+        assertEquals(2, spans.size)
+        assertEquals(0, spansService.completedSpans()?.size)
+    }
+
+    @Test
+    fun `crash ending flushes completed spans`() {
+        startFakeSession()
+        spansService.initializeService(now, now + 5L)
+        assertEquals(1, spansService.completedSpans()?.size)
+
+        sessionHandler.onCrash("crashId")
+        assertEquals(0, spansService.completedSpans()?.size)
+    }
+
+    private fun startFakeSession() {
+        sessionHandler.onSessionStarted(
+            coldStart = true,
+            startType = Session.SessionLifeEventType.STATE,
+            startTime = clock.now(),
+            automaticSessionCloserCallback = mockAutomaticSessionStopperRunnable
+        )
     }
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage?.spans)
-        assertEquals(1, sessionMessage?.spans?.size)
-        assertEquals(testSpan, sessionMessage?.spans!![0])
+        val spans = checkNotNull(sessionMessage?.spans)
+        assertEquals(3, spans.size)
+        val expectedSpans = listOf("emb-sdk-init", "emb-test-span", "emb-session-span")
+        assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
     }
 }

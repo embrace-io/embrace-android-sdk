@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.anr.detection
 
 import android.app.ActivityManager
 import android.os.Process
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -35,14 +34,12 @@ internal class AnrProcessErrorSampler(
 
     private var intervalMs: Long = configService.anrBehavior.getAnrProcessErrorsIntervalMs()
 
-    @VisibleForTesting
     var scheduledFuture: ScheduledFuture<*>? = null
 
-    @VisibleForTesting
     var anrProcessErrors: NavigableMap<Long, AnrProcessErrorStateInfo> = ConcurrentSkipListMap()
 
     // timestamp when the thread has been unblocked
-    @VisibleForTesting
+
     var threadUnblockedMs: Long? = null
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
@@ -95,7 +92,7 @@ internal class AnrProcessErrorSampler(
      *
      * @param threadBlockedTimestamp timestamp of when the thread has been blocked
      */
-    @VisibleForTesting
+
     internal fun onSearchForProcessErrors(threadBlockedTimestamp: Long) {
         val shouldStopScheduler = !isSchedulerAllowedToRun()
         if (shouldStopScheduler) {
@@ -139,7 +136,7 @@ internal class AnrProcessErrorSampler(
      * Basically, once the thread has been unblocked, we still have [schedulerExtraTimeAllowance]
      * ms for the scheduler to keep running.
      */
-    @VisibleForTesting
+
     internal fun isSchedulerAllowedToRun(): Boolean {
         return when (val ms = threadUnblockedMs) {
             null -> true

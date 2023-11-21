@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.internal.clock.Clock
 
@@ -9,11 +8,11 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  */
 internal data class ExceptionError(@Transient private val logStrictMode: Boolean) {
     @SerializedName("c")
-    @VisibleForTesting
+
     var occurrences = 0
 
     @SerializedName("rep")
-    @VisibleForTesting
+
     val exceptionErrors = mutableListOf<ExceptionErrorInfo>()
 
     /**

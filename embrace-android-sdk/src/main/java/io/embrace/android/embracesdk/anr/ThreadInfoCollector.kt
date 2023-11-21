@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.anr
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import java.util.regex.Pattern
@@ -43,7 +42,7 @@ internal class ThreadInfoCollector(
      *
      * @return filtered threads
      */
-    @VisibleForTesting
+
     internal fun getAllowedThreads(configService: ConfigService): Set<ThreadInfo> {
         val allowed: MutableSet<ThreadInfo> = HashSet()
         val anrBehavior = configService.anrBehavior

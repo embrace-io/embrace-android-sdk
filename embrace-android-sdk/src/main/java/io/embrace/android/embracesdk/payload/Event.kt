@@ -14,7 +14,7 @@ internal data class Event constructor(
 
     @SerializedName("id")
     @JvmField
-    val eventId: String? = null,
+    val eventId: String,
 
     @SerializedName("si")
     @JvmField
@@ -22,7 +22,7 @@ internal data class Event constructor(
 
     @SerializedName("t")
     @JvmField
-    val type: Type? = null,
+    val type: Type,
 
     @SerializedName("ts")
     @JvmField

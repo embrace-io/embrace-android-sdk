@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.text.TextUtils
 import android.util.Pair
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
@@ -19,8 +18,8 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
-import io.embrace.android.embracesdk.session.ActivityListener
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.utils.filter
 import java.util.Collections
 import java.util.Deque
@@ -42,7 +41,7 @@ internal class EmbraceBreadcrumbService(
     clock: Clock,
     configService: ConfigService,
     logger: InternalEmbraceLogger
-) : BreadcrumbService, ActivityListener, MemoryCleanerListener {
+) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     /**
      * Clock used by the service
@@ -60,7 +59,6 @@ internal class EmbraceBreadcrumbService(
     private val viewBreadcrumbs = LinkedBlockingDeque<ViewBreadcrumb?>()
     private val tapBreadcrumbs = LinkedBlockingDeque<TapBreadcrumb?>()
 
-    @VisibleForTesting
     val customBreadcrumbs = LinkedBlockingDeque<CustomBreadcrumb?>()
     private val rnActionBreadcrumbs = LinkedBlockingDeque<RnActionBreadcrumb?>()
     val webViewBreadcrumbs = LinkedBlockingDeque<WebViewBreadcrumb?>()

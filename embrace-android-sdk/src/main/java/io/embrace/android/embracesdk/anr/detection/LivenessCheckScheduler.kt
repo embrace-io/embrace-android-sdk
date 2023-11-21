@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import android.os.Message
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -107,7 +106,7 @@ internal class LivenessCheckScheduler internal constructor(
      * Called at regular intervals on the monitor thread. This function posts a message to the
      * main thread that is used to check whether it is live or not.
      */
-    @VisibleForTesting
+
     internal fun onMonitorThreadHeartbeat() {
         enforceThread(anrMonitorThread)
 

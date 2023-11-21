@@ -4,7 +4,8 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import androidx.annotation.VisibleForTesting
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
@@ -15,6 +16,8 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Compani
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.payload.BlobMessage
+import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import java.io.IOException
 import java.util.concurrent.ExecutorService
@@ -29,6 +32,8 @@ internal class EmbraceApplicationExitInfoService constructor(
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
     private val deliveryService: DeliveryService,
+    private val metadataService: MetadataService,
+    private val userService: UserService,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker
 ) : ApplicationExitInfoService, ConfigListener {
 
@@ -36,7 +41,6 @@ internal class EmbraceApplicationExitInfoService constructor(
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 
-    @VisibleForTesting
     @Volatile
     var backgroundExecution: Future<*>? = null
 
@@ -140,7 +144,6 @@ internal class EmbraceApplicationExitInfoService constructor(
         return unsentAeiObjects
     }
 
-    @VisibleForTesting
     fun buildSessionAppExitInfoData(
         appExitInfo: ApplicationExitInfo,
         trace: String?,
@@ -181,7 +184,14 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
         if (appExitInfoWithTraces.isNotEmpty()) {
-            deliveryService.sendAEIBlob(appExitInfoWithTraces)
+            val blob = BlobMessage(
+                metadataService.getAppInfo(),
+                appExitInfoWithTraces,
+                metadataService.getDeviceInfo(),
+                BlobSession(metadataService.activeSessionId),
+                userService.getUserInfo()
+            )
+            deliveryService.sendAEIBlob(blob)
         }
     }
 

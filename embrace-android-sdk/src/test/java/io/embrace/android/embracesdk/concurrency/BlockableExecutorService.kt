@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.concurrency
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.ConcurrentLinkedQueue

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.BetaApi
+import io.embrace.android.embracesdk.annotation.BetaApi
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 
 /**

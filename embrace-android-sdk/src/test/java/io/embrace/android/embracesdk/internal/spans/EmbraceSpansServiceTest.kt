@@ -46,6 +46,7 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `initializing service if the config is not on won't actually initialize it`() {
+        spansRemoteConfig = SpansRemoteConfig(pctEnabled = 0f)
         configService.updateListeners()
         spansService.initializeService(1, 5)
         configService.updateListeners()

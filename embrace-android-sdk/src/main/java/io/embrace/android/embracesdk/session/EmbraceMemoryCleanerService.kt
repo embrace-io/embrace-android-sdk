@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
@@ -12,7 +11,7 @@ internal class EmbraceMemoryCleanerService : MemoryCleanerService {
     /**
      * List of listeners that subscribe to clean services collections.
      */
-    @VisibleForTesting
+
     val listeners = CopyOnWriteArrayList<MemoryCleanerListener>()
 
     override fun cleanServicesCollections(

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData

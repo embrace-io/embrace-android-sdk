@@ -8,7 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.embrace.android.embracesdk.utils.Consumer;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 /**
  * Counts the bytes read from an input stream and invokes a callback once the stream has reached
@@ -20,9 +21,9 @@ final class CountingInputStreamWithCallback extends FilterInputStream {
      */
     private volatile long streamMark = -1;
     /**
-     * The callback to be invoked with num of bytes after reaching the end of the stream.
+     * The callback to be invoked with raw bytes after reaching the end of the stream.
      */
-    private final Consumer<Long, byte[]> callback;
+    private final Function1<byte[], Unit> callback;
 
     /**
      * true if the callback has been invoked, false otherwise.
@@ -38,7 +39,6 @@ final class CountingInputStreamWithCallback extends FilterInputStream {
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-
     /**
      * Wraps another input stream, counting the number of bytes read.
      *
@@ -46,7 +46,7 @@ final class CountingInputStreamWithCallback extends FilterInputStream {
      */
     CountingInputStreamWithCallback(InputStream in,
                                     boolean shouldCaptureBody,
-                                    @NonNull Consumer<Long, byte[]> callback) {
+                                    @NonNull Function1<byte[], Unit> callback) {
         super(in);
         this.callback = callback;
         this.shouldCaptureBody = shouldCaptureBody;
@@ -124,6 +124,6 @@ final class CountingInputStreamWithCallback extends FilterInputStream {
 
     private void notifyCallback() {
         callbackCompleted = true;
-        callback.accept(count.longValue(), os.toByteArray());
+        callback.invoke(os.toByteArray());
     }
 }

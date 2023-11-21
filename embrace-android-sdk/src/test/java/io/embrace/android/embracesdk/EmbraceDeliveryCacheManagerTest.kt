@@ -268,7 +268,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `save and load failed api calls`() {
         val failedCalls = DeliveryFailedApiCalls()
         val request1 = ApiRequest(
-            url = EmbraceUrl.getUrl("http://test.url"),
+            url = EmbraceUrl.create("http://test.url"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -279,7 +279,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         failedCalls.add(failedApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.getUrl("http://test.url"),
+            url = EmbraceUrl.create("http://test.url"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -291,7 +291,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         failedCalls.add(failedApiCall2)
 
         val request3 = ApiRequest(
-            url = EmbraceUrl.getUrl("http://test.url"),
+            url = EmbraceUrl.create("http://test.url"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",

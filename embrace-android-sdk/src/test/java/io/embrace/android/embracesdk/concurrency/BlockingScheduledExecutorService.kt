@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.concurrency
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.fakes.FakeClock
 import java.util.LinkedList
 import java.util.concurrent.AbstractExecutorService
@@ -31,10 +31,11 @@ import java.util.concurrent.TimeUnit
  */
 @InternalApi
 internal class BlockingScheduledExecutorService(
-    private val fakeClock: FakeClock = FakeClock()
+    private val fakeClock: FakeClock = FakeClock(),
+    blockingMode: Boolean = true
 ) : AbstractExecutorService(), ScheduledExecutorService {
     private val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
-    private val delegateExecutorService = BlockableExecutorService(blockingMode = true)
+    private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
 
     /**
      * Run all tasks due to run at the current time and return when all the tasks have finished running. This does not include tasks

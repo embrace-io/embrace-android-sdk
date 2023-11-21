@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.InternalApi
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 
-@InternalApi
 internal class SpansBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: () -> SpansRemoteConfig?
@@ -13,7 +11,7 @@ internal class SpansBehavior(
     remoteSupplier
 ) {
     companion object {
-        private const val DEFAULT_PCT_ENABLED = 0.0f
+        private const val DEFAULT_PCT_ENABLED = 100.0f
     }
 
     fun isSpansEnabled(): Boolean {

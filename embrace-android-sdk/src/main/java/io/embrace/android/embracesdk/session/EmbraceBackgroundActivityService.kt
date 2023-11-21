@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.session
 
-import android.app.Activity
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -28,6 +25,8 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.create
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.Breadcrumbs
+import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.submitSafe
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -37,7 +36,7 @@ internal class EmbraceBackgroundActivityService(
     private val performanceInfoService: PerformanceInfoService,
     private val metadataService: MetadataService,
     private val breadcrumbService: BreadcrumbService,
-    activityService: ActivityService,
+    processStateService: ProcessStateService,
     private val eventService: EventService,
     private val remoteLogger: EmbraceRemoteLogger,
     private val userService: UserService,
@@ -45,13 +44,14 @@ internal class EmbraceBackgroundActivityService(
     private val deliveryService: DeliveryService,
     private val configService: ConfigService,
     private val ndkService: NdkService,
+    private val preferencesService: PreferencesService,
     /**
      * Embrace service dependencies of the background activity session service.
      */
     private val clock: Clock,
     private val spansService: SpansService,
     private val executorServiceSupplier: Lazy<ExecutorService>
-) : BackgroundActivityService, ActivityListener, ConfigListener {
+) : BackgroundActivityService, ConfigListener {
 
     @get:Synchronized
     private val cacheExecutorService: ExecutorService by lazy { executorServiceSupplier.value }
@@ -61,20 +61,19 @@ internal class EmbraceBackgroundActivityService(
     /**
      * The active background activity session.
      */
-    @VisibleForTesting
+
     @Volatile
     var backgroundActivity: BackgroundActivity? = null
     private val manualBkgSessionsSent = AtomicInteger(0)
 
-    @VisibleForTesting
     var lastSendAttempt: Long
     private var isEnabled = true
 
     init {
-        activityService.addListener(this)
+        processStateService.addListener(this)
         lastSendAttempt = clock.now()
         configService.addListener(this)
-        if (activityService.isInBackground) {
+        if (processStateService.isInBackground) {
             // start background activity capture from a cold start
             startBackgroundActivityCapture(clock.now(), true, LifeEventType.BKGND_STATE)
         }
@@ -186,7 +185,8 @@ internal class EmbraceBackgroundActivityService(
             coldStart,
             startType,
             APPLICATION_STATE_BACKGROUND,
-            userService.loadUserInfoFromDisk()
+            userService.loadUserInfoFromDisk(),
+            preferencesService
         )
         backgroundActivity = activity
         metadataService.setActiveSessionId(activity.sessionId)
@@ -352,11 +352,6 @@ internal class EmbraceBackgroundActivityService(
             InternalStaticEmbraceLogger.logDebug("Error while caching active session", ex)
         }
     }
-
-    override fun applicationStartupComplete() {}
-    override fun onView(activity: Activity) {}
-    override fun onViewClose(activity: Activity) {}
-    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
 
     companion object {
         /**

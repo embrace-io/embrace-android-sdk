@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -28,9 +28,13 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentCachedSession: String? = null
     var lastSavedSession: SessionMessage? = null
     val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
-    var appExitInfoRequests: MutableList<List<AppExitInfoData>> = mutableListOf()
+    var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
     override fun saveSession(sessionMessage: SessionMessage) {
+        lastSavedSession = sessionMessage
+    }
+
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
         lastSavedSession = sessionMessage
     }
 
@@ -64,16 +68,12 @@ internal class FakeDeliveryService : DeliveryService {
         sendBackgroundActivitiesInvokedCount++
     }
 
-    override fun sendLogs(eventMessage: EventMessage) {
+    override fun sendLog(eventMessage: EventMessage) {
         lastSentLogs.add(eventMessage)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         lastSentNetworkCall = networkEvent
-    }
-
-    override fun sendEvent(eventMessage: EventMessage) {
-        lastSentEvent = eventMessage
     }
 
     override fun sendEventAndWait(eventMessage: EventMessage) {
@@ -84,7 +84,7 @@ internal class FakeDeliveryService : DeliveryService {
         lastSentCrash = crash
     }
 
-    override fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>) {
-        this.appExitInfoRequests.add(appExitInfoData)
+    override fun sendAEIBlob(blobMessage: BlobMessage) {
+        blobMessages.add(blobMessage)
     }
 }

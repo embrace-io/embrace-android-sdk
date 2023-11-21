@@ -11,13 +11,13 @@ import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceEventService.Companion.STARTUP_EVENT_NAME
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
@@ -26,9 +26,9 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -64,7 +64,7 @@ internal class EmbraceEventServiceTest {
         private lateinit var preferenceService: PreferencesService
         private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
-        private lateinit var activityService: ActivityService
+        private lateinit var processStateService: ProcessStateService
         private lateinit var mockMemoryCleanerService: MemoryCleanerService
         private lateinit var logger: InternalEmbraceLogger
 
@@ -74,7 +74,7 @@ internal class EmbraceEventServiceTest {
             metadataService = FakeAndroidMetadataService()
             preferenceService = FakePreferenceService()
             performanceInfoService = FakePerformanceInfoService()
-            activityService = FakeActivityService()
+            processStateService = FakeProcessStateService()
             mockMemoryCleanerService = mockk(relaxUnitFun = true)
             logger = InternalEmbraceLogger()
             userService = EmbraceUserService(
@@ -111,11 +111,11 @@ internal class EmbraceEventServiceTest {
         )
         sessionProperties = EmbraceSessionProperties(
             FakePreferenceService(),
-            logger,
-            configService
+            configService,
+            logger
         )
         gatingService = FakeGatingService(configService)
-        fakeWorkerThreadModule = FakeWorkerThreadModule(blockingMode = true)
+        fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
         spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = fakeClock))
         configService.addListener(spansService)
         eventHandler = EventHandler(
@@ -431,9 +431,9 @@ internal class EmbraceEventServiceTest {
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        assertEquals(1, spansService.completedSpans()?.size)
-        val startupSpan = spansService.completedSpans()!![0]
-        with(startupSpan) {
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(1, completedSpans.size)
+        with(completedSpans[0]) {
             assertEquals("emb-startup-moment", name)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(10), endTimeNanos)
@@ -453,18 +453,37 @@ internal class EmbraceEventServiceTest {
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        assertEquals(0, spansService.completedSpans()?.size)
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(0, completedSpans.size)
 
         fakeClock.setCurrentTime(20L)
         eventService.endEvent(STARTUP_EVENT_NAME)
         executor.runCurrentlyBlocked()
-        assertEquals(1, spansService.completedSpans()?.size)
+        val completedSpansAgain = checkNotNull(spansService.completedSpans())
+        assertEquals(1, completedSpansAgain.size)
 
-        val startupSpan = spansService.completedSpans()!![0]
-        with(startupSpan) {
+        with(completedSpansAgain[0]) {
             assertEquals("emb-startup-moment", name)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
             assertEquals(TimeUnit.MILLISECONDS.toNanos(20), endTimeNanos)
         }
+    }
+
+    @Test
+    fun `startup not logged as span if startup moment is ended via a timeout`() {
+        spansService.initializeService(
+            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1),
+            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(3)
+        )
+        configService.updateListeners()
+        spansService.flushSpans()
+        eventService.sendStartupMoment()
+        assertNull(eventService.getStartupMomentInfo())
+        fakeClock.tick(10000L)
+        fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
+        fakeWorkerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION).runCurrentlyBlocked()
+        assertNotNull(eventService.getStartupMomentInfo())
+        val completedSpans = checkNotNull(spansService.completedSpans())
+        assertEquals(0, completedSpans.size)
     }
 }

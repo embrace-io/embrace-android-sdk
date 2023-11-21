@@ -17,6 +17,12 @@ import java.util.Map;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
+/**
+ * An interface that duplicates the functionality of HttpURLConnection whose implementation can then wrap an actual HttpURLConnection's
+ * implementation so calls can be forwarded from this interface's implementation to the wrapped HttpURLConnection implementation.
+ * Having this separate interface allows the actual wrappers ({@link EmbraceHttpUrlConnectionImpl}/{@link EmbraceHttpsUrlConnectionImpl})
+ * to share an implementation whilst exposing separate interfaces for what they're wrapping.
+ */
 interface EmbraceHttpUrlConnection {
 
     void addRequestProperty(@NonNull String key, @Nullable String value);
@@ -66,8 +72,6 @@ interface EmbraceHttpUrlConnection {
 
     @Nullable
     InputStream getErrorStream();
-
-    boolean shouldInterceptHeaderRetrieval(@Nullable String key);
 
     @Nullable
     String getHeaderField(int n);

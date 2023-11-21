@@ -11,6 +11,10 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+        TODO("Not yet implemented")
+    }
+
     override fun loadSession(sessionId: String): SessionMessage? {
         TODO("Not yet implemented")
     }

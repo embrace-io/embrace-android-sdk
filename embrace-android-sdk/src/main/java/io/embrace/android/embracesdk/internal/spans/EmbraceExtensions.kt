@@ -122,6 +122,35 @@ internal fun Span.setSequenceId(id: Long): Span {
 }
 
 /**
+ * Add in interesting attributes about the running app environment to the span as private Embrace attributes
+ */
+internal fun Span.addAppAttributes(): Span {
+    var hasOkHttp3 = false
+    var okhttpVersion: String? = null
+    try {
+        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
+        hasOkHttp3 = true
+        val okhttpObject = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
+        okhttpVersion = okhttpObject.getField("VERSION").get(okhttpObject)?.toString()
+    } catch (t: Throwable) {
+        // only write the version if the call to obtain it doesn't throw
+    }
+    setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
+    okhttpVersion?.let { setAttribute("okhttp3_on_classpath".toEmbraceAttributeName(), it) }
+
+    var kotlinStdLibVersion = "unknown"
+    try {
+        kotlinStdLibVersion = KotlinVersion.CURRENT.toString()
+    } catch (t: Throwable) {
+        // Use the default if this fails. Given that Embrace requires some version to be on the classpath, this might indicate a change
+        // in how Kotlin exposes its version at runtime, or something odd going on in general.
+    }
+    setAttribute("kotlin_on_classpath".toEmbraceAttributeName(), kotlinStdLibVersion)
+
+    return this
+}
+
+/**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
  */
@@ -166,6 +195,11 @@ internal fun EmbraceSpanData.isPrivate(): Boolean = attributes[PRIVATE_SPAN_ATTR
  * Return the appropriate internal Embrace Span name given the current value
  */
 internal fun String.toEmbraceSpanName(): String = EMBRACE_SPAN_NAME_PREFIX + this
+
+/**
+ * Return the appropriate internal Embrace attribute name given the current string
+ */
+internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PREFIX + this
 
 /**
  * Contains the set of attributes (i.e. implementers of the [Attribute] interface) set on a [Span] by the SDK that has special meaning

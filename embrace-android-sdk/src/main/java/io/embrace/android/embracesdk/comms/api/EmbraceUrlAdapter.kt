@@ -20,7 +20,7 @@ internal class EmbraceUrlAdapter : TypeAdapter<EmbraceUrl>() {
         jsonReader.beginObject()
         while (jsonReader.hasNext()) {
             if (jsonReader.nextName() == "url") {
-                embraceUrl = EmbraceUrl.getUrl(jsonReader.nextString())
+                embraceUrl = EmbraceUrl.create(jsonReader.nextString())
             }
         }
         jsonReader.endObject()

@@ -4,7 +4,10 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class ApiRequestTest {
@@ -21,14 +24,14 @@ internal class ApiRequestTest {
         "test_did",
         "test_eid",
         "test_lid",
-        EmbraceUrl.getUrl("https://google.com"),
+        EmbraceUrl.create("https://google.com"),
         HttpMethod.GET,
         "d800f828fec4409dcabc7f5252e7ce71"
     )
 
     @Test
     fun testFullHeaders() {
-        Assert.assertEquals(
+        assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "User-Agent" to "Embrace/a/1",
@@ -47,8 +50,8 @@ internal class ApiRequestTest {
 
     @Test
     fun testMinimalHeaders() {
-        val minimal = ApiRequest(url = EmbraceUrl.getUrl("https://google.com"))
-        Assert.assertEquals(
+        val minimal = ApiRequest(url = EmbraceUrl.create("https://google.com"))
+        assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
@@ -63,14 +66,14 @@ internal class ApiRequestTest {
         val expectedInfo = ResourceReader.readResourceAsText("api_request.json")
             .filter { !it.isWhitespace() }
         val observed = serializer.toJson(request)
-        Assert.assertEquals(expectedInfo, observed)
+        assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("api_request.json")
         val obj = serializer.fromJson(json, ApiRequest::class.java)
-        Assert.assertEquals(
+        assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "User-Agent" to "Embrace/a/1",
@@ -90,6 +93,14 @@ internal class ApiRequestTest {
     @Test
     fun testEmptyObject() {
         val info = serializer.fromJson("{}", ApiRequest::class.java)
-        Assert.assertNotNull(info)
+        assertNotNull(info)
+    }
+
+    @Test
+    fun testSessionRequest() {
+        assertFalse(request.isSessionRequest())
+
+        val copy = request.copy(url = EmbraceUrl.create("https://example.com/sessions"))
+        assertTrue(copy.isSessionRequest())
     }
 }

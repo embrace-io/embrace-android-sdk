@@ -12,6 +12,9 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An implementation of HttpURLConnection that forwards calls to an {@link EmbraceUrlConnectionDelegate}
+ */
 class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLConnection {
 
     private final EmbraceHttpUrlConnection embraceHttpUrlConnectionDelegate;
@@ -23,8 +26,12 @@ class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLC
      * @param enableWrapIoStreams true if we should transparently ungzip the response, else false
      */
     public EmbraceHttpUrlConnectionImpl(T connection, boolean enableWrapIoStreams) {
+        this(connection, new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams));
+    }
+
+    EmbraceHttpUrlConnectionImpl(T connection, EmbraceUrlConnectionDelegate<T> delegate) {
         super(connection.getURL());
-        embraceHttpUrlConnectionDelegate = new EmbraceUrlConnectionDelegate<>(connection, enableWrapIoStreams);
+        embraceHttpUrlConnectionDelegate = delegate;
     }
 
     @Override

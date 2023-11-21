@@ -143,6 +143,14 @@ internal class SessionBehavior(
         getFullSessionEvents().contains(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
 
     /**
+     * Checks whether the session start message should be sent to the API or not.
+     */
+    fun isStartMessageEnabled(): Boolean {
+        return thresholdCheck.isBehaviorEnabled(remote?.sessionConfig?.pctStartMessageEnabled)
+            ?: true
+    }
+
+    /**
      * Checks whether a feature should be gated.
      * If [getSessionComponents] is null, this will return false.
      * If [getSessionComponents] is empty, this will return true.

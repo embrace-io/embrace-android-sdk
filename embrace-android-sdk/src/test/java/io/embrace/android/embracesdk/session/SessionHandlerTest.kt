@@ -570,6 +570,40 @@ internal class SessionHandlerTest {
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
+    @Test
+    fun `start + end session message requests are sent`() {
+        startFakeSession()
+        clock.tick(10000)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.STATE,
+            endTime = clock.now()
+        )
+        val sessions = deliveryService.lastSentSessions
+        assertEquals(2, sessions.size)
+        assertEquals(1, sessions.count { it.second == SessionMessageState.START })
+        assertEquals(1, sessions.count { it.second == SessionMessageState.END })
+    }
+
+    @Test
+    fun `start message is not sent when disabled`() {
+        // disable sending of session start messages
+        remoteConfig = RemoteConfig(
+            sessionConfig = SessionRemoteConfig(
+                pctStartMessageEnabled = 0f
+            )
+        )
+        configService.sessionBehavior.isStartMessageEnabled()
+        startFakeSession()
+        clock.tick(10000)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.STATE,
+            endTime = clock.now()
+        )
+        val sessions = deliveryService.lastSentSessions
+        assertEquals(1, sessions.size)
+        assertEquals(1, sessions.count { it.second == SessionMessageState.END })
+    }
+
     private fun startFakeSession() {
         sessionHandler.onSessionStarted(
             coldStart = true,

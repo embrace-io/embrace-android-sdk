@@ -478,6 +478,7 @@ internal class EmbraceGatingServiceTest {
         RemoteConfig(
             sessionConfig = SessionRemoteConfig(
                 true,
+                100f,
                 false,
                 components,
                 fullSessionEvents

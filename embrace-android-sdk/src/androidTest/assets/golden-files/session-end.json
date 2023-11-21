@@ -144,7 +144,8 @@
         "emb.type": "SESSION",
         "emb.okhttp3": "true",
         "emb.okhttp3_on_classpath": "4.9.3",
-        "emb.kotlin_on_classpath": "1.4.32"
+        "emb.kotlin_on_classpath": "1.4.32",
+        "emb.is_emulator": "__EMBRACE_TEST_IGNORE__"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],

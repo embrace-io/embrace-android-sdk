@@ -722,6 +722,8 @@ internal class EmbraceMetadataService private constructor(
             return defaultBundleId
         }
 
+        fun isEmulator(): Boolean = MetadataUtils.isEmulator()
+
         private fun hashBundleToMd5(bundle: ByteArray): String {
             val hashBundle: String
             val md = MessageDigest.getInstance("MD5")

@@ -228,7 +228,20 @@ internal class EmbraceApiService(
             BLOBS("blobs"),
             LOGGING("logging"),
             NETWORK("network"),
-            SESSIONS("sessions")
+            SESSIONS("sessions");
+
+            companion object {
+                fun fromEmbraceUrl(embraceUrl: EmbraceUrl): Endpoint? {
+                    return when (embraceUrl.url.path.substringAfterLast("/")) {
+                        EVENTS.path -> EVENTS
+                        BLOBS.path -> BLOBS
+                        LOGGING.path -> LOGGING
+                        NETWORK.path -> NETWORK
+                        SESSIONS.path -> SESSIONS
+                        else -> null
+                    }
+                }
+            }
         }
     }
 }

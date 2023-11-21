@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
+import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -63,11 +63,11 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun saveFailedApiCalls(failedApiCalls: DeliveryFailedApiCalls) {
+    override fun saveFailedApiCalls(failedApiCalls: FailedApiCallsPerEndpoint) {
         TODO("Not yet implemented")
     }
 
-    override fun loadFailedApiCalls(): DeliveryFailedApiCalls {
+    override fun loadFailedApiCalls(): FailedApiCallsPerEndpoint {
         TODO("Not yet implemented")
     }
 }

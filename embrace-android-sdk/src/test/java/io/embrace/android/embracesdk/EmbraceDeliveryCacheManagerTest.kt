@@ -2,11 +2,12 @@ package io.embrace.android.embracesdk
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -266,7 +267,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `save and load failed api calls`() {
-        val failedCalls = DeliveryFailedApiCalls()
+        val failedCalls = FailedApiCallsPerEndpoint()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url"),
             httpMethod = HttpMethod.POST,
@@ -275,8 +276,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json")
-        failedCalls.add(failedApiCall1)
+        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
+        failedCalls.add(Endpoint.SESSIONS, failedApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url"),
@@ -286,9 +287,9 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_2",
             contentEncoding = "gzip"
         )
-
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json")
-        failedCalls.add(failedApiCall2)
+        fakeClock.tickSecond()
+        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
+        failedCalls.add(Endpoint.EVENTS, failedApiCall2)
 
         val request3 = ApiRequest(
             url = EmbraceUrl.create("http://test.url"),
@@ -298,20 +299,25 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_3",
             contentEncoding = "gzip"
         )
-        val failedApiCall3 = DeliveryFailedApiCall(request3, "payload_3.json")
-        failedCalls.add(failedApiCall3)
+        fakeClock.tickSecond()
+        val failedApiCall3 = DeliveryFailedApiCall(request3, "payload_3.json", fakeClock.now())
+        failedCalls.add(Endpoint.LOGGING, failedApiCall3)
 
         deliveryCacheManager.saveFailedApiCalls(failedCalls)
         val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
 
         assertEquals(3, cachedCalls.size)
         assertEquals(
-            listOf("request_1", "request_2", "request_3"),
-            cachedCalls.map { failedCall -> failedCall.apiRequest.eventId }
+            listOf("request_1"),
+            cachedCalls[Endpoint.SESSIONS]?.map { failedCall -> failedCall.apiRequest.eventId }
         )
         assertEquals(
-            listOf("payload_1.json", "payload_2.json", "payload_3.json"),
-            cachedCalls.map { failedCall -> failedCall.cachedPayload }
+            listOf("request_2"),
+            cachedCalls[Endpoint.EVENTS]?.map { failedCall -> failedCall.apiRequest.eventId }
+        )
+        assertEquals(
+            listOf("request_3"),
+            cachedCalls[Endpoint.LOGGING]?.map { failedCall -> failedCall.apiRequest.eventId }
         )
     }
 

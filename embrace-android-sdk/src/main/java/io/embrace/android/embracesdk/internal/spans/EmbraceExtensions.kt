@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -146,6 +147,10 @@ internal fun Span.addAppAttributes(): Span {
         // in how Kotlin exposes its version at runtime, or something odd going on in general.
     }
     setAttribute("kotlin_on_classpath".toEmbraceAttributeName(), kotlinStdLibVersion)
+    setAttribute(
+        "is_emulator".toEmbraceAttributeName(),
+        runCatching { EmbraceMetadataService.isEmulator().toString() }.getOrDefault("unknown")
+    )
 
     return this
 }

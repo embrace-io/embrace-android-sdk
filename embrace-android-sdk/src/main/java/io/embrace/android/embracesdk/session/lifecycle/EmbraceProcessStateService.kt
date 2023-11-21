@@ -5,6 +5,8 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
@@ -17,13 +19,13 @@ import java.util.concurrent.CopyOnWriteArrayList
  * by ProcessLifecycleOwner.
  */
 internal class EmbraceProcessStateService(
-    private val clock: Clock
+    private val clock: Clock,
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : ProcessStateService {
 
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-
     val listeners = CopyOnWriteArrayList<ProcessStateListener>()
 
     private var sessionService: SessionService? = null
@@ -66,6 +68,12 @@ internal class EmbraceProcessStateService(
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     override fun onForeground() {
         logDebug("AppState: App entered foreground.")
+
+        if (!isInBackground) {
+            val msg = "Unbalanced call to onForeground(). This will contribute to session loss."
+            logger.logError(msg, InternalError(msg))
+        }
+
         isInBackground = false
         val timestamp = clock.now()
 

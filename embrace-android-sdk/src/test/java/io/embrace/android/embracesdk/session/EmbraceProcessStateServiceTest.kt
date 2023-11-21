@@ -8,7 +8,10 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.FakeSessionService
 import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.mockk.clearAllMocks
@@ -61,6 +64,8 @@ internal class EmbraceProcessStateServiceTest {
         }
     }
 
+    private lateinit var logger: FakeLoggerAction
+
     @Before
     fun before() {
         clearAllMocks(
@@ -69,9 +74,10 @@ internal class EmbraceProcessStateServiceTest {
             constructorMocks = false,
             staticMocks = false
         )
-
+        logger = FakeLoggerAction()
         stateService = EmbraceProcessStateService(
-            fakeClock
+            fakeClock,
+            InternalEmbraceLogger().apply { addLoggerAction(logger) }
         )
     }
 
@@ -194,6 +200,51 @@ internal class EmbraceProcessStateServiceTest {
         assertEquals(backgroundExpected, invocations)
     }
 
+    @Test
+    fun testBalancedLifecycleCalls() {
+        repeat(10) {
+            stateService.onForeground()
+            stateService.onBackground()
+        }
+        val messages = fetchLogMessages()
+        assertTrue(messages.isEmpty())
+    }
+
+    @Test
+    fun testUnbalancedForegroundCall() {
+        repeat(3) {
+            stateService.onForeground()
+        }
+        stateService.onBackground()
+        stateService.onForeground()
+
+        val messages = fetchLogMessages().map { it.msg }
+        assertEquals(2, messages.size)
+        assertEquals(
+            listOf(
+                "Unbalanced call to onForeground(). This will contribute to session loss.",
+                "Unbalanced call to onForeground(). This will contribute to session loss.",
+            ),
+            messages
+        )
+    }
+
+    @Test
+    fun testUnbalancedBackgroundCall() {
+        repeat(4) {
+            stateService.onBackground()
+        }
+        stateService.onForeground()
+        stateService.onBackground()
+
+        val messages = fetchLogMessages().map { it.msg }
+        assertEquals(0, messages.size)
+    }
+
+    private fun fetchLogMessages() = logger.msgQueue.filter {
+        it.severity >= InternalStaticEmbraceLogger.Severity.ERROR
+    }
+
     private class DecoratedListener(
         private val invocations: MutableList<String>
     ) : ProcessStateListener {
@@ -209,8 +260,8 @@ internal class EmbraceProcessStateServiceTest {
 
     private class DecoratedSessionService(
         private val invocations: MutableList<String>,
-        private val service: SessionService = FakeSessionService()
-    ) : SessionService by service {
+        private val stateService: SessionService = FakeSessionService()
+    ) : SessionService by stateService {
 
         override fun onBackground(timestamp: Long) {
             invocations.add(javaClass.simpleName)
@@ -223,8 +274,8 @@ internal class EmbraceProcessStateServiceTest {
 
     private class DecoratedBackgroundActivityService(
         private val invocations: MutableList<String>,
-        private val service: BackgroundActivityService = FakeBackgroundActivityService()
-    ) : BackgroundActivityService by service {
+        private val stateService: BackgroundActivityService = FakeBackgroundActivityService()
+    ) : BackgroundActivityService by stateService {
 
         override fun onBackground(timestamp: Long) {
             invocations.add(javaClass.simpleName)

@@ -73,6 +73,8 @@ internal class FailedApiCallsPerEndpoint {
             .minByOrNull { it.value.peek()?.queueTime ?: Long.MAX_VALUE }
             ?.key
 
-        return failedApiCallsMap[entryToPollFrom]?.poll()
+        return entryToPollFrom?.let {
+            failedApiCallsMap[it]?.poll()
+        }
     }
 }

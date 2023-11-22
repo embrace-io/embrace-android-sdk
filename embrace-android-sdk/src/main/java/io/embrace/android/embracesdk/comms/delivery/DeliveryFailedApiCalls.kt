@@ -23,36 +23,47 @@ internal data class DeliveryFailedApiCall(
 /**
  * A map containing a list of failed API calls per endpoint.
  */
-internal class FailedApiCallsPerEndpoint : ConcurrentHashMap<Endpoint, DeliveryFailedApiCalls>() {
+internal class FailedApiCallsPerEndpoint {
+
+    private val failedApiCallsMap = ConcurrentHashMap<Endpoint, DeliveryFailedApiCalls>()
 
     /**
      * Adds a failed API call in the corresponding endpoint's list.
      */
     fun add(endpoint: Endpoint, failedApiCall: DeliveryFailedApiCall) {
-        if (this.containsKey(endpoint)) {
-            this[endpoint]?.add(failedApiCall)
-        } else {
-            val failedApiCalls = DeliveryFailedApiCalls()
-            failedApiCalls.add(failedApiCall)
-            this[endpoint] = failedApiCalls
-        }
+        val failedApiCallsForEndpoint = failedApiCallsMap.getOrPut(endpoint) { DeliveryFailedApiCalls() }
+        failedApiCallsForEndpoint.add(failedApiCall)
+    }
+
+    /**
+     * Returns the list of failed API calls for the corresponding endpoint.
+     */
+    fun get(endpoint: Endpoint): DeliveryFailedApiCalls? {
+        return failedApiCallsMap[endpoint]
+    }
+
+    /**
+     * Clears all lists of failed API calls.
+     */
+    fun clear() {
+        failedApiCallsMap.clear()
     }
 
     /**
      * Returns the total number of failed API calls in all endpoints' lists.
      */
-    fun failedApiCallsCount() = this.values.sumOf { it.size }
+    fun failedApiCallsCount() = failedApiCallsMap.values.sumOf { it.size }
 
     /**
      * Returns the number of failed API calls in the corresponding endpoint's list.
      */
-    fun failedApiCallsCount(endpoint: Endpoint) = this[endpoint]?.size ?: 0
+    fun failedApiCallsCount(endpoint: Endpoint) = failedApiCallsMap[endpoint]?.size ?: 0
 
     /**
      * Returns true if there are any failed API calls in any endpoint's list.
      */
     fun hasAnyFailedApiCalls(): Boolean {
-        return this.values.any { it.isNotEmpty() }
+        return failedApiCallsMap.values.any { it.isNotEmpty() }
     }
 
     /**
@@ -67,18 +78,18 @@ internal class FailedApiCallsPerEndpoint : ConcurrentHashMap<Endpoint, DeliveryF
      * endpoint's list.
      */
     fun pollNextFailedApiCall(): DeliveryFailedApiCall? {
-        this[Endpoint.SESSIONS]?.let { sessions ->
+        failedApiCallsMap[Endpoint.SESSIONS]?.let { sessions ->
             if (sessions.isNotEmpty()) {
                 return sessions.poll()
             }
         }
 
-        val entryToPollFrom = this
+        val entryToPollFrom = failedApiCallsMap
             .entries
             .filter { it.value.isNotEmpty() }
             .minByOrNull { it.value.peek()?.queueTime ?: Long.MAX_VALUE }
             ?.key
 
-        return this[entryToPollFrom]?.poll()
+        return failedApiCallsMap[entryToPollFrom]?.poll()
     }
 }

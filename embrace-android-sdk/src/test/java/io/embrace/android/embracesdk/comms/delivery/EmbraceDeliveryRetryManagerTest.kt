@@ -308,16 +308,16 @@ internal class EmbraceDeliveryRetryManagerTest {
         }
 
         // verify logs were added to the queue, and that most recently added requests are dropped
-        assertEquals(100, failedApiCalls[Endpoint.LOGGING]?.size)
-        assertEquals("il:message_id_0", failedApiCalls[Endpoint.LOGGING]?.first()?.apiRequest?.logId)
-        assertEquals("il:message_id_99", failedApiCalls[Endpoint.LOGGING]?.last()?.apiRequest?.logId)
+        assertEquals(100, failedApiCalls.get(Endpoint.LOGGING)?.size)
+        assertEquals("il:message_id_0", failedApiCalls.get(Endpoint.LOGGING)?.first()?.apiRequest?.logId)
+        assertEquals("il:message_id_99", failedApiCalls.get(Endpoint.LOGGING)?.last()?.apiRequest?.logId)
 
         // now add some sessions for retry
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
         deliveryRetryManager.scheduleForRetry(sessionRequest, ByteArray(0))
-        assertEquals(1, failedApiCalls[Endpoint.SESSIONS]?.size)
-        assertEquals("is:session_id_0", failedApiCalls[Endpoint.SESSIONS]?.first()?.apiRequest?.logId)
-        val request = failedApiCalls[Endpoint.SESSIONS]?.last()?.apiRequest
+        assertEquals(1, failedApiCalls.get(Endpoint.SESSIONS)?.size)
+        assertEquals("is:session_id_0", failedApiCalls.get(Endpoint.SESSIONS)?.first()?.apiRequest?.logId)
+        val request = failedApiCalls.get(Endpoint.SESSIONS)?.last()?.apiRequest
         assertTrue(request?.url.toString().endsWith("/sessions"))
     }
 

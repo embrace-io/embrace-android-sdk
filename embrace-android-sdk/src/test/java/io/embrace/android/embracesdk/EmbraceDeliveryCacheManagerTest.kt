@@ -306,25 +306,25 @@ internal class EmbraceDeliveryCacheManagerTest {
         deliveryCacheManager.saveFailedApiCalls(failedCalls)
         val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
 
-        assertEquals(3, cachedCalls.size)
+        assertEquals(3, cachedCalls.failedApiCallsCount())
         assertEquals(
             listOf("request_1"),
-            cachedCalls[Endpoint.SESSIONS]?.map { failedCall -> failedCall.apiRequest.eventId }
+            cachedCalls.get(Endpoint.SESSIONS)?.map { failedCall -> failedCall.apiRequest.eventId }
         )
         assertEquals(
             listOf("request_2"),
-            cachedCalls[Endpoint.EVENTS]?.map { failedCall -> failedCall.apiRequest.eventId }
+            cachedCalls.get(Endpoint.EVENTS)?.map { failedCall -> failedCall.apiRequest.eventId }
         )
         assertEquals(
             listOf("request_3"),
-            cachedCalls[Endpoint.LOGGING]?.map { failedCall -> failedCall.apiRequest.eventId }
+            cachedCalls.get(Endpoint.LOGGING)?.map { failedCall -> failedCall.apiRequest.eventId }
         )
     }
 
     @Test
     fun `load empty set of delivery calls if non cached`() {
         val failedCalls = deliveryCacheManager.loadFailedApiCalls()
-        assertTrue(failedCalls.isEmpty())
+        assertTrue(failedCalls.hasNoFailedApiCalls())
     }
 
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {

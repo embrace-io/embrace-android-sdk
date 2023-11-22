@@ -134,10 +134,37 @@ final class EmbraceImpl {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @NonNull
+    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
+
+    @NonNull
+    private final Clock sdkClock;
+
+    @NonNull
     private final InitModule initModule;
 
     @NonNull
-    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
+    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
+
+    @NonNull
+    private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
+
+    @NonNull
+    private final Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServicesModuleSupplier;
+
+    @NonNull
+    private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
+
+    @NonNull
+    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
+        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
+
+    @NonNull
+    private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
+        DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
+
+    @NonNull
+    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
+        deliveryModuleSupplier;
 
     /**
      * Custom app ID that overrides the one specified at build time
@@ -245,34 +272,9 @@ final class EmbraceImpl {
     @Nullable
     private LastRunCrashVerifier crashVerifier;
 
-    @NonNull
-    private final Clock sdkClock;
-
-    @NonNull
-    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
-
-    @NonNull
-    private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
-
-    @NonNull
-    private final Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServicesModuleSupplier;
-
-    @NonNull
-    private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
-
-    @NonNull
-    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
-        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
-
-    @NonNull
-    private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
-        DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
-
-    @NonNull
-    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
-        deliveryModuleSupplier;
-
-    //variable pointing to the composeActivityListener instance obtained using reflection
+    /**
+     * Variable pointing to the composeActivityListener instance obtained using reflection
+     */
     @Nullable
     private Object composeActivityListenerInstance;
 
@@ -676,6 +678,20 @@ final class EmbraceImpl {
     }
 
     /**
+     * Loads the crash verifier to get the end state of the app crashed in the last run.
+     * This method is called when the app starts.
+     *
+     * @param crashModule        an instance of {@link CrashModule}
+     * @param workerThreadModule an instance of {@link WorkerThreadModule}
+     */
+    private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
+        crashVerifier = crashModule.getLastRunCrashVerifier();
+        crashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        );
+    }
+
+    /**
      * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
      *
      * @param coreModule instance containing a required set of dependencies
@@ -689,7 +705,6 @@ final class EmbraceImpl {
             internalEmbraceLogger.logError("registerComposeActivityListener error", e);
         }
     }
-
 
     /**
      * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
@@ -729,7 +744,7 @@ final class EmbraceImpl {
             internalEmbraceLogger.logError("App ID cannot be null or empty.");
             return false;
         }
-        if (!isValidAppId(appId)) {
+        if (!appIdPattern.matcher(appId).find()) {
             internalEmbraceLogger.logError("Invalid app ID. Must be a 5-character string with " +
                 "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".");
             return false;
@@ -737,10 +752,6 @@ final class EmbraceImpl {
 
         customAppId = appId;
         return true;
-    }
-
-    static boolean isValidAppId(String appId) {
-        return appIdPattern.matcher(appId).find();
     }
 
     /**
@@ -1225,16 +1236,6 @@ final class EmbraceImpl {
     }
 
     /**
-     * Logs a React Native Redux Action.
-     */
-    void logRnAction(@NonNull String name, long startTime, long endTime,
-                     @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (checkSdkStarted("log React Native action")) {
-            breadcrumbService.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        }
-    }
-
-    /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     void logInternalError(@Nullable String message, @Nullable String details) {
@@ -1259,27 +1260,6 @@ final class EmbraceImpl {
     void logInternalError(@NonNull Throwable error) {
         if (checkSdkStarted("log internal error")) {
             exceptionsService.handleInternalError(error);
-        }
-    }
-
-    /**
-     * Logs a Dart error to the Embrace SDK - this is not intended for public use.
-     */
-    void logDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library,
-        @NonNull LogExceptionType logExceptionType
-    ) {
-        if (flutterInternalInterface != null) {
-            if (logExceptionType == LogExceptionType.HANDLED) {
-                flutterInternalInterface.logHandledDartException(stack, name, message, context, library);
-            } else if (logExceptionType == LogExceptionType.UNHANDLED) {
-                flutterInternalInterface.logUnhandledDartException(stack, name, message, context, library);
-            }
-            onActivityReported();
         }
     }
 
@@ -1369,160 +1349,6 @@ final class EmbraceImpl {
     }
 
     /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    void logRnView(@NonNull String screen) {
-        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
-            internalEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
-            return;
-        }
-
-        logView(screen);
-    }
-
-    /**
-     * Logs that a particular WebView URL was loaded.
-     *
-     * @param url the url to log
-     */
-    void logWebView(String url) {
-        if (checkSdkStarted("log WebView")) {
-            breadcrumbService.logWebView(url, sdkClock.now());
-            onActivityReported();
-        }
-    }
-
-    /**
-     * Logs a tap on a screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     * @param type        the type of tap that occurred
-     */
-    void logTap(Pair<Float, Float> point, String elementName, TapBreadcrumb.TapBreadcrumbType type) {
-        if (checkSdkStarted("log tap")) {
-            breadcrumbService.logTap(point, elementName, sdkClock.now(), type);
-            onActivityReported();
-        }
-    }
-
-    @Nullable
-    @InternalApi
-    ConfigService getConfigService() {
-        return configService;
-    }
-
-    @Nullable
-    ProcessStateService getActivityService() {
-        return processStateService;
-    }
-
-    @Nullable
-    ActivityTracker getActivityLifecycleTracker() {
-        return activityTracker;
-    }
-
-    @Nullable
-    EmbraceInternalErrorService getExceptionsService() {
-        return exceptionsService;
-    }
-
-    @Nullable
-    MetadataService getMetadataService() {
-        return metadataService;
-    }
-
-    @Nullable
-    Application getApplication() {
-        return application;
-    }
-
-    @Nullable
-    private Map<String, Object> normalizeProperties(@Nullable Map<String, Object> properties) {
-        Map<String, Object> normalizedProperties = new HashMap<>();
-        if (properties != null) {
-            try {
-                normalizedProperties = PropertyUtils.sanitizeProperties(properties);
-            } catch (Exception e) {
-                internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
-            }
-            return normalizedProperties;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
-     * communication with other Android SDK modules.
-     */
-    @NonNull
-    EmbraceInternalInterface getEmbraceInternalInterface() {
-        if (isStarted() && embraceInternalInterface != null) {
-            return embraceInternalInterface;
-        } else {
-            return EmbraceInternalInterfaceKt.getDefaultImpl();
-        }
-
-    }
-
-    /**
-     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native.
-     */
-    @Nullable
-    ReactNativeInternalInterface getReactNativeInternalInterface() {
-        return reactNativeInternalInterface;
-    }
-
-    /**
-     * Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity.
-     */
-    @Nullable
-    UnityInternalInterface getUnityInternalInterface() {
-        return unityInternalInterface;
-    }
-
-    /**
-     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter.
-     */
-    @Nullable
-    FlutterInternalInterface getFlutterInternalInterface() {
-        return flutterInternalInterface;
-    }
-
-    void installUnityThreadSampler() {
-        if (checkSdkStarted("install Unity thread sampler")) {
-            sampleCurrentThreadDuringAnrs();
-        }
-    }
-
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     */
-    void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
-        }
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     */
-    void setDartVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setDartVersion(version);
-        }
-    }
-
-    /**
      * Saves captured push notification information into session payload
      *
      * @param title                    the title of the notification as a string (or null)
@@ -1555,22 +1381,29 @@ final class EmbraceImpl {
         }
     }
 
-    private void onActivityReported() {
-        if (backgroundActivityService != null) {
-            backgroundActivityService.save();
+    /**
+     * Logs that a particular WebView URL was loaded.
+     *
+     * @param url the url to log
+     */
+    void logWebView(String url) {
+        if (checkSdkStarted("log WebView")) {
+            breadcrumbService.logWebView(url, sdkClock.now());
+            onActivityReported();
         }
     }
 
-    boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
-        if (isStarted() && networkCaptureService != null) {
-            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
-        }
-        return false;
-    }
-
-    void setProcessStartedByNotification() {
-        if (isStarted()) {
-            eventService.setProcessStartedByNotification();
+    /**
+     * Logs a tap on a screen element.
+     *
+     * @param point       the coordinates of the screen tap
+     * @param elementName the name of the element which was tapped
+     * @param type        the type of tap that occurred
+     */
+    void logTap(Pair<Float, Float> point, String elementName, TapBreadcrumb.TapBreadcrumbType type) {
+        if (checkSdkStarted("log tap")) {
+            breadcrumbService.logTap(point, elementName, sdkClock.now(), type);
+            onActivityReported();
         }
     }
 
@@ -1618,18 +1451,181 @@ final class EmbraceImpl {
         }
     }
 
+    @Nullable
+    @InternalApi
+    ConfigService getConfigService() {
+        return configService;
+    }
+
+    @Nullable
+    ProcessStateService getActivityService() {
+        return processStateService;
+    }
+
+    @Nullable
+    ActivityTracker getActivityLifecycleTracker() {
+        return activityTracker;
+    }
+
+    @Nullable
+    EmbraceInternalErrorService getExceptionsService() {
+        return exceptionsService;
+    }
+
+    @Nullable
+    MetadataService getMetadataService() {
+        return metadataService;
+    }
+
+    @Nullable
+    Application getApplication() {
+        return application;
+    }
+
     /**
-     * Loads the crash verifier to get the end state of the app crashed in the last run.
-     * This method is called when the app starts.
-     *
-     * @param crashModule        an instance of {@link CrashModule}
-     * @param workerThreadModule an instance of {@link WorkerThreadModule}
+     * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
+     * communication with other Android SDK modules.
      */
-    private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
-        crashVerifier = crashModule.getLastRunCrashVerifier();
-        crashVerifier.readAndCleanMarkerAsync(
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-        );
+    @NonNull
+    EmbraceInternalInterface getEmbraceInternalInterface() {
+        if (isStarted() && embraceInternalInterface != null) {
+            return embraceInternalInterface;
+        } else {
+            return EmbraceInternalInterfaceKt.getDefaultImpl();
+        }
+    }
+
+    boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
+        if (isStarted() && networkCaptureService != null) {
+            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+        }
+        return false;
+    }
+
+    void setProcessStartedByNotification() {
+        if (isStarted()) {
+            eventService.setProcessStartedByNotification();
+        }
+    }
+
+    /**
+     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for React Native.
+     */
+    @Nullable
+    ReactNativeInternalInterface getReactNativeInternalInterface() {
+        return reactNativeInternalInterface;
+    }
+
+    /**
+     * Logs a React Native Redux Action.
+     */
+    void logRnAction(@NonNull String name, long startTime, long endTime,
+                     @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
+        if (checkSdkStarted("log React Native action")) {
+            breadcrumbService.logRnAction(name, startTime, endTime, properties, bytesSent, output);
+        }
+    }
+
+    /**
+     * Logs the fact that a particular view was entered.
+     * <p>
+     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
+     * logged.
+     *
+     * @param screen the name of the view to log
+     */
+    void logRnView(@NonNull String screen) {
+        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
+            internalEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
+            return;
+        }
+
+        logView(screen);
+    }
+
+    /**
+     * Gets the {@link UnityInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for Unity.
+     */
+    @Nullable
+    UnityInternalInterface getUnityInternalInterface() {
+        return unityInternalInterface;
+    }
+
+    void installUnityThreadSampler() {
+        if (checkSdkStarted("install Unity thread sampler")) {
+            sampleCurrentThreadDuringAnrs();
+        }
+    }
+
+    /**
+     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for Flutter.
+     */
+    @Nullable
+    FlutterInternalInterface getFlutterInternalInterface() {
+        return flutterInternalInterface;
+    }
+
+    /**
+     * Logs a Dart error to the Embrace SDK - this is not intended for public use.
+     */
+    void logDartException(
+        @Nullable String stack,
+        @Nullable String name,
+        @Nullable String message,
+        @Nullable String context,
+        @Nullable String library,
+        @NonNull LogExceptionType logExceptionType
+    ) {
+        if (flutterInternalInterface != null) {
+            if (logExceptionType == LogExceptionType.HANDLED) {
+                flutterInternalInterface.logHandledDartException(stack, name, message, context, library);
+            } else if (logExceptionType == LogExceptionType.UNHANDLED) {
+                flutterInternalInterface.logUnhandledDartException(stack, name, message, context, library);
+            }
+            onActivityReported();
+        }
+    }
+
+    /**
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     */
+    void setEmbraceFlutterSdkVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
+        }
+    }
+
+    /**
+     * Sets the Dart version - this is not intended for public use.
+     */
+    void setDartVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setDartVersion(version);
+        }
+    }
+
+    private void onActivityReported() {
+        if (backgroundActivityService != null) {
+            backgroundActivityService.save();
+        }
+    }
+
+    @Nullable
+    private Map<String, Object> normalizeProperties(@Nullable Map<String, Object> properties) {
+        Map<String, Object> normalizedProperties = new HashMap<>();
+        if (properties != null) {
+            try {
+                normalizedProperties = PropertyUtils.sanitizeProperties(properties);
+            } catch (Exception e) {
+                internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
+            }
+            return normalizedProperties;
+        } else {
+            return null;
+        }
     }
 
     private boolean checkSdkStarted(@NonNull String action) {

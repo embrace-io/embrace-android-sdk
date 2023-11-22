@@ -654,7 +654,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @InternalApi
     void installUnityThreadSampler() {
-        getImpl().installUnityThreadSampler();
+        impl.installUnityThreadSampler();
     }
 
     /**

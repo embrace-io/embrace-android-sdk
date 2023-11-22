@@ -371,7 +371,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             listOf("request_2"),
             cachedCalls.get(Endpoint.EVENTS)?.map { failedCall -> failedCall.apiRequest.eventId }
         )
-
     }
 
     @Test

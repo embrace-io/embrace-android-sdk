@@ -111,7 +111,7 @@ internal class MomentMessageTest : BaseTest() {
                     jsonreader.isLenient = true
                     val obj = serializer.loadObject(jsonreader, DeliveryFailedApiCalls::class.java)
                     if (obj != null) {
-                        val failedCallFileName = obj.element().cachedPayload
+                        val failedCallFileName = obj.element().cachedPayloadFilename
                         assert(failedCallFileName.isNotBlank())
                         readFileContent("\"t\":\"start\"", failedCallFileName)
                     } else {

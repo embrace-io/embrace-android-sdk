@@ -69,7 +69,7 @@ internal class LogMessageTest : BaseTest() {
                     jsonreader.isLenient = true
                     val obj = serializer.loadObject(jsonreader, DeliveryFailedApiCalls::class.java)
                     if (obj != null) {
-                        val failedCallFileName = obj.element().cachedPayload
+                        val failedCallFileName = obj.element().cachedPayloadFilename
                         assert(failedCallFileName.isNotBlank())
                         readFileContent("Test log info fail", failedCallFileName)
                     } else {

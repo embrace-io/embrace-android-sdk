@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import java.util.concurrent.ConcurrentHashMap
@@ -14,9 +15,9 @@ internal class DeliveryFailedApiCalls : ConcurrentLinkedQueue<DeliveryFailedApiC
  * A failed API call.
  */
 internal data class DeliveryFailedApiCall(
-    val apiRequest: ApiRequest,
-    val cachedPayload: String,
-    val queueTime: Long? = null
+    @SerializedName("apiRequest") val apiRequest: ApiRequest,
+    @SerializedName("cachedPayload") val cachedPayloadFilename: String,
+    @SerializedName("queueTime") val queueTime: Long? = null
 )
 
 /**

@@ -185,12 +185,12 @@ internal class EmbraceDeliveryRetryManager(
      * Executes the network call for a DeliveryFailedApiCall.
      */
     private fun retryFailedApiCall(call: DeliveryFailedApiCall): Boolean {
-        val payload = cacheManager.loadPayload(call.cachedPayload)
+        val payload = cacheManager.loadPayload(call.cachedPayloadFilename)
         if (payload != null) {
             try {
                 logger.logDeveloper(TAG, "Retrying failed API call")
                 retryMethod(call.apiRequest, payload)
-                cacheManager.deletePayload(call.cachedPayload)
+                cacheManager.deletePayload(call.cachedPayloadFilename)
             } catch (ex: Exception) {
                 logger.logDeveloper(
                     TAG,

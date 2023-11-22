@@ -163,7 +163,7 @@ internal class EmbraceBackgroundActivityService(
             startType
         )
         backgroundActivity = activity
-        metadataService.setActiveSessionId(activity.sessionId)
+        metadataService.setActiveSessionId(activity.sessionId, false)
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
             ndkService.updateSessionId(activity.sessionId)
         }

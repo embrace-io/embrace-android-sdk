@@ -371,16 +371,19 @@ internal class EmbraceMetadataService private constructor(
     override val activeSessionId: String?
         get() = sessionId
 
-    override fun setActiveSessionId(sessionId: String?) {
+    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
         logDeveloper("EmbraceMetadataService", "Active session Id: $sessionId")
         this.sessionId = sessionId
-        setSessionIdToProcessStateSummary(this.sessionId)
+
+        if (isSession) {
+            setSessionIdToProcessStateSummary(this.sessionId)
+        }
     }
 
     override fun removeActiveSessionId(sessionId: String?) {
         if (this.sessionId != null && this.sessionId == sessionId) {
             logDeveloper("EmbraceMetadataService", "Nulling active session Id")
-            setActiveSessionId(null)
+            setActiveSessionId(null, false)
         }
     }
 

@@ -55,7 +55,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     @Before
     fun setUp() {
         clearAllMocks()
-        metadataService.setActiveSessionId("session-123")
+        metadataService.setActiveSessionId("session-123", true)
         every { configService.networkBehavior } returns fakeNetworkBehavior { cfg }
         every { configService.sdkEndpointBehavior } returns fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
     }

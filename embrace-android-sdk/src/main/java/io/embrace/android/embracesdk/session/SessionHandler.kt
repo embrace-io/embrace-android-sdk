@@ -104,7 +104,7 @@ internal class SessionHandler(
 
             val sessionMessage = sessionMessageCollator.buildStartSessionMessage(session)
 
-            metadataService.setActiveSessionId(session.sessionId)
+            metadataService.setActiveSessionId(session.sessionId, true)
 
             if (configService.sessionBehavior.isStartMessageEnabled()) {
                 deliveryService.sendSession(sessionMessage, SessionMessageState.START)

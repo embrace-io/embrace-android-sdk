@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -225,10 +224,10 @@ internal class EmbraceDeliveryCacheManager(
         if (cachedApiCalls != null) {
             cachedApiCallsPerEndpoint = FailedApiCallsPerEndpoint()
             cachedApiCalls.forEach { cachedApiCall ->
-                val endpoint = EmbraceApiService.Companion.Endpoint.valueOf(
-                    cachedApiCall.apiRequest.url.url.path.substringAfterLast("/")
-                )
-                cachedApiCallsPerEndpoint.add(endpoint, cachedApiCall)
+                val endpoint = cachedApiCall.apiRequest.url.toEndpoint()
+                endpoint?.let {
+                    cachedApiCallsPerEndpoint.add(it, cachedApiCall)
+                }
             }
         }
 

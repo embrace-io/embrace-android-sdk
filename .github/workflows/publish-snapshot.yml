@@ -19,8 +19,7 @@ jobs:
     name: Update Baseline Profile
     uses: ./.github/workflows/generate_baseline_profile.yml
     secrets:
-      token:
-        ${{ secrets.CD_GITHUB_TOKEN }}
+      token: ${{ secrets.CD_GITHUB_TOKEN }}
   sdk:
     name: Publish SDK to Maven Internal
     needs: [functional, baseline-profile]

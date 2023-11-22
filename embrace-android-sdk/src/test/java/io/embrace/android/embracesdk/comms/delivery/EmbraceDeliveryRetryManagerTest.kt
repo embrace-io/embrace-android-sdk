@@ -249,19 +249,19 @@ internal class EmbraceDeliveryRetryManagerTest {
         assertTrue(failedApiCalls.hasNoFailedApiCalls())
 
         val mockApiRequestSessions = mockk<ApiRequest>(relaxed = true) {
-            every { url.url.path } returns "https://mytesturl.com/sessions"
+            every { url.toEndpoint() } returns Endpoint.SESSIONS
         }
         val mockApiRequestEvents = mockk<ApiRequest>(relaxed = true) {
-            every { url.url.path } returns "https://mytesturl.com/events"
+            every { url.toEndpoint() } returns Endpoint.EVENTS
         }
         val mockApiRequestLogging = mockk<ApiRequest>(relaxed = true) {
-            every { url.url.path } returns "https://mytesturl.com/logging"
+            every { url.toEndpoint() } returns Endpoint.LOGGING
         }
         val mockApiRequestBlobs = mockk<ApiRequest>(relaxed = true) {
-            every { url.url.path } returns "https://mytesturl.com/blobs"
+            every { url.toEndpoint() } returns Endpoint.BLOBS
         }
         val mockApiRequestNetwork = mockk<ApiRequest>(relaxed = true) {
-            every { url.url.path } returns "https://mytesturl.com/network"
+            every { url.toEndpoint() } returns Endpoint.NETWORK
         }
 
         repeat(201) {

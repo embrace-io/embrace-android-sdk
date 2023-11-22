@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
  * Represents a particular user's session within the app.
@@ -114,64 +113,5 @@ internal data class BackgroundActivity(
 
         @SerializedName("be")
         BKGND_SIZE
-    }
-
-    companion object {
-
-        @JvmStatic
-        fun createStartMessage(
-            embUuid: String,
-            startTime: Long,
-            coldStart: Boolean,
-            startType: LifeEventType,
-            applicationState: String,
-            userInfo: UserInfo?,
-            preferencesService: PreferencesService
-        ) = BackgroundActivity(
-            sessionId = embUuid,
-            startTime = startTime,
-            appState = applicationState,
-            isColdStart = coldStart,
-            startType = startType,
-            user = userInfo,
-            number = preferencesService.incrementAndGetBackgroundActivityNumber()
-        )
-
-        @JvmStatic
-        @Suppress("LongParameterList")
-        fun createStopMessage(
-            original: BackgroundActivity,
-            applicationState: String,
-            messageType: String,
-            endTime: Long?,
-            eventIdsForSession: List<String>,
-            infoLogIds: List<String>,
-            warningLogIds: List<String>,
-            errorLogIds: List<String>,
-            infoLogsAttemptedToSend: Int,
-            warnLogsAttemptedToSend: Int,
-            errorLogsAttemptedToSend: Int,
-            currentExceptionError: ExceptionError?,
-            lastHeartbeatTime: Long,
-            endType: LifeEventType?,
-            unhandledExceptionsSent: Int,
-            crashId: String?
-        ) = original.copy(
-            appState = applicationState,
-            messageType = messageType,
-            endTime = endTime,
-            eventIds = eventIdsForSession,
-            infoLogIds = infoLogIds,
-            warningLogIds = warningLogIds,
-            errorLogIds = errorLogIds,
-            infoLogsAttemptedToSend = infoLogsAttemptedToSend,
-            warnLogsAttemptedToSend = warnLogsAttemptedToSend,
-            errorLogsAttemptedToSend = errorLogsAttemptedToSend,
-            exceptionError = currentExceptionError,
-            lastHeartbeatTime = lastHeartbeatTime,
-            endType = endType,
-            unhandledExceptions = unhandledExceptionsSent,
-            crashReportId = crashId
-        )
     }
 }

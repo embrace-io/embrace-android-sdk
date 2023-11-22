@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.FakeSessionService
 import io.embrace.android.embracesdk.injection.SessionModule
+import io.embrace.android.embracesdk.session.BackgroundActivityCollator
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionMessageCollator
@@ -18,5 +19,8 @@ internal class FakeSessionModule(
         get() = TODO("Not yet implemented")
 
     override val sessionMessageCollator: SessionMessageCollator
+        get() = TODO("Not yet implemented")
+
+    override val backgroundActivityCollator: BackgroundActivityCollator
         get() = TODO("Not yet implemented")
 }

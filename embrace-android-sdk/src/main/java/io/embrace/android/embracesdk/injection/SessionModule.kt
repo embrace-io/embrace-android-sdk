@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.ndk.NativeModule
+import io.embrace.android.embracesdk.session.BackgroundActivityCollator
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionService
@@ -18,6 +19,7 @@ internal interface SessionModule {
     val sessionService: SessionService
     val backgroundActivityService: BackgroundActivityService?
     val sessionMessageCollator: SessionMessageCollator
+    val backgroundActivityCollator: BackgroundActivityCollator
     val sessionPropertiesService: SessionPropertiesService
 }
 
@@ -99,24 +101,32 @@ internal class SessionModuleImpl(
     override val backgroundActivityService: BackgroundActivityService? by singleton {
         if (essentialServiceModule.configService.isBackgroundActivityCaptureEnabled()) {
             EmbraceBackgroundActivityService(
-                dataContainerModule.performanceInfoService,
                 essentialServiceModule.metadataService,
-                dataCaptureServiceModule.breadcrumbService,
                 essentialServiceModule.processStateService,
-                dataContainerModule.eventService,
-                customerLogModule.remoteLogger,
-                essentialServiceModule.userService,
-                sdkObservabilityModule.exceptionService,
                 deliveryModule.deliveryService,
                 essentialServiceModule.configService,
                 nativeModule.ndkService,
-                androidServicesModule.preferencesService,
                 initModule.clock,
-                initModule.spansService,
+                backgroundActivityCollator,
                 lazy { workerThreadModule.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR) }
             )
         } else {
             null
         }
+    }
+
+    override val backgroundActivityCollator: BackgroundActivityCollator by singleton {
+        BackgroundActivityCollator(
+            essentialServiceModule.userService,
+            androidServicesModule.preferencesService,
+            dataContainerModule.eventService,
+            customerLogModule.remoteLogger,
+            sdkObservabilityModule.exceptionService,
+            dataCaptureServiceModule.breadcrumbService,
+            essentialServiceModule.metadataService,
+            dataContainerModule.performanceInfoService,
+            initModule.spansService,
+            initModule.clock
+        )
     }
 }

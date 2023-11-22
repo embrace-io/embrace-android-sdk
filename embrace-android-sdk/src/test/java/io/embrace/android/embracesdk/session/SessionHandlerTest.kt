@@ -71,7 +71,7 @@ internal class SessionHandlerTest {
     companion object {
         private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
         private val preferencesService: PreferencesService = mockk(relaxed = true)
-        private val mockUserService: FakeUserService = FakeUserService()
+        private val userService: FakeUserService = FakeUserService()
         private val mockNetworkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
         private val mockBreadcrumbService: BreadcrumbService = mockk(relaxed = true)
@@ -168,7 +168,7 @@ internal class SessionHandlerTest {
             NoOpThermalStatusService(),
             null,
             mockBreadcrumbService,
-            mockUserService,
+            userService,
             clock
         )
         spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock))
@@ -177,7 +177,7 @@ internal class SessionHandlerTest {
             logger,
             configService,
             preferencesService,
-            mockUserService,
+            userService,
             mockNetworkConnectivityService,
             metadataService,
             mockBreadcrumbService,
@@ -204,7 +204,7 @@ internal class SessionHandlerTest {
     fun `onSession started successfully`() {
         val maxSessionSeconds = 60
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 60, asyncEnd = false)
-        mockUserService.obj = mockUserInfo
+        userService.obj = mockUserInfo
         mockActiveSession = fakeSession()
 
         val screen = "screen"
@@ -354,7 +354,8 @@ internal class SessionHandlerTest {
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            1000
+            1000,
+            false
         )
 
         verify { mockSessionPeriodicCacheExecutorService wasNot Called }
@@ -369,7 +370,8 @@ internal class SessionHandlerTest {
     fun `onSession not allowed to end because session control is disabled for TIMED event type`() {
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.TIMED,
-            1000
+            1000,
+            false
         )
 
         verify { mockSessionPeriodicCacheExecutorService wasNot Called }
@@ -389,7 +391,8 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             Session.SessionLifeEventType.MANUAL,
-            1000
+            1000,
+            false
         )
 
         verify { mockSessionPeriodicCacheExecutorService wasNot Called }
@@ -410,7 +413,8 @@ internal class SessionHandlerTest {
 
         sessionHandler.onSessionEnded(
             /* any type */ Session.SessionLifeEventType.STATE,
-            1000
+            1000,
+            false
         )
 
         // verify automatic session stopper was called
@@ -500,9 +504,44 @@ internal class SessionHandlerTest {
         clock.tick(30000)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            endTime = 10L
+            endTime = 10L,
+            false
         )
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
+    }
+
+    @Test
+    fun `clearing user info disallowed for state sessions`() {
+        startFakeSession()
+        clock.tick(30000)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.STATE,
+            endTime = 10L,
+            true
+        )
+        assertEquals(0, userService.clearedCount)
+    }
+
+    @Test
+    fun `endSession clears user info`() {
+        remoteConfig = remoteConfig.copy(
+            sessionConfig = SessionRemoteConfig(
+                isEnabled = true
+            )
+        )
+        sessionHandler.onSessionStarted(
+            coldStart = true,
+            startType = Session.SessionLifeEventType.MANUAL,
+            startTime = clock.now(),
+            automaticSessionCloserCallback = mockAutomaticSessionStopperRunnable
+        )
+        clock.tick(30000)
+        sessionHandler.onSessionEnded(
+            endType = Session.SessionLifeEventType.MANUAL,
+            endTime = clock.now(),
+            true
+        )
+        assertEquals(1, userService.clearedCount)
     }
 
     @Test
@@ -551,7 +590,8 @@ internal class SessionHandlerTest {
         clock.tick(15000L)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            endTime = clock.now()
+            endTime = clock.now(),
+            false
         )
 
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
@@ -576,7 +616,8 @@ internal class SessionHandlerTest {
         clock.tick(10000)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            endTime = clock.now()
+            endTime = clock.now(),
+            false
         )
         val sessions = deliveryService.lastSentSessions
         assertEquals(2, sessions.size)
@@ -597,7 +638,8 @@ internal class SessionHandlerTest {
         clock.tick(10000)
         sessionHandler.onSessionEnded(
             endType = Session.SessionLifeEventType.STATE,
-            endTime = clock.now()
+            endTime = clock.now(),
+            false
         )
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)

@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -14,6 +16,7 @@ internal class EmbraceSessionService(
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
+    private val configService: ConfigService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService {
@@ -92,7 +95,7 @@ internal class EmbraceSessionService(
 
     override fun onBackground(timestamp: Long) {
         logger.logDeveloper(TAG, "OnBackground. Ending session.")
-        endSession(Session.SessionLifeEventType.STATE, timestamp)
+        endSession(Session.SessionLifeEventType.STATE, timestamp, false)
     }
 
     /**
@@ -100,7 +103,10 @@ internal class EmbraceSessionService(
      *
      * @param endType the origin of the event that ends the session.
      */
-    override fun triggerStatelessSessionEnd(endType: Session.SessionLifeEventType) {
+    override fun triggerStatelessSessionEnd(
+        endType: Session.SessionLifeEventType,
+        clearUserInfo: Boolean
+    ) {
         if (Session.SessionLifeEventType.STATE == endType) {
             logger.logWarning(
                 "triggerStatelessSessionEnd is not allowed to be called for SessionLifeEventType=$endType"
@@ -109,7 +115,7 @@ internal class EmbraceSessionService(
         }
 
         // Ends active session.
-        endSession(endType, clock.now())
+        endSession(endType, clock.now(), clearUserInfo)
 
         // Starts a new session.
         if (!processStateService.isInBackground) {
@@ -121,14 +127,32 @@ internal class EmbraceSessionService(
         logger.logInfo("Session successfully closed.")
     }
 
+    override fun endSessionManually(clearUserInfo: Boolean) {
+        val sessionBehavior: SessionBehavior = configService.sessionBehavior
+        if (sessionBehavior.getMaxSessionSecondsAllowed() != null) {
+            logger.logWarning("Can't close the session, automatic session close enabled.")
+            return
+        }
+
+        if (sessionBehavior.isAsyncEndEnabled()) {
+            logger.logWarning("Can't close the session, session ending in background thread enabled.")
+            return
+        }
+        triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL)
+    }
+
     /**
      * This will trigger all necessary events to end the current session and send it to the server.
      *
      * @param endType the origin of the event that ends the session.
      */
-    private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
+    private fun endSession(
+        endType: Session.SessionLifeEventType,
+        endTime: Long,
+        clearUserInfo: Boolean
+    ) {
         logger.logDebug("Will try to end session.")
-        sessionHandler.onSessionEnded(endType, endTime)
+        sessionHandler.onSessionEnded(endType, endTime, clearUserInfo)
         logger.logDeveloper(TAG, "Active session cleared")
     }
 

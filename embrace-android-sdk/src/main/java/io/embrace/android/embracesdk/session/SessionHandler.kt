@@ -125,7 +125,7 @@ internal class SessionHandler(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    fun onSessionEnded(endType: SessionLifeEventType, endTime: Long) {
+    fun onSessionEnded(endType: SessionLifeEventType, endTime: Long, clearUserInfo: Boolean) {
         synchronized(lock) {
             val session = activeSession ?: return
 
@@ -146,6 +146,12 @@ internal class SessionHandler(
             sessionProperties.clearTemporary()
             logger.logDebug("Session properties successfully temporary cleared.")
             deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+
+            if (endType == SessionLifeEventType.MANUAL && clearUserInfo) {
+                userService.clearAllUserInfo()
+                // Update user info in NDK service
+                ndkService.onUserInfoUpdate()
+            }
 
             // clear active session
             activeSession = null

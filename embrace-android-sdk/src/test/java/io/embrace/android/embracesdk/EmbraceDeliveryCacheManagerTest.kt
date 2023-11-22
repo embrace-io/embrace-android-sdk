@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpo
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
+import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -319,6 +320,58 @@ internal class EmbraceDeliveryCacheManagerTest {
             listOf("request_3"),
             cachedCalls.get(Endpoint.LOGGING)?.map { failedCall -> failedCall.apiRequest.eventId }
         )
+    }
+
+    /**
+     * The current version is storing [FailedApiCallsPerEndpoint] in a file, but previous versions
+     * were storing [DeliveryFailedApiCalls]. This test checks that the current
+     * version can read the old version and convert it to the new one.
+     */
+    @Test
+    fun `save old version of failed api calls and loads as new version`() {
+        val failedCalls = DeliveryFailedApiCalls()
+        val request1 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/sessions"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id_1",
+            deviceId = "test_device_id",
+            eventId = "request_1",
+            contentEncoding = "gzip"
+        )
+        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
+        failedCalls.add(failedApiCall1)
+
+        val request2 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/events"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id",
+            deviceId = "test_device_id",
+            eventId = "request_2",
+            contentEncoding = "gzip"
+        )
+        fakeClock.tickSecond()
+        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
+        failedCalls.add(failedApiCall2)
+
+        cacheService.cacheObject(
+            "failed_api_calls.json",
+            failedCalls,
+            DeliveryFailedApiCalls::class.java
+        )
+
+        val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
+        assertEquals(2, cachedCalls.failedApiCallsCount())
+        assertEquals(1, cachedCalls.failedApiCallsCount(Endpoint.SESSIONS))
+        assertEquals(1, cachedCalls.failedApiCallsCount(Endpoint.EVENTS))
+        assertEquals(
+            listOf("request_1"),
+            cachedCalls.get(Endpoint.SESSIONS)?.map { failedCall -> failedCall.apiRequest.eventId }
+        )
+        assertEquals(
+            listOf("request_2"),
+            cachedCalls.get(Endpoint.EVENTS)?.map { failedCall -> failedCall.apiRequest.eventId }
+        )
+
     }
 
     @Test

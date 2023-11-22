@@ -39,6 +39,11 @@ internal class FailedApiCallsPerEndpoint : ConcurrentHashMap<Endpoint, DeliveryF
     }
 
     /**
+     * Returns the total number of failed API calls in all endpoints' lists.
+     */
+    fun failedApiCallsCount() = this.values.sumOf { it.size }
+
+    /**
      * Returns the number of failed API calls in the corresponding endpoint's list.
      */
     fun failedApiCallsCount(endpoint: Endpoint) = this[endpoint]?.size ?: 0

@@ -133,7 +133,8 @@ internal class EmbraceDeliveryRetryManager(
                                 try {
                                     logger.logDeveloper(TAG, "Retrying failed API calls")
 
-                                    while (retryMap.hasAnyFailedApiCalls()) {
+                                    val retries = retryMap.failedApiCallsCount()
+                                    repeat(retries) {
                                         val failedApiCall = retryMap.pollNextFailedApiCall()
                                         if (failedApiCall != null) {
                                             val callSucceeded = retryFailedApiCall(failedApiCall)

@@ -11,8 +11,10 @@ import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
+import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
+import io.embrace.android.embracesdk.session.captureDataSafely
 
 internal class EmbracePerformanceInfoService(
     private val anrService: AnrService?,
@@ -37,28 +39,45 @@ internal class EmbracePerformanceInfoService(
             "EmbracePerformanceInfoService",
             "Session performance info start time: $sessionStart"
         )
-        val requests = NetworkRequests(networkLoggingService.getNetworkCallsSnapshot())
         val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
 
         return info.copy(
-            appExitInfoData = when {
-                applicationExitInfoService != null &&
-                    coldStart -> ArrayList(applicationExitInfoService.getCapturedData())
-                else -> null
+            appExitInfoData = captureDataSafely {
+                captureAppExitInfoData(coldStart, applicationExitInfoService)
             },
-            networkRequests = requests,
-            anrIntervals = anrService?.getCapturedData()?.toList(),
-            anrProcessErrors = anrService?.getAnrProcessErrors(sessionStart)?.toList(),
-            googleAnrTimestamps = googleAnrTimestampRepository.getGoogleAnrTimestamps(
-                sessionStart,
-                sessionLastKnownTime
-            ).toList(),
-            powerSaveModeIntervals = powerSaveModeService.getCapturedData()?.toList(),
-            strictmodeViolations = strictModeService.getCapturedData()?.toList(),
-            nativeThreadAnrIntervals = nativeThreadSamplerService?.getCapturedIntervals(
-                receivedTermination
-            )
+            networkRequests = captureDataSafely { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
+            anrIntervals = captureDataSafely { anrService?.getCapturedData()?.toList() },
+            anrProcessErrors = captureDataSafely {
+                anrService?.getAnrProcessErrors(sessionStart)?.toList()
+            },
+            googleAnrTimestamps = captureDataSafely {
+                googleAnrTimestampRepository.getGoogleAnrTimestamps(
+                    sessionStart,
+                    sessionLastKnownTime
+                ).toList()
+            },
+            powerSaveModeIntervals = captureDataSafely {
+                powerSaveModeService.getCapturedData()?.toList()
+            },
+            strictmodeViolations = captureDataSafely { strictModeService.getCapturedData()?.toList() },
+            nativeThreadAnrIntervals = captureDataSafely {
+                nativeThreadSamplerService?.getCapturedIntervals(
+                    receivedTermination
+                )
+            }
         )
+    }
+
+    private fun captureAppExitInfoData(
+        coldStart: Boolean,
+        applicationExitInfoService: ApplicationExitInfoService?
+    ): ArrayList<AppExitInfoData>? {
+        return when {
+            applicationExitInfoService != null &&
+                coldStart -> ArrayList(applicationExitInfoService.getCapturedData())
+
+            else -> null
+        }
     }
 
     override fun getPerformanceInfo(
@@ -69,10 +88,14 @@ internal class EmbracePerformanceInfoService(
         logDeveloper("EmbracePerformanceInfoService", "Building performance info")
 
         return PerformanceInfo(
-            diskUsage = metadataService.getDiskUsage()?.copy(),
-            memoryWarnings = memoryService.getCapturedData()?.toList(),
-            networkInterfaceIntervals = networkConnectivityService.getCapturedData()?.toList(),
-            powerSaveModeIntervals = powerSaveModeService.getCapturedData()?.toList(),
+            diskUsage = captureDataSafely { metadataService.getDiskUsage()?.copy() },
+            memoryWarnings = captureDataSafely { memoryService.getCapturedData()?.toList() },
+            networkInterfaceIntervals = captureDataSafely {
+                networkConnectivityService.getCapturedData()?.toList()
+            },
+            powerSaveModeIntervals = captureDataSafely {
+                powerSaveModeService.getCapturedData()?.toList()
+            },
         )
     }
 }

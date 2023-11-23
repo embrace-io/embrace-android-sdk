@@ -74,7 +74,7 @@ internal class SessionMessageCollator(
             false -> null
         }
 
-        val startupEventInfo = eventService.getStartupMomentInfo()
+        val startupEventInfo = captureDataSafely(eventService::getStartupMomentInfo)
 
         val startupDuration = when (originSession.isColdStart && startupEventInfo != null) {
             true -> startupEventInfo.duration
@@ -88,8 +88,8 @@ internal class SessionMessageCollator(
         val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
             false -> null
             else -> BetaFeatures(
-                thermalStates = thermalStatusService.getCapturedData(),
-                activityLifecycleBreadcrumbs = activityLifecycleBreadcrumbService?.getCapturedData()
+                thermalStates = captureDataSafely(thermalStatusService::getCapturedData),
+                activityLifecycleBreadcrumbs = captureDataSafely { activityLifecycleBreadcrumbService?.getCapturedData() }
             )
         }
 
@@ -97,19 +97,19 @@ internal class SessionMessageCollator(
             isEndedCleanly = endedCleanly,
             appState = EmbraceSessionService.APPLICATION_STATE_FOREGROUND,
             messageType = MESSAGE_TYPE_END,
-            eventIds = eventService.findEventIdsForSession(startTime, endTime),
-            infoLogIds = remoteLogger.findInfoLogIds(startTime, endTime),
-            warningLogIds = remoteLogger.findWarningLogIds(startTime, endTime),
-            errorLogIds = remoteLogger.findErrorLogIds(startTime, endTime),
-            networkLogIds = remoteLogger.findNetworkLogIds(startTime, endTime),
-            infoLogsAttemptedToSend = remoteLogger.getInfoLogsAttemptedToSend(),
-            warnLogsAttemptedToSend = remoteLogger.getWarnLogsAttemptedToSend(),
-            errorLogsAttemptedToSend = remoteLogger.getErrorLogsAttemptedToSend(),
+            eventIds = captureDataSafely { eventService.findEventIdsForSession(startTime, endTime) },
+            infoLogIds = captureDataSafely { remoteLogger.findInfoLogIds(startTime, endTime) },
+            warningLogIds = captureDataSafely { remoteLogger.findWarningLogIds(startTime, endTime) },
+            errorLogIds = captureDataSafely { remoteLogger.findErrorLogIds(startTime, endTime) },
+            networkLogIds = captureDataSafely { remoteLogger.findNetworkLogIds(startTime, endTime) },
+            infoLogsAttemptedToSend = captureDataSafely(remoteLogger::getInfoLogsAttemptedToSend),
+            warnLogsAttemptedToSend = captureDataSafely(remoteLogger::getWarnLogsAttemptedToSend),
+            errorLogsAttemptedToSend = captureDataSafely(remoteLogger::getErrorLogsAttemptedToSend),
             lastHeartbeatTime = clock.now(),
-            properties = sessionProperties.get(),
+            properties = captureDataSafely(sessionProperties::get),
             endType = endType,
-            unhandledExceptions = remoteLogger.getUnhandledExceptionsSent(),
-            webViewInfo = webViewService.getCapturedData(),
+            unhandledExceptions = captureDataSafely(remoteLogger::getUnhandledExceptionsSent),
+            webViewInfo = captureDataSafely(webViewService::getCapturedData),
             crashReportId = crashReportId,
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
@@ -117,9 +117,9 @@ internal class SessionMessageCollator(
             sdkStartupDuration = sdkStartDuration,
             startupDuration = startupDuration,
             startupThreshold = startupThreshold,
-            user = userService.getUserInfo(),
+            user = captureDataSafely(userService::getUserInfo),
             betaFeatures = betaFeatures,
-            symbols = nativeThreadSamplerService?.getNativeSymbols()
+            symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
         )
 
         val performanceInfo = performanceInfoService.getSessionPerformanceInfo(
@@ -129,9 +129,9 @@ internal class SessionMessageCollator(
             originSession.isReceivedTermination
         )
 
-        val appInfo = metadataService.getAppInfo()
-        val deviceInfo = metadataService.getDeviceInfo()
-        val breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime)
+        val appInfo = captureDataSafely(metadataService::getAppInfo)
+        val deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
+        val breadcrumbs = captureDataSafely { breadcrumbService.getBreadcrumbs(startTime, endTime) }
 
         val endSessionWithAllErrors =
             endSession.copy(exceptionError = exceptionService.currentExceptionError)
@@ -149,8 +149,8 @@ internal class SessionMessageCollator(
 
     internal fun buildStartSessionMessage(session: Session) = SessionMessage(
         session = session,
-        appInfo = metadataService.getAppInfo(),
-        deviceInfo = metadataService.getDeviceInfo()
+        appInfo = captureDataSafely(metadataService::getAppInfo),
+        deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
     )
 }
 

@@ -40,7 +40,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.Called
 import io.mockk.clearAllMocks
@@ -237,7 +236,7 @@ internal class SessionHandlerTest {
             mockSessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
                 any(),
                 0,
-                SESSION_CACHING_INTERVAL.toLong(),
+                2,
                 TimeUnit.SECONDS
             )
         }

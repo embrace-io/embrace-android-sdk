@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.EmbraceSessionService.Companion.SESSION_CACHING_INTERVAL
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.io.Closeable
@@ -50,6 +49,19 @@ internal class SessionHandler(
     private val automaticSessionStopper: ScheduledExecutorService,
     private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
 ) : Closeable {
+
+    companion object {
+
+        /**
+         * The minimum threshold for how long a session must last. Package-private for test accessibility
+         */
+        private const val minSessionTime = 5000L
+
+        /**
+         * Session caching interval in seconds.
+         */
+        private const val SESSION_CACHING_INTERVAL = 2
+    }
 
     /**
      * The currently active session.
@@ -81,12 +93,16 @@ internal class SessionHandler(
         automaticSessionCloserCallback: Runnable
     ): SessionMessage? {
         synchronized(lock) {
+            logger.logDebug(
+                "SessionHandler: running onSessionStarted. coldStart=$coldStart," +
+                    " startType=$startType, startTime=$startTime"
+            )
+
             if (!isAllowedToStart()) {
                 logger.logDebug("Session not allowed to start.")
                 return null
             }
 
-            logDeveloper("SessionHandler", "Session Started")
             val session = Session.buildStartSession(
                 Uuid.getEmbUuid(),
                 coldStart,
@@ -97,7 +113,7 @@ internal class SessionHandler(
                 sessionProperties.get()
             )
             activeSession = session
-            logDeveloper("SessionHandler", "SessionId = ${session.sessionId}")
+            logDeveloper("SessionHandler", "Started new session. ID=${session.sessionId}")
 
             // Record the connection type at the start of the session.
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
@@ -109,7 +125,7 @@ internal class SessionHandler(
             if (configService.sessionBehavior.isStartMessageEnabled()) {
                 deliveryService.sendSession(sessionMessage, SessionMessageState.START)
             }
-            logger.logDebug("Start session successfully sent.")
+            logger.logDebug("Start session sent to delivery service.")
 
             handleAutomaticSessionStopper(automaticSessionCloserCallback)
             addFirstViewBreadcrumbForSession(startTime)
@@ -128,8 +144,7 @@ internal class SessionHandler(
     fun onSessionEnded(endType: SessionLifeEventType, endTime: Long, clearUserInfo: Boolean) {
         synchronized(lock) {
             val session = activeSession ?: return
-
-            logger.logDebug("Will try to run end session full.")
+            logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.NORMAL_END,
                 session,
@@ -155,6 +170,7 @@ internal class SessionHandler(
 
             // clear active session
             activeSession = null
+            logger.logDebug("SessionHandler: cleared active session")
         }
     }
 
@@ -165,7 +181,7 @@ internal class SessionHandler(
     fun onCrash(crashId: String) {
         synchronized(lock) {
             val session = activeSession ?: return
-            logger.logDebug("Will try to run end session for crash.")
+            logger.logDebug("SessionHandler: running onCrash for $crashId")
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.JVM_CRASH,
                 session,
@@ -200,8 +216,8 @@ internal class SessionHandler(
         completedSpans: List<EmbraceSpanData>? = null
     ): SessionMessage? {
         synchronized(lock) {
-            logger.logDebug("Will try to run end session for caching.")
             val session = activeSession ?: return null
+            logger.logDeveloper("SessionHandler", "Running periodic cache of active session.")
             val msg = createSessionSnapshot(
                 SessionSnapshotType.PERIODIC_CACHE,
                 session,
@@ -262,7 +278,7 @@ internal class SessionHandler(
                     )
                     false
                 } else if (endType == SessionLifeEventType.MANUAL &&
-                    ((clock.now() - activeSession.startTime) < EmbraceSessionService.minSessionTime)
+                    ((clock.now() - activeSession.startTime) < minSessionTime)
                 ) {
                     // If less than 5 seconds, then the session cannot be finished manually.
                     logger.logError("The session has to be of at least 5 seconds to be ended manually.")

@@ -48,7 +48,7 @@ internal class EmbraceDeliveryRetryManager(
     override fun scheduleForRetry(request: ApiRequest, payload: ByteArray) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
-        val endpoint = request.url.toEndpoint()
+        val endpoint = request.url.endpoint()
         endpoint?.let { e ->
             if (isBelowRetryLimit(e)) {
                 val cachedPayloadName = cacheManager.savePayload(payload)
@@ -143,7 +143,7 @@ internal class EmbraceDeliveryRetryManager(
                                                 cacheManager.saveFailedApiCalls(retryMap)
                                             } else {
                                                 // if the retry failed, add the call back to the queue.
-                                                val endpoint = failedApiCall.apiRequest.url.toEndpoint()
+                                                val endpoint = failedApiCall.apiRequest.url.endpoint()
                                                 endpoint?.let { e ->
                                                     retryMap.add(e, failedApiCall)
                                                 }

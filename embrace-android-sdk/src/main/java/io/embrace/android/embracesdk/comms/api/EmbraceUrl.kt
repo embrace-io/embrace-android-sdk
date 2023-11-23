@@ -12,7 +12,7 @@ internal class EmbraceUrl(val url: URL) {
         return EmbraceConnectionImpl(url.openConnection() as HttpURLConnection, this)
     }
 
-    fun toEndpoint(): Endpoint? {
+    fun endpoint(): Endpoint? {
         return when (url.path.substringAfterLast("/")) {
             Endpoint.EVENTS.path -> Endpoint.EVENTS
             Endpoint.BLOBS.path -> Endpoint.BLOBS

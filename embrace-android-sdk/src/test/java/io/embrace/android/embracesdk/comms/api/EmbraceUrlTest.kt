@@ -8,7 +8,7 @@ import org.junit.Test
 internal class EmbraceUrlTest {
 
     @Test
-    fun `test toEndpoint`() {
+    fun `test endpoint()`() {
         val embraceUrlSessions = EmbraceUrl.create("https://embrace.io/sessions")
         val embraceUrlEvents = EmbraceUrl.create("https://embrace.io/events")
         val embraceUrlBlobs = EmbraceUrl.create("https://embrace.io/blobs")
@@ -16,12 +16,12 @@ internal class EmbraceUrlTest {
         val embraceUrlNetwork = EmbraceUrl.create("https://embrace.io/network")
         val embraceUrlOther = EmbraceUrl.create("https://embrace.io/other")
 
-        assertEquals(Endpoint.SESSIONS, embraceUrlSessions.toEndpoint())
-        assertEquals(Endpoint.EVENTS, embraceUrlEvents.toEndpoint())
-        assertEquals(Endpoint.BLOBS, embraceUrlBlobs.toEndpoint())
-        assertEquals(Endpoint.LOGGING, embraceUrlLogging.toEndpoint())
-        assertEquals(Endpoint.NETWORK, embraceUrlNetwork.toEndpoint())
-        assertEquals(null, embraceUrlOther.toEndpoint())
+        assertEquals(Endpoint.SESSIONS, embraceUrlSessions.endpoint())
+        assertEquals(Endpoint.EVENTS, embraceUrlEvents.endpoint())
+        assertEquals(Endpoint.BLOBS, embraceUrlBlobs.endpoint())
+        assertEquals(Endpoint.LOGGING, embraceUrlLogging.endpoint())
+        assertEquals(Endpoint.NETWORK, embraceUrlNetwork.endpoint())
+        assertEquals(null, embraceUrlOther.endpoint())
     }
     @Test
     fun `test equality`() {

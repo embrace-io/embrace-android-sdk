@@ -249,19 +249,19 @@ internal class EmbraceDeliveryRetryManagerTest {
         assertTrue(failedApiCalls.hasNoFailedApiCalls())
 
         val mockApiRequestSessions = mockk<ApiRequest>(relaxed = true) {
-            every { url.toEndpoint() } returns Endpoint.SESSIONS
+            every { url.endpoint() } returns Endpoint.SESSIONS
         }
         val mockApiRequestEvents = mockk<ApiRequest>(relaxed = true) {
-            every { url.toEndpoint() } returns Endpoint.EVENTS
+            every { url.endpoint() } returns Endpoint.EVENTS
         }
         val mockApiRequestLogging = mockk<ApiRequest>(relaxed = true) {
-            every { url.toEndpoint() } returns Endpoint.LOGGING
+            every { url.endpoint() } returns Endpoint.LOGGING
         }
         val mockApiRequestBlobs = mockk<ApiRequest>(relaxed = true) {
-            every { url.toEndpoint() } returns Endpoint.BLOBS
+            every { url.endpoint() } returns Endpoint.BLOBS
         }
         val mockApiRequestNetwork = mockk<ApiRequest>(relaxed = true) {
-            every { url.toEndpoint() } returns Endpoint.NETWORK
+            every { url.endpoint() } returns Endpoint.NETWORK
         }
 
         repeat(201) {
@@ -348,7 +348,7 @@ internal class EmbraceDeliveryRetryManagerTest {
 
         if (loadFailedRequest) {
             val mockApiRequest = mockk<ApiRequest>(relaxed = true) {
-                every { url.toEndpoint() } returns Endpoint.SESSIONS
+                every { url.endpoint() } returns Endpoint.SESSIONS
             }
             failedApiCalls.add(Endpoint.SESSIONS, DeliveryFailedApiCall(mockApiRequest, "cached_payload_1"))
         }

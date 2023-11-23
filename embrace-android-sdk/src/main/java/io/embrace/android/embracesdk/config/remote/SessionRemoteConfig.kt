@@ -11,6 +11,12 @@ internal data class SessionRemoteConfig(
     @SerializedName("enable")
     val isEnabled: Boolean? = null,
 
+    /**
+     * Whether the start message should be enabled or not
+     */
+    @SerializedName("pct_start_message_enabled")
+    val pctStartMessageEnabled: Float? = null,
+
     @SerializedName("async_end")
     @Deprecated("This flag is obsolete and is no longer respected.")
     val endAsync: Boolean? = null,

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -11,7 +12,7 @@ internal interface DeliveryCacheManager {
     fun loadSessionBytes(sessionId: String): ByteArray?
     fun deleteSession(sessionId: String)
     fun getAllCachedSessionIds(): List<String>
-    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray?
+    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>): ByteArray?
     fun loadBackgroundActivity(backgroundActivityId: String): ByteArray?
     fun saveCrash(crash: EventMessage)
     fun loadCrash(): EventMessage?

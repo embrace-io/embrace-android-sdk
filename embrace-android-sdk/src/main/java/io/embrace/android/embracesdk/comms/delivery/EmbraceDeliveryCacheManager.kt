@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -133,7 +134,7 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>): ByteArray? {
         val baId = backgroundActivityMessage.backgroundActivity.sessionId
         val baBytes = serializer.bytesFromPayload(
             backgroundActivityMessage,

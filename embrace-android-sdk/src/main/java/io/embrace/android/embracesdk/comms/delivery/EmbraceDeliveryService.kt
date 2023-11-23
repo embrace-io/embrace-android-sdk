@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -107,7 +108,7 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to cache
      */
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>) {
         backgroundActivities.add(backgroundActivityMessage.backgroundActivity.sessionId)
         cacheManager.saveBackgroundActivity(backgroundActivityMessage)
     }
@@ -117,7 +118,7 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to send
      */
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>) {
         logger.logDeveloper(TAG, "Sending background activity message")
 
         sendSessionsExecutorService.submit {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -19,9 +20,9 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
-    var lastSentBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSentBackgroundActivity: BackgroundActivityMessage<BackgroundActivity>? = null
     var saveBackgroundActivityInvokedCount: Int = 0
-    var lastSavedBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSavedBackgroundActivity: BackgroundActivityMessage<BackgroundActivity>? = null
     var lastEventSentAsync: EventMessage? = null
     var eventSentAsyncInvokedCount: Int = 0
     var lastSavedCrash: EventMessage? = null
@@ -55,12 +56,12 @@ internal class FakeDeliveryService : DeliveryService {
         lastEventSentAsync = eventMessage
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>) {
         saveBackgroundActivityInvokedCount++
         lastSavedBackgroundActivity = backgroundActivityMessage
     }
 
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>) {
         lastSentBackgroundActivity = backgroundActivityMessage
     }
 

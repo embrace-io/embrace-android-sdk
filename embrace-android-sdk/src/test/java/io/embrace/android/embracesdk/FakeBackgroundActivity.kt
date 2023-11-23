@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.opentelemetry.api.trace.StatusCode
 
-internal fun fakeBackgroundActivity(): BackgroundActivityMessage {
+internal fun fakeBackgroundActivity(): BackgroundActivityMessage<BackgroundActivity> {
     val backgroundActivity = BackgroundActivity("fake-activity", 0, "")
     val userInfo = UserInfo("fake-user-id")
     val appInfo = AppInfo("fake-app-id")

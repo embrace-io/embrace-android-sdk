@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -15,8 +16,8 @@ internal interface DeliveryService {
     fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
     fun saveCrash(crash: EventMessage)
-    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
-    fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
+    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>)
+    fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage<BackgroundActivity>)
     fun sendBackgroundActivities()
     fun sendLog(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)

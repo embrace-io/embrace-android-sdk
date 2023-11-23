@@ -208,7 +208,7 @@ internal class EmbraceBackgroundActivityService(
         endTime: Long,
         endType: LifeEventType,
         crashId: String?
-    ): BackgroundActivityMessage? {
+    ): BackgroundActivityMessage<BackgroundActivity>? {
         val activity = backgroundActivity
         if (activity == null) {
             InternalStaticEmbraceLogger.logError("No background activity to report")
@@ -274,7 +274,7 @@ internal class EmbraceBackgroundActivityService(
     private fun buildBackgroundActivityMessage(
         backgroundActivity: BackgroundActivity?,
         isBackgroundActivityEnd: Boolean
-    ): BackgroundActivityMessage? {
+    ): BackgroundActivityMessage<BackgroundActivity>? {
         if (backgroundActivity != null) {
             val startTime = backgroundActivity.startTime ?: 0L
             val endTime = backgroundActivity.endTime ?: clock.now()

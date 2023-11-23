@@ -8,13 +8,15 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
  * The session message, containing the session itself, as well as performance information about the
  * device which occurred during the session.
  */
-internal data class BackgroundActivityMessage @JvmOverloads internal constructor(
+internal data class BackgroundActivityMessage<T> @JvmOverloads internal constructor(
+
+    // TODO: this is identical to SessionMessage. We can combine the two classes.
 
     /**
      * The session information.
      */
     @SerializedName("s")
-    val backgroundActivity: BackgroundActivity,
+    val backgroundActivity: T,
 
     /**
      * The user information.

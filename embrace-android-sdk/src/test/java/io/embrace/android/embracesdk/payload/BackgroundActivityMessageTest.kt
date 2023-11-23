@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
@@ -41,7 +42,8 @@ internal class BackgroundActivityMessageTest {
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-        val obj = Gson().fromJson(json, BackgroundActivityMessage::class.java)
+        val collectionType = object : TypeToken<BackgroundActivityMessage<BackgroundActivity>>() {}.type
+        val obj: BackgroundActivityMessage<BackgroundActivity> = Gson().fromJson(json, collectionType)
         assertNotNull(obj)
 
         assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)

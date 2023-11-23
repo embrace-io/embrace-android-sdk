@@ -146,7 +146,7 @@ jobs:
       token: ${{ secrets.CD_GITHUB_TOKEN }}
       
   measure-startup-time:
-    uses: embrace-io/android-sdk-benchmark/blob/main/.github/workflows/macrobenchmark.yml@main
+    uses: embrace-io/android-sdk-benchmark/.github/workflows/macrobenchmark.yml@main
     needs: release
     with:
       sdk_version: ${{ github.event.inputs.current_version }}

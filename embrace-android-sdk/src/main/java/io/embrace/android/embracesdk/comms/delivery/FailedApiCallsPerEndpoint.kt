@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A map containing a list of failed API calls per endpoint.
+ * Public methods on this class aren't meant to be accessed by multiple threads.
  */
 internal class FailedApiCallsPerEndpoint {
 

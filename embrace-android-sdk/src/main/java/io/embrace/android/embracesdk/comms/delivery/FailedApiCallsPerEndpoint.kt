@@ -20,44 +20,6 @@ internal class FailedApiCallsPerEndpoint {
     }
 
     /**
-     * Returns the list of failed API calls for the corresponding endpoint.
-     */
-    fun get(endpoint: Endpoint): DeliveryFailedApiCalls? {
-        return failedApiCallsMap[endpoint]
-    }
-
-    /**
-     * Clears all lists of failed API calls.
-     */
-    fun clear() {
-        failedApiCallsMap.clear()
-    }
-
-    /**
-     * Returns the total number of failed API calls in all endpoints' lists.
-     */
-    fun failedApiCallsCount() = failedApiCallsMap.values.sumOf { it.size }
-
-    /**
-     * Returns the number of failed API calls in the corresponding endpoint's list.
-     */
-    fun failedApiCallsCount(endpoint: Endpoint) = failedApiCallsMap[endpoint]?.size ?: 0
-
-    /**
-     * Returns true if there are any failed API calls in any endpoint's list.
-     */
-    fun hasAnyFailedApiCalls(): Boolean {
-        return failedApiCallsMap.values.any { it.isNotEmpty() }
-    }
-
-    /**
-     * Returns true if there are no failed API calls in any endpoint's list.
-     */
-    fun hasNoFailedApiCalls(): Boolean {
-        return !hasAnyFailedApiCalls()
-    }
-
-    /**
      * Returns the next failed API call to be sent and removes it from the corresponding
      * endpoint's list.
      */
@@ -76,6 +38,55 @@ internal class FailedApiCallsPerEndpoint {
 
         return entryToPollFrom?.let {
             failedApiCallsMap[it]?.poll()
+        }
+    }
+
+    /**
+     * Returns true if the number of retries for the endpoint is below the limit.
+     */
+    fun isBelowRetryLimit(endpoint: Endpoint): Boolean {
+        return failedApiCallsCount(endpoint) < endpoint.getMaxFailedApiCalls()
+    }
+
+    /**
+     * Clears all lists of failed API calls.
+     */
+    fun clear() {
+        failedApiCallsMap.clear()
+    }
+
+    /**
+     * Returns true if there are any failed API calls in any endpoint's list.
+     */
+    fun hasAnyFailedApiCalls(): Boolean {
+        return failedApiCallsMap.values.any { it.isNotEmpty() }
+    }
+
+    /**
+     * Returns true if there are no failed API calls in any endpoint's list.
+     */
+    fun hasNoFailedApiCalls(): Boolean {
+        return !hasAnyFailedApiCalls()
+    }
+
+    /**
+     * Returns the total number of failed API calls in all endpoints' lists.
+     */
+    fun failedApiCallsCount() = failedApiCallsMap.values.sumOf { it.size }
+
+    /**
+     * Returns the number of failed API calls in the corresponding endpoint's list.
+     */
+    private fun failedApiCallsCount(endpoint: Endpoint) = failedApiCallsMap[endpoint]?.size ?: 0
+
+    private fun Endpoint.getMaxFailedApiCalls(): Int {
+        return when (this) {
+            Endpoint.EVENTS -> 100
+            Endpoint.BLOBS -> 50
+            Endpoint.LOGGING -> 100
+            Endpoint.NETWORK -> 50
+            Endpoint.SESSIONS -> 100
+            Endpoint.UNKNOWN -> 50
         }
     }
 }

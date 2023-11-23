@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import java.util.concurrent.RejectedExecutionException
@@ -49,7 +48,7 @@ internal class EmbraceDeliveryRetryManager(
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
         val endpoint = request.url.endpoint()
-        if (isBelowRetryLimit(endpoint)) {
+        if (retryMap.isBelowRetryLimit(endpoint)) {
             val cachedPayloadName = cacheManager.savePayload(payload)
             val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName, clock.now())
 
@@ -91,13 +90,6 @@ internal class EmbraceDeliveryRetryManager(
                 }
             }
         }
-    }
-
-    /**
-     * Returns true if the number of retries for the endpoint is below the limit.
-     */
-    private fun isBelowRetryLimit(endpoint: Endpoint): Boolean {
-        return retryMap.failedApiCallsCount(endpoint) < endpoint.getMaxFailedApiCalls()
     }
 
     /**
@@ -217,20 +209,6 @@ internal class EmbraceDeliveryRetryManager(
         }
         if (nextDelay <= MAX_EXPONENTIAL_RETRY_PERIOD) {
             scheduleFailedApiCallsRetry(nextDelay)
-        }
-    }
-
-    companion object {
-
-        fun Endpoint.getMaxFailedApiCalls(): Int {
-            return when (this) {
-                Endpoint.EVENTS -> 100
-                Endpoint.BLOBS -> 50
-                Endpoint.LOGGING -> 100
-                Endpoint.NETWORK -> 50
-                Endpoint.SESSIONS -> 100
-                Endpoint.UNKNOWN -> 50
-            }
         }
     }
 }

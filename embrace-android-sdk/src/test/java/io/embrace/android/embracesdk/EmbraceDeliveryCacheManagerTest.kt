@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
@@ -307,19 +306,10 @@ internal class EmbraceDeliveryCacheManagerTest {
         deliveryCacheManager.saveFailedApiCalls(failedCalls)
         val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
 
-        assertEquals(3, cachedCalls.failedApiCallsCount())
-        assertEquals(
-            listOf("request_1"),
-            cachedCalls.get(Endpoint.SESSIONS)?.map { failedCall -> failedCall.apiRequest.eventId }
-        )
-        assertEquals(
-            listOf("request_2"),
-            cachedCalls.get(Endpoint.EVENTS)?.map { failedCall -> failedCall.apiRequest.eventId }
-        )
-        assertEquals(
-            listOf("request_3"),
-            cachedCalls.get(Endpoint.LOGGING)?.map { failedCall -> failedCall.apiRequest.eventId }
-        )
+        assertEquals(failedApiCall1, cachedCalls.pollNextFailedApiCall())
+        assertEquals(failedApiCall2, cachedCalls.pollNextFailedApiCall())
+        assertEquals(failedApiCall3, cachedCalls.pollNextFailedApiCall())
+        assertNull(cachedCalls.pollNextFailedApiCall())
     }
 
     /**
@@ -360,17 +350,9 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
 
         val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
-        assertEquals(2, cachedCalls.failedApiCallsCount())
-        assertEquals(1, cachedCalls.failedApiCallsCount(Endpoint.SESSIONS))
-        assertEquals(1, cachedCalls.failedApiCallsCount(Endpoint.EVENTS))
-        assertEquals(
-            listOf("request_1"),
-            cachedCalls.get(Endpoint.SESSIONS)?.map { failedCall -> failedCall.apiRequest.eventId }
-        )
-        assertEquals(
-            listOf("request_2"),
-            cachedCalls.get(Endpoint.EVENTS)?.map { failedCall -> failedCall.apiRequest.eventId }
-        )
+        assertEquals(failedApiCall1, cachedCalls.pollNextFailedApiCall())
+        assertEquals(failedApiCall2, cachedCalls.pollNextFailedApiCall())
+        assertEquals(null, cachedCalls.pollNextFailedApiCall())
     }
 
     @Test

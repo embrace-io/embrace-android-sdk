@@ -45,7 +45,8 @@ internal class FailedApiCallsPerEndpoint {
      * Returns true if the number of retries for the endpoint is below the limit.
      */
     fun isBelowRetryLimit(endpoint: Endpoint): Boolean {
-        return failedApiCallsCount(endpoint) < endpoint.getMaxFailedApiCalls()
+        val failedApiCallsCount = failedApiCallsMap[endpoint]?.size ?: 0
+        return failedApiCallsCount < endpoint.getMaxFailedApiCalls()
     }
 
     /**
@@ -68,16 +69,6 @@ internal class FailedApiCallsPerEndpoint {
     fun hasNoFailedApiCalls(): Boolean {
         return !hasAnyFailedApiCalls()
     }
-
-    /**
-     * Returns the total number of failed API calls in all endpoints' lists.
-     */
-    fun failedApiCallsCount() = failedApiCallsMap.values.sumOf { it.size }
-
-    /**
-     * Returns the number of failed API calls in the corresponding endpoint's list.
-     */
-    private fun failedApiCallsCount(endpoint: Endpoint) = failedApiCallsMap[endpoint]?.size ?: 0
 
     private fun Endpoint.getMaxFailedApiCalls(): Int {
         return when (this) {

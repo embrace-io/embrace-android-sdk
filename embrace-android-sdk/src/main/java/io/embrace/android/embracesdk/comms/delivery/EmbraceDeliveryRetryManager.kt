@@ -118,36 +118,42 @@ internal class EmbraceDeliveryRetryManager(
                 if (shouldScheduleRetry()) {
                     lastRetryTask = scheduledExecutorService.schedule(
                         {
-                            var noFailedRetries = true
                             if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
                                 try {
                                     logger.logDeveloper(TAG, "Retrying failed API calls")
 
-                                    val retries = retryMap.failedApiCallsCount()
-                                    repeat(retries) {
+                                    val failedApiCallsToRetry = mutableListOf<DeliveryFailedApiCall>()
+
+                                    while (true) {
                                         val failedApiCall = retryMap.pollNextFailedApiCall()
-                                        if (failedApiCall != null) {
+                                        failedApiCall?.let {
                                             val callSucceeded = retryFailedApiCall(failedApiCall)
                                             if (callSucceeded) {
                                                 // if the retry succeeded, save the modified queue in cache.
                                                 cacheManager.saveFailedApiCalls(retryMap)
                                             } else {
-                                                // if the retry failed, add the call back to the queue.
-                                                retryMap.add(failedApiCall)
-                                                noFailedRetries = false
+                                                // if the retry failed, it will be added back to the queue.
+                                                failedApiCallsToRetry.add(failedApiCall)
                                             }
+                                        } ?: break
+                                    }
+
+                                    // Add back to the queue all retries that failed.
+                                    failedApiCallsToRetry.forEach {
+                                        retryMap.add(it)
+                                    }
+
+                                    if (retryMap.hasAnyFailedApiCalls()) {
+                                        scheduledExecutorService.submit {
+                                            val allRetriesSucceeded = failedApiCallsToRetry.isEmpty()
+                                            scheduleNextFailedApiCallsRetry(
+                                                allRetriesSucceeded,
+                                                delayInSeconds
+                                            )
                                         }
                                     }
                                 } catch (ex: Exception) {
                                     logger.logDebug("Error when retrying failed API call", ex)
-                                }
-                                if (retryMap.hasAnyFailedApiCalls()) {
-                                    scheduledExecutorService.submit {
-                                        scheduleNextFailedApiCallsRetry(
-                                            noFailedRetries,
-                                            delayInSeconds
-                                        )
-                                    }
                                 }
                             } else {
                                 logger.logInfo(
@@ -200,8 +206,8 @@ internal class EmbraceDeliveryRetryManager(
      * Schedules the next call to retry sending the failed_api_calls again. The delay will be extended if the previous retry yielded
      * at least one failed request.
      */
-    private fun scheduleNextFailedApiCallsRetry(noFailedRetries: Boolean, delay: Long) {
-        val nextDelay = if (noFailedRetries) {
+    private fun scheduleNextFailedApiCallsRetry(allRetriesSucceeded: Boolean, delay: Long) {
+        val nextDelay = if (allRetriesSucceeded) {
             RETRY_PERIOD
         } else {
             // if a network call failed, the retries will use exponential backoff

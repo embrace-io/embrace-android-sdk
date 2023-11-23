@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,7 +30,7 @@ internal class FailedApiCallsPerEndpointTest {
             contentEncoding = "gzip"
         )
         val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
-        failedApiCalls.add(Endpoint.SESSIONS, failedApiCall1)
+        failedApiCalls.add(failedApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
@@ -42,7 +41,7 @@ internal class FailedApiCallsPerEndpointTest {
             contentEncoding = "gzip"
         )
         val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_filename")
-        failedApiCalls.add(Endpoint.EVENTS, failedApiCall2)
+        failedApiCalls.add(failedApiCall2)
 
         assertEquals(2, failedApiCalls.failedApiCallsCount())
         assertEquals(1, failedApiCalls.failedApiCallsCount(Endpoint.SESSIONS))
@@ -59,15 +58,31 @@ internal class FailedApiCallsPerEndpointTest {
 
     @Test
     fun `test hasAnyFailedApiCalls`() {
+        val request1 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/sessions"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id_1",
+            deviceId = "test_device_id",
+            eventId = "request_1",
+            contentEncoding = "gzip"
+        )
         assertFalse(failedApiCalls.hasAnyFailedApiCalls())
-        failedApiCalls.add(Endpoint.EVENTS, DeliveryFailedApiCall(mockk(), "payload_filename"))
+        failedApiCalls.add(DeliveryFailedApiCall(request1, "payload_filename"))
         assertTrue(failedApiCalls.hasAnyFailedApiCalls())
     }
 
     @Test
     fun `test hasNoFailedApiCalls`() {
+        val request1 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/sessions"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id_1",
+            deviceId = "test_device_id",
+            eventId = "request_1",
+            contentEncoding = "gzip"
+        )
         assertTrue(failedApiCalls.hasNoFailedApiCalls())
-        failedApiCalls.add(Endpoint.EVENTS, DeliveryFailedApiCall(mockk(), "payload_filename"))
+        failedApiCalls.add(DeliveryFailedApiCall(request1, "payload_filename"))
         assertFalse(failedApiCalls.hasNoFailedApiCalls())
     }
 
@@ -87,7 +102,7 @@ internal class FailedApiCallsPerEndpointTest {
             contentEncoding = "gzip"
         )
         val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
-        failedApiCalls.add(Endpoint.EVENTS, failedApiCall1)
+        failedApiCalls.add(failedApiCall1)
 
         assertEquals(failedApiCall1, failedApiCalls.get(Endpoint.EVENTS)?.first())
         failedApiCalls.clear()
@@ -105,7 +120,7 @@ internal class FailedApiCallsPerEndpointTest {
             contentEncoding = "gzip"
         )
         val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
-        failedApiCalls.add(Endpoint.EVENTS, failedApiCall1)
+        failedApiCalls.add(failedApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
@@ -116,7 +131,7 @@ internal class FailedApiCallsPerEndpointTest {
             contentEncoding = "gzip"
         )
         val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_filename")
-        failedApiCalls.add(Endpoint.SESSIONS, failedApiCall2)
+        failedApiCalls.add(failedApiCall2)
 
         assertEquals(failedApiCall2, failedApiCalls.pollNextFailedApiCall())
         assertEquals(failedApiCall1, failedApiCalls.pollNextFailedApiCall())

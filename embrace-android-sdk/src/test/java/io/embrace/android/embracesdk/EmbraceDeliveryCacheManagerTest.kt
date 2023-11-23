@@ -270,7 +270,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `save and load failed api calls`() {
         val failedCalls = FailedApiCallsPerEndpoint()
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url"),
+            url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -278,10 +278,10 @@ internal class EmbraceDeliveryCacheManagerTest {
             contentEncoding = "gzip"
         )
         val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
-        failedCalls.add(Endpoint.SESSIONS, failedApiCall1)
+        failedCalls.add(failedApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url"),
+            url = EmbraceUrl.create("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -290,10 +290,10 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
-        failedCalls.add(Endpoint.EVENTS, failedApiCall2)
+        failedCalls.add(failedApiCall2)
 
         val request3 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url"),
+            url = EmbraceUrl.create("http://test.url/logging"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -302,7 +302,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val failedApiCall3 = DeliveryFailedApiCall(request3, "payload_3.json", fakeClock.now())
-        failedCalls.add(Endpoint.LOGGING, failedApiCall3)
+        failedCalls.add(failedApiCall3)
 
         deliveryCacheManager.saveFailedApiCalls(failedCalls)
         val cachedCalls = deliveryCacheManager.loadFailedApiCalls()

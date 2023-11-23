@@ -350,7 +350,7 @@ internal class EmbraceDeliveryRetryManagerTest {
             val mockApiRequest = mockk<ApiRequest>(relaxed = true) {
                 every { url.endpoint() } returns Endpoint.SESSIONS
             }
-            failedApiCalls.add(Endpoint.SESSIONS, DeliveryFailedApiCall(mockApiRequest, "cached_payload_1"))
+            failedApiCalls.add(DeliveryFailedApiCall(mockApiRequest, "cached_payload_1"))
         }
 
         if (runRetryJobAfterScheduling) {

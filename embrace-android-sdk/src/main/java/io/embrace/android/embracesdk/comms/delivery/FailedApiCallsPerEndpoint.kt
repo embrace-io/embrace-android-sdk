@@ -13,7 +13,8 @@ internal class FailedApiCallsPerEndpoint {
     /**
      * Adds a failed API call in the corresponding endpoint's list.
      */
-    fun add(endpoint: Endpoint, failedApiCall: DeliveryFailedApiCall) {
+    fun add(failedApiCall: DeliveryFailedApiCall) {
+        val endpoint = failedApiCall.apiRequest.url.endpoint()
         val failedApiCallsForEndpoint = failedApiCallsMap.getOrPut(endpoint) { DeliveryFailedApiCalls() }
         failedApiCallsForEndpoint.add(failedApiCall)
     }

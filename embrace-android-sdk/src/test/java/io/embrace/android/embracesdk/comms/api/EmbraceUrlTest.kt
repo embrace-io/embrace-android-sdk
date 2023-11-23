@@ -21,7 +21,7 @@ internal class EmbraceUrlTest {
         assertEquals(Endpoint.BLOBS, embraceUrlBlobs.endpoint())
         assertEquals(Endpoint.LOGGING, embraceUrlLogging.endpoint())
         assertEquals(Endpoint.NETWORK, embraceUrlNetwork.endpoint())
-        assertEquals(null, embraceUrlOther.endpoint())
+        assertEquals(Endpoint.UNKNOWN, embraceUrlOther.endpoint())
     }
     @Test
     fun `test equality`() {

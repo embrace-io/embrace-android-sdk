@@ -238,10 +238,7 @@ internal class EmbraceDeliveryCacheManager(
         if (loadFailedApiCalls.isSuccess) {
             cachedApiCallsPerEndpoint = FailedApiCallsPerEndpoint()
             loadFailedApiCalls.getOrNull()?.forEach { cachedApiCall ->
-                val endpoint = cachedApiCall.apiRequest.url.endpoint()
-                endpoint?.let {
-                    cachedApiCallsPerEndpoint.add(it, cachedApiCall)
-                }
+                cachedApiCallsPerEndpoint.add(cachedApiCall)
             }
         }
 

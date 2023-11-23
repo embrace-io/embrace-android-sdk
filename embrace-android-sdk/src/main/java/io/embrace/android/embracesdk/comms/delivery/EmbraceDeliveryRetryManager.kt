@@ -49,21 +49,19 @@ internal class EmbraceDeliveryRetryManager(
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
         val endpoint = request.url.endpoint()
-        endpoint?.let { e ->
-            if (isBelowRetryLimit(e)) {
-                val cachedPayloadName = cacheManager.savePayload(payload)
-                val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName, clock.now())
+        if (isBelowRetryLimit(endpoint)) {
+            val cachedPayloadName = cacheManager.savePayload(payload)
+            val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName, clock.now())
 
-                val scheduleJob = retryMap.hasNoFailedApiCalls()
+            val scheduleJob = retryMap.hasNoFailedApiCalls()
 
-                retryMap.add(e, failedApiCall)
-                cacheManager.saveFailedApiCalls(retryMap)
+            retryMap.add(failedApiCall)
+            cacheManager.saveFailedApiCalls(retryMap)
 
-                // By default there are no scheduled retry jobs pending.
-                // If the retry map was initially empty, try to schedule a retry.
-                if (scheduleJob) {
-                    scheduleFailedApiCallsRetry(RETRY_PERIOD)
-                }
+            // By default there are no scheduled retry jobs pending.
+            // If the retry map was initially empty, try to schedule a retry.
+            if (scheduleJob) {
+                scheduleFailedApiCallsRetry(RETRY_PERIOD)
             }
         }
     }
@@ -143,10 +141,7 @@ internal class EmbraceDeliveryRetryManager(
                                                 cacheManager.saveFailedApiCalls(retryMap)
                                             } else {
                                                 // if the retry failed, add the call back to the queue.
-                                                val endpoint = failedApiCall.apiRequest.url.endpoint()
-                                                endpoint?.let { e ->
-                                                    retryMap.add(e, failedApiCall)
-                                                }
+                                                retryMap.add(failedApiCall)
                                                 noFailedRetries = false
                                             }
                                         }
@@ -234,6 +229,7 @@ internal class EmbraceDeliveryRetryManager(
                 Endpoint.LOGGING -> 100
                 Endpoint.NETWORK -> 50
                 Endpoint.SESSIONS -> 100
+                Endpoint.UNKNOWN -> 50
             }
         }
     }

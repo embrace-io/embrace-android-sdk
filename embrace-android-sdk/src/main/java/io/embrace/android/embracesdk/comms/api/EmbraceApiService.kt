@@ -228,7 +228,8 @@ internal class EmbraceApiService(
             BLOBS("blobs"),
             LOGGING("logging"),
             NETWORK("network"),
-            SESSIONS("sessions")
+            SESSIONS("sessions"),
+            UNKNOWN("unknown")
         }
     }
 }

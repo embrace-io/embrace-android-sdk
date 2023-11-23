@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import com.google.gson.stream.JsonReader
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.After
@@ -70,9 +69,9 @@ internal class LogMessageTest : BaseTest() {
                     jsonreader.isLenient = true
                     val obj = serializer.loadObject(jsonreader, FailedApiCallsPerEndpoint::class.java)
                     if (obj != null) {
-                        val failedApiCall = obj.get(EmbraceApiService.Companion.Endpoint.LOGGING)
+                        val failedApiCall = obj.pollNextFailedApiCall()
                         checkNotNull(failedApiCall)
-                        val failedCallFileName = failedApiCall.element().cachedPayloadFilename
+                        val failedCallFileName = failedApiCall.cachedPayloadFilename
                         assert(failedCallFileName.isNotBlank())
                         readFileContent("Test log info fail", failedCallFileName)
                     } else {

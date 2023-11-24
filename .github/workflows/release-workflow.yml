@@ -118,6 +118,11 @@ jobs:
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
           git push
 
+      - name: Create release pull request
+        run: gh pr create -B master -H "release/${{ github.event.inputs.current_version }}" --title 'Merge release/${{ github.event.inputs.current_version }} into master' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+
       - name: Checkout Swazzler
         uses: actions/checkout@v3
         with:

@@ -207,14 +207,10 @@ internal class EmbraceDeliveryCacheManager(
     override fun loadFailedApiCalls(): FailedApiCallsPerEndpoint {
         logger.logDeveloper(TAG, "Loading failed api calls")
         val cached = executorService.submit<FailedApiCallsPerEndpoint> {
-            val loadFailedApiCalls = runCatching {
+            val loadApiCallsResult = runCatching {
                 cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, FailedApiCallsPerEndpoint::class.java)
             }
-            if (loadFailedApiCalls.isSuccess) {
-                loadFailedApiCalls.getOrNull()
-            } else {
-                loadFailedApiCallsOldVersion()
-            }
+            loadApiCallsResult.getOrNull() ?: loadFailedApiCallsOldVersion()
         }.get()
         return if (cached != null) {
             cached

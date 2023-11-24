@@ -32,6 +32,7 @@ internal interface SpansService {
         parent: EmbraceSpan? = null,
         type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
         internal: Boolean = true,
+        recordSystrace: Boolean = false,
         code: () -> T
     ): T
 
@@ -70,5 +71,6 @@ internal interface SpansService {
 
     companion object {
         val featureDisabledSpansService = FeatureDisabledSpansService()
+        val systraceOnlySpansService = FeatureDisabledSpansService(true)
     }
 }

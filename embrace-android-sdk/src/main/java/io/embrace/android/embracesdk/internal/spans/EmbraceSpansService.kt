@@ -61,8 +61,22 @@ internal class EmbraceSpansService(private val clock: Clock) : Initializable, Sp
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? =
         currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal)
 
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean, code: () -> T): T =
-        currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: EmbraceAttributes.Type,
+        internal: Boolean,
+        recordSystrace: Boolean,
+        code: () -> T
+    ): T =
+        currentDelegate.recordSpan(
+            name = name,
+            parent = parent,
+            type = type,
+            internal = internal,
+            recordSystrace = recordSystrace,
+            code = code
+        )
 
     override fun recordCompletedSpan(
         name: String,

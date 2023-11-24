@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -98,10 +99,14 @@ internal fun SpanBuilder.updateParent(parent: EmbraceSpan?): SpanBuilder {
 /**
  * Allow a [SpanBuilder] to take in a lambda around which a span will be created for its execution
  */
-internal fun <T> SpanBuilder.record(code: () -> T): T {
+internal fun <T> SpanBuilder.record(
+    systraceName: String? = null,
+    code: () -> T
+): T {
+
     val returnValue: T
     var span: Span? = null
-
+    val trace = systraceName?.let { Systrace.start(systraceName) }
     try {
         span = startSpan()
         returnValue = code()
@@ -109,6 +114,8 @@ internal fun <T> SpanBuilder.record(code: () -> T): T {
     } catch (t: Throwable) {
         span?.endSpan(ErrorCode.FAILURE)
         throw t
+    } finally {
+        trace?.let { Systrace.end(instance = trace) }
     }
 
     return returnValue

@@ -73,6 +73,7 @@ import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTrac
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
+import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
@@ -247,7 +248,7 @@ final class EmbraceImpl {
     private final Clock sdkClock;
 
     @NonNull
-    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
+    private final Function3<Context, Embrace.AppFramework, SpansService, CoreModule> coreModuleSupplier;
 
     @NonNull
     private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
@@ -275,7 +276,7 @@ final class EmbraceImpl {
     private Object composeActivityListenerInstance;
 
     EmbraceImpl(@NonNull Function0<InitModule> initModuleSupplier,
-                @NonNull Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier,
+                @NonNull Function3<Context, Embrace.AppFramework, SpansService, CoreModule> coreModuleSupplier,
                 @NonNull Function0<WorkerThreadModule> workerThreadModuleSupplier,
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
@@ -353,7 +354,7 @@ final class EmbraceImpl {
         final long startTime = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
 
-        final CoreModule coreModule = coreModuleSupplier.invoke(context, framework);
+        final CoreModule coreModule = coreModuleSupplier.invoke(context, framework, initModule.getSpansService());
         serviceRegistry = coreModule.getServiceRegistry();
         serviceRegistry.registerService(initModule.getSpansService());
         application = coreModule.getApplication();

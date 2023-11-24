@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -97,7 +98,7 @@ internal class IntegrationTestRule(
         with(harness) {
             val embraceImpl = EmbraceImpl(
                 { initModule },
-                { _, _ -> fakeCoreModule },
+                { _, _, _ -> fakeCoreModule },
                 { workerThreadModule },
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
@@ -129,7 +130,7 @@ internal class IntegrationTestRule(
         val enableIntegrationTesting: Boolean = false,
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: InitModule = FakeInitModule(clock = fakeClock),
-        val fakeCoreModule: FakeCoreModule = FakeCoreModule(),
+        val fakeCoreModule: FakeCoreModule = FakeCoreModule(jsonSerializer = EmbraceSerializer(initModule.spansService)),
         val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(),
         val fakeConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,

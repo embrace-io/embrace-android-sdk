@@ -91,10 +91,16 @@ internal class SpansServiceImpl(
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        recordSystrace: Boolean,
         code: () -> T
     ): T {
         return if (EmbraceSpanImpl.inputsValid(name) && validateAndUpdateContext(parent, internal)) {
-            createRootSpanBuilder(name = name, type = type, internal = internal).updateParent(parent).record(code)
+            createRootSpanBuilder(name = name, type = type, internal = internal)
+                .updateParent(parent)
+                .record(
+                    systraceName = if (recordSystrace) name.toEmbraceSpanName() else null,
+                    code = code
+                )
         } else {
             code()
         }

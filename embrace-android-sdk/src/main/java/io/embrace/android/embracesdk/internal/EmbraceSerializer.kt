@@ -6,6 +6,7 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
+import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.BufferedWriter
@@ -15,7 +16,9 @@ import java.nio.charset.Charset
 /**
  * A wrapper around Gson to allow for thread-safe serialization.
  */
-internal class EmbraceSerializer {
+internal class EmbraceSerializer(
+    val spansService: SpansService = SpansService.featureDisabledSpansService
+) {
 
     private val gson by threadLocal {
         GsonBuilder()

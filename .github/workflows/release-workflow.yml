@@ -81,7 +81,7 @@ jobs:
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
           git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
-          git checkout -b release/${{ github.event.inputs.current_version }}
+          git checkout -b "release/${{ github.event.inputs.current_version }}"
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.current_version }}"

@@ -34,10 +34,11 @@ internal class FakeCoreModule(
 ) : CoreModule {
 
     companion object {
+
+        @Suppress("DEPRECATION")
         fun getMockedContext(): Context {
             val packageInfo = PackageInfo()
             packageInfo.versionName = "1.0.0"
-            @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
 
             val mockContext = mockk<Context>(relaxed = true)

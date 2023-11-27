@@ -88,6 +88,7 @@ internal class EmbraceInternalInterfaceImplTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testLogHandledException() {
         val exception = Throwable("handled exception")

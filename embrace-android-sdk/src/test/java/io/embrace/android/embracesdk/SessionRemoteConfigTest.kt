@@ -8,6 +8,7 @@ import org.junit.Test
 
 internal class SessionRemoteConfigTest {
 
+    @Suppress("DEPRECATION")
     @Test
     fun testDefaults() {
         val cfg = SessionRemoteConfig(false, 100f, false, null, null)

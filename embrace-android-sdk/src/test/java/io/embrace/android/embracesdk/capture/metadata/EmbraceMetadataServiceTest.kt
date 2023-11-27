@@ -63,6 +63,7 @@ internal class EmbraceMetadataServiceTest {
             unmockkAll()
         }
 
+        @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
@@ -111,6 +112,7 @@ internal class EmbraceMetadataServiceTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE) =
         EmbraceMetadataService.ofContext(
             context,
@@ -130,6 +132,7 @@ internal class EmbraceMetadataServiceTest {
             lazy { packageInfo.versionCode.toString() }
         ).apply { precomputeValues() }
 
+    @Suppress("DEPRECATION")
     private fun getReactNativeMetadataService() =
         EmbraceMetadataService.ofContext(
             context,
@@ -260,6 +263,7 @@ internal class EmbraceMetadataServiceTest {
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `test device info without running async operations`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))

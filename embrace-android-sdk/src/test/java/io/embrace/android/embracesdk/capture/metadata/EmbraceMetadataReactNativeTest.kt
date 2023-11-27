@@ -20,14 +20,13 @@ import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
-import org.junit.Assert.assertNotEquals
 
 internal class EmbraceMetadataReactNativeTest {
 

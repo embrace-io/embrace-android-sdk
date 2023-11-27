@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.payload.Breadcrumbs
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

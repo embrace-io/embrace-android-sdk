@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.gating.PerformanceInfoSanitizer
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.mockk.mockk
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

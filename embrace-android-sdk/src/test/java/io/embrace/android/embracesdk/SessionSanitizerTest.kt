@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizer
 import io.embrace.android.embracesdk.payload.Orientation
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

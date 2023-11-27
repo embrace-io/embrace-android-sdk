@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.utils.NetworkUtils
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

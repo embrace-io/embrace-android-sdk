@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.utils.BitmapFactory
 import io.embrace.android.embracesdk.utils.JsonValidator
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -25,7 +25,6 @@ import java.net.HttpURLConnection
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import org.junit.Assert.assertEquals
 
 /**
  * The default Base test class, which all tests using TestServer should inherit from. This

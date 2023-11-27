@@ -6,12 +6,11 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.mockk
-import org.junit.Assert
-import org.junit.Test
-import java.io.StringReader
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.StringReader
 
 internal class EmbraceSerializerTest {
     private val serializer = EmbraceSerializer()

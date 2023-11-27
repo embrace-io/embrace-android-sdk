@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.config.local
 
 import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

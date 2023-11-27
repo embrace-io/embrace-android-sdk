@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.mockk.mockk
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

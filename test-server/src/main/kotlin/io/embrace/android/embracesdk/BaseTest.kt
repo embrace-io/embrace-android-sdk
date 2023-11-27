@@ -25,6 +25,7 @@ import java.net.HttpURLConnection
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import org.junit.Assert.assertEquals
 
 /**
  * The default Base test class, which all tests using TestServer should inherit from. This
@@ -181,7 +182,7 @@ public open class BaseTest {
             waitForRequest { request ->
                 when (request.path?.substringBefore("?")) {
                     EmbraceEndpoint.EVENTS.url -> {
-                        Assert.assertEquals("POST", request.method)
+                        assertEquals("POST", request.method)
                         if (!isStartupStartEventValidated) {
                             isStartupStartEventValidated = true
                             validateMessageAgainstGoldenFile(
@@ -196,11 +197,11 @@ public open class BaseTest {
                         }
                     }
                     EmbraceEndpoint.SESSIONS.url -> {
-                        Assert.assertEquals("POST", request.method)
+                        assertEquals("POST", request.method)
                         validateMessageAgainstGoldenFile(request, "session-start.json")
                     }
                     EmbraceEndpoint.CONFIG.url -> {
-                        Assert.assertEquals("GET", request.method)
+                        assertEquals("GET", request.method)
                     }
                     else -> fail("Unexpected Request call. ${request.path}")
                 }

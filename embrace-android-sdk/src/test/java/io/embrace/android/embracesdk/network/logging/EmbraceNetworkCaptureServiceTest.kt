@@ -18,6 +18,8 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -64,13 +66,13 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun testUrlMatch() {
         val regex = "httpbin.org/*".toRegex()
         val url = "https://httpbin.org/get"
-        Assert.assertTrue(regex.containsMatchIn(url))
+        assertTrue(regex.containsMatchIn(url))
     }
 
     @Test
     fun `test no capture rules`() {
         val result = getService().getNetworkCaptureRules("url", "GET")
-        Assert.assertEquals(0, result.size)
+        assertEquals(0, result.size)
     }
 
     @Test
@@ -78,7 +80,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         val rule = getDefaultRule(urlRegex = "embrace.io/*")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("url", "GET")
-        Assert.assertEquals(0, result.size)
+        assertEquals(0, result.size)
     }
 
     @Test
@@ -86,7 +88,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         val rule = getDefaultRule(urlRegex = "https://a-o0o0o.data.emb-api.com")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://a-o0o0o.data.emb-api.com", "GET")
-        Assert.assertEquals(0, result.size)
+        assertEquals(0, result.size)
     }
 
     @Test
@@ -94,7 +96,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         val rule = getDefaultRule(expiresIn = 0)
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertEquals(0, result.size)
+        assertEquals(0, result.size)
     }
 
     @Test
@@ -103,10 +105,10 @@ internal class EmbraceNetworkCaptureServiceTest {
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         every { mockPreferenceService.isNetworkCaptureRuleOver(any()) } returns false
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertEquals(1, result.size)
+        assertEquals(1, result.size)
         every { mockPreferenceService.isNetworkCaptureRuleOver(any()) } returns true
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertEquals(0, emptyRule.size)
+        assertEquals(0, emptyRule.size)
     }
 
     @Test
@@ -115,7 +117,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         every { mockPreferenceService.isNetworkCaptureRuleOver(any()) } returns true
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertEquals(0, emptyRule.size)
+        assertEquals(0, emptyRule.size)
     }
 
     @Test
@@ -126,7 +128,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         )
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertTrue(result.isNotEmpty())
+        assertTrue(result.isNotEmpty())
     }
 
     @Test
@@ -137,7 +139,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         )
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
-        Assert.assertTrue(result.isEmpty())
+        assertTrue(result.isEmpty())
     }
     @Test
     fun `test capture rule duration`() {

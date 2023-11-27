@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizer
 import io.embrace.android.embracesdk.payload.Orientation
 import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SessionSanitizerTest {
@@ -38,18 +40,18 @@ internal class SessionSanitizerTest {
 
         val result = SessionSanitizer(session, components).sanitize()
 
-        Assert.assertNotNull(result.properties)
-        Assert.assertNotNull(result.orientations)
-        Assert.assertNotNull(result.terminationTime)
-        Assert.assertNotNull(result.isReceivedTermination)
-        Assert.assertNotNull(result.infoLogIds)
-        Assert.assertNotNull(result.infoLogsAttemptedToSend)
-        Assert.assertNotNull(result.warningLogIds)
-        Assert.assertNotNull(result.warnLogsAttemptedToSend)
-        Assert.assertNotNull(result.eventIds)
-        Assert.assertNotNull(result.startupDuration)
-        Assert.assertNotNull(result.startupThreshold)
-        Assert.assertNull(result.betaFeatures)
+        assertNotNull(result.properties)
+        assertNotNull(result.orientations)
+        assertNotNull(result.terminationTime)
+        assertNotNull(result.isReceivedTermination)
+        assertNotNull(result.infoLogIds)
+        assertNotNull(result.infoLogsAttemptedToSend)
+        assertNotNull(result.warningLogIds)
+        assertNotNull(result.warnLogsAttemptedToSend)
+        assertNotNull(result.eventIds)
+        assertNotNull(result.startupDuration)
+        assertNotNull(result.startupThreshold)
+        assertNull(result.betaFeatures)
     }
 
     @Test
@@ -58,17 +60,17 @@ internal class SessionSanitizerTest {
 
         val result = SessionSanitizer(session, components).sanitize()
 
-        Assert.assertNull(result.properties)
-        Assert.assertNull(result.orientations)
-        Assert.assertNull(result.terminationTime)
-        Assert.assertNull(result.isReceivedTermination)
-        Assert.assertNull(result.infoLogIds)
-        Assert.assertNull(result.infoLogsAttemptedToSend)
-        Assert.assertNull(result.warningLogIds)
-        Assert.assertNull(result.warnLogsAttemptedToSend)
-        Assert.assertNull(result.eventIds)
-        Assert.assertNull(result.startupDuration)
-        Assert.assertNull(result.startupThreshold)
-        Assert.assertNull(result.betaFeatures)
+        assertNull(result.properties)
+        assertNull(result.orientations)
+        assertNull(result.terminationTime)
+        assertNull(result.isReceivedTermination)
+        assertNull(result.infoLogIds)
+        assertNull(result.infoLogsAttemptedToSend)
+        assertNull(result.warningLogIds)
+        assertNull(result.warnLogsAttemptedToSend)
+        assertNull(result.eventIds)
+        assertNull(result.startupDuration)
+        assertNull(result.startupThreshold)
+        assertNull(result.betaFeatures)
     }
 }

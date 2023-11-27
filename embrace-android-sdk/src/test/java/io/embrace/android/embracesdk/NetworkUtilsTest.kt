@@ -5,6 +5,10 @@ import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class NetworkUtilsTest {
@@ -73,21 +77,21 @@ internal class NetworkUtilsTest {
     @Test
     fun testValidIPs() {
         for (ip in validIpAddresses) {
-            Assert.assertTrue("$ip should be a valid IP", isIpAddress(ip))
+            assertTrue("$ip should be a valid IP", isIpAddress(ip))
         }
     }
 
     @Test
     fun testInvalidIps() {
         for (ip in invalidIpAddresses) {
-            Assert.assertFalse("$ip should not be a valid IP", isIpAddress(ip))
+            assertFalse("$ip should not be a valid IP", isIpAddress(ip))
         }
     }
 
     @Test
     fun testInvalidUrls() {
         for (url in invalidURLs) {
-            Assert.assertNull(
+            assertNull(
                 "$url should not be a valid domain",
                 getDomain(url)
             )
@@ -101,10 +105,10 @@ internal class NetworkUtilsTest {
             val expected = pairs[1]
             val domain = getDomain(url)
 
-            Assert.assertTrue("$url should contain a domain", domain != null)
+            assertTrue("$url should contain a domain", domain != null)
 
             if (domain != null) {
-                Assert.assertEquals(
+                assertEquals(
                     "Domain for " + url + " should be " + expected + " not " + domain,
                     domain,
                     expected
@@ -123,13 +127,13 @@ internal class NetworkUtilsTest {
         val traceIdMoreEqualAllowedLength =
             "34ec0b8ac9d65e91,34ec0b8ac9d65e9134ec0b8ac9d65e91,34ec0b8ac9d65e"
 
-        Assert.assertNull(NetworkUtils.getValidTraceId(null))
+        assertNull(NetworkUtils.getValidTraceId(null))
 
-        Assert.assertNull(NetworkUtils.getValidTraceId("\u00B6containUnicode"))
+        assertNull(NetworkUtils.getValidTraceId("\u00B6containUnicode"))
 
-        Assert.assertEquals(validTraceId, NetworkUtils.getValidTraceId(validTraceId))
+        assertEquals(validTraceId, NetworkUtils.getValidTraceId(validTraceId))
 
-        Assert.assertEquals(
+        assertEquals(
             traceIdMoreEqualAllowedLength,
             NetworkUtils.getValidTraceId(traceIdMoreThanAllowedLength)
         )
@@ -137,14 +141,14 @@ internal class NetworkUtilsTest {
 
     @Test
     fun stripUrl() {
-        Assert.assertNull(stripUrl(null))
+        assertNull(stripUrl(null))
 
         for (pairs in urlsToStrip) {
             val url = pairs[0]
             val expected = pairs[1]
             val strippedUrl = stripUrl(url)
 
-            Assert.assertEquals(expected, strippedUrl)
+            assertEquals(expected, strippedUrl)
         }
     }
 }

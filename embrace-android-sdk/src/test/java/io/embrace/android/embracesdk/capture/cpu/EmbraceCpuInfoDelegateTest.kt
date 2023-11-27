@@ -7,6 +7,7 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -31,7 +32,7 @@ internal class EmbraceCpuInfoDelegateTest {
     fun `check native library not loaded returns null`() {
         every { mockSharedObjectLoader.loadEmbraceNative() } returns false
 
-        Assert.assertEquals(null, cpuInfoDelegate.getCpuName())
-        Assert.assertEquals(null, cpuInfoDelegate.getElg())
+        assertEquals(null, cpuInfoDelegate.getCpuName())
+        assertEquals(null, cpuInfoDelegate.getElg())
     }
 }

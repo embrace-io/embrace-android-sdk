@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
 import io.embrace.android.embracesdk.gating.UserInfoSanitizer
 import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class UserInfoSanitizerTest {
@@ -19,8 +21,8 @@ internal class UserInfoSanitizerTest {
 
         val result = UserInfoSanitizer(userInfo, components).sanitize()
 
-        Assert.assertNotNull(result.personas)
-        Assert.assertNotNull(result.email)
+        assertNotNull(result.personas)
+        assertNotNull(result.email)
     }
 
     @Test
@@ -30,7 +32,7 @@ internal class UserInfoSanitizerTest {
 
         val result = UserInfoSanitizer(userInfo, components).sanitize()
 
-        Assert.assertNotNull(result.email)
-        Assert.assertNull(result.personas)
+        assertNotNull(result.email)
+        assertNull(result.personas)
     }
 }

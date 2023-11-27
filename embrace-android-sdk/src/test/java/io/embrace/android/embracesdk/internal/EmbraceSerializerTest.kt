@@ -9,6 +9,9 @@ import io.mockk.mockk
 import org.junit.Assert
 import org.junit.Test
 import java.io.StringReader
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 
 internal class EmbraceSerializerTest {
     private val serializer = EmbraceSerializer()
@@ -18,19 +21,19 @@ internal class EmbraceSerializerTest {
     @Test
     fun testWriteToFile() {
         val result = serializer.writeToFile(payload, SessionMessage::class.java, mockk(relaxed = true))
-        Assert.assertTrue(result)
+        assertTrue(result)
     }
 
     @Test
     fun testLoadObject() {
         val reader = JsonReader(StringReader(Gson().toJson(payload)))
         val result = serializer.loadObject(reader, SessionMessage::class.java)
-        Assert.assertEquals("fakeSessionId", result?.session?.sessionId)
+        assertEquals("fakeSessionId", result?.session?.sessionId)
     }
 
     @Test
     fun testBytesFromPayload() {
         val result = serializer.bytesFromPayload(payload, SessionMessage::class.java)
-        Assert.assertNotNull(result)
+        assertNotNull(result)
     }
 }

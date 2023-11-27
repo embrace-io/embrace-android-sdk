@@ -5,6 +5,9 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.payload.Event
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class EventSanitizerTest {
@@ -23,7 +26,7 @@ internal class EventSanitizerTest {
 
         val sanitizerError = EventSanitizer(errorLogEvent, components)
         val resultLogError = sanitizerError.sanitize()
-        Assert.assertNull(resultLogError.customPropertiesMap)
+        assertNull(resultLogError.customPropertiesMap)
     }
 
     @Test
@@ -40,7 +43,7 @@ internal class EventSanitizerTest {
 
         val sanitizerInfo = EventSanitizer(infoLogEvent, components)
         val resultInfo = sanitizerInfo.sanitize()
-        Assert.assertNull(resultInfo.customPropertiesMap)
+        assertNull(resultInfo.customPropertiesMap)
     }
 
     @Test
@@ -57,7 +60,7 @@ internal class EventSanitizerTest {
 
         val sanitizerWarning = EventSanitizer(warningLogEvent, components)
         val resultWarning = sanitizerWarning.sanitize()
-        Assert.assertNull(resultWarning.customPropertiesMap)
+        assertNull(resultWarning.customPropertiesMap)
     }
 
     @Test
@@ -73,7 +76,7 @@ internal class EventSanitizerTest {
         )
 
         val result = EventSanitizer(noLogEvent, components).sanitize()
-        Assert.assertNotNull(result.customPropertiesMap)
+        assertNotNull(result.customPropertiesMap)
     }
 
     @Test
@@ -96,13 +99,13 @@ internal class EventSanitizerTest {
         val result = sanitizer.sanitize()
 
         // Expected: Same event without sessionProperties
-        Assert.assertEquals("123", result.eventId)
-        Assert.assertEquals(1000L, result.duration)
-        Assert.assertEquals("state", result.appState)
-        Assert.assertEquals(EmbraceEvent.Type.INFO_LOG, result.type)
-        Assert.assertEquals(null, result.customPropertiesMap)
-        Assert.assertEquals(null, result.sessionPropertiesMap)
-        Assert.assertEquals(LogExceptionType.NONE.value, result.logExceptionType)
+        assertEquals("123", result.eventId)
+        assertEquals(1000L, result.duration)
+        assertEquals("state", result.appState)
+        assertEquals(EmbraceEvent.Type.INFO_LOG, result.type)
+        assertEquals(null, result.customPropertiesMap)
+        assertEquals(null, result.sessionPropertiesMap)
+        assertEquals(LogExceptionType.NONE.value, result.logExceptionType)
     }
 
     @Test
@@ -123,10 +126,10 @@ internal class EventSanitizerTest {
         val result = sanitizer.sanitize()
 
         // Expected: Same event
-        Assert.assertEquals(event.eventId, result.eventId)
-        Assert.assertEquals(event.duration, result.duration)
-        Assert.assertEquals(event.appState, result.appState)
-        Assert.assertEquals(event.sessionPropertiesMap, result.sessionPropertiesMap)
-        Assert.assertEquals(event.logExceptionType, result.logExceptionType)
+        assertEquals(event.eventId, result.eventId)
+        assertEquals(event.duration, result.duration)
+        assertEquals(event.appState, result.appState)
+        assertEquals(event.sessionPropertiesMap, result.sessionPropertiesMap)
+        assertEquals(event.logExceptionType, result.logExceptionType)
     }
 }

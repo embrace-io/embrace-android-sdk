@@ -27,6 +27,7 @@ import org.junit.Test
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
+import org.junit.Assert.assertNotEquals
 
 internal class EmbraceMetadataReactNativeTest {
 
@@ -116,7 +117,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 
@@ -131,7 +132,7 @@ internal class EmbraceMetadataReactNativeTest {
         // get the react native Bundle ID once to call the lazy property
         metadataService.getReactNativeBundleId()
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 

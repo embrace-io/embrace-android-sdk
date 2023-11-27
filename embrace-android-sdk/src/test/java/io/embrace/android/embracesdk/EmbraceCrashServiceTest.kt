@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
 import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandler
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Crash
@@ -38,6 +38,8 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceCrashServiceTest {
+
+    private val serializer = EmbraceSerializer()
 
     private lateinit var embraceCrashService: EmbraceCrashService
     private lateinit var sessionService: SessionService
@@ -202,14 +204,14 @@ internal class EmbraceCrashServiceTest {
         )
         val expectedInfo = ResourceReader.readResourceAsText("crash_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(crash)
+        val observed = serializer.toJson(crash)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("crash_expected.json")
-        val obj = Gson().fromJson(json, Crash::class.java)
+        val obj = serializer.fromJson(json, Crash::class.java)
 
         assertEquals("123", obj.crashId)
 

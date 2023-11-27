@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -14,19 +14,20 @@ internal class ViewBreadcrumbTest {
     ).apply {
         end = 1700000000
     }
+    private val serializer = EmbraceSerializer()
 
     @Test
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("view_breadcrumb_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("view_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, ViewBreadcrumb::class.java)
+        val obj = serializer.fromJson(json, ViewBreadcrumb::class.java)
         assertEquals("screen", obj.screen)
         assertEquals(1600000000L, obj.getStartTime())
         assertEquals(1700000000L, obj.end)
@@ -34,7 +35,7 @@ internal class ViewBreadcrumbTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", ViewBreadcrumb::class.java)
+        val info = serializer.fromJson("{}", ViewBreadcrumb::class.java)
         assertNotNull(info)
     }
 }

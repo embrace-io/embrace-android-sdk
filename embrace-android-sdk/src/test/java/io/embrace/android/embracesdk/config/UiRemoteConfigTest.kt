@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk.config
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.UiRemoteConfig
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class UiRemoteConfigTest {
+
+    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -34,7 +36,7 @@ internal class UiRemoteConfigTest {
     @Test
     fun testDeserialization() {
         val data = ResourceReader.readResourceAsText("ui_config.json")
-        val cfg = Gson().fromJson(data, UiRemoteConfig::class.java)
+        val cfg = serializer.fromJson(data, UiRemoteConfig::class.java)
         assertEquals(80, cfg.breadcrumbs)
         assertEquals(50, cfg.taps)
         assertEquals(200, cfg.views)
@@ -44,7 +46,7 @@ internal class UiRemoteConfigTest {
 
     @Test
     fun testDeserializationEmptyObj() {
-        val cfg = Gson().fromJson("{}", UiRemoteConfig::class.java)
+        val cfg = serializer.fromJson("{}", UiRemoteConfig::class.java)
         verifyDefaults(cfg)
     }
 

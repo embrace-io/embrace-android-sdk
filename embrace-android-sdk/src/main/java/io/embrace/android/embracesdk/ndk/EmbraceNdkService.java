@@ -10,7 +10,6 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -38,6 +37,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryService;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
+import io.embrace.android.embracesdk.internal.EmbraceSerializer;
 import io.embrace.android.embracesdk.internal.SharedObjectLoader;
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker;
 import io.embrace.android.embracesdk.internal.utils.Uuid;
@@ -113,7 +113,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
     private final EmbraceSessionProperties sessionProperties;
 
-    private Lazy<Gson> gson;
+    private final EmbraceSerializer serializer;
 
     private String unityCrashId;
 
@@ -145,7 +145,8 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
         @NonNull NdkServiceDelegate.NdkDelegate delegate,
         @NonNull ExecutorService cleanCacheExecutorService,
         @NonNull ExecutorService ndkStartupExecutorService,
-        @NonNull DeviceArchitecture deviceArchitecture) {
+        @NonNull DeviceArchitecture deviceArchitecture,
+        @NonNull EmbraceSerializer serializer) {
 
         this.context = context;
         this.storageDir = storageDir;
@@ -171,10 +172,10 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
         this.cleanCacheExecutorService = cleanCacheExecutorService;
         this.ndkStartupExecutorService = ndkStartupExecutorService;
+        this.serializer = serializer;
 
         if (configService.getAutoDataCaptureBehavior().isNdkEnabled()) {
             processStateService.addListener(this);
-            this.gson = LazyKt.lazy(Gson::new);
 
             if (appFramework == Embrace.AppFramework.UNITY) {
                 this.unityCrashId = Uuid.getEmbUuid();
@@ -371,7 +372,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
                 Type listOfNativeCrashError = new TypeToken<ArrayList<NativeCrashDataError>>() {
                 }.getType();
                 try {
-                    return gson.getValue().fromJson(errorsRaw, listOfNativeCrashError);
+                    return serializer.fromJson(errorsRaw, listOfNativeCrashError);
                 } catch (JsonSyntaxException e) {
                     logger.logError("Failed to parse native crash error file {crashId=" + nativeCrash.getNativeCrashId() +
                         ", errorFilePath=" + absolutePath + "}");
@@ -429,7 +430,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
                 logger.logDeveloper("EmbraceNDKService", "Processing native crash at " + path);
 
                 if (crashRaw != null) {
-                    nativeCrash = gson.getValue().fromJson(crashRaw, NativeCrashData.class);
+                    nativeCrash = serializer.fromJson(crashRaw, NativeCrashData.class);
 
                     if (nativeCrash == null) {
                         logger.logError("Failed to deserialize native crash error file: " + crashFile.getAbsolutePath());
@@ -499,7 +500,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
         if (resourceId != 0) {
             try {
                 String encodedSymbols = new String(Base64.decode(context.getResources().getString(resourceId), Base64.DEFAULT));
-                return gson.getValue().fromJson(encodedSymbols, NativeSymbols.class);
+                return serializer.fromJson(encodedSymbols, NativeSymbols.class);
             } catch (Exception ex) {
                 logger.logError(String.format(Locale.getDefault(), "Failed to decode symbols from resources {resourceId=%d}.",
                         resourceId),

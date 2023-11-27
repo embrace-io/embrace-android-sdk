@@ -47,7 +47,7 @@ internal class EmbraceCacheService(
     }
 
     /**
-     * Writes a file to the cache. Must be serializable by GSON.
+     * Writes a file to the cache. Must be serializable JSON.
      *
      *
      * If writing the object to the cache fails, an exception is logged.

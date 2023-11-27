@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class NativeCrashMetadataTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val info = NativeCrashMetadata(
         AppInfo("1.0"),
@@ -19,27 +21,27 @@ internal class NativeCrashMetadataTest {
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("native_crash_metadata_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("native_crash_metadata_expected.json")
-        val obj = Gson().fromJson(json, NativeCrashMetadata::class.java)
+        val obj = serializer.fromJson(json, NativeCrashMetadata::class.java)
         verifyInfoPopulated(obj)
     }
 
     @Test
     fun testToJsonImpl() {
         val json = info.toJson()
-        val obj = Gson().fromJson(json, NativeCrashMetadata::class.java)
+        val obj = serializer.fromJson(json, NativeCrashMetadata::class.java)
         verifyInfoPopulated(obj)
     }
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", NativeCrashMetadata::class.java)
+        val info = serializer.fromJson("{}", NativeCrashMetadata::class.java)
         assertNotNull(info)
     }
 

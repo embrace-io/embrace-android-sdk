@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.payload.Event
 import org.junit.Assert.assertEquals
@@ -8,6 +8,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class EmbraceEventTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val event = Event(
         eventId = Uuid.getEmbUuid(),
@@ -40,14 +42,14 @@ internal class EmbraceEventTest {
     fun testSerialization() {
         val data = ResourceReader.readResourceAsText("event_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(eventComplete)
+        val observed = serializer.toJson(eventComplete)
         assertEquals(data, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("event_expected.json")
-        val obj = Gson().fromJson(json, Event::class.java)
+        val obj = serializer.fromJson(json, Event::class.java)
         assertEquals("eventId", obj.eventId)
         assertEquals("sessionId", obj.sessionId)
         assertEquals("messageId", obj.messageId)

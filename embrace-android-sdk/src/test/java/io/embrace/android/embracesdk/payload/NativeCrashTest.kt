@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class NativeCrashTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val info = NativeCrash(
         "id",
@@ -26,14 +28,14 @@ internal class NativeCrashTest {
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("native_crash_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("native_crash_expected.json")
-        val obj = Gson().fromJson(json, NativeCrash::class.java)
+        val obj = serializer.fromJson(json, NativeCrash::class.java)
         assertEquals("id", obj.id)
         assertEquals("crashMessage", obj.crashMessage)
         assertEquals(mapOf("key" to "value"), obj.symbols)
@@ -47,7 +49,7 @@ internal class NativeCrashTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", NativeCrash::class.java)
+        val info = serializer.fromJson("{}", NativeCrash::class.java)
         assertNotNull(info)
     }
 }

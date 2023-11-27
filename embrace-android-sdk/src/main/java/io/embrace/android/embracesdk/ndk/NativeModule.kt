@@ -45,6 +45,7 @@ internal class NativeModuleImpl(
             workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_CRASH_CLEANER),
             workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_STARTUP),
             essentialServiceModule.deviceArchitecture,
+            coreModule.jsonSerializer
         )
     }
 

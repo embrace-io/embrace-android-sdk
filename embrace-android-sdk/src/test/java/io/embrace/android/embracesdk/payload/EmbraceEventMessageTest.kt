@@ -1,14 +1,16 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class EmbraceEventMessageTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val eventComplete = Event(
         eventId = "eventId",
@@ -43,14 +45,14 @@ internal class EmbraceEventMessageTest {
     fun testSerialization() {
         val data = ResourceReader.readResourceAsText("eventmessage_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(eventMessage)
+        val observed = serializer.toJson(eventMessage)
         assertEquals(data, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("eventmessage_expected.json")
-        val obj = Gson().fromJson(json, EventMessage::class.java)
+        val obj = serializer.fromJson(json, EventMessage::class.java)
         assertEquals("eventId", obj.event.eventId)
         assertEquals("sessionId", obj.event.sessionId)
         assertEquals("messageId", obj.event.messageId)

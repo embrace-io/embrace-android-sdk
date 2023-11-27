@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AppInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -8,6 +8,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class AppInfoTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val info = AppInfo(
         appVersion = "1.0",
@@ -34,14 +36,14 @@ internal class AppInfoTest {
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("app_info_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("app_info_expected.json")
-        val obj = Gson().fromJson(json, AppInfo::class.java)
+        val obj = serializer.fromJson(json, AppInfo::class.java)
         assertEquals("1.0", obj.appVersion)
         assertEquals(Embrace.AppFramework.NATIVE.value, obj.appFramework)
         assertEquals("1234", obj.buildId)
@@ -63,7 +65,7 @@ internal class AppInfoTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", AppInfo::class.java)
+        val info = serializer.fromJson("{}", AppInfo::class.java)
         assertNotNull(info)
     }
 }

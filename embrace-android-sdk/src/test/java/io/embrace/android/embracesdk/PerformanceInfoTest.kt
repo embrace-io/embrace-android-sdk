@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.DiskUsage
@@ -18,6 +18,7 @@ import org.junit.Test
 
 internal class PerformanceInfoTest {
 
+    private val serializer = EmbraceSerializer()
     private val diskUsage: DiskUsage = DiskUsage(10000000, 2000000)
     private val networkRequests: NetworkRequests = mockk()
     private val memoryWarnings: List<MemoryWarning> = emptyList()
@@ -34,20 +35,20 @@ internal class PerformanceInfoTest {
         val expectedInfo = ResourceReader.readResourceAsText("perf_info_expected.json")
             .filter { !it.isWhitespace() }
 
-        val observed = Gson().toJson(buildPerformanceInfo())
+        val observed = serializer.toJson(buildPerformanceInfo())
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testPerfInfoDeserialization() {
         val json = ResourceReader.readResourceAsText("perf_info_expected.json")
-        val obj = Gson().fromJson(json, PerformanceInfo::class.java)
+        val obj = serializer.fromJson(json, PerformanceInfo::class.java)
         verifyFields(obj)
     }
 
     @Test
     fun testPerfInfoEmptyObject() {
-        val anrInterval = Gson().fromJson("{}", PerformanceInfo::class.java)
+        val anrInterval = serializer.fromJson("{}", PerformanceInfo::class.java)
         assertNotNull(anrInterval)
     }
 

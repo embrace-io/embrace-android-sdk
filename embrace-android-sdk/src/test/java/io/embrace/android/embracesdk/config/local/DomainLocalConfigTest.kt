@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class DomainLocalConfigTest {
+
+    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -17,14 +19,14 @@ internal class DomainLocalConfigTest {
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("domain_config.json")
-        val obj = Gson().fromJson(json, DomainLocalConfig::class.java)
+        val obj = serializer.fromJson(json, DomainLocalConfig::class.java)
         assertEquals("example-apis.com", obj.domain)
         assertEquals(400, obj.limit)
     }
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", DomainLocalConfig::class.java)
+        val obj = serializer.fromJson("{}", DomainLocalConfig::class.java)
         verifyDefaults(obj)
     }
 

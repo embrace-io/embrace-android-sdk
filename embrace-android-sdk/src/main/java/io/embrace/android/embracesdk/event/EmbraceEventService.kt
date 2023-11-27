@@ -260,7 +260,7 @@ internal class EmbraceEventService(
     override fun getActiveEventIds(): List<String> {
         val ids: MutableList<String> = ArrayList()
         stream<EventDescription>(activeEvents.values) { (_, event): EventDescription ->
-            event.eventId?.let(ids::add)
+            ids.add(event.eventId)
         }
         return ids
     }

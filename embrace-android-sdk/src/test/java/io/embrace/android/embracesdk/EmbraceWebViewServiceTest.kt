@@ -90,6 +90,7 @@ internal class EmbraceWebViewServiceTest {
                 WebVitalType.LCP -> {
                     assertEquals(2222, it.startTime) // bigger starttime from expectedCompleteData
                 }
+                else -> {}
             }
         }
     }
@@ -126,6 +127,7 @@ internal class EmbraceWebViewServiceTest {
                 WebVitalType.LCP -> {
                     assertEquals(2222, it.startTime) // bigger starttime from expectedCompleteData
                 }
+                else -> {}
             }
         }
     }

@@ -72,6 +72,7 @@ internal interface EssentialServiceModule {
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
     val deliveryRetryManager: DeliveryRetryManager
+    val storageDirectory: Lazy<File>
 }
 
 internal class EssentialServiceModuleImpl(
@@ -229,7 +230,7 @@ internal class EssentialServiceModuleImpl(
     override val cache by singleton {
         ApiResponseCache(
             coreModule.jsonSerializer,
-            { File(coreModule.context.cacheDir, "emb_config_cache") }
+            { File(storageDirectory.value, "emb_config_cache") }
         )
     }
 
@@ -261,7 +262,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val cacheService: CacheService by singleton {
-        EmbraceCacheService(coreModule.context, coreModule.jsonSerializer, coreModule.logger)
+        EmbraceCacheService(storageDirectory, coreModule.jsonSerializer, coreModule.logger)
     }
 
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
@@ -303,6 +304,10 @@ internal class EssentialServiceModuleImpl(
         ApiClientImpl(
             coreModule.logger
         )
+    }
+
+    override val storageDirectory: Lazy<File> = lazy {
+        coreModule.context.cacheDir
     }
 }
 

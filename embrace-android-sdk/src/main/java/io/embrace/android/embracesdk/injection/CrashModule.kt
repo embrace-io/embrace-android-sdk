@@ -24,12 +24,14 @@ internal class CrashModuleImpl(
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    dataContainerModule: DataContainerModule,
-    coreModule: CoreModule
+    dataContainerModule: DataContainerModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
-        val markerFile = lazy { File(coreModule.context.cacheDir.path, CrashFileMarker.CRASH_MARKER_FILE_NAME) }
+        val markerFile = lazy {
+            val dir = essentialServiceModule.storageDirectory.value
+            File(dir, CrashFileMarker.CRASH_MARKER_FILE_NAME)
+        }
         CrashFileMarker(markerFile)
     }
 

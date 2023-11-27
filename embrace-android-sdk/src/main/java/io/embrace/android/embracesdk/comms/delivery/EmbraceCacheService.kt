@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import android.content.Context
 import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -12,18 +11,17 @@ import java.util.regex.Pattern
  * Handles the reading and writing of objects from the app's cache.
  */
 internal class EmbraceCacheService(
-    context: Context,
+    fileProvider: Lazy<File>,
     private val serializer: EmbraceSerializer,
-    logger: InternalEmbraceLogger
+    private val logger: InternalEmbraceLogger
 ) : CacheService {
 
-    private val cacheDir: Lazy<File>
-    private val logger: InternalEmbraceLogger
+    private val storageDir: File by fileProvider
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
         if (bytes != null) {
-            val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+            val file = File(storageDir, EMBRACE_PREFIX + name)
             try {
                 file.writeBytes(bytes)
                 logger.logDeveloper(TAG, "Bytes cached")
@@ -37,7 +35,7 @@ internal class EmbraceCacheService(
 
     override fun loadBytes(name: String): ByteArray? {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
-        val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+        val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             return file.readBytes()
         } catch (ex: FileNotFoundException) {
@@ -61,7 +59,7 @@ internal class EmbraceCacheService(
      */
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
         logger.logDeveloper(TAG, "Attempting to cache object: $name")
-        val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+        val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             file.bufferedWriter().use {
                 serializer.writeToFile(objectToCache, clazz, it)
@@ -72,7 +70,7 @@ internal class EmbraceCacheService(
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
-        val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+        val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             file.bufferedReader().use { bufferedReader ->
                 JsonReader(bufferedReader).use { jsonreader ->
@@ -95,7 +93,7 @@ internal class EmbraceCacheService(
 
     override fun deleteFile(name: String): Boolean {
         logger.logDeveloper("EmbraceCacheService", "Attempting to delete file from cache: $name")
-        val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+        val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             return file.delete()
         } catch (ex: Exception) {
@@ -106,7 +104,7 @@ internal class EmbraceCacheService(
 
     override fun deleteObject(name: String): Boolean {
         logger.logDeveloper("EmbraceCacheService", "Attempting to delete: $name")
-        val file = File(cacheDir.value, EMBRACE_PREFIX + name)
+        val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             return file.delete()
         } catch (ex: Exception) {
@@ -119,7 +117,7 @@ internal class EmbraceCacheService(
         logger.logDeveloper("EmbraceCacheService", "Attempting to delete objects by regex: $regex")
         val pattern = Pattern.compile(regex)
         var result = false
-        val filesInCache = cacheDir.value.listFiles()
+        val filesInCache = storageDir.listFiles()
         if (filesInCache != null) {
             for (cache in filesInCache) {
                 if (pattern.matcher(cache.name).find()) {
@@ -139,20 +137,18 @@ internal class EmbraceCacheService(
     }
 
     override fun moveObject(src: String, dst: String): Boolean {
-        val cacheDir = cacheDir.value
-        val srcFile = File(cacheDir, EMBRACE_PREFIX + src)
+        val srcFile = File(storageDir, EMBRACE_PREFIX + src)
         if (!srcFile.exists()) {
             logger.logDeveloper("EmbraceCacheService", "Source file doesn't exist: $src")
             return false
         }
-        val dstFile = File(cacheDir, EMBRACE_PREFIX + dst)
+        val dstFile = File(storageDir, EMBRACE_PREFIX + dst)
         logger.logDeveloper("EmbraceCacheService", "Object moved from $src to $dst")
         return srcFile.renameTo(dstFile)
     }
 
     override fun listFilenamesByPrefix(prefix: String): List<String>? {
-        val cacheDir = cacheDir.value
-        return cacheDir.listFiles { file ->
+        return storageDir.listFiles { file ->
             file.name.startsWith(EMBRACE_PREFIX + prefix)
         }?.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
     }
@@ -160,10 +156,5 @@ internal class EmbraceCacheService(
     companion object {
         private const val EMBRACE_PREFIX = "emb_"
         private const val TAG = "EmbraceCacheService"
-    }
-
-    init {
-        this.logger = logger
-        cacheDir = lazy { context.cacheDir }
     }
 }

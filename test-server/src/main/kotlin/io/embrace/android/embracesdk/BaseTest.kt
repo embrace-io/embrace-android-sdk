@@ -38,6 +38,7 @@ public open class BaseTest {
     protected val gson: Gson = Gson()
     public val testServer: TestServer = TestServer()
     private var fileObserver: EmbraceFileObserver? = null
+    private val storageDir by lazy { mContext.cacheDir }
 
     @SuppressLint("VisibleForTests")
     @Before
@@ -51,7 +52,7 @@ public open class BaseTest {
         mContext =
             EmbraceContext(InstrumentationRegistry.getInstrumentation().context.applicationContext)
 
-        failedApiCallsFilePath = mContext.cacheDir.absolutePath + "/emb_failed_api_calls.json"
+        failedApiCallsFilePath = storageDir.absolutePath + "/emb_failed_api_calls.json"
 
         // attach our mock context to the ProcessLifecycleOwner, this will give us control over the
         // activity/application lifecycle for callbacks registered with the ProcessLifecycleOwner
@@ -75,7 +76,7 @@ public open class BaseTest {
     }
 
     private fun clearCacheFolder() {
-        mContext.cacheDir.deleteRecursively()
+        storageDir.deleteRecursively()
     }
 
     private fun getDefaultNetworkResponses(): Map<String, TestServerResponse> {
@@ -312,8 +313,7 @@ public open class BaseTest {
      * @param failedCallFileName file name that contains our failed api request
      */
     public fun readFileContent(failedApiContent: String, failedCallFileName: String) {
-        val failedApiFilePath =
-            mContext.cacheDir.path + "/emb_" + failedCallFileName
+        val failedApiFilePath = storageDir.path + "/emb_" + failedCallFileName
         val failedApiFile = File(failedApiFilePath)
         val failedApiJsonString: String =
             failedApiFile.reader().use { it.readText() }

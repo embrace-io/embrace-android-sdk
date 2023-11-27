@@ -9,7 +9,6 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -118,7 +117,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
     private String unityCrashId;
 
-    private final Lazy<File> cacheDir;
+    private final Lazy<File> storageDir;
 
     private final ExecutorService cleanCacheExecutorService;
     private final ExecutorService ndkStartupExecutorService;
@@ -132,6 +131,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
     EmbraceNdkService(
         @NonNull Context context,
+        @NonNull Lazy<File> storageDir,
         @NonNull MetadataService metadataService,
         @NonNull ProcessStateService processStateService,
         @NonNull ConfigService configService,
@@ -148,6 +148,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
         @NonNull DeviceArchitecture deviceArchitecture) {
 
         this.context = context;
+        this.storageDir = storageDir;
         this.metadataService = metadataService;
         this.configService = configService;
         this.deliveryService = deliveryService;
@@ -168,7 +169,6 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
             return null;
         });
 
-        this.cacheDir = LazyKt.lazy(context::getCacheDir);
         this.cleanCacheExecutorService = cleanCacheExecutorService;
         this.ndkStartupExecutorService = ndkStartupExecutorService;
 
@@ -305,7 +305,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
     }
 
     protected void createCrashReportDirectory() {
-        String directory = cacheDir.getValue() + "/" + NATIVE_CRASH_FILE_FOLDER;
+        String directory = storageDir.getValue() + "/" + NATIVE_CRASH_FILE_FOLDER;
         File directoryFile = new File(directory);
 
         if (directoryFile.exists()) {
@@ -318,8 +318,8 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
     }
 
     protected void installSignals() {
-        String reportBasePath = cacheDir.getValue().getAbsolutePath() + "/" + NATIVE_CRASH_FILE_FOLDER;
-        String markerFilePath = cacheDir.getValue().getAbsolutePath() + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME;
+        String reportBasePath = storageDir.getValue().getAbsolutePath() + "/" + NATIVE_CRASH_FILE_FOLDER;
+        String markerFilePath = storageDir.getValue().getAbsolutePath() + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME;
         logger.logDeveloper("EmbraceNDKService", "Creating report path at " + reportBasePath);
 
         String nativeCrashId;
@@ -516,7 +516,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
     private File[] getNativeFiles(FilenameFilter filter) {
         File[] matchingFiles = null;
-        final File[] files = cacheDir.getValue().listFiles();
+        final File[] files = storageDir.getValue().listFiles();
 
         if (files == null) {
             return null;

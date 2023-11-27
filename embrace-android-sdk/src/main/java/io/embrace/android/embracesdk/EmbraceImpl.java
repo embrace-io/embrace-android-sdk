@@ -593,8 +593,7 @@ final class EmbraceImpl {
             nativeModule,
             sessionModule,
             anrModule,
-            dataContainerModule,
-            coreModule
+            dataContainerModule
         );
 
         loadCrashVerifier(crashModule, nonNullWorkerThreadModule);

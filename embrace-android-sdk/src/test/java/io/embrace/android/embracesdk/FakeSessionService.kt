@@ -13,11 +13,18 @@ internal class FakeSessionService : SessionService {
         TODO("Not yet implemented")
     }
 
-    override fun triggerStatelessSessionEnd(endType: Session.SessionLifeEventType) {
+    override fun triggerStatelessSessionEnd(
+        endType: Session.SessionLifeEventType,
+        clearUserInfo: Boolean
+    ) {
         TODO("Not yet implemented")
     }
 
     override fun handleCrash(crashId: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun endSessionManually(clearUserInfo: Boolean) {
         TODO("Not yet implemented")
     }
 

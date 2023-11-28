@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.clearAllMocks
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -38,7 +39,7 @@ internal class EmbraceSessionServiceTest {
 
     companion object {
 
-        private val activityService = FakeProcessStateService()
+        private val processStateService = FakeProcessStateService()
         private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
         private val mockSession: Session = mockk(relaxed = true)
         private val mockSessionMessage: SessionMessage = mockk(relaxed = true)
@@ -154,17 +155,26 @@ internal class EmbraceSessionServiceTest {
 
     @Test
     fun `trigger stateless end session successfully for activity in background`() {
-        initializeSessionService()
+        initializeSessionService(isActivityInBackground = false)
         // let's start session first so we have an active session
         startDefaultSession()
-
-        service.triggerStatelessSessionEnd(SessionLifeEventType.MANUAL)
+        clearMocks(mockSessionHandler)
+        service.endSessionManually(true)
 
         // verify session is ended
-        verify {
+        verify(exactly = 1) {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.MANUAL,
-                0
+                0,
+                false
+            )
+        }
+        verify(exactly = 1) {
+            mockSessionHandler.onSessionStarted(
+                false,
+                SessionLifeEventType.MANUAL,
+                0,
+                any()
             )
         }
     }
@@ -179,7 +189,7 @@ internal class EmbraceSessionServiceTest {
         service.triggerStatelessSessionEnd(endType)
 
         // verify session is ended
-        verify { mockSessionHandler.onSessionEnded(endType, 0) }
+        verify { mockSessionHandler.onSessionEnded(endType, 0, false) }
         // verify that a MANUAL session is started
         verify {
             mockSessionHandler.onSessionStarted(
@@ -216,14 +226,15 @@ internal class EmbraceSessionServiceTest {
         ndkEnabled: Boolean = false,
         isActivityInBackground: Boolean = true
     ) {
-        activityService.isInBackground = isActivityInBackground
+        processStateService.isInBackground = isActivityInBackground
 
         service = EmbraceSessionService(
-            activityService,
+            processStateService,
             mockNdkService,
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
+            FakeConfigService(),
             clock
         )
     }

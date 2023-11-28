@@ -1337,26 +1337,9 @@ final class EmbraceImpl {
      * <p>
      * Cleans all the user info on the device.
      */
-    public synchronized void endSession(boolean clearUserInfo) {
+    public void endSession(boolean clearUserInfo) {
         if (isStarted()) {
-            SessionBehavior sessionBehavior = configService.getSessionBehavior();
-            if (sessionBehavior.getMaxSessionSecondsAllowed() != null) {
-                internalEmbraceLogger.logWarning("Can't close the session, automatic session close enabled.");
-                return;
-            }
-
-            if (sessionBehavior.isAsyncEndEnabled()) {
-                internalEmbraceLogger.logWarning("Can't close the session, session ending in background thread enabled.");
-                return;
-            }
-
-            if (clearUserInfo) {
-                userService.clearAllUserInfo();
-                // Update user info in NDK service
-                ndkService.onUserInfoUpdate();
-            }
-
-            sessionService.triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL);
+            sessionService.endSessionManually(clearUserInfo);
         } else {
             internalEmbraceLogger.logSDKNotInitialized("end session");
         }

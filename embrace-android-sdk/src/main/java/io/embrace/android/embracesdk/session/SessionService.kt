@@ -14,13 +14,15 @@ internal interface SessionService : ProcessStateListener, Closeable {
      */
     fun startSession(coldStart: Boolean, startType: SessionLifeEventType, startTime: Long)
 
+    fun endSessionManually(clearUserInfo: Boolean)
+
     /**
      * This is responsible for the current session to be cached, ended and sent to the server and
      * immediately starting a new session after that.
      *
      * @param endType the origin of the event that ends the session.
      */
-    fun triggerStatelessSessionEnd(endType: SessionLifeEventType)
+    fun triggerStatelessSessionEnd(endType: SessionLifeEventType, clearUserInfo: Boolean = false)
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.

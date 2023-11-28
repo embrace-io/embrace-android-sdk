@@ -6,11 +6,12 @@ import io.embrace.android.embracesdk.payload.UserInfo
 internal class FakeUserService : UserService {
 
     var obj: UserInfo = UserInfo()
+    var clearedCount = 0
 
     override fun getUserInfo(): UserInfo = obj
 
     override fun clearAllUserInfo() {
-        TODO("Not yet implemented")
+        clearedCount += 1
     }
 
     override fun loadUserInfoFromDisk(): UserInfo? {

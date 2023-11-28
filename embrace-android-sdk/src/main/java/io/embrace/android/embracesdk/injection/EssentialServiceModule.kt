@@ -278,7 +278,8 @@ internal class EssentialServiceModuleImpl(
         EmbraceDeliveryRetryManager(
             networkConnectivityService,
             apiRetryExecutor,
-            deliveryCacheManager
+            deliveryCacheManager,
+            initModule.clock
         )
     }
 

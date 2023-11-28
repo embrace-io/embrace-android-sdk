@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import com.google.gson.stream.JsonReader
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
+import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -109,9 +109,11 @@ internal class MomentMessageTest : BaseTest() {
             file.bufferedReader().use { bufferedReader ->
                 JsonReader(bufferedReader).use { jsonreader ->
                     jsonreader.isLenient = true
-                    val obj = serializer.loadObject(jsonreader, DeliveryFailedApiCalls::class.java)
+                    val obj = serializer.loadObject(jsonreader, FailedApiCallsPerEndpoint::class.java)
                     if (obj != null) {
-                        val failedCallFileName = obj.element().cachedPayload
+                        val failedApiCall = obj.pollNextFailedApiCall()
+                        checkNotNull(failedApiCall)
+                        val failedCallFileName = failedApiCall.cachedPayloadFilename
                         assert(failedCallFileName.isNotBlank())
                         readFileContent("\"t\":\"start\"", failedCallFileName)
                     } else {

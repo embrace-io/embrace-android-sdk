@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
@@ -13,10 +14,13 @@ import kotlin.math.max
 internal class EmbraceDeliveryRetryManager(
     networkConnectivityService: NetworkConnectivityService,
     private val scheduledExecutorService: ScheduledExecutorService,
-    private val cacheManager: DeliveryCacheManager
+    private val cacheManager: DeliveryCacheManager,
+    private val clock: Clock
 ) : DeliveryRetryManager, NetworkConnectivityListener {
 
-    private val retryQueue: DeliveryFailedApiCalls by lazy { cacheManager.loadFailedApiCalls() }
+    private val retryMap: FailedApiCallsPerEndpoint by lazy {
+        cacheManager.loadFailedApiCalls()
+    }
     private var lastRetryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
     private lateinit var retryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
@@ -42,14 +46,19 @@ internal class EmbraceDeliveryRetryManager(
      */
     override fun scheduleForRetry(request: ApiRequest, payload: ByteArray) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
-        if (pendingRetriesCount() < MAX_FAILED_CALLS || request.isSessionRequest()) {
-            val scheduleJob = retryQueue.isEmpty()
-            val cachedPayloadName = cacheManager.savePayload(payload)
-            val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName)
-            retryQueue.add(failedApiCall)
-            cacheManager.saveFailedApiCalls(retryQueue)
 
-            // By default there are no scheduled retry jobs pending. If the retry queue was initially empty, try to schedule a retry.
+        val endpoint = request.url.endpoint()
+        if (retryMap.isBelowRetryLimit(endpoint)) {
+            val cachedPayloadName = cacheManager.savePayload(payload)
+            val failedApiCall = DeliveryFailedApiCall(request, cachedPayloadName, clock.now())
+
+            val scheduleJob = retryMap.hasNoFailedApiCalls()
+
+            retryMap.add(failedApiCall)
+            cacheManager.saveFailedApiCalls(retryMap)
+
+            // By default there are no scheduled retry jobs pending.
+            // If the retry map was initially empty, try to schedule a retry.
             if (scheduleJob) {
                 scheduleFailedApiCallsRetry(RETRY_PERIOD)
             }
@@ -86,23 +95,16 @@ internal class EmbraceDeliveryRetryManager(
     /**
      * Returns true if there is an active pending retry task
      */
-
     fun isRetryTaskActive(): Boolean =
         lastRetryTask?.let { task ->
             !task.isCancelled && !task.isDone
         } ?: false
 
     /**
-     * Returns the number of failed API calls that will be retried
-     */
-
-    fun pendingRetriesCount() = retryQueue.size
-
-    /**
      * Return true if the conditions are met that a retry should be scheduled
      */
     private fun shouldScheduleRetry(): Boolean {
-        return !isRetryTaskActive() && retryQueue.isNotEmpty()
+        return !isRetryTaskActive() && retryMap.hasAnyFailedApiCalls()
     }
 
     /**
@@ -116,35 +118,42 @@ internal class EmbraceDeliveryRetryManager(
                 if (shouldScheduleRetry()) {
                     lastRetryTask = scheduledExecutorService.schedule(
                         {
-                            var noFailedRetries = true
                             if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
                                 try {
-                                    logger.logInfo("Retrying failed API calls")
                                     logger.logDeveloper(TAG, "Retrying failed API calls")
-                                    val retries = pendingRetriesCount()
-                                    repeat(retries) {
-                                        retryQueue.poll()?.let { failedApiCall ->
+
+                                    val failedApiCallsToRetry = mutableListOf<DeliveryFailedApiCall>()
+
+                                    while (true) {
+                                        val failedApiCall = retryMap.pollNextFailedApiCall()
+                                        failedApiCall?.let {
                                             val callSucceeded = retryFailedApiCall(failedApiCall)
                                             if (callSucceeded) {
                                                 // if the retry succeeded, save the modified queue in cache.
-                                                cacheManager.saveFailedApiCalls(retryQueue)
+                                                cacheManager.saveFailedApiCalls(retryMap)
                                             } else {
-                                                // if the retry failed, add the call back to the queue.
-                                                retryQueue.add(failedApiCall)
-                                                noFailedRetries = false
+                                                // if the retry failed, it will be added back to the queue.
+                                                failedApiCallsToRetry.add(failedApiCall)
                                             }
+                                        } ?: break
+                                    }
+
+                                    // Add back to the queue all retries that failed.
+                                    failedApiCallsToRetry.forEach {
+                                        retryMap.add(it)
+                                    }
+
+                                    if (retryMap.hasAnyFailedApiCalls()) {
+                                        scheduledExecutorService.submit {
+                                            val allRetriesSucceeded = failedApiCallsToRetry.isEmpty()
+                                            scheduleNextFailedApiCallsRetry(
+                                                allRetriesSucceeded,
+                                                delayInSeconds
+                                            )
                                         }
                                     }
                                 } catch (ex: Exception) {
                                     logger.logDebug("Error when retrying failed API call", ex)
-                                }
-                                if (retryQueue.isNotEmpty()) {
-                                    scheduledExecutorService.submit {
-                                        scheduleNextFailedApiCallsRetry(
-                                            noFailedRetries,
-                                            delayInSeconds
-                                        )
-                                    }
                                 }
                             } else {
                                 logger.logInfo(
@@ -170,12 +179,12 @@ internal class EmbraceDeliveryRetryManager(
      * Executes the network call for a DeliveryFailedApiCall.
      */
     private fun retryFailedApiCall(call: DeliveryFailedApiCall): Boolean {
-        val payload = cacheManager.loadPayload(call.cachedPayload)
+        val payload = cacheManager.loadPayload(call.cachedPayloadFilename)
         if (payload != null) {
             try {
                 logger.logDeveloper(TAG, "Retrying failed API call")
                 retryMethod(call.apiRequest, payload)
-                cacheManager.deletePayload(call.cachedPayload)
+                cacheManager.deletePayload(call.cachedPayloadFilename)
             } catch (ex: Exception) {
                 logger.logDeveloper(
                     TAG,
@@ -197,8 +206,8 @@ internal class EmbraceDeliveryRetryManager(
      * Schedules the next call to retry sending the failed_api_calls again. The delay will be extended if the previous retry yielded
      * at least one failed request.
      */
-    private fun scheduleNextFailedApiCallsRetry(noFailedRetries: Boolean, delay: Long) {
-        val nextDelay = if (noFailedRetries) {
+    private fun scheduleNextFailedApiCallsRetry(allRetriesSucceeded: Boolean, delay: Long) {
+        val nextDelay = if (allRetriesSucceeded) {
             RETRY_PERIOD
         } else {
             // if a network call failed, the retries will use exponential backoff
@@ -213,4 +222,3 @@ internal class EmbraceDeliveryRetryManager(
 private const val TAG = "EmbraceDeliveryRetryManager"
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
-private const val MAX_FAILED_CALLS = 200 // Max number of failed calls that will be cached for retry

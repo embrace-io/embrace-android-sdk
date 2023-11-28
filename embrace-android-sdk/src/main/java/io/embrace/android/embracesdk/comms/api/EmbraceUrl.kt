@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
+import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
@@ -9,6 +10,17 @@ internal class EmbraceUrl(val url: URL) {
     @Throws(IOException::class)
     fun openConnection(): EmbraceConnection {
         return EmbraceConnectionImpl(url.openConnection() as HttpURLConnection, this)
+    }
+
+    fun endpoint(): Endpoint {
+        return when (url.path.substringAfterLast("/")) {
+            Endpoint.EVENTS.path -> Endpoint.EVENTS
+            Endpoint.BLOBS.path -> Endpoint.BLOBS
+            Endpoint.LOGGING.path -> Endpoint.LOGGING
+            Endpoint.NETWORK.path -> Endpoint.NETWORK
+            Endpoint.SESSIONS.path -> Endpoint.SESSIONS
+            else -> Endpoint.UNKNOWN
+        }
     }
 
     override fun toString(): String {

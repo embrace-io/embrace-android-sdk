@@ -19,6 +19,6 @@ internal interface DeliveryCacheManager {
     fun savePayload(bytes: ByteArray): String
     fun loadPayload(name: String): ByteArray?
     fun deletePayload(name: String)
-    fun saveFailedApiCalls(failedApiCalls: DeliveryFailedApiCalls)
-    fun loadFailedApiCalls(): DeliveryFailedApiCalls
+    fun saveFailedApiCalls(failedApiCalls: FailedApiCallsPerEndpoint)
+    fun loadFailedApiCalls(): FailedApiCallsPerEndpoint
 }

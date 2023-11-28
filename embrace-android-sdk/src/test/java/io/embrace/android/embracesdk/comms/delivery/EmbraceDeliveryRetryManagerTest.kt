@@ -4,8 +4,10 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.mockk.clearMocks
@@ -34,7 +36,7 @@ internal class EmbraceDeliveryRetryManagerTest {
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var mockCacheManager: DeliveryCacheManager
         private lateinit var testScheduledExecutor: ScheduledExecutorService
-        private lateinit var failedApiCalls: DeliveryFailedApiCalls
+        private lateinit var failedApiCalls: FailedApiCallsPerEndpoint
         private lateinit var deliveryRetryManager: EmbraceDeliveryRetryManager
         private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
 
@@ -58,7 +60,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
-        failedApiCalls = DeliveryFailedApiCalls()
+        failedApiCalls = FailedApiCallsPerEndpoint()
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
@@ -240,21 +242,6 @@ internal class EmbraceDeliveryRetryManagerTest {
     }
 
     @Test
-    fun `queue size should be bounded`() {
-        initDeliveryRetryManager(status = NetworkStatus.WIFI, loadFailedRequest = false)
-        every { mockRetryMethod(any(), any()) } throws Exception()
-
-        assertEquals(0, deliveryRetryManager.pendingRetriesCount())
-
-        val mockApiRequest = mockk<ApiRequest>(relaxed = true)
-        repeat(201) {
-            deliveryRetryManager.scheduleForRetry(mockApiRequest, "{ dummy_payload }".toByteArray())
-            blockingScheduledExecutorService.runCurrentlyBlocked()
-        }
-        assertEquals(200, deliveryRetryManager.pendingRetriesCount())
-    }
-
-    @Test
     fun `queue prioritises keeping sessions when saturated`() {
         initDeliveryRetryManager(status = NetworkStatus.WIFI, loadFailedRequest = false)
 
@@ -269,7 +256,7 @@ internal class EmbraceDeliveryRetryManagerTest {
             ),
             lazy { "deviceId" }, "appId"
         )
-        repeat(250) { k ->
+        repeat(105) { k ->
             val request = mapper.logRequest(
                 EventMessage(
                     Event(
@@ -283,16 +270,13 @@ internal class EmbraceDeliveryRetryManagerTest {
         }
 
         // verify logs were added to the queue, and that most recently added requests are dropped
-        assertEquals(200, failedApiCalls.size)
-        assertEquals("il:message_id_0", failedApiCalls.first().apiRequest.logId)
-        assertEquals("il:message_id_199", failedApiCalls.last().apiRequest.logId)
+        assertEquals("il:message_id_0", failedApiCalls.pollNextFailedApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_1", failedApiCalls.pollNextFailedApiCall()?.apiRequest?.logId)
 
         // now add some sessions for retry
-        deliveryRetryManager.scheduleForRetry(mapper.sessionRequest(), ByteArray(0))
-        assertEquals(201, failedApiCalls.size)
-        assertEquals("il:message_id_0", failedApiCalls.first().apiRequest.logId)
-        val request = failedApiCalls.last().apiRequest
-        assertTrue(request.url.toString().endsWith("/sessions"))
+        val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
+        deliveryRetryManager.scheduleForRetry(sessionRequest, ByteArray(0))
+        assertEquals(sessionRequest, failedApiCalls.pollNextFailedApiCall()?.apiRequest)
     }
 
     private fun clearApiPipeline() {
@@ -312,7 +296,8 @@ internal class EmbraceDeliveryRetryManagerTest {
         deliveryRetryManager = EmbraceDeliveryRetryManager(
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
-            cacheManager = mockCacheManager
+            cacheManager = mockCacheManager,
+            clock = FakeClock()
         )
 
         deliveryRetryManager.setRetryMethod(mockRetryMethod)
@@ -320,7 +305,10 @@ internal class EmbraceDeliveryRetryManagerTest {
         failedApiCalls.clear()
 
         if (loadFailedRequest) {
-            failedApiCalls.add(DeliveryFailedApiCall(mockk(), "cached_payload_1"))
+            val mockApiRequest = mockk<ApiRequest>(relaxed = true) {
+                every { url.endpoint() } returns Endpoint.SESSIONS
+            }
+            failedApiCalls.add(DeliveryFailedApiCall(mockApiRequest, "cached_payload_1"))
         }
 
         if (runRetryJobAfterScheduling) {

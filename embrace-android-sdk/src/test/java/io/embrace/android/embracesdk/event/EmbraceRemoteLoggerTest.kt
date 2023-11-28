@@ -105,7 +105,7 @@ internal class EmbraceRemoteLoggerTest {
         }
         every { configService.dataCaptureEventBehavior.isLogMessageEnabled(any()) } returns true
         every { configService.dataCaptureEventBehavior.isMessageTypeEnabled(any()) } returns true
-        metadataService.setActiveSessionId("session-123")
+        metadataService.setActiveSessionId("session-123", true)
         metadataService.setAppForeground()
         metadataService.setAppId("appId")
     }

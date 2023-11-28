@@ -254,4 +254,20 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(any()) }
     }
+
+    @Test
+    fun `test limit exceeded`() {
+        val mockIntent = mockk<Intent>(relaxed = true)
+
+        repeat(60) {
+            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
+            fakeClock.tick(1)
+            service.onReceive(mockContext, mockIntent)
+
+            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
+            fakeClock.tick(1)
+            service.onReceive(mockContext, mockIntent)
+        }
+        assertEquals(100, service.getCapturedData().size)
+    }
 }

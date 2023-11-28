@@ -27,6 +27,10 @@ internal class EmbraceNetworkConnectivityService(
     private val isNetworkCaptureEnabled: Boolean
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
+    companion object {
+        private const val MAX_CAPTURED_NETWORK_STATUS = 100
+    }
+
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private val networkReachable: NavigableMap<Long, NetworkStatus> = TreeMap()
     private var lastNetworkStatus: NetworkStatus? = null
@@ -118,7 +122,9 @@ internal class EmbraceNetworkConnectivityService(
 
     private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus) {
         synchronized(this) {
-            networkReachable[timestamp] = networkStatus
+            if (networkReachable.size < MAX_CAPTURED_NETWORK_STATUS) {
+                networkReachable[timestamp] = networkStatus
+            }
         }
     }
 

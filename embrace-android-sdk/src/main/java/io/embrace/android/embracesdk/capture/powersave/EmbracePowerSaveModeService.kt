@@ -21,6 +21,10 @@ internal class EmbracePowerSaveModeService(
     private val powerManager: PowerManager?
 ) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
 
+    private companion object {
+        private const val MAX_CAPTURED_POWER_MODE_INTERVALS = 100
+    }
+
     private val tag = "EmbracePowerSaveModeService"
 
     private val powerSaveIntentFilter = IntentFilter(ACTION_POWER_SAVE_MODE_CHANGED)
@@ -47,7 +51,7 @@ internal class EmbracePowerSaveModeService(
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
         if (powerManager?.isPowerSaveMode == true) {
-            powerSaveModeIntervals.add(PowerChange(timestamp, Kind.START))
+            addPowerChange(PowerChange(timestamp, Kind.START))
         }
     }
 
@@ -56,7 +60,7 @@ internal class EmbracePowerSaveModeService(
         try {
             when (intent.action) {
                 ACTION_POWER_SAVE_MODE_CHANGED ->
-                    powerSaveModeIntervals.add(
+                    addPowerChange(
                         PowerChange(
                             clock.now(),
                             if (powerManager?.isPowerSaveMode == true) Kind.START else Kind.END
@@ -65,6 +69,12 @@ internal class EmbracePowerSaveModeService(
             }
         } catch (ex: Exception) {
             InternalStaticEmbraceLogger.logError("Failed to handle " + intent.action, ex)
+        }
+    }
+
+    private fun addPowerChange(powerChange: PowerChange) {
+        if (powerSaveModeIntervals.size < MAX_CAPTURED_POWER_MODE_INTERVALS) {
+            powerSaveModeIntervals.add(powerChange)
         }
     }
 

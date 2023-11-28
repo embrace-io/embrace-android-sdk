@@ -179,4 +179,16 @@ internal class EmbracePowerSaveModeServiceTest {
         service.cleanCollections()
         assertEquals(0, service.getCapturedData().size)
     }
+
+    @Test
+    fun `test limit exceeded`() {
+        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { mockIntent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
+        every { powerManager.isPowerSaveMode } returns false
+
+        repeat(150) {
+            service.onReceive(mockContext, mockIntent)
+        }
+        assertEquals(100, service.getCapturedData().size)
+    }
 }

@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.mockk.mockk
-import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class EventSanitizerFacadeTest {
@@ -59,16 +60,16 @@ internal class EventSanitizerFacadeTest {
         val sanitizedMessage =
             EventSanitizerFacade(eventMessage, enabledComponents).getSanitizedMessage()
 
-        Assert.assertNotNull(sanitizedMessage.event.customPropertiesMap)
-        Assert.assertNotNull(sanitizedMessage.event.sessionPropertiesMap)
-        Assert.assertNotNull(sanitizedMessage.userInfo!!.personas)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNotNull(sanitizedMessage.event.customPropertiesMap)
+        assertNotNull(sanitizedMessage.event.sessionPropertiesMap)
+        assertNotNull(sanitizedMessage.userInfo!!.personas)
+        assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
+        assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
+        assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
+        assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        Assert.assertNotNull(sanitizedMessage.appInfo)
-        Assert.assertNotNull(sanitizedMessage.deviceInfo)
+        assertNotNull(sanitizedMessage.appInfo)
+        assertNotNull(sanitizedMessage.deviceInfo)
     }
 
     @Test
@@ -77,15 +78,15 @@ internal class EventSanitizerFacadeTest {
         val eventSanitizer = EventSanitizerFacade(eventMessage, setOf())
         val sanitizedMessage = eventSanitizer.getSanitizedMessage()
 
-        Assert.assertNull(sanitizedMessage.event.customPropertiesMap)
-        Assert.assertNull(sanitizedMessage.event.sessionPropertiesMap)
-        Assert.assertNull(sanitizedMessage.userInfo!!.personas)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNull(sanitizedMessage.event.customPropertiesMap)
+        assertNull(sanitizedMessage.event.sessionPropertiesMap)
+        assertNull(sanitizedMessage.userInfo!!.personas)
+        assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
+        assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
+        assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
+        assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        Assert.assertNotNull(sanitizedMessage.appInfo)
-        Assert.assertNotNull(sanitizedMessage.deviceInfo)
+        assertNotNull(sanitizedMessage.appInfo)
+        assertNotNull(sanitizedMessage.deviceInfo)
     }
 }

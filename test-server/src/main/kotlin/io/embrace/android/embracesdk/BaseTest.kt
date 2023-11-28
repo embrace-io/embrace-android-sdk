@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.utils.BitmapFactory
 import io.embrace.android.embracesdk.utils.JsonValidator
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -186,7 +186,7 @@ public open class BaseTest {
             waitForRequest { request ->
                 when (request.path?.substringBefore("?")) {
                     EmbraceEndpoint.EVENTS.url -> {
-                        Assert.assertEquals("POST", request.method)
+                        assertEquals("POST", request.method)
                         if (!isStartupStartEventValidated) {
                             isStartupStartEventValidated = true
                             validateMessageAgainstGoldenFile(
@@ -201,11 +201,11 @@ public open class BaseTest {
                         }
                     }
                     EmbraceEndpoint.SESSIONS.url -> {
-                        Assert.assertEquals("POST", request.method)
+                        assertEquals("POST", request.method)
                         validateMessageAgainstGoldenFile(request, "session-start.json")
                     }
                     EmbraceEndpoint.CONFIG.url -> {
-                        Assert.assertEquals("GET", request.method)
+                        assertEquals("GET", request.method)
                     }
                     else -> fail("Unexpected Request call. ${request.path}")
                 }

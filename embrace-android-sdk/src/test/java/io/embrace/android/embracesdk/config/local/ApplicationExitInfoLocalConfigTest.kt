@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.config.local
 
 import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -20,7 +20,7 @@ internal class ApplicationExitInfoLocalConfigTest {
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("application_exit_info_local_config.json")
         val obj = Gson().fromJson(json, AppExitInfoLocalConfig::class.java)
-        Assert.assertEquals(10, obj.appExitInfoTracesLimit)
+        assertEquals(10, obj.appExitInfoTracesLimit)
         assertTrue(obj.aeiCaptureEnabled ?: false)
     }
 

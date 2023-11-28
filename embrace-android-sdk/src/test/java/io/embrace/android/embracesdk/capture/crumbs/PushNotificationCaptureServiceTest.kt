@@ -11,7 +11,8 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -158,23 +159,23 @@ internal class PushNotificationCaptureServiceTest {
     @Test
     fun `verify get message priority`() {
         // if null return 0 (unknown)
-        Assert.assertEquals(0, PushNotificationCaptureService.getMessagePriority(null))
+        assertEquals(0, PushNotificationCaptureService.getMessagePriority(null))
 
         // if high return 1 (high)
-        Assert.assertEquals(1, PushNotificationCaptureService.getMessagePriority("high"))
+        assertEquals(1, PushNotificationCaptureService.getMessagePriority("high"))
 
         // if normal return 2 (normal)
-        Assert.assertEquals(2, PushNotificationCaptureService.getMessagePriority("normal"))
+        assertEquals(2, PushNotificationCaptureService.getMessagePriority("normal"))
 
         // if any other thing return 0 (unknown)
-        Assert.assertEquals(0, PushNotificationCaptureService.getMessagePriority("whatever"))
+        assertEquals(0, PushNotificationCaptureService.getMessagePriority("whatever"))
     }
 
     @Test
     fun `verify extract user defined data from bundle`() {
         // if empty bundle it should return empty map
         every { mockBundle.keySet() } returns emptySet()
-        Assert.assertTrue(
+        assertTrue(
             PushNotificationCaptureService.extractDeveloperDefinedPayload(mockBundle).isEmpty()
         )
 
@@ -182,7 +183,7 @@ internal class PushNotificationCaptureServiceTest {
         every { mockBundle.keySet() } returns setOf(
             "google.key", "gcm.key", "from", "message_type", "collapse_key"
         )
-        Assert.assertTrue(
+        assertTrue(
             PushNotificationCaptureService.extractDeveloperDefinedPayload(mockBundle).isEmpty()
         )
 
@@ -199,8 +200,8 @@ internal class PushNotificationCaptureServiceTest {
         val userDefinedMap =
             PushNotificationCaptureService.extractDeveloperDefinedPayload(mockBundle)
 
-        Assert.assertEquals(2, userDefinedMap.size)
-        Assert.assertEquals("value1", userDefinedMap["user_defined_key1"])
-        Assert.assertEquals("value2", userDefinedMap["user_defined_key2"])
+        assertEquals(2, userDefinedMap.size)
+        assertEquals("value1", userDefinedMap["user_defined_key1"])
+        assertEquals("value2", userDefinedMap["user_defined_key2"])
     }
 }

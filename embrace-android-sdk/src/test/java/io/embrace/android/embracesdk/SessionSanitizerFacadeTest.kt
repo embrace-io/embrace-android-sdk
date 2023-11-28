@@ -11,7 +11,8 @@ import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.mockk.mockk
-import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SessionSanitizerFacadeTest {
@@ -90,34 +91,34 @@ internal class SessionSanitizerFacadeTest {
             SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
 
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        Assert.assertNotNull(crumbs.customBreadcrumbs)
-        Assert.assertNotNull(crumbs.viewBreadcrumbs)
-        Assert.assertNotNull(crumbs.fragmentBreadcrumbs)
-        Assert.assertNotNull(crumbs.tapBreadcrumbs)
-        Assert.assertNotNull(crumbs.webViewBreadcrumbs)
+        assertNotNull(crumbs.customBreadcrumbs)
+        assertNotNull(crumbs.viewBreadcrumbs)
+        assertNotNull(crumbs.fragmentBreadcrumbs)
+        assertNotNull(crumbs.tapBreadcrumbs)
+        assertNotNull(crumbs.webViewBreadcrumbs)
 
-        Assert.assertNotNull(sanitizedMessage.userInfo?.personas)
+        assertNotNull(sanitizedMessage.userInfo?.personas)
 
-        Assert.assertNotNull(sanitizedMessage.session.properties)
-        Assert.assertNotNull(sanitizedMessage.session.orientations)
-        Assert.assertNotNull(sanitizedMessage.session.terminationTime)
-        Assert.assertNotNull(sanitizedMessage.session.isReceivedTermination)
-        Assert.assertNotNull(sanitizedMessage.session.infoLogIds)
-        Assert.assertNotNull(sanitizedMessage.session.infoLogsAttemptedToSend)
-        Assert.assertNotNull(sanitizedMessage.session.warningLogIds)
-        Assert.assertNotNull(sanitizedMessage.session.warnLogsAttemptedToSend)
-        Assert.assertNotNull(sanitizedMessage.session.eventIds)
-        Assert.assertNotNull(sanitizedMessage.session.startupDuration)
-        Assert.assertNotNull(sanitizedMessage.session.startupThreshold)
+        assertNotNull(sanitizedMessage.session.properties)
+        assertNotNull(sanitizedMessage.session.orientations)
+        assertNotNull(sanitizedMessage.session.terminationTime)
+        assertNotNull(sanitizedMessage.session.isReceivedTermination)
+        assertNotNull(sanitizedMessage.session.infoLogIds)
+        assertNotNull(sanitizedMessage.session.infoLogsAttemptedToSend)
+        assertNotNull(sanitizedMessage.session.warningLogIds)
+        assertNotNull(sanitizedMessage.session.warnLogsAttemptedToSend)
+        assertNotNull(sanitizedMessage.session.eventIds)
+        assertNotNull(sanitizedMessage.session.startupDuration)
+        assertNotNull(sanitizedMessage.session.startupThreshold)
 
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
-        Assert.assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
+        assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
+        assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
+        assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
+        assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        Assert.assertNotNull(sanitizedMessage.appInfo)
-        Assert.assertNotNull(sanitizedMessage.deviceInfo)
+        assertNotNull(sanitizedMessage.appInfo)
+        assertNotNull(sanitizedMessage.deviceInfo)
     }
 
     @Test
@@ -127,33 +128,33 @@ internal class SessionSanitizerFacadeTest {
             SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
 
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        Assert.assertNull(crumbs.customBreadcrumbs)
-        Assert.assertNull(crumbs.viewBreadcrumbs)
-        Assert.assertNull(crumbs.fragmentBreadcrumbs)
-        Assert.assertNull(crumbs.tapBreadcrumbs)
-        Assert.assertNull(crumbs.webViewBreadcrumbs)
+        assertNull(crumbs.customBreadcrumbs)
+        assertNull(crumbs.viewBreadcrumbs)
+        assertNull(crumbs.fragmentBreadcrumbs)
+        assertNull(crumbs.tapBreadcrumbs)
+        assertNull(crumbs.webViewBreadcrumbs)
 
-        Assert.assertNull(sanitizedMessage.userInfo?.personas)
+        assertNull(sanitizedMessage.userInfo?.personas)
 
-        Assert.assertNull(sanitizedMessage.session.properties)
-        Assert.assertNull(sanitizedMessage.session.orientations)
-        Assert.assertNull(sanitizedMessage.session.terminationTime)
-        Assert.assertNull(sanitizedMessage.session.isReceivedTermination)
-        Assert.assertNull(sanitizedMessage.session.infoLogIds)
-        Assert.assertNull(sanitizedMessage.session.infoLogsAttemptedToSend)
-        Assert.assertNull(sanitizedMessage.session.warningLogIds)
-        Assert.assertNull(sanitizedMessage.session.warnLogsAttemptedToSend)
-        Assert.assertNull(sanitizedMessage.session.eventIds)
-        Assert.assertNull(sanitizedMessage.session.startupDuration)
-        Assert.assertNull(sanitizedMessage.session.startupThreshold)
+        assertNull(sanitizedMessage.session.properties)
+        assertNull(sanitizedMessage.session.orientations)
+        assertNull(sanitizedMessage.session.terminationTime)
+        assertNull(sanitizedMessage.session.isReceivedTermination)
+        assertNull(sanitizedMessage.session.infoLogIds)
+        assertNull(sanitizedMessage.session.infoLogsAttemptedToSend)
+        assertNull(sanitizedMessage.session.warningLogIds)
+        assertNull(sanitizedMessage.session.warnLogsAttemptedToSend)
+        assertNull(sanitizedMessage.session.eventIds)
+        assertNull(sanitizedMessage.session.startupDuration)
+        assertNull(sanitizedMessage.session.startupThreshold)
 
-        Assert.assertNull(sanitizedMessage.performanceInfo?.networkRequests)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
-        Assert.assertNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNull(sanitizedMessage.performanceInfo?.networkRequests)
+        assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
+        assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
+        assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
+        assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        Assert.assertNotNull(sanitizedMessage.appInfo)
-        Assert.assertNotNull(sanitizedMessage.deviceInfo)
+        assertNotNull(sanitizedMessage.appInfo)
+        assertNotNull(sanitizedMessage.deviceInfo)
     }
 }

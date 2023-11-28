@@ -18,7 +18,7 @@ internal class ThreadInfoTest {
             ),
             1
         )
-        assertEquals(1, threadInfo.lines!!.size)
+        assertEquals(1, checkNotNull(threadInfo.lines).size)
     }
 
     @Test

@@ -300,8 +300,8 @@ internal class SessionHandlerTest {
         )
 
         verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
-        assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        checkNotNull(sessionMessage)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -320,8 +320,8 @@ internal class SessionHandlerTest {
 
         // verify automatic session stopper has not been scheduled
         verify { mockAutomaticSessionStopper wasNot Called }
-        assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        checkNotNull(sessionMessage)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -344,8 +344,8 @@ internal class SessionHandlerTest {
 
         // verify we are forcing log view with foreground activity class name
         verify(exactly = 1) { mockBreadcrumbService.forceLogView(activityClassName, now) }
-        assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        checkNotNull(sessionMessage)
+        assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case
     }
 

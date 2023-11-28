@@ -34,9 +34,13 @@ internal class EmbraceNdkServiceRepository(
                 }
 
                 val comparator: Comparator<File> = if (byOldest) {
-                    Comparator { first: File, next: File -> sorted[first]?.compareTo(sorted[next]!!)!! }
+                    Comparator { first: File, next: File ->
+                        checkNotNull(sorted[first]?.compareTo(checkNotNull(sorted[next])))
+                    }
                 } else {
-                    Comparator { first: File, next: File -> sorted[next]?.compareTo(sorted[first]!!)!! }
+                    Comparator { first: File, next: File ->
+                        checkNotNull(sorted[next]?.compareTo(checkNotNull(sorted[first])))
+                    }
                 }
                 return nativeCrashList.sortedWith(comparator)
             } catch (ex: Exception) {

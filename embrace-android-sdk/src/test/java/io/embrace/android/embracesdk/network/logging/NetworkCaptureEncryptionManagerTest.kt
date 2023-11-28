@@ -51,9 +51,9 @@ internal class NetworkCaptureEncryptionManagerTest {
     @Test
     fun `test encrypt and decrypt correctly`() {
         val textToEncrypt = "text to encrypt"
-        val encryptedText = networkCaptureEncryptionManager.encrypt(textToEncrypt, sPublicKey)
+        val encryptedText = checkNotNull(networkCaptureEncryptionManager.encrypt(textToEncrypt, sPublicKey))
 
-        assertEquals(textToEncrypt, decrypt(encryptedText!!))
+        assertEquals(textToEncrypt, decrypt(encryptedText))
     }
 
     @Test
@@ -66,9 +66,9 @@ internal class NetworkCaptureEncryptionManagerTest {
 
     @Test
     fun `test encrypt and decrypt long payload correctly`() {
-        val encryptedText = networkCaptureEncryptionManager.encrypt(encryptedPayload, sPublicKey)
+        val encryptedText = checkNotNull(networkCaptureEncryptionManager.encrypt(encryptedPayload, sPublicKey))
 
-        assertNotNull(decrypt(encryptedText!!))
+        assertNotNull(decrypt(encryptedText))
     }
 
     private fun decrypt(data: String): String? {

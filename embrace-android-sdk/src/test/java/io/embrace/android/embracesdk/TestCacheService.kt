@@ -23,7 +23,8 @@ internal class TestCacheService : CacheService {
         if (!cache.containsKey(name)) {
             return null
         }
-        return gson.fromJson(String(cache[name]!!), clazz)
+        val json = String(checkNotNull(cache[name]))
+        return gson.fromJson(json, clazz)
     }
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
@@ -55,10 +56,8 @@ internal class TestCacheService : CacheService {
     }
 
     override fun moveObject(src: String, dst: String): Boolean {
-        if (cache[src] == null) {
-            return false
-        }
-        cache[dst] = cache[src]!!
+        val bytes = cache[src] ?: return false
+        cache[dst] = bytes
         cache.remove(src)
         return true
     }

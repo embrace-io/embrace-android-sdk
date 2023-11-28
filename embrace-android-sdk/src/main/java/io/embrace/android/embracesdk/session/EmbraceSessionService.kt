@@ -21,40 +21,25 @@ internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService {
 
-    companion object {
-        private const val TAG = "EmbraceSessionService"
-
-        /**
-         * Signals to the API that the application was in the foreground.
-         */
-        const val APPLICATION_STATE_FOREGROUND = "foreground"
-
-        /**
-         * The minimum threshold for how long a session must last. Package-private for test accessibility
-         */
-        const val minSessionTime = 5000L
-
-        /**
-         * Session caching interval in seconds.
-         */
-        const val SESSION_CACHING_INTERVAL = 2
-    }
-
     init {
         if (!this.processStateService.isInBackground) {
             // If the app goes to foreground before the SDK finishes its startup,
             // the session service will not be registered to the activity listener and will not
             // start the cold session.
             // If so, force a cold session start.
-            logger.logDeveloper(TAG, "Forcing cold start")
-            startStateSession(true, clock.now())
+            logger.logDebug("Forcing start of new session as app is in foreground.")
+            startSession(true, Session.SessionLifeEventType.STATE, clock.now())
         }
 
         // Send any sessions that were cached and not yet sent.
         deliveryService.sendCachedSessions(isNdkEnabled, ndkService, sessionHandler.getSessionId())
     }
 
-    override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
+    override fun startSession(
+        coldStart: Boolean,
+        startType: Session.SessionLifeEventType,
+        startTime: Long
+    ) {
         val automaticSessionCloserCallback = Runnable {
             try {
                 logger.logInfo("Automatic session closing triggered.")
@@ -64,38 +49,24 @@ internal class EmbraceSessionService(
             }
         }
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             coldStart,
             startType,
             startTime,
             automaticSessionCloserCallback
         )
-
-        if (sessionMessage != null) {
-            logger.logDeveloper(TAG, "Session Message is created")
-        } else {
-            logger.logDeveloper(TAG, "Session Message is NULL")
-        }
     }
 
     override fun handleCrash(crashId: String) {
-        logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
         sessionHandler.onCrash(crashId)
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-        logger.logDeveloper(TAG, "OnForeground. Starting session.")
-        startStateSession(coldStart, timestamp)
-    }
-
-    private fun startStateSession(coldStart: Boolean, endTime: Long) {
-        logger.logDeveloper(TAG, "Start state session. Is cold start: $coldStart")
-        startSession(coldStart, Session.SessionLifeEventType.STATE, endTime)
+        startSession(coldStart, Session.SessionLifeEventType.STATE, timestamp)
     }
 
     override fun onBackground(timestamp: Long) {
-        logger.logDeveloper(TAG, "OnBackground. Ending session.")
-        endSession(Session.SessionLifeEventType.STATE, timestamp, false)
+        sessionHandler.onSessionEnded(Session.SessionLifeEventType.STATE, timestamp, false)
     }
 
     /**
@@ -115,16 +86,13 @@ internal class EmbraceSessionService(
         }
 
         // Ends active session.
-        endSession(endType, clock.now(), clearUserInfo)
+        sessionHandler.onSessionEnded(endType, clock.now(), clearUserInfo)
 
         // Starts a new session.
         if (!processStateService.isInBackground) {
-            logger.logDeveloper(TAG, "Activity is not in background, starting session.")
+            logger.logDebug("Forcing start of new session as app is in foreground.")
             startSession(false, endType, clock.now())
-        } else {
-            logger.logDeveloper(TAG, "Activity in background, not starting session.")
         }
-        logger.logInfo("Session successfully closed.")
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {
@@ -138,22 +106,7 @@ internal class EmbraceSessionService(
             logger.logWarning("Can't close the session, session ending in background thread enabled.")
             return
         }
-        triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL)
-    }
-
-    /**
-     * This will trigger all necessary events to end the current session and send it to the server.
-     *
-     * @param endType the origin of the event that ends the session.
-     */
-    private fun endSession(
-        endType: Session.SessionLifeEventType,
-        endTime: Long,
-        clearUserInfo: Boolean
-    ) {
-        logger.logDebug("Will try to end session.")
-        sessionHandler.onSessionEnded(endType, endTime, clearUserInfo)
-        logger.logDeveloper(TAG, "Active session cleared")
+        triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL, clearUserInfo)
     }
 
     override fun close() {

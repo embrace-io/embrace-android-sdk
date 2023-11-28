@@ -166,7 +166,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionEnded(
                 SessionLifeEventType.MANUAL,
                 0,
-                false
+                true
             )
         }
         verify(exactly = 1) {

@@ -95,7 +95,7 @@ internal class SessionMessageCollator(
 
         val endSession = originSession.copy(
             isEndedCleanly = endedCleanly,
-            appState = EmbraceSessionService.APPLICATION_STATE_FOREGROUND,
+            appState = Session.APPLICATION_STATE_FOREGROUND,
             messageType = MESSAGE_TYPE_END,
             eventIds = captureDataSafely { eventService.findEventIdsForSession(startTime, endTime) },
             infoLogIds = captureDataSafely { remoteLogger.findInfoLogIds(startTime, endTime) },

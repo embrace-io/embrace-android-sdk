@@ -171,7 +171,7 @@ internal class AnrStacktraceSamplerTest {
         val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
 
         // simulate 110 ANRs with intervals
-        repeat(anrRepeatCount) { index ->
+        repeat(anrRepeatCount) {
             sampler.onThreadBlocked(thread, clock.now())
             sampler.onThreadBlockedInterval(thread, clock.now())
             clock.tick(intervalMs)

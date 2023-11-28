@@ -160,19 +160,19 @@ internal class EmbraceBreadcrumbService(
         timestamp: Long,
         type: TapBreadcrumbType
     ) {
-        var point = point
         if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
             return
         }
         logger.logDeveloper("EmbraceBreadcrumbsService", "log tap")
         try {
-            if (!configService.breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
-                point = Pair(0.0f, 0.0f)
+            val finalPoint = if (!configService.breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
+                Pair(0.0f, 0.0f)
             } else {
                 logger.logDeveloper("EmbraceBreadcrumbsService", "Cannot capture tap coordinates")
+                point
             }
             val limit = configService.breadcrumbBehavior.getTapBreadcrumbLimit()
-            tryAddBreadcrumb(tapBreadcrumbs, TapBreadcrumb(point, element, timestamp, type), limit)
+            tryAddBreadcrumb(tapBreadcrumbs, TapBreadcrumb(finalPoint, element, timestamp, type), limit)
         } catch (ex: Exception) {
             logger.logError("Failed to log tap breadcrumb for element $element", ex)
         }
@@ -492,10 +492,7 @@ internal class EmbraceBreadcrumbService(
     private fun addToViewLogsQueue(screen: String?, timestamp: Long, force: Boolean) {
         try {
             val lastViewBreadcrumb = viewBreadcrumbs.peek()
-            var lastScreen = if (lastViewBreadcrumb != null) lastViewBreadcrumb.screen else ""
-            if (lastScreen == null) {
-                lastScreen = ""
-            }
+            val lastScreen = lastViewBreadcrumb?.screen ?: ""
             if (force || lastViewBreadcrumb == null || !lastScreen.equals(
                     screen.toString(),
                     ignoreCase = true

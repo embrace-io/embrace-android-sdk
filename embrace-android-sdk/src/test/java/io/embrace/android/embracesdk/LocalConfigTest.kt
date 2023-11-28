@@ -142,6 +142,7 @@ internal class LocalConfigTest {
         assertFalse(localConfig.ndkEnabled)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testSessionOnlyConfig() {
         var localConfig =
@@ -238,7 +239,7 @@ internal class LocalConfigTest {
 
     @Test
     fun testStartupMomentOnlyConfig() {
-        var localConfig = LocalConfig.buildConfig(
+        val localConfig = LocalConfig.buildConfig(
             "GrCPU",
             false,
             "{\"startup_moment\": {\"automatically_end\": false}}",

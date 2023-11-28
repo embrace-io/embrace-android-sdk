@@ -60,6 +60,7 @@ internal class EmbraceApiServiceTest {
         initApiService()
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `test getConfig returns correct values in Response`() {
         fakeApiClient.queueResponse(

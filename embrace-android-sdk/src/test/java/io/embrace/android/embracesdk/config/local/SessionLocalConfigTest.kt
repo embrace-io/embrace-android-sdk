@@ -15,6 +15,7 @@ internal class SessionLocalConfigTest {
         verifyDefaults(cfg)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("session_config.json")
@@ -32,6 +33,7 @@ internal class SessionLocalConfigTest {
         verifyDefaults(obj)
     }
 
+    @Suppress("DEPRECATION")
     private fun verifyDefaults(cfg: SessionLocalConfig) {
         assertNull(cfg.maxSessionSeconds)
         assertNull(cfg.asyncEnd)

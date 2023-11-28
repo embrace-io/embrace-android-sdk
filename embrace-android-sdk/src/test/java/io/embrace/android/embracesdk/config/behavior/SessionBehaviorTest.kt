@@ -31,6 +31,7 @@ internal class SessionBehaviorTest {
         maxSessionProperties = 57,
     )
 
+    @Suppress("DEPRECATION")
     @Test
     fun testDefaults() {
         with(fakeSessionBehavior()) {
@@ -46,6 +47,7 @@ internal class SessionBehaviorTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testLocalOnly() {
         with(fakeSessionBehavior(localCfg = { local })) {
@@ -59,6 +61,7 @@ internal class SessionBehaviorTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testRemoteAndLocal() {
         with(fakeSessionBehavior(localCfg = { local }, remoteCfg = { remote })) {

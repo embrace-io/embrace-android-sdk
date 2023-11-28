@@ -62,13 +62,14 @@ internal class EmbraceMetadataUnityTest {
         }
 
         @AfterClass
+        @JvmStatic
         fun tearDown() {
             unmockkAll()
         }
 
+        @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.versionName = "1.0.0"
-            @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
 
             every { context.getSystemService(Context.WINDOW_SERVICE) }.returns(mockk<WindowManager>())
@@ -97,6 +98,7 @@ internal class EmbraceMetadataUnityTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
         buildInfo,

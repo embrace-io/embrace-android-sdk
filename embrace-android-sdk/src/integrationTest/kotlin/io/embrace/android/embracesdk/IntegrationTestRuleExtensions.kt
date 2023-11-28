@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -10,7 +9,6 @@ import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
@@ -66,7 +64,7 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
  */
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
-    action: () -> Unit = {}
+    action: () -> Unit
 ): SessionMessage {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)

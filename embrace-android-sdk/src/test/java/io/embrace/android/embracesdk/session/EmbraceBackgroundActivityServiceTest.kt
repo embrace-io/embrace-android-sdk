@@ -321,21 +321,26 @@ internal class EmbraceBackgroundActivityServiceTest {
     }
 
     private fun createService(): EmbraceBackgroundActivityService {
-        return EmbraceBackgroundActivityService(
-            performanceInfoService,
-            metadataService,
-            mockBreadcrumbService,
-            activityService,
+        val collator = BackgroundActivityCollator(
+            userService,
+            preferencesService,
             eventService,
             remoteLogger,
-            userService,
             exceptionService,
+            mockBreadcrumbService,
+            metadataService,
+            performanceInfoService,
+            spansService,
+            clock,
+        )
+        return EmbraceBackgroundActivityService(
+            metadataService,
+            activityService,
             deliveryService,
             configService,
             ndkService,
-            preferencesService,
             clock,
-            spansService,
+            collator,
             lazy { blockableExecutorService }
         )
     }

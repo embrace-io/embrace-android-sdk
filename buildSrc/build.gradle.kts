@@ -26,3 +26,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.32")
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.12.1")
 }
+
+// ensure the Kotlin + Java compilers both use the same language level.
+project.tasks.withType(JavaCompile::class.java) {
+    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+}

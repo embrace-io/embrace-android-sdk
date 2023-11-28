@@ -10,6 +10,8 @@ import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import org.junit.Assert
+import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -64,7 +66,7 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
  */
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
-    action: () -> Unit
+    action: () -> Unit = {}
 ): SessionMessage {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
@@ -116,6 +118,24 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs:
     }
 
     throw TimeoutException("Timeout period elapsed before condition met")
+}
+
+internal fun verifySessionHappened(startMessage: SessionMessage, endMessage: SessionMessage) {
+    verifySessionMessage(startMessage)
+    verifySessionMessage(endMessage)
+    assertEquals(startMessage.session.sessionId, endMessage.session.sessionId)
+}
+
+internal fun verifySessionMessage(sessionMessage: SessionMessage) {
+    assertNotNull(sessionMessage.session)
+    assertNotNull(sessionMessage.appInfo)
+    assertNotNull(sessionMessage.deviceInfo)
+
+    if (sessionMessage.session.messageType == "en") {
+        assertNotNull(sessionMessage.userInfo)
+        assertNotNull(sessionMessage.breadcrumbs)
+        assertNotNull(sessionMessage.performanceInfo)
+    }
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

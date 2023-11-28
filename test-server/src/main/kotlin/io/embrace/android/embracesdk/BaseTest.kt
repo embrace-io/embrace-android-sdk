@@ -163,6 +163,11 @@ public open class BaseTest {
         Embrace.getInstance().setUserIdentifier("some id")
         Embrace.getInstance().setUsername("John Doe")
 
+        // ensure that the 'first_day' persona is always set so that
+        // the session message is always deterministic no matter
+        // what device it ran on
+        Embrace.getInstance().addUserPersona("first_day")
+
         validateInitializationRequests()
     }
 

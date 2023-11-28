@@ -5,8 +5,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionMessageSerializer
 import java.io.Closeable
@@ -55,24 +56,24 @@ internal class EmbraceDeliveryCacheManager(
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
+    override fun saveSession(sessionMessage: SessionMessage<Session>): ByteArray? {
         return saveSessionImpl(sessionMessage)
     }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage<Session>) {
         saveSessionImpl(sessionMessage, true)
     }
 
-    private fun saveSessionImpl(sessionMessage: SessionMessage, writeSync: Boolean = false): ByteArray {
+    private fun saveSessionImpl(sessionMessage: SessionMessage<Session>, writeSync: Boolean = false): ByteArray {
         if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
             deleteOldestSessions()
         }
         val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-        saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
+        saveBytes(sessionMessage.data.sessionId, sessionBytes, writeSync)
         return sessionBytes
     }
 
-    override fun loadSession(sessionId: String): SessionMessage? {
+    override fun loadSession(sessionId: String): SessionMessage<Session>? {
         cachedSessions[sessionId]?.let { cachedSession ->
             return loadSession(cachedSession)
         }
@@ -107,8 +108,7 @@ internal class EmbraceDeliveryCacheManager(
             if (filename == OLD_VERSION_FILE_NAME) {
                 // If a cached session from a previous version of the SDK is found,
                 // load and save it again using the new naming schema
-                val previousSdkSession =
-                    cacheService.loadObject(filename, SessionMessage::class.java)
+                val previousSdkSession = cacheService.loadSession(filename, Session::class.java)
                 previousSdkSession?.also {
                     // When saved, the new session filename is also added to cachedSessions
                     saveSession(it)
@@ -133,12 +133,9 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
-        val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.bytesFromPayload(
-            backgroundActivityMessage,
-            BackgroundActivityMessage::class.java
-        )
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>): ByteArray? {
+        val baId = backgroundActivityMessage.data.sessionId
+        val baBytes = serializer.bytesFromSessionMessage(backgroundActivityMessage)
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
             baBytes?.let { saveBytes(baId, it) }
@@ -212,12 +209,12 @@ internal class EmbraceDeliveryCacheManager(
     override fun close() {
     }
 
-    private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        return executorService.submit<SessionMessage?> {
+    private fun loadSession(cachedSession: CachedSession): SessionMessage<Session>? {
+        return executorService.submit<SessionMessage<Session>?> {
             try {
-                val sessionMessage = cacheService.loadObject(
+                val sessionMessage = cacheService.loadSession(
                     cachedSession.filename,
-                    SessionMessage::class.java
+                    Session::class.java
                 )
                 if (sessionMessage != null) {
                     logger.logDeveloper(TAG, "Successfully fetched previous session message.")

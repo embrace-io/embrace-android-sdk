@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk
 
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
@@ -24,6 +26,14 @@ internal class TestCacheService : CacheService {
             return null
         }
         return gson.fromJson(String(cache[name]!!), clazz)
+    }
+
+    override fun <T> loadSession(name: String, clazz: Class<T>): SessionMessage<T>? {
+        if (!cache.containsKey(name)) {
+            return null
+        }
+        val type = object : TypeToken<SessionMessage<T>>() {}.type
+        return gson.fromJson(String(cache[name]!!), type)
     }
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {

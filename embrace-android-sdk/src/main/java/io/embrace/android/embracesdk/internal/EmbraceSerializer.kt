@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.internal
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
+import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.BufferedWriter
 import java.lang.reflect.Type
 import java.nio.charset.Charset
@@ -54,8 +56,19 @@ internal class EmbraceSerializer {
         return gson.fromJson(jsonReader, clazz)
     }
 
+    fun <T> loadSessionMessage(jsonReader: JsonReader): SessionMessage<T>? {
+        val type = object : TypeToken<SessionMessage<T>>() {}.type
+        return gson.fromJson(jsonReader, type)
+    }
+
     fun <T> bytesFromPayload(payload: T, clazz: Class<T>): ByteArray? {
         val json: String? = gson.toJson(payload, clazz.genericSuperclass)
+        return json?.toByteArray(Charset.forName("UTF-8"))
+    }
+
+    fun <T> bytesFromSessionMessage(payload: T): ByteArray? {
+        val type = object : TypeToken<SessionMessage<T>>() {}.type
+        val json: String? = gson.toJson(payload, type)
         return json?.toByteArray(Charset.forName("UTF-8"))
     }
 }

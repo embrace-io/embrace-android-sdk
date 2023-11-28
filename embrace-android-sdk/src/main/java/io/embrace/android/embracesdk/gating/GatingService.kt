@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal interface GatingService {
@@ -12,7 +13,7 @@ internal interface GatingService {
      *
      * @param sessionMessage to be sanitized
      */
-    fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage
+    fun gateSessionMessage(sessionMessage: SessionMessage<Session>): SessionMessage<Session>
 
     /**
      * Sanitizes an event message before send it to backend based on the Gating configuration.

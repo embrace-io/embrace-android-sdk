@@ -74,7 +74,7 @@ internal class EmbraceBreadcrumbServiceTest {
 
     private fun assertJsonMessage(service: EmbraceBreadcrumbService, expected: String) {
         val message = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             breadcrumbs = service.getBreadcrumbs(
                 0, clock.now()
             )
@@ -438,7 +438,7 @@ internal class EmbraceBreadcrumbServiceTest {
         clock.tickSecond()
         service.onViewClose(activity)
         val message = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             breadcrumbs = service.getBreadcrumbs(
                 0, clock.now()
             )
@@ -463,7 +463,7 @@ internal class EmbraceBreadcrumbServiceTest {
 
         service.onViewClose(activity)
         val message = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
         val jsonMessage = gson.toJson(message)
@@ -471,7 +471,7 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(expected, jsonMessage)
 
         val secondMessage = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
         val secondJsonMessage = gson.toJson(secondMessage)

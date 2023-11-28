@@ -142,7 +142,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
         val payload = checkNotNull(deliveryService.lastSavedBackgroundActivity)
-        assertEquals(5, payload.backgroundActivity.number)
+        assertEquals(5, payload.data.number)
     }
 
     @Test

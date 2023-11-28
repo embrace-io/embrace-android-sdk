@@ -41,7 +41,7 @@ internal class EmbraceSessionServiceTest {
         private val activityService = FakeProcessStateService()
         private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
         private val mockSession: Session = mockk(relaxed = true)
-        private val mockSessionMessage: SessionMessage = mockk(relaxed = true)
+        private val mockSessionMessage: SessionMessage<Session> = mockk(relaxed = true)
         private val mockSessionHandler: SessionHandler = mockk(relaxed = true)
         private val clock = FakeClock()
 
@@ -49,7 +49,7 @@ internal class EmbraceSessionServiceTest {
         @JvmStatic
         fun beforeClass() {
             mockkStatic(ExecutorService::class)
-            every { mockSessionMessage.session } returns mockSession
+            every { mockSessionMessage.data } returns mockSession
         }
 
         @AfterClass

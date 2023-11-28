@@ -19,14 +19,14 @@ internal class SessionMessageSerializer(
 ) : MemoryCleanerListener {
 
     private val jsonCache = mutableMapOf<String, String>()
-    private var prevSession: SessionMessage? = null
+    private var prevSession: SessionMessage<Session>? = null
 
-    fun serialize(msg: SessionMessage): String {
+    fun serialize(msg: SessionMessage<Session>): String {
         synchronized(this) {
             val json = StringBuilder()
             json.append("{")
 
-            val session = calculateJsonValue(msg, "s", Session::class.java) { it.session }
+            val session = calculateJsonValue(msg, "s", Session::class.java) { it.data }
             addJsonProperty("\"s\":", session, json)
 
             val userInfo = calculateJsonValue(msg, "u", UserInfo::class.java) { it.userInfo }
@@ -66,10 +66,10 @@ internal class SessionMessageSerializer(
     }
 
     private fun <T> calculateJsonValue(
-        msg: SessionMessage,
+        msg: SessionMessage<Session>,
         key: String,
         clz: Class<T>,
-        fieldProvider: (sessionMessage: SessionMessage) -> T?
+        fieldProvider: (sessionMessage: SessionMessage<Session>) -> T?
     ): String {
         return runCatching {
             val newValue = fieldProvider(msg) ?: return "null"

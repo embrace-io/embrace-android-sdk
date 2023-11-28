@@ -320,7 +320,7 @@ internal class NetworkRequestApiTest {
         val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
 
         // Look for a specific error where the fetch from the cache returns a stale value
-        session.session.exceptionError?.exceptionErrors?.forEach { errorInfo ->
+        session.data.exceptionError?.exceptionErrors?.forEach { errorInfo ->
             errorInfo.exceptions?.forEach { exception ->
                 val msg = exception.message
                 assertTrue(

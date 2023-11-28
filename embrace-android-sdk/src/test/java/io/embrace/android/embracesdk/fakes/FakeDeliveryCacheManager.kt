@@ -2,20 +2,21 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
+    override fun saveSession(sessionMessage: SessionMessage<Session>): ByteArray? {
         TODO("Not yet implemented")
     }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage<Session>) {
         TODO("Not yet implemented")
     }
 
-    override fun loadSession(sessionId: String): SessionMessage? {
+    override fun loadSession(sessionId: String): SessionMessage<Session>? {
         TODO("Not yet implemented")
     }
 
@@ -31,7 +32,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>): ByteArray? {
         TODO("Not yet implemented")
     }
 

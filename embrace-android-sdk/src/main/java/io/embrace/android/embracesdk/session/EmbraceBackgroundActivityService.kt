@@ -23,8 +23,8 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.createStartMessage
 import io.embrace.android.embracesdk.payload.BackgroundActivity.Companion.createStopMessage
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.Breadcrumbs
+import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.submitSafe
@@ -208,7 +208,7 @@ internal class EmbraceBackgroundActivityService(
         endTime: Long,
         endType: LifeEventType,
         crashId: String?
-    ): BackgroundActivityMessage? {
+    ): SessionMessage<BackgroundActivity>? {
         val activity = backgroundActivity
         if (activity == null) {
             InternalStaticEmbraceLogger.logError("No background activity to report")
@@ -274,7 +274,7 @@ internal class EmbraceBackgroundActivityService(
     private fun buildBackgroundActivityMessage(
         backgroundActivity: BackgroundActivity?,
         isBackgroundActivityEnd: Boolean
-    ): BackgroundActivityMessage? {
+    ): SessionMessage<BackgroundActivity>? {
         if (backgroundActivity != null) {
             val startTime = backgroundActivity.startTime ?: 0L
             val endTime = backgroundActivity.endTime ?: clock.now()
@@ -295,8 +295,8 @@ internal class EmbraceBackgroundActivityService(
                 spans = spansService.completedSpans()
             }
 
-            return BackgroundActivityMessage(
-                backgroundActivity = backgroundActivity,
+            return SessionMessage(
+                data = backgroundActivity,
                 userInfo = backgroundActivity.user,
                 appInfo = metadataService.getAppInfo(),
                 deviceInfo = metadataService.getDeviceInfo(),

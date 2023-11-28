@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.PerformanceInfo
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert.assertEquals
@@ -16,7 +18,7 @@ import org.junit.Test
 
 internal class SessionMessageSerializerTest {
 
-    private lateinit var msg: SessionMessage
+    private lateinit var msg: SessionMessage<Session>
 
     @Before
     fun setUp() {
@@ -37,7 +39,8 @@ internal class SessionMessageSerializerTest {
         val serializer = SessionMessageSerializer(EmbraceSerializer())
 
         // message should be identical to JSON.
-        val expected = gson.toJson(msg, SessionMessage::class.java)
+        val type = object: TypeToken<SessionMessage<Session>>() {}.type
+        val expected = gson.toJson(msg, type)
         val observed = serializer.serialize(msg)
         assertEquals(expected, observed)
 

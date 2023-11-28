@@ -54,7 +54,7 @@ internal class SessionSanitizerFacadeTest {
     )
 
     private val sessionMessage = SessionMessage(
-        session = session,
+        data = session,
         userInfo = userInfo,
         appInfo = AppInfo(),
         deviceInfo = DeviceInfo(),
@@ -98,17 +98,17 @@ internal class SessionSanitizerFacadeTest {
 
         Assert.assertNotNull(sanitizedMessage.userInfo?.personas)
 
-        Assert.assertNotNull(sanitizedMessage.session.properties)
-        Assert.assertNotNull(sanitizedMessage.session.orientations)
-        Assert.assertNotNull(sanitizedMessage.session.terminationTime)
-        Assert.assertNotNull(sanitizedMessage.session.isReceivedTermination)
-        Assert.assertNotNull(sanitizedMessage.session.infoLogIds)
-        Assert.assertNotNull(sanitizedMessage.session.infoLogsAttemptedToSend)
-        Assert.assertNotNull(sanitizedMessage.session.warningLogIds)
-        Assert.assertNotNull(sanitizedMessage.session.warnLogsAttemptedToSend)
-        Assert.assertNotNull(sanitizedMessage.session.eventIds)
-        Assert.assertNotNull(sanitizedMessage.session.startupDuration)
-        Assert.assertNotNull(sanitizedMessage.session.startupThreshold)
+        Assert.assertNotNull(sanitizedMessage.data.properties)
+        Assert.assertNotNull(sanitizedMessage.data.orientations)
+        Assert.assertNotNull(sanitizedMessage.data.terminationTime)
+        Assert.assertNotNull(sanitizedMessage.data.isReceivedTermination)
+        Assert.assertNotNull(sanitizedMessage.data.infoLogIds)
+        Assert.assertNotNull(sanitizedMessage.data.infoLogsAttemptedToSend)
+        Assert.assertNotNull(sanitizedMessage.data.warningLogIds)
+        Assert.assertNotNull(sanitizedMessage.data.warnLogsAttemptedToSend)
+        Assert.assertNotNull(sanitizedMessage.data.eventIds)
+        Assert.assertNotNull(sanitizedMessage.data.startupDuration)
+        Assert.assertNotNull(sanitizedMessage.data.startupThreshold)
 
         Assert.assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
         Assert.assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
@@ -135,17 +135,17 @@ internal class SessionSanitizerFacadeTest {
 
         Assert.assertNull(sanitizedMessage.userInfo?.personas)
 
-        Assert.assertNull(sanitizedMessage.session.properties)
-        Assert.assertNull(sanitizedMessage.session.orientations)
-        Assert.assertNull(sanitizedMessage.session.terminationTime)
-        Assert.assertNull(sanitizedMessage.session.isReceivedTermination)
-        Assert.assertNull(sanitizedMessage.session.infoLogIds)
-        Assert.assertNull(sanitizedMessage.session.infoLogsAttemptedToSend)
-        Assert.assertNull(sanitizedMessage.session.warningLogIds)
-        Assert.assertNull(sanitizedMessage.session.warnLogsAttemptedToSend)
-        Assert.assertNull(sanitizedMessage.session.eventIds)
-        Assert.assertNull(sanitizedMessage.session.startupDuration)
-        Assert.assertNull(sanitizedMessage.session.startupThreshold)
+        Assert.assertNull(sanitizedMessage.data.properties)
+        Assert.assertNull(sanitizedMessage.data.orientations)
+        Assert.assertNull(sanitizedMessage.data.terminationTime)
+        Assert.assertNull(sanitizedMessage.data.isReceivedTermination)
+        Assert.assertNull(sanitizedMessage.data.infoLogIds)
+        Assert.assertNull(sanitizedMessage.data.infoLogsAttemptedToSend)
+        Assert.assertNull(sanitizedMessage.data.warningLogIds)
+        Assert.assertNull(sanitizedMessage.data.warnLogsAttemptedToSend)
+        Assert.assertNull(sanitizedMessage.data.eventIds)
+        Assert.assertNull(sanitizedMessage.data.startupDuration)
+        Assert.assertNull(sanitizedMessage.data.startupThreshold)
 
         Assert.assertNull(sanitizedMessage.performanceInfo?.networkRequests)
         Assert.assertNull(sanitizedMessage.performanceInfo?.anrIntervals)

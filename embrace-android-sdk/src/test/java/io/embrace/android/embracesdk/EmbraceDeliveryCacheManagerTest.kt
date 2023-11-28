@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.mockk.clearAllMocks
@@ -106,15 +107,15 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `manager returns null if cache service throws an exception`() {
-        every { cacheService.loadObject(any(), SessionMessage::class.java) } throws Exception()
+        every { cacheService.loadSession(any(), Session::class.java) } throws Exception()
 
         deliveryCacheManager.saveSession(createSessionMessage("exception_session"))
         assertNull(deliveryCacheManager.loadSession("exception_session"))
 
         every {
-            cacheService.loadObject(
+            cacheService.loadSession(
                 any(),
-                SessionMessage::class.java
+                Session::class.java
             )
         } answers { callOriginal() }
     }
@@ -321,7 +322,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         assertTrue(failedCalls.isEmpty())
     }
 
-    private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
+    private fun assertSessionsMatch(session1: SessionMessage<Session>, session2: SessionMessage<Session>) {
         // SessionMessage does not implement equals, so we have to serialize to compare
         assertEquals(
             String(serializer.bytesFromPayload(session1, SessionMessage::class.java)!!),
@@ -329,7 +330,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
     }
 
-    private fun createSessionMessage(sessionId: String): SessionMessage {
+    private fun createSessionMessage(sessionId: String): SessionMessage<Session> {
         val session = fakeSession().copy(
             sessionId = sessionId,
             startTime = fakeClock.now()

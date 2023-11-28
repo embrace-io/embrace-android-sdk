@@ -3,9 +3,11 @@ package io.embrace.android.embracesdk
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import org.junit.Assert.assertEquals
@@ -102,10 +104,11 @@ internal class AnrIntegrationTest : BaseTest() {
         Embrace.getImpl().endAppStartup(null)
     }
 
-    private fun readBodyAsSessionMessage(request: RecordedRequest): SessionMessage {
+    private fun readBodyAsSessionMessage(request: RecordedRequest): SessionMessage<Session> {
         val stream = request.body.inputStream()
         GZIPInputStream(stream).bufferedReader().use {
-            return gson.fromJson(it, SessionMessage::class.java)
+            val type = object: TypeToken<SessionMessage<Session>>() {}.type
+            return gson.fromJson(it, type)
         }
     }
 

@@ -79,7 +79,7 @@ internal class SessionHandler(
         startType: SessionLifeEventType,
         startTime: Long,
         automaticSessionCloserCallback: Runnable
-    ): SessionMessage? {
+    ): SessionMessage<Session>? {
         synchronized(lock) {
             if (!isAllowedToStart()) {
                 logger.logDebug("Session not allowed to start.")
@@ -192,7 +192,7 @@ internal class SessionHandler(
      */
     fun onPeriodicCacheActiveSessionImpl(
         completedSpans: List<EmbraceSpanData>? = null
-    ): SessionMessage? {
+    ): SessionMessage<Session>? {
         synchronized(lock) {
             logger.logDebug("Will try to run end session for caching.")
             val session = activeSession ?: return null
@@ -281,7 +281,7 @@ internal class SessionHandler(
         lifeEventType: SessionLifeEventType,
         endTime: Long,
         crashId: String? = null,
-    ): SessionMessage? {
+    ): SessionMessage<Session>? {
         if (endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
         }

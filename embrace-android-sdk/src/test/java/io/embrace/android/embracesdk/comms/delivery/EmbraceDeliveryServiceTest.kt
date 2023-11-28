@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.Called
 import io.mockk.clearAllMocks
@@ -67,7 +68,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `cache current session successfully`() {
         initializeDeliveryService()
-        val mockSessionMessage: SessionMessage = mockk()
+        val mockSessionMessage: SessionMessage<Session> = mockk()
         every {
             mockDeliveryCacheManager.saveSession(mockSessionMessage)
         } returns "cached_session".toByteArray()

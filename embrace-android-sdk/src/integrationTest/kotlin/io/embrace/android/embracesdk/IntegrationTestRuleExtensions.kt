@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.robolectric.Robolectric
@@ -41,14 +41,14 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
 /**
  * Returns a list of [SessionMessage] that were sent by the SDK since startup.
  */
-internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
+internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage<Session>> {
     return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }
 }
 
 /**
  * Returns the last [SessionMessage] that was sent by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage {
+internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage<Session> {
     return getSentSessionMessages().last()
 }
 
@@ -65,7 +65,7 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
     action: () -> Unit
-): SessionMessage {
+): SessionMessage<Session> {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
     val activityController = if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
@@ -77,7 +77,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
 
     // assert a session was started.
     val startSession = getLastSentSessionMessage()
-    assertEquals("st", startSession.session.messageType)
+    assertEquals("st", startSession.data.messageType)
     // TODO: future: increase number of assertions on what is always in a start message?
 
     // perform a custom action during the session boundary, e.g. adding a breadcrumb.
@@ -90,7 +90,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
     activityController?.stop()
 
     val endSession = getLastSentSessionMessage()
-    assertEquals("en", endSession.session.messageType)
+    assertEquals("en", endSession.data.messageType)
     // TODO: future: increase number of assertions on what is always in a start message?
 
 

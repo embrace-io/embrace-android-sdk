@@ -109,7 +109,7 @@ internal class EmbraceGatingServiceTest {
         val result = gatingService.gateSessionMessage(sessionMessage)
 
         // result shouldn't be sanitized.
-        assertNotNull(result.session.properties)
+        assertNotNull(result.data.properties)
     }
 
     @Test
@@ -129,8 +129,8 @@ internal class EmbraceGatingServiceTest {
         val result = gatingService.gateSessionMessage(sessionMessage)
 
         // result shouldn't be sanitized.
-        assertEquals("id1", result.session.errorLogIds?.at(0))
-        assertNotNull(result.session.properties)
+        assertEquals("id1", result.data.errorLogIds?.at(0))
+        assertNotNull(result.data.properties)
     }
 
     @Test
@@ -150,8 +150,8 @@ internal class EmbraceGatingServiceTest {
         val result = gatingService.gateSessionMessage(sessionMessage)
 
         // result shouldn't be sanitized.
-        assertEquals("crashReportId", result.session.crashReportId)
-        assertNotNull(result.session.properties)
+        assertEquals("crashReportId", result.data.crashReportId)
+        assertNotNull(result.data.properties)
     }
 
     @Test
@@ -226,7 +226,7 @@ internal class EmbraceGatingServiceTest {
         )
 
         val message = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             userInfo = UserInfo(),
             performanceInfo = PerformanceInfo(),
             breadcrumbs = breadcrumbs
@@ -254,7 +254,7 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNotNull(sanitizedMessage.session.properties)
+        assertNotNull(sanitizedMessage.data.properties)
     }
 
     @Test
@@ -267,7 +267,7 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNotNull(sanitizedMessage.session.orientations)
+        assertNotNull(sanitizedMessage.data.orientations)
     }
 
     @Test
@@ -281,8 +281,8 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNotNull(sanitizedMessage.session.terminationTime)
-        assertTrue(checkNotNull(sanitizedMessage.session.isReceivedTermination))
+        assertNotNull(sanitizedMessage.data.terminationTime)
+        assertTrue(checkNotNull(sanitizedMessage.data.isReceivedTermination))
     }
 
     @Test
@@ -296,8 +296,8 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNotNull(sanitizedMessage.session.startupDuration)
-        assertNotNull(sanitizedMessage.session.startupThreshold)
+        assertNotNull(sanitizedMessage.data.startupDuration)
+        assertNotNull(sanitizedMessage.data.startupThreshold)
     }
 
     @Test
@@ -311,8 +311,8 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNull(sanitizedMessage.session.startupDuration)
-        assertNull(sanitizedMessage.session.startupThreshold)
+        assertNull(sanitizedMessage.data.startupDuration)
+        assertNull(sanitizedMessage.data.startupThreshold)
     }
 
     @Test
@@ -328,11 +328,11 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        val infoIds = checkNotNull(sanitizedMessage.session.infoLogIds)
-        assertTrue(sanitizedMessage.session.infoLogsAttemptedToSend == 1)
+        val infoIds = checkNotNull(sanitizedMessage.data.infoLogIds)
+        assertTrue(sanitizedMessage.data.infoLogsAttemptedToSend == 1)
         assertTrue(infoIds.contains("INFO-LOG"))
-        val warnIds = checkNotNull(sanitizedMessage.session.warningLogIds)
-        assertTrue(sanitizedMessage.session.warnLogsAttemptedToSend == 1)
+        val warnIds = checkNotNull(sanitizedMessage.data.warningLogIds)
+        assertTrue(sanitizedMessage.data.warnLogsAttemptedToSend == 1)
         assertTrue(warnIds.contains("WARNING-LOG"))
     }
 
@@ -349,10 +349,10 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNull(sanitizedMessage.session.infoLogIds)
-        assertFalse(sanitizedMessage.session.infoLogsAttemptedToSend == 1)
-        assertNull(sanitizedMessage.session.warningLogIds)
-        assertFalse(sanitizedMessage.session.warnLogsAttemptedToSend == 1)
+        assertNull(sanitizedMessage.data.infoLogIds)
+        assertFalse(sanitizedMessage.data.infoLogsAttemptedToSend == 1)
+        assertNull(sanitizedMessage.data.warningLogIds)
+        assertFalse(sanitizedMessage.data.warnLogsAttemptedToSend == 1)
     }
 
     @Test
@@ -363,7 +363,7 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        val ids = checkNotNull(sanitizedMessage.session.eventIds)
+        val ids = checkNotNull(sanitizedMessage.data.eventIds)
         assertTrue(ids.contains("MOMENT-ID"))
     }
 
@@ -374,7 +374,7 @@ internal class EmbraceGatingServiceTest {
         val sessionMessage = SessionMessage(session)
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        assertNull(sanitizedMessage.session.eventIds)
+        assertNull(sanitizedMessage.data.eventIds)
     }
 
     @Test
@@ -403,7 +403,7 @@ internal class EmbraceGatingServiceTest {
         val userInfo = UserInfo(personas = setOf("persona"))
 
         val sessionMessage = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             userInfo = userInfo,
             performanceInfo = PerformanceInfo()
         )
@@ -434,7 +434,7 @@ internal class EmbraceGatingServiceTest {
         )
 
         val sessionMessage = SessionMessage(
-            session = fakeSession(),
+            data = fakeSession(),
             performanceInfo = sessionPerformanceInfo
         )
 

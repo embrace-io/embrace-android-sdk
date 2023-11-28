@@ -244,7 +244,7 @@ internal class SessionHandlerTest {
         // verify session id gets updated if ndk enabled
         verify { mockNdkService.updateSessionId(sessionUuid) }
         // verify session is correctly built
-        with(checkNotNull(sessionMessage?.session)) {
+        with(checkNotNull(sessionMessage?.data)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
             assertTrue(isColdStart)
@@ -302,7 +302,7 @@ internal class SessionHandlerTest {
 
         verify(exactly = 1) { preferencesService.incrementAndGetSessionNumber() }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage!!.data)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -322,7 +322,7 @@ internal class SessionHandlerTest {
         // verify automatic session stopper has not been scheduled
         verify { mockAutomaticSessionStopper wasNot Called }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage!!.data)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -346,7 +346,7 @@ internal class SessionHandlerTest {
         // verify we are forcing log view with foreground activity class name
         verify(exactly = 1) { mockBreadcrumbService.forceLogView(activityClassName, now) }
         assertNotNull(sessionMessage)
-        assertNotNull(sessionMessage!!.session)
+        assertNotNull(sessionMessage!!.data)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -440,7 +440,7 @@ internal class SessionHandlerTest {
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
         assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
 
-        val session = checkNotNull(deliveryService.lastSavedSession).session
+        val session = checkNotNull(deliveryService.lastSavedSession).data
 
         with(session) {
             assertFalse(checkNotNull(isEndedCleanly))
@@ -536,7 +536,7 @@ internal class SessionHandlerTest {
     fun `verify periodic caching`() {
         startFakeSession()
         sessionHandler.onPeriodicCacheActiveSessionImpl()
-        val session = checkNotNull(deliveryService.lastSavedSession).session
+        val session = checkNotNull(deliveryService.lastSavedSession).data
         assertEquals(false, session.isEndedCleanly)
         assertEquals(true, session.isReceivedTermination)
     }
@@ -613,7 +613,7 @@ internal class SessionHandlerTest {
         )
     }
 
-    private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
+    private fun assertSpanInSessionMessage(sessionMessage: SessionMessage<Session>?) {
         assertNotNull(sessionMessage)
         val spans = checkNotNull(sessionMessage?.spans)
         assertEquals(3, spans.size)

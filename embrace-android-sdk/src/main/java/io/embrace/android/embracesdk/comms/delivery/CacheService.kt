@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.payload.SessionMessage
+
 /**
  * Handles the caching of objects.
  */
@@ -23,6 +25,16 @@ internal interface CacheService {
      * @return optionally the object, if it can be read successfully
      */
     fun <T> loadObject(name: String, clazz: Class<T>): T?
+
+    /**
+     * Reads the specified object from the cache, if it exists.
+     *
+     * @param name  the name of the object to read from the cache
+     * @param clazz the class of the cached object
+     * @param <T>   the type of the cached object
+     * @return optionally the object, if it can be read successfully
+     */
+    fun <T> loadSession(name: String, clazz: Class<T>): SessionMessage<T>?
 
     /**
      * Caches a byte array to disk.

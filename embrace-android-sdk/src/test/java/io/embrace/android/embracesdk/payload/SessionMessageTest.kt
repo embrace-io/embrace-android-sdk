@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -11,6 +12,7 @@ import org.junit.Test
 
 internal class SessionMessageTest {
 
+    private val type = object: TypeToken<SessionMessage<Session>>() {}.type
     private val session = fakeSession()
     private val userInfo = UserInfo("fake-user-id", "fake-user-name")
     private val appInfo = AppInfo("fake-app-version")
@@ -53,9 +55,9 @@ internal class SessionMessageTest {
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("session_message_expected.json")
-        val obj = Gson().fromJson(json, SessionMessage::class.java)
+        val obj = Gson().fromJson<SessionMessage<Session>>(json, type)
         assertNotNull(obj)
-        assertEquals(session, obj.session)
+        assertEquals(session, obj.data)
         assertEquals(userInfo, obj.userInfo)
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
@@ -66,7 +68,7 @@ internal class SessionMessageTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", SessionMessage::class.java)
+        val info = Gson().fromJson<SessionMessage<Session>>("{}", type)
         assertNotNull(info)
     }
 }

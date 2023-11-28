@@ -46,7 +46,7 @@ internal class SessionMessageCollator(
         sdkStartupDuration: Long,
         endTime: Long,
         spans: List<EmbraceSpanData>? = null
-    ): SessionMessage {
+    ): SessionMessage<Session> {
         val startTime: Long = originSession.startTime
 
         // if it's a crash session, then add the stacktrace to the session payload
@@ -137,7 +137,7 @@ internal class SessionMessageCollator(
             endSession.copy(exceptionError = exceptionService.currentExceptionError)
 
         return SessionMessage(
-            session = endSessionWithAllErrors,
+            data = endSessionWithAllErrors,
             userInfo = endSessionWithAllErrors.user,
             appInfo = appInfo,
             deviceInfo = deviceInfo,
@@ -148,7 +148,7 @@ internal class SessionMessageCollator(
     }
 
     internal fun buildStartSessionMessage(session: Session) = SessionMessage(
-        session = session,
+        data = session,
         appInfo = captureDataSafely(metadataService::getAppInfo),
         deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
     )

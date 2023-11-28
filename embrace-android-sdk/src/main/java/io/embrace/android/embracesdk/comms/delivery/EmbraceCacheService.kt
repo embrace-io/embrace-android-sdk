@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.regex.Pattern
@@ -71,13 +72,25 @@ internal class EmbraceCacheService(
         }
     }
 
+    override fun <T> loadSession(name: String, clazz: Class<T>): SessionMessage<T>? {
+        return loadObjectImpl(name) { jsonReader ->
+            serializer.loadSessionMessage(jsonReader)
+        }
+    }
+
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
+        return loadObjectImpl(name) { jsonReader ->
+            serializer.loadObject(jsonReader, clazz)
+        }
+    }
+
+    private fun <T> loadObjectImpl(name: String, mapper: (jsonReader: JsonReader) -> T): T? {
         val file = File(cacheDir.value, EMBRACE_PREFIX + name)
         try {
             file.bufferedReader().use { bufferedReader ->
                 JsonReader(bufferedReader).use { jsonreader ->
                     jsonreader.isLenient = true
-                    val obj = serializer.loadObject(jsonreader, clazz)
+                    val obj = mapper(jsonreader)
                     if (obj != null) {
                         return obj
                     } else {

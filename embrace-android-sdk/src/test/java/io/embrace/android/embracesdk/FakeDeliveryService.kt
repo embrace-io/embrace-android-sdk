@@ -3,10 +3,11 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 /**
@@ -19,26 +20,26 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
-    var lastSentBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSentBackgroundActivity: SessionMessage<BackgroundActivity>? = null
     var saveBackgroundActivityInvokedCount: Int = 0
-    var lastSavedBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSavedBackgroundActivity: SessionMessage<BackgroundActivity>? = null
     var lastEventSentAsync: EventMessage? = null
     var eventSentAsyncInvokedCount: Int = 0
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
-    var lastSavedSession: SessionMessage? = null
-    val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
+    var lastSavedSession: SessionMessage<Session>? = null
+    val lastSentSessions: MutableList<Pair<SessionMessage<Session>, SessionMessageState>> = mutableListOf()
     var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun saveSession(sessionMessage: SessionMessage<Session>) {
         lastSavedSession = sessionMessage
     }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage<Session>) {
         lastSavedSession = sessionMessage
     }
 
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
+    override fun sendSession(sessionMessage: SessionMessage<Session>, state: SessionMessageState) {
         lastSentSessions.add(Pair(sessionMessage, state))
     }
 
@@ -55,12 +56,12 @@ internal class FakeDeliveryService : DeliveryService {
         lastEventSentAsync = eventMessage
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>) {
         saveBackgroundActivityInvokedCount++
         lastSavedBackgroundActivity = backgroundActivityMessage
     }
 
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>) {
         lastSentBackgroundActivity = backgroundActivityMessage
     }
 

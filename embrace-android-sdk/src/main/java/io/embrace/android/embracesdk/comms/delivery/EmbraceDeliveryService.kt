@@ -4,11 +4,12 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
@@ -34,12 +35,12 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun saveSession(sessionMessage: SessionMessage<Session>) {
         val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
         cacheManager.saveSession(sanitizedSessionMessage)
     }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+    override fun saveSessionOnCrash(sessionMessage: SessionMessage<Session>) {
         val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
         cacheManager.saveSessionOnCrash(sanitizedSessionMessage)
     }
@@ -50,7 +51,7 @@ internal class EmbraceDeliveryService(
      * @param sessionMessage    The session message to send
      * @param state             Whether this message is for the session start or end
      */
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
+    override fun sendSession(sessionMessage: SessionMessage<Session>, state: SessionMessageState) {
         logger.logDeveloper(TAG, "Sending session message")
 
         sendSessionsExecutorService.submit {
@@ -62,7 +63,7 @@ internal class EmbraceDeliveryService(
     }
 
     private fun sendSessionImpl(
-        sessionMessage: SessionMessage,
+        sessionMessage: SessionMessage<Session>,
         state: SessionMessageState
     ) {
         logger.logDeveloper(TAG, "Sending session message - background job started")
@@ -74,7 +75,7 @@ internal class EmbraceDeliveryService(
             try {
                 var onFinish: (() -> Unit)? = null
                 if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
-                    onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
+                    onFinish = { cacheManager.deleteSession(sessionMessage.data.sessionId) }
                 }
 
                 if (state == SessionMessageState.END_WITH_CRASH) {
@@ -107,8 +108,8 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to cache
      */
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
-        backgroundActivities.add(backgroundActivityMessage.backgroundActivity.sessionId)
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>) {
+        backgroundActivities.add(backgroundActivityMessage.data.sessionId)
         cacheManager.saveBackgroundActivity(backgroundActivityMessage)
     }
 
@@ -117,7 +118,7 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to send
      */
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage<BackgroundActivity>) {
         logger.logDeveloper(TAG, "Sending background activity message")
 
         sendSessionsExecutorService.submit {
@@ -129,7 +130,7 @@ internal class EmbraceDeliveryService(
 
                 try {
                     val onFinish: (() -> Unit) =
-                        { cacheManager.deleteSession(backgroundActivityMessage.backgroundActivity.sessionId) }
+                        { cacheManager.deleteSession(backgroundActivityMessage.data.sessionId) }
                     apiService.sendSession(backgroundActivity, onFinish)
                     logger.logDeveloper(TAG, "Session message queued to be sent.")
                 } catch (ex: Exception) {
@@ -251,15 +252,15 @@ internal class EmbraceDeliveryService(
 
     private fun attachCrashToSession(
         nativeCrashData: NativeCrashData,
-        sessionMessage: SessionMessage
-    ): SessionMessage {
+        sessionMessage: SessionMessage<Session>
+    ): SessionMessage<Session> {
         logger.logDeveloper(
             TAG,
-            "Attaching native crash ${nativeCrashData.nativeCrashId} to session ${sessionMessage.session.sessionId}"
+            "Attaching native crash ${nativeCrashData.nativeCrashId} to session ${sessionMessage.data.sessionId}"
         )
 
-        val session = sessionMessage.session.copy(crashReportId = nativeCrashData.nativeCrashId)
-        return sessionMessage.copy(session = session)
+        val session = sessionMessage.data.copy(crashReportId = nativeCrashData.nativeCrashId)
+        return sessionMessage.copy(data = session)
     }
 
     private fun sendCachedSessions(ids: List<String>, currentSession: String?) {

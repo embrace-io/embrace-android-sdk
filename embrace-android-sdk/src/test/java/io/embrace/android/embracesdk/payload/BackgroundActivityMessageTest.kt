@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
@@ -20,7 +21,7 @@ internal class BackgroundActivityMessageTest {
     private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
     private val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 
-    private val info = BackgroundActivityMessage(
+    private val info = SessionMessage(
         backgroundActivity,
         userInfo,
         appInfo,
@@ -41,10 +42,11 @@ internal class BackgroundActivityMessageTest {
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-        val obj = Gson().fromJson(json, BackgroundActivityMessage::class.java)
+        val collectionType = object : TypeToken<SessionMessage<BackgroundActivity>>() {}.type
+        val obj: SessionMessage<BackgroundActivity> = Gson().fromJson(json, collectionType)
         assertNotNull(obj)
 
-        assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)
+        assertEquals(backgroundActivity.startTime, obj.data.startTime)
         assertEquals(userInfo, obj.userInfo)
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
@@ -55,7 +57,8 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", BackgroundActivityMessage::class.java)
+        val type = object : TypeToken<SessionMessage<BackgroundActivity>>() {}.type
+        val info = Gson().fromJson<SessionMessage<BackgroundActivity>>("{}", type)
         assertNotNull(info)
     }
 }

@@ -64,7 +64,7 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
  */
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
-    action: () -> Unit
+    action: () -> Unit = {}
 ): SessionMessage {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)

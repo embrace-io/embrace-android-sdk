@@ -26,25 +26,25 @@ internal data class BackgroundActivityMessage @JvmOverloads internal constructor
      * The app information.
      */
     @SerializedName("a")
-    val appInfo: AppInfo,
+    val appInfo: AppInfo?,
 
     /**
      * The device information.
      */
     @SerializedName("d")
-    val deviceInfo: DeviceInfo,
+    val deviceInfo: DeviceInfo?,
 
     /**
      * The device's performance info, such as power, cpu, network.
      */
     @SerializedName("p")
-    val performanceInfo: PerformanceInfo,
+    val performanceInfo: PerformanceInfo?,
 
     /**
      * Breadcrumbs which occurred as part of this session.
      */
     @SerializedName("br")
-    val breadcrumbs: Breadcrumbs,
+    val breadcrumbs: Breadcrumbs?,
 
     @SerializedName("spans")
     val spans: List<EmbraceSpanData>?,

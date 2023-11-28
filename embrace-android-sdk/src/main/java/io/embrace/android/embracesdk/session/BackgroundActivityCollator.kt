@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
-import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class BackgroundActivityCollator(
@@ -41,7 +40,7 @@ internal class BackgroundActivityCollator(
             appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
             isColdStart = coldStart,
             startType = startType,
-            user = userService.loadUserInfoFromDisk(),
+            user = captureDataSafely(userService::loadUserInfoFromDisk),
             number = preferencesService
                 .incrementAndGetBackgroundActivityNumber()
         )
@@ -58,17 +57,27 @@ internal class BackgroundActivityCollator(
             appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
             messageType = EmbraceBackgroundActivityService.MESSAGE_TYPE_END,
             endTime = endTime,
-            eventIds = eventService.findEventIdsForSession(startTime, endTime),
-            infoLogIds = remoteLogger.findInfoLogIds(startTime, endTime),
-            warningLogIds = remoteLogger.findWarningLogIds(startTime, endTime),
-            errorLogIds = remoteLogger.findErrorLogIds(startTime, endTime),
-            infoLogsAttemptedToSend = remoteLogger.getInfoLogsAttemptedToSend(),
-            warnLogsAttemptedToSend = remoteLogger.getWarnLogsAttemptedToSend(),
-            errorLogsAttemptedToSend = remoteLogger.getErrorLogsAttemptedToSend(),
-            exceptionError = exceptionService.currentExceptionError,
+            eventIds = captureDataSafely {
+                eventService.findEventIdsForSession(
+                    startTime,
+                    endTime
+                )
+            },
+            infoLogIds = captureDataSafely { remoteLogger.findInfoLogIds(startTime, endTime) },
+            warningLogIds = captureDataSafely {
+                remoteLogger.findWarningLogIds(
+                    startTime,
+                    endTime
+                )
+            },
+            errorLogIds = captureDataSafely { remoteLogger.findErrorLogIds(startTime, endTime) },
+            infoLogsAttemptedToSend = captureDataSafely(remoteLogger::getInfoLogsAttemptedToSend),
+            warnLogsAttemptedToSend = captureDataSafely(remoteLogger::getWarnLogsAttemptedToSend),
+            errorLogsAttemptedToSend = captureDataSafely(remoteLogger::getErrorLogsAttemptedToSend),
+            exceptionError = captureDataSafely(exceptionService::currentExceptionError),
             lastHeartbeatTime = endTime,
             endType = endType,
-            unhandledExceptions = remoteLogger.getUnhandledExceptionsSent(),
+            unhandledExceptions = captureDataSafely(remoteLogger::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
     }
@@ -88,33 +97,38 @@ internal class BackgroundActivityCollator(
             val startTime = backgroundActivity.startTime ?: 0L
             val endTime = backgroundActivity.endTime ?: clock.now()
             val isCrash = backgroundActivity.crashReportId != null
-            val breadcrumbs: Breadcrumbs
-            val spans: List<EmbraceSpanData>?
-            if (isBackgroundActivityEnd) {
-                breadcrumbs = breadcrumbService.flushBreadcrumbs()
-                spans = spansService.flushSpans(
-                    if (isCrash) {
-                        EmbraceAttributes.AppTerminationCause.CRASH
-                    } else {
-                        null
+            val breadcrumbs = captureDataSafely {
+                when {
+                    isBackgroundActivityEnd -> breadcrumbService.flushBreadcrumbs()
+                    else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
+                }
+            }
+            val spans: List<EmbraceSpanData>? = captureDataSafely {
+                when {
+                    isBackgroundActivityEnd -> {
+                        val appTerminationCause = when {
+                            isCrash -> EmbraceAttributes.AppTerminationCause.CRASH
+                            else -> null
+                        }
+                        spansService.flushSpans(appTerminationCause)
                     }
-                )
-            } else {
-                breadcrumbs = breadcrumbService.getBreadcrumbs(startTime, endTime)
-                spans = spansService.completedSpans()
+                    else -> spansService.completedSpans()
+                }
             }
 
             return BackgroundActivityMessage(
                 backgroundActivity = backgroundActivity,
                 userInfo = backgroundActivity.user,
-                appInfo = metadataService.getAppInfo(),
-                deviceInfo = metadataService.getDeviceInfo(),
-                performanceInfo = performanceInfoService.getSessionPerformanceInfo(
-                    startTime,
-                    endTime,
-                    java.lang.Boolean.TRUE == backgroundActivity.isColdStart,
-                    null
-                ),
+                appInfo = captureDataSafely(metadataService::getAppInfo),
+                deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
+                performanceInfo = captureDataSafely {
+                    performanceInfoService.getSessionPerformanceInfo(
+                        startTime,
+                        endTime,
+                        java.lang.Boolean.TRUE == backgroundActivity.isColdStart,
+                        null
+                    )
+                },
                 breadcrumbs = breadcrumbs,
                 spans = spans
             )

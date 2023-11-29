@@ -48,8 +48,8 @@ internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionM
 /**
  * Returns the last [SessionMessage] that was sent by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage {
-    return getSentSessionMessages().last()
+internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
+    return getSentSessionMessages().lastOrNull()
 }
 
 /**
@@ -65,20 +65,16 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
     action: () -> Unit = {}
-): SessionMessage {
+): SessionMessage? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
-    val activityController = if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
+    val activityController =
+        if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
 
     activityController?.create()
     activityController?.start()
     activityService.onForeground()
     activityController?.resume()
-
-    // assert a session was started.
-    val startSession = getLastSentSessionMessage()
-    assertEquals("st", startSession.session.messageType)
-    // TODO: future: increase number of assertions on what is always in a start message?
 
     // perform a custom action during the session boundary, e.g. adding a breadcrumb.
     action()
@@ -88,14 +84,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
     activityController?.pause()
     activityService.onBackground()
     activityController?.stop()
-
-    val endSession = getLastSentSessionMessage()
-    assertEquals("en", endSession.session.messageType)
-    // TODO: future: increase number of assertions on what is always in a start message?
-
-
-    // return the session end message for further assertions.
-    return endSession
+    return getLastSentSessionMessage()
 }
 
 internal fun exceptionsService(): EmbraceInternalErrorService? = Embrace.getImpl().exceptionsService
@@ -120,7 +109,9 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs:
 
 internal fun verifySessionHappened(startMessage: SessionMessage, endMessage: SessionMessage) {
     verifySessionMessage(startMessage)
+    assertEquals("st", startMessage.session.messageType)
     verifySessionMessage(endMessage)
+    assertEquals("en", endMessage.session.messageType)
     assertEquals(startMessage.session.sessionId, endMessage.session.sessionId)
 }
 

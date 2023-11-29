@@ -23,7 +23,6 @@ import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -92,11 +91,11 @@ internal class EmbraceDeliveryCacheManagerTest {
             )
         }
 
-        assertSessionsMatch(sessionMessage, deliveryCacheManager.loadSession("test_cache")!!)
+        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
 
         val expectedByteArray =
             serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
-        assertArrayEquals(expectedByteArray, deliveryCacheManager.loadSessionBytes("test_cache")!!)
+        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
     @Test
@@ -150,8 +149,8 @@ internal class EmbraceDeliveryCacheManagerTest {
         deliveryCacheManager.saveSession(session)
 
         val cachedSession = deliveryCacheManager.loadSession("test_remove")
-        assertNotNull(cachedSession)
-        assertSessionsMatch(session, cachedSession!!)
+        checkNotNull(cachedSession)
+        assertSessionsMatch(session, cachedSession)
 
         deliveryCacheManager.deleteSession("test_remove")
 
@@ -250,7 +249,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
-        assertSessionsMatch(session, deliveryCacheManager.loadSession(allSessions[0])!!)
+        assertSessionsMatch(session, checkNotNull(deliveryCacheManager.loadSession(allSessions[0])))
 
         verify { cacheService.deleteFile("last_session.json") }
     }
@@ -413,8 +412,8 @@ internal class EmbraceDeliveryCacheManagerTest {
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
         // SessionMessage does not implement equals, so we have to serialize to compare
         assertEquals(
-            String(serializer.bytesFromPayload(session1, SessionMessage::class.java)!!),
-            String(serializer.bytesFromPayload(session2, SessionMessage::class.java)!!)
+            String(checkNotNull(serializer.bytesFromPayload(session1, SessionMessage::class.java))),
+            String(checkNotNull(serializer.bytesFromPayload(session2, SessionMessage::class.java)))
         )
     }
 

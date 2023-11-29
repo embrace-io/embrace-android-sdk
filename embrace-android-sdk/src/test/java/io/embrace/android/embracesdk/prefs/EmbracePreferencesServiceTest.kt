@@ -277,7 +277,7 @@ internal class EmbracePreferencesServiceTest {
     fun `test is jail broken is saved`() {
         assertNull(service.jailbroken)
         service.jailbroken = true
-        assertTrue(service.jailbroken!!)
+        assertTrue(checkNotNull(service.jailbroken))
     }
 
     @Test

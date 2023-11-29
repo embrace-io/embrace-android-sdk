@@ -529,7 +529,10 @@ internal class EmbraceBreadcrumbService(
         endTime: Long
     ): List<T> {
         logger.logDeveloper("EmbraceBreadcrumbsService", "Filtering breadcrumbs for time window")
-        return filter(breadcrumbs) { crumb: T -> crumb!!.getStartTime() >= startTime && (endTime <= 0L || crumb.getStartTime() <= endTime) }
+        return filter(breadcrumbs) { crumb: T ->
+            checkNotNull(crumb)
+            crumb.getStartTime() >= startTime && (endTime <= 0L || crumb.getStartTime() <= endTime)
+        }
     }
 
     private fun <T> tryAddBreadcrumb(

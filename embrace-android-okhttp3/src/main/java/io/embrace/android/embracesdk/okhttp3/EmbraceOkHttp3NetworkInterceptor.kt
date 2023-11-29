@@ -110,7 +110,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
                 HttpMethod.fromString(request.method),
                 response.sentRequestAtMillis + offset,
                 response.receivedResponseAtMillis + offset,
-                if (request.body != null) request.body!!.contentLength() else 0,
+                request.body?.contentLength() ?: 0,
                 contentLength,
                 response.code,
                 request.header(embrace.traceIdHeader),

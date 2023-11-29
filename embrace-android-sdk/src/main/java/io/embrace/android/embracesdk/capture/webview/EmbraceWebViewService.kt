@@ -51,7 +51,7 @@ internal class EmbraceWebViewService(
                 )
             }
 
-            webViewInfoMap[it.url + it.startTime] = processVitalList(it, webViewInfoMap[it.url + it.startTime]!!)
+            webViewInfoMap[it.url + it.startTime] = processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
 
             InternalStaticEmbraceLogger.logger.logDebug("Collected WebView core vital: $message")
         }

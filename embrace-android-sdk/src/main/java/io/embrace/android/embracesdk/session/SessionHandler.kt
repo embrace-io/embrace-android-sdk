@@ -72,6 +72,7 @@ internal class SessionHandler(
     internal fun getSessionId(): String? = activeSession?.sessionId
 
     var scheduledFuture: ScheduledFuture<*>? = null
+    var closerFuture: ScheduledFuture<*>? = null
 
     /**
      * Guards session state changes.
@@ -347,9 +348,9 @@ internal class SessionHandler(
         }
 
         try {
-            this.automaticSessionStopper.scheduleWithFixedDelay(
+            closerFuture?.cancel(true)
+            closerFuture = this.automaticSessionStopper.schedule(
                 automaticSessionStopperCallback,
-                maxSessionSeconds.toLong(),
                 maxSessionSeconds.toLong(),
                 TimeUnit.SECONDS
             )

@@ -192,6 +192,7 @@ internal class SessionHandler(
                 clock.now(),
                 crashId,
             )
+            activeSession = null
             fullEndSessionMessage?.let(deliveryService::saveSessionOnCrash)
         }
     }

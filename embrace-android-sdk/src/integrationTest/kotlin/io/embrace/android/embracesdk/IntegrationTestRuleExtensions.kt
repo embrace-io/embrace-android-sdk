@@ -46,6 +46,13 @@ internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionM
 }
 
 /**
+ * Returns the last [SessionMessage] that was saved by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMessage? {
+    return fakeDeliveryModule.deliveryService.lastSavedSession
+}
+
+/**
  * Returns the last [SessionMessage] that was sent by the SDK.
  */
 internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {

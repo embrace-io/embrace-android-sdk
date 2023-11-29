@@ -5,14 +5,14 @@ import io.embrace.android.embracesdk.comms.api.ApiRequest
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
- * A queue containing failed API calls.
+ * A queue containing pending API calls.
  */
-internal class DeliveryFailedApiCalls : ConcurrentLinkedQueue<DeliveryFailedApiCall>()
+internal class PendingApiCallsQueue : ConcurrentLinkedQueue<PendingApiCall>()
 
 /**
- * A failed API call.
+ * A pending API call.
  */
-internal data class DeliveryFailedApiCall(
+internal data class PendingApiCall(
     @SerializedName("apiRequest") val apiRequest: ApiRequest,
     @SerializedName("cachedPayload") val cachedPayloadFilename: String,
     @SerializedName("queueTime") val queueTime: Long? = null

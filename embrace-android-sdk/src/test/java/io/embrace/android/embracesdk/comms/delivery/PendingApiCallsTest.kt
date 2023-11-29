@@ -10,17 +10,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class FailedApiCallsPerEndpointTest {
+internal class PendingApiCallsTest {
 
-    private lateinit var failedApiCalls: FailedApiCallsPerEndpoint
+    private lateinit var pendingApiCalls: PendingApiCalls
 
     @Before
     fun setUp() {
-        failedApiCalls = FailedApiCallsPerEndpoint()
+        pendingApiCalls = PendingApiCalls()
     }
 
     @Test
-    fun `test adding failed api calls associated to endpoints`() {
+    fun `test adding pending api calls associated to endpoints`() {
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -29,8 +29,8 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
-        failedApiCalls.add(failedApiCall1)
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
+        pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
@@ -40,16 +40,16 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_2",
             contentEncoding = "gzip"
         )
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_filename")
-        failedApiCalls.add(failedApiCall2)
+        val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
+        pendingApiCalls.add(pendingApiCall2)
 
-        assertEquals(failedApiCall1, failedApiCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall2, failedApiCalls.pollNextFailedApiCall())
-        assertEquals(null, failedApiCalls.pollNextFailedApiCall())
+        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
     }
 
     @Test
-    fun `test hasAnyFailedApiCalls`() {
+    fun `test hasAnyPendingApiCall`() {
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -58,28 +58,13 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        assertFalse(failedApiCalls.hasAnyFailedApiCalls())
-        failedApiCalls.add(DeliveryFailedApiCall(request1, "payload_filename"))
-        assertTrue(failedApiCalls.hasAnyFailedApiCalls())
+        assertFalse(pendingApiCalls.hasAnyPendingApiCall())
+        pendingApiCalls.add(PendingApiCall(request1, "payload_filename"))
+        assertTrue(pendingApiCalls.hasAnyPendingApiCall())
     }
 
     @Test
-    fun `test hasNoFailedApiCalls`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        assertTrue(failedApiCalls.hasNoFailedApiCalls())
-        failedApiCalls.add(DeliveryFailedApiCall(request1, "payload_filename"))
-        assertFalse(failedApiCalls.hasNoFailedApiCalls())
-    }
-
-    @Test
-    fun `test pollNextFailedApiCall always return session if exists`() {
+    fun `test pollNextPendingApiCall always return session if exists`() {
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
             httpMethod = HttpMethod.POST,
@@ -88,8 +73,8 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
-        failedApiCalls.add(failedApiCall1)
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
+        pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
@@ -99,17 +84,17 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_2",
             contentEncoding = "gzip"
         )
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_filename")
-        failedApiCalls.add(failedApiCall2)
+        val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
+        pendingApiCalls.add(pendingApiCall2)
 
-        assertEquals(failedApiCall2, failedApiCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall1, failedApiCalls.pollNextFailedApiCall())
-        assertEquals(null, failedApiCalls.pollNextFailedApiCall())
+        assertEquals(pendingApiCall2, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
     }
 
     @Test
-    fun `test pollNextFailedApiCall returns null if no failed api calls exist`() {
-        assertEquals(null, failedApiCalls.pollNextFailedApiCall())
+    fun `test pollNextPendingApiCall returns null if no pending api calls exist`() {
+        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
     }
 
     @Test
@@ -122,18 +107,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(SESSIONS_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
     }
 
     @Test
@@ -146,18 +131,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(EVENTS_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
     }
 
     @Test
@@ -170,18 +155,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(BLOBS_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
     }
 
     @Test
@@ -194,18 +179,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(LOGGING_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
     }
 
     @Test
@@ -218,18 +203,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(NETWORK_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
     }
 
     @Test
@@ -242,18 +227,18 @@ internal class FailedApiCallsPerEndpointTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_filename")
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         repeat(UNKNOWN_LIMIT - 1) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertTrue(failedApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
+        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
 
         repeat(2) {
-            failedApiCalls.add(failedApiCall1)
+            pendingApiCalls.add(pendingApiCall1)
         }
 
-        assertFalse(failedApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
+        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
     }
 }
 

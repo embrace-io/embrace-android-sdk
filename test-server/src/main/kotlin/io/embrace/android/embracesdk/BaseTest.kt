@@ -33,7 +33,7 @@ import java.util.zip.GZIPInputStream
  */
 public open class BaseTest {
 
-    protected lateinit var failedApiCallsFilePath: String
+    protected lateinit var pendingApiCallsFilePath: String
     public lateinit var mContext: EmbraceContext
     protected val gson: Gson = Gson()
     public val testServer: TestServer = TestServer()
@@ -52,7 +52,7 @@ public open class BaseTest {
         mContext =
             EmbraceContext(InstrumentationRegistry.getInstrumentation().context.applicationContext)
 
-        failedApiCallsFilePath = storageDir.absolutePath + "/emb_failed_api_calls.json"
+        pendingApiCallsFilePath = storageDir.absolutePath + "/emb_failed_api_calls.json"
 
         // attach our mock context to the ProcessLifecycleOwner, this will give us control over the
         // activity/application lifecycle for callbacks registered with the ProcessLifecycleOwner
@@ -239,9 +239,9 @@ public open class BaseTest {
         validate: (file: File) -> Unit
     ) {
         val startSignal = CountDownLatch(1)
-        val file = File(failedApiCallsFilePath)
+        val file = File(pendingApiCallsFilePath)
 
-        fileObserver = EmbraceFileObserver(failedApiCallsFilePath, FileObserver.ALL_EVENTS)
+        fileObserver = EmbraceFileObserver(pendingApiCallsFilePath, FileObserver.ALL_EVENTS)
         fileObserver?.startWatching(startSignal)
 
         testServer.addResponse(

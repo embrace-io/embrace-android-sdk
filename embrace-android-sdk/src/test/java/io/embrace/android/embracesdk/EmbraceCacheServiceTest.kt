@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -179,26 +179,26 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test DeliveryFailedApiCalls can be cached`() {
+    fun `test PendingApiCalls can be cached`() {
         val apiRequest = ApiRequest(
             httpMethod = HttpMethod.GET,
-            url = EmbraceUrl.create("http://fake.url")
+            url = EmbraceUrl.create("http://fake.url/sessions")
         )
-        val failedApiCalls = DeliveryFailedApiCalls()
-        failedApiCalls.add(DeliveryFailedApiCall(apiRequest, "payload_id"))
+        val pendingApiCalls = PendingApiCalls()
+        pendingApiCalls.add(PendingApiCall(apiRequest, "payload_id"))
 
-        val cacheKey = "test_failed_calls_cache"
+        val cacheKey = "test_pending_calls_cache"
         service.cacheObject(
             cacheKey,
-            failedApiCalls,
-            DeliveryFailedApiCalls::class.java
+            pendingApiCalls,
+            PendingApiCalls::class.java
         )
-        val cachedFailedCalls =
-            service.loadObject(cacheKey, DeliveryFailedApiCalls::class.java)
+        val cachedPendingCalls =
+            service.loadObject(cacheKey, PendingApiCalls::class.java)
 
-        checkNotNull(cachedFailedCalls)
-        assertFalse(cachedFailedCalls.isEmpty())
-        val cachedApiRequest = cachedFailedCalls.poll()?.apiRequest
+        checkNotNull(cachedPendingCalls)
+        assertTrue(cachedPendingCalls.hasAnyPendingApiCall())
+        val cachedApiRequest = cachedPendingCalls.pollNextPendingApiCall()?.apiRequest
         assertNotNull(cachedApiRequest)
         assertEquals(apiRequest.contentType, cachedApiRequest?.contentType)
         assertEquals(apiRequest.userAgent, cachedApiRequest?.userAgent)

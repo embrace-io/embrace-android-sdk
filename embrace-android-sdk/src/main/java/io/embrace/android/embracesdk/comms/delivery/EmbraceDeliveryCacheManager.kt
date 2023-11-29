@@ -38,9 +38,9 @@ internal class EmbraceDeliveryCacheManager(
         private const val CRASH_FILE_NAME = "crash.json"
 
         /**
-         * File names for failed api calls
+         * File name for pending api calls
          */
-        private const val FAILED_API_CALLS_FILE_NAME = "failed_api_calls.json"
+        private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"
 
         const val MAX_SESSIONS_CACHED = 64
 
@@ -185,55 +185,55 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     /**
-     * Saves the [FailedApiCallsPerEndpoint] map to a file named [FAILED_API_CALLS_FILE_NAME].
+     * Saves the [PendingApiCalls] map to a file named [PENDING_API_CALLS_FILE_NAME].
      */
-    override fun saveFailedApiCalls(failedApiCalls: FailedApiCallsPerEndpoint) {
-        logger.logDeveloper(TAG, "Saving failed api calls")
+    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
+        logger.logDeveloper(TAG, "Saving pending api calls")
         serializer.bytesFromPayload(
-            failedApiCalls,
-            FailedApiCallsPerEndpoint::class.java
+            pendingApiCalls,
+            PendingApiCalls::class.java
         )?.let {
             executorService.submit {
-                cacheService.cacheBytes(FAILED_API_CALLS_FILE_NAME, it)
+                cacheService.cacheBytes(PENDING_API_CALLS_FILE_NAME, it)
             }
         }
     }
 
     /**
-     * Loads the [FailedApiCallsPerEndpoint] map from a file named [FAILED_API_CALLS_FILE_NAME].
+     * Loads the [PendingApiCalls] map from a file named [PENDING_API_CALLS_FILE_NAME].
      * If loadObject returns null, it tries to load the old version of the file which was storing
-     * [DeliveryFailedApiCalls] instead of [FailedApiCallsPerEndpoint].
+     * [PendingApiCallsQueue] instead of [PendingApiCalls].
      */
-    override fun loadFailedApiCalls(): FailedApiCallsPerEndpoint {
-        logger.logDeveloper(TAG, "Loading failed api calls")
-        val cached = executorService.submit<FailedApiCallsPerEndpoint> {
+    override fun loadPendingApiCalls(): PendingApiCalls {
+        logger.logDeveloper(TAG, "Loading pending api calls")
+        val cached = executorService.submit<PendingApiCalls> {
             val loadApiCallsResult = runCatching {
-                cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, FailedApiCallsPerEndpoint::class.java)
+                cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
             }
-            loadApiCallsResult.getOrNull() ?: loadFailedApiCallsOldVersion()
+            loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
         }.get()
         return if (cached != null) {
             cached
         } else {
-            logger.logDeveloper(TAG, "No failed api calls cache found")
-            FailedApiCallsPerEndpoint()
+            logger.logDeveloper(TAG, "No pending api calls cache found")
+            PendingApiCalls()
         }
     }
 
     /**
-     * Loads the old version of the [FAILED_API_CALLS_FILE_NAME] file where
-     * it was storing [DeliveryFailedApiCalls] instead of [FailedApiCallsPerEndpoint]
+     * Loads the old version of the [PENDING_API_CALLS_FILE_NAME] file where
+     * it was storing [PendingApiCallsQueue] instead of [PendingApiCalls]
      */
-    private fun loadFailedApiCallsOldVersion(): FailedApiCallsPerEndpoint? {
-        logger.logDeveloper(TAG, "Loading old version of failed api calls")
-        var cachedApiCallsPerEndpoint: FailedApiCallsPerEndpoint? = null
-        val loadFailedApiCalls = runCatching {
-            cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, DeliveryFailedApiCalls::class.java)
+    private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
+        logger.logDeveloper(TAG, "Loading old version of pending api calls")
+        var cachedApiCallsPerEndpoint: PendingApiCalls? = null
+        val loadPendingApiCallsQueue = runCatching {
+            cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCallsQueue::class.java)
         }
 
-        if (loadFailedApiCalls.isSuccess) {
-            cachedApiCallsPerEndpoint = FailedApiCallsPerEndpoint()
-            loadFailedApiCalls.getOrNull()?.forEach { cachedApiCall ->
+        if (loadPendingApiCallsQueue.isSuccess) {
+            cachedApiCallsPerEndpoint = PendingApiCalls()
+            loadPendingApiCallsQueue.getOrNull()?.forEach { cachedApiCall ->
                 cachedApiCallsPerEndpoint.add(cachedApiCall)
             }
         }

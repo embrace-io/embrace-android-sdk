@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
-import io.embrace.android.embracesdk.fakes.FakeDeliveryRetryManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
+import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -38,7 +38,7 @@ internal class EmbraceApiServiceTest {
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
-    private lateinit var fakeDeliveryRetryManager: FakeDeliveryRetryManager
+    private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
 
     @Before
     fun setUp() {
@@ -56,7 +56,7 @@ internal class EmbraceApiServiceTest {
         networkConnectivityService = FakeNetworkConnectivityService()
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
-        fakeDeliveryRetryManager = FakeDeliveryRetryManager()
+        fakePendingApiCallsSender = FakePendingApiCallsSender()
         initApiService()
     }
 
@@ -269,7 +269,7 @@ internal class EmbraceApiServiceTest {
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
-            deliveryRetryManager = fakeDeliveryRetryManager,
+            pendingApiCallsSender = fakePendingApiCallsSender,
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )

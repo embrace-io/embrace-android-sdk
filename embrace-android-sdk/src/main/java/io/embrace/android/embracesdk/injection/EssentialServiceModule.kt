@@ -21,10 +21,10 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryRetryManager
+import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
@@ -71,7 +71,7 @@ internal interface EssentialServiceModule {
     val networkConnectivityService: NetworkConnectivityService
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
-    val deliveryRetryManager: DeliveryRetryManager
+    val pendingApiCallsSender: PendingApiCallsSender
     val storageDirectory: Lazy<File>
 }
 
@@ -275,8 +275,8 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    override val deliveryRetryManager: DeliveryRetryManager by singleton {
-        EmbraceDeliveryRetryManager(
+    override val pendingApiCallsSender: PendingApiCallsSender by singleton {
+        EmbracePendingApiCallsSender(
             networkConnectivityService,
             apiRetryExecutor,
             deliveryCacheManager,
@@ -292,7 +292,7 @@ internal class EssentialServiceModuleImpl(
             logger = coreModule.logger,
             scheduledExecutorService = apiRetryExecutor,
             cacheManager = deliveryCacheManager,
-            deliveryRetryManager = deliveryRetryManager,
+            pendingApiCallsSender = pendingApiCallsSender,
             lazyDeviceId = lazyDeviceId,
             appId = appId,
             urlBuilder = urlBuilder,

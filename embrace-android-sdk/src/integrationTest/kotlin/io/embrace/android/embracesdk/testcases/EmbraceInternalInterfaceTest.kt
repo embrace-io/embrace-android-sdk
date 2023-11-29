@@ -202,7 +202,7 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            val requests = checkNotNull(session?.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -223,7 +223,7 @@ internal class EmbraceInternalInterfaceTest {
                 embrace.internalInterface.logComposeTap(android.util.Pair.create(expectedX, expectedY), expectedElementName)
             }
 
-            val tapBreadcrumb = checkNotNull(session.breadcrumbs?.tapBreadcrumbs?.last())
+            val tapBreadcrumb = checkNotNull(session?.breadcrumbs?.tapBreadcrumbs?.last())
             assertEquals("10,99", tapBreadcrumb.location)
             assertEquals(expectedElementName, tapBreadcrumb.tappedElementName)
         }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import android.content.Context
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
@@ -10,8 +9,6 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,18 +22,15 @@ import java.nio.file.Files
 
 internal class EmbraceCacheServiceTest {
 
-    private lateinit var context: Context
     private lateinit var service: CacheService
     private lateinit var dir: File
 
     @Before
     fun setUp() {
-        context = mockk()
 
         dir = Files.createTempDirectory("tmpDirPrefix").toFile()
-        every { context.cacheDir } returns dir
         service = EmbraceCacheService(
-            context,
+            lazy { dir },
             EmbraceSerializer(),
             InternalEmbraceLogger()
         )
@@ -151,7 +145,11 @@ internal class EmbraceCacheServiceTest {
         // In order to force File.listFiles() to return null, we make the File not to be a directory
         val myDir = File("no_directory_file")
         myDir.createNewFile()
-        every { context.cacheDir } returns myDir
+        service = EmbraceCacheService(
+            lazy { myDir },
+            EmbraceSerializer(),
+            InternalEmbraceLogger()
+        )
 
         val deleted = service.deleteObjectsByRegex(".*object.*")
         assertFalse(deleted)

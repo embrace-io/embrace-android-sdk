@@ -24,7 +24,7 @@ import java.net.URI
  */
 internal class ApiResponseCache @JvmOverloads constructor(
     private val serializer: EmbraceSerializer,
-    cacheDirProvider: () -> File,
+    storageDirProvider: () -> File,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : Closeable {
 
@@ -35,7 +35,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
 
     @Volatile
     private var cache: HttpResponseCache? = null
-    private val cacheDir: File by lazy { cacheDirProvider() }
+    private val storageDir: File by lazy { storageDirProvider() }
     private val lock = Object()
 
     private fun initializeIfNeeded() {
@@ -43,7 +43,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
             synchronized(lock) {
                 if (cache == null) {
                     cache = try {
-                        HttpResponseCache.install(cacheDir, MAX_CACHE_SIZE_BYTES)
+                        HttpResponseCache.install(storageDir, MAX_CACHE_SIZE_BYTES)
                     } catch (exc: IOException) {
                         logger.logWarning("Failed to initialize HTTP cache.", exc)
                         null

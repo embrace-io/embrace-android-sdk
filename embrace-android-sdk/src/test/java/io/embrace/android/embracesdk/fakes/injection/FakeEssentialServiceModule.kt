@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import java.io.File
 
 internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),
@@ -62,4 +63,6 @@ internal class FakeEssentialServiceModule(
         get() = throw UnsupportedOperationException()
 
     override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate()
+
+    override val storageDirectory: Lazy<File> = lazy { throw UnsupportedOperationException() }
 }

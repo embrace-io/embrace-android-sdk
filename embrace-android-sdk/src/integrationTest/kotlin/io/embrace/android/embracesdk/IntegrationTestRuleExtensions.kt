@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -10,7 +9,6 @@ import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import org.junit.Assert
 import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/

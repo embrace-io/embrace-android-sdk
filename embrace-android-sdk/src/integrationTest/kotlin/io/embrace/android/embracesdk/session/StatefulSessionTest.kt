@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
@@ -44,6 +46,8 @@ internal class StatefulSessionTest {
             val messages = testRule.harness.getSentSessionMessages()
             val first = messages[1]
             verifySessionHappened(messages[0], first)
+            assertEquals(SessionLifeEventType.STATE, first.session.startType)
+            assertEquals(SessionLifeEventType.STATE, first.session.endType)
             val crumb = checkNotNull(first.breadcrumbs?.customBreadcrumbs?.single())
             assertEquals("Hello, World!", crumb.message)
 

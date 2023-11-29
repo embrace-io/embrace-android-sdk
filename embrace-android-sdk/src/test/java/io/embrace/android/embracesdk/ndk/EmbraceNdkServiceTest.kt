@@ -5,7 +5,6 @@ import android.content.res.Resources
 import android.os.Build
 import android.util.Base64
 import com.google.common.util.concurrent.MoreExecutors
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -19,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -67,7 +67,6 @@ internal class EmbraceNdkServiceTest {
         private lateinit var delegate: NdkServiceDelegate.NdkDelegate
         private lateinit var repository: EmbraceNdkServiceRepository
         private lateinit var resources: Resources
-        private lateinit var gson: Gson
         private val deviceArchitecture = FakeDeviceArchitecture()
 
         @BeforeClass
@@ -90,7 +89,6 @@ internal class EmbraceNdkServiceTest {
             delegate = mockk(relaxed = true)
             repository = mockk(relaxUnitFun = true)
             resources = mockk(relaxUnitFun = true)
-            gson = Gson()
 
             val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
             every { metadataService.getAppInfo() } returns appInfo
@@ -582,7 +580,8 @@ internal class EmbraceNdkServiceTest {
         delegate,
         cleanCacheExecutorService,
         ndkStartupExecutorService,
-        deviceArchitecture
+        deviceArchitecture,
+        EmbraceSerializer()
     ) {
         override fun createCrashReportDirectory() {
         }

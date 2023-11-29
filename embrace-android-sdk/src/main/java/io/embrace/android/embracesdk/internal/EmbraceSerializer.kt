@@ -32,11 +32,11 @@ internal class EmbraceSerializer {
             ?: throw JsonIOException("Failed converting object to JSON.")
     }
 
-    fun <T> fromJson(json: String, type: Type): T? {
+    fun <T> fromJson(json: String, type: Type): T {
         return gson.fromJson(json, type)
     }
 
-    fun <T> fromJson(json: String, clz: Class<T>): T? {
+    fun <T> fromJson(json: String, clz: Class<T>): T {
         return gson.fromJson(json, clz)
     }
 

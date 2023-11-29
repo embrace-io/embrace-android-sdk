@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -15,6 +14,8 @@ import org.junit.Before
 import org.junit.Test
 
 internal class SessionMessageSerializerTest {
+
+    private val embraceSerializer = EmbraceSerializer()
 
     private lateinit var msg: SessionMessage
 
@@ -33,11 +34,10 @@ internal class SessionMessageSerializerTest {
 
     @Test
     fun testSessionMessageSerializer() {
-        val gson = Gson()
         val serializer = SessionMessageSerializer(EmbraceSerializer())
 
         // message should be identical to JSON.
-        val expected = gson.toJson(msg, SessionMessage::class.java)
+        val expected = embraceSerializer.toJson(msg, SessionMessage::class.java)
         val observed = serializer.serialize(msg)
         assertEquals(expected, observed)
 

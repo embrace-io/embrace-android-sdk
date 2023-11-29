@@ -18,10 +18,12 @@ import org.junit.Test
  */
 internal class SessionStacktraceSampleJsonTest {
 
+    private val gson = Gson()
+
     @Test
     fun testSymbolSerialization() {
         val session = fakeSession().copy(symbols = mapOf("foo" to "bar"))
-        val root = Gson().toJsonTree(session).asJsonObject
+        val root = gson.toJsonTree(session).asJsonObject
 
         // assert symbols included
         val symbols = root.getAsJsonObject("sb")
@@ -34,7 +36,7 @@ internal class SessionStacktraceSampleJsonTest {
         val session = PerformanceInfo(
             nativeThreadAnrIntervals = listOf(fixture)
         )
-        val root = Gson().toJsonTree(session).asJsonObject
+        val root = gson.toJsonTree(session).asJsonObject
 
         // assert ticks included
         val ticks = root.getAsJsonArray("nst")

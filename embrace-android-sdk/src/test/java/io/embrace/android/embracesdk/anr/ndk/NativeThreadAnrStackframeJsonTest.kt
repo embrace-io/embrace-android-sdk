@@ -8,6 +8,8 @@ import org.junit.Test
 
 internal class NativeThreadAnrStackframeJsonTest {
 
+    private val serializer = Gson()
+
     @Test
     fun testSerialization() {
         val frame = NativeThreadAnrStackframe(
@@ -17,7 +19,7 @@ internal class NativeThreadAnrStackframeJsonTest {
             11
         )
 
-        val tree = Gson().toJsonTree(frame).asJsonObject
+        val tree = serializer.toJsonTree(frame).asJsonObject
         assertNotNull(tree)
         assertEquals(4, tree.size())
         assertEquals("0x5092afb9", tree.get("pc").asString)

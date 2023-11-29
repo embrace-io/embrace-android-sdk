@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class ThreadInfoTest {
+    private val serializer = EmbraceSerializer()
 
     @Test
     fun testThreadInfoMaxLines() {
@@ -34,14 +35,14 @@ internal class ThreadInfoTest {
         val expectedInfo = ResourceReader.readResourceAsText("thread_info_expected.json")
             .filter { !it.isWhitespace() }
 
-        val observed = Gson().toJson(threadInfo)
+        val observed = serializer.toJson(threadInfo)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testThreadInfoDeserialization() {
         val json = ResourceReader.readResourceAsText("thread_info_expected.json")
-        val obj = Gson().fromJson(json, ThreadInfo::class.java)
+        val obj = serializer.fromJson(json, ThreadInfo::class.java)
         assertEquals(13, obj.threadId)
         assertEquals(5, obj.priority)
         assertEquals(Thread.State.RUNNABLE, obj.state)
@@ -57,7 +58,7 @@ internal class ThreadInfoTest {
 
     @Test
     fun testThreadInfoEmptyObject() {
-        val threadInfo = Gson().fromJson("{}", ThreadInfo::class.java)
+        val threadInfo = serializer.fromJson("{}", ThreadInfo::class.java)
         assertNotNull(threadInfo)
     }
 }

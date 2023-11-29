@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -10,6 +10,7 @@ import org.junit.Test
 
 internal class BackgroundActivityMessageTest {
 
+    private val serializer = EmbraceSerializer()
     private val backgroundActivity = BackgroundActivity("fake-activity", 0, "")
     private val userInfo = UserInfo("fake-user-id")
     private val appInfo = AppInfo("fake-app-id")
@@ -34,14 +35,14 @@ internal class BackgroundActivityMessageTest {
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-        val obj = Gson().fromJson(json, BackgroundActivityMessage::class.java)
+        val obj = serializer.fromJson(json, BackgroundActivityMessage::class.java)
         assertNotNull(obj)
 
         assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)
@@ -55,7 +56,7 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", BackgroundActivityMessage::class.java)
+        val info = serializer.fromJson("{}", BackgroundActivityMessage::class.java)
         assertNotNull(info)
     }
 }

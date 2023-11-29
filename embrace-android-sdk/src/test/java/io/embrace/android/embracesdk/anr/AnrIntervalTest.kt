@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.anr
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
@@ -35,6 +35,8 @@ internal class AnrIntervalTest {
         code = AnrInterval.CODE_SAMPLES_CLEARED
     )
 
+    private val serializer = EmbraceSerializer()
+
     @Test
     fun testClearAnrSamples() {
         val interval = interval.copy(code = AnrInterval.CODE_DEFAULT)
@@ -53,14 +55,14 @@ internal class AnrIntervalTest {
         val expectedInfo = ResourceReader.readResourceAsText("anr_interval_expected.json")
             .filter { !it.isWhitespace() }
 
-        val observed = Gson().toJson(interval.copy())
+        val observed = serializer.toJson(interval.copy())
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testAnrTickDeserialization() {
         val json = ResourceReader.readResourceAsText("anr_interval_expected.json")
-        val obj = Gson().fromJson(json, AnrInterval::class.java)
+        val obj = serializer.fromJson(json, AnrInterval::class.java)
         assertEquals(150980980980, obj.startTime)
         assertEquals(150980980980 + 5000, obj.endTime)
         assertEquals(150980980980 + 4000, obj.lastKnownTime)
@@ -70,7 +72,7 @@ internal class AnrIntervalTest {
 
     @Test
     fun testAnrIntervalEmptyObject() {
-        val anrInterval = Gson().fromJson("{}", AnrInterval::class.java)
+        val anrInterval = serializer.fromJson("{}", AnrInterval::class.java)
         assertNotNull(anrInterval)
     }
 

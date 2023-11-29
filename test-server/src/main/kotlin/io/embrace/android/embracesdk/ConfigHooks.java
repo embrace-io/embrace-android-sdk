@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig;
 import io.embrace.android.embracesdk.config.remote.RemoteConfig;
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig;
 import io.embrace.android.embracesdk.config.remote.WebViewVitals;
+import io.embrace.android.embracesdk.internal.EmbraceSerializer;
 
 /**
  * Provides hooks into SessionConfig that aren't accessible via Kotlin.
@@ -97,7 +98,7 @@ public class ConfigHooks {
             null
         );
 
-        String json = new Gson().toJson(sdkConfig);
+        String json = new EmbraceSerializer().toJson(sdkConfig);
         return Base64.encodeToString(
             json.getBytes(StandardCharsets.UTF_8),
             Base64.DEFAULT

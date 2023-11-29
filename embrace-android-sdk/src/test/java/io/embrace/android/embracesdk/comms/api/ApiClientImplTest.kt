@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.api
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -27,6 +27,7 @@ import kotlin.IllegalStateException
  */
 internal class ApiClientImplTest {
 
+    private val serializer = EmbraceSerializer()
     private lateinit var apiClient: ApiClientImpl
     private lateinit var server: MockWebServer
     private lateinit var baseUrl: String
@@ -265,7 +266,7 @@ internal class ApiClientImplTest {
     private fun createLargeSessionPayload(): String {
         val props = (1..5000).associate { "my_big_key_$it" to "my_big_val_$it" }
         val session = fakeSession().copy(properties = props)
-        return Gson().toJson(session)
+        return serializer.toJson(session)
     }
 
     companion object {

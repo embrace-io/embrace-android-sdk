@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -16,19 +16,20 @@ internal class UserInfoTest {
         username = "joebloggs",
         personas = setOf("first_day"),
     )
+    private val serializer = EmbraceSerializer()
 
     @Test
     fun testSerialization() {
         val data = ResourceReader.readResourceAsText("user_info_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(data, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("user_info_expected.json")
-        val obj = Gson().fromJson(json, UserInfo::class.java)
+        val obj = serializer.fromJson(json, UserInfo::class.java)
         assertEquals("123", obj.userId)
         assertEquals("fake@example.com", obj.email)
         assertEquals("joebloggs", obj.username)
@@ -37,7 +38,7 @@ internal class UserInfoTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", UserInfo::class.java)
+        val info = serializer.fromJson("{}", UserInfo::class.java)
         assertNotNull(info)
     }
 

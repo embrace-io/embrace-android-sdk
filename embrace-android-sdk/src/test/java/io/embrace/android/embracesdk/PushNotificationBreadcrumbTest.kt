@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class PushNotificationBreadcrumbTest {
+
+    private val serializer = EmbraceSerializer()
 
     private val info = PushNotificationBreadcrumb(
         "title",
@@ -22,14 +24,14 @@ internal class PushNotificationBreadcrumbTest {
     fun testSerialization() {
         val expectedInfo = ResourceReader.readResourceAsText("push_notification_breadcrumb_expected.json")
             .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
+        val observed = serializer.toJson(info)
         assertEquals(expectedInfo, observed)
     }
 
     @Test
     fun testDeserialization() {
         val json = ResourceReader.readResourceAsText("push_notification_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, PushNotificationBreadcrumb::class.java)
+        val obj = serializer.fromJson(json, PushNotificationBreadcrumb::class.java)
         assertEquals("title", obj.title)
         assertEquals("body", obj.body)
         assertEquals("from", obj.from)
@@ -41,7 +43,7 @@ internal class PushNotificationBreadcrumbTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", PushNotificationBreadcrumb::class.java)
+        val info = serializer.fromJson("{}", PushNotificationBreadcrumb::class.java)
         assertNotNull(info)
     }
 }

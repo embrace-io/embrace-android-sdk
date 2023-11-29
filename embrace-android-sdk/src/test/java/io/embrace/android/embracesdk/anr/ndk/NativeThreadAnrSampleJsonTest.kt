@@ -9,6 +9,8 @@ import org.junit.Test
 
 internal class NativeThreadAnrSampleJsonTest {
 
+    private val serializer = Gson()
+
     @Test
     fun testSerialization() {
         val sample = NativeThreadAnrSample(
@@ -35,7 +37,7 @@ internal class NativeThreadAnrSampleJsonTest {
         assertEquals("/data/foo/libtest.so", stackframe.soPath)
         assertEquals(5, stackframe.result)
 
-        val tree = Gson().toJsonTree(sample).asJsonObject
+        val tree = serializer.toJsonTree(sample).asJsonObject
         assertNotNull(tree)
         assertEquals(4, tree.size())
         assertEquals(2, tree.get("r").asInt)

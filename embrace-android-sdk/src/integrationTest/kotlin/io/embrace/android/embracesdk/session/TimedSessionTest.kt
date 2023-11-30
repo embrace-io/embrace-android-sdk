@@ -35,7 +35,7 @@ internal class TimedSessionTest {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         IntegrationTestRule.Harness(
             fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock),
+            workerThreadModule = FakeWorkerThreadModule(clock, SESSION_CLOSER),
         )
     }
 
@@ -78,21 +78,6 @@ internal class TimedSessionTest {
             val messages = harness.getSentSessionMessages()
             assertEquals(2, messages.size)
             verifySessionHappened(messages[0], messages[1])
-        }
-    }
-
-    private class FakeWorkerThreadModule(
-        fakeClock: FakeClock,
-        private val base: WorkerThreadModule = WorkerThreadModuleImpl()
-    ) : WorkerThreadModule by base {
-
-        private val executor = BlockingScheduledExecutorService(fakeClock)
-
-        override fun scheduledExecutor(executorName: ExecutorName): ScheduledExecutorService {
-            return when (executorName) {
-                SESSION_CLOSER -> executor
-                else -> base.scheduledExecutor(executorName)
-            }
         }
     }
 }

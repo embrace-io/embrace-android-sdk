@@ -4,61 +4,64 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpo
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A map containing a list of pending API calls per endpoint.
- * Public methods on this class aren't meant to be accessed by multiple threads.
+ * A map containing a queue of pending API calls for each endpoint.
  */
 internal class PendingApiCalls {
 
     private val pendingApiCallsMap = ConcurrentHashMap<Endpoint, PendingApiCallsQueue>()
 
     /**
-     * Adds a pending API call in the corresponding endpoint's list.
+     * Adds a pending API call in the corresponding endpoint's queue.
+     * If the endpoint's queue has reached its limit, the oldest pending API call is removed and
+     * the new one is added.
      */
     fun add(pendingApiCall: PendingApiCall) {
         val endpoint = pendingApiCall.apiRequest.url.endpoint()
         val pendingApiCallsForEndpoint = pendingApiCallsMap.getOrPut(endpoint) { PendingApiCallsQueue() }
-        pendingApiCallsForEndpoint.add(pendingApiCall)
+
+        synchronized(pendingApiCallsForEndpoint) {
+            if (pendingApiCallsForEndpoint.hasReachedLimit(endpoint)) {
+                pendingApiCallsForEndpoint.remove()
+            }
+            pendingApiCallsForEndpoint.add(pendingApiCall)
+        }
     }
 
     /**
      * Returns the next pending API call to be sent and removes it from the corresponding
-     * endpoint's list.
+     * endpoint's queue.
      */
     fun pollNextPendingApiCall(): PendingApiCall? {
-        pendingApiCallsMap[Endpoint.SESSIONS]?.let { sessions ->
-            if (sessions.isNotEmpty()) {
-                return sessions.poll()
+        pendingApiCallsMap[Endpoint.SESSIONS]?.let { sessionsQueue ->
+            synchronized(sessionsQueue) {
+                if (sessionsQueue.isNotEmpty()) {
+                    return sessionsQueue.poll()
+                }
             }
         }
 
-        val entryToPollFrom = pendingApiCallsMap
+        val queueWithMinTime = pendingApiCallsMap
             .entries
             .filter { it.value.isNotEmpty() }
             .minByOrNull { it.value.peek()?.queueTime ?: Long.MAX_VALUE }
-            ?.key
+            ?.value
 
-        return entryToPollFrom?.let {
-            pendingApiCallsMap[it]?.poll()
+        return queueWithMinTime?.let { queue ->
+            synchronized(queue) {
+                queue.poll()
+            }
         }
     }
 
     /**
-     * Returns true if the number of retries for the endpoint is below the limit.
+     * Returns true if the endpoint's queue has reached its limit.
      */
-    fun isBelowRetryLimit(endpoint: Endpoint): Boolean {
-        val pendingApiCallsCount = pendingApiCallsMap[endpoint]?.size ?: 0
-        return pendingApiCallsCount < endpoint.getMaxPendingApiCalls()
+    private fun PendingApiCallsQueue.hasReachedLimit(endpoint: Endpoint): Boolean {
+        return this.size >= endpoint.getMaxPendingApiCalls()
     }
 
     /**
-     * Clears all lists of pending API calls.
-     */
-    fun clear() {
-        pendingApiCallsMap.clear()
-    }
-
-    /**
-     * Returns true if there is al least one pending API call in any endpoint's list.
+     * Returns true if there is al least one pending API call in any endpoint's queue.
      */
     fun hasAnyPendingApiCall(): Boolean {
         return pendingApiCallsMap.values.any { it.isNotEmpty() }

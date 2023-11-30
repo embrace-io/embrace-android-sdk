@@ -98,153 +98,59 @@ internal class PendingApiCallsTest {
     }
 
     @Test
-    fun `test isBellowRetryLimit for sessions`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(SESSIONS_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
+    fun `Test that when the queue is full, the oldest api call is removed and the new one is added`() {
+
+        Endpoint.values().forEach {
+            pendingApiCalls = PendingApiCalls()
+            val queueLimit = it.getMaxPendingApiCalls()
+            val path = it.path
+            repeat(queueLimit) {
+                val request = ApiRequest(
+                    url = EmbraceUrl.create("http://test.url/$path"),
+                    httpMethod = HttpMethod.POST,
+                    appId = "test_app_id_1",
+                    deviceId = "test_device_id",
+                    eventId = "request_$it",
+                    contentEncoding = "gzip"
+                )
+                val pendingApiCall = PendingApiCall(request, "payload_filename")
+
+                pendingApiCalls.add(pendingApiCall)
+            }
+
+            val exceedingRequest = ApiRequest(
+                url = EmbraceUrl.create("http://test.url/$path"),
+                httpMethod = HttpMethod.POST,
+                appId = "test_app_id_1",
+                deviceId = "test_device_id",
+                eventId = "request_exceeding",
+                contentEncoding = "gzip"
+            )
+            val exceedingPendingApiCall = PendingApiCall(exceedingRequest, "payload_filename")
+
+            pendingApiCalls.add(exceedingPendingApiCall)
+
+            val headApiCall = pendingApiCalls.pollNextPendingApiCall()
+
+            // Verify that after adding an api call when queue is full, the head of the queue is the second one added
+            assertTrue(headApiCall?.apiRequest?.eventId == "request_1")
+
+            // Verify that the exceeding api call was added to the queue
+            repeat(queueLimit - 2) {
+                pendingApiCalls.pollNextPendingApiCall()
+            }
+            assertEquals(exceedingPendingApiCall, pendingApiCalls.pollNextPendingApiCall())
         }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.SESSIONS))
     }
 
-    @Test
-    fun `test isBellowRetryLimit for events`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(EVENTS_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
+    private fun Endpoint.getMaxPendingApiCalls(): Int {
+        return when (this) {
+            Endpoint.EVENTS -> 100
+            Endpoint.BLOBS -> 50
+            Endpoint.LOGGING -> 100
+            Endpoint.NETWORK -> 50
+            Endpoint.SESSIONS -> 100
+            Endpoint.UNKNOWN -> 50
         }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.EVENTS))
-    }
-
-    @Test
-    fun `test isBellowRetryLimit for blobs`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/blobs"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(BLOBS_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.BLOBS))
-    }
-
-    @Test
-    fun `test isBellowRetryLimit for logging`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/logging"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(LOGGING_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.LOGGING))
-    }
-
-    @Test
-    fun `test isBellowRetryLimit for network`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/network"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(NETWORK_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.NETWORK))
-    }
-
-    @Test
-    fun `test isBellowRetryLimit for unknown`() {
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/any"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        repeat(UNKNOWN_LIMIT - 1) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertTrue(pendingApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
-
-        repeat(2) {
-            pendingApiCalls.add(pendingApiCall1)
-        }
-
-        assertFalse(pendingApiCalls.isBelowRetryLimit(Endpoint.UNKNOWN))
     }
 }
-
-private const val EVENTS_LIMIT = 100
-private const val BLOBS_LIMIT = 50
-private const val LOGGING_LIMIT = 100
-private const val NETWORK_LIMIT = 50
-private const val SESSIONS_LIMIT = 100
-private const val UNKNOWN_LIMIT = 50

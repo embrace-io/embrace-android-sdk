@@ -39,21 +39,18 @@ internal class EmbracePendingApiCallsSender(
     override fun scheduleApiCall(request: ApiRequest, payload: ByteArray) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
-        val endpoint = request.url.endpoint()
-        if (pendingApiCalls.isBelowRetryLimit(endpoint)) {
-            val cachedPayloadName = cacheManager.savePayload(payload)
-            val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
+        val cachedPayloadName = cacheManager.savePayload(payload)
+        val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
 
-            val scheduleJob = pendingApiCalls.hasAnyPendingApiCall().not()
+        val scheduleJob = pendingApiCalls.hasAnyPendingApiCall().not()
 
-            pendingApiCalls.add(pendingApiCall)
-            cacheManager.savePendingApiCalls(pendingApiCalls)
+        pendingApiCalls.add(pendingApiCall)
+        cacheManager.savePendingApiCalls(pendingApiCalls)
 
-            // By default there are no scheduled retry jobs pending.
-            // If the retry map was initially empty, try to schedule a retry.
-            if (scheduleJob) {
-                scheduleApiCallsDelivery(RETRY_PERIOD)
-            }
+        // By default there are no scheduled retry jobs pending.
+        // If the retry map was initially empty, try to schedule a retry.
+        if (scheduleJob) {
+            scheduleApiCallsDelivery(RETRY_PERIOD)
         }
     }
 

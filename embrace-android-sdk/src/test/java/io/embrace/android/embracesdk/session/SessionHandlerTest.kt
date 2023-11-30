@@ -224,9 +224,8 @@ internal class SessionHandlerTest {
         assertEquals(sessionUuid, metadataService.activeSessionId)
         // verify automatic session stopper has been scheduled
         verify {
-            mockAutomaticSessionStopper.scheduleWithFixedDelay(
+            mockAutomaticSessionStopper.schedule(
                 mockAutomaticSessionStopperRunnable,
-                maxSessionSeconds.toLong(),
                 maxSessionSeconds.toLong(),
                 TimeUnit.SECONDS
             )

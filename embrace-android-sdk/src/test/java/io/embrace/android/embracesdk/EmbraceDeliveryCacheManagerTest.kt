@@ -4,10 +4,10 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCall
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.FailedApiCallsPerEndpoint
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsQueue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -23,6 +23,7 @@ import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -265,8 +266,8 @@ internal class EmbraceDeliveryCacheManagerTest {
     }
 
     @Test
-    fun `save and load failed api calls`() {
-        val failedCalls = FailedApiCallsPerEndpoint()
+    fun `save and load pending api calls`() {
+        val pendingApiCalls = PendingApiCalls()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -275,8 +276,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
-        failedCalls.add(failedApiCall1)
+        val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
@@ -287,8 +288,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             contentEncoding = "gzip"
         )
         fakeClock.tickSecond()
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
-        failedCalls.add(failedApiCall2)
+        val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall2)
 
         val request3 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/logging"),
@@ -299,27 +300,27 @@ internal class EmbraceDeliveryCacheManagerTest {
             contentEncoding = "gzip"
         )
         fakeClock.tickSecond()
-        val failedApiCall3 = DeliveryFailedApiCall(request3, "payload_3.json", fakeClock.now())
-        failedCalls.add(failedApiCall3)
+        val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall3)
 
-        deliveryCacheManager.saveFailedApiCalls(failedCalls)
-        val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
+        deliveryCacheManager.savePendingApiCalls(pendingApiCalls)
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
 
-        assertEquals(failedApiCall1, cachedCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall2, cachedCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall3, cachedCalls.pollNextFailedApiCall())
-        assertNull(cachedCalls.pollNextFailedApiCall())
+        assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall3, cachedCalls.pollNextPendingApiCall())
+        assertNull(cachedCalls.pollNextPendingApiCall())
     }
 
     /**
-     * The current version is storing [FailedApiCallsPerEndpoint] in a file, but previous versions
-     * were storing [DeliveryFailedApiCalls]. This test checks that the current
+     * The current version is storing [PendingApiCalls] in a file, but previous versions
+     * were storing [PendingApiCallsQueue]. This test checks that the current
      * version can read the old version and convert it to the new one.
      * Test that the load works even if the cache returns null when loading the file
      */
     @Test
-    fun `load old version of failed api calls file as new version when load cache returns null`() {
-        val failedCalls = DeliveryFailedApiCalls()
+    fun `load old version of pending api calls file as new version when load cache returns null`() {
+        val pendingApiCallsQueue = PendingApiCallsQueue()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -328,8 +329,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
-        failedCalls.add(failedApiCall1)
+        val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
+        pendingApiCallsQueue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
@@ -340,32 +341,32 @@ internal class EmbraceDeliveryCacheManagerTest {
             contentEncoding = "gzip"
         )
         fakeClock.tickSecond()
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
-        failedCalls.add(failedApiCall2)
+        val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
+        pendingApiCallsQueue.add(pendingApiCall2)
 
         cacheService.cacheObject(
-            FAILED_API_CALLS_FILE_NAME,
-            failedCalls,
-            DeliveryFailedApiCalls::class.java
+            PENDING_API_CALLS_FILE_NAME,
+            pendingApiCallsQueue,
+            PendingApiCallsQueue::class.java
         )
 
-        every { cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, FailedApiCallsPerEndpoint::class.java) } returns null
+        every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } returns null
 
-        val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
-        assertEquals(failedApiCall1, cachedCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall2, cachedCalls.pollNextFailedApiCall())
-        assertEquals(null, cachedCalls.pollNextFailedApiCall())
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
+        assertEquals(null, cachedCalls.pollNextPendingApiCall())
     }
 
     /**
-     * The current version is storing [FailedApiCallsPerEndpoint] in a file, but previous versions
-     * were storing [DeliveryFailedApiCalls]. This test checks that the current
+     * The current version is storing [PendingApiCalls] in a file, but previous versions
+     * were storing [PendingApiCallsQueue]. This test checks that the current
      * version can read the old version and convert it to the new one.
      * Test that the load works even if the cache throws an exception when loading the file.
      */
     @Test
-    fun `load old version of failed api calls file as new version when load cache throws exception`() {
-        val failedCalls = DeliveryFailedApiCalls()
+    fun `load old version of pending api calls file as new version when load cache throws exception`() {
+        val pendingApiCallsQueue = PendingApiCallsQueue()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -374,8 +375,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        val failedApiCall1 = DeliveryFailedApiCall(request1, "payload_1.json", fakeClock.now())
-        failedCalls.add(failedApiCall1)
+        val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
+        pendingApiCallsQueue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/events"),
@@ -386,27 +387,27 @@ internal class EmbraceDeliveryCacheManagerTest {
             contentEncoding = "gzip"
         )
         fakeClock.tickSecond()
-        val failedApiCall2 = DeliveryFailedApiCall(request2, "payload_2.json", fakeClock.now())
-        failedCalls.add(failedApiCall2)
+        val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
+        pendingApiCallsQueue.add(pendingApiCall2)
 
         cacheService.cacheObject(
-            FAILED_API_CALLS_FILE_NAME,
-            failedCalls,
-            DeliveryFailedApiCalls::class.java
+            PENDING_API_CALLS_FILE_NAME,
+            pendingApiCallsQueue,
+            PendingApiCallsQueue::class.java
         )
 
-        every { cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, FailedApiCallsPerEndpoint::class.java) } throws Exception()
+        every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } throws Exception()
 
-        val cachedCalls = deliveryCacheManager.loadFailedApiCalls()
-        assertEquals(failedApiCall1, cachedCalls.pollNextFailedApiCall())
-        assertEquals(failedApiCall2, cachedCalls.pollNextFailedApiCall())
-        assertEquals(null, cachedCalls.pollNextFailedApiCall())
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
+        assertEquals(null, cachedCalls.pollNextPendingApiCall())
     }
 
     @Test
     fun `load empty set of delivery calls if non cached`() {
-        val failedCalls = deliveryCacheManager.loadFailedApiCalls()
-        assertTrue(failedCalls.hasNoFailedApiCalls())
+        val pendingApiCalls = deliveryCacheManager.loadPendingApiCalls()
+        assertFalse(pendingApiCalls.hasAnyPendingApiCall())
     }
 
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
@@ -430,4 +431,4 @@ internal class EmbraceDeliveryCacheManagerTest {
     }
 }
 
-private const val FAILED_API_CALLS_FILE_NAME = "failed_api_calls.json"
+private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"

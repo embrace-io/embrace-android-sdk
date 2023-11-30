@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -26,7 +26,7 @@ internal class EmbraceApiService(
     private val logger: InternalEmbraceLogger,
     private val scheduledExecutorService: ScheduledExecutorService,
     private val cacheManager: DeliveryCacheManager,
-    private val deliveryRetryManager: DeliveryRetryManager,
+    private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
@@ -40,7 +40,7 @@ internal class EmbraceApiService(
     init {
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
-        deliveryRetryManager.setRetryMethod(this::executePost)
+        pendingApiCallsSender.setSendMethod(this::executePost)
     }
 
     /**
@@ -201,12 +201,12 @@ internal class EmbraceApiService(
                 if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
                     executePost(request, payload)
                 } else {
-                    deliveryRetryManager.scheduleForRetry(request, payload)
+                    pendingApiCallsSender.scheduleApiCall(request, payload)
                     logger.logWarning("No connection available. Request was queued to retry later.")
                 }
             } catch (ex: Exception) {
                 logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                deliveryRetryManager.scheduleForRetry(request, payload)
+                pendingApiCallsSender.scheduleApiCall(request, payload)
                 throw ex
             } finally {
                 onComplete?.invoke()

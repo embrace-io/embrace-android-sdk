@@ -26,7 +26,7 @@ import org.junit.Test
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-internal class EmbraceDeliveryRetryManagerTest {
+internal class EmbracePendingApiCallsSenderTest {
 
     companion object {
         private val connectedNetworkStatuses =
@@ -36,8 +36,8 @@ internal class EmbraceDeliveryRetryManagerTest {
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var mockCacheManager: DeliveryCacheManager
         private lateinit var testScheduledExecutor: ScheduledExecutorService
-        private lateinit var failedApiCalls: FailedApiCallsPerEndpoint
-        private lateinit var deliveryRetryManager: EmbraceDeliveryRetryManager
+        private lateinit var pendingApiCalls: PendingApiCalls
+        private lateinit var pendingApiCallsHandler: EmbracePendingApiCallsSender
         private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
 
         @BeforeClass
@@ -60,12 +60,12 @@ internal class EmbraceDeliveryRetryManagerTest {
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
-        failedApiCalls = FailedApiCallsPerEndpoint()
+        pendingApiCalls = PendingApiCalls()
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
         every { mockCacheManager.loadPayload("cached_payload_1") } returns "{payload 1}".toByteArray()
-        every { mockCacheManager.loadFailedApiCalls() } returns failedApiCalls
+        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
         every { mockCacheManager.savePayload(any()) } returns "fake_cache"
     }
 
@@ -177,7 +177,7 @@ internal class EmbraceDeliveryRetryManagerTest {
                 runRetryJobAfterScheduling = true
             )
             blockingScheduledExecutorService.runCurrentlyBlocked()
-            deliveryRetryManager.onNetworkConnectivityStatusChanged(status)
+            pendingApiCallsHandler.onNetworkConnectivityStatusChanged(status)
             retryTaskNotActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
             checkNoApiRequestSent()
@@ -193,7 +193,7 @@ internal class EmbraceDeliveryRetryManagerTest {
                 status = NetworkStatus.NOT_REACHABLE, runRetryJobAfterScheduling = true
             )
             blockingScheduledExecutorService.runCurrentlyBlocked()
-            deliveryRetryManager.onNetworkConnectivityStatusChanged(status)
+            pendingApiCallsHandler.onNetworkConnectivityStatusChanged(status)
             retryTaskActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
             checkRequestSendAttempt()
@@ -208,7 +208,7 @@ internal class EmbraceDeliveryRetryManagerTest {
             initDeliveryRetryManager(
                 status = NetworkStatus.NOT_REACHABLE, loadFailedRequest = false
             )
-            deliveryRetryManager.onNetworkConnectivityStatusChanged(status)
+            pendingApiCallsHandler.onNetworkConnectivityStatusChanged(status)
             retryTaskNotActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
             checkNoApiRequestSent()
@@ -221,7 +221,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     fun `retryTask is active and runs after connection changes from not reachable to connected before retry job is scheduled`() {
         connectedNetworkStatuses.forEach { status ->
             initDeliveryRetryManager(status = NetworkStatus.NOT_REACHABLE)
-            deliveryRetryManager.onNetworkConnectivityStatusChanged(status)
+            pendingApiCallsHandler.onNetworkConnectivityStatusChanged(status)
             retryTaskActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
             checkRequestSendAttempt()
@@ -234,7 +234,7 @@ internal class EmbraceDeliveryRetryManagerTest {
     fun `retryTask is not active and doesn't run after connection changes from connected to not reachable before retry job is scheduled`() {
         connectedNetworkStatuses.forEach { status ->
             initDeliveryRetryManager(status = status)
-            deliveryRetryManager.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE)
+            pendingApiCallsHandler.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE)
             retryTaskNotActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
             checkNoApiRequestSent()
@@ -266,22 +266,22 @@ internal class EmbraceDeliveryRetryManagerTest {
                     )
                 )
             )
-            deliveryRetryManager.scheduleForRetry(request, ByteArray(0))
+            pendingApiCallsHandler.scheduleApiCall(request, ByteArray(0))
         }
 
         // verify logs were added to the queue, and that most recently added requests are dropped
-        assertEquals("il:message_id_0", failedApiCalls.pollNextFailedApiCall()?.apiRequest?.logId)
-        assertEquals("il:message_id_1", failedApiCalls.pollNextFailedApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_0", pendingApiCalls.pollNextPendingApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_1", pendingApiCalls.pollNextPendingApiCall()?.apiRequest?.logId)
 
         // now add some sessions for retry
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
-        deliveryRetryManager.scheduleForRetry(sessionRequest, ByteArray(0))
-        assertEquals(sessionRequest, failedApiCalls.pollNextFailedApiCall()?.apiRequest)
+        pendingApiCallsHandler.scheduleApiCall(sessionRequest, ByteArray(0))
+        assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }
 
     private fun clearApiPipeline() {
         clearMocks(mockRetryMethod, answers = false)
-        failedApiCalls.clear()
+        pendingApiCalls.clear()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
     }
@@ -293,22 +293,22 @@ internal class EmbraceDeliveryRetryManagerTest {
     ) {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
-        deliveryRetryManager = EmbraceDeliveryRetryManager(
+        pendingApiCallsHandler = EmbracePendingApiCallsSender(
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
             clock = FakeClock()
         )
 
-        deliveryRetryManager.setRetryMethod(mockRetryMethod)
+        pendingApiCallsHandler.setSendMethod(mockRetryMethod)
 
-        failedApiCalls.clear()
+        pendingApiCalls.clear()
 
         if (loadFailedRequest) {
             val mockApiRequest = mockk<ApiRequest>(relaxed = true) {
                 every { url.endpoint() } returns Endpoint.SESSIONS
             }
-            failedApiCalls.add(DeliveryFailedApiCall(mockApiRequest, "cached_payload_1"))
+            pendingApiCalls.add(PendingApiCall(mockApiRequest, "cached_payload_1"))
         }
 
         if (runRetryJobAfterScheduling) {
@@ -317,12 +317,12 @@ internal class EmbraceDeliveryRetryManagerTest {
     }
 
     private fun retryTaskActive(status: NetworkStatus) {
-        assertTrue("Failed for network status = $status", deliveryRetryManager.isRetryTaskActive())
+        assertTrue("Failed for network status = $status", pendingApiCallsHandler.isDeliveryTaskActive())
     }
 
     private fun retryTaskNotActive(status: NetworkStatus) {
         assertFalse(
-            "Failed for network status = $status", deliveryRetryManager.isRetryTaskActive()
+            "Failed for network status = $status", pendingApiCallsHandler.isDeliveryTaskActive()
         )
     }
 

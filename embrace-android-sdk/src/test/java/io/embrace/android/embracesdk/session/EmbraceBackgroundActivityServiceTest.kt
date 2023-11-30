@@ -295,10 +295,10 @@ internal class EmbraceBackgroundActivityServiceTest {
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now, now + 10L)
         service.sendBackgroundActivity()
-        assertNotNull(deliveryService.lastSentBackgroundActivity)
+        assertNotNull(deliveryService.sentBackgroundActivities.last())
 
         // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSentBackgroundActivity?.spans?.size)
+        assertEquals(2, deliveryService.sentBackgroundActivities.last().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 

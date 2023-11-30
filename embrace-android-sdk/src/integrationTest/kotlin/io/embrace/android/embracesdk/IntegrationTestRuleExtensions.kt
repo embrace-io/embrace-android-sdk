@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.app.Activity
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
@@ -45,6 +46,7 @@ internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionM
     return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }
 }
 
+
 /**
  * Returns the last [SessionMessage] that was saved by the SDK.
  */
@@ -57,6 +59,13 @@ internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMe
  */
 internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
     return getSentSessionMessages().lastOrNull()
+}
+
+/**
+ * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
+ */
+internal fun IntegrationTestRule.Harness.getSavedBackgroundActivities(): List<BackgroundActivityMessage> {
+    return fakeDeliveryModule.deliveryService.savedBackgroundActivities.toList()
 }
 
 /**
@@ -74,13 +83,12 @@ internal fun IntegrationTestRule.Harness.recordSession(
     action: () -> Unit = {}
 ): SessionMessage? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
-    val activityService = checkNotNull(Embrace.getImpl().activityService)
     val activityController =
         if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
 
     activityController?.create()
     activityController?.start()
-    activityService.onForeground()
+    sendProcessToForeground()
     activityController?.resume()
 
     // perform a custom action during the session boundary, e.g. adding a breadcrumb.
@@ -89,9 +97,19 @@ internal fun IntegrationTestRule.Harness.recordSession(
     // end session 30s later by entering background
     fakeClock.tick(30000)
     activityController?.pause()
-    activityService.onBackground()
+    sendProcessToBackground()
     activityController?.stop()
     return getLastSentSessionMessage()
+}
+
+internal fun IntegrationTestRule.Harness.sendProcessToBackground() {
+    val activityService = checkNotNull(Embrace.getImpl().activityService)
+    activityService.onBackground()
+}
+
+internal fun IntegrationTestRule.Harness.sendProcessToForeground() {
+    val activityService = checkNotNull(Embrace.getImpl().activityService)
+    activityService.onForeground()
 }
 
 internal fun exceptionsService(): EmbraceInternalErrorService? = Embrace.getImpl().exceptionsService
@@ -131,6 +149,19 @@ internal fun verifySessionMessage(sessionMessage: SessionMessage) {
         assertNotNull(sessionMessage.userInfo)
         assertNotNull(sessionMessage.breadcrumbs)
         assertNotNull(sessionMessage.performanceInfo)
+    }
+}
+
+internal fun verifyBackgroundActivityMessage(message: BackgroundActivityMessage) {
+    assertNotNull(message.backgroundActivity.sessionId)
+    assertNotNull(message.backgroundActivity)
+    assertNotNull(message.appInfo)
+    assertNotNull(message.deviceInfo)
+
+    if (message.backgroundActivity.messageType == "en") {
+        assertNotNull(message.userInfo)
+        assertNotNull(message.breadcrumbs)
+        assertNotNull(message.performanceInfo)
     }
 }
 

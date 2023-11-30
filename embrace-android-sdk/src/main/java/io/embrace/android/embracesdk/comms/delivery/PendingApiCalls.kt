@@ -4,15 +4,15 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpo
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A map containing a list of pending API calls per endpoint.
+ * A map containing a queue of pending API calls for each endpoint.
  */
 internal class PendingApiCalls {
 
     private val pendingApiCallsMap = ConcurrentHashMap<Endpoint, PendingApiCallsQueue>()
 
     /**
-     * Adds a pending API call in the corresponding endpoint's list.
-     * If the endpoint's list has reached its limit, the oldest pending API call is removed and
+     * Adds a pending API call in the corresponding endpoint's queue.
+     * If the endpoint's queue has reached its limit, the oldest pending API call is removed and
      * the new one is added.
      */
     fun add(pendingApiCall: PendingApiCall) {
@@ -29,7 +29,7 @@ internal class PendingApiCalls {
 
     /**
      * Returns the next pending API call to be sent and removes it from the corresponding
-     * endpoint's list.
+     * endpoint's queue.
      */
     fun pollNextPendingApiCall(): PendingApiCall? {
         pendingApiCallsMap[Endpoint.SESSIONS]?.let { sessionsQueue ->
@@ -54,14 +54,14 @@ internal class PendingApiCalls {
     }
 
     /**
-     * Returns true if the endpoint's list has reached its limit.
+     * Returns true if the endpoint's queue has reached its limit.
      */
     private fun PendingApiCallsQueue.hasReachedLimit(endpoint: Endpoint): Boolean {
         return this.size >= endpoint.getMaxPendingApiCalls()
     }
 
     /**
-     * Returns true if there is al least one pending API call in any endpoint's list.
+     * Returns true if there is al least one pending API call in any endpoint's queue.
      */
     fun hasAnyPendingApiCall(): Boolean {
         return pendingApiCallsMap.values.any { it.isNotEmpty() }

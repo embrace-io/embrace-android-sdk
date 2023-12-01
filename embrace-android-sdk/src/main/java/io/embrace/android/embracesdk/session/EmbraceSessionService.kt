@@ -86,7 +86,7 @@ internal class EmbraceSessionService(
         }
 
         // Ends active session.
-        sessionHandler.onSessionEnded(endType, clock.now(), clearUserInfo)
+        sessionHandler.onSessionEnded(endType, clock.now(), clearUserInfo) ?: return
 
         // Starts a new session.
         if (!processStateService.isInBackground) {

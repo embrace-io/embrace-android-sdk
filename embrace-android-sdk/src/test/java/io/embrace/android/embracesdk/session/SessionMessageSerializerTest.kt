@@ -6,9 +6,11 @@ import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo
+import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -23,11 +25,11 @@ internal class SessionMessageSerializerTest {
     fun setUp() {
         msg = SessionMessage(
             fakeSession(),
-            UserInfo(),
-            AppInfo(),
-            DeviceInfo(),
-            PerformanceInfo(),
-            Breadcrumbs(),
+            UserInfo("fakeUserId", "fakeUserName", "fakeUserEmail"),
+            AppInfo("1.0",),
+            DeviceInfo("google"),
+            PerformanceInfo(DiskUsage(1509609900020L, 1509609900020L)),
+            Breadcrumbs(listOf(ViewBreadcrumb("fakeViewName", 1509609900020L))),
             listOf(testSpan)
         )
     }
@@ -44,5 +46,10 @@ internal class SessionMessageSerializerTest {
         // JSON can be generated from cache
         val cacheAttempt = serializer.serialize(msg)
         assertEquals(expected, cacheAttempt)
+
+        // cleaning collections does not alter generated json
+        serializer.cleanCollections()
+        val cleanAttempt = serializer.serialize(msg)
+        assertEquals(expected, cleanAttempt)
     }
 }

@@ -9,6 +9,9 @@ import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
+import java.io.BufferedWriter
+import java.io.StringWriter
+import java.io.Writer
 
 /**
  * Serializes the session message to JSON in multiple parts. This allows nodes on the JSON tree
@@ -22,50 +25,59 @@ internal class SessionMessageSerializer(
     private var prevSession: SessionMessage? = null
 
     fun serialize(msg: SessionMessage): String {
+        val writer = StringWriter()
+        serialize(msg, writer)
+        return writer.toString()
+    }
+
+    fun serialize(msg: SessionMessage, stream: Writer) {
         synchronized(this) {
-            val json = StringBuilder()
-            json.append("{")
-
-            val session = calculateJsonValue(msg, "s", Session::class.java) { it.session }
-            addJsonProperty("\"s\":", session, json)
-
-            val userInfo = calculateJsonValue(msg, "u", UserInfo::class.java) { it.userInfo }
-            addJsonProperty("\"u\":", userInfo, json)
-
-            val appInfo = calculateJsonValue(msg, "a", AppInfo::class.java) { it.appInfo }
-            addJsonProperty("\"a\":", appInfo, json)
-
-            val deviceInfo = calculateJsonValue(msg, "d", DeviceInfo::class.java) { it.deviceInfo }
-            addJsonProperty("\"d\":", deviceInfo, json)
-
-            val performanceInfo =
-                calculateJsonValue(msg, "p", PerformanceInfo::class.java) { it.performanceInfo }
-            addJsonProperty("\"p\":", performanceInfo, json)
-
-            val breadcrumbs =
-                calculateJsonValue(msg, "br", Breadcrumbs::class.java) { it.breadcrumbs }
-            addJsonProperty("\"br\":", breadcrumbs, json)
-
-            val spans = calculateJsonValue(msg, "spans", List::class.java) { it.spans }
-            addJsonProperty("\"spans\":", spans, json)
-
-            json.append("\"v\":")
-            json.append(ApiClient.MESSAGE_VERSION)
-            json.append("}")
-            prevSession = msg
-            return json.toString()
+            stream.buffered().use { writer ->
+                writer.serializeImpl(msg)
+                prevSession = msg
+            }
         }
     }
 
-    private fun addJsonProperty(key: String, value: String, json: StringBuilder) {
+    private fun BufferedWriter.serializeImpl(msg: SessionMessage) {
+        append("{")
+
+        val session = jsonValue(msg, "s", Session::class.java, SessionMessage::session)
+        addJsonProperty("\"s\":", session)
+
+        val userInfo = jsonValue(msg, "u", UserInfo::class.java, SessionMessage::userInfo)
+        addJsonProperty("\"u\":", userInfo)
+
+        val appInfo = jsonValue(msg, "a", AppInfo::class.java, SessionMessage::appInfo)
+        addJsonProperty("\"a\":", appInfo)
+
+        val deviceInfo = jsonValue(msg, "d", DeviceInfo::class.java, SessionMessage::deviceInfo)
+        addJsonProperty("\"d\":", deviceInfo)
+
+        val performanceInfo =
+            jsonValue(msg, "p", PerformanceInfo::class.java, SessionMessage::performanceInfo)
+        addJsonProperty("\"p\":", performanceInfo)
+
+        val breadcrumbs = jsonValue(msg, "br", Breadcrumbs::class.java, SessionMessage::breadcrumbs)
+        addJsonProperty("\"br\":", breadcrumbs)
+
+        val spans = jsonValue(msg, "spans", List::class.java, SessionMessage::spans)
+        addJsonProperty("\"spans\":", spans)
+
+        append("\"v\":")
+        append("${ApiClient.MESSAGE_VERSION}")
+        append("}")
+    }
+
+    private fun BufferedWriter.addJsonProperty(key: String, value: String) {
         if (value != "null") {
-            json.append(key)
-            json.append(value)
-            json.append(",")
+            append(key)
+            append(value)
+            append(",")
         }
     }
 
-    private fun <T> calculateJsonValue(
+    private fun <T> jsonValue(
         msg: SessionMessage,
         key: String,
         clz: Class<T>,

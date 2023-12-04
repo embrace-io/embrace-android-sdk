@@ -142,9 +142,13 @@ internal class SessionHandler(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    fun onSessionEnded(endType: SessionLifeEventType, endTime: Long, clearUserInfo: Boolean) {
+    fun onSessionEnded(
+        endType: SessionLifeEventType,
+        endTime: Long,
+        clearUserInfo: Boolean
+    ): SessionMessage? {
         synchronized(lock) {
-            val session = activeSession ?: return
+            val session = activeSession ?: return null
             logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.NORMAL_END,
@@ -153,7 +157,7 @@ internal class SessionHandler(
                 spansService.flushSpans(),
                 endType,
                 endTime
-            ) ?: return
+            ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
             memoryCleanerService.cleanServicesCollections(exceptionService)
@@ -172,6 +176,7 @@ internal class SessionHandler(
             // clear active session
             activeSession = null
             logger.logDebug("SessionHandler: cleared active session")
+            return fullEndSessionMessage
         }
     }
 

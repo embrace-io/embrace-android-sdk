@@ -6,12 +6,10 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.getSentSessionMessages
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -40,13 +38,9 @@ internal class ManualSessionTest {
                 embrace.endSession()
             }
             val messages = harness.getSentSessionMessages()
-
-            // FIXME (future): ending a session manually drops the session end event of a
-            //  stateful session.
-            assertEquals(3, messages.size)
-            val second = messages[2]
-            verifySessionHappened(messages[1], second)
-            assertEquals(2, second.session.number)
+            assertEquals(2, messages.size)
+            verifySessionHappened(messages[0], messages[1])
+            assertEquals(1, messages[1].session.number)
         }
     }
 
@@ -80,12 +74,9 @@ internal class ManualSessionTest {
             }
             val messages = harness.getSentSessionMessages()
 
-            // FIXME (future): ending a session manually drops the session end event of a
-            //  stateful session.
-            assertEquals(3, messages.size)
-            val second = messages[2]
-            verifySessionHappened(messages[1], second)
-            assertEquals(2, second.session.number)
+            assertEquals(2, messages.size)
+            verifySessionHappened(messages[0], messages[1])
+            assertEquals(1, messages[1].session.number)
         }
     }
 }

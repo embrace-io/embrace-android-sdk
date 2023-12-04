@@ -64,12 +64,17 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun saveSessionImpl(sessionMessage: SessionMessage, writeSync: Boolean = false): ByteArray {
-        if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
-            deleteOldestSessions()
+        try {
+            if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
+                deleteOldestSessions()
+            }
+            val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+            saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
+            return sessionBytes
+        } catch (exc: Throwable) {
+            logger.logError("Save session failed", exc, true)
+            throw exc
         }
-        val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-        saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
-        return sessionBytes
     }
 
     override fun loadSession(sessionId: String): SessionMessage? {
@@ -292,8 +297,8 @@ internal class EmbraceDeliveryCacheManager(
                 cachedSessions[cachedSession.sessionId] = cachedSession
             }
             logger.logDeveloper(TAG, "Session message successfully cached.")
-        } catch (ex: Exception) {
-            logger.logError("Failed to cache current active session", ex)
+        } catch (ex: Throwable) {
+            logger.logError("Failed to cache current active session", ex, true)
         }
     }
 

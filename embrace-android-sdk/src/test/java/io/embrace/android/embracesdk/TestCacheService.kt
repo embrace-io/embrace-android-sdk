@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
@@ -64,5 +65,9 @@ internal class TestCacheService : CacheService {
 
     override fun listFilenamesByPrefix(prefix: String): MutableList<String> {
         return (cache.keys.filter { it.startsWith(prefix) }).toMutableList()
+    }
+
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
+        cacheBytes(name, gson.toJson(sessionMessage).toByteArray())
     }
 }

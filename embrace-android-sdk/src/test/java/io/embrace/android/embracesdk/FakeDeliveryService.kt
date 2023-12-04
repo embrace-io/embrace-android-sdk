@@ -38,6 +38,10 @@ internal class FakeDeliveryService : DeliveryService {
         lastSavedSession = sessionMessage
     }
 
+    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
+        lastSavedSession = sessionMessage
+    }
+
     override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
         lastSentSessions.add(Pair(sessionMessage, state))
     }

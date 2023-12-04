@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class FakeCacheService : CacheService {
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
@@ -36,6 +37,10 @@ internal class FakeCacheService : CacheService {
     }
 
     override fun listFilenamesByPrefix(prefix: String): List<String>? {
+        TODO("Not yet implemented")
+    }
+
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
         TODO("Not yet implemented")
     }
 }

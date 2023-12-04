@@ -7,11 +7,15 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
+    override fun saveSession(sessionMessage: SessionMessage): ByteArray {
         TODO("Not yet implemented")
     }
 
     override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
+        TODO("Not yet implemented")
+    }
+
+    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
         TODO("Not yet implemented")
     }
 

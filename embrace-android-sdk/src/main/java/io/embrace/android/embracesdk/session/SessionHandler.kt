@@ -233,7 +233,7 @@ internal class SessionHandler(
                 SessionLifeEventType.STATE,
                 clock.now()
             )
-            msg?.let(deliveryService::saveSession)
+            msg?.let(deliveryService::saveSessionPeriodicCache)
             return msg
         }
     }

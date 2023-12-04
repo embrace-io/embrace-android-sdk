@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 internal enum class SessionMessageState { START, END, END_WITH_CRASH }
 
 internal interface DeliveryService {
+    fun saveSessionPeriodicCache(sessionMessage: SessionMessage)
     fun saveSessionOnCrash(sessionMessage: SessionMessage)
     fun saveSession(sessionMessage: SessionMessage)
     fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)

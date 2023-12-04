@@ -100,6 +100,46 @@ internal class EmbraceDeliveryCacheManagerTest {
     }
 
     @Test
+    fun `cache periodic session successful`() {
+        val sessionMessage = createSessionMessage("test_cache")
+
+        deliveryCacheManager.saveSessionPeriodicCache(sessionMessage)
+
+        verify {
+            cacheService.writeSession(
+                "$prefix.$clockInit.test_cache.json",
+                sessionMessage
+            )
+        }
+
+        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+
+        val expectedByteArray =
+            serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
+    }
+
+    @Test
+    fun `cache session on crash successful`() {
+        val sessionMessage = createSessionMessage("test_cache")
+
+        deliveryCacheManager.saveSessionOnCrash(sessionMessage)
+
+        verify {
+            cacheService.writeSession(
+                "$prefix.$clockInit.test_cache.json",
+                sessionMessage
+            )
+        }
+
+        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+
+        val expectedByteArray =
+            serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
+    }
+
+    @Test
     fun `session not found in cache`() {
         assertNull(deliveryCacheManager.loadSession("not_found_session"))
         assertNull(deliveryCacheManager.loadSessionBytes("not_found_session"))

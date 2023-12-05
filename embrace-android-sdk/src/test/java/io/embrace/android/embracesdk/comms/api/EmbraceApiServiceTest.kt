@@ -247,7 +247,7 @@ internal class EmbraceApiServiceTest {
         }
 
         expectedPayload?.let {
-            assertArrayEquals(it, fakeApiClient.sentRequests[0].second)
+            assertArrayEquals(it, fakeApiClient.sentRequests[0].second?.readBytes())
         } ?: assertNull(fakeApiClient.sentRequests[0].second)
     }
 

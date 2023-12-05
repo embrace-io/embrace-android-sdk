@@ -55,22 +55,36 @@ internal class EmbraceDeliveryCacheManager(
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
-        return saveSessionImpl(sessionMessage)
+    override fun saveSession(sessionMessage: SessionMessage): ByteArray {
+        val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+        saveSessionImpl(sessionMessage, false) { filename ->
+            cacheService.cacheBytes(filename, sessionBytes)
+        }
+        return sessionBytes
+    }
+
+    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
+        saveSessionImpl(sessionMessage, false) { filename ->
+            cacheService.writeSession(filename, sessionMessage)
+        }
     }
 
     override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        saveSessionImpl(sessionMessage, true)
+        saveSessionImpl(sessionMessage, true) { filename ->
+            cacheService.writeSession(filename, sessionMessage)
+        }
     }
 
-    private fun saveSessionImpl(sessionMessage: SessionMessage, writeSync: Boolean = false): ByteArray {
+    private fun saveSessionImpl(
+        sessionMessage: SessionMessage,
+        writeSync: Boolean,
+        saveAction: (filename: String) -> Unit
+    ) {
         try {
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
                 deleteOldestSessions()
             }
-            val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-            saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
-            return sessionBytes
+            saveBytes(sessionMessage.session.sessionId, writeSync, saveAction)
         } catch (exc: Throwable) {
             logger.logError("Save session failed", exc, true)
             throw exc
@@ -146,7 +160,11 @@ internal class EmbraceDeliveryCacheManager(
         )
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
-            baBytes?.let { saveBytes(baId, it) }
+            baBytes?.let { bytes ->
+                saveBytes(baId) { filename ->
+                    cacheService.cacheBytes(filename, bytes)
+                }
+            }
         }
         return baBytes
     }
@@ -274,17 +292,24 @@ internal class EmbraceDeliveryCacheManager(
             .forEach { deleteSession(it.sessionId) }
     }
 
-    private fun saveBytes(sessionId: String, bytes: ByteArray, writeSync: Boolean = false) {
+    private fun saveBytes(
+        sessionId: String,
+        writeSync: Boolean = false,
+        saveAction: (filename: String) -> Unit
+    ) {
         if (writeSync) {
-            saveBytesImpl(sessionId, bytes)
+            saveBytesImpl(sessionId, saveAction)
         } else {
             executorService.submit {
-                saveBytesImpl(sessionId, bytes)
+                saveBytesImpl(sessionId, saveAction)
             }
         }
     }
 
-    private fun saveBytesImpl(sessionId: String, bytes: ByteArray) {
+    private fun saveBytesImpl(
+        sessionId: String,
+        saveAction: (filename: String) -> Unit
+    ) {
         try {
             val cachedSession = cachedSessions.getOrElse(sessionId) {
                 CachedSession(
@@ -292,7 +317,7 @@ internal class EmbraceDeliveryCacheManager(
                     clock.now()
                 )
             }
-            cacheService.cacheBytes(cachedSession.filename, bytes)
+            saveAction(cachedSession.filename)
             if (!cachedSessions.containsKey(cachedSession.sessionId)) {
                 cachedSessions[cachedSession.sessionId] = cachedSession
             }

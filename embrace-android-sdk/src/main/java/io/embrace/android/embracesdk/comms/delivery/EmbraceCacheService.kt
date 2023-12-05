@@ -2,7 +2,10 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionMessageSerializer
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.regex.Pattern
@@ -17,6 +20,10 @@ internal class EmbraceCacheService(
 ) : CacheService {
 
     private val storageDir: File by fileProvider
+
+    private val sessionMessageSerializer by threadLocal {
+        SessionMessageSerializer(serializer)
+    }
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
@@ -151,6 +158,19 @@ internal class EmbraceCacheService(
         return storageDir.listFiles { file ->
             file.name.startsWith(EMBRACE_PREFIX + prefix)
         }?.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
+    }
+
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
+        try {
+            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
+            val file = File(storageDir, EMBRACE_PREFIX + name)
+            file.bufferedWriter().use {
+                sessionMessageSerializer.serialize(sessionMessage, it)
+            }
+            logger.logDeveloper(TAG, "Bytes cached")
+        } catch (ex: Throwable) {
+            logger.logWarning("Failed to write session with buffered writer", ex)
+        }
     }
 
     companion object {

@@ -79,6 +79,28 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     @Test
+    fun `cache periodic session successful`() {
+        initializeDeliveryService()
+        val mockSessionMessage: SessionMessage = mockk()
+
+        deliveryService.saveSessionPeriodicCache(mockSessionMessage)
+
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSessionPeriodicCache(mockSessionMessage) }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
+    }
+
+    @Test
+    fun `cache session on crash successful`() {
+        initializeDeliveryService()
+        val mockSessionMessage: SessionMessage = mockk()
+
+        deliveryService.saveSessionOnCrash(mockSessionMessage)
+
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSessionOnCrash(mockSessionMessage) }
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
+    }
+
+    @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
         initializeDeliveryService()
         every { mockDeliveryCacheManager.getAllCachedSessionIds() } returns emptyList()

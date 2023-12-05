@@ -5,7 +5,8 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal interface DeliveryCacheManager {
-    fun saveSession(sessionMessage: SessionMessage): ByteArray?
+    fun saveSession(sessionMessage: SessionMessage): ByteArray
+    fun saveSessionPeriodicCache(sessionMessage: SessionMessage)
     fun saveSessionOnCrash(sessionMessage: SessionMessage)
     fun loadSession(sessionId: String): SessionMessage?
     fun loadSessionBytes(sessionId: String): ByteArray?

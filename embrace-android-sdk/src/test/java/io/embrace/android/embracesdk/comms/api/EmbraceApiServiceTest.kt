@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.EmbraceRateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeApiClient
@@ -270,6 +272,7 @@ internal class EmbraceApiServiceTest {
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
             pendingApiCallsSender = fakePendingApiCallsSender,
+            rateLimitHandler = EmbraceRateLimitHandler(),
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )

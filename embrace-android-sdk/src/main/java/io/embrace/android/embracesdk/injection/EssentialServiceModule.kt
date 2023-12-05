@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
+import io.embrace.android.embracesdk.comms.delivery.EmbraceRateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
@@ -137,6 +138,8 @@ internal class EssentialServiceModuleImpl(
 
     private val deliveryCacheExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
+
+    private val rateLimitHandler = EmbraceRateLimitHandler()
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -280,6 +283,7 @@ internal class EssentialServiceModuleImpl(
             networkConnectivityService,
             apiRetryExecutor,
             deliveryCacheManager,
+            rateLimitHandler,
             initModule.clock
         )
     }
@@ -293,6 +297,7 @@ internal class EssentialServiceModuleImpl(
             scheduledExecutorService = apiRetryExecutor,
             cacheManager = deliveryCacheManager,
             pendingApiCallsSender = pendingApiCallsSender,
+            rateLimitHandler = rateLimitHandler,
             lazyDeviceId = lazyDeviceId,
             appId = appId,
             urlBuilder = urlBuilder,

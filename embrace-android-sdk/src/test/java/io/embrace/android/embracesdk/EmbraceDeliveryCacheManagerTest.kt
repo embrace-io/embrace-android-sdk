@@ -407,7 +407,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `load empty set of delivery calls if non cached`() {
         val pendingApiCalls = deliveryCacheManager.loadPendingApiCalls()
-        assertFalse(pendingApiCalls.hasAnyPendingApiCall())
+        assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
     }
 
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {

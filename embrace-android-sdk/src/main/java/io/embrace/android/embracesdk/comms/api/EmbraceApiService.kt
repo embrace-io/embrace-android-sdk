@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityLis
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
@@ -27,6 +28,7 @@ internal class EmbraceApiService(
     private val scheduledExecutorService: ScheduledExecutorService,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
+    private val rateLimitHandler: RateLimitHandler,
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
@@ -197,30 +199,33 @@ internal class EmbraceApiService(
         onComplete: (() -> Any)?
     ): Future<*> {
         return scheduledExecutorService.submit {
-            try {
-                if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                    executePost(request, payload)
-                } else {
-                    pendingApiCallsSender.scheduleApiCall(request, payload)
-                    logger.logWarning("No connection available. Request was queued to retry later.")
+            val endpoint = request.url.endpoint()
+
+            if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
+                !rateLimitHandler.isRateLimited(endpoint)
+            ) {
+                // Execute the request if the device is online and the endpoint is not rate limited.
+                val response: ApiResponse = executePost(request, payload)
+
+                if (pendingApiCallsSender.shouldRetry(response)) {
+                    pendingApiCallsSender.savePendingApiCall(request, payload)
+                    pendingApiCallsSender.scheduleApiCall(response)
                 }
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                pendingApiCallsSender.scheduleApiCall(request, payload)
-                throw ex
-            } finally {
-                onComplete?.invoke()
+
+                if (response !is ApiResponse.Success) {
+                    onComplete?.invoke()
+                    error("Failed to post Embrace API call. ")
+                }
+            } else {
+                // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
+                pendingApiCallsSender.savePendingApiCall(request, payload)
             }
+            onComplete?.invoke()
         }
     }
 
-    @Suppress("UseCheckOrError")
-    private fun executePost(request: ApiRequest, payload: ByteArray) {
-        val response = apiClient.executePost(request, payload)
-        if (response !is ApiResponse.Success) {
-            throw IllegalStateException("Failed to retrieve from Embrace server.")
-        }
-    }
+    private fun executePost(request: ApiRequest, payload: ByteArray) =
+        apiClient.executePost(request, payload)
 
     companion object {
         enum class Endpoint(val path: String) {

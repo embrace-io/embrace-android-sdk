@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -38,7 +39,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
-        private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
+        private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse
 
         @BeforeClass
         @JvmStatic
@@ -140,7 +141,7 @@ internal class EmbracePendingApiCallsSenderTest {
             blockingScheduledExecutorService.runCurrentlyBlocked()
 
             // Let the next retry succeed
-            every { mockRetryMethod(any(), any()) } returns Unit
+            every { mockRetryMethod(any(), any()) } returns ApiResponse.Success("", null)
 
             // Second failure will result in another retry in double the last time, 240 seconds
             // Go most of the way to check it didn't run, then go all the way to check that it did.
@@ -266,7 +267,12 @@ internal class EmbracePendingApiCallsSenderTest {
                     )
                 )
             )
-            pendingApiCallsSender.scheduleApiCall(request, ByteArray(0))
+            pendingApiCallsSender.savePendingApiCall(request, ByteArray(0))
+            pendingApiCallsSender.scheduleApiCall(
+                ApiResponse.Incomplete(
+                    Throwable()
+                )
+            )
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
@@ -275,7 +281,8 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
-        pendingApiCallsSender.scheduleApiCall(sessionRequest, ByteArray(0))
+        pendingApiCallsSender.savePendingApiCall(sessionRequest, ByteArray(0))
+        pendingApiCallsSender.scheduleApiCall(ApiResponse.Incomplete(Throwable()))
         assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }
 
@@ -297,6 +304,7 @@ internal class EmbracePendingApiCallsSenderTest {
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
+            rateLimitHandler = mockk(relaxed = true),
             clock = FakeClock()
         )
 

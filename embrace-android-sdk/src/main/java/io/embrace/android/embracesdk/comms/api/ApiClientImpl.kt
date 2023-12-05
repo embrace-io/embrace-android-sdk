@@ -101,8 +101,9 @@ internal class ApiClientImpl(
                     ApiResponse.PayloadTooLarge
                 }
                 TOO_MANY_REQUESTS -> {
+                    val endpoint = connection.url.endpoint()
                     val retryAfter = responseHeaders["Retry-After"]?.toLongOrNull()
-                    ApiResponse.TooManyRequests(retryAfter)
+                    ApiResponse.TooManyRequests(endpoint, retryAfter)
                 }
                 NO_HTTP_RESPONSE -> {
                     ApiResponse.Incomplete(IllegalStateException("Connection failed or unexpected response code"))

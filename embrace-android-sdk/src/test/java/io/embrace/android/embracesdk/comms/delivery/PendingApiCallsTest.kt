@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,11 +13,14 @@ import org.junit.Test
 
 internal class PendingApiCallsTest {
 
+    private lateinit var rateLimitHandler: RateLimitHandler
     private lateinit var pendingApiCalls: PendingApiCalls
 
     @Before
     fun setUp() {
         pendingApiCalls = PendingApiCalls()
+        rateLimitHandler = EmbraceRateLimitHandler()
+        pendingApiCalls.setRateLimitHandler(rateLimitHandler)
     }
 
     @Test
@@ -49,7 +53,7 @@ internal class PendingApiCallsTest {
     }
 
     @Test
-    fun `test hasAnyPendingApiCall`() {
+    fun `test hasPendingApiCallsToSend`() {
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -58,9 +62,9 @@ internal class PendingApiCallsTest {
             eventId = "request_1",
             contentEncoding = "gzip"
         )
-        assertFalse(pendingApiCalls.hasAnyPendingApiCall())
+        assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
         pendingApiCalls.add(PendingApiCall(request1, "payload_filename"))
-        assertTrue(pendingApiCalls.hasAnyPendingApiCall())
+        assertTrue(pendingApiCalls.hasPendingApiCallsToSend())
     }
 
     @Test
@@ -98,10 +102,10 @@ internal class PendingApiCallsTest {
     }
 
     @Test
-    fun `Test that when the queue is full, the oldest api call is removed and the new one is added`() {
-
+    fun `test add on a full queue, removes the oldest API call and adds the new one`() {
         Endpoint.values().forEach {
             pendingApiCalls = PendingApiCalls()
+            pendingApiCalls.setRateLimitHandler(rateLimitHandler)
             val queueLimit = it.getMaxPendingApiCalls()
             val path = it.path
             repeat(queueLimit) {
@@ -141,6 +145,26 @@ internal class PendingApiCallsTest {
             }
             assertEquals(exceedingPendingApiCall, pendingApiCalls.pollNextPendingApiCall())
         }
+    }
+
+    @Test
+    fun `test pollNextPendingApiCall doesn't return api calls from rate limited endpoint`() {
+        val request1 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/events"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id_1",
+            deviceId = "test_device_id",
+            eventId = "request_1",
+            contentEncoding = "gzip"
+        )
+        val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
+        pendingApiCalls.add(pendingApiCall1)
+
+        rateLimitHandler.setRateLimit(Endpoint.EVENTS, 1000)
+        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
+
+        rateLimitHandler.clearRateLimit(Endpoint.EVENTS)
+        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
     }
 
     private fun Endpoint.getMaxPendingApiCalls(): Int {

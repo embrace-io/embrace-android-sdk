@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
@@ -216,7 +217,7 @@ internal class EmbraceApiService(
 
     @Suppress("UseCheckOrError")
     private fun executePost(request: ApiRequest, payload: ByteArray) {
-        val response = apiClient.executePost(request, payload)
+        val response = apiClient.executePost(request, ByteArrayInputStream(payload))
         if (response !is ApiResponse.Success) {
             throw IllegalStateException("Failed to retrieve from Embrace server.")
         }

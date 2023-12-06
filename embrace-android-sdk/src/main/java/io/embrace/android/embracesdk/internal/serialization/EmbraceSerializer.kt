@@ -1,46 +1,50 @@
 package io.embrace.android.embracesdk.internal.serialization
 
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonWriter
-import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import com.squareup.moshi.Moshi
 import io.embrace.android.embracesdk.internal.utils.threadLocal
+import okio.buffer
+import okio.sink
+import okio.source
 import java.io.InputStream
 import java.io.OutputStream
 
 /**
- * A wrapper around Gson to allow for thread-safe serialization.
+ * A wrapper around the JSON library to allow for thread-safe serialization.
  */
 internal class EmbraceSerializer {
 
     private val impl by threadLocal {
-        GsonBuilder()
-            .registerTypeAdapter(EmbraceUrl::class.java, EmbraceUrlAdapter())
-            .create()
+        Moshi.Builder()
+            .add(EmbraceUrlAdapter())
+            .build()
     }
 
     fun <T> toJson(src: T): String {
-        return impl.toJson(src)
+        val adapter = impl.adapter<T>(checkNotNull(src)::class.java)
+        return adapter.toJson(src) ?: error("Failed converting object to JSON.")
     }
 
     fun <T> toJson(any: T, clazz: Class<T>, outputStream: OutputStream) {
-        outputStream.writer().buffered().use {
-            impl.toJson(any, clazz, JsonWriter(it))
+        outputStream.sink().buffer().use {
+            val adapter = impl.adapter(clazz)
+            adapter.toJson(it, any)
         }
     }
 
     fun <T> fromJson(json: String, clz: Class<T>): T {
-        return impl.fromJson(json, clz)
+        val adapter = impl.adapter(clz)
+        return adapter.fromJson(json) ?: error("JSON conversion failed.")
     }
 
     fun <T> fromJson(inputStream: InputStream, clz: Class<T>): T {
-        inputStream.bufferedReader().use {
-            return impl.fromJson(JsonReader(it), clz)
+        return inputStream.source().buffer().use {
+            val adapter = impl.adapter(clz)
+            adapter.fromJson(it) ?: error("JSON conversion failed.")
         }
     }
 
-    fun <T> fromJsonWithTypeToken(json: String): T {
-        return impl.fromJson(json, object : TypeToken<T>() {}.type)
+    inline fun <reified T> fromJsonWithTypeToken(json: String): T {
+        val adapter = impl.adapter(T::class.java)
+        return adapter.fromJson(json) ?: error("JSON conversion failed.")
     }
 }

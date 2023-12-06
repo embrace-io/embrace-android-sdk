@@ -3,12 +3,12 @@
   "s": "STATE",
   "ex": [
     {
+      "n": "java.lang.IllegalStateException",
+      "m": "Whoops!",
       "tt": [
         "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
         "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
-      ],
-      "n": "java.lang.IllegalStateException",
-      "m": "Whoops!"
+      ]
     }
   ]
 }

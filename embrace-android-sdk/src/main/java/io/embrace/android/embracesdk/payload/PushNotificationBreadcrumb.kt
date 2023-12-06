@@ -1,29 +1,31 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 
+@JsonClass(generateAdapter = true)
 internal data class PushNotificationBreadcrumb(
-    @SerializedName("ti")
+    @Json(name = "ti")
     val title: String?,
 
-    @SerializedName("bd")
+    @Json(name = "bd")
     val body: String?,
 
-    @SerializedName("tp")
+    @Json(name = "tp")
     val from: String?,
 
-    @SerializedName("id")
+    @Json(name = "id")
     internal val id: String?,
 
-    @SerializedName("pt")
+    @Json(name = "pt")
     val priority: Int?,
 
-    @SerializedName("te")
+    @Json(name = "te")
     val type: String?,
 
-    @SerializedName("ts")
-    private val timestamp: Long
+    @Json(name = "ts")
+    internal val timestamp: Long
 
 ) : Breadcrumb {
 

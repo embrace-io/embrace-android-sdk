@@ -1,25 +1,27 @@
 package io.embrace.android.embracesdk.payload
 
 import android.util.Base64
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
 import io.embrace.android.embracesdk.payload.ExceptionInfo.Companion.ofThrowable
 import io.embrace.android.embracesdk.payload.ThreadInfo.Companion.ofThread
 
+@JsonClass(generateAdapter = true)
 internal data class Crash(
-    @SerializedName("id")
+    @Json(name = "id")
     @JvmField
     val crashId: String,
 
-    @SerializedName("ex")
+    @Json(name = "ex")
     val exceptions: List<ExceptionInfo>? = null,
 
-    @SerializedName("rep_js")
+    @Json(name = "rep_js")
     val jsExceptions: List<String>? = null,
 
-    @SerializedName("th")
+    @Json(name = "th")
     val threads: List<ThreadInfo>? = null
 ) {
 

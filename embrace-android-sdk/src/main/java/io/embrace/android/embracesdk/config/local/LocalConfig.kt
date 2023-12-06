@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.config.local
 
 import android.util.Base64
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Compani
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfo
 import java.lang.Boolean.parseBoolean
 
+@JsonClass(generateAdapter = true)
 internal class LocalConfig(
 
     /**
@@ -19,7 +21,7 @@ internal class LocalConfig(
     /**
      * Control whether the Embrace SDK is able to capture native crashes.
      */
-    @SerializedName("ndk_enabled")
+    @Json(name = "ndk_enabled")
     val ndkEnabled: Boolean,
 
     /**

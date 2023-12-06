@@ -1,23 +1,25 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
  * Information about the user of the app, provided by the developer performing the integration.
  */
+@JsonClass(generateAdapter = true)
 internal data class UserInfo(
 
-    @SerializedName("id")
+    @Json(name = "id")
     var userId: String? = null,
 
-    @SerializedName("em")
+    @Json(name = "em")
     var email: String? = null,
 
-    @SerializedName("un")
+    @Json(name = "un")
     var username: String? = null,
 
-    @SerializedName("per")
+    @Json(name = "per")
     var personas: Set<String>? = null
 ) {
 

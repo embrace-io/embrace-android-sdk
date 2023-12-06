@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.EmbraceEvent.Type
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Wraps the event [Type]. This class is purely used for backwards-compatibility.
  */
-internal class EmbraceEvent private constructor() {
+@JsonClass(generateAdapter = true)
+internal class EmbraceEvent internal constructor() {
 
     /**
      * This actually belongs in [Event], but to maintain backwards-compatibility of the API,
@@ -25,31 +27,31 @@ internal class EmbraceEvent private constructor() {
         val abbreviation: String
     ) {
 
-        @SerializedName("start")
+        @Json(name = "start")
         START("s"),
 
-        @SerializedName("late")
+        @Json(name = "late")
         LATE("l"),
 
-        @SerializedName("interrupt")
+        @Json(name = "interrupt")
         INTERRUPT("i"),
 
-        @SerializedName("crash")
+        @Json(name = "crash")
         CRASH("c"),
 
-        @SerializedName("end")
+        @Json(name = "end")
         END("e"),
 
-        @SerializedName("info")
+        @Json(name = "info")
         INFO_LOG("il"),
 
-        @SerializedName("error")
+        @Json(name = "error")
         ERROR_LOG("el"),
 
-        @SerializedName("warning")
+        @Json(name = "warning")
         WARNING_LOG("wl"),
 
-        @SerializedName("network")
+        @Json(name = "network")
         NETWORK_LOG("n");
 
         companion object {

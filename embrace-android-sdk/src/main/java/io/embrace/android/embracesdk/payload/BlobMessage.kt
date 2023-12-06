@@ -1,24 +1,26 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiClient
 
+@JsonClass(generateAdapter = true)
 internal data class BlobMessage(
-    @SerializedName("a")
+    @Json(name = "a")
     val appInfo: AppInfo? = null,
 
-    @SerializedName("bae")
+    @Json(name = "bae")
     val applicationExits: List<AppExitInfoData> = emptyList(),
 
-    @SerializedName("d")
+    @Json(name = "d")
     val deviceInfo: DeviceInfo? = null,
 
-    @SerializedName("s")
+    @Json(name = "s")
     val session: BlobSession? = null,
 
-    @SerializedName("u")
+    @Json(name = "u")
     val userInfo: UserInfo? = null,
 
-    @SerializedName("v")
+    @Json(name = "v")
     val version: Int = ApiClient.MESSAGE_VERSION
 )

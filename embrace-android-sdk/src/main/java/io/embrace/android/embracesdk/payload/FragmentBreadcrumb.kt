@@ -1,19 +1,21 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 
 /**
  * Breadcrumb that represents a fragment that was viewed.
  */
+@JsonClass(generateAdapter = true)
 internal class FragmentBreadcrumb(
-    @SerializedName("n")
+    @Json(name = "n")
     val name: String,
 
-    @SerializedName("st")
+    @Json(name = "st")
     var start: Long,
 
-    @SerializedName("en")
+    @Json(name = "en")
     var endTime: Long
 ) : Breadcrumb {
     override fun getStartTime(): Long = start

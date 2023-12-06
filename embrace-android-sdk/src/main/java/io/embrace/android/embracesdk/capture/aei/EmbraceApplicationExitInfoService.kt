@@ -247,7 +247,7 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     /**
      * Converts a byte array to a UTF-8 string, escaping non-encodable bytes as
-     * 2-byte UTF-8 sequences, which will later be converted into \uXXXX by JSON marshalling.
+     * 2-byte UTF-8 sequences, which will later be converted into unicode by JSON marshalling.
      * This allows us to send arbitrary binary data from the NDK
      * protobuf file without needing to encode it as Base64 (which compresses poorly).
      */

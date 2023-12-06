@@ -367,7 +367,7 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
             String errorsRaw = delegate._getErrors(absolutePath);
             if (errorsRaw != null) {
                 try {
-                    return serializer.<ArrayList<NativeCrashDataError>>fromJsonWithTypeToken(errorsRaw);
+                    return null; // FIXME serializer.<ArrayList<NativeCrashDataError>>fromJsonWithTypeToken(errorsRaw);
                 } catch (Exception e) {
                     logger.logError("Failed to parse native crash error file {crashId=" + nativeCrash.getNativeCrashId() +
                         ", errorFilePath=" + absolutePath + "}");

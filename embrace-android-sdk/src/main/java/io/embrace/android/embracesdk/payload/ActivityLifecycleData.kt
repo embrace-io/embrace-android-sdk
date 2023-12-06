@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class ActivityLifecycleData(
-    @SerializedName("a")
+    @Json(name = "a")
     internal val activity: String?,
 
-    @SerializedName("d")
+    @Json(name = "d")
     internal val data: List<ActivityLifecycleBreadcrumb>?
 )

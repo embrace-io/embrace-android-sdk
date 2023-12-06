@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class ThermalState(
 
-    @SerializedName("t")
+    @Json(name = "t")
     internal val timestamp: Long,
 
-    @SerializedName("s")
+    @Json(name = "s")
     internal val status: Int
 )

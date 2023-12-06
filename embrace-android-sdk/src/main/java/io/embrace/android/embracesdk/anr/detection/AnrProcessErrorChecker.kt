@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.anr.detection
 
 import android.app.ActivityManager
 import android.os.Process
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.clock.Clock
 
 private const val DATA_LIMIT_BYTES = 16 * 1024
@@ -30,35 +31,36 @@ internal fun findAnrProcessErrorStateInfo(
 /**
  * Holds information about the ANR as reported by [AnrProcessErrorStateInfo].
  */
+@JsonClass(generateAdapter = true)
 internal data class AnrProcessErrorStateInfo(
 
     /**
      * The activity name associated with the error, if known.  May be null.
      */
-    @SerializedName("t")
+    @Json(name = "t")
     val tag: String? = null,
 
     /**
      * A short message describing the error condition.
      */
-    @SerializedName("sm")
+    @Json(name = "sm")
     val shortMsg: String? = null,
 
     /**
      * A long message describing the error condition.
      */
-    @SerializedName("lm")
+    @Json(name = "lm")
     val longMsg: String? = null,
 
     /**
      * The stack trace where the error originated. May be null.
      */
-    @SerializedName("st")
+    @Json(name = "st")
     val stackTrace: String? = null,
 
     /**
      * The timestamp where the process error info was first detected.
      */
-    @SerializedName("ts")
+    @Json(name = "ts")
     val timestamp: Long? = null,
 )

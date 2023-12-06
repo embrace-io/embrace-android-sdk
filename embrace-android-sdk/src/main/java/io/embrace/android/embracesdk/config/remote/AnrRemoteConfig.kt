@@ -1,91 +1,93 @@
 package io.embrace.android.embracesdk.config.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Configuration values relating to the ANR tracking on the app.
  */
+@JsonClass(generateAdapter = true)
 internal data class AnrRemoteConfig(
 
-    @SerializedName("pct_enabled")
+    @Json(name = "pct_enabled")
     val pctEnabled: Int? = null,
 
-    @SerializedName("pct_pe_enabled")
+    @Json(name = "pct_pe_enabled")
     val pctAnrProcessErrorsEnabled: Int? = null,
 
-    @SerializedName("pct_bg_enabled")
+    @Json(name = "pct_bg_enabled")
     val pctBgEnabled: Int? = null,
 
-    @SerializedName("interval")
+    @Json(name = "interval")
     val sampleIntervalMs: Long? = null,
 
-    @SerializedName("anr_pe_interval")
+    @Json(name = "anr_pe_interval")
     val anrProcessErrorsIntervalMs: Long? = null,
 
-    @SerializedName("anr_pe_delay")
+    @Json(name = "anr_pe_delay")
     val anrProcessErrorsDelayMs: Long? = null,
 
-    @SerializedName("anr_pe_sc_extra_time")
+    @Json(name = "anr_pe_sc_extra_time")
     val anrProcessErrorsSchedulerExtraTimeAllowance: Long? = null,
 
-    @SerializedName("per_interval")
+    @Json(name = "per_interval")
     val maxStacktracesPerInterval: Int? = null,
 
-    @SerializedName("max_depth")
+    @Json(name = "max_depth")
     val stacktraceFrameLimit: Int? = null,
 
-    @SerializedName("per_session")
+    @Json(name = "per_session")
     val anrPerSession: Int? = null,
 
-    @SerializedName("main_thread_only")
+    @Json(name = "main_thread_only")
     val mainThreadOnly: Boolean? = null,
 
-    @SerializedName("priority")
+    @Json(name = "priority")
     val minThreadPriority: Int? = null,
 
-    @SerializedName("min_duration")
+    @Json(name = "min_duration")
     val minDuration: Int? = null,
 
-    @SerializedName("white_list")
+    @Json(name = "white_list")
     val allowList: List<String>? = null,
 
-    @SerializedName("black_list")
+    @Json(name = "black_list")
     val blockList: List<String>? = null,
 
-    @SerializedName("unity_ndk_sampling_factor")
+    @Json(name = "unity_ndk_sampling_factor")
     val nativeThreadAnrSamplingFactor: Int? = null,
 
-    @SerializedName("unity_ndk_sampling_unwinder")
+    @Json(name = "unity_ndk_sampling_unwinder")
     val nativeThreadAnrSamplingUnwinder: String? = null,
 
-    @SerializedName("pct_unity_thread_capture_enabled")
+    @Json(name = "pct_unity_thread_capture_enabled")
     val pctNativeThreadAnrSamplingEnabled: Float? = null,
 
-    @SerializedName("ndk_sampling_offset_enabled")
+    @Json(name = "ndk_sampling_offset_enabled")
     val nativeThreadAnrSamplingOffsetEnabled: Boolean? = null,
 
-    @SerializedName("pct_idle_handler_enabled")
+    @Json(name = "pct_idle_handler_enabled")
     val pctIdleHandlerEnabled: Float? = null,
 
-    @SerializedName("pct_strictmode_listener_enabled")
+    @Json(name = "pct_strictmode_listener_enabled")
     val pctStrictModeListenerEnabled: Float? = null,
 
-    @SerializedName("strictmode_violation_limit")
+    @Json(name = "strictmode_violation_limit")
     val strictModeViolationLimit: Int? = null,
 
-    @SerializedName("ignore_unity_ndk_sampling_allowlist")
+    @Json(name = "ignore_unity_ndk_sampling_allowlist")
     val ignoreNativeThreadAnrSamplingAllowlist: Boolean? = null,
 
-    @SerializedName("unity_ndk_sampling_allowlist")
+    @Json(name = "unity_ndk_sampling_allowlist")
     val nativeThreadAnrSamplingAllowlist: List<AllowedNdkSampleMethod>? = null,
 
     /**
      * Percentage of users for which Google ANR timestamp capture is enabled.
      */
-    @SerializedName("google_pct_enabled")
+    @Json(name = "google_pct_enabled")
     val googlePctEnabled: Int? = null,
 
-    @SerializedName("monitor_thread_priority")
+    @Json(name = "monitor_thread_priority")
     val monitorThreadPriority: Int? = null
 ) {
 
@@ -94,8 +96,9 @@ internal data class AnrRemoteConfig(
         LIBUNWINDSTACK(1);
     }
 
+    @JsonClass(generateAdapter = true)
     internal class AllowedNdkSampleMethod(
-        @SerializedName("c") val clz: String? = null,
-        @SerializedName("m") val method: String? = null
+        @Json(name = "c") val clz: String? = null,
+        @Json(name = "m") val method: String? = null
     )
 }

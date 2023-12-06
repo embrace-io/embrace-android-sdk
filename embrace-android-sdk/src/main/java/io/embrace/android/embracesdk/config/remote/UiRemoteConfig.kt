@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.config.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Configuration values relating to the user interface of the app.
  */
+@JsonClass(generateAdapter = true)
 internal data class UiRemoteConfig(
 
     /**
@@ -13,7 +15,7 @@ internal data class UiRemoteConfig(
     val breadcrumbs: Int? = null,
     val taps: Int? = null,
     val views: Int? = null,
-    @SerializedName("web_views")
+    @Json(name = "web_views")
     val webViews: Int? = null,
     val fragments: Int? = null
 )

@@ -1,31 +1,28 @@
 package io.embrace.android.embracesdk.internal.serialization
 
-import com.google.gson.TypeAdapter
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonWriter
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.ToJson
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 
-internal class EmbraceUrlAdapter : TypeAdapter<EmbraceUrl>() {
+@JsonClass(generateAdapter = true)
+internal data class EmbraceUrlJson(
+    @Json(name = "url")
+    val url: String? = null
+)
 
-    override fun write(jsonWriter: JsonWriter, embraceUrl: EmbraceUrl?) {
-        jsonWriter.run {
-            beginObject()
-            name("url").value(embraceUrl?.toString())
-            endObject()
-        }
+internal class EmbraceUrlAdapter {
+
+    @FromJson
+    fun fromJson(json: EmbraceUrlJson): EmbraceUrl? {
+        val url = json.url ?: return null
+        return EmbraceUrl.create(url)
     }
 
-    override fun read(jsonReader: JsonReader): EmbraceUrl? {
-        var embraceUrl: EmbraceUrl? = null
-
-        jsonReader.beginObject()
-        while (jsonReader.hasNext()) {
-            if (jsonReader.nextName() == "url") {
-                embraceUrl = EmbraceUrl.create(jsonReader.nextString())
-            }
-        }
-        jsonReader.endObject()
-
-        return embraceUrl
+    @ToJson
+    fun toJson(embraceUrl: EmbraceUrl?): EmbraceUrlJson? {
+        val url = embraceUrl?.toString() ?: return null
+        return EmbraceUrlJson(url)
     }
 }

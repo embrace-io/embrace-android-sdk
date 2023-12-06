@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 
 /**
  * Breadcrumb that represents the display event for a View.
  */
+@JsonClass(generateAdapter = true)
 internal class ViewBreadcrumb(
     /**
      * The screen name for the view breadcrumb.
@@ -15,17 +17,17 @@ internal class ViewBreadcrumb(
     /**
      * The timestamp at which the view started.
      */
-    @SerializedName("st")
+    @Json(name = "st")
     val start: Long?,
 
     /**
      * The timestamp at which the view ended.
      */
-    @SerializedName("en")
+    @Json(name = "en")
     var end: Long? = null
 ) : Breadcrumb {
 
-    @SerializedName("vn")
+    @Json(name = "vn")
     val screen: String
 
     init {

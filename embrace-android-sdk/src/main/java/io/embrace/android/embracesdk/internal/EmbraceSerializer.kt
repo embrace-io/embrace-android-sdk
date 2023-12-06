@@ -2,13 +2,14 @@ package io.embrace.android.embracesdk.internal
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
-import com.google.gson.stream.JsonReader
+import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonWriter
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.BufferedWriter
+import java.io.Reader
 import java.lang.reflect.Type
 import java.nio.charset.Charset
 
@@ -32,6 +33,16 @@ internal class EmbraceSerializer {
             ?: throw JsonIOException("Failed converting object to JSON.")
     }
 
+    fun <T> toJson(any: T, clazz: Class<T>, writer: BufferedWriter): Boolean {
+        return try {
+            gson.toJson(any, clazz, JsonWriter(writer))
+            true
+        } catch (e: Exception) {
+            InternalStaticEmbraceLogger.logDebug("cannot write to bufferedWriter", e)
+            false
+        }
+    }
+
     fun <T> fromJson(json: String, type: Type): T {
         return gson.fromJson(json, type)
     }
@@ -40,22 +51,16 @@ internal class EmbraceSerializer {
         return gson.fromJson(json, clz)
     }
 
-    fun <T> writeToFile(any: T, clazz: Class<T>, bw: BufferedWriter): Boolean {
-        return try {
-            gson.toJson(any, clazz, JsonWriter(bw))
-            true
-        } catch (e: Exception) {
-            InternalStaticEmbraceLogger.logDebug("cannot write to bufferedWriter", e)
-            false
-        }
+    fun <T> fromJson(reader: Reader, clz: Class<T>): T {
+        return gson.fromJson(reader, clz)
     }
 
-    fun <T> loadObject(jsonReader: JsonReader, clazz: Class<T>): T? {
-        return gson.fromJson(jsonReader, clazz)
+    fun <T> fromJson(json: String): T {
+        return gson.fromJson(json, object : TypeToken<T>() {}.type)
     }
 
     fun <T> bytesFromPayload(payload: T, clazz: Class<T>): ByteArray? {
-        val json: String? = gson.toJson(payload, clazz.genericSuperclass)
-        return json?.toByteArray(Charset.forName("UTF-8"))
+        val json = toJson(payload, clazz)
+        return json.toByteArray(Charset.forName("UTF-8"))
     }
 }

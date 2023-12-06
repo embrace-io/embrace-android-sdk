@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.webview
 
-import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -17,7 +16,6 @@ internal class EmbraceWebViewService(
      * The information collected for each WebView
      */
     private val webViewInfoMap = hashMapOf<String, WebViewInfo>()
-    private val webVitalType = object : TypeToken<WebViewInfo>() {}.type
 
     override fun collectWebData(tag: String, message: String) {
         InternalStaticEmbraceLogger.logger.logDeveloper("EmbraceWebViewService", "Collecting WebView log: $message")
@@ -95,7 +93,7 @@ internal class EmbraceWebViewService(
     private fun parseWebVital(message: String): WebViewInfo? {
         try {
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
-                return serializer.fromJson(message, webVitalType)
+                return serializer.fromJson(message, WebViewInfo::class.java)
             } else {
                 InternalStaticEmbraceLogger.logger.logError("Web Vital info is too large to parse")
             }

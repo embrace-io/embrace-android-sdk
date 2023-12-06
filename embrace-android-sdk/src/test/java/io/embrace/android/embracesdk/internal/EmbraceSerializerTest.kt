@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal
 
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -18,15 +17,15 @@ internal class EmbraceSerializerTest {
 
     @Test
     fun testWriteToFile() {
-        val result = serializer.writeToFile(payload, SessionMessage::class.java, mockk(relaxed = true))
+        val result = serializer.toJson(payload, SessionMessage::class.java, mockk(relaxed = true))
         assertTrue(result)
     }
 
     @Test
     fun testLoadObject() {
-        val reader = JsonReader(StringReader(serializer.toJson(payload)))
-        val result = serializer.loadObject(reader, SessionMessage::class.java)
-        assertEquals("fakeSessionId", result?.session?.sessionId)
+        val reader = StringReader(serializer.toJson(payload))
+        val result = serializer.fromJson(reader, SessionMessage::class.java)
+        assertEquals("fakeSessionId", result.session.sessionId)
     }
 
     @Test

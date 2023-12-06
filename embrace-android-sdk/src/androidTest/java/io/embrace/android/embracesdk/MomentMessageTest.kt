@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import java.io.File
+import java.io.IOException
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import java.io.File
-import java.io.IOException
 
 private const val MOMENT_NAME = "my_moment"
 
@@ -107,19 +106,12 @@ internal class MomentMessageTest : BaseTest() {
             readFile(file, EmbraceEndpoint.EVENTS.url)
             val serializer = EmbraceSerializer()
             file.bufferedReader().use { bufferedReader ->
-                JsonReader(bufferedReader).use { jsonreader ->
-                    jsonreader.isLenient = true
-                    val obj = serializer.loadObject(jsonreader, PendingApiCalls::class.java)
-                    if (obj != null) {
-                        val pendingApiCall = obj.pollNextPendingApiCall()
-                        checkNotNull(pendingApiCall)
-                        val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
-                        assert(pendingApiCallFileName.isNotBlank())
-                        readFileContent("\"t\":\"start\"", pendingApiCallFileName)
-                    } else {
-                        fail("Null object")
-                    }
-                }
+                val obj = serializer.fromJson(bufferedReader, PendingApiCalls::class.java)
+                val pendingApiCall = obj.pollNextPendingApiCall()
+                checkNotNull(pendingApiCall)
+                val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
+                assert(pendingApiCallFileName.isNotBlank())
+                readFileContent("\"t\":\"start\"", pendingApiCallFileName)
             }
         } catch (e: IOException) {
             fail("IOException error: ${e.message}")

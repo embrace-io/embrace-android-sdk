@@ -150,7 +150,7 @@ internal class EmbracePreferencesService(
         key: String
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
-        return serializer.fromJson<HashMap<String, String>>(mapString)
+        return serializer.fromJsonWithTypeToken<HashMap<String, String>>(mapString)
     }
 
     override var appVersion: String?

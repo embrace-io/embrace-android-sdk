@@ -152,18 +152,13 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray {
         val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.bytesFromPayload(
-            backgroundActivityMessage,
-            BackgroundActivityMessage::class.java
-        )
+        val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
-            baBytes?.let { bytes ->
-                saveBytes(baId) { filename ->
-                    cacheService.cacheBytes(filename, bytes)
-                }
+            saveBytes(baId) { filename ->
+                cacheService.cacheBytes(filename, baBytes)
             }
         }
         return baBytes
@@ -212,13 +207,9 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
         logger.logDeveloper(TAG, "Saving pending api calls")
-        serializer.bytesFromPayload(
-            pendingApiCalls,
-            PendingApiCalls::class.java
-        )?.let {
-            executorService.submit {
-                cacheService.cacheBytes(PENDING_API_CALLS_FILE_NAME, it)
-            }
+        val bytes = serializer.toJson(pendingApiCalls).toByteArray()
+        executorService.submit {
+            cacheService.cacheBytes(PENDING_API_CALLS_FILE_NAME, bytes)
         }
     }
 

@@ -105,14 +105,11 @@ internal class MomentMessageTest : BaseTest() {
             assertTrue(file.exists() && !file.isDirectory)
             readFile(file, EmbraceEndpoint.EVENTS.url)
             val serializer = EmbraceSerializer()
-            file.bufferedReader().use { bufferedReader ->
-                val obj = serializer.fromJson(bufferedReader, PendingApiCalls::class.java)
-                val pendingApiCall = obj.pollNextPendingApiCall()
-                checkNotNull(pendingApiCall)
-                val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
-                assert(pendingApiCallFileName.isNotBlank())
-                readFileContent("\"t\":\"start\"", pendingApiCallFileName)
-            }
+            val obj = serializer.fromJson(file.inputStream(), PendingApiCalls::class.java)
+            val pendingApiCall = checkNotNull(obj.pollNextPendingApiCall())
+            val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
+            assert(pendingApiCallFileName.isNotBlank())
+            readFileContent("\"t\":\"start\"", pendingApiCallFileName)
         } catch (e: IOException) {
             fail("IOException error: ${e.message}")
         }

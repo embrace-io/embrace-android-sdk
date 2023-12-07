@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -69,7 +68,7 @@ internal class EmbraceCacheService(
         val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             file.bufferedWriter().use {
-                serializer.writeToFile(objectToCache, clazz, it)
+                serializer.toJson(objectToCache, clazz, it)
             }
         } catch (ex: Exception) {
             logger.logDebug("Failed to store cache object " + file.path, ex)
@@ -80,14 +79,11 @@ internal class EmbraceCacheService(
         val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
             file.bufferedReader().use { bufferedReader ->
-                JsonReader(bufferedReader).use { jsonreader ->
-                    jsonreader.isLenient = true
-                    val obj = serializer.loadObject(jsonreader, clazz)
-                    if (obj != null) {
-                        return obj
-                    } else {
-                        logger.logDeveloper("EmbraceCacheService", "Object $name not found")
-                    }
+                val obj = serializer.fromJson(bufferedReader, clazz)
+                if (obj != null) {
+                    return obj
+                } else {
+                    logger.logDeveloper("EmbraceCacheService", "Object $name not found")
                 }
             }
         } catch (ex: FileNotFoundException) {

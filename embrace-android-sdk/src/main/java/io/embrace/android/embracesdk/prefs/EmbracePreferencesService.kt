@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.prefs
 
 import android.content.SharedPreferences
-import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -151,8 +150,7 @@ internal class EmbracePreferencesService(
         key: String
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
-        val type = object : TypeToken<HashMap<String?, String?>?>() {}.type
-        return serializer.fromJson<HashMap<String, String>>(mapString, type)
+        return serializer.fromJson<HashMap<String, String>>(mapString)
     }
 
     override var appVersion: String?

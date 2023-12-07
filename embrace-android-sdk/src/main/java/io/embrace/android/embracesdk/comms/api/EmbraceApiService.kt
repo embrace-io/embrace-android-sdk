@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
@@ -64,8 +63,7 @@ internal class EmbraceApiService(
         return when (val response = apiClient.executeGet(request)) {
             is ApiResponse.Success -> {
                 logger.logInfo("Fetched new config successfully.")
-                val jsonReader = JsonReader(StringReader(response.body))
-                serializer.loadObject(jsonReader, RemoteConfig::class.java)
+                serializer.fromJson(StringReader(response.body), RemoteConfig::class.java)
             }
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")

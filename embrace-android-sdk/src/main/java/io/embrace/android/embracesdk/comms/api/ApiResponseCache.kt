@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
 import android.net.http.HttpResponseCache
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -60,8 +59,8 @@ internal class ApiResponseCache @JvmOverloads constructor(
     fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
         val cachedResponse = retrieveCacheResponse(url, request)
         val obj = cachedResponse?.runCatching {
-            JsonReader(InputStreamReader(body).buffered()).use {
-                serializer.loadObject(it, RemoteConfig::class.java)
+            InputStreamReader(body).buffered().use {
+                serializer.fromJson(it, RemoteConfig::class.java)
             }
         }?.getOrNull()
         val eTag = cachedResponse?.let { retrieveETag(cachedResponse) }

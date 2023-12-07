@@ -1,6 +1,6 @@
-package io.embrace.android.embracesdk.comms.api
+package io.embrace.android.embracesdk.internal.serialization
 
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

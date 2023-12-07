@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType

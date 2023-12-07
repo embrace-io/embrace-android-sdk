@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

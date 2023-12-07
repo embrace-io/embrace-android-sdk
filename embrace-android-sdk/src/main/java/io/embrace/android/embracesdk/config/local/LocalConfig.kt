@@ -4,7 +4,7 @@ import android.util.Base64
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfo
 import java.lang.Boolean.parseBoolean

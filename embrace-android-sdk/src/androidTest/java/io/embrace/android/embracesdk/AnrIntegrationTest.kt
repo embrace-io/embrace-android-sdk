@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.SessionMessage

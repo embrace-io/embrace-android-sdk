@@ -1,10 +1,10 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.serialization
 
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.mockk
-import org.junit.Assert.assertEquals
+import org.junit.Assert
 import org.junit.Test
 
 internal class EmbraceSerializerTest {
@@ -21,6 +21,6 @@ internal class EmbraceSerializerTest {
     fun testLoadObject() {
         val stream = serializer.toJson(payload).byteInputStream()
         val result = serializer.fromJson(stream, SessionMessage::class.java)
-        assertEquals("fakeSessionId", result.session.sessionId)
+        Assert.assertEquals("fakeSessionId", result.session.sessionId)
     }
 }

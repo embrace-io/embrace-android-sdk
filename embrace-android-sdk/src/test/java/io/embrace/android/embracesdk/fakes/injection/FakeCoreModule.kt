@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.isDebug
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry

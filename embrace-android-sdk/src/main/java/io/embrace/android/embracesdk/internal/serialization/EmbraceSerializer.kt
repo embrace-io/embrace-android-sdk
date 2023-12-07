@@ -1,11 +1,10 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.serialization
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import java.io.InputStream
 import java.io.OutputStream

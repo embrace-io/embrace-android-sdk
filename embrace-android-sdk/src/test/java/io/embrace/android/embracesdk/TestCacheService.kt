@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern

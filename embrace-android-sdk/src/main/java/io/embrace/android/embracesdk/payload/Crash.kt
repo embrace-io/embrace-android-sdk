@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import android.util.Base64
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
 import io.embrace.android.embracesdk.payload.ExceptionInfo.Companion.ofThrowable

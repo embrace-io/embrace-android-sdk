@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.utils.MessageUtils
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
@@ -21,13 +20,6 @@ internal data class UserInfo(
     @SerializedName("per")
     var personas: Set<String>? = null
 ) {
-
-    fun toJson(): String {
-        return "{\"id\": " + MessageUtils.withNull(userId) +
-            ",\"em\": " + MessageUtils.withNull(email) +
-            ",\"un\":" + MessageUtils.withNull(username) +
-            ",\"per\":" + MessageUtils.withSet(personas) + "}"
-    }
 
     companion object {
         const val PERSONA_NEW_USER = "new_user"

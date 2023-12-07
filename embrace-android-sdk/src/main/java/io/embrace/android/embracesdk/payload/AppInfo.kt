@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.utils.MessageUtils
 
 internal data class AppInfo(
     /**
@@ -119,26 +118,4 @@ internal data class AppInfo(
      */
     @SerializedName("usv")
     val hostedSdkVersion: String? = null,
-) {
-    fun toJson(): String {
-        return "{\"v\": " + MessageUtils.withNull(appVersion) +
-            ",\"f\": " + appFramework +
-            ",\"bi\":" + MessageUtils.withNull(buildId) +
-            ",\"bt\":" + MessageUtils.withNull(buildType) +
-            ",\"fl\":" + MessageUtils.withNull(buildFlavor) +
-            ",\"e\":" + MessageUtils.withNull(environment) +
-            ",\"vu\":" + MessageUtils.boolToStr(appUpdated) +
-            ",\"vul\":" + MessageUtils.boolToStr(appUpdatedThisLaunch) +
-            ",\"bv\":" + MessageUtils.withNull(bundleVersion) +
-            ",\"ou\":" + MessageUtils.boolToStr(osUpdated) +
-            ",\"oul\":" + MessageUtils.boolToStr(osUpdatedThisLaunch) +
-            ",\"sdk\":" + MessageUtils.withNull(sdkVersion) +
-            ",\"sdc\":" + MessageUtils.withNull(sdkSimpleVersion) +
-            ",\"rn\":" + MessageUtils.withNull(reactNativeBundleId) +
-            ",\"jsp\":" + MessageUtils.withNull(javaScriptPatchNumber) +
-            ",\"rnv\":" + MessageUtils.withNull(reactNativeVersion) +
-            ",\"unv\":" + MessageUtils.withNull(hostedPlatformVersion) +
-            ",\"ubg\":" + MessageUtils.withNull(buildGuid) +
-            ",\"usv\":" + MessageUtils.withNull(hostedSdkVersion) + "}"
-    }
-}
+)

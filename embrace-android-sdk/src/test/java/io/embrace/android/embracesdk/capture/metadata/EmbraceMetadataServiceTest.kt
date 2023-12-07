@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -40,6 +41,7 @@ internal class EmbraceMetadataServiceTest {
     companion object {
         private val context: Context = mockk(relaxed = true)
         private val packageInfo = PackageInfo()
+        private val serializer = EmbraceSerializer()
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
         private val cpuInfoDelegate: EmbraceCpuInfoDelegate = mockk(relaxed = true)
@@ -192,7 +194,7 @@ internal class EmbraceMetadataServiceTest {
             .replace("{versionCode}", BuildConfig.VERSION_CODE)
             .filter { !it.isWhitespace() }
 
-        val appInfo = getMetadataService().getAppInfo().toJson()
+        val appInfo = serializer.toJson(getMetadataService().getAppInfo())
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
@@ -216,7 +218,7 @@ internal class EmbraceMetadataServiceTest {
 
         metadataService.setReactNativeBundleId(context, "1234")
 
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
@@ -245,7 +247,7 @@ internal class EmbraceMetadataServiceTest {
         every { MetadataUtils.getLocale() }.returns("en-US")
         every { MetadataUtils.getSystemUptime() }.returns(123L)
 
-        val deviceInfo = getMetadataService().getDeviceInfo().toJson()
+        val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
         verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
         verify(exactly = 1) { MetadataUtils.getModel() }
@@ -289,7 +291,7 @@ internal class EmbraceMetadataServiceTest {
             lazy { packageInfo.versionCode.toString() }
         )
 
-        val deviceInfo = metadataService.getDeviceInfo().toJson()
+        val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
         verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
         verify(exactly = 1) { MetadataUtils.getModel() }
@@ -300,9 +302,6 @@ internal class EmbraceMetadataServiceTest {
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
         verify(exactly = 1) { MetadataUtils.getSystemUptime() }
-
-        assertTrue(deviceInfo.contains("\"jb\":null"))
-        assertTrue(deviceInfo.contains("\"sr\":null"))
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 

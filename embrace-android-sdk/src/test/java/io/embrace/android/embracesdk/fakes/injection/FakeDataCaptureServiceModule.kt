@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 
 internal class FakeDataCaptureServiceModule(
     override val strictModeService: StrictModeService = NoOpStrictModeService(),

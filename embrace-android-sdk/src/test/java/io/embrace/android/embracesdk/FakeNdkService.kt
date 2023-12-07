@@ -19,7 +19,7 @@ internal class FakeNdkService : NdkService {
     }
 
     override fun getUnityCrashId(): String? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun testCrash(isCpp: Boolean) {

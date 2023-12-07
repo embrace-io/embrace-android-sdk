@@ -1,8 +1,9 @@
-package io.embrace.android.embracesdk.comms.api
+package io.embrace.android.embracesdk.internal.serialization
 
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 
 internal class EmbraceUrlAdapter : TypeAdapter<EmbraceUrl>() {
 

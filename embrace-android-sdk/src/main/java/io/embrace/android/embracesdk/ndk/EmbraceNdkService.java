@@ -33,7 +33,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryService;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
-import io.embrace.android.embracesdk.internal.EmbraceSerializer;
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer;
 import io.embrace.android.embracesdk.internal.SharedObjectLoader;
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker;
 import io.embrace.android.embracesdk.internal.utils.Uuid;

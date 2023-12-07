@@ -147,7 +147,7 @@ internal data class Session @JvmOverloads internal constructor(
         internal const val APPLICATION_STATE_FOREGROUND = "foreground"
 
         @JvmStatic
-        fun buildStartSession(
+        fun buildInitialSession(
             id: String,
             coldStart: Boolean,
             startType: SessionLifeEventType,

@@ -44,16 +44,16 @@ internal class StatefulSessionTest {
 
             // verify first session
             val messages = testRule.harness.getSentSessionMessages()
-            val first = messages[1]
-            verifySessionHappened(messages[0], first)
+            val first = messages[0]
+            verifySessionHappened(first)
             assertEquals(SessionLifeEventType.STATE, first.session.startType)
             assertEquals(SessionLifeEventType.STATE, first.session.endType)
             val crumb = checkNotNull(first.breadcrumbs?.customBreadcrumbs?.single())
             assertEquals("Hello, World!", crumb.message)
 
             // verify second session
-            val second = messages[3]
-            verifySessionHappened(messages[2], second)
+            val second = messages[1]
+            verifySessionHappened(second)
             assertNotEquals(first.session.sessionId, second.session.sessionId)
             assertEquals(true, second.breadcrumbs?.customBreadcrumbs?.isEmpty())
         }
@@ -70,7 +70,7 @@ internal class StatefulSessionTest {
             // TODO: future the logic seems wrong here - nested calls should probably be ignored
             //  and should not drop a session. However, it's an unlikely scenario (if we trust)
             //  Google's process lifecycle implementation.
-            assertEquals(3, messages.size)
+            assertEquals(1, messages.size)
         }
     }
 }

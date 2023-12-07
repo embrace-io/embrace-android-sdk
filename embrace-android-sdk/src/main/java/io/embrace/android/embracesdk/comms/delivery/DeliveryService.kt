@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 
-internal enum class SessionMessageState { START, END, END_WITH_CRASH }
+internal enum class SessionMessageState { END, END_WITH_CRASH }
 
 internal interface DeliveryService {
     fun saveSessionPeriodicCache(sessionMessage: SessionMessage)

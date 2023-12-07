@@ -104,7 +104,7 @@ internal class SessionHandler(
                 return null
             }
 
-            val session = Session.buildStartSession(
+            val session = Session.buildInitialSession(
                 Uuid.getEmbUuid(),
                 coldStart,
                 startType,
@@ -119,13 +119,10 @@ internal class SessionHandler(
             // Record the connection type at the start of the session.
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
 
-            val sessionMessage = sessionMessageCollator.buildStartSessionMessage(session)
+            val sessionMessage = sessionMessageCollator.buildInitialSessionMessage(session)
 
             metadataService.setActiveSessionId(session.sessionId, true)
 
-            if (configService.sessionBehavior.isStartMessageEnabled()) {
-                deliveryService.sendSession(sessionMessage, SessionMessageState.START)
-            }
             logger.logDebug("Start session sent to delivery service.")
 
             handleAutomaticSessionStopper(automaticSessionCloserCallback)

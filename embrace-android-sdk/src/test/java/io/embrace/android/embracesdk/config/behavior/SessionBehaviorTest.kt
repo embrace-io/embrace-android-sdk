@@ -24,7 +24,6 @@ internal class SessionBehaviorTest {
         sessionConfig = SessionRemoteConfig(
             isEnabled = true,
             endAsync = false,
-            pctStartMessageEnabled = 0f,
             sessionComponents = setOf("test"),
             fullSessionEvents = setOf("test2")
         ),
@@ -42,7 +41,6 @@ internal class SessionBehaviorTest {
             assertNull(getSessionComponents())
             assertFalse(isGatingFeatureEnabled())
             assertFalse(isSessionControlEnabled())
-            assertTrue(isStartMessageEnabled())
             assertEquals(10, getMaxSessionProperties())
         }
     }
@@ -57,7 +55,6 @@ internal class SessionBehaviorTest {
             assertEquals(setOf("breadcrumbs"), getSessionComponents())
             assertEquals(setOf("crash"), getFullSessionEvents())
             assertTrue(isGatingFeatureEnabled())
-            assertTrue(isStartMessageEnabled())
         }
     }
 
@@ -71,7 +68,6 @@ internal class SessionBehaviorTest {
             assertEquals(setOf("test"), getSessionComponents())
             assertEquals(setOf("test2"), getFullSessionEvents())
             assertEquals(57, getMaxSessionProperties())
-            assertFalse(isStartMessageEnabled())
         }
     }
 

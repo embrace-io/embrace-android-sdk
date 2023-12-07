@@ -95,12 +95,10 @@ internal class TracingApiTest {
                 )
             }
             val sessionEndTime = harness.fakeClock.now()
-            assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
-            val startSession = harness.fakeDeliveryModule.deliveryService.lastSentSessions[0]
-            assertEquals(SessionMessageState.START, startSession.second)
-            val endSession = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1]
-            assertEquals(SessionMessageState.END, endSession.second)
-            with(endSession.first) {
+            assertEquals(1, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
+            val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[0]
+            assertEquals(SessionMessageState.END, sessionMessage.second)
+            with(sessionMessage.first) {
                 checkNotNull(spans)
                 assertEquals(6, spans.size)
                 val spansMap = spans.associateBy { it.name }

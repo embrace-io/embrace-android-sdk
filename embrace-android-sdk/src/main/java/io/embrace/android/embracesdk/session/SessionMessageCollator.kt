@@ -147,7 +147,7 @@ internal class SessionMessageCollator(
         )
     }
 
-    internal fun buildStartSessionMessage(session: Session) = SessionMessage(
+    internal fun buildInitialSessionMessage(session: Session) = SessionMessage(
         session = session,
         appInfo = captureDataSafely(metadataService::getAppInfo),
         deviceInfo = captureDataSafely(metadataService::getDeviceInfo)

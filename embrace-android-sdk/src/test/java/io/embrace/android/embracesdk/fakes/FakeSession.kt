@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.payload.Session
 
-internal fun fakeSession(): Session = Session.buildStartSession(
+internal fun fakeSession(): Session = Session.buildInitialSession(
     "fakeSessionId",
     true,
     Session.SessionLifeEventType.STATE,

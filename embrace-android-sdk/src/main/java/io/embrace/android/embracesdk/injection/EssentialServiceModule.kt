@@ -27,10 +27,10 @@ import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -91,13 +91,12 @@ internal class EssentialServiceModuleImpl(
 
     // Many of these properties are temporarily here to break a circular dependency between services.
     // When possible, we should try to move them into a new service or module.
-    private val localConfig =
-        LocalConfig.fromResources(
-            coreModule.resources,
-            coreModule.context.packageName,
-            customAppId,
-            coreModule.jsonSerializer
-        )
+    private val localConfig = LocalConfigParser.fromResources(
+        coreModule.resources,
+        coreModule.context.packageName,
+        customAppId,
+        coreModule.jsonSerializer
+    )
 
     private val lazyPackageInfo = lazy {
         coreModule.context.packageManager.getPackageInfo(coreModule.context.packageName, 0)

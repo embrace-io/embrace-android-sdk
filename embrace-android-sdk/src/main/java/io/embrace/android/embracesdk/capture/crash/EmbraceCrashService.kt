@@ -15,10 +15,10 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.payload.extensions.CrashFactory
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -81,9 +81,9 @@ internal class EmbraceCrashService(
                     "EmbraceCrashService",
                     "unityCrashId is $unityCrashId"
                 )
-                Crash.ofThrowable(exception, jsException, unityCrashId)
+                CrashFactory.ofThrowable(exception, jsException, unityCrashId)
             } else {
-                Crash.ofThrowable(exception, jsException)
+                CrashFactory.ofThrowable(exception, jsException)
             }
             logDeveloper("EmbraceCrashService", "crashId = " + crash.crashId)
 

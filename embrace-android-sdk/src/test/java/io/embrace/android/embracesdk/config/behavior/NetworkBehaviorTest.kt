@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.DomainLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
@@ -146,7 +146,7 @@ internal class NetworkBehaviorTest {
     @Test
     fun testGetCapturePublicKey() {
         val json = ResourceReader.readResourceAsText("public_key_config.json")
-        val localConfig = LocalConfig.buildConfig("aaa", false, json, EmbraceSerializer())
+        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer())
         val behavior = fakeNetworkBehavior(localCfg = localConfig::sdkConfig)
         assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
     }

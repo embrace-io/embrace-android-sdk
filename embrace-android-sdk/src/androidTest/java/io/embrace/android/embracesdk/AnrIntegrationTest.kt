@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.payload.extensions.duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

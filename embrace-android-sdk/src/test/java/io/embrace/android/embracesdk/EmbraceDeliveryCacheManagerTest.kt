@@ -71,14 +71,14 @@ internal class EmbraceDeliveryCacheManagerTest {
             executor,
             logger,
             fakeClock,
-            EmbraceSerializer()
+            serializer
         )
     }
 
     @Test
     fun `cache current session successfully`() {
         val sessionMessage = createSessionMessage("test_cache")
-        val expectedBytes = EmbraceSerializer().toJson(sessionMessage).toByteArray()
+        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
         val serialized = deliveryCacheManager.saveSession(sessionMessage)
 
@@ -161,7 +161,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.cacheBytes(any(), any()) } throws Exception()
 
         val sessionMessage = createSessionMessage("test_cache_fails")
-        val expectedBytes = EmbraceSerializer().toJson(sessionMessage).toByteArray()
+        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
         val serialized = checkNotNull(deliveryCacheManager.saveSession(sessionMessage))
 

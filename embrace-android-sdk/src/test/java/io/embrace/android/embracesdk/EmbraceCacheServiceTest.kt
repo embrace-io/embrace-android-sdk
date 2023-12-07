@@ -27,13 +27,15 @@ internal class EmbraceCacheServiceTest {
     private lateinit var service: CacheService
     private lateinit var dir: File
 
+    private val serializer = EmbraceSerializer()
+
     @Before
     fun setUp() {
 
         dir = Files.createTempDirectory("tmpDirPrefix").toFile()
         service = EmbraceCacheService(
             lazy { dir },
-            EmbraceSerializer(),
+            serializer,
             InternalEmbraceLogger()
         )
 
@@ -149,7 +151,7 @@ internal class EmbraceCacheServiceTest {
         myDir.createNewFile()
         service = EmbraceCacheService(
             lazy { myDir },
-            EmbraceSerializer(),
+            serializer,
             InternalEmbraceLogger()
         )
 

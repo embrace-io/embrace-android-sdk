@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk.payload
 
 import android.util.Pair
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class TapBreadcrumbTest {
-
-    private val serializer = EmbraceSerializer()
 
     private val info = TapBreadcrumb(
         Pair(0f, 0f),
@@ -20,16 +19,12 @@ internal class TapBreadcrumbTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("tap_breadcrumb_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("tap_breadcrumb_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("tap_breadcrumb_expected.json")
-        val obj = serializer.fromJson(json, TapBreadcrumb::class.java)
+        val obj = deserializeJsonFromResource<TapBreadcrumb>("tap_breadcrumb_expected.json")
         assertEquals("0,0", obj.location)
         assertEquals("tappedElementName", obj.tappedElementName)
         assertEquals(1600000000, obj.getStartTime())
@@ -38,7 +33,7 @@ internal class TapBreadcrumbTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", TapBreadcrumb::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<TapBreadcrumb>()
+        assertNotNull(obj)
     }
 }

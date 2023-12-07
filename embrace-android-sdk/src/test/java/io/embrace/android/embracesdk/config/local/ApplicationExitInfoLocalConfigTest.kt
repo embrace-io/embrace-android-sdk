@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.config.local
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class ApplicationExitInfoLocalConfigTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -20,15 +18,14 @@ internal class ApplicationExitInfoLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("application_exit_info_local_config.json")
-        val obj = serializer.fromJson(json, AppExitInfoLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<AppExitInfoLocalConfig>("application_exit_info_local_config.json")
         assertEquals(10, obj.appExitInfoTracesLimit)
         assertTrue(obj.aeiCaptureEnabled ?: false)
     }
 
     @Test
     fun testEmptyObject() {
-        val appExitInfoLocalConfig = serializer.fromJson("{}", AppExitInfoLocalConfig::class.java)
+        val appExitInfoLocalConfig = deserializeEmptyJsonString<AppExitInfoLocalConfig>()
         assertNull(appExitInfoLocalConfig.appExitInfoTracesLimit)
         assertNull(appExitInfoLocalConfig.aeiCaptureEnabled)
     }

@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -10,7 +11,6 @@ import org.junit.Test
 
 internal class BackgroundActivityMessageTest {
 
-    private val serializer = EmbraceSerializer()
     private val backgroundActivity = BackgroundActivity("fake-activity", 0, "")
     private val userInfo = UserInfo("fake-user-id")
     private val appInfo = AppInfo("fake-app-id")
@@ -33,16 +33,12 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("bg_activity_message_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-        val obj = serializer.fromJson(json, BackgroundActivityMessage::class.java)
+        val obj = deserializeJsonFromResource<BackgroundActivityMessage>("bg_activity_message_expected.json")
         assertNotNull(obj)
 
         assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)
@@ -56,7 +52,7 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", BackgroundActivityMessage::class.java)
-        assertNotNull(info)
+        val cfg = deserializeEmptyJsonString<BackgroundActivityMessage>()
+        assertNotNull(cfg)
     }
 }

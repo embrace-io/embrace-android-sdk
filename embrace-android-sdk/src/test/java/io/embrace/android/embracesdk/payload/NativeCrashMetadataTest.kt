@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -19,16 +21,12 @@ internal class NativeCrashMetadataTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("native_crash_metadata_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("native_crash_metadata_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("native_crash_metadata_expected.json")
-        val obj = serializer.fromJson(json, NativeCrashMetadata::class.java)
+        val obj = deserializeJsonFromResource<NativeCrashMetadata>("native_crash_metadata_expected.json")
         verifyInfoPopulated(obj)
     }
 
@@ -41,8 +39,8 @@ internal class NativeCrashMetadataTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", NativeCrashMetadata::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<NativeCrashMetadata>()
+        assertNotNull(obj)
     }
 
     private fun verifyInfoPopulated(obj: NativeCrashMetadata) {

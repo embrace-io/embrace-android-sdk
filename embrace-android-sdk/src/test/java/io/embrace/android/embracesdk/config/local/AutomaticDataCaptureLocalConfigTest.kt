@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.config.local
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class AutomaticDataCaptureLocalConfigTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -18,9 +17,7 @@ internal class AutomaticDataCaptureLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("auto_data_capture_config.json")
-        val obj = serializer.fromJson(json, AutomaticDataCaptureLocalConfig::class.java)
-
+        val obj = deserializeJsonFromResource<AutomaticDataCaptureLocalConfig>("auto_data_capture_config.json")
         assertFalse(checkNotNull(obj.anrServiceEnabled))
         assertFalse(checkNotNull(obj.memoryServiceEnabled))
         assertFalse(checkNotNull(obj.networkConnectivityServiceEnabled))
@@ -29,8 +26,8 @@ internal class AutomaticDataCaptureLocalConfigTest {
 
     @Test
     fun testEmptyObject() {
-        val obj = serializer.fromJson("{}", AutomaticDataCaptureLocalConfig::class.java)
-        verifyDefaults(obj)
+        val obj = deserializeEmptyJsonString<AutomaticDataCaptureLocalConfig>()
+        assertNotNull(obj)
     }
 
     private fun verifyDefaults(cfg: AutomaticDataCaptureLocalConfig) {

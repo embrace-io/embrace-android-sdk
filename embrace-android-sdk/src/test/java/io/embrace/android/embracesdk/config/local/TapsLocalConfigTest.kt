@@ -1,14 +1,12 @@
 package io.embrace.android.embracesdk.config.local
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class TapsLocalConfigTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -18,14 +16,13 @@ internal class TapsLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("taps_config.json")
-        val obj = serializer.fromJson(json, TapsLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<TapsLocalConfig>("taps_config.json")
         assertFalse(checkNotNull(obj.captureCoordinates))
     }
 
     @Test
     fun testEmptyObject() {
-        val obj = serializer.fromJson("{}", TapsLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<TapsLocalConfig>()
         assertNull(obj.captureCoordinates)
     }
 }

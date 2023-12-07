@@ -20,7 +20,6 @@ internal class FakeAnrService : AnrService {
     override fun getAnrProcessErrors(startTime: Long): List<AnrProcessErrorStateInfo> = anrProcessErrors
 
     override fun forceAnrTrackingStopOnCrash() {
-        TODO("Not yet implemented")
     }
 
     override fun finishInitialization(

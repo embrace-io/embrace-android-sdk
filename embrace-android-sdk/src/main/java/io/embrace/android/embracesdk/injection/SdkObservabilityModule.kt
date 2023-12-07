@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.logging.AndroidLogger
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalErrorLogger
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 
 /**
  * Contains dependencies that are used to gain internal observability into how the SDK
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.logging.InternalErrorLogger
 internal interface SdkObservabilityModule {
     val exceptionService: EmbraceInternalErrorService
     val internalErrorLogger: InternalErrorLogger
+    val embraceTelemetryService: EmbraceTelemetryService
 }
 
 internal class SdkObservabilityModuleImpl(
@@ -29,5 +31,9 @@ internal class SdkObservabilityModuleImpl(
 
     override val internalErrorLogger: InternalErrorLogger by singleton {
         InternalErrorLogger(exceptionService, AndroidLogger(), logStrictMode)
+    }
+
+    override val embraceTelemetryService: EmbraceTelemetryService by singleton {
+        EmbraceTelemetryService()
     }
 }

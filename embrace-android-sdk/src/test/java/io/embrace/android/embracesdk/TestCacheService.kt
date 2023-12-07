@@ -13,7 +13,7 @@ internal class TestCacheService : CacheService {
     private val cache: MutableMap<String, ByteArray> = ConcurrentHashMap()
 
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
-        cache[name] = serializer.toJson(objectToCache, checkNotNull(clazz.genericSuperclass)).toByteArray()
+        cache[name] = serializer.toJson(objectToCache).toByteArray()
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {

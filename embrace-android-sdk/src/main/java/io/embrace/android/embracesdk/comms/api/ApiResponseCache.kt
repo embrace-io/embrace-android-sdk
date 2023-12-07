@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.io.InputStreamReader
 import java.net.CacheResponse
 import java.net.URI
 
@@ -59,9 +58,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
     fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
         val cachedResponse = retrieveCacheResponse(url, request)
         val obj = cachedResponse?.runCatching {
-            InputStreamReader(body).buffered().use {
-                serializer.fromJson(it, RemoteConfig::class.java)
-            }
+            serializer.fromJson(body, RemoteConfig::class.java)
         }?.getOrNull()
         val eTag = cachedResponse?.let { retrieveETag(cachedResponse) }
         return CachedConfig(obj, eTag)

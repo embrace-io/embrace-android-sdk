@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.io.ByteArrayInputStream
-import java.io.StringReader
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -63,7 +62,9 @@ internal class EmbraceApiService(
         return when (val response = apiClient.executeGet(request)) {
             is ApiResponse.Success -> {
                 logger.logInfo("Fetched new config successfully.")
-                serializer.fromJson(StringReader(response.body), RemoteConfig::class.java)
+                response.body?.let {
+                    serializer.fromJson(it, RemoteConfig::class.java)
+                }
             }
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")
@@ -150,7 +151,7 @@ internal class EmbraceApiService(
      * @param eventMessage the event message containing the event
      */
     override fun sendEventAndWait(eventMessage: EventMessage) {
-        post(eventMessage, mapper::eventMessageRequest)?.get()
+        post(eventMessage, mapper::eventMessageRequest).get()
     }
 
     /**
@@ -160,7 +161,7 @@ internal class EmbraceApiService(
      */
     override fun sendCrash(crash: EventMessage) {
         try {
-            post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }?.get(
+            post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }.get(
                 CRASH_TIMEOUT,
                 TimeUnit.SECONDS
             )
@@ -178,16 +179,11 @@ internal class EmbraceApiService(
         payload: T,
         mapper: (T) -> ApiRequest,
         noinline onComplete: (() -> Unit)? = null
-    ): Future<*>? {
-        val bytes = serializer.bytesFromPayload(payload, T::class.java)
+    ): Future<*> {
+        val bytes = serializer.toJson(payload).toByteArray()
         val request: ApiRequest = mapper(payload)
-
-        bytes?.let {
-            logger.logDeveloper(TAG, "Post event")
-            return postOnExecutor(it, request, onComplete)
-        }
-        logger.logError("Failed to post event")
-        return null
+        logger.logDeveloper(TAG, "Post event")
+        return postOnExecutor(bytes, request, onComplete)
     }
 
     private fun postOnExecutor(

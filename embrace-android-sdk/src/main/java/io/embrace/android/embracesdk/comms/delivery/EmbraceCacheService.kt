@@ -67,9 +67,7 @@ internal class EmbraceCacheService(
         logger.logDeveloper(TAG, "Attempting to cache object: $name")
         val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
-            file.bufferedWriter().use {
-                serializer.toJson(objectToCache, clazz, it)
-            }
+            serializer.toJson(objectToCache, clazz, file.outputStream())
         } catch (ex: Exception) {
             logger.logDebug("Failed to store cache object " + file.path, ex)
         }
@@ -78,14 +76,7 @@ internal class EmbraceCacheService(
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
         val file = File(storageDir, EMBRACE_PREFIX + name)
         try {
-            file.bufferedReader().use { bufferedReader ->
-                val obj = serializer.fromJson(bufferedReader, clazz)
-                if (obj != null) {
-                    return obj
-                } else {
-                    logger.logDeveloper("EmbraceCacheService", "Object $name not found")
-                }
-            }
+            return serializer.fromJson(file.inputStream(), clazz)
         } catch (ex: FileNotFoundException) {
             logger.logDebug("Cache file cannot be found " + file.path)
         } catch (ex: Exception) {

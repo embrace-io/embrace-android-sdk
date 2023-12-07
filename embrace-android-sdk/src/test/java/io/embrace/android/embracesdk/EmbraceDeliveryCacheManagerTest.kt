@@ -78,8 +78,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `cache current session successfully`() {
         val sessionMessage = createSessionMessage("test_cache")
-        val expectedBytes =
-            EmbraceSerializer().bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        val expectedBytes = EmbraceSerializer().toJson(sessionMessage).toByteArray()
 
         val serialized = deliveryCacheManager.saveSession(sessionMessage)
 
@@ -94,8 +93,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
 
-        val expectedByteArray =
-            serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
         assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
@@ -114,8 +112,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
 
-        val expectedByteArray =
-            serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
         assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
@@ -134,8 +131,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
 
-        val expectedByteArray =
-            serializer.bytesFromPayload(sessionMessage, SessionMessage::class.java)
+        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
         assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
@@ -165,12 +161,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.cacheBytes(any(), any()) } throws Exception()
 
         val sessionMessage = createSessionMessage("test_cache_fails")
-        val expectedBytes = checkNotNull(
-            EmbraceSerializer().bytesFromPayload(
-                sessionMessage,
-                SessionMessage::class.java
-            )
-        )
+        val expectedBytes = EmbraceSerializer().toJson(sessionMessage).toByteArray()
 
         val serialized = checkNotNull(deliveryCacheManager.saveSession(sessionMessage))
 
@@ -453,8 +444,8 @@ internal class EmbraceDeliveryCacheManagerTest {
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
         // SessionMessage does not implement equals, so we have to serialize to compare
         assertEquals(
-            String(checkNotNull(serializer.bytesFromPayload(session1, SessionMessage::class.java))),
-            String(checkNotNull(serializer.bytesFromPayload(session2, SessionMessage::class.java)))
+            serializer.toJson(session1),
+            serializer.toJson(session2)
         )
     }
 

@@ -63,14 +63,12 @@ internal class LogMessageTest : BaseTest() {
             assertTrue(file.exists() && !file.isDirectory)
             readFile(file, "/v1/log/logging")
             val serializer = EmbraceSerializer()
-            file.bufferedReader().use { bufferedReader ->
-                val obj = serializer.fromJson(bufferedReader, PendingApiCalls::class.java)
-                val pendingApiCall = obj.pollNextPendingApiCall()
-                checkNotNull(pendingApiCall)
-                val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
-                assert(pendingApiCallFileName.isNotBlank())
-                readFileContent("Test log info fail", pendingApiCallFileName)
-            }
+            val obj = serializer.fromJson(file.inputStream(), PendingApiCalls::class.java)
+            val pendingApiCall = obj.pollNextPendingApiCall()
+            checkNotNull(pendingApiCall)
+            val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
+            assert(pendingApiCallFileName.isNotBlank())
+            readFileContent("Test log info fail", pendingApiCallFileName)
         } catch (e: IOException) {
             fail("IOException error: ${e.message}")
         }

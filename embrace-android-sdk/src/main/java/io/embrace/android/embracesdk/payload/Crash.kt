@@ -81,7 +81,7 @@ internal data class Crash(
             var jsExceptions: List<String>? = null
             if (jsException != null) {
                 try {
-                    val jsonException = serializer.toJson(jsException, jsException.javaClass).toByteArray()
+                    val jsonException = serializer.toJson(jsException).toByteArray()
                     val encodedString = Base64.encodeToString(jsonException, Base64.NO_WRAP)
                     jsExceptions = listOf(encodedString)
                 } catch (ex: Exception) {

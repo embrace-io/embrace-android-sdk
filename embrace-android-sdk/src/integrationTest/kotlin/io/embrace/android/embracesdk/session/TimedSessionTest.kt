@@ -54,13 +54,13 @@ internal class TimedSessionTest {
                 }
             }
             val messages = harness.getSentSessionMessages()
-            assertEquals(10, messages.size)
-            verifySessionHappened(messages[0], messages[1])
-            verifySessionHappened(messages[2], messages[3])
-            verifySessionHappened(messages[4], messages[5])
-            verifySessionHappened(messages[6], messages[7])
-            verifySessionHappened(messages[8], messages[9])
-            assertNotEquals(messages[1].session.sessionId, messages[3].session.sessionId)
+            assertEquals(5, messages.size)
+            verifySessionHappened(messages[0])
+            verifySessionHappened(messages[1])
+            verifySessionHappened(messages[2])
+            verifySessionHappened(messages[3])
+            verifySessionHappened(messages[4])
+            assertNotEquals(messages[0].session.sessionId, messages[1].session.sessionId)
         }
     }
 
@@ -75,9 +75,8 @@ internal class TimedSessionTest {
             harness.recordSession {
                 executor.moveForwardAndRunBlocked(90000)
             }
-            val messages = harness.getSentSessionMessages()
-            assertEquals(2, messages.size)
-            verifySessionHappened(messages[0], messages[1])
+            val message = harness.getSentSessionMessages().single()
+            verifySessionHappened(message)
         }
     }
 }

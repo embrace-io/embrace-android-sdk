@@ -174,29 +174,6 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     @Test
-    fun `send session start`() {
-        initializeDeliveryService()
-
-        every {
-            mockDeliveryCacheManager.saveSession(any())
-        } returns "cached_session".toByteArray()
-
-        val mockFuture: Future<Unit> = mockk()
-        every { apiService.sendSession(any(), any()) } returns mockFuture
-
-        deliveryService.sendSession(mockk(), SessionMessageState.START)
-
-        verify(exactly = 1) {
-            apiService.sendSession(
-                any(),
-                null
-            )
-        }
-        verify { mockFuture wasNot Called }
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
     fun `send session end`() {
         initializeDeliveryService()
 

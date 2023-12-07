@@ -114,12 +114,9 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs:
     throw TimeoutException("Timeout period elapsed before condition met")
 }
 
-internal fun verifySessionHappened(startMessage: SessionMessage, endMessage: SessionMessage) {
-    verifySessionMessage(startMessage)
-    assertEquals("st", startMessage.session.messageType)
-    verifySessionMessage(endMessage)
-    assertEquals("en", endMessage.session.messageType)
-    assertEquals(startMessage.session.sessionId, endMessage.session.sessionId)
+internal fun verifySessionHappened(message: SessionMessage) {
+    verifySessionMessage(message)
+    assertEquals("en", message.session.messageType)
 }
 
 internal fun verifySessionMessage(sessionMessage: SessionMessage) {

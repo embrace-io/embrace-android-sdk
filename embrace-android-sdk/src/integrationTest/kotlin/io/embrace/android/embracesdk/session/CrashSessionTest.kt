@@ -40,9 +40,8 @@ internal class CrashSessionTest {
         }
 
         // verify first session
-        val startMessage = testRule.harness.getSentSessionMessages().single()
-        val endMessage = checkNotNull(testRule.harness.getLastSavedSessionMessage())
-        verifySessionHappened(startMessage, endMessage)
-        assertNotNull(endMessage.session.crashReportId)
+        val message = checkNotNull(testRule.harness.getLastSavedSessionMessage())
+        verifySessionHappened(message)
+        assertNotNull(message.session.crashReportId)
     }
 }

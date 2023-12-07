@@ -37,10 +37,9 @@ internal class ManualSessionTest {
             harness.recordSession {
                 embrace.endSession()
             }
-            val messages = harness.getSentSessionMessages()
-            assertEquals(2, messages.size)
-            verifySessionHappened(messages[0], messages[1])
-            assertEquals(1, messages[1].session.number)
+            val message = harness.getSentSessionMessages().single()
+            verifySessionHappened(message)
+            assertEquals(1, message.session.number)
         }
     }
 
@@ -55,10 +54,10 @@ internal class ManualSessionTest {
                 embrace.endSession()
             }
             val messages = harness.getSentSessionMessages()
-            assertEquals(4, messages.size)
-            verifySessionHappened(messages[0], messages[1])
-            verifySessionHappened(messages[2], messages[3])
-            assertNotEquals(messages[1].session.sessionId, messages[3].session.sessionId)
+            assertEquals(2, messages.size)
+            verifySessionHappened(messages[0])
+            verifySessionHappened(messages[1])
+            assertNotEquals(messages[0].session.sessionId, messages[1].session.sessionId)
         }
     }
 
@@ -72,11 +71,9 @@ internal class ManualSessionTest {
                 harness.fakeClock.tick(1000) // not enough to trigger new session
                 embrace.endSession()
             }
-            val messages = harness.getSentSessionMessages()
-
-            assertEquals(2, messages.size)
-            verifySessionHappened(messages[0], messages[1])
-            assertEquals(1, messages[1].session.number)
+            val message = harness.getSentSessionMessages().single()
+            verifySessionHappened(message)
+            assertEquals(1, message.session.number)
         }
     }
 }

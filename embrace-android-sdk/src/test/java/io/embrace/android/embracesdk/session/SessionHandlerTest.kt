@@ -418,7 +418,6 @@ internal class SessionHandlerTest {
         // verify automatic session stopper was called
         verify { sessionHandler.scheduledFuture?.cancel(false) }
         verify { mockMemoryCleanerService wasNot Called }
-        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
@@ -440,7 +439,6 @@ internal class SessionHandlerTest {
         // about to crash we can save some time on not doing these //
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
 
         val session = checkNotNull(deliveryService.lastSavedSession).session
 
@@ -480,7 +478,6 @@ internal class SessionHandlerTest {
         // when periodic caching, the following calls should not be made
         verify { mockMemoryCleanerService wasNot Called }
         verify(exactly = 0) { mockSessionProperties.clearTemporary() }
-        assertEquals(SessionMessageState.START, deliveryService.lastSentSessions.single().second)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 
@@ -609,29 +606,7 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `start + end session message requests are sent`() {
-        startFakeSession()
-        clock.tick(10000)
-        sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.STATE,
-            endTime = clock.now(),
-            false
-        )
-        val sessions = deliveryService.lastSentSessions
-        assertEquals(2, sessions.size)
-        assertEquals(1, sessions.count { it.second == SessionMessageState.START })
-        assertEquals(1, sessions.count { it.second == SessionMessageState.END })
-    }
-
-    @Test
-    fun `start message is not sent when disabled`() {
-        // disable sending of session start messages
-        remoteConfig = RemoteConfig(
-            sessionConfig = SessionRemoteConfig(
-                pctStartMessageEnabled = 0f
-            )
-        )
-        configService.sessionBehavior.isStartMessageEnabled()
+    fun `session message is sent`() {
         startFakeSession()
         clock.tick(10000)
         sessionHandler.onSessionEnded(

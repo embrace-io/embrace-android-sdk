@@ -46,9 +46,6 @@ internal class PeriodicSessionCacheTest {
                 harness.workerThreadModule.scheduledExecutor(SESSION_CACHING) as BlockingScheduledExecutorService
 
             harness.recordSession {
-                val startMessage = harness.getSentSessionMessages().single()
-                verifySessionMessage(startMessage)
-
                 executor.runCurrentlyBlocked()
                 embrace.addBreadcrumb("Test")
 

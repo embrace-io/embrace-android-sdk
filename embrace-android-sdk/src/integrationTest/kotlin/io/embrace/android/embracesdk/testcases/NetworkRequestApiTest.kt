@@ -268,7 +268,7 @@ internal class NetworkRequestApiTest {
                 embrace.recordNetworkRequest(request)
             }
 
-            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
             val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
@@ -317,7 +317,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkCall(): NetworkCallV2 {
-        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
 
         // Look for a specific error where the fetch from the cache returns a stale value
         session.session.exceptionError?.exceptionErrors?.forEach { errorInfo ->

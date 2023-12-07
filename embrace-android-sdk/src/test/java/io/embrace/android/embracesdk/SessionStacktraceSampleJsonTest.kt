@@ -2,13 +2,11 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.ThreadState
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
@@ -16,15 +14,10 @@ import org.junit.Test
  */
 internal class SessionStacktraceSampleJsonTest {
 
-    private val serializer = EmbraceSerializer()
-
     @Test
     fun testSymbolSerialization() {
         val session = fakeSession().copy(symbols = mapOf("foo" to "bar"))
-        val json = serializer.toJson(session)
-        val expected = ResourceReader.readResourceAsText("session_stacktrace_symbols.json")
-            .filter { !it.isWhitespace() }
-        assertEquals(expected, json)
+        assertJsonMatchesGoldenFile("session_stacktrace_symbols.json", session)
     }
 
     @Test
@@ -33,10 +26,7 @@ internal class SessionStacktraceSampleJsonTest {
         val session = PerformanceInfo(
             nativeThreadAnrIntervals = listOf(fixture)
         )
-        val json = serializer.toJson(session)
-        val expected = ResourceReader.readResourceAsText("session_native_stacktrace.json")
-            .filter { !it.isWhitespace() }
-        assertEquals(expected, json)
+        assertJsonMatchesGoldenFile("session_native_stacktrace.json", session)
     }
 
     private fun generateNativeSampleTick(): NativeThreadAnrInterval {

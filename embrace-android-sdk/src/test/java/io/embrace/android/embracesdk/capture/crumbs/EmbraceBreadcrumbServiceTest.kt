@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.TapsLocalConfig
@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -36,7 +35,6 @@ internal class EmbraceBreadcrumbServiceTest {
     private lateinit var memoryCleanerService: EmbraceMemoryCleanerService
     private lateinit var activity: Activity
     private val logger = InternalEmbraceLogger()
-    private val serializer = EmbraceSerializer()
     private val clock = FakeClock()
 
     @Before
@@ -79,8 +77,7 @@ internal class EmbraceBreadcrumbServiceTest {
                 0, clock.now()
             )
         )
-        val jsonMessage = serializer.toJson(message)
-        assertEquals(jsonMessage, expected)
+        assertJsonMatchesGoldenFile(expected, message)
     }
 
     /*
@@ -98,9 +95,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logView("viewB", clock.now())
         clock.tickSecond()
         service.onViewClose(activity)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_view.json")
-            .filter { !it.isWhitespace() }
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_view.json")
     }
 
     /*
@@ -115,9 +110,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logWebView("https://example.com/path2", clock.now())
         val webViews = service.webViewBreadcrumbs
         assertEquals("two webviews captured", 2, webViews.size)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_webview.json")
-            .filter { !it.isWhitespace() }
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_webview.json")
     }
 
     /*
@@ -129,9 +122,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logCustom("breadcrumb", clock.now())
         val breadcrumbs = service.customBreadcrumbs
         assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_custom.json")
-            .filter { !it.isWhitespace() }
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_custom.json")
     }
 
     /*
@@ -446,10 +437,7 @@ internal class EmbraceBreadcrumbServiceTest {
                 0, clock.now()
             )
         )
-        val jsonMessage = serializer.toJson(message)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_fragment.json")
-            .filter { !it.isWhitespace() }
-        assertEquals(expected, jsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)
     }
 
     @Test
@@ -470,19 +458,13 @@ internal class EmbraceBreadcrumbServiceTest {
             session = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
-        val jsonMessage = serializer.toJson(message)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_view_custom.json")
-            .filter { !it.isWhitespace() }
-        assertEquals(expected, jsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_view_custom.json", message)
 
         val secondMessage = SessionMessage(
             session = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
-        val secondJsonMessage = serializer.toJson(secondMessage)
-        val expectedEmpty = ResourceReader.readResourceAsText("breadcrumb_empty.json")
-            .filter { !it.isWhitespace() }
-        assertEquals(expectedEmpty, secondJsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_empty.json", secondMessage)
     }
 
     @Test

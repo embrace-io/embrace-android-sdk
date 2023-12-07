@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.mockk.every
 import io.mockk.mockk
@@ -11,7 +10,6 @@ import org.junit.Test
 
 internal class ExceptionInfoTest {
 
-    private val serializer = EmbraceSerializer()
     private val info = ExceptionInfo(
         "java.lang.IllegalStateException",
         "Whoops!",
@@ -23,16 +21,12 @@ internal class ExceptionInfoTest {
 
     @Test
     fun testExceptionInfoSerialization() {
-        val data = ResourceReader.readResourceAsText("exception_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("exception_info_expected.json", info)
     }
 
     @Test
     fun testExceptionInfoDeserialization() {
-        val json = ResourceReader.readResourceAsText("exception_info_expected.json")
-        val obj = serializer.fromJson(json, ExceptionInfo::class.java)
+        val obj = deserializeJsonFromResource<ExceptionInfo>("exception_info_expected.json")
         assertEquals("java.lang.IllegalStateException", obj.name)
         assertEquals("Whoops!", obj.message)
         assertEquals("java.base/java.lang.Thread.getStackTrace(Thread.java:1602)", obj.lines[0])
@@ -44,9 +38,8 @@ internal class ExceptionInfoTest {
 
     @Test
     fun testExceptionInfoEmptyObject() {
-        val info = serializer.fromJson("{}", ExceptionInfo::class.java)
-        assertNotNull(info)
-        info.name
+        val obj = deserializeEmptyJsonString<ExceptionInfo>()
+        assertNotNull(obj)
     }
 
     @Test

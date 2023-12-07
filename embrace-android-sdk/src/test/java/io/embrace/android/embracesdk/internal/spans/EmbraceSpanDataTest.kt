@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import org.junit.Assert.assertEquals
@@ -12,8 +12,7 @@ internal class EmbraceSpanDataTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("span_expected.json")
-        val deserializedSpan = serializer.fromJson(json, EmbraceSpanData::class.java)
+        val deserializedSpan = deserializeJsonFromResource<EmbraceSpanData>("span_expected.json")
         assertEquals(testSpan.name, deserializedSpan.name)
         assertEquals(testSpan.spanId, deserializedSpan.spanId)
         assertEquals(testSpan.parentSpanId, deserializedSpan.parentSpanId)

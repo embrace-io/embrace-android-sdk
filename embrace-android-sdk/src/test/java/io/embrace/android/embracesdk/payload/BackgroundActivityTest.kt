@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class BackgroundActivityTest {
-
-    private val serializer = EmbraceSerializer()
 
     private val info = BackgroundActivity(
         sessionId = "fake-session-id",
@@ -38,16 +37,12 @@ internal class BackgroundActivityTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("bg_activity_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("bg_activity_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("bg_activity_expected.json")
-        val obj = serializer.fromJson(json, BackgroundActivity::class.java)
+        val obj = deserializeJsonFromResource<BackgroundActivity>("bg_activity_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -77,7 +72,7 @@ internal class BackgroundActivityTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", BackgroundActivity::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<BackgroundActivity>()
+        assertNotNull(obj)
     }
 }

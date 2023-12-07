@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.config
 
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class NetworkRemoteConfigTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -29,16 +27,14 @@ internal class NetworkRemoteConfigTest {
 
     @Test
     fun testDeserialization() {
-        val data = ResourceReader.readResourceAsText("network_config.json")
-        val cfg = serializer.fromJson(data, NetworkRemoteConfig::class.java)
-
+        val cfg = deserializeJsonFromResource<NetworkRemoteConfig>("network_config.json")
         assertEquals(2000, cfg.defaultCaptureLimit)
         assertEquals(mapOf("google.com" to 500), cfg.domainLimits)
     }
 
     @Test
     fun testDeserializationEmptyObj() {
-        val cfg = serializer.fromJson("{}", NetworkRemoteConfig::class.java)
+        val cfg = deserializeEmptyJsonString<NetworkRemoteConfig>()
         verifyDefaults(cfg)
     }
 

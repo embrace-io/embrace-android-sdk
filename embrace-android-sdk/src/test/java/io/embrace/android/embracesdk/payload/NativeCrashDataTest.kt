@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class NativeCrashDataTest {
-
-    private val serializer = EmbraceSerializer()
 
     private val info = NativeCrashData(
         "report_id",
@@ -35,16 +34,12 @@ internal class NativeCrashDataTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("native_crash_data_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("native_crash_data_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("native_crash_data_expected.json")
-        val obj = serializer.fromJson(json, NativeCrashData::class.java)
+        val obj = deserializeJsonFromResource<NativeCrashData>("native_crash_data_expected.json")
         assertEquals("report_id", obj.nativeCrashId)
         assertEquals("sid", obj.sessionId)
         assertEquals(1610000000000, obj.timestamp)
@@ -59,7 +54,7 @@ internal class NativeCrashDataTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", NativeCrashData::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<NativeCrashData>()
+        assertNotNull(obj)
     }
 }

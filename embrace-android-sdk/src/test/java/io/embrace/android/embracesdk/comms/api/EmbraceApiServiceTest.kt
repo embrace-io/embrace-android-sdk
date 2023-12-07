@@ -31,6 +31,9 @@ import org.junit.Test
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
+
+    private val serializer = EmbraceSerializer()
+
     private lateinit var apiUrlBuilder: ApiUrlBuilder
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
@@ -284,6 +287,5 @@ internal class EmbraceApiServiceTest {
             headers = emptyMap(),
             body = ""
         )
-        private val serializer = EmbraceSerializer()
     }
 }

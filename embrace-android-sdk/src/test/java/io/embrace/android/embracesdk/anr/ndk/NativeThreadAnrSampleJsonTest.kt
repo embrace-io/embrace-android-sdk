@@ -1,15 +1,11 @@
 package io.embrace.android.embracesdk.anr.ndk
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class NativeThreadAnrSampleJsonTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testSerialization() {
@@ -26,10 +22,6 @@ internal class NativeThreadAnrSampleJsonTest {
                 )
             )
         )
-
-        val expected = ResourceReader.readResourceAsText("native_thread_anr_sample.json")
-            .filter { !it.isWhitespace() }
-        val json = serializer.toJson(sample)
-        assertEquals(expected, json)
+        assertJsonMatchesGoldenFile("native_thread_anr_sample.json", sample)
     }
 }

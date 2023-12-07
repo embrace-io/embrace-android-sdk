@@ -11,9 +11,11 @@ import org.junit.Test
 
 internal class LocalConfigTest {
 
+    private val serializer = EmbraceSerializer()
+
     @Test
     fun testEmptyConfig() {
-        val localConfig = LocalConfig.buildConfig("GrCPU", false, null, EmbraceSerializer())
+        val localConfig = LocalConfig.buildConfig("GrCPU", false, null, serializer)
         assertNotNull(localConfig)
     }
 
@@ -24,7 +26,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"app\": {\"report_disk_usage\": false}}",
-                EmbraceSerializer()
+                serializer
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.app?.reportDiskUsage))
     }
@@ -33,7 +35,7 @@ internal class LocalConfigTest {
     fun testBetaFunctionalityOnlyConfig() {
         // disabled explicitly
         var localConfig =
-            LocalConfig.buildConfig("GrCPU", false, "{\"beta_features_enabled\": false}", EmbraceSerializer())
+            LocalConfig.buildConfig("GrCPU", false, "{\"beta_features_enabled\": false}", serializer)
         assertFalse(checkNotNull(localConfig.sdkConfig.betaFeaturesEnabled))
 
         // enabled explicitly
@@ -41,12 +43,12 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"beta_features_enabled\": true}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.betaFeaturesEnabled))
 
         // enabled by default
-        localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", EmbraceSerializer())
+        localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", serializer)
         assertNull(localConfig.sdkConfig.betaFeaturesEnabled)
     }
 
@@ -54,7 +56,7 @@ internal class LocalConfigTest {
     fun testSigHandlerDetectionOnlyConfig() {
         // disabled explicitly
         var localConfig =
-            LocalConfig.buildConfig("GrCPU", false, "{\"sig_handler_detection\": false}", EmbraceSerializer())
+            LocalConfig.buildConfig("GrCPU", false, "{\"sig_handler_detection\": false}", serializer)
         assertFalse(checkNotNull(localConfig.sdkConfig.sigHandlerDetection))
 
         // enabled explicitly
@@ -62,12 +64,12 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"sig_handler_detection\": true}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.sigHandlerDetection))
 
         // enabled by default
-        localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", EmbraceSerializer())
+        localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", serializer)
         assertNull(localConfig.sdkConfig.sigHandlerDetection)
     }
 
@@ -77,7 +79,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"base_urls\": {\"config\": \"custom_config\"}}",
-            EmbraceSerializer()
+            serializer
         )
         assertEquals(localConfig.sdkConfig.baseUrls?.config, "custom_config")
         localConfig =
@@ -85,14 +87,14 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"base_urls\": {\"data\": \"custom_data\"}}",
-                EmbraceSerializer()
+                serializer
             )
         assertEquals(localConfig.sdkConfig.baseUrls?.data, "custom_data")
         localConfig = LocalConfig.buildConfig(
             "GrCPU",
             false,
             "{\"base_urls\": {\"data_dev\": \"custom_data_dev\"}}",
-            EmbraceSerializer()
+            serializer
         )
         assertEquals(
             localConfig.sdkConfig.baseUrls?.dataDev,
@@ -102,14 +104,14 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"base_urls\": {\"images\": \"custom_images\"}}",
-            EmbraceSerializer()
+            serializer
         )
         assertEquals(localConfig.sdkConfig.baseUrls?.images, "custom_images")
     }
 
     @Test
     fun testViewConfigOnlyConfig() {
-        var localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", EmbraceSerializer())
+        var localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", serializer)
         assertNull(
             localConfig.sdkConfig.viewConfig?.enableAutomaticActivityCapture,
         )
@@ -117,7 +119,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"view_config\":{\"enable_automatic_activity_capture\":false}}",
-            EmbraceSerializer()
+            serializer
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.viewConfig?.enableAutomaticActivityCapture))
     }
@@ -129,7 +131,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"crash_handler\": {\"enabled\": false}}",
-                EmbraceSerializer()
+                serializer
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.crashHandler?.enabled))
         localConfig =
@@ -137,7 +139,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"crash_handler\": {\"ndk_enabled\": false}}",
-                EmbraceSerializer()
+                serializer
             )
         assertFalse(localConfig.ndkEnabled)
     }
@@ -150,7 +152,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"session\": {\"max_session_seconds\": 60}}",
-                EmbraceSerializer()
+                serializer
             )
         assertEquals(
             localConfig.sdkConfig.sessionConfig?.maxSessionSeconds,
@@ -163,7 +165,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"session\": {\"max_session_seconds\": 59}}",
-                EmbraceSerializer()
+                serializer
             )
         assertEquals(
             59,
@@ -175,7 +177,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"session\": {\"max_session_seconds\": null}}",
-            EmbraceSerializer()
+            serializer
         )
         assertNull(
             localConfig.sdkConfig.sessionConfig?.maxSessionSeconds,
@@ -183,7 +185,7 @@ internal class LocalConfigTest {
 
         // ignore max_session_seconds when it is too small
         localConfig =
-            LocalConfig.buildConfig("GrCPU", false, "{\"session\": {\"async_end\": true}}", EmbraceSerializer())
+            LocalConfig.buildConfig("GrCPU", false, "{\"session\": {\"async_end\": true}}", serializer)
         assertTrue(checkNotNull(localConfig.sdkConfig.sessionConfig?.asyncEnd))
 
         // error_log_strict_mode is true
@@ -191,7 +193,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"session\": {\"error_log_strict_mode\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(
             checkNotNull(localConfig.sdkConfig.sessionConfig?.sessionEnableErrorLogStrictMode)
@@ -202,7 +204,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"session\": {\"components\": [\"breadcrumbs_taps\"]}}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(
             checkNotNull(localConfig.sdkConfig.sessionConfig?.sessionComponents)
@@ -215,7 +217,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"session\": {\"send_full_for\": []}}",
-                EmbraceSerializer()
+                serializer
             )
         assertTrue(
             checkNotNull(localConfig.sdkConfig.sessionConfig?.fullSessionEvents).isEmpty()
@@ -226,7 +228,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"session\": {\"send_full_for\": [\"crashes\"]}}",
-            EmbraceSerializer()
+            serializer
         )
         val sessionConfig = localConfig.sdkConfig.sessionConfig
         assertFalse(
@@ -243,7 +245,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"startup_moment\": {\"automatically_end\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.startupMoment?.automaticallyEnd))
     }
@@ -255,7 +257,7 @@ internal class LocalConfigTest {
                 "GrCPU",
                 false,
                 "{\"taps\": {\"capture_coordinates\": false}}",
-                EmbraceSerializer()
+                serializer
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.taps?.captureCoordinates))
     }
@@ -266,7 +268,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"networking\": {\"capture_request_content_length\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(
             checkNotNull(localConfig.sdkConfig.networking?.captureRequestContentLength)
@@ -276,14 +278,14 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"networking\": {\"enable_native_monitoring\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.networking?.enableNativeMonitoring))
         localConfig = LocalConfig.buildConfig(
             "GrCPU",
             false,
             "{\"networking\": {\"trace_id_header\": \"custom-value\"}}",
-            EmbraceSerializer()
+            serializer
         )
         assertEquals(
             checkNotNull(localConfig.sdkConfig.networking?.traceIdHeader),
@@ -293,7 +295,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"networking\": {\"disabled_url_patterns\": [\"a.b.c\", \"https://example.com\", \"https://example2.com/foo/123/bar\"]}}",
-            EmbraceSerializer()
+            serializer
         )
         assertEquals(
             3,
@@ -307,14 +309,14 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"webview\": {\"enable\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.webViewConfig?.captureWebViews))
         localConfig = LocalConfig.buildConfig(
             "GrCPU",
             false,
             "{\"webview\": {\"capture_query_params\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.webViewConfig?.captureQueryParams))
     }
@@ -325,7 +327,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"background_activity\": {}}",
-            EmbraceSerializer()
+            serializer
         )
         var backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
         assertNull(
@@ -344,7 +346,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"background_activity\": {\"capture_enabled\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
 
@@ -355,7 +357,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"manual_background_activity_limit\": 50}}",
-            EmbraceSerializer()
+            serializer
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
         assertTrue(
@@ -369,7 +371,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"min_background_activity_duration\": 300}}",
-            EmbraceSerializer()
+            serializer
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
         assertTrue(
@@ -383,7 +385,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"max_cached_activities\": 50}}",
-            EmbraceSerializer()
+            serializer
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
         assertTrue(
@@ -397,7 +399,7 @@ internal class LocalConfigTest {
 
     @Test
     fun testComposeConfig() {
-        var localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", EmbraceSerializer())
+        var localConfig = LocalConfig.buildConfig("GrCPU", false, "{}", serializer)
         assertNull(
             localConfig.sdkConfig.composeConfig?.captureComposeOnClick,
         )
@@ -405,7 +407,7 @@ internal class LocalConfigTest {
             "GrCPU",
             false,
             "{\"compose\":{\"capture_compose_onclick\":false}}",
-            EmbraceSerializer()
+            serializer
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.composeConfig?.captureComposeOnClick))
     }
@@ -415,7 +417,7 @@ internal class LocalConfigTest {
         var localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"memory_info\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertFalse(
@@ -424,7 +426,7 @@ internal class LocalConfigTest {
         localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"memory_info\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertTrue(
@@ -437,7 +439,7 @@ internal class LocalConfigTest {
         var localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertFalse(
@@ -446,7 +448,7 @@ internal class LocalConfigTest {
         localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertTrue(
@@ -459,7 +461,7 @@ internal class LocalConfigTest {
         var localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
 
@@ -469,7 +471,7 @@ internal class LocalConfigTest {
         localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
 
@@ -483,7 +485,7 @@ internal class LocalConfigTest {
         var localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"anr_info\": false}}",
-            EmbraceSerializer()
+            serializer
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertFalse(
@@ -492,7 +494,7 @@ internal class LocalConfigTest {
         localConfig = LocalConfig.buildConfig(
             "GrCPU", false,
             "{\"automatic_data_capture\": { \"anr_info\": true}}",
-            EmbraceSerializer()
+            serializer
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
         assertTrue(

@@ -71,12 +71,6 @@ internal data class PerformanceInfo(
     val networkRequests: NetworkRequests? = null,
 
     /**
-     * StrictMode violations captured during the session
-     */
-    @SerializedName("v")
-    val strictmodeViolations: List<StrictModeViolation>? = null,
-
-    /**
      * Stats about the responsiveness of the ANR monitoring components
      */
     @SerializedName("rms")

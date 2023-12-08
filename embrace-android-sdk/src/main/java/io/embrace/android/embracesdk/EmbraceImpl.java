@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBr
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
 import io.embrace.android.embracesdk.config.ConfigService;
@@ -602,10 +601,6 @@ final class EmbraceImpl {
 
         Thread.setDefaultUncaughtExceptionHandler(crashModule.getAutomaticVerificationExceptionHandler());
         serviceRegistry.registerService(crashModule.getCrashService());
-
-        StrictModeService strictModeService = dataCaptureServiceModule.getStrictModeService();
-        serviceRegistry.registerService(strictModeService);
-        strictModeService.start();
 
         serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
 

@@ -13,8 +13,8 @@ public class MockView(public val context: EmbraceContext) : View(context) {
         bottom = context.screenshotBitmap.height
     }
 
-    @SuppressWarnings("MissingSuperCall")
-    override fun draw(canvas: Canvas?) {
-        canvas?.setBitmap(context.screenshotBitmap)
-    }
+//    @SuppressWarnings("MissingSuperCall")
+//    override fun draw(canvas: Canvas?) {
+//        canvas?.setBitmap(context.screenshotBitmap)
+//    }
 }

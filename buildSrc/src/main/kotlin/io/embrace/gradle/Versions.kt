@@ -4,8 +4,8 @@ package io.embrace.gradle
  * Defines dependency versions that are used in the project.
  */
 object Versions {
-    val compileSdk = 33
-    val minSdk = 21
+    val compileSdk = 34
+    val minSdk = 23
     val junit = "4.13.2"
     val kotlin = "1.5.20"
     // kotin library exposed to the customer

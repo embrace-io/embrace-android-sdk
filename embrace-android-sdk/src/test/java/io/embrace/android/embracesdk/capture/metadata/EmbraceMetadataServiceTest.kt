@@ -245,7 +245,6 @@ internal class EmbraceMetadataServiceTest {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
         every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
         every { MetadataUtils.getLocale() }.returns("en-US")
-        every { MetadataUtils.getSystemUptime() }.returns(123L)
 
         val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
@@ -257,7 +256,6 @@ internal class EmbraceMetadataServiceTest {
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
-        verify(exactly = 1) { MetadataUtils.getSystemUptime() }
         verify(exactly = 1) { MetadataUtils.getNumberOfCores() }
 
         assertTrue(deviceInfo.contains("\"jb\":true"))
@@ -271,7 +269,6 @@ internal class EmbraceMetadataServiceTest {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
         every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
         every { MetadataUtils.getLocale() }.returns("en-US")
-        every { MetadataUtils.getSystemUptime() }.returns(123L)
 
         val metadataService = EmbraceMetadataService.ofContext(
             context,
@@ -301,7 +298,6 @@ internal class EmbraceMetadataServiceTest {
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
-        verify(exactly = 1) { MetadataUtils.getSystemUptime() }
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 

@@ -37,9 +37,6 @@ internal data class DeviceInfo(
     @SerializedName("tz")
     val timezoneDescription: String? = null,
 
-    @SerializedName("up")
-    val uptime: Long? = null,
-
     @SerializedName("nc")
     val cores: Int? = null,
 

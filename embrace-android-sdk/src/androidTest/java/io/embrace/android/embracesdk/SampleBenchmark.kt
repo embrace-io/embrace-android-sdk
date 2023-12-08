@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk
 
+import android.annotation.SuppressLint
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.gson.GsonBuilder
+import com.squareup.moshi.Moshi
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.EmbraceUrlAdapter
@@ -36,12 +38,13 @@ internal class SampleBenchmark {
     @get:Rule
     val benchmarkRule = BenchmarkRule()
 
+    @SuppressLint("CheckResult")
     @Test
     fun libraryInitialization() {
         benchmarkRule.measureRepeated {
-            GsonBuilder()
-                .registerTypeAdapter(EmbraceUrl::class.java, EmbraceUrlAdapter())
-                .create()
+            Moshi.Builder()
+                .add(EmbraceUrlAdapter())
+                .build()
         }
     }
 

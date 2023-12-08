@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -34,6 +35,7 @@ internal class EmbraceMetadataUnityTest {
         private val fakeClock = FakeClock()
         private lateinit var context: Context
         private val packageInfo = PackageInfo()
+        private val serializer = EmbraceSerializer()
         private lateinit var buildInfo: BuildInfo
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
@@ -123,7 +125,7 @@ internal class EmbraceMetadataUnityTest {
         preferencesService.unityBuildIdNumber = "unityBuildIdNumber"
 
         val metadataService = getMetadataService()
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
 
         assertTrue(appInfo.contains("\"unv\":\"unityVersionNumber\""))
         assertTrue(appInfo.contains("\"ubg\":\"unityBuildIdNumber\""))
@@ -139,7 +141,7 @@ internal class EmbraceMetadataUnityTest {
         preferencesService.unityVersionNumber = "unityVersionNumber"
         preferencesService.unityBuildIdNumber = "unityBuildIdNumber"
 
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
 
         assertTrue(appInfo.contains("\"unv\":\"unityVersionNumber\""))
         assertTrue(appInfo.contains("\"ubg\":\"unityBuildIdNumber\""))

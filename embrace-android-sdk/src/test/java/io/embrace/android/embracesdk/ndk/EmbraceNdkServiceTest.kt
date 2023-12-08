@@ -68,6 +68,7 @@ internal class EmbraceNdkServiceTest {
         private lateinit var repository: EmbraceNdkServiceRepository
         private lateinit var resources: Resources
         private val deviceArchitecture = FakeDeviceArchitecture()
+        private val serializer = EmbraceSerializer()
 
         @BeforeClass
         @JvmStatic
@@ -190,7 +191,7 @@ internal class EmbraceNdkServiceTest {
                 sessionProperties.get().toMap()
             )
 
-        verify { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+        verify { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
     }
 
     @Test
@@ -219,12 +220,14 @@ internal class EmbraceNdkServiceTest {
             )
         }
 
-        val newDeviceMetaData = NativeCrashMetadata(
-            metadataService.getAppInfo(),
-            metadataService.getDeviceInfo(),
-            userService.getUserInfo(),
-            sessionProperties.get().toMap()
-        ).toJson()
+        val newDeviceMetaData = serializer.toJson(
+            NativeCrashMetadata(
+                metadataService.getAppInfo(),
+                metadataService.getDeviceInfo(),
+                userService.getUserInfo(),
+                sessionProperties.get().toMap()
+            )
+        )
 
         verify(exactly = 1) { delegate._updateMetaData(newDeviceMetaData) }
         assertEquals(embraceNdkService.getUnityCrashId(), Uuid.getEmbUuid())
@@ -243,12 +246,14 @@ internal class EmbraceNdkServiceTest {
         every { metadataService.getDeviceInfo() } returns deviceInfo
         every { metadataService.getLightweightDeviceInfo() } returns deviceInfo
 
-        val metaData = NativeCrashMetadata(
-            metadataService.getLightweightAppInfo(),
-            metadataService.getLightweightDeviceInfo(),
-            userService.getUserInfo(),
-            sessionProperties.get().toMap()
-        ).toJson()
+        val metaData = serializer.toJson(
+            NativeCrashMetadata(
+                metadataService.getLightweightAppInfo(),
+                metadataService.getLightweightDeviceInfo(),
+                userService.getUserInfo(),
+                sessionProperties.get().toMap()
+            )
+        )
 
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
@@ -320,7 +325,7 @@ internal class EmbraceNdkServiceTest {
                 sessionProperties.get().toMap()
             )
 
-        verify(exactly = 0) { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+        verify(exactly = 0) { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
     }
 
     @Test
@@ -361,7 +366,7 @@ internal class EmbraceNdkServiceTest {
                 sessionProperties.get().toMap()
             )
 
-        verify { delegate._updateMetaData(newDeviceMetaData.toJson()) }
+        verify { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
     }
 
     @Test

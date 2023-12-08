@@ -331,11 +331,12 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
         boolean is32bit = deviceArchitecture.is32BitDevice();
         logger.logDeveloper("EmbraceNDKService", "Installing signal handlers. 32bit=" + is32bit + ", crashId=" + nativeCrashId);
 
-        String initialMetaData = new NativeCrashMetadata(
+        NativeCrashMetadata payload = new NativeCrashMetadata(
             this.metadataService.getLightweightAppInfo(),
             this.metadataService.getLightweightDeviceInfo(),
             this.userService.getUserInfo(),
-            this.sessionProperties.get()).toJson();
+            this.sessionProperties.get());
+        String initialMetaData = serializer.toJson(payload);
 
         delegate._installSignalHandlers(
             reportBasePath,
@@ -687,11 +688,12 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
     }
 
     private String getMetaData(Boolean includeSessionProperties) {
-        return new NativeCrashMetadata(
+        NativeCrashMetadata payload = new NativeCrashMetadata(
             this.metadataService.getAppInfo(),
             this.metadataService.getDeviceInfo(),
             this.userService.getUserInfo(),
-            includeSessionProperties ? this.sessionProperties.get() : null).toJson();
+            includeSessionProperties ? this.sessionProperties.get() : null);
+        return serializer.toJson(payload);
     }
 
     private void uninstallSignals() {

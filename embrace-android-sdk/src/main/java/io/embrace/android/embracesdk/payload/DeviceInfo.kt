@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.utils.MessageUtils
 
 internal data class DeviceInfo(
 
@@ -48,24 +47,5 @@ internal data class DeviceInfo(
     val cpuName: String? = null,
 
     @SerializedName("gp")
-    private val egl: String? = null
-) {
-
-    fun toJson(): String {
-        return "{\"dm\": " + MessageUtils.withNull(manufacturer) +
-            ",\"do\": " + MessageUtils.withNull(model) +
-            ",\"da\":" + MessageUtils.withNull(architecture) +
-            ",\"jb\":" + MessageUtils.boolToStr(jailbroken) +
-            ",\"lc\":" + MessageUtils.withNull(locale) +
-            ",\"ms\":" + MessageUtils.withNull(internalStorageTotalCapacity) +
-            ",\"os\":" + MessageUtils.withNull(operatingSystemType) +
-            ",\"ov\":" + MessageUtils.withNull(operatingSystemVersion) +
-            ",\"oc\":" + MessageUtils.withNull(operatingSystemVersionCode) +
-            ",\"sr\":" + MessageUtils.withNull(screenResolution) +
-            ",\"tz\":" + MessageUtils.withNull(timezoneDescription) +
-            ",\"up\":" + MessageUtils.withNull(uptime) +
-            ",\"nc\":" + MessageUtils.withNull(cores) +
-            ",\"pt\":" + MessageUtils.withNull(cpuName) +
-            ",\"gp\":" + MessageUtils.withNull(egl) + "}"
-    }
-}
+    val egl: String? = null
+)

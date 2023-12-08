@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 
 /**
  * Describes information about how the device is performing.
@@ -31,13 +30,6 @@ internal data class PerformanceInfo(
      */
     @SerializedName("anr")
     val anrIntervals: List<AnrInterval>? = null,
-
-    /**
-     * Periods during which the application was not responding (UI thread blocked for > 1 sec),
-     * detected by the OS, not Embrace. This is what we call ANR Process Errors.
-     */
-    @SerializedName("anr_pe")
-    val anrProcessErrors: List<AnrProcessErrorStateInfo>? = null,
 
     /**
      * Timestamps where Google ANRs were triggered.

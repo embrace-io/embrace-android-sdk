@@ -49,9 +49,6 @@ internal class EmbracePerformanceInfoService(
             },
             networkRequests = captureDataSafely { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
             anrIntervals = captureDataSafely { anrService?.getCapturedData()?.toList() },
-            anrProcessErrors = captureDataSafely {
-                anrService?.getAnrProcessErrors(sessionStart)?.toList()
-            },
             googleAnrTimestamps = captureDataSafely {
                 googleAnrTimestampRepository.getGoogleAnrTimestamps(
                     sessionStart,

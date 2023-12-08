@@ -2,14 +2,12 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.WrongThreadException
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.mockk.every
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -71,28 +69,12 @@ internal class EmbraceAnrServiceTest {
     }
 
     @Test
-    fun testGetAnrProcessErrors() {
-        with(rule) {
-            val startTime = 10L
-            every { mockAnrProcessErrorSampler.getAnrProcessErrors(startTime) } returns listOf(
-                anrProcessErrorStateInfo
-            )
-
-            val anrErrors = anrService.getAnrProcessErrors(startTime)
-
-            assertTrue(anrErrors.size == 1)
-            assertEquals(anrProcessErrorStateInfo, anrErrors.get(0))
-        }
-    }
-
-    @Test
     fun testListener() {
         with(rule) {
             val listener = FakeBlockedThreadListener()
             anrService.addBlockedThreadListener(listener)
             assertEquals(anrService, blockedThreadDetector.listener)
             assertTrue(anrService.listeners.contains(listener))
-            assertTrue(anrService.listeners.contains(mockAnrProcessErrorSampler))
         }
     }
 
@@ -492,14 +474,5 @@ internal class EmbraceAnrServiceTest {
         override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
             unblockedCount++
         }
-    }
-
-    companion object {
-        val anrProcessErrorStateInfo = AnrProcessErrorStateInfo(
-            "tag",
-            "shortMsg",
-            "longMsg",
-            "stacktrace"
-        )
     }
 }

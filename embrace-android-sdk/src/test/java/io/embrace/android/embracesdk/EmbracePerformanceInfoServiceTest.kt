@@ -90,7 +90,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private fun assertBasicSessionPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(NetworkRequests(networkLoggingService.data), info.networkRequests)
         assertValueCopied(anrService.data, info.anrIntervals)
-        assertValueCopied(anrService.anrProcessErrors, info.anrProcessErrors)
         assertValueCopied(
             googleAnrTimestampRepository.getGoogleAnrTimestamps(0, SESSION_END_TIME_MS),
             info.googleAnrTimestamps

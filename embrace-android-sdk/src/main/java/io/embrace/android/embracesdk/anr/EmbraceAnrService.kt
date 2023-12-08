@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.anr
 
 import android.os.Looper
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
@@ -36,7 +34,6 @@ internal class EmbraceAnrService(
     livenessCheckScheduler: LivenessCheckScheduler,
     anrExecutorService: ScheduledExecutorService,
     state: ThreadMonitoringState,
-    private val anrProcessErrorSampler: AnrProcessErrorSampler,
     @field:VisibleForTesting val clock: Clock,
     private val anrMonitorThread: AtomicReference<Thread>
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
@@ -63,9 +60,6 @@ internal class EmbraceAnrService(
         // add listeners
         listeners.add(stacktraceSampler)
         listeners.add(UnbalancedCallDetector(logger))
-        listeners.add(
-            anrProcessErrorSampler
-        )
         livenessCheckScheduler.listener = this
     }
 
@@ -109,12 +103,6 @@ internal class EmbraceAnrService(
             logger.logError("Failed to getAnrIntervals()", exc, true)
             emptyList()
         }
-    }
-
-    override fun getAnrProcessErrors(
-        startTime: Long
-    ): List<AnrProcessErrorStateInfo> {
-        return anrProcessErrorSampler.getAnrProcessErrors(startTime)
     }
 
     override fun forceAnrTrackingStopOnCrash() {

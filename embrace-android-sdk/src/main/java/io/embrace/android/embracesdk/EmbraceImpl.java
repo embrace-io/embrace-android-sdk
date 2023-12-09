@@ -33,7 +33,6 @@ import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
-import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger;
 import io.embrace.android.embracesdk.event.EventService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
@@ -86,7 +85,6 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService;
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
-import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
@@ -443,7 +441,7 @@ final class EmbraceImpl {
         );
         AnrService nonNullAnrService = anrModule.getAnrService();
         anrService = nonNullAnrService;
-        serviceRegistry.registerService(anrService);
+        serviceRegistry.registerServices(anrService, anrModule.getResponsivenessMonitorService());
 
         // set callbacks and pass in non-placeholder config.
         nonNullAnrService.finishInitialization(

@@ -132,7 +132,7 @@ internal class LivenessCheckSchedulerTest {
     fun testExecuteHealthCheckSameInterval() {
         mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns false
-        scheduler.onMonitorThreadHeartbeat()
+        scheduler.checkHeartbeat()
 
         // verify target thread handler called with scheduling
         verify(exactly = 1) { fakeTargetThreadHandler.sendMessage(any()) }
@@ -149,7 +149,7 @@ internal class LivenessCheckSchedulerTest {
     fun testExecuteHealthCheckPendingMessage() {
         mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns true
-        scheduler.onMonitorThreadHeartbeat()
+        scheduler.checkHeartbeat()
 
         // verify target thread handler called with scheduling
         verify(exactly = 0) { fakeTargetThreadHandler.sendMessage(any()) }

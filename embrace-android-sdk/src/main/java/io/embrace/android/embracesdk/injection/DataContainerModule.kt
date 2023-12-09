@@ -67,7 +67,8 @@ internal class DataContainerModuleImpl(
             anrModule.googleAnrTimestampRepository,
             applicationExitInfoService,
             dataCaptureServiceModule.strictModeService,
-            nativeModule.nativeThreadSamplerService
+            nativeModule.nativeThreadSamplerService,
+            anrModule.responsivenessMonitorService
         )
     }
 

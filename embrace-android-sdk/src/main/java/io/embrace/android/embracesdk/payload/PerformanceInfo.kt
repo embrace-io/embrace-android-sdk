@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
+import io.embrace.android.embracesdk.anr.detection.ResponsivenessMonitor
 
 /**
  * Describes information about how the device is performing.
@@ -74,5 +75,11 @@ internal data class PerformanceInfo(
      * StrictMode violations captured during the session
      */
     @SerializedName("v")
-    val strictmodeViolations: List<StrictModeViolation>? = null
+    val strictmodeViolations: List<StrictModeViolation>? = null,
+
+    /**
+     * Stats about the responsiveness of the ANR monitoring components
+     */
+    @SerializedName("rms")
+    val responsivenessMonitorSnapshots: List<ResponsivenessMonitor.Snapshot>? = null
 )

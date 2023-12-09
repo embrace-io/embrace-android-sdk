@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.anr.detection.ResponsivenessMonitor
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.DiskUsage
@@ -27,6 +28,7 @@ internal class PerformanceInfoTest {
     private val nativeThreadAnrIntervals: List<NativeThreadAnrInterval> = emptyList()
     private val powerSaveModeIntervals: List<PowerModeInterval> = emptyList()
     private val violations: List<StrictModeViolation> = emptyList()
+    private val threadMonitorSnapshots: List<ResponsivenessMonitor.Snapshot> = emptyList()
 
     @Test
     fun testPerfInfoSerialization() {
@@ -53,6 +55,7 @@ internal class PerformanceInfoTest {
         assertEquals(networkInterfaceIntervals, performanceInfo.networkInterfaceIntervals)
         assertEquals(powerSaveModeIntervals, performanceInfo.powerSaveModeIntervals)
         assertEquals(violations, performanceInfo.strictmodeViolations)
+        assertEquals(threadMonitorSnapshots, performanceInfo.responsivenessMonitorSnapshots)
     }
 
     private fun buildPerformanceInfo(): PerformanceInfo = PerformanceInfo(
@@ -65,6 +68,7 @@ internal class PerformanceInfoTest {
         networkInterfaceIntervals = networkInterfaceIntervals,
         powerSaveModeIntervals = powerSaveModeIntervals,
         networkRequests = networkRequests,
-        strictmodeViolations = violations
+        strictmodeViolations = violations,
+        responsivenessMonitorSnapshots = threadMonitorSnapshots
     )
 }

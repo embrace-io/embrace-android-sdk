@@ -169,8 +169,20 @@ internal class LivenessCheckSchedulerTest {
         anrExecutorService.runCurrentlyBlocked()
         assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
         cfg = cfg.copy(sampleIntervalMs = 10)
+        assertEquals(1, anrExecutorService.scheduledTasksCount())
         anrExecutorService.moveForwardAndRunBlocked(100)
         anrExecutorService.runCurrentlyBlocked()
+        anrExecutorService.moveForwardAndRunBlocked(10)
         assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
+        assertEquals(1, anrExecutorService.scheduledTasksCount())
+    }
+
+    @Test
+    fun `starting monitoring thread twice does not result in multiple recurring tasks`() {
+        repeat(2) {
+            scheduler.startMonitoringThread()
+            anrExecutorService.runCurrentlyBlocked()
+            assertEquals(1, anrExecutorService.scheduledTasksCount())
+        }
     }
 }

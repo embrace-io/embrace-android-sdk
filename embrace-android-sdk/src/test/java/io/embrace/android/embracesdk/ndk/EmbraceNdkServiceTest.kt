@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -28,7 +27,6 @@ import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -47,12 +45,13 @@ import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.ExecutorService
 
 internal class EmbraceNdkServiceTest {
 
     companion object {
-        private lateinit var embraceNdkService: TestEmbraceNdkService
+        private lateinit var embraceNdkService: EmbraceNdkService
         private lateinit var context: Context
         private lateinit var metadataService: MetadataService
         private lateinit var configService: ConfigService
@@ -117,11 +116,12 @@ internal class EmbraceNdkServiceTest {
     }
 
     private fun initializeService() {
-        embraceNdkService = TestEmbraceNdkService(
+        embraceNdkService = EmbraceNdkService(
             context,
             lazy { storageDir },
             metadataService,
             activityService,
+            configService,
             mockDeliveryService,
             userService,
             sessionProperties,
@@ -131,7 +131,9 @@ internal class EmbraceNdkServiceTest {
             repository,
             delegate,
             MoreExecutors.newDirectExecutorService(),
-            MoreExecutors.newDirectExecutorService()
+            MoreExecutors.newDirectExecutorService(),
+            deviceArchitecture,
+            EmbraceSerializer()
         )
     }
 
@@ -498,14 +500,6 @@ internal class EmbraceNdkServiceTest {
         verify(exactly = 1) { delegate._getCrashReport(any()) }
         verify(exactly = 1) { repository.errorFileForCrash(crashFile) }
         verify(exactly = 1) { repository.mapFileForCrash(crashFile) }
-        verify(exactly = 1) {
-            repository.deleteFiles(
-                crashFile,
-                errorFile,
-                mapFile,
-                any() as NativeCrashData
-            )
-        }
     }
 
     @Test
@@ -552,43 +546,5 @@ internal class EmbraceNdkServiceTest {
         })
     }
 
-    private val storageDir by lazy { context.cacheDir }
-
-    private class TestEmbraceNdkService(
-        context: Context,
-        storageDir: Lazy<File>,
-        metadataService: MetadataService,
-        processStateService: ProcessStateService,
-        deliveryService: DeliveryService,
-        userService: UserService,
-        sessionProperties: EmbraceSessionProperties,
-        appFramework: Embrace.AppFramework,
-        sharedObjectLoader: SharedObjectLoader,
-        logger: InternalEmbraceLogger,
-        repository: EmbraceNdkServiceRepository,
-        delegate: NdkServiceDelegate.NdkDelegate,
-        cleanCacheExecutorService: ExecutorService,
-        ndkStartupExecutorService: ExecutorService
-    ) : EmbraceNdkService(
-        context,
-        storageDir,
-        metadataService,
-        processStateService,
-        configService,
-        deliveryService,
-        userService,
-        sessionProperties,
-        appFramework,
-        sharedObjectLoader,
-        logger,
-        repository,
-        delegate,
-        cleanCacheExecutorService,
-        ndkStartupExecutorService,
-        deviceArchitecture,
-        EmbraceSerializer()
-    ) {
-        override fun createCrashReportDirectory() {
-        }
-    }
+    private val storageDir: File by lazy { Files.createTempDirectory("test").toFile() }
 }

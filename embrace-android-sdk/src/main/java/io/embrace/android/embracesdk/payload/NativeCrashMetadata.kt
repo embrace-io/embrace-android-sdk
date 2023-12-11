@@ -6,5 +6,5 @@ internal class NativeCrashMetadata(
     @SerializedName("a") val appInfo: AppInfo,
     @SerializedName("d") val deviceInfo: DeviceInfo,
     @SerializedName("u") val userInfo: UserInfo,
-    @SerializedName("sp") val sessionProperties: Map<String?, String?>?
+    @SerializedName("sp") val sessionProperties: Map<String, String>?
 )

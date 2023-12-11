@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionMessageSerializer
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 import java.io.Closeable
 import java.util.concurrent.ExecutorService
 
@@ -55,23 +56,24 @@ internal class EmbraceDeliveryCacheManager(
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray {
-        val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-        saveSessionImpl(sessionMessage, false) { filename ->
-            cacheService.cacheBytes(filename, sessionBytes)
-        }
-        return sessionBytes
-    }
-
-    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
-        saveSessionImpl(sessionMessage, false) { filename ->
-            cacheService.writeSession(filename, sessionMessage)
-        }
-    }
-
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        saveSessionImpl(sessionMessage, true) { filename ->
-            cacheService.writeSession(filename, sessionMessage)
+    override fun saveSession(
+        sessionMessage: SessionMessage,
+        snapshotType: SessionSnapshotType
+    ): ByteArray? {
+        return when (snapshotType) {
+            SessionSnapshotType.NORMAL_END -> {
+                val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+                saveSessionImpl(sessionMessage, false) { filename ->
+                    cacheService.cacheBytes(filename, sessionBytes)
+                }
+                sessionBytes
+            }
+            else -> {
+                saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
+                    cacheService.writeSession(filename, sessionMessage)
+                }
+                null
+            }
         }
     }
 
@@ -130,7 +132,7 @@ internal class EmbraceDeliveryCacheManager(
                     cacheService.loadObject(filename, SessionMessage::class.java)
                 previousSdkSession?.also {
                     // When saved, the new session filename is also added to cachedSessions
-                    saveSession(it)
+                    saveSession(it, SessionSnapshotType.NORMAL_END)
                     executorService.submit {
                         cacheService.deleteFile(filename)
                     }

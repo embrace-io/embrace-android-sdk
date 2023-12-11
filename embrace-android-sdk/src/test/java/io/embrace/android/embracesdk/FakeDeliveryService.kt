@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
@@ -27,19 +28,13 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
     var lastSavedSession: SessionMessage? = null
+    var lastSnapshotType: SessionSnapshotType? = null
     val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
     var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         lastSavedSession = sessionMessage
-    }
-
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        lastSavedSession = sessionMessage
-    }
-
-    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
-        lastSavedSession = sessionMessage
+        lastSnapshotType = snapshotType
     }
 
     override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {

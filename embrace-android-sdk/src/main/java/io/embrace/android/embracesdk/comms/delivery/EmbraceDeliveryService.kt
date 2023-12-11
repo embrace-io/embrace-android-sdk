@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -34,19 +35,9 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSession(sanitizedSessionMessage)
-    }
-
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSessionOnCrash(sanitizedSessionMessage)
-    }
-
-    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSessionPeriodicCache(sanitizedSessionMessage)
+        cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
     }
 
     /**
@@ -55,7 +46,10 @@ internal class EmbraceDeliveryService(
      * @param sessionMessage    The session message to send
      * @param state             Whether this message is for the session start or end
      */
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
+    override fun sendSession(
+        sessionMessage: SessionMessage,
+        state: SessionMessageState
+    ) {
         logger.logDeveloper(TAG, "Sending session message")
 
         sendSessionsExecutorService.submit {
@@ -71,7 +65,13 @@ internal class EmbraceDeliveryService(
         state: SessionMessageState
     ) {
         logger.logDeveloper(TAG, "Sending session message - background job started")
-        val sessionBytes = cacheManager.saveSession(sessionMessage)
+
+        val snapshotType = when (state) {
+            SessionMessageState.END_WITH_CRASH -> SessionSnapshotType.JVM_CRASH
+            else -> SessionSnapshotType.NORMAL_END
+        }
+
+        val sessionBytes = cacheManager.saveSession(sessionMessage, snapshotType) ?: return
 
         logger.logDeveloper(TAG, "Serialized session message ready to be sent")
 
@@ -243,7 +243,7 @@ internal class EmbraceDeliveryService(
                 val newSessionMessage =
                     attachCrashToSession(nativeCrashData, sessionMessage)
                 // Replace the cached file for the corresponding session
-                cacheManager.saveSession(newSessionMessage)
+                cacheManager.saveSession(newSessionMessage, SessionSnapshotType.NORMAL_END)
             } ?: run {
             logger.logError(
                 "Could not find session with id ${nativeCrashData.sessionId} to " +

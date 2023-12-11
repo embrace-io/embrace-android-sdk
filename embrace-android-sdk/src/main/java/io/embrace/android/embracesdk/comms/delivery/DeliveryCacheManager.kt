@@ -3,11 +3,10 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal interface DeliveryCacheManager {
-    fun saveSession(sessionMessage: SessionMessage): ByteArray
-    fun saveSessionPeriodicCache(sessionMessage: SessionMessage)
-    fun saveSessionOnCrash(sessionMessage: SessionMessage)
+    fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType): ByteArray?
     fun loadSession(sessionId: String): SessionMessage?
     fun loadSessionBytes(sessionId: String): ByteArray?
     fun deleteSession(sessionId: String)

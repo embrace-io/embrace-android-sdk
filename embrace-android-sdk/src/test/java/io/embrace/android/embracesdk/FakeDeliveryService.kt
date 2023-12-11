@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -29,7 +28,7 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentCachedSession: String? = null
     var lastSavedSession: SessionMessage? = null
     var lastSnapshotType: SessionSnapshotType? = null
-    val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
+    val lastSentSessions: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
     var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
     override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
@@ -37,8 +36,8 @@ internal class FakeDeliveryService : DeliveryService {
         lastSnapshotType = snapshotType
     }
 
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
-        lastSentSessions.add(Pair(sessionMessage, state))
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+        lastSentSessions.add(Pair(sessionMessage, snapshotType))
     }
 
     override fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?) {

@@ -4,11 +4,11 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.returnIfConditionMet
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -97,7 +97,7 @@ internal class TracingApiTest {
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(1, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[0]
-            assertEquals(SessionMessageState.END, sessionMessage.second)
+            assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
             with(sessionMessage.first) {
                 checkNotNull(spans)
                 assertEquals(6, spans.size)

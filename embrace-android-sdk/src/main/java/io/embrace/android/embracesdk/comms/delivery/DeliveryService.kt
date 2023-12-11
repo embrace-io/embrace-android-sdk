@@ -8,11 +8,9 @@ import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 
-internal enum class SessionMessageState { END, END_WITH_CRASH }
-
 internal interface DeliveryService {
     fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
-    fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)
+    fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
     fun saveCrash(crash: EventMessage)
     fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)

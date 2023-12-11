@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.session.SessionSnapshotType
 internal interface DeliveryService {
     fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
-    fun saveCrash(crash: EventMessage)
     fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
     fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
     fun sendBackgroundActivities()

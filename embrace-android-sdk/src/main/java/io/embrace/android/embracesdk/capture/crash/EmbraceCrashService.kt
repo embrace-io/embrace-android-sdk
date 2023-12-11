@@ -131,17 +131,15 @@ internal class EmbraceCrashService(
             val crashEvent = gatingService.gateEventMessage(versionedEvent)
             logDeveloper("EmbraceCrashService", "Attempting to send event...")
 
-            // Save the crash to file
-            deliveryService.saveCrash(crashEvent)
-            // End, cache and send the session
-            sessionService.handleCrash(crash.crashId)
-            backgroundActivityService?.handleCrash(crash.crashId)
-
             // Send the crash. This is not guaranteed to succeed since the process is terminating
             // and the request is made on a background executor, but data analysis shows that
             // a surprising % of crashes make it through based on the receive time. Therefore we
             // attempt to send the crash and if it fails, we will send it again on the next launch.
             deliveryService.sendCrash(crashEvent)
+
+            // End, cache and send the session
+            sessionService.handleCrash(crash.crashId)
+            backgroundActivityService?.handleCrash(crash.crashId)
 
             // Indicate that a crash happened so we can know that in the next launch
             crashMarker.mark()

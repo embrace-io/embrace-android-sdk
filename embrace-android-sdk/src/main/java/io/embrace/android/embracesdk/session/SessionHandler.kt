@@ -194,7 +194,7 @@ internal class SessionHandler(
                 crashId,
             )
             activeSession = null
-            fullEndSessionMessage?.let { deliveryService.saveSession(it, SessionSnapshotType.JVM_CRASH) }
+            fullEndSessionMessage?.let { deliveryService.sendSession(it, SessionSnapshotType.JVM_CRASH) }
         }
     }
 
@@ -229,7 +229,7 @@ internal class SessionHandler(
                 SessionLifeEventType.STATE,
                 clock.now()
             )
-            msg?.let { deliveryService.saveSession(it, SessionSnapshotType.PERIODIC_CACHE) }
+            msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
             return msg
         }
     }

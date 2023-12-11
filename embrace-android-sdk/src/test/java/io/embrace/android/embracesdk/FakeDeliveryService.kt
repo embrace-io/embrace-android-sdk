@@ -31,13 +31,12 @@ internal class FakeDeliveryService : DeliveryService {
     val lastSentSessions: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
     var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
-    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+        if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
+            lastSentSessions.add(sessionMessage to snapshotType)
+        }
         lastSavedSession = sessionMessage
         lastSnapshotType = snapshotType
-    }
-
-    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
-        lastSentSessions.add(Pair(sessionMessage, snapshotType))
     }
 
     override fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?) {

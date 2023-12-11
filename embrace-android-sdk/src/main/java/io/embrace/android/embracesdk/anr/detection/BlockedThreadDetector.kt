@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -101,7 +102,7 @@ internal class BlockedThreadDetector(
         heartbeatResponseMonitor.reset()
     }
 
-    fun responsivenessMonitorSnapshot(): ResponsivenessMonitor.Snapshot = heartbeatResponseMonitor.snapshot()
+    fun responsivenessMonitorSnapshot(): ResponsivenessSnapshot = heartbeatResponseMonitor.snapshot()
 
     /**
      * Decides whether we should attempt an ANR sample or not. In ordinary conditions this

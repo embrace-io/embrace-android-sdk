@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -92,7 +93,7 @@ internal class LivenessCheckScheduler internal constructor(
         blockedThreadDetector.resetResponsivenessMonitor()
     }
 
-    fun responsivenessMonitorSnapshots(): List<ResponsivenessMonitor.Snapshot> =
+    fun responsivenessMonitorSnapshots(): List<ResponsivenessSnapshot> =
         listOf(heartbeatSendMonitor.snapshot(), blockedThreadDetector.responsivenessMonitorSnapshot())
 
     private fun scheduleRegularHeartbeats() {

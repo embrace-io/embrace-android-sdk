@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.payload.ResponsivenessOutlier
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -23,7 +24,7 @@ internal class ResponsivenessMonitor(
     boundaries: List<Long> = listOf(120L, 250L, 500L, 2000L)
 ) {
     private val buckets = boundaries.sorted().plus(Long.MAX_VALUE)
-    private val outliers = mutableListOf<Outlier>()
+    private val outliers = mutableListOf<ResponsivenessOutlier>()
     private val gaps: MutableMap<Long, Long> = buckets.associateWith { 0L } as MutableMap<Long, Long>
     private val firstPing = AtomicLong(unsetPingTime)
     private val latestPing = AtomicLong(unsetPingTime)
@@ -31,22 +32,10 @@ internal class ResponsivenessMonitor(
 
     @Synchronized
     fun ping() {
-        val previousPing = latestPing.get()
-        latestPing.set(clock.now())
+        val previousPing = latestPing.getAndSet(clock.now())
         if (previousPing != unsetPingTime) {
-            (latestPing.get() - previousPing).let { gap ->
-                if (gap >= 0) {
-                    buckets.find { bucketCandidate ->
-                        bucketCandidate > gap
-                    }?.let { bucket ->
-                        gaps[bucket] = gaps[bucket]?.inc() ?: 1L
-                        if (bucket > outlierThreshold && outliers.size < outliersLimit) {
-                            outliers.add(Outlier(previousPing, latestPing.get()))
-                        }
-                    } ?: errors.incrementAndGet()
-                } else {
-                    errors.incrementAndGet()
-                }
+            if (!recordGap(latestPing.get(), previousPing)) {
+                errors.incrementAndGet()
             }
         } else {
             firstPing.set(latestPing.get())
@@ -54,7 +43,7 @@ internal class ResponsivenessMonitor(
     }
 
     @Synchronized
-    fun snapshot(): Snapshot = Snapshot(
+    fun snapshot(): ResponsivenessSnapshot = ResponsivenessSnapshot(
         name = name,
         firstPing = firstPing.get(),
         lastPing = latestPing.get(),
@@ -72,33 +61,35 @@ internal class ResponsivenessMonitor(
         errors.set(0)
     }
 
-    data class Snapshot(
-        @SerializedName("name")
-        val name: String,
+    /**
+     * Record the duration of the gap between the current ping time and the previous one and return true if it's successful.
+     * This method will loop through the bucket boundaries starting from the lowest to find one that is strictly greater than the
+     * gap and increment the associated gap bucket. If the gap exceeds the outlier definition and we haven't reached our limit yet,
+     * include it in the outliers list.
+     *
+     * This method will return false in the following situation:
+     *  - the gap is negative (the clock should be locked so we don't expect any "time travelling"
+     *  - the bucket cannot be found (all valid buckets should be initialized to 0 so this shouldn't happen)
+     *  - the gap is greater than or equal to all boundaries, which shouldn't happen as [Long.MAX_VALUE] is the final boundary
+     */
+    private fun recordGap(currentPing: Long, previousPing: Long): Boolean {
+        val gap = currentPing - previousPing
+        if (gap >= 0) {
+            buckets.find { bucketCandidate ->
+                bucketCandidate > gap
+            }?.let { bucket ->
+                if (gaps.containsKey(bucket)) {
+                    gaps[bucket] = gaps[bucket]?.inc() ?: 1
+                    if (bucket > outlierThreshold && outliers.size < outliersLimit) {
+                        outliers.add(ResponsivenessOutlier(previousPing, currentPing))
+                    }
+                    return true
+                }
+            }
+        }
 
-        @SerializedName("first")
-        val firstPing: Long,
-
-        @SerializedName("last")
-        val lastPing: Long,
-
-        @SerializedName("gaps")
-        val gaps: Map<Long, Long>,
-
-        @SerializedName("outliers")
-        val outliers: List<Outlier>,
-
-        @SerializedName("errors")
-        val errors: Long,
-    )
-
-    data class Outlier(
-        @SerializedName("start")
-        val start: Long,
-
-        @SerializedName("end")
-        val end: Long
-    )
+        return false
+    }
 
     companion object {
         private const val unsetPingTime = -1L

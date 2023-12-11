@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.payload.ResponsivenessOutlier
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Before
@@ -60,9 +62,9 @@ internal class ResponsivenessMonitorTest {
                 assertEquals("Bucket ${it.key} - ", if (it.key == 120L) 2L else 1L, gaps[it.key])
             }
             assertEquals(2, outliers.size)
-            assertEquals(outlier1Start, outliers.first().start)
-            assertEquals(outlier2Start, outliers.first().end)
-            assertEquals(ResponsivenessMonitor.Outlier(outlier2Start, outlier2End), outliers.last())
+            assertEquals(outlier1Start, outliers.first().startMs)
+            assertEquals(outlier2Start, outliers.first().endMs)
+            assertEquals(ResponsivenessOutlier(outlier2Start, outlier2End), outliers.last())
         }
     }
 
@@ -173,7 +175,7 @@ internal class ResponsivenessMonitorTest {
         assertEquals(snapshot1, snapshot2)
     }
 
-    private fun checkEmptyState(snapshot: ResponsivenessMonitor.Snapshot) {
+    private fun checkEmptyState(snapshot: ResponsivenessSnapshot) {
         with(snapshot) {
             assertEquals("test", name)
             assertEquals(-1L, firstPing)

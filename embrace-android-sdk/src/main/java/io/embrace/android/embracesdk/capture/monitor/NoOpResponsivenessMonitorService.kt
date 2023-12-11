@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.capture.monitor
 
-import io.embrace.android.embracesdk.anr.detection.ResponsivenessMonitor
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 
 internal class NoOpResponsivenessMonitorService : ResponsivenessMonitorService {
-    override fun getCapturedData(): List<ResponsivenessMonitor.Snapshot> = emptyList()
+    override fun getCapturedData(): List<ResponsivenessSnapshot> = emptyList()
 
     override fun cleanCollections() {}
 }

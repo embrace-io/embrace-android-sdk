@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
 import android.os.StatFs;
-import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -101,15 +100,6 @@ final class MetadataUtils {
      */
     static int getOperatingSystemVersionCode() {
         return Build.VERSION.SDK_INT;
-    }
-
-    /**
-     * Gets the system uptime in milliseconds.
-     *
-     * @return the system uptime in milliseconds
-     */
-    static Long getSystemUptime() {
-        return SystemClock.uptimeMillis();
     }
 
     /**

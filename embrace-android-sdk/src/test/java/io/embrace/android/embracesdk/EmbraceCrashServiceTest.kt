@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.payload.extensions.CrashFactory
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.utils.at
@@ -58,7 +59,7 @@ internal class EmbraceCrashServiceTest {
     @Before
     fun setup() {
         mockkStatic(Crash::class)
-        mockkObject(Crash.Companion)
+        mockkObject(CrashFactory)
 
         sessionService = mockk(relaxed = true)
         sessionPropertiesService = FakeSessionPropertiesService()
@@ -71,7 +72,7 @@ internal class EmbraceCrashServiceTest {
         crashMarker = mockk(relaxUnitFun = true)
 
         localJsException = JsException("jsException", "Error", "Error", "")
-        crash = Crash.ofThrowable(testException, localJsException)
+        crash = CrashFactory.ofThrowable(testException, localJsException)
     }
 
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean) {
@@ -110,7 +111,7 @@ internal class EmbraceCrashServiceTest {
         )
 
         metadataService.setAppForeground()
-        every { Crash.ofThrowable(any(), any(), any()) } returns crash
+        every { CrashFactory.ofThrowable(any(), any(), any()) } returns crash
     }
 
     @Test
@@ -119,7 +120,7 @@ internal class EmbraceCrashServiceTest {
         every { ndkService.getUnityCrashId() } returns null
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
 
-        verify { Crash.ofThrowable(testException, localJsException, any()) }
+        verify { CrashFactory.ofThrowable(testException, localJsException, any()) }
         verify { anrService.forceAnrTrackingStopOnCrash() }
 
         verify { deliveryService.sendCrash(any()) }
@@ -137,13 +138,13 @@ internal class EmbraceCrashServiceTest {
 
     @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with unityId`() {
-        crash = Crash.ofThrowable(testException, localJsException, "Unity123")
+        crash = CrashFactory.ofThrowable(testException, localJsException, "Unity123")
         setupForHandleCrash(false)
         every { ndkService.getUnityCrashId() } returns "Unity123"
 
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
 
-        verify { Crash.ofThrowable(testException, localJsException, "Unity123") }
+        verify { CrashFactory.ofThrowable(testException, localJsException, "Unity123") }
         verify { anrService.forceAnrTrackingStopOnCrash() }
         verify { deliveryService.sendCrash(any()) }
         verify { sessionService.handleCrash(crash.crashId) }
@@ -151,7 +152,7 @@ internal class EmbraceCrashServiceTest {
 
     @Test
     fun `test handleCrash calls mark() method when capture_last_run config is enabled`() {
-        crash = Crash.ofThrowable(testException, localJsException, "Unity123")
+        crash = CrashFactory.ofThrowable(testException, localJsException, "Unity123")
         setupForHandleCrash(false)
         every { ndkService.getUnityCrashId() } returns null
 

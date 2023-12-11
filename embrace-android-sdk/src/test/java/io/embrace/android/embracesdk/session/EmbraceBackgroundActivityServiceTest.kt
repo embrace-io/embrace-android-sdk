@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
@@ -83,7 +84,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         configService.addListener(spansService)
         configService.updateListeners()
         localConfig = spyk(
-            LocalConfig.buildConfig(
+            LocalConfigParser.buildConfig(
                 "GrCPU",
                 false,
                 "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",

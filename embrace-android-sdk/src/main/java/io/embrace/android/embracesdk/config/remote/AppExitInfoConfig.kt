@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.config.remote
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior.Companion.AEI_MAX_NUM_DEFAULT
 
 internal class AppExitInfoConfig(
     /**
@@ -14,5 +13,5 @@ internal class AppExitInfoConfig(
     val pctAeiCaptureEnabled: Float? = null,
 
     @SerializedName("aei_max_num")
-    val aeiMaxNum: Int = AEI_MAX_NUM_DEFAULT,
+    val aeiMaxNum: Int? = null,
 )

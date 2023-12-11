@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -156,7 +157,7 @@ internal class EmbraceGatingServiceTest {
 
     @Test
     fun `test gating feature from local and remote config`() {
-        localConfig = LocalConfig.buildConfig(
+        localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
             "{\"session\": {\"components\": [" +

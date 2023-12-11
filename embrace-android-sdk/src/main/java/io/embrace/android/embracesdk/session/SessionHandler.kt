@@ -104,7 +104,7 @@ internal class SessionHandler(
                 return null
             }
 
-            val session = Session.buildInitialSession(
+            val session = sessionMessageCollator.buildInitialSession(
                 Uuid.getEmbUuid(),
                 coldStart,
                 startType,

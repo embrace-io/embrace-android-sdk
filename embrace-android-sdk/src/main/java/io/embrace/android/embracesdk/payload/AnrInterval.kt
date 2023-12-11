@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import androidx.annotation.CheckResult
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -52,46 +51,6 @@ internal data class AnrInterval @JvmOverloads constructor(
         @SerializedName("ui")
         UI
     }
-
-    /**
-     * Retrieves the ANR sample count associated with this interval, or 0 if the samples have been
-     * redacted.
-     */
-    fun size(): Int = anrSampleList?.size() ?: 0
-
-    /**
-     * Calculates the duration of the interval, returning -1 if this is unknown.
-     */
-    fun duration(): Long {
-        return when (val end = endTime ?: lastKnownTime) {
-            null -> -1
-            else -> end - startTime
-        }
-    }
-
-    /**
-     * Performs a copy of the AnrInterval that ensures the [anrSampleList] is a new object. Note:
-     * that this does not copy all the way down the object tree.
-     */
-    fun deepCopy(): AnrInterval {
-        val copy = when (val original = anrSampleList) {
-            null -> null
-            else -> original.copy(samples = original.samples.toMutableList())
-        }
-        return AnrInterval(
-            startTime,
-            lastKnownTime,
-            endTime,
-            type,
-            copy,
-            code
-        )
-    }
-
-    @CheckResult
-    fun clearSamples(): AnrInterval = copy(anrSampleList = null, code = CODE_SAMPLES_CLEARED)
-
-    fun hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
 
     companion object {
         internal const val CODE_DEFAULT = 0

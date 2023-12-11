@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class SessionMessageCollator(
@@ -151,6 +152,26 @@ internal class SessionMessageCollator(
         session = session,
         appInfo = captureDataSafely(metadataService::getAppInfo),
         deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
+    )
+
+    internal fun buildInitialSession(
+        id: String,
+        coldStart: Boolean,
+        startType: Session.SessionLifeEventType,
+        startTime: Long,
+        sessionNumber: Int,
+        userInfo: UserInfo?,
+        sessionProperties: Map<String, String>
+    ): Session = Session(
+        sessionId = id,
+        startTime = startTime,
+        number = sessionNumber,
+        appState = Session.APPLICATION_STATE_FOREGROUND,
+        isColdStart = coldStart,
+        startType = startType,
+        properties = sessionProperties,
+        messageType = MESSAGE_TYPE_START,
+        user = userInfo
     )
 }
 

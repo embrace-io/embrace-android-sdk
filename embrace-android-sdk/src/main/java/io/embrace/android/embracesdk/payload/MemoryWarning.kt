@@ -13,5 +13,5 @@ internal data class MemoryWarning(
     /**
      * The timestamp at which the memory trim event occurred.
      */
-    @field:SerializedName("ts") val timestamp: Long
+    @SerializedName("ts") val timestamp: Long
 )

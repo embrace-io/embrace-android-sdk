@@ -44,11 +44,11 @@ internal class EmbraceDeliveryService(
      * Caches and sends over the network a session message
      *
      * @param sessionMessage    The session message to send
-     * @param state             Whether this message is for the session start or end
+     * @param snapshotType      The type of session snapshot
      */
     override fun sendSession(
         sessionMessage: SessionMessage,
-        state: SessionMessageState
+        snapshotType: SessionSnapshotType
     ) {
         logger.logDeveloper(TAG, "Sending session message")
 
@@ -56,47 +56,28 @@ internal class EmbraceDeliveryService(
             // sanitize start session message before send it to backend
             val sanitizedSession = gatingService.gateSessionMessage(sessionMessage)
             logger.logDebug("Session successfully sanitized.")
-            sendSessionImpl(sanitizedSession, state)
+            sendSessionImpl(sanitizedSession, snapshotType)
         }
     }
 
     private fun sendSessionImpl(
         sessionMessage: SessionMessage,
-        state: SessionMessageState
+        snapshotType: SessionSnapshotType
     ) {
-        logger.logDeveloper(TAG, "Sending session message - background job started")
-
-        val snapshotType = when (state) {
-            SessionMessageState.END_WITH_CRASH -> SessionSnapshotType.JVM_CRASH
-            else -> SessionSnapshotType.NORMAL_END
+        if (snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
+            return
         }
 
         val sessionBytes = cacheManager.saveSession(sessionMessage, snapshotType) ?: return
-
         logger.logDeveloper(TAG, "Serialized session message ready to be sent")
 
         try {
-            var onFinish: (() -> Unit)? = null
-            if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
-                onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
+            val future = apiService.sendSession(sessionBytes) {
+                cacheManager.deleteSession(sessionMessage.session.sessionId)
             }
-
-            if (state == SessionMessageState.END_WITH_CRASH) {
-                // perform session request synchronously
-                apiService.sendSession(
-                    sessionBytes,
-                    onFinish
-                )?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
-                logger.logDeveloper(TAG, "Session message sent.")
-            } else {
-                // perform session request asynchronously
-                apiService.sendSession(sessionBytes, onFinish)
-                logger.logDeveloper(TAG, "Session message queued to be sent.")
+            if (snapshotType == SessionSnapshotType.JVM_CRASH) {
+                future?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
             }
-            logger.logDeveloper(
-                TAG,
-                "Current session has been successfully removed from cache."
-            )
         } catch (ex: Exception) {
             logger.logInfo(
                 "Failed to send session end message. Embrace will store the " +

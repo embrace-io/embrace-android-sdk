@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -162,7 +161,7 @@ internal class SessionHandler(
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()
             logger.logDebug("Session properties successfully temporary cleared.")
-            deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+            deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
 
             if (endType == SessionLifeEventType.MANUAL && clearUserInfo) {
                 userService.clearAllUserInfo()

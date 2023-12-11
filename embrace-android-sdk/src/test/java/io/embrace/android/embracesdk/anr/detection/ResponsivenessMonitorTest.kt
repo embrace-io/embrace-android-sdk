@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.anr.detection
 
+import io.embrace.android.embracesdk.anr.detection.ResponsivenessMonitor.Companion.defaultOutlierLimit
+import io.embrace.android.embracesdk.anr.detection.ResponsivenessMonitor.Companion.defaultOutlierThreshold
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.payload.ResponsivenessOutlier
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -28,7 +31,7 @@ internal class ResponsivenessMonitorTest {
     @Test
     fun `check reset`() {
         responsivenessMonitor.ping()
-        defaultGaps.forEach {
+        testGaps.forEach {
             clock.tick(it)
             responsivenessMonitor.ping()
         }
@@ -47,32 +50,43 @@ internal class ResponsivenessMonitorTest {
             clock.tick(it)
             responsivenessMonitor.ping()
         }
-        val outlier1Start = clock.now()
+        val outlierPings = mutableListOf<Long>()
+        outlierPings.add(clock.now())
         clock.tick(defaultOutlierThreshold + 1)
         responsivenessMonitor.ping()
-        val outlier2Start = clock.now()
-        clock.tick(5000)
+        outlierPings.add(clock.now())
+        clock.tick(1001L)
         responsivenessMonitor.ping()
-        val outlier2End = clock.now()
+        outlierPings.add(clock.now())
+        clock.tick(2001L)
+        responsivenessMonitor.ping()
+        outlierPings.add(clock.now())
         with(responsivenessMonitor.snapshot()) {
             assertEquals("test", name)
             assertEquals(startTime, firstPing)
-            assertEquals(outlier2End, lastPing)
+            assertEquals(outlierPings.last(), lastPing)
             gaps.forEach {
-                assertEquals("Bucket ${it.key} - ", if (it.key == 120L) 2L else 1L, gaps[it.key])
+                assertEquals("Bucket ${it.key} - ", if (it.key == ResponsivenessMonitor.Bucket.B1.name) 2L else 1L, gaps[it.key])
             }
-            assertEquals(2, outliers.size)
-            assertEquals(outlier1Start, outliers.first().startMs)
-            assertEquals(outlier2Start, outliers.first().endMs)
-            assertEquals(ResponsivenessOutlier(outlier2Start, outlier2End), outliers.last())
+            assertEquals(3, outliers.size)
+            assertEquals(4, outlierPings.size)
+            val outlierPingsIterator = outlierPings.iterator()
+            var lastPingTime = outlierPingsIterator.next()
+            outliers.forEach { outlier ->
+                val currentPingTime = outlierPingsIterator.next()
+                assertEquals(lastPingTime, outlier.startMs)
+                assertEquals(currentPingTime, outlier.endMs)
+                assertEquals(ResponsivenessOutlier(lastPingTime, currentPingTime), outlier)
+                lastPingTime = currentPingTime
+            }
         }
     }
 
     @Test
     fun `test bucket boundaries`() {
         responsivenessMonitor.ping()
-        defaultBuckets.forEach {
-            clock.tick(it)
+        ResponsivenessMonitor.Bucket.values().forEach {
+            clock.tick(it.max)
             responsivenessMonitor.ping()
         }
         with(responsivenessMonitor.snapshot()) {
@@ -80,9 +94,9 @@ internal class ResponsivenessMonitorTest {
             assertEquals(startTime, firstPing)
             assertEquals(clock.now(), lastPing)
             gaps.forEach {
-                assertEquals("Bucket ${it.key} - ", if (it.key == 120L) 0L else 1L, gaps[it.key])
+                assertEquals("Bucket ${it.key} - ", if (it.key == ResponsivenessMonitor.Bucket.B1.name) 0L else 1L, gaps[it.key])
             }
-            assertEquals(2, outliers.size)
+            assertEquals(3, outliers.size)
             assertEquals(1, errors)
         }
     }
@@ -118,7 +132,7 @@ internal class ResponsivenessMonitorTest {
             assertEquals(startTime, firstPing)
             assertEquals(clock.now(), lastPing)
             gaps.forEach {
-                assertEquals("Bucket ${it.key} - ", if (it.key == 120L) 2L else 0L, gaps[it.key])
+                assertEquals("Bucket ${it.key} - ", if (it.key == ResponsivenessMonitor.Bucket.B1.name) 2L else 0L, gaps[it.key])
             }
             assertEquals(0, outliers.size)
             assertEquals(0, errors)
@@ -138,7 +152,7 @@ internal class ResponsivenessMonitorTest {
             assertEquals(startTime, firstPing)
             assertEquals(clock.now(), lastPing)
             gaps.forEach {
-                assertEquals("Bucket ${it.key} - ", if (it.key == 2000L) 100L else 0L, gaps[it.key])
+                assertEquals("Bucket ${it.key} - ", if (it.key == ResponsivenessMonitor.Bucket.B4.name) 100L else 0L, gaps[it.key])
             }
             assertEquals(100, outliers.size)
             assertEquals(0, errors)
@@ -151,7 +165,7 @@ internal class ResponsivenessMonitorTest {
             assertEquals(startTime, firstPing)
             assertEquals(clock.now(), lastPing)
             gaps.forEach {
-                assertEquals("Bucket ${it.key} - ", if (it.key == 2000L) 101L else 0L, gaps[it.key])
+                assertEquals("Bucket ${it.key} - ", if (it.key == ResponsivenessMonitor.Bucket.B4.name) 101L else 0L, gaps[it.key])
             }
             assertEquals(100, outliers.size)
             assertEquals(0, errors)
@@ -175,12 +189,21 @@ internal class ResponsivenessMonitorTest {
         assertEquals(snapshot1, snapshot2)
     }
 
+    @Test
+    fun `natural sort order of buckets is sorted by the max value`() {
+        var lastValue = 0L
+        ResponsivenessMonitor.Bucket.values().forEach {
+            assertTrue("Bucket ${it.name} has a smaller max value that expected", it.max > lastValue)
+            lastValue = it.max
+        }
+    }
+
     private fun checkEmptyState(snapshot: ResponsivenessSnapshot) {
         with(snapshot) {
             assertEquals("test", name)
             assertEquals(-1L, firstPing)
             assertEquals(-1L, lastPing)
-            assertEquals(5, gaps.size)
+            assertEquals(6, gaps.size)
             gaps.forEach {
                 assertEquals(0L, gaps[it.key])
             }
@@ -190,10 +213,7 @@ internal class ResponsivenessMonitorTest {
     }
 
     companion object {
-        private const val defaultOutlierThreshold = 500L
-        private const val defaultOutlierLimit = 100
-        private val defaultBuckets = listOf(120L, 250L, 500L, 2000L, Long.MAX_VALUE)
-        private val defaultGaps = defaultBuckets.dropLast(1).map { it - 1 }
-        private val noOutlierGaps = defaultGaps.filter { it <= 500L }
+        private val testGaps = ResponsivenessMonitor.Bucket.values().dropLast(1).map { it.max - 1 }
+        private val noOutlierGaps = testGaps.filter { it <= defaultOutlierThreshold }
     }
 }

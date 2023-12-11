@@ -17,7 +17,7 @@ internal data class ResponsivenessSnapshot(
     val lastPing: Long,
 
     @SerializedName("gaps")
-    val gaps: Map<Long, Long>,
+    val gaps: Map<String, Long>,
 
     @SerializedName("outliers")
     val outliers: List<ResponsivenessOutlier>,

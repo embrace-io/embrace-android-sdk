@@ -406,7 +406,7 @@ internal class EmbraceNdkServiceTest {
                 any() as NativeCrashData
             )
         }
-        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
     }
 
     @Test
@@ -516,7 +516,7 @@ internal class EmbraceNdkServiceTest {
         verify(exactly = 0) { delegate._getCrashReport(any()) }
         verify(exactly = 0) { repository.errorFileForCrash(any()) }
         verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
         verify(exactly = 0) {
             repository.deleteFiles(
                 any() as File,
@@ -525,7 +525,7 @@ internal class EmbraceNdkServiceTest {
                 any() as NativeCrashData
             )
         }
-        verify(exactly = 0) { mockDeliveryService.sendEventAsync(any() as EventMessage) }
+        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
     }
 
     @Test

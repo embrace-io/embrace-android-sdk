@@ -43,7 +43,7 @@ internal class FakeDeliveryService : DeliveryService {
         lastSentCachedSession = currentSession
     }
 
-    override fun sendEventAsync(eventMessage: EventMessage) {
+    override fun sendMoment(eventMessage: EventMessage) {
         eventSentAsyncInvokedCount++
         lastEventSentAsync = eventMessage
     }

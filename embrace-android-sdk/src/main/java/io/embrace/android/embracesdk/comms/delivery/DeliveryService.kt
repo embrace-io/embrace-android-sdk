@@ -18,6 +18,6 @@ internal interface DeliveryService {
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendCrash(crash: EventMessage)
     fun sendAEIBlob(blobMessage: BlobMessage)
-    fun sendEventAsync(eventMessage: EventMessage)
+    fun sendMoment(eventMessage: EventMessage)
     fun sendEventAndWait(eventMessage: EventMessage)
 }

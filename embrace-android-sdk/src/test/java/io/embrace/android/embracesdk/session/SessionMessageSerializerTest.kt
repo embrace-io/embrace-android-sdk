@@ -39,7 +39,7 @@ internal class SessionMessageSerializerTest {
         val serializer = SessionMessageSerializer(EmbraceSerializer())
 
         // message should be identical to JSON.
-        val expected = embraceSerializer.toJson(msg, SessionMessage::class.java)
+        val expected = embraceSerializer.toJson(msg)
         val observed = serializer.serialize(msg)
         assertEquals(expected, observed)
 

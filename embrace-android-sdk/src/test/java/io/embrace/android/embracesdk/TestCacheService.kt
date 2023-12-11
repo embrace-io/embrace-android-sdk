@@ -1,22 +1,19 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.GsonBuilder
-import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.comms.api.EmbraceUrlAdapter
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
 internal class TestCacheService : CacheService {
 
-    private val gson = GsonBuilder()
-        .registerTypeAdapter(EmbraceUrl::class.java, EmbraceUrlAdapter())
-        .create()
+    private val serializer = EmbraceSerializer()
 
     private val cache: MutableMap<String, ByteArray> = ConcurrentHashMap()
 
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
-        cache[name] = gson.toJson(objectToCache, clazz.genericSuperclass).toByteArray()
+        cache[name] = serializer.toJson(objectToCache).toByteArray()
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
@@ -24,7 +21,7 @@ internal class TestCacheService : CacheService {
             return null
         }
         val json = String(checkNotNull(cache[name]))
-        return gson.fromJson(json, clazz)
+        return serializer.fromJson(json, clazz)
     }
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
@@ -64,5 +61,9 @@ internal class TestCacheService : CacheService {
 
     override fun listFilenamesByPrefix(prefix: String): MutableList<String> {
         return (cache.keys.filter { it.startsWith(prefix) }).toMutableList()
+    }
+
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
+        cacheBytes(name, serializer.toJson(sessionMessage).toByteArray())
     }
 }

@@ -201,10 +201,6 @@ public open class BaseTest {
                             )
                         }
                     }
-                    EmbraceEndpoint.SESSIONS.url -> {
-                        assertEquals("POST", request.method)
-                        validateMessageAgainstGoldenFile(request, "session-start.json")
-                    }
                     EmbraceEndpoint.CONFIG.url -> {
                         assertEquals("GET", request.method)
                     }
@@ -334,7 +330,7 @@ public open class BaseTest {
     }
 }
 
-public const val TOTAL_REQUESTS_AT_INIT: Int = 4
+public const val TOTAL_REQUESTS_AT_INIT: Int = 3
 public const val BITMAP_HEIGHT: Int = 100
 public const val BITMAP_WIDTH: Int = 100
 

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.ExceptionErrorInfo
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import org.junit.Assert.assertEquals
@@ -8,7 +7,6 @@ import org.junit.Test
 
 internal class ExceptionErrorInfoTest {
 
-    private val serializer = EmbraceSerializer()
     private val info = ExceptionInfo(
         "java.lang.IllegalStateException",
         "Whoops!",
@@ -26,18 +24,12 @@ internal class ExceptionErrorInfoTest {
                 info,
             )
         )
-
-        val expectedInfo = ResourceReader.readResourceAsText("exception_error_info_expected.json")
-            .filter { !it.isWhitespace() }
-
-        val observed = serializer.toJson(exceptionErrorInfo)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("exception_error_info_expected.json", exceptionErrorInfo)
     }
 
     @Test
     fun testExceptionErrorInfoDeserialization() {
-        val json = ResourceReader.readResourceAsText("exception_error_info_expected.json")
-        val obj = serializer.fromJson(json, ExceptionErrorInfo::class.java)
+        val obj = deserializeJsonFromResource<ExceptionErrorInfo>("exception_error_info_expected.json")
         assertEquals(0L, obj.timestamp)
         assertEquals("STATE", obj.state)
         val exceptionInfo = obj.exceptions?.get(0)

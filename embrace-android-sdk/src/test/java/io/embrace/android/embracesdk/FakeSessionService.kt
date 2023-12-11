@@ -21,7 +21,6 @@ internal class FakeSessionService : SessionService {
     }
 
     override fun handleCrash(crashId: String) {
-        TODO("Not yet implemented")
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {

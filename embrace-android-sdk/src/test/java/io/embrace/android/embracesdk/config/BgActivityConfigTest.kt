@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.config
 
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class BgActivityConfigTest {
-
-    private val serializer = EmbraceSerializer()
 
     @Test
     fun testDefaults() {
@@ -27,14 +25,13 @@ internal class BgActivityConfigTest {
 
     @Test
     fun testDeserialization() {
-        val data = ResourceReader.readResourceAsText("bg_activity_config.json")
-        val cfg = serializer.fromJson(data, BackgroundActivityRemoteConfig::class.java)
+        val cfg = deserializeJsonFromResource<BackgroundActivityRemoteConfig>("bg_activity_config.json")
         assertEquals(0.5f, cfg.threshold)
     }
 
     @Test
     fun testDeserializationEmptyObj() {
-        val cfg = serializer.fromJson("{}", BackgroundActivityRemoteConfig::class.java)
+        val cfg = deserializeEmptyJsonString<BackgroundActivityRemoteConfig>()
         assertNull(cfg.threshold)
     }
 }

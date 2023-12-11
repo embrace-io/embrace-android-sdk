@@ -33,6 +33,9 @@ import org.junit.Test
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
+
+    private val serializer = EmbraceSerializer()
+
     private lateinit var apiUrlBuilder: ApiUrlBuilder
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
@@ -150,7 +153,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+            expectedPayload = serializer.toJson(event).toByteArray()
         )
     }
 
@@ -161,7 +164,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendAEIBlob(blob)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/blobs",
-            expectedPayload = serializer.bytesFromPayload(blob, BlobMessage::class.java)
+            expectedPayload = serializer.toJson(blob).toByteArray()
         )
     }
 
@@ -174,7 +177,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/network",
             expectedLogId = "n:network-event-id",
-            expectedPayload = serializer.bytesFromPayload(networkEvent, NetworkEvent::class.java)
+            expectedPayload = serializer.toJson(networkEvent).toByteArray()
         )
     }
 
@@ -191,7 +194,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "e:event-id",
-            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+            expectedPayload = serializer.toJson(event).toByteArray()
         )
     }
 
@@ -208,7 +211,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "c:event-1,event-2",
-            expectedPayload = serializer.bytesFromPayload(crash, EventMessage::class.java)
+            expectedPayload = serializer.toJson(crash).toByteArray()
         )
     }
 
@@ -249,7 +252,7 @@ internal class EmbraceApiServiceTest {
         }
 
         expectedPayload?.let {
-            assertArrayEquals(it, fakeApiClient.sentRequests[0].second)
+            assertArrayEquals(it, fakeApiClient.sentRequests[0].second?.readBytes())
         } ?: assertNull(fakeApiClient.sentRequests[0].second)
     }
 
@@ -287,6 +290,5 @@ internal class EmbraceApiServiceTest {
             headers = emptyMap(),
             body = ""
         )
-        private val serializer = EmbraceSerializer()
     }
 }

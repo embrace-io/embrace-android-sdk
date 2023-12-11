@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Crash
@@ -38,8 +37,6 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceCrashServiceTest {
-
-    private val serializer = EmbraceSerializer()
 
     private lateinit var embraceCrashService: EmbraceCrashService
     private lateinit var sessionService: SessionService
@@ -202,29 +199,21 @@ internal class EmbraceCrashServiceTest {
                 )
             )
         )
-        val expectedInfo = ResourceReader.readResourceAsText("crash_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(crash)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("crash_expected.json", crash)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("crash_expected.json")
-        val obj = serializer.fromJson(json, Crash::class.java)
-
+        val obj = deserializeJsonFromResource<Crash>("crash_expected.json")
         assertEquals("123", obj.crashId)
-
-        assertEquals("java.lang.RuntimeException", obj?.exceptions?.at(0)?.name)
-        assertEquals("ExceptionMessage", obj?.exceptions?.at(0)?.message)
-        assertEquals("stacktrace.line", obj?.exceptions?.at(0)?.lines?.at(0))
-
-        assertEquals("js_exception", obj?.jsExceptions?.at(0))
-
-        assertEquals(123L, obj?.threads?.at(0)?.threadId)
-        assertEquals(Thread.State.RUNNABLE, obj?.threads?.at(0)?.state)
-        assertEquals("ReferenceHandler", obj?.threads?.at(0)?.name)
-        assertEquals(1, obj?.threads?.at(0)?.priority)
-        assertEquals("stacktrace.line.thread", obj?.threads?.at(0)?.lines?.at(0))
+        assertEquals("java.lang.RuntimeException", obj.exceptions?.at(0)?.name)
+        assertEquals("ExceptionMessage", obj.exceptions?.at(0)?.message)
+        assertEquals("stacktrace.line", obj.exceptions?.at(0)?.lines?.at(0))
+        assertEquals("js_exception", obj.jsExceptions?.at(0))
+        assertEquals(123L, obj.threads?.at(0)?.threadId)
+        assertEquals(Thread.State.RUNNABLE, obj.threads?.at(0)?.state)
+        assertEquals("ReferenceHandler", obj.threads?.at(0)?.name)
+        assertEquals(1, obj.threads?.at(0)?.priority)
+        assertEquals("stacktrace.line.thread", obj.threads?.at(0)?.lines?.at(0))
     }
 }

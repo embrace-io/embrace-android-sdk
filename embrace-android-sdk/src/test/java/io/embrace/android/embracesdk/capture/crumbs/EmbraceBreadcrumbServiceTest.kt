@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
-import com.google.gson.GsonBuilder
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.TapsLocalConfig
@@ -36,7 +35,6 @@ internal class EmbraceBreadcrumbServiceTest {
     private lateinit var memoryCleanerService: EmbraceMemoryCleanerService
     private lateinit var activity: Activity
     private val logger = InternalEmbraceLogger()
-    private val gson = GsonBuilder().setPrettyPrinting().create()
     private val clock = FakeClock()
 
     @Before
@@ -79,8 +77,7 @@ internal class EmbraceBreadcrumbServiceTest {
                 0, clock.now()
             )
         )
-        val jsonMessage = gson.toJson(message)
-        assertEquals(jsonMessage, expected)
+        assertJsonMatchesGoldenFile(expected, message)
     }
 
     /*
@@ -98,8 +95,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logView("viewB", clock.now())
         clock.tickSecond()
         service.onViewClose(activity)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_view.json")
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_view.json")
     }
 
     /*
@@ -114,8 +110,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logWebView("https://example.com/path2", clock.now())
         val webViews = service.webViewBreadcrumbs
         assertEquals("two webviews captured", 2, webViews.size)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_webview.json")
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_webview.json")
     }
 
     /*
@@ -124,11 +119,10 @@ internal class EmbraceBreadcrumbServiceTest {
     @Test
     fun testBreadcrumbCreate() {
         val service = initializeBreadcrumbService()
-        service.logCustom("a breadcrumb", clock.now())
+        service.logCustom("breadcrumb", clock.now())
         val breadcrumbs = service.customBreadcrumbs
         assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_custom.json")
-        assertJsonMessage(service, expected)
+        assertJsonMessage(service, "breadcrumb_custom.json")
     }
 
     /*
@@ -443,9 +437,7 @@ internal class EmbraceBreadcrumbServiceTest {
                 0, clock.now()
             )
         )
-        val jsonMessage = gson.toJson(message)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_fragment.json")
-        assertEquals(expected, jsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)
     }
 
     @Test
@@ -457,7 +449,7 @@ internal class EmbraceBreadcrumbServiceTest {
         clock.tickSecond()
         service.startView("b")
         clock.tickSecond()
-        service.logCustom("a breadcrumb", clock.now())
+        service.logCustom("breadcrumb", clock.now())
         val breadcrumbs = service.customBreadcrumbs
         assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
 
@@ -466,17 +458,13 @@ internal class EmbraceBreadcrumbServiceTest {
             session = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
-        val jsonMessage = gson.toJson(message)
-        val expected = ResourceReader.readResourceAsText("breadcrumb_view_custom.json")
-        assertEquals(expected, jsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_view_custom.json", message)
 
         val secondMessage = SessionMessage(
             session = fakeSession(),
             breadcrumbs = service.flushBreadcrumbs()
         )
-        val secondJsonMessage = gson.toJson(secondMessage)
-        val expectedEmpty = ResourceReader.readResourceAsText("breadcrumb_empty.json")
-        assertEquals(expectedEmpty, secondJsonMessage)
+        assertJsonMatchesGoldenFile("breadcrumb_empty.json", secondMessage)
     }
 
     @Test

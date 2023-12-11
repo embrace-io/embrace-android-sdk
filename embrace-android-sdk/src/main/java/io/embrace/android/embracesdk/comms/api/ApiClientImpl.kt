@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPO
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -45,25 +45,23 @@ internal class ApiClientImpl(
         }
     }
 
-    override fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse =
-        executeRawPost(request, gzip(payloadToCompress))
-
-    /**
-     * Posts a payload according to the ApiRequest parameter. The payload will not be gzip compressed.
-     */
-    private fun executeRawPost(request: ApiRequest, payload: ByteArray?): ApiResponse {
+    override fun executePost(
+        request: ApiRequest,
+        payloadStream: ByteArrayInputStream
+    ): ApiResponse {
         logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
         logger.logDeveloper("ApiClient", "Request details: $request")
-
         var connection: EmbraceConnection? = null
         return try {
             connection = request.toConnection()
             setTimeouts(connection)
-            if (payload != null) {
-                logger.logDeveloper("ApiClient", "Payload size: " + payload.size)
-                connection.outputStream?.write(payload)
-                connection.connect()
+
+            connection.outputStream?.let { httpStream ->
+                GZIPOutputStream(httpStream).use { outputStream ->
+                    payloadStream.copyTo(outputStream)
+                }
             }
+            connection.connect()
             val response = executeHttpRequest(connection)
             response
         } catch (ex: Throwable) {
@@ -153,26 +151,6 @@ internal class ApiClientImpl(
         } catch (ex: IOException) {
             logger.logDeveloper("ApiClient", "Failed to read response body.", ex)
             throw IllegalStateException("Failed to read response body.", ex)
-        }
-    }
-
-    /**
-     * Compresses a given byte array using the GZIP compression algorithm.
-     *
-     * @param bytes the byte array to compress
-     * @return the compressed byte array
-     */
-    private fun gzip(bytes: ByteArray): ByteArray {
-        return try {
-            ByteArrayOutputStream().use { baos ->
-                GZIPOutputStream(baos).use { gzipStream ->
-                    gzipStream.write(bytes)
-                    gzipStream.finish()
-                }
-                baos.toByteArray()
-            }
-        } catch (ex: IOException) {
-            throw IllegalStateException("Failed to gzip payload.", ex)
         }
     }
 }

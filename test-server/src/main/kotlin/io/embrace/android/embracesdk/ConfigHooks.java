@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk;
 
 import android.util.Base64;
 
-import com.google.gson.Gson;
-
 import java.nio.charset.StandardCharsets;
 
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig;
@@ -47,7 +45,6 @@ public class ConfigHooks {
 
     static SessionRemoteConfig getSessionConfig() {
         return new SessionRemoteConfig(true,
-            100f,
             false,
             null,
             null);

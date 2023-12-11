@@ -2,13 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.DeviceInfo
-import io.embrace.android.embracesdk.payload.PerformanceInfo
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.UserInfo
 import java.io.BufferedWriter
 import java.io.StringWriter
 import java.io.Writer
@@ -42,26 +36,26 @@ internal class SessionMessageSerializer(
     private fun BufferedWriter.serializeImpl(msg: SessionMessage) {
         append("{")
 
-        val session = jsonValue(msg, "s", Session::class.java, SessionMessage::session)
+        val session = jsonValue(msg, "s", SessionMessage::session)
         addJsonProperty("\"s\":", session)
 
-        val userInfo = jsonValue(msg, "u", UserInfo::class.java, SessionMessage::userInfo)
+        val userInfo = jsonValue(msg, "u", SessionMessage::userInfo)
         addJsonProperty("\"u\":", userInfo)
 
-        val appInfo = jsonValue(msg, "a", AppInfo::class.java, SessionMessage::appInfo)
+        val appInfo = jsonValue(msg, "a", SessionMessage::appInfo)
         addJsonProperty("\"a\":", appInfo)
 
-        val deviceInfo = jsonValue(msg, "d", DeviceInfo::class.java, SessionMessage::deviceInfo)
+        val deviceInfo = jsonValue(msg, "d", SessionMessage::deviceInfo)
         addJsonProperty("\"d\":", deviceInfo)
 
         val performanceInfo =
-            jsonValue(msg, "p", PerformanceInfo::class.java, SessionMessage::performanceInfo)
+            jsonValue(msg, "p", SessionMessage::performanceInfo)
         addJsonProperty("\"p\":", performanceInfo)
 
-        val breadcrumbs = jsonValue(msg, "br", Breadcrumbs::class.java, SessionMessage::breadcrumbs)
+        val breadcrumbs = jsonValue(msg, "br", SessionMessage::breadcrumbs)
         addJsonProperty("\"br\":", breadcrumbs)
 
-        val spans = jsonValue(msg, "spans", List::class.java, SessionMessage::spans)
+        val spans = jsonValue(msg, "spans", SessionMessage::spans)
         addJsonProperty("\"spans\":", spans)
 
         append("\"v\":")
@@ -80,7 +74,6 @@ internal class SessionMessageSerializer(
     private fun <T> jsonValue(
         msg: SessionMessage,
         key: String,
-        clz: Class<T>,
         fieldProvider: (sessionMessage: SessionMessage) -> T?
     ): String {
         return runCatching {
@@ -90,7 +83,7 @@ internal class SessionMessageSerializer(
             val isCacheValid = newValue == oldValue
             return when {
                 cache != null && isCacheValid -> cache
-                else -> return serializer.toJson(newValue, clz).apply {
+                else -> return serializer.toJson(newValue).apply {
                     jsonCache[key] = this
                 }
             }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.payload.SessionMessage
+
 /**
  * Handles the caching of objects.
  */
@@ -31,6 +33,12 @@ internal interface CacheService {
      * @param bytes  the bytes to write
      */
     fun cacheBytes(name: String, bytes: ByteArray?)
+
+    /**
+     * Serializes a session object to disk via a stream. This saves memory when the session is
+     * large & the return value isn't used (e.g. for a crash & periodic caching)
+     */
+    fun writeSession(name: String, sessionMessage: SessionMessage)
 
     /**
      * Reads the bytes from a cached file, if it exists.

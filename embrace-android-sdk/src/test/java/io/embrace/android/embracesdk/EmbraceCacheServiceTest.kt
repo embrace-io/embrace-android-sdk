@@ -6,9 +6,11 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,13 +27,15 @@ internal class EmbraceCacheServiceTest {
     private lateinit var service: CacheService
     private lateinit var dir: File
 
+    private val serializer = EmbraceSerializer()
+
     @Before
     fun setUp() {
 
         dir = Files.createTempDirectory("tmpDirPrefix").toFile()
         service = EmbraceCacheService(
             lazy { dir },
-            EmbraceSerializer(),
+            serializer,
             InternalEmbraceLogger()
         )
 
@@ -147,7 +151,7 @@ internal class EmbraceCacheServiceTest {
         myDir.createNewFile()
         service = EmbraceCacheService(
             lazy { myDir },
-            EmbraceSerializer(),
+            serializer,
             InternalEmbraceLogger()
         )
 
@@ -211,6 +215,14 @@ internal class EmbraceCacheServiceTest {
         assertEquals(apiRequest.logId, cachedApiRequest?.logId)
         assertEquals(apiRequest.url.toString(), cachedApiRequest?.url.toString())
         assertEquals(apiRequest.httpMethod, cachedApiRequest?.httpMethod)
+    }
+
+    @Test
+    fun `test write session`() {
+        val original = SessionMessage(fakeSession())
+        service.writeSession("test", original)
+        val loadObject = service.loadObject("test", SessionMessage::class.java)
+        assertEquals(original, loadObject)
     }
 }
 

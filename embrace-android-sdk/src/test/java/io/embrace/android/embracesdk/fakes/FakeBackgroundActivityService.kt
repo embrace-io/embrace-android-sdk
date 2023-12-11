@@ -9,7 +9,6 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
     }
 
     override fun handleCrash(crashId: String) {
-        TODO("Not yet implemented")
     }
 
     override fun save() {

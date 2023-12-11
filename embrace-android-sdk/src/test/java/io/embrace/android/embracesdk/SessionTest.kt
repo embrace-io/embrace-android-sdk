@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
@@ -14,8 +13,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionTest {
-
-    private val serializer = EmbraceSerializer()
 
     private val info = Session(
         sessionId = "fake-session-id",
@@ -61,16 +58,12 @@ internal class SessionTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("session_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = serializer.toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("session_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("session_expected.json")
-        val obj = serializer.fromJson(json, Session::class.java)
+        val obj = deserializeJsonFromResource<Session>("session_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -111,7 +104,7 @@ internal class SessionTest {
 
     @Test
     fun testEmptyObject() {
-        val info = serializer.fromJson("{}", Session::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<Session>()
+        assertNotNull(obj)
     }
 }

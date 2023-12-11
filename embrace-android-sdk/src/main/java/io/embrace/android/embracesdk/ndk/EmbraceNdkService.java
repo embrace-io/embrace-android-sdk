@@ -10,16 +10,12 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -369,11 +365,9 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
 
             String errorsRaw = delegate._getErrors(absolutePath);
             if (errorsRaw != null) {
-                Type listOfNativeCrashError = new TypeToken<ArrayList<NativeCrashDataError>>() {
-                }.getType();
                 try {
-                    return serializer.fromJson(errorsRaw, listOfNativeCrashError);
-                } catch (JsonSyntaxException e) {
+                    return serializer.<ArrayList<NativeCrashDataError>>fromJsonWithTypeToken(errorsRaw);
+                } catch (Exception e) {
                     logger.logError("Failed to parse native crash error file {crashId=" + nativeCrash.getNativeCrashId() +
                         ", errorFilePath=" + absolutePath + "}");
                 }
@@ -471,11 +465,6 @@ class EmbraceNdkService implements NdkService, ProcessStateListener {
                 }
 
                 repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash);
-
-            } catch (JsonSyntaxException ex) {
-                //noinspection ResultOfMethodCallIgnored
-                crashFile.delete();
-                logger.logError("Failed to parse JSON from crash file {crashFilePath=" + crashFile.getAbsolutePath() + "}.", ex, true);
             } catch (Exception ex) {
                 //noinspection ResultOfMethodCallIgnored
                 crashFile.delete();

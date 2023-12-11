@@ -15,6 +15,9 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
+import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -80,7 +83,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache")
         val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
-        val serialized = deliveryCacheManager.saveSession(sessionMessage)
+        val serialized = deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
         assertArrayEquals(expectedBytes, serialized)
 
@@ -101,7 +104,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `cache periodic session successful`() {
         val sessionMessage = createSessionMessage("test_cache")
 
-        deliveryCacheManager.saveSessionPeriodicCache(sessionMessage)
+        deliveryCacheManager.saveSession(sessionMessage, PERIODIC_CACHE)
 
         verify {
             cacheService.writeSession(
@@ -120,7 +123,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `cache session on crash successful`() {
         val sessionMessage = createSessionMessage("test_cache")
 
-        deliveryCacheManager.saveSessionOnCrash(sessionMessage)
+        deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
 
         verify {
             cacheService.writeSession(
@@ -145,7 +148,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `manager returns null if cache service throws an exception`() {
         every { cacheService.loadObject(any(), SessionMessage::class.java) } throws Exception()
 
-        deliveryCacheManager.saveSession(createSessionMessage("exception_session"))
+        deliveryCacheManager.saveSession(createSessionMessage("exception_session"), NORMAL_END)
         assertNull(deliveryCacheManager.loadSession("exception_session"))
 
         every {
@@ -163,7 +166,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache_fails")
         val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
-        val serialized = checkNotNull(deliveryCacheManager.saveSession(sessionMessage))
+        val serialized = checkNotNull(deliveryCacheManager.saveSession(sessionMessage, NORMAL_END))
 
         val charset = Charset.defaultCharset()
         val expectedStr = String(expectedBytes, charset)
@@ -178,7 +181,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         assertNull(deliveryCacheManager.loadSession("test_remove"))
 
         val session = createSessionMessage("test_remove")
-        deliveryCacheManager.saveSession(session)
+        deliveryCacheManager.saveSession(session, NORMAL_END)
 
         val cachedSession = deliveryCacheManager.loadSession("test_remove")
         checkNotNull(cachedSession)
@@ -193,7 +196,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `if an exception is thrown, then remove cache session should not fail`() {
         every { cacheService.deleteFile(any()) } throws Exception()
 
-        deliveryCacheManager.saveSession(createSessionMessage("test_delete_exception"))
+        deliveryCacheManager.saveSession(createSessionMessage("test_delete_exception"), NORMAL_END)
         deliveryCacheManager.deleteSession("test_delete_exception")
 
         verify {
@@ -245,7 +248,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `amount of cached sessions in file is limited`() {
         repeat(100) { i ->
-            deliveryCacheManager.saveSession(createSessionMessage("test$i"))
+            deliveryCacheManager.saveSession(createSessionMessage("test$i"), NORMAL_END)
             fakeClock.tick()
         }
         for (i in 0..99) {

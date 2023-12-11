@@ -6,13 +6,12 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal enum class SessionMessageState { END, END_WITH_CRASH }
 
 internal interface DeliveryService {
-    fun saveSessionPeriodicCache(sessionMessage: SessionMessage)
-    fun saveSessionOnCrash(sessionMessage: SessionMessage)
-    fun saveSession(sessionMessage: SessionMessage)
+    fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
     fun saveCrash(crash: EventMessage)

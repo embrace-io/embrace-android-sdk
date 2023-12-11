@@ -5,17 +5,11 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray {
-        TODO("Not yet implemented")
-    }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        TODO("Not yet implemented")
-    }
-
-    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType): ByteArray {
         TODO("Not yet implemented")
     }
 

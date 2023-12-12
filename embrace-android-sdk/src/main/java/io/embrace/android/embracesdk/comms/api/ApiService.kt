@@ -12,8 +12,7 @@ internal interface ApiService {
     fun sendLog(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendEvent(eventMessage: EventMessage)
-    fun sendEventAndWait(eventMessage: EventMessage)
-    fun sendCrash(crash: EventMessage)
+    fun sendCrash(crash: EventMessage): Future<*>
     fun sendAEIBlob(blobMessage: BlobMessage)
     fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*>?
 }

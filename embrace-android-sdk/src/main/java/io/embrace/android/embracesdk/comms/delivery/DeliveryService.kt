@@ -16,8 +16,7 @@ internal interface DeliveryService {
     fun sendBackgroundActivities()
     fun sendLog(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
-    fun sendCrash(crash: EventMessage)
+    fun sendCrash(crash: EventMessage, processTerminating: Boolean)
     fun sendAEIBlob(blobMessage: BlobMessage)
     fun sendMoment(eventMessage: EventMessage)
-    fun sendEventAndWait(eventMessage: EventMessage)
 }

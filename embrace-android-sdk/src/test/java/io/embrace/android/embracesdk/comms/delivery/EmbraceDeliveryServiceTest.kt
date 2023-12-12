@@ -279,7 +279,7 @@ internal class EmbraceDeliveryServiceTest {
     fun testSaveCrash() {
         initializeDeliveryService()
         val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.CRASH))
-        deliveryService.sendCrash(obj)
+        deliveryService.sendCrash(obj, true)
         verify(exactly = 1) { mockDeliveryCacheManager.saveCrash(obj) }
         verify(exactly = 1) { apiService.sendCrash(obj) }
     }

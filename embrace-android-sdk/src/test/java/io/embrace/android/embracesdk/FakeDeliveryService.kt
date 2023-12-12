@@ -69,11 +69,7 @@ internal class FakeDeliveryService : DeliveryService {
         lastSentNetworkCall = networkEvent
     }
 
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        lastSentEvent = eventMessage
-    }
-
-    override fun sendCrash(crash: EventMessage) {
+    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
         lastSavedCrash = crash
         lastSentCrash = crash
     }

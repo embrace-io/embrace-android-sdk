@@ -30,11 +30,7 @@ internal class FakeApiService : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendCrash(crash: EventMessage) {
+    override fun sendCrash(crash: EventMessage): Future<*> {
         TODO("Not yet implemented")
     }
 

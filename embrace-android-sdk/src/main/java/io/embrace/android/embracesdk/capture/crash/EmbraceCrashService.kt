@@ -135,7 +135,7 @@ internal class EmbraceCrashService(
             // and the request is made on a background executor, but data analysis shows that
             // a surprising % of crashes make it through based on the receive time. Therefore we
             // attempt to send the crash and if it fails, we will send it again on the next launch.
-            deliveryService.sendCrash(crashEvent)
+            deliveryService.sendCrash(crashEvent, true)
 
             // End, cache and send the session
             sessionService.handleCrash(crash.crashId)

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.io.ByteArrayInputStream
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
@@ -146,28 +145,12 @@ internal class EmbraceApiService(
     }
 
     /**
-     * Sends an event to the API and waits for the request to be completed
-     *
-     * @param eventMessage the event message containing the event
-     */
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        post(eventMessage, mapper::eventMessageRequest).get()
-    }
-
-    /**
      * Sends a crash event to the API and reschedules it if the request times out
      *
      * @param crash the event message containing the crash
      */
-    override fun sendCrash(crash: EventMessage) {
-        try {
-            post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }.get(
-                CRASH_TIMEOUT,
-                TimeUnit.SECONDS
-            )
-        } catch (e: Exception) {
-            logger.logError("The crash report request has timed out.")
-        }
+    override fun sendCrash(crash: EventMessage): Future<*> {
+        return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
     override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
@@ -230,4 +213,3 @@ internal class EmbraceApiService(
 }
 
 private const val TAG = "EmbraceApiService"
-private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash

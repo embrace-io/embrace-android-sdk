@@ -51,7 +51,8 @@ internal object JsonValidator {
             }
             jsonElement1.isJsonPrimitive && jsonElement2.isJsonPrimitive -> {
                 return areJsonPrimitiveEquals(
-                    jsonElement1.asJsonPrimitive, jsonElement2.asJsonPrimitive
+                    jsonElement1.asJsonPrimitive,
+                    jsonElement2.asJsonPrimitive
                 )
             }
             jsonElement1.isJsonNull && jsonElement2.isJsonNull -> {
@@ -80,7 +81,8 @@ internal object JsonValidator {
                 try {
                     if (!areJsonElementsEquals(entry.value, jsonObject2.get(entry.key))) {
                         Log.e(
-                            JsonValidator.javaClass.simpleName, "Match failed for key: ${entry.key}"
+                            JsonValidator.javaClass.simpleName,
+                            "Match failed for key: ${entry.key}"
                         )
                         return false
                     }
@@ -111,7 +113,8 @@ internal object JsonValidator {
         jsonArray1.forEachIndexed { index, entry ->
             if (!areJsonElementsEquals(entry, jsonArray2.get(index))) {
                 Log.e(
-                    JsonValidator.javaClass.simpleName, "Different array value at position: $index."
+                    JsonValidator.javaClass.simpleName,
+                    "Different array value at position: $index."
                 )
                 return false
             }

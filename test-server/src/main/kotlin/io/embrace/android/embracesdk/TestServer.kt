@@ -69,7 +69,6 @@ public class TestServer {
  */
 public data class TestServerResponse(val statusCode: Int, val body: String = "") {
     public fun toMockWebServerResponse(): MockResponse {
-
         return MockResponse().setResponseCode(statusCode).also {
             if (body.isNotEmpty()) it.setBody(body)
         }

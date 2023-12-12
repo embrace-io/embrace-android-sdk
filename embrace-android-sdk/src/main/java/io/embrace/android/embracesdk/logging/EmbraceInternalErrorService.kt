@@ -71,7 +71,9 @@ internal class EmbraceInternalErrorService(
                 val addResult = capturedThrowable.add(throwable)
                 addResult && ignoreThrowableCause(throwable.cause, capturedThrowable)
             }
-        } else false
+        } else {
+            false
+        }
     }
 
     @Synchronized

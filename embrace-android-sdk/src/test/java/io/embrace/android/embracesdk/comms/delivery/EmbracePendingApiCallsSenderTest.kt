@@ -87,7 +87,9 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask is not active and doesn't run if there are no failed API requests`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = status, loadFailedRequest = false, runRetryJobAfterScheduling = true
+                status = status,
+                loadFailedRequest = false,
+                runRetryJobAfterScheduling = true
             )
             retryTaskNotActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
@@ -161,7 +163,8 @@ internal class EmbracePendingApiCallsSenderTest {
     @Test
     fun `retryTask is not active and doesn't run after init if network not reachable`() {
         initPendingApiCallsSender(
-            status = NetworkStatus.NOT_REACHABLE, runRetryJobAfterScheduling = true
+            status = NetworkStatus.NOT_REACHABLE,
+            runRetryJobAfterScheduling = true
         )
         blockingScheduledExecutorService.runCurrentlyBlocked()
         retryTaskNotActive(NetworkStatus.NOT_REACHABLE)
@@ -190,7 +193,8 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask is active and runs after connection changes from not reachable to connected after retry job runs`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = NetworkStatus.NOT_REACHABLE, runRetryJobAfterScheduling = true
+                status = NetworkStatus.NOT_REACHABLE,
+                runRetryJobAfterScheduling = true
             )
             blockingScheduledExecutorService.runCurrentlyBlocked()
             pendingApiCallsSender.onNetworkConnectivityStatusChanged(status)
@@ -206,7 +210,8 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask isn't active and doesn't run if there are no failed request after getting a connection before retry job is scheduled`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = NetworkStatus.NOT_REACHABLE, loadFailedRequest = false
+                status = NetworkStatus.NOT_REACHABLE,
+                loadFailedRequest = false
             )
             pendingApiCallsSender.onNetworkConnectivityStatusChanged(status)
             retryTaskNotActive(status)
@@ -254,7 +259,8 @@ internal class EmbracePendingApiCallsSenderTest {
                 lazy { "deviceId" },
                 lazy { "appVersionName" }
             ),
-            lazy { "deviceId" }, "appId"
+            lazy { "deviceId" },
+            "appId"
         )
         repeat(105) { k ->
             val request = mapper.logRequest(
@@ -323,7 +329,8 @@ internal class EmbracePendingApiCallsSenderTest {
 
     private fun retryTaskNotActive(status: NetworkStatus) {
         assertFalse(
-            "Failed for network status = $status", pendingApiCallsSender.isDeliveryTaskActive()
+            "Failed for network status = $status",
+            pendingApiCallsSender.isDeliveryTaskActive()
         )
     }
 

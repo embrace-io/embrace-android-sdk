@@ -55,7 +55,8 @@ internal class AnrModuleImplTest {
     private fun createConfigServiceWithAnrDisabled() = FakeConfigService(
         autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(localCfg = {
             LocalConfig(
-                "", false,
+                "",
+                false,
                 SdkLocalConfig(
                     automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                         anrServiceEnabled = false

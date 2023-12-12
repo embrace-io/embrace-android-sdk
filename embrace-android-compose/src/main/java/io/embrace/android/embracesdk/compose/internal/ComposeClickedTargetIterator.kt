@@ -12,7 +12,12 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
     private val composeInternalErrorLogger = ComposeInternalErrorLogger()
     private val nodeLocator = EmbraceNodeIterator()
 
-    override fun findTarget(decorView: View, x: Float, y: Float, onSingleTapUpBackgroundWorker: ScheduledExecutorService) {
+    override fun findTarget(
+        decorView: View,
+        x: Float,
+        y: Float,
+        onSingleTapUpBackgroundWorker: ScheduledExecutorService
+    ) {
         try {
             val queue: Queue<View> = LinkedList()
             queue.add(decorView)

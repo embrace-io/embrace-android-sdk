@@ -415,7 +415,8 @@ internal class LocalConfigTest {
     @Test
     fun testServiceEnablementMemoryServiceConfig() {
         var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"memory_info\": false}}",
             serializer
         )
@@ -424,7 +425,8 @@ internal class LocalConfigTest {
             checkNotNull(cfg.memoryServiceEnabled)
         )
         localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"memory_info\": true}}",
             serializer
         )
@@ -437,7 +439,8 @@ internal class LocalConfigTest {
     @Test
     fun testServiceEnablementPowerSaveModeServiceConfig() {
         var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": false}}",
             serializer
         )
@@ -446,7 +449,8 @@ internal class LocalConfigTest {
             checkNotNull(cfg.powerSaveModeServiceEnabled)
         )
         localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": true}}",
             serializer
         )
@@ -459,7 +463,8 @@ internal class LocalConfigTest {
     @Test
     fun testServiceEnablementNetworkConnectivityServiceConfig() {
         var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": false}}",
             serializer
         )
@@ -469,7 +474,8 @@ internal class LocalConfigTest {
             checkNotNull(cfg.networkConnectivityServiceEnabled)
         )
         localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": true}}",
             serializer
         )
@@ -483,7 +489,8 @@ internal class LocalConfigTest {
     @Test
     fun testServiceEnablementAnrServiceConfig() {
         var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"anr_info\": false}}",
             serializer
         )
@@ -492,7 +499,8 @@ internal class LocalConfigTest {
             checkNotNull(cfg.anrServiceEnabled)
         )
         localConfig = LocalConfigParser.buildConfig(
-            "GrCPU", false,
+            "GrCPU",
+            false,
             "{\"automatic_data_capture\": { \"anr_info\": true}}",
             serializer
         )

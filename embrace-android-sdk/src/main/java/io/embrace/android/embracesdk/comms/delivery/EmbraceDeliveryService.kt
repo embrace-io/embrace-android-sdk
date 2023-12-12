@@ -229,7 +229,7 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    override fun sendEventAsync(eventMessage: EventMessage) {
+    override fun sendMoment(eventMessage: EventMessage) {
         sendSessionsExecutorService.submit {
             apiService.sendEvent(eventMessage)
         }

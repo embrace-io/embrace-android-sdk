@@ -271,7 +271,7 @@ internal class EmbraceDeliveryServiceTest {
     fun testSendEventAsync() {
         initializeDeliveryService()
         val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
-        deliveryService.sendEventAsync(obj)
+        deliveryService.sendMoment(obj)
         verify(exactly = 1) { apiService.sendEvent(obj) }
     }
 

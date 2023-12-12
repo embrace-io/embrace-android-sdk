@@ -64,7 +64,7 @@ internal class EventHandler(
 
         if (shouldSendMoment(eventName)) {
             val eventMessage = buildStartEventMessage(event)
-            deliveryService.sendEventAsync(eventMessage)
+            deliveryService.sendMoment(eventMessage)
         } else {
             logger.logDebug("$eventName start moment not sent based on gating config.")
         }
@@ -101,7 +101,7 @@ internal class EventHandler(
         val endEventMessage = buildEndEventMessage(endEvent, startTime, endTime)
 
         if (shouldSendMoment(event.name)) {
-            deliveryService.sendEventAsync(endEventMessage)
+            deliveryService.sendMoment(endEventMessage)
         } else {
             logger.logDebug("${event.name} end moment not sent based on gating config.")
         }

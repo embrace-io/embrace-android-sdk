@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.aei.ApplicationExitInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
@@ -26,7 +27,8 @@ internal class EmbracePerformanceInfoService(
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val applicationExitInfoService: ApplicationExitInfoService?,
     private val strictModeService: StrictModeService,
-    private val nativeThreadSamplerService: NativeThreadSamplerService?
+    private val nativeThreadSamplerService: NativeThreadSamplerService?,
+    private val responsivenessMonitorService: ResponsivenessMonitorService?
 ) : PerformanceInfoService {
 
     override fun getSessionPerformanceInfo(
@@ -64,7 +66,8 @@ internal class EmbracePerformanceInfoService(
                 nativeThreadSamplerService?.getCapturedIntervals(
                     receivedTermination
                 )
-            }
+            },
+            responsivenessMonitorSnapshots = captureDataSafely { responsivenessMonitorService?.getCapturedData() }
         )
     }
 

@@ -16,6 +16,9 @@ import io.embrace.android.embracesdk.anr.sigquit.GetThreadsInCurrentProcess
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrHandlerNativeDelegate
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
+import io.embrace.android.embracesdk.capture.monitor.EmbraceResponsivenessMonitorService
+import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
+import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import java.util.concurrent.Executors
@@ -26,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal interface AnrModule {
     val googleAnrTimestampRepository: GoogleAnrTimestampRepository
     val anrService: AnrService
+    val responsivenessMonitorService: ResponsivenessMonitorService
 }
 
 internal class AnrModuleImpl(
@@ -59,6 +63,16 @@ internal class AnrModuleImpl(
             )
         } else {
             NoOpAnrService()
+        }
+    }
+
+    override val responsivenessMonitorService: ResponsivenessMonitorService by singleton {
+        if (configService.autoDataCaptureBehavior.isAnrServiceEnabled() && !ApkToolsConfig.IS_ANR_MONITORING_DISABLED) {
+            EmbraceResponsivenessMonitorService(
+                livenessCheckScheduler = livenessCheckScheduler
+            )
+        } else {
+            NoOpResponsivenessMonitorService()
         }
     }
 

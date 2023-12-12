@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -45,6 +46,7 @@ internal class LivenessCheckScheduler internal constructor(
         }
         get() = blockedThreadDetector.listener
 
+    private val heartbeatSendMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatSend")
     private var intervalMs: Long = configService.anrBehavior.getSamplingIntervalMs()
     private var monitorFuture: ScheduledFuture<*>? = null
 
@@ -59,7 +61,8 @@ internal class LivenessCheckScheduler internal constructor(
     fun startMonitoringThread() {
         enforceThread(anrMonitorThread)
         if (!state.started.getAndSet(true)) {
-            logger.logInfo("Started heartbeats to capture ANRs.")
+            logger.logInfo("Start ANR detection...")
+            resetResponsivenessMonitors()
             scheduleRegularHeartbeats()
         }
     }
@@ -74,25 +77,32 @@ internal class LivenessCheckScheduler internal constructor(
             monitorFuture?.let { monitorTask ->
                 monitorTask.cancel(false)
                 if (monitorTask.isDone) {
-                    logger.logInfo("Stopped heartbeats to capture ANRs.")
+                    logger.logInfo("Stopped ANR detection...")
                     state.started.set(false)
                 } else {
-                    logger.logError("Scheduled heartbeat could not be stopped.")
+                    logger.logError("Scheduled heartbeat task could not be stopped.")
                 }
             } ?: logger.logError(
-                "Scheduled heartbeat could not be stopped. " +
-                    "monitorFuture is null"
+                "Scheduled heartbeat task could not be stopped - task is null"
             )
         }
     }
+
+    fun resetResponsivenessMonitors() {
+        heartbeatSendMonitor.reset()
+        blockedThreadDetector.resetResponsivenessMonitor()
+    }
+
+    fun responsivenessMonitorSnapshots(): List<ResponsivenessSnapshot> =
+        listOf(heartbeatSendMonitor.snapshot(), blockedThreadDetector.responsivenessMonitorSnapshot())
 
     private fun scheduleRegularHeartbeats() {
         enforceThread(anrMonitorThread)
 
         intervalMs = configService.anrBehavior.getSamplingIntervalMs()
-        val runnable = Runnable(::onMonitorThreadHeartbeat)
+        val runnable = Runnable(::checkHeartbeat)
         try {
-            logger.logDeveloper("EmbraceAnrService", "Heartbeat Interval: $intervalMs")
+            logger.logInfo("Starting ANR heartbeats with interval: ${intervalMs}ms")
             monitorFuture =
                 anrExecutor.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
@@ -106,20 +116,17 @@ internal class LivenessCheckScheduler internal constructor(
      * Called at regular intervals on the monitor thread. This function posts a message to the
      * main thread that is used to check whether it is live or not.
      */
-
-    internal fun onMonitorThreadHeartbeat() {
+    internal fun checkHeartbeat() {
         enforceThread(anrMonitorThread)
 
         try {
+            heartbeatSendMonitor.ping()
             with(configService.anrBehavior.getMonitorThreadPriority()) {
                 android.os.Process.setThreadPriority(this)
             }
 
             if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
-                logger.logDeveloper(
-                    "EmbraceAnrService",
-                    "Different interval detected, restarting runnable"
-                )
+                logger.logInfo("Different interval detected, restarting heartbeat task")
 
                 // we don't want to interrupt this Runnable while it's running
                 monitorFuture?.cancel(false)

@@ -75,7 +75,7 @@ internal class EmbraceDeliveryServiceTest {
             mockDeliveryCacheManager.saveSession(mockSessionMessage, NORMAL_END)
         } returns "cached_session".toByteArray()
 
-        deliveryService.saveSession(mockSessionMessage, NORMAL_END)
+        deliveryService.sendSession(mockSessionMessage, NORMAL_END)
 
         verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, NORMAL_END) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
@@ -86,7 +86,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         val mockSessionMessage: SessionMessage = mockk()
 
-        deliveryService.saveSession(mockSessionMessage, PERIODIC_CACHE)
+        deliveryService.sendSession(mockSessionMessage, PERIODIC_CACHE)
 
         verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, PERIODIC_CACHE) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
@@ -97,7 +97,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         val mockSessionMessage: SessionMessage = mockk()
 
-        deliveryService.saveSession(mockSessionMessage, JVM_CRASH)
+        deliveryService.sendSession(mockSessionMessage, JVM_CRASH)
 
         verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, JVM_CRASH) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)

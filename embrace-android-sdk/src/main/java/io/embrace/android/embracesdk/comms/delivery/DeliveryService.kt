@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal interface DeliveryService {
-    fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
     fun saveCrash(crash: EventMessage)

@@ -124,17 +124,15 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache")
 
         deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
+        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
 
-        verify {
-            cacheService.writeSession(
+        verify(exactly = 1) {
+            cacheService.cacheBytes(
                 "$prefix.$clockInit.test_cache.json",
-                sessionMessage
+                expectedByteArray
             )
         }
-
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
-
-        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
         assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 

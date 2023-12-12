@@ -35,41 +35,12 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
-    }
-
-    /**
-     * Caches and sends over the network a session message
-     *
-     * @param sessionMessage    The session message to send
-     * @param snapshotType      The type of session snapshot
-     */
-    override fun sendSession(
-        sessionMessage: SessionMessage,
-        snapshotType: SessionSnapshotType
-    ) {
-        logger.logDeveloper(TAG, "Sending session message")
-
-        sendSessionsExecutorService.submit {
-            // sanitize start session message before send it to backend
-            val sanitizedSession = gatingService.gateSessionMessage(sessionMessage)
-            logger.logDebug("Session successfully sanitized.")
-            sendSessionImpl(sanitizedSession, snapshotType)
-        }
-    }
-
-    private fun sendSessionImpl(
-        sessionMessage: SessionMessage,
-        snapshotType: SessionSnapshotType
-    ) {
-        if (snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
+        val sessionBytes = cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
+        if (sessionBytes == null || snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
             return
         }
-
-        val sessionBytes = cacheManager.saveSession(sessionMessage, snapshotType) ?: return
-        logger.logDeveloper(TAG, "Serialized session message ready to be sent")
 
         try {
             val future = apiService.sendSession(sessionBytes) {

@@ -61,18 +61,18 @@ internal class EmbraceDeliveryCacheManager(
         snapshotType: SessionSnapshotType
     ): ByteArray? {
         return when (snapshotType) {
-            SessionSnapshotType.NORMAL_END -> {
-                val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+            SessionSnapshotType.PERIODIC_CACHE -> {
                 saveSessionImpl(sessionMessage, false) { filename ->
-                    cacheService.cacheBytes(filename, sessionBytes)
-                }
-                sessionBytes
-            }
-            else -> {
-                saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
                     cacheService.writeSession(filename, sessionMessage)
                 }
                 null
+            }
+            else -> {
+                val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+                saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
+                    cacheService.cacheBytes(filename, sessionBytes)
+                }
+                sessionBytes
             }
         }
     }

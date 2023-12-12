@@ -19,13 +19,11 @@ import java.util.concurrent.atomic.AtomicLong
 internal class ResponsivenessMonitor(
     private val clock: Clock,
     private val name: String,
-    private val outliersLimit: Int = 100,
-    private val outlierThreshold: Long = 500L,
-    boundaries: List<Long> = listOf(120L, 250L, 500L, 2000L)
+    private val outliersLimit: Int = defaultOutlierLimit,
+    private val outlierThreshold: Long = defaultOutlierThreshold,
 ) {
-    private val buckets = boundaries.sorted().plus(Long.MAX_VALUE)
     private val outliers = mutableListOf<ResponsivenessOutlier>()
-    private val gaps: MutableMap<Long, Long> = buckets.associateWith { 0L } as MutableMap<Long, Long>
+    private val gaps: MutableMap<Bucket, Long> = Bucket.values().associateWith { 0L } as MutableMap<Bucket, Long>
     private val firstPing = AtomicLong(unsetPingTime)
     private val latestPing = AtomicLong(unsetPingTime)
     private val errors = AtomicLong(0)
@@ -47,7 +45,7 @@ internal class ResponsivenessMonitor(
         name = name,
         firstPing = firstPing.get(),
         lastPing = latestPing.get(),
-        gaps = gaps.toMap(),
+        gaps = gaps.mapKeys { it.key.name },
         outliers = outliers.toList(),
         errors = errors.get()
     )
@@ -75,12 +73,12 @@ internal class ResponsivenessMonitor(
     private fun recordGap(currentPing: Long, previousPing: Long): Boolean {
         val gap = currentPing - previousPing
         if (gap >= 0) {
-            buckets.find { bucketCandidate ->
-                bucketCandidate > gap
+            Bucket.values().find { bucketCandidate ->
+                bucketCandidate.max > gap
             }?.let { bucket ->
                 if (gaps.containsKey(bucket)) {
                     gaps[bucket] = gaps[bucket]?.inc() ?: 1
-                    if (bucket > outlierThreshold && outliers.size < outliersLimit) {
+                    if (bucket.max > outlierThreshold && outliers.size < outliersLimit) {
                         outliers.add(ResponsivenessOutlier(previousPing, currentPing))
                     }
                     return true
@@ -91,7 +89,18 @@ internal class ResponsivenessMonitor(
         return false
     }
 
+    enum class Bucket(val max: Long) {
+        B1(120L),
+        B2(250L),
+        B3(500L),
+        B4(1000L),
+        B5(2000L),
+        B6(Long.MAX_VALUE)
+    }
+
     companion object {
+        const val defaultOutlierLimit = 100
+        const val defaultOutlierThreshold = 500L
         private const val unsetPingTime = -1L
     }
 }

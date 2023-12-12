@@ -72,19 +72,10 @@ internal class LivenessCheckScheduler internal constructor(
      */
     fun stopMonitoringThread() {
         enforceThread(anrMonitorThread)
-
         if (state.started.get()) {
-            monitorFuture?.let { monitorTask ->
-                monitorTask.cancel(false)
-                if (monitorTask.isDone) {
-                    logger.logInfo("Stopped ANR detection...")
-                    state.started.set(false)
-                } else {
-                    logger.logError("Scheduled heartbeat task could not be stopped.")
-                }
-            } ?: logger.logError(
-                "Scheduled heartbeat task could not be stopped - task is null"
-            )
+            if (stopHeartbeatTask()) {
+                state.started.set(false)
+            }
         }
     }
 
@@ -103,13 +94,29 @@ internal class LivenessCheckScheduler internal constructor(
         val runnable = Runnable(::checkHeartbeat)
         try {
             logger.logInfo("Starting ANR heartbeats with interval: ${intervalMs}ms")
-            monitorFuture =
-                anrExecutor.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+            monitorFuture = anrExecutor.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
             // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
             val message = "ANR capture initialization failed"
             logger.logError(message, exc, true)
         }
+    }
+
+    private fun stopHeartbeatTask(): Boolean {
+        enforceThread(anrMonitorThread)
+
+        monitorFuture?.let { monitorTask ->
+            if (monitorTask.cancel(false)) {
+                logger.logInfo("Stopped ANR detection...")
+                monitorFuture = null
+                return true
+            }
+        }
+        // There is no expected situation where this cancel should fail because monitorFuture should never be null or canceled when
+        // we get here, and if this is running, the heartbeat task won't be. If for some reason it fails, log an error.
+        val message = "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
+        logger.logError(message, IllegalStateException(message))
+        return false
     }
 
     /**
@@ -126,13 +133,12 @@ internal class LivenessCheckScheduler internal constructor(
             }
 
             if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
-                logger.logInfo("Different interval detected, restarting heartbeat task")
-
-                // we don't want to interrupt this Runnable while it's running
-                monitorFuture?.cancel(false)
-
-                // reschedule a heartbeat at the new cadence
-                scheduleRegularHeartbeats()
+                logger.logInfo("Different interval detected, scheduling a heartbeat restart")
+                anrExecutor.submit {
+                    if (stopHeartbeatTask()) {
+                        scheduleRegularHeartbeats()
+                    }
+                }
             } else {
                 val now = clock.now()
                 if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {

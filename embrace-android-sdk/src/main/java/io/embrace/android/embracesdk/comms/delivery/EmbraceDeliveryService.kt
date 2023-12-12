@@ -136,6 +136,7 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendCrash(crash: EventMessage) {
+        cacheManager.saveCrash(crash)
         apiService.sendCrash(crash)
     }
 
@@ -154,13 +155,6 @@ internal class EmbraceDeliveryService(
         } else {
             sendCachedSessionsWithoutNdk(currentSession)
         }
-    }
-
-    /**
-     * Persist crash to disk so it can be sent on the next SDK start.
-     */
-    override fun saveCrash(crash: EventMessage) {
-        cacheManager.saveCrash(crash)
     }
 
     private fun sendCachedCrash() {

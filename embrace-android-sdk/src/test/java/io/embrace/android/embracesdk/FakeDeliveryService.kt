@@ -43,10 +43,6 @@ internal class FakeDeliveryService : DeliveryService {
         lastSentCachedSession = currentSession
     }
 
-    override fun saveCrash(crash: EventMessage) {
-        lastSavedCrash = crash
-    }
-
     override fun sendEventAsync(eventMessage: EventMessage) {
         eventSentAsyncInvokedCount++
         lastEventSentAsync = eventMessage
@@ -78,6 +74,7 @@ internal class FakeDeliveryService : DeliveryService {
     }
 
     override fun sendCrash(crash: EventMessage) {
+        lastSavedCrash = crash
         lastSentCrash = crash
     }
 

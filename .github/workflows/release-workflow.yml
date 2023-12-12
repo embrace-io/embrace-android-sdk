@@ -122,9 +122,19 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
+          ref: ${{ github.ref_name }}
           path: ./embrace-swazzler3
           token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Swazzler Require Branch
+        run: |
+          cd ./embrace-swazzler3
+          sed -i -r "s#requireBranch = \"master\"#requireBranch = '${{ github.ref_name }}'#g" build.gradle
+          git add build.gradle
+          git config --global user.name "embrace-ci"
+          git config --global user.email "embrace-ci@users.noreply.github.com"
+          git commit -m "CI/CD: change required branch for release to ${{ github.ref_name }}"
+          git push
 
       - name: Swazzler Release
         run: |

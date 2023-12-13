@@ -13,9 +13,6 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.EmbraceStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.NoOpStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
@@ -58,11 +55,6 @@ internal interface DataCaptureServiceModule {
      * Captures push notifications
      */
     val pushNotificationService: PushNotificationCaptureService
-
-    /**
-     * Captures strict mode violations
-     */
-    val strictModeService: StrictModeService
 
     /**
      * Captures thermal state events
@@ -137,14 +129,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         PushNotificationCaptureService(
             breadcrumbService, coreModule.logger
         )
-    }
-
-    override val strictModeService: StrictModeService by singleton {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.P) && configService.anrBehavior.isStrictModeListenerEnabled()) {
-            EmbraceStrictModeService(configService, scheduledExecutor, initModule.clock)
-        } else {
-            NoOpStrictModeService()
-        }
     }
 
     override val thermalStatusService: ThermalStatusService by singleton {

@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -26,7 +25,6 @@ internal class EmbracePerformanceInfoService(
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val applicationExitInfoService: ApplicationExitInfoService?,
-    private val strictModeService: StrictModeService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val responsivenessMonitorService: ResponsivenessMonitorService?
 ) : PerformanceInfoService {
@@ -58,7 +56,6 @@ internal class EmbracePerformanceInfoService(
             powerSaveModeIntervals = captureDataSafely {
                 powerSaveModeService.getCapturedData()?.toList()
             },
-            strictmodeViolations = captureDataSafely { strictModeService.getCapturedData()?.toList() },
             nativeThreadAnrIntervals = captureDataSafely {
                 nativeThreadSamplerService?.getCapturedIntervals(
                     receivedTermination

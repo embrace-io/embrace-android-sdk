@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakePowerSaveModeService
-import io.embrace.android.embracesdk.fakes.FakeStrictModeService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -33,7 +32,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private val metadataService = FakeAndroidMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val applicationExitInfoService = FakeApplicationExitInfoService()
-    private val strictModeService = FakeStrictModeService()
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
 
     @Before
@@ -47,7 +45,6 @@ internal class EmbracePerformanceInfoServiceTest {
             metadataService,
             googleAnrTimestampRepository,
             applicationExitInfoService,
-            strictModeService,
             null,
             monitoringServiceRule
         )
@@ -94,7 +91,6 @@ internal class EmbracePerformanceInfoServiceTest {
             googleAnrTimestampRepository.getGoogleAnrTimestamps(0, SESSION_END_TIME_MS),
             info.googleAnrTimestamps
         )
-        assertValueCopied(strictModeService.data, info.strictmodeViolations)
     }
 
     private fun assertValueCopied(expected: Any?, observed: Any?) {

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.spans.SpansServiceImpl.Companion.M
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -683,7 +684,8 @@ internal class SpansServiceImplTest {
         spansService = SpansServiceImpl(
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitStartTimeMillis),
             sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitEndTimeMillis),
-            clock = FakeOpenTelemetryClock(embraceClock = clock)
+            clock = FakeOpenTelemetryClock(embraceClock = clock),
+            EmbraceTelemetryService()
         )
     }
 

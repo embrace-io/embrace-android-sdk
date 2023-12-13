@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -119,39 +118,6 @@ internal fun <T> SpanBuilder.record(code: () -> T): T {
  */
 internal fun Span.setSequenceId(id: Long): Span {
     setAttribute(SEQUENCE_ID_ATTRIBUTE_NAME, id)
-    return this
-}
-
-/**
- * Add in interesting attributes about the running app environment to the span as private Embrace attributes
- */
-internal fun Span.addAppAttributes(): Span {
-    var hasOkHttp3 = false
-    var okhttpVersion: String? = null
-    try {
-        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
-        hasOkHttp3 = true
-        val okhttpObject = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
-        okhttpVersion = okhttpObject.getField("VERSION").get(okhttpObject)?.toString()
-    } catch (t: Throwable) {
-        // only write the version if the call to obtain it doesn't throw
-    }
-    setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
-    okhttpVersion?.let { setAttribute("okhttp3_on_classpath".toEmbraceAttributeName(), it) }
-
-    var kotlinStdLibVersion = "unknown"
-    try {
-        kotlinStdLibVersion = KotlinVersion.CURRENT.toString()
-    } catch (t: Throwable) {
-        // Use the default if this fails. Given that Embrace requires some version to be on the classpath, this might indicate a change
-        // in how Kotlin exposes its version at runtime, or something odd going on in general.
-    }
-    setAttribute("kotlin_on_classpath".toEmbraceAttributeName(), kotlinStdLibVersion)
-    setAttribute(
-        "is_emulator".toEmbraceAttributeName(),
-        runCatching { EmbraceMetadataService.isEmulator().toString() }.getOrDefault("unknown")
-    )
-
     return this
 }
 

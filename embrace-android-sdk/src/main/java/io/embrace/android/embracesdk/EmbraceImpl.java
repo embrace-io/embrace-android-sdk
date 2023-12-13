@@ -463,7 +463,7 @@ final class EmbraceImpl {
         serviceRegistry.registerService(exceptionsService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
-        telemetryService = sdkObservabilityModule.getEmbraceTelemetryService();
+        telemetryService = initModule.getEmbraceTelemetryService();
         serviceRegistry.registerService(telemetryService);
 
         serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
@@ -1624,7 +1624,9 @@ final class EmbraceImpl {
         if (!isStarted) {
             internalEmbraceLogger.logSDKNotInitialized(action);
         }
-        telemetryService.onPublicApiCalled(action);
+        if (telemetryService != null) {
+            telemetryService.onPublicApiCalled(action);
+        }
         return isStarted;
     }
 }

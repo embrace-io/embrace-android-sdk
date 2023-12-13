@@ -16,36 +16,36 @@ internal class EmbraceTelemetryServiceTest {
     @Test
     fun `onPublicApiCalled with a new name`() {
         // Given a method is not in the map
-        assertEquals(null, embraceTelemetryService.usageCountMap["testPublicApi"])
+        assertEquals(null, embraceTelemetryService.getTelemetryAttributes()["testPublicApi"])
 
         // When the method is added
         embraceTelemetryService.onPublicApiCalled("testPublicApi")
 
         // Then the method is in the map
-        assertEquals(1, embraceTelemetryService.usageCountMap["testPublicApi"])
+        assertEquals("1", embraceTelemetryService.getTelemetryAttributes()["usage - testPublicApi"])
     }
 
     @Test
     fun `onPublicApiCalled with an existing name`() {
         // Given a method is in the map
-        embraceTelemetryService.onPublicApiCalled("aMethod")
+        embraceTelemetryService.onPublicApiCalled("publicApi")
 
         // When the same method is called again
-        embraceTelemetryService.onPublicApiCalled("aMethod")
+        embraceTelemetryService.onPublicApiCalled("publicApi")
 
         // Then the method is counted twice
-        assertEquals(2, embraceTelemetryService.usageCountMap["aMethod"])
+        assertEquals("2", embraceTelemetryService.getTelemetryAttributes()["usage - publicApi"])
     }
 
     @Test
-    fun `onSessionEnd clears the map`() {
+    fun `getTelemetryAttributes clears the usage map`() {
         // Given a method is in the map
         embraceTelemetryService.onPublicApiCalled("aMethod")
 
-        // When the session ends
-        embraceTelemetryService.onSessionEnd()
+        // When getting telemetry attributes
+        embraceTelemetryService.getTelemetryAttributes()
 
-        // Then the map is empty
-        assertEquals(0, embraceTelemetryService.usageCountMap.size)
+        // That method isn't in the map anymore
+        assertEquals(null, embraceTelemetryService.getTelemetryAttributes().getOrDefault("usage - aMethod", null))
     }
 }

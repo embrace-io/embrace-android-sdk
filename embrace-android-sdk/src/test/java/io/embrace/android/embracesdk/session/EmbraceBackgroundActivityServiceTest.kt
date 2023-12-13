@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -75,7 +76,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             preferencesService,
             mockk()
         )
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
+        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock), EmbraceTelemetryService())
         spansRemoteConfig = SpansRemoteConfig(pctEnabled = 100f)
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,

@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -168,7 +169,7 @@ internal class SessionHandlerTest {
             userService,
             clock
         )
-        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock))
+        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), EmbraceTelemetryService())
         spansService.onConfigChange(configService)
         sessionHandler = SessionHandler(
             logger,

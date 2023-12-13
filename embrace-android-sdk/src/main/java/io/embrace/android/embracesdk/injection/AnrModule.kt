@@ -4,7 +4,6 @@ import android.os.Looper
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.anr.NoOpAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
@@ -35,7 +34,6 @@ internal interface AnrModule {
 internal class AnrModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule
 ) : AnrModule {
 
@@ -57,7 +55,6 @@ internal class AnrModuleImpl(
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrExecutorService = anrExecutorService,
                 state = state,
-                anrProcessErrorSampler = anrProcessErrorSampler,
                 clock = initModule.clock,
                 anrMonitorThread = anrMonitorThread
             )
@@ -109,16 +106,6 @@ internal class AnrModuleImpl(
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
             anrMonitorThread = anrMonitorThread
-        )
-    }
-
-    private val anrProcessErrorSampler by singleton {
-        AnrProcessErrorSampler(
-            activityManager = systemServiceModule.activityManager,
-            configService = configService,
-            anrExecutor = anrExecutorService,
-            clock = initModule.clock,
-            logger = coreModule.logger
         )
     }
 

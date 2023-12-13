@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
@@ -102,9 +103,8 @@ internal class SessionTest {
         }
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<Session>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<Session>()
     }
 }

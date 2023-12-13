@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class NativeSymbols(
-    @SerializedName("symbols")
+    @Json(name = "symbols")
     internal val symbols: Map<String, Map<String, String>>
 ) {
 

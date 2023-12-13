@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class AnrSampleTest {
@@ -33,9 +33,8 @@ internal class AnrSampleTest {
         assertEquals(listOf(threadInfo), obj.threads)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testThreadInfoEmptyObject() {
-        val obj = deserializeEmptyJsonString<AnrSample>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<AnrSample>()
     }
 }

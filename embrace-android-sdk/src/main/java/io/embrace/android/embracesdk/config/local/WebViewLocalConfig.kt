@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class WebViewLocalConfig(
-    @SerializedName("enable")
+    @Json(name = "enable")
     val captureWebViews: Boolean? = null,
 
-    @SerializedName("capture_query_params")
+    @Json(name = "capture_query_params")
     val captureQueryParams: Boolean? = null
 )

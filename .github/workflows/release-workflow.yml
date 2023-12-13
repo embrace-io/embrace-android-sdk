@@ -112,7 +112,7 @@ jobs:
 
       - name: Set next SDK version
         run: |
-          git checkout master
+          git checkout ${{ github.ref_name }}
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"

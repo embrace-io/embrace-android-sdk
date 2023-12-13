@@ -3,7 +3,9 @@ name: Generate Baseline Profile
 on:
   workflow_dispatch:
   workflow_call:
-    secrets: inherit
+    secrets:
+      token:
+        required: true
 
 jobs:
   test:
@@ -20,7 +22,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
 
       - name: Checkout Android SDK Benchmark
         uses: actions/checkout@v3
@@ -28,7 +30,7 @@ jobs:
           repository: embrace-io/android-sdk-benchmark
           ref: main
           path: ./android-sdk-benchmark
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
 
       - uses: actions/cache@v3
         with:

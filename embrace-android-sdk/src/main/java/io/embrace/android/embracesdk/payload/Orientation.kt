@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.payload
 
 import android.content.res.Configuration
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class Orientation(
-    @SerializedName("o") val orientation: String,
-    @SerializedName("ts") val timestamp: Long
+    @Json(name = "o") val orientation: String,
+    @Json(name = "ts") val timestamp: Long
 ) {
 
     constructor(orientation: Int, timestamp: Long) : this(

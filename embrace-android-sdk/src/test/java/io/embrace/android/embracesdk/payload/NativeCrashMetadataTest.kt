@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class NativeCrashMetadataTest {
@@ -27,10 +27,9 @@ internal class NativeCrashMetadataTest {
         verifyInfoPopulated(obj)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<NativeCrashMetadata>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<NativeCrashMetadata>()
     }
 
     private fun verifyInfoPopulated(obj: NativeCrashMetadata) {

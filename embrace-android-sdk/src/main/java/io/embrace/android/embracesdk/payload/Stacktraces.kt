@@ -1,37 +1,39 @@
 package io.embrace.android.embracesdk.payload
 
 import androidx.annotation.VisibleForTesting
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
 import io.embrace.android.embracesdk.Embrace.AppFramework.NATIVE
 import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.Embrace.AppFramework.UNITY
 
+@JsonClass(generateAdapter = true)
 internal class Stacktraces @JvmOverloads constructor(
     stacktraces: List<String>? = null,
     customStacktrace: String? = null,
     framework: AppFramework = NATIVE,
 
-    @SerializedName("c")
+    @Json(name = "c")
     @get:VisibleForTesting
     val context: String? = null,
 
-    @SerializedName("l")
+    @Json(name = "l")
     @get:VisibleForTesting
     val library: String? = null
 ) {
 
-    @SerializedName("tt")
+    @Json(name = "tt")
     val jvmStacktrace: List<String>?
 
-    @SerializedName("jsk")
+    @Json(name = "jsk")
     val javascriptStacktrace: String?
 
-    @SerializedName("u")
+    @Json(name = "u")
     val unityStacktrace: String?
 
-    @SerializedName("f")
+    @Json(name = "f")
     val flutterStacktrace: String?
 
     init {

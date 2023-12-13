@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.mockk.every
 import io.mockk.mockk
@@ -36,10 +37,9 @@ internal class ExceptionInfoTest {
         )
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testExceptionInfoEmptyObject() {
-        val obj = deserializeEmptyJsonString<ExceptionInfo>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<ExceptionInfo>()
     }
 
     @Test

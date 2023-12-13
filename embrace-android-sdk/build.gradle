@@ -3,6 +3,7 @@ import io.embrace.gradle.Versions
 plugins {
     id "internal-embrace-plugin"
     id("org.jetbrains.kotlinx.kover") version "0.7.1"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 description = "Embrace Android SDK: Core"
@@ -81,7 +82,10 @@ koverReport {
 dependencies {
     implementation "androidx.lifecycle:lifecycle-common-java8:2.5.0"
     implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
-    implementation "com.google.code.gson:gson:2.9.0"
+
+    // json
+    implementation("com.squareup.moshi:moshi:${Versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}")
 
     implementation "io.opentelemetry:opentelemetry-api:${Versions.openTelemetry}"
     implementation "io.opentelemetry:opentelemetry-sdk:${Versions.openTelemetry}"

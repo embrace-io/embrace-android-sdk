@@ -303,6 +303,15 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companio
 	public final fun create (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
 }
 
+public final class io/embrace/android/embracesdk/spans/EmbraceSpanEventJsonAdapter : com/squareup/moshi/JsonAdapter {
+	public fun <init> (Lcom/squareup/moshi/Moshi;)V
+	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
+	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;)V
+	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum, io/embrace/android/embracesdk/internal/spans/EmbraceAttributes$Attribute {
 	public static final field FAILURE Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static final field UNKNOWN Lio/embrace/android/embracesdk/spans/ErrorCode;

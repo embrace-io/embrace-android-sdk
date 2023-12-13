@@ -1,20 +1,22 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents the background activity configuration element specified in the Embrace config file.
  */
+@JsonClass(generateAdapter = true)
 internal class BackgroundActivityLocalConfig(
-    @SerializedName("capture_enabled")
+    @Json(name = "capture_enabled")
     val backgroundActivityCaptureEnabled: Boolean? = null,
 
-    @SerializedName("manual_background_activity_limit")
+    @Json(name = "manual_background_activity_limit")
     val manualBackgroundActivityLimit: Int? = null,
 
-    @SerializedName("min_background_activity_duration")
+    @Json(name = "min_background_activity_duration")
     val minBackgroundActivityDuration: Long? = null,
 
-    @SerializedName("max_cached_activities")
+    @Json(name = "max_cached_activities")
     val maxCachedActivities: Int? = null
 )

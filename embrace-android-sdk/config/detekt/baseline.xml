@@ -4,6 +4,7 @@
   <CurrentIssues>
     <ID>DataClassContainsFunctions:ExceptionError.kt$ExceptionError$fun addException(ex: Throwable?, appState: String?, clock: Clock)</ID>
     <ID>DataClassContainsFunctions:ExceptionError.kt$ExceptionError$private fun getExceptionInfo(ex: Throwable?): List&lt;ExceptionInfo&gt;</ID>
-    <ID>DataClassShouldBeImmutable:ExceptionError.kt$ExceptionError$@SerializedName("c") var occurrences = 0</ID>
+    <ID>DataClassShouldBeImmutable:ExceptionError.kt$ExceptionError$@Json(name = "c") var occurrences = 0</ID>
+    <ID>DataClassShouldBeImmutable:ExceptionError.kt$ExceptionError$@Json(name = "rep") var exceptionErrors = mutableListOf&lt;ExceptionErrorInfo&gt;()</ID>
   </CurrentIssues>
 </SmellBaseline>

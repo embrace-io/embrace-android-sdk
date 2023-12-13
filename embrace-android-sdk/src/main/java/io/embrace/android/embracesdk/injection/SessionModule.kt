@@ -47,7 +47,6 @@ internal class SessionModuleImpl(
             sdkObservabilityModule.exceptionService,
             dataContainerModule.performanceInfoService,
             dataCaptureServiceModule.webviewService,
-            dataCaptureServiceModule.activityLifecycleBreadcrumbService,
             dataCaptureServiceModule.thermalStatusService,
             nativeModule.nativeThreadSamplerService,
             dataCaptureServiceModule.breadcrumbService,

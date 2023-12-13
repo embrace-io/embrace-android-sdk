@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
@@ -24,7 +23,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,7 +47,6 @@ internal class DataCaptureServiceModuleImplTest {
         assertTrue(module.webviewService is EmbraceWebViewService)
         assertTrue(module.breadcrumbService is EmbraceBreadcrumbService)
         assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
-        assertTrue(module.activityLifecycleBreadcrumbService is EmbraceActivityLifecycleBreadcrumbService)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.componentCallbackService)
     }
@@ -67,7 +64,6 @@ internal class DataCaptureServiceModuleImplTest {
 
         assertTrue(module.powerSaveModeService is NoOpPowerSaveModeService)
         assertTrue(module.thermalStatusService is NoOpThermalStatusService)
-        assertNull(module.activityLifecycleBreadcrumbService)
     }
 
     @Test
@@ -84,7 +80,6 @@ internal class DataCaptureServiceModuleImplTest {
         assertTrue(module.memoryService is NoOpMemoryService)
         assertTrue(module.powerSaveModeService is NoOpPowerSaveModeService)
         assertTrue(module.thermalStatusService is NoOpThermalStatusService)
-        assertNull(module.activityLifecycleBreadcrumbService)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

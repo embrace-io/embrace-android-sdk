@@ -4,8 +4,6 @@ import android.os.Build
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
@@ -60,11 +58,6 @@ internal interface DataCaptureServiceModule {
      * Captures thermal state events
      */
     val thermalStatusService: ThermalStatusService
-
-    /**
-     * Captures breadcrumbs of the activity lifecycle
-     */
-    val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?
 
     /**
      * Registers for the component callback to capture memory events
@@ -141,14 +134,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             )
         } else {
             NoOpThermalStatusService()
-        }
-    }
-
-    override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            EmbraceActivityLifecycleBreadcrumbService(configService, initModule.clock)
-        } else {
-            null
         }
     }
 }

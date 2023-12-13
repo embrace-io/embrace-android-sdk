@@ -3,7 +3,9 @@ name: Generate Baseline Profile
 on:
   workflow_dispatch:
   workflow_call:
-    secrets: inherit
+    secrets:
+      token:
+        required: true
 
 jobs:
   test:

@@ -276,7 +276,6 @@ internal class EmbraceMetadataService private constructor(
             MetadataUtils.getOperatingSystemVersionCode(),
             getScreenResolution(),
             MetadataUtils.getTimezoneId(),
-            MetadataUtils.getSystemUptime(),
             MetadataUtils.getNumberOfCores(),
             if (populateAllFields) getCpuName() else null,
             if (populateAllFields) getEgl() else null

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.PowerModeInterval
-import io.embrace.android.embracesdk.payload.StrictModeViolation
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -26,7 +26,7 @@ internal class PerformanceInfoTest {
     private val appExitInfoData: List<AppExitInfoData> = mockk(relaxed = true)
     private val nativeThreadAnrIntervals: List<NativeThreadAnrInterval> = emptyList()
     private val powerSaveModeIntervals: List<PowerModeInterval> = emptyList()
-    private val violations: List<StrictModeViolation> = emptyList()
+    private val threadMonitorSnapshots: List<ResponsivenessSnapshot> = emptyList()
 
     @Test
     fun testPerfInfoSerialization() {
@@ -52,7 +52,7 @@ internal class PerformanceInfoTest {
         assertEquals(nativeThreadAnrIntervals, performanceInfo.nativeThreadAnrIntervals)
         assertEquals(networkInterfaceIntervals, performanceInfo.networkInterfaceIntervals)
         assertEquals(powerSaveModeIntervals, performanceInfo.powerSaveModeIntervals)
-        assertEquals(violations, performanceInfo.strictmodeViolations)
+        assertEquals(threadMonitorSnapshots, performanceInfo.responsivenessMonitorSnapshots)
     }
 
     private fun buildPerformanceInfo(): PerformanceInfo = PerformanceInfo(
@@ -65,6 +65,6 @@ internal class PerformanceInfoTest {
         networkInterfaceIntervals = networkInterfaceIntervals,
         powerSaveModeIntervals = powerSaveModeIntervals,
         networkRequests = networkRequests,
-        strictmodeViolations = violations
+        responsivenessMonitorSnapshots = threadMonitorSnapshots
     )
 }

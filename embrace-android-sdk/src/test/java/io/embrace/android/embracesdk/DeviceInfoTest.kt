@@ -17,7 +17,6 @@ internal class DeviceInfoTest {
         29,
         "1080x720",
         "GMT+1",
-        150923,
         8
     )
 

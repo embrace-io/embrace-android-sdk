@@ -4,8 +4,6 @@ import android.os.Build
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
@@ -13,9 +11,6 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.EmbraceStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.NoOpStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
@@ -60,19 +55,9 @@ internal interface DataCaptureServiceModule {
     val pushNotificationService: PushNotificationCaptureService
 
     /**
-     * Captures strict mode violations
-     */
-    val strictModeService: StrictModeService
-
-    /**
      * Captures thermal state events
      */
     val thermalStatusService: ThermalStatusService
-
-    /**
-     * Captures breadcrumbs of the activity lifecycle
-     */
-    val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?
 
     /**
      * Registers for the component callback to capture memory events
@@ -139,14 +124,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         )
     }
 
-    override val strictModeService: StrictModeService by singleton {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.P) && configService.anrBehavior.isStrictModeListenerEnabled()) {
-            EmbraceStrictModeService(configService, scheduledExecutor, initModule.clock)
-        } else {
-            NoOpStrictModeService()
-        }
-    }
-
     override val thermalStatusService: ThermalStatusService by singleton {
         if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             EmbraceThermalStatusService(
@@ -157,14 +134,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             )
         } else {
             NoOpThermalStatusService()
-        }
-    }
-
-    override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            EmbraceActivityLifecycleBreadcrumbService(configService, initModule.clock)
-        } else {
-            null
         }
     }
 }

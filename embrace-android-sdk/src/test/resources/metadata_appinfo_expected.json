@@ -11,11 +11,5 @@
   "ou": false,
   "oul": false,
   "sdk": "{versionName}",
-  "sdc": "{versionCode}",
-  "rn": null,
-  "jsp": null,
-  "rnv": null,
-  "unv": null,
-  "ubg": null,
-  "usv": null
+  "sdc": "{versionCode}"
 }

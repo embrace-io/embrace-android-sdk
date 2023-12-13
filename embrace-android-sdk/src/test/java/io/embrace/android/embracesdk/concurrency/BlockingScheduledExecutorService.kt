@@ -88,6 +88,8 @@ internal class BlockingScheduledExecutorService(
         runCurrentlyBlocked()
     }
 
+    fun scheduledTasksCount(): Int = scheduledTasks.size
+
     override fun execute(command: Runnable?) {
         requireNotNull(command)
         delegateExecutorService.execute(command)
@@ -271,6 +273,14 @@ internal class BlockingScheduledExecutorService(
         }
 
         override fun isPeriodic(): Boolean = periodMs != 0L
+
+        override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+            val cancelled = super.cancel(mayInterruptIfRunning)
+            if (cancelled) {
+                scheduledTasks.remove(this)
+            }
+            return cancelled
+        }
     }
 
     private class BlockedScheduledFutureTaskComparator : Comparator<BlockedFutureScheduledTask<*>> {

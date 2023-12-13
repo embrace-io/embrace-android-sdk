@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
@@ -163,7 +162,6 @@ internal class SessionHandlerTest {
             mockExceptionService,
             mockPerformanceInfoService,
             mockWebViewservice,
-            null,
             NoOpThermalStatusService(),
             null,
             mockBreadcrumbService,
@@ -616,7 +614,7 @@ internal class SessionHandlerTest {
         )
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)
-        assertEquals(1, sessions.count { it.second == SessionMessageState.END })
+        assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
     private fun startFakeSession() {

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -24,8 +25,8 @@ internal class EmbraceDeliveryService(
 
     companion object {
         private const val TAG = "EmbraceDeliveryService"
-
         private const val SEND_SESSION_TIMEOUT = 1L
+        private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
     private val backgroundActivities by lazy { mutableSetOf<String>() }
@@ -34,69 +35,20 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSession(sanitizedSessionMessage)
-    }
-
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSessionOnCrash(sanitizedSessionMessage)
-    }
-
-    override fun saveSessionPeriodicCache(sessionMessage: SessionMessage) {
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSessionPeriodicCache(sanitizedSessionMessage)
-    }
-
-    /**
-     * Caches and sends over the network a session message
-     *
-     * @param sessionMessage    The session message to send
-     * @param state             Whether this message is for the session start or end
-     */
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
-        logger.logDeveloper(TAG, "Sending session message")
-
-        sendSessionsExecutorService.submit {
-            // sanitize start session message before send it to backend
-            val sanitizedSession = gatingService.gateSessionMessage(sessionMessage)
-            logger.logDebug("Session successfully sanitized.")
-            sendSessionImpl(sanitizedSession, state)
+        val sessionBytes = cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
+        if (sessionBytes == null || snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
+            return
         }
-    }
-
-    private fun sendSessionImpl(
-        sessionMessage: SessionMessage,
-        state: SessionMessageState
-    ) {
-        logger.logDeveloper(TAG, "Sending session message - background job started")
-        val sessionBytes = cacheManager.saveSession(sessionMessage)
-
-        logger.logDeveloper(TAG, "Serialized session message ready to be sent")
 
         try {
-            var onFinish: (() -> Unit)? = null
-            if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
-                onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
+            val future = apiService.sendSession(sessionBytes) {
+                cacheManager.deleteSession(sessionMessage.session.sessionId)
             }
-
-            if (state == SessionMessageState.END_WITH_CRASH) {
-                // perform session request synchronously
-                apiService.sendSession(
-                    sessionBytes,
-                    onFinish
-                )?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
-                logger.logDeveloper(TAG, "Session message sent.")
-            } else {
-                // perform session request asynchronously
-                apiService.sendSession(sessionBytes, onFinish)
-                logger.logDeveloper(TAG, "Session message queued to be sent.")
+            if (snapshotType == SessionSnapshotType.JVM_CRASH) {
+                future?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
             }
-            logger.logDeveloper(
-                TAG,
-                "Current session has been successfully removed from cache."
-            )
         } catch (ex: Exception) {
             logger.logInfo(
                 "Failed to send session end message. Embrace will store the " +
@@ -183,8 +135,15 @@ internal class EmbraceDeliveryService(
         apiService.sendNetworkCall(networkEvent)
     }
 
-    override fun sendCrash(crash: EventMessage) {
-        apiService.sendCrash(crash)
+    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
+        runCatching {
+            cacheManager.saveCrash(crash)
+            val future = apiService.sendCrash(crash)
+
+            if (processTerminating) {
+                future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
+            }
+        }
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
@@ -202,13 +161,6 @@ internal class EmbraceDeliveryService(
         } else {
             sendCachedSessionsWithoutNdk(currentSession)
         }
-    }
-
-    /**
-     * Persist crash to disk so it can be sent on the next SDK start.
-     */
-    override fun saveCrash(crash: EventMessage) {
-        cacheManager.saveCrash(crash)
     }
 
     private fun sendCachedCrash() {
@@ -243,7 +195,7 @@ internal class EmbraceDeliveryService(
                 val newSessionMessage =
                     attachCrashToSession(nativeCrashData, sessionMessage)
                 // Replace the cached file for the corresponding session
-                cacheManager.saveSession(newSessionMessage)
+                cacheManager.saveSession(newSessionMessage, SessionSnapshotType.NORMAL_END)
             } ?: run {
             logger.logError(
                 "Could not find session with id ${nativeCrashData.sessionId} to " +
@@ -283,13 +235,9 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    override fun sendEventAsync(eventMessage: EventMessage) {
+    override fun sendMoment(eventMessage: EventMessage) {
         sendSessionsExecutorService.submit {
             apiService.sendEvent(eventMessage)
         }
-    }
-
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        apiService.sendEventAndWait(eventMessage)
     }
 }

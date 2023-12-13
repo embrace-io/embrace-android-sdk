@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
 import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.session.MESSAGE_TYPE_START
 
 /**
  * Represents a particular user's session within the app.
@@ -145,26 +144,5 @@ internal data class Session @JvmOverloads internal constructor(
          * Signals to the API that the application was in the foreground.
          */
         internal const val APPLICATION_STATE_FOREGROUND = "foreground"
-
-        @JvmStatic
-        fun buildInitialSession(
-            id: String,
-            coldStart: Boolean,
-            startType: SessionLifeEventType,
-            startTime: Long,
-            sessionNumber: Int,
-            userInfo: UserInfo?,
-            sessionProperties: Map<String, String>
-        ): Session = Session(
-            sessionId = id,
-            startTime = startTime,
-            number = sessionNumber,
-            appState = APPLICATION_STATE_FOREGROUND,
-            isColdStart = coldStart,
-            startType = startType,
-            properties = sessionProperties,
-            messageType = MESSAGE_TYPE_START,
-            user = userInfo
-        )
     }
 }

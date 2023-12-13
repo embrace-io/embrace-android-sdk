@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.config
 
-import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior.Companion.AEI_MAX_NUM_DEFAULT
 import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -13,7 +12,7 @@ internal class ApplicationExitInfoRemoteConfigTest {
     @Test
     fun testDefaults() {
         val appExitInfoConfig = AppExitInfoConfig()
-        assertEquals(AEI_MAX_NUM_DEFAULT, appExitInfoConfig.aeiMaxNum)
+        assertNull(appExitInfoConfig.aeiMaxNum)
     }
 
     @Test
@@ -41,6 +40,6 @@ internal class ApplicationExitInfoRemoteConfigTest {
         val appExitInfoConfig = deserializeEmptyJsonString<AppExitInfoConfig>()
         assertNull(appExitInfoConfig.appExitInfoTracesLimit)
         assertNull(appExitInfoConfig.pctAeiCaptureEnabled)
-        assertEquals(AEI_MAX_NUM_DEFAULT, appExitInfoConfig.aeiMaxNum)
+        assertNull(appExitInfoConfig.aeiMaxNum)
     }
 }

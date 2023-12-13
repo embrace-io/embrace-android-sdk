@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
@@ -9,7 +10,7 @@ import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -36,7 +37,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         @JvmStatic
         fun beforeClass() {
             mockLocalConfig =
-                LocalConfig.buildConfig(
+                LocalConfigParser.buildConfig(
                     "GrCPU",
                     false,
                     "{\"base_urls\": {\"data\": \"https://data.emb-api.com\"}}",

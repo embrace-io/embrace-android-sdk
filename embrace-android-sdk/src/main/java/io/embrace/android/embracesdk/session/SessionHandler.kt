@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -104,7 +103,7 @@ internal class SessionHandler(
                 return null
             }
 
-            val session = Session.buildInitialSession(
+            val session = sessionMessageCollator.buildInitialSession(
                 Uuid.getEmbUuid(),
                 coldStart,
                 startType,
@@ -162,7 +161,7 @@ internal class SessionHandler(
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()
             logger.logDebug("Session properties successfully temporary cleared.")
-            deliveryService.sendSession(fullEndSessionMessage, SessionMessageState.END)
+            deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
 
             if (endType == SessionLifeEventType.MANUAL && clearUserInfo) {
                 userService.clearAllUserInfo()
@@ -195,7 +194,7 @@ internal class SessionHandler(
                 crashId,
             )
             activeSession = null
-            fullEndSessionMessage?.let(deliveryService::saveSessionOnCrash)
+            fullEndSessionMessage?.let { deliveryService.sendSession(it, SessionSnapshotType.JVM_CRASH) }
         }
     }
 
@@ -230,7 +229,7 @@ internal class SessionHandler(
                 SessionLifeEventType.STATE,
                 clock.now()
             )
-            msg?.let(deliveryService::saveSessionPeriodicCache)
+            msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
             return msg
         }
     }

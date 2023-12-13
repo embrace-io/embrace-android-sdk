@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.api.ApiClient
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.BufferedWriter
 import java.io.StringWriter

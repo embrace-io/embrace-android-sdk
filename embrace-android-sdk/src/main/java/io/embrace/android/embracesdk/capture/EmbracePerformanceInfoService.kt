@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.capture.aei.ApplicationExitInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -25,8 +25,8 @@ internal class EmbracePerformanceInfoService(
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val applicationExitInfoService: ApplicationExitInfoService?,
-    private val strictModeService: StrictModeService,
-    private val nativeThreadSamplerService: NativeThreadSamplerService?
+    private val nativeThreadSamplerService: NativeThreadSamplerService?,
+    private val responsivenessMonitorService: ResponsivenessMonitorService?
 ) : PerformanceInfoService {
 
     override fun getSessionPerformanceInfo(
@@ -47,9 +47,6 @@ internal class EmbracePerformanceInfoService(
             },
             networkRequests = captureDataSafely { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
             anrIntervals = captureDataSafely { anrService?.getCapturedData()?.toList() },
-            anrProcessErrors = captureDataSafely {
-                anrService?.getAnrProcessErrors(sessionStart)?.toList()
-            },
             googleAnrTimestamps = captureDataSafely {
                 googleAnrTimestampRepository.getGoogleAnrTimestamps(
                     sessionStart,
@@ -59,12 +56,12 @@ internal class EmbracePerformanceInfoService(
             powerSaveModeIntervals = captureDataSafely {
                 powerSaveModeService.getCapturedData()?.toList()
             },
-            strictmodeViolations = captureDataSafely { strictModeService.getCapturedData()?.toList() },
             nativeThreadAnrIntervals = captureDataSafely {
                 nativeThreadSamplerService?.getCapturedIntervals(
                     receivedTermination
                 )
-            }
+            },
+            responsivenessMonitorSnapshots = captureDataSafely { responsivenessMonitorService?.getCapturedData() }
         )
     }
 

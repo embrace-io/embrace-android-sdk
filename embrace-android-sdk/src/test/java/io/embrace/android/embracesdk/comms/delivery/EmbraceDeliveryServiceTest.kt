@@ -10,6 +10,9 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
+import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -69,12 +72,12 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         val mockSessionMessage: SessionMessage = mockk()
         every {
-            mockDeliveryCacheManager.saveSession(mockSessionMessage)
+            mockDeliveryCacheManager.saveSession(mockSessionMessage, NORMAL_END)
         } returns "cached_session".toByteArray()
 
-        deliveryService.saveSession(mockSessionMessage)
+        deliveryService.sendSession(mockSessionMessage, NORMAL_END)
 
-        verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage) }
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, NORMAL_END) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
@@ -83,9 +86,9 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         val mockSessionMessage: SessionMessage = mockk()
 
-        deliveryService.saveSessionPeriodicCache(mockSessionMessage)
+        deliveryService.sendSession(mockSessionMessage, PERIODIC_CACHE)
 
-        verify(exactly = 1) { mockDeliveryCacheManager.saveSessionPeriodicCache(mockSessionMessage) }
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, PERIODIC_CACHE) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
@@ -94,9 +97,9 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         val mockSessionMessage: SessionMessage = mockk()
 
-        deliveryService.saveSessionOnCrash(mockSessionMessage)
+        deliveryService.sendSession(mockSessionMessage, JVM_CRASH)
 
-        verify(exactly = 1) { mockDeliveryCacheManager.saveSessionOnCrash(mockSessionMessage) }
+        verify(exactly = 1) { mockDeliveryCacheManager.saveSession(mockSessionMessage, JVM_CRASH) }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
@@ -178,13 +181,13 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
 
         every {
-            mockDeliveryCacheManager.saveSession(any())
+            mockDeliveryCacheManager.saveSession(any(), NORMAL_END)
         } returns "cached_session".toByteArray()
 
         val mockFuture: Future<Unit> = mockk()
         every { apiService.sendSession(any(), any()) } returns mockFuture
 
-        deliveryService.sendSession(mockk(), SessionMessageState.END)
+        deliveryService.sendSession(mockk(), NORMAL_END)
 
         verify(exactly = 1) {
             apiService.sendSession(
@@ -203,13 +206,13 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
 
         every {
-            mockDeliveryCacheManager.saveSession(any())
+            mockDeliveryCacheManager.saveSession(any(), JVM_CRASH)
         } returns "cached_session".toByteArray()
 
         val mockFuture: Future<Unit> = mockk()
         every { apiService.sendSession(any(), any()) } returns mockFuture
 
-        deliveryService.sendSession(mockk(), SessionMessageState.END_WITH_CRASH)
+        deliveryService.sendSession(mockk(), JVM_CRASH)
 
         verify(exactly = 1) {
             apiService.sendSession(
@@ -223,6 +226,29 @@ internal class EmbraceDeliveryServiceTest {
             mockFuture.get(1L, TimeUnit.SECONDS)
         }
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
+    }
+
+    @Test
+    fun `send session invalid`() {
+        initializeDeliveryService()
+
+        every {
+            mockDeliveryCacheManager.saveSession(any(), NORMAL_END)
+        } returns "cached_session".toByteArray()
+
+        val mockFuture: Future<Unit> = mockk()
+        every { apiService.sendSession(any(), any()) } returns mockFuture
+
+        deliveryService.sendSession(mockk(), PERIODIC_CACHE)
+
+        verify(exactly = 0) {
+            apiService.sendSession(
+                any(),
+                withArg {
+                    assertNotNull(it)
+                }
+            )
+        }
     }
 
     @Test
@@ -245,7 +271,7 @@ internal class EmbraceDeliveryServiceTest {
     fun testSendEventAsync() {
         initializeDeliveryService()
         val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
-        deliveryService.sendEventAsync(obj)
+        deliveryService.sendMoment(obj)
         verify(exactly = 1) { apiService.sendEvent(obj) }
     }
 
@@ -253,8 +279,9 @@ internal class EmbraceDeliveryServiceTest {
     fun testSaveCrash() {
         initializeDeliveryService()
         val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.CRASH))
-        deliveryService.saveCrash(obj)
+        deliveryService.sendCrash(obj, true)
         verify(exactly = 1) { mockDeliveryCacheManager.saveCrash(obj) }
+        verify(exactly = 1) { apiService.sendCrash(obj) }
     }
 
     @Test

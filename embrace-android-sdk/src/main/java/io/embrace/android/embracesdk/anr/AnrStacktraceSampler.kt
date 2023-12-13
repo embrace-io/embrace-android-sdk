@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
+import io.embrace.android.embracesdk.payload.extensions.clearSamples
+import io.embrace.android.embracesdk.payload.extensions.deepCopy
+import io.embrace.android.embracesdk.payload.extensions.duration
+import io.embrace.android.embracesdk.payload.extensions.hasSamples
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService

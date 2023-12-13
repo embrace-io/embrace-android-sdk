@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
@@ -31,7 +30,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
 ) : ExternalResource() {
     val logger = InternalEmbraceLogger()
     val mockSigquitDetectionService: SigquitDetectionService = mockk(relaxed = true)
-    val mockAnrProcessErrorSampler: AnrProcessErrorSampler = mockk(relaxed = true)
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var anrService: EmbraceAnrService
@@ -84,7 +82,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             livenessCheckScheduler = livenessCheckScheduler,
             anrExecutorService = anrExecutorService,
             state = state,
-            anrProcessErrorSampler = mockAnrProcessErrorSampler,
             clock = clock,
             anrMonitorThread = anrMonitorThread
         )

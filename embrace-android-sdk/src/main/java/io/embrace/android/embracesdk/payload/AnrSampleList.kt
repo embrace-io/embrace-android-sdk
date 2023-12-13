@@ -12,10 +12,4 @@ internal data class AnrSampleList(
      */
     @SerializedName("ticks")
     val samples: List<AnrSample>
-) {
-
-    /**
-     * Retrieves the size of the list.
-     */
-    fun size(): Int = samples.size
-}
+)

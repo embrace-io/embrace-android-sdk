@@ -24,16 +24,13 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
-import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger;
 import io.embrace.android.embracesdk.event.EventService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
@@ -86,7 +83,6 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService;
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
-import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
@@ -438,12 +434,11 @@ final class EmbraceImpl {
         AnrModuleImpl anrModule = new AnrModuleImpl(
             initModule,
             coreModule,
-            systemServiceModule,
             essentialServiceModule
         );
         AnrService nonNullAnrService = anrModule.getAnrService();
         anrService = nonNullAnrService;
-        serviceRegistry.registerService(anrService);
+        serviceRegistry.registerServices(anrService, anrModule.getResponsivenessMonitorService());
 
         // set callbacks and pass in non-placeholder config.
         nonNullAnrService.finishInitialization(
@@ -605,17 +600,7 @@ final class EmbraceImpl {
         Thread.setDefaultUncaughtExceptionHandler(crashModule.getAutomaticVerificationExceptionHandler());
         serviceRegistry.registerService(crashModule.getCrashService());
 
-        StrictModeService strictModeService = dataCaptureServiceModule.getStrictModeService();
-        serviceRegistry.registerService(strictModeService);
-        strictModeService.start();
-
         serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
-
-        ActivityLifecycleBreadcrumbService collector = dataCaptureServiceModule.getActivityLifecycleBreadcrumbService();
-        if (collector instanceof Application.ActivityLifecycleCallbacks) {
-            coreModule.getApplication().registerActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks) collector);
-            serviceRegistry.registerService(collector);
-        }
 
         if (nonNullConfigService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule);

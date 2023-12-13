@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig;
 import io.embrace.android.embracesdk.config.remote.RemoteConfig;
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig;
 import io.embrace.android.embracesdk.config.remote.WebViewVitals;
-import io.embrace.android.embracesdk.internal.EmbraceSerializer;
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer;
 
 /**
  * Provides hooks into SessionConfig that aren't accessible via Kotlin.

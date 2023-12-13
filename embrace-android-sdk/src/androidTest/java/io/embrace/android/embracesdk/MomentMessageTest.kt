@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import java.io.File
 import java.io.IOException
 import org.junit.After

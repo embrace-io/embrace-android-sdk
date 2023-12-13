@@ -258,7 +258,7 @@ internal class EventHandlerTest {
         )
 
         verify { mockLateTimer.cancel(false) }
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
         assertEquals(builtEndEventMessage, result)
     }
     @Test
@@ -316,7 +316,7 @@ internal class EventHandlerTest {
         )
 
         verify { mockLateTimer.cancel(false) }
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
         assertEquals(builtEndEventMessage, result)
     }
 
@@ -370,7 +370,7 @@ internal class EventHandlerTest {
         }
         assertNotNull(eventDescription)
         assertEquals(builtEvent, eventDescription.event)
-        verify { mockDeliveryService.sendEventAsync(builtEventMessage) }
+        verify { mockDeliveryService.sendMoment(builtEventMessage) }
         blockingScheduledExecutorService.runCurrentlyBlocked()
         assertTrue(hasCallableBeenInvoked)
     }
@@ -436,7 +436,7 @@ internal class EventHandlerTest {
             mockTimeoutCallback
         )
 
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
     }
 
     @Test
@@ -500,7 +500,7 @@ internal class EventHandlerTest {
             mockTimeoutCallback
         )
 
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
     }
 
     @Test
@@ -579,7 +579,7 @@ internal class EventHandlerTest {
             mockSessionProperties
         )
 
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
     }
 
     @Test
@@ -660,7 +660,7 @@ internal class EventHandlerTest {
             mockSessionProperties
         )
 
-        verify { mockDeliveryService.sendEventAsync(any()) }
+        verify { mockDeliveryService.sendMoment(any()) }
     }
 
     private fun createGatingConfig(components: Set<String>) = RemoteConfig(

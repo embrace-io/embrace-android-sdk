@@ -132,7 +132,7 @@ internal class LivenessCheckSchedulerTest {
     fun testExecuteHealthCheckSameInterval() {
         mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns false
-        scheduler.onMonitorThreadHeartbeat()
+        scheduler.checkHeartbeat()
 
         // verify target thread handler called with scheduling
         verify(exactly = 1) { fakeTargetThreadHandler.sendMessage(any()) }
@@ -149,7 +149,7 @@ internal class LivenessCheckSchedulerTest {
     fun testExecuteHealthCheckPendingMessage() {
         mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns true
-        scheduler.onMonitorThreadHeartbeat()
+        scheduler.checkHeartbeat()
 
         // verify target thread handler called with scheduling
         verify(exactly = 0) { fakeTargetThreadHandler.sendMessage(any()) }
@@ -169,8 +169,20 @@ internal class LivenessCheckSchedulerTest {
         anrExecutorService.runCurrentlyBlocked()
         assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
         cfg = cfg.copy(sampleIntervalMs = 10)
+        assertEquals(1, anrExecutorService.scheduledTasksCount())
         anrExecutorService.moveForwardAndRunBlocked(100)
         anrExecutorService.runCurrentlyBlocked()
+        anrExecutorService.moveForwardAndRunBlocked(10)
         assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
+        assertEquals(1, anrExecutorService.scheduledTasksCount())
+    }
+
+    @Test
+    fun `starting monitoring thread twice does not result in multiple recurring tasks`() {
+        repeat(2) {
+            scheduler.startMonitoringThread()
+            anrExecutorService.runCurrentlyBlocked()
+            assertEquals(1, anrExecutorService.scheduledTasksCount())
+        }
     }
 }

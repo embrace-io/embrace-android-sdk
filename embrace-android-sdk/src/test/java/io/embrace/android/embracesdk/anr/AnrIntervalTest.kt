@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
 import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.payload.extensions.clearSamples
+import io.embrace.android.embracesdk.payload.extensions.deepCopy
+import io.embrace.android.embracesdk.payload.extensions.duration
+import io.embrace.android.embracesdk.payload.extensions.size
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame

@@ -46,7 +46,7 @@ internal class FakeEventService : EventService {
     }
 
     override fun getActiveEventIds(): List<String>? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun getStartupMomentInfo(): StartupEventInfo? {

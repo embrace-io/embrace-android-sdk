@@ -37,7 +37,6 @@
       }
     },
     "anr": [],
-    "anr_pe": [],
     "ds": {
       "as": "__EMBRACE_TEST_IGNORE__",
       "fs": "__EMBRACE_TEST_IGNORE__"
@@ -46,7 +45,8 @@
     "ga": [],
     "mw": [],
     "ns": "__EMBRACE_TEST_IGNORE__",
-    "lp": "__EMBRACE_TEST_IGNORE__"
+    "lp": "__EMBRACE_TEST_IGNORE__",
+    "rms": "__EMBRACE_TEST_IGNORE__"
   },
   "s": {
     "as": "__EMBRACE_TEST_IGNORE__",

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class SessionMessageCollator(
@@ -27,7 +27,6 @@ internal class SessionMessageCollator(
     private val exceptionService: EmbraceInternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
-    private val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?,
     private val thermalStatusService: ThermalStatusService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val breadcrumbService: BreadcrumbService,
@@ -89,7 +88,6 @@ internal class SessionMessageCollator(
             false -> null
             else -> BetaFeatures(
                 thermalStates = captureDataSafely(thermalStatusService::getCapturedData),
-                activityLifecycleBreadcrumbs = captureDataSafely { activityLifecycleBreadcrumbService?.getCapturedData() }
             )
         }
 
@@ -151,6 +149,26 @@ internal class SessionMessageCollator(
         session = session,
         appInfo = captureDataSafely(metadataService::getAppInfo),
         deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
+    )
+
+    internal fun buildInitialSession(
+        id: String,
+        coldStart: Boolean,
+        startType: Session.SessionLifeEventType,
+        startTime: Long,
+        sessionNumber: Int,
+        userInfo: UserInfo?,
+        sessionProperties: Map<String, String>
+    ): Session = Session(
+        sessionId = id,
+        startTime = startTime,
+        number = sessionNumber,
+        appState = Session.APPLICATION_STATE_FOREGROUND,
+        isColdStart = coldStart,
+        startType = startType,
+        properties = sessionProperties,
+        messageType = MESSAGE_TYPE_START,
+        user = userInfo
     )
 }
 

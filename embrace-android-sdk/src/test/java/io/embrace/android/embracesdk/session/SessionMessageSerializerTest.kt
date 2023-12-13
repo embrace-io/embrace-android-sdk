@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSpan
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo

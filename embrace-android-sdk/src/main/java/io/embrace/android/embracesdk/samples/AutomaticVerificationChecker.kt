@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import android.app.Activity
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.File
 import java.io.FileNotFoundException

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
@@ -19,7 +18,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 
 internal class FakeDataCaptureServiceModule(
     override val thermalStatusService: ThermalStatusService = NoOpThermalStatusService(),
-    override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? = null,
     override val powerSaveModeService: PowerSaveModeService = NoOpPowerSaveModeService(),
     override val memoryService: MemoryService = FakeMemoryService(),
     override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),

@@ -162,7 +162,6 @@ internal class SessionHandlerTest {
             mockExceptionService,
             mockPerformanceInfoService,
             mockWebViewservice,
-            null,
             NoOpThermalStatusService(),
             null,
             mockBreadcrumbService,

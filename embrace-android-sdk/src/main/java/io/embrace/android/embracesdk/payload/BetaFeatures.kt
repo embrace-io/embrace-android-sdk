@@ -11,9 +11,6 @@ import com.google.gson.annotations.SerializedName
  */
 internal data class BetaFeatures(
 
-    @SerializedName("lb")
-    internal var activityLifecycleBreadcrumbs: List<ActivityLifecycleData>? = null,
-
     @SerializedName("ts")
     internal var thermalStates: List<ThermalState>? = null
 )

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -28,7 +27,6 @@ internal class SessionMessageCollator(
     private val exceptionService: EmbraceInternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
-    private val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?,
     private val thermalStatusService: ThermalStatusService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val breadcrumbService: BreadcrumbService,
@@ -90,7 +88,6 @@ internal class SessionMessageCollator(
             false -> null
             else -> BetaFeatures(
                 thermalStates = captureDataSafely(thermalStatusService::getCapturedData),
-                activityLifecycleBreadcrumbs = captureDataSafely { activityLifecycleBreadcrumbService?.getCapturedData() }
             )
         }
 

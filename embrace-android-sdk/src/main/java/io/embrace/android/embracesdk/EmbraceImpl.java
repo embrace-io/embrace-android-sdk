@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
@@ -602,12 +601,6 @@ final class EmbraceImpl {
         serviceRegistry.registerService(crashModule.getCrashService());
 
         serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
-
-        ActivityLifecycleBreadcrumbService collector = dataCaptureServiceModule.getActivityLifecycleBreadcrumbService();
-        if (collector instanceof Application.ActivityLifecycleCallbacks) {
-            coreModule.getApplication().registerActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks) collector);
-            serviceRegistry.registerService(collector);
-        }
 
         if (nonNullConfigService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule);

@@ -60,8 +60,8 @@ internal class EventSanitizerFacadeTest {
         val sanitizedMessage =
             EventSanitizerFacade(eventMessage, enabledComponents).getSanitizedMessage()
 
-        assertNotNull(sanitizedMessage.event.customPropertiesMap)
-        assertNotNull(sanitizedMessage.event.sessionPropertiesMap)
+        assertNotNull(sanitizedMessage.event.customProperties)
+        assertNotNull(sanitizedMessage.event.sessionProperties)
         assertNotNull(checkNotNull(sanitizedMessage.userInfo).personas)
         assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
@@ -78,8 +78,8 @@ internal class EventSanitizerFacadeTest {
         val eventSanitizer = EventSanitizerFacade(eventMessage, setOf())
         val sanitizedMessage = eventSanitizer.getSanitizedMessage()
 
-        assertNull(sanitizedMessage.event.customPropertiesMap)
-        assertNull(sanitizedMessage.event.sessionPropertiesMap)
+        assertNull(sanitizedMessage.event.customProperties)
+        assertNull(sanitizedMessage.event.sessionProperties)
         assertNull(checkNotNull(sanitizedMessage.userInfo).personas)
         assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)

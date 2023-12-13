@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
  * Breadcrumbs that represent tap events.
  */
 internal class TapBreadcrumb(
-    point: Pair<Float?, Float?>?,
+    point: Pair<Float?, Float?>? = null,
 
     /**
      * Name of the tapped element.

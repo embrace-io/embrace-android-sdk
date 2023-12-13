@@ -25,7 +25,7 @@ internal class EventSanitizerTest {
 
         val sanitizerError = EventSanitizer(errorLogEvent, components)
         val resultLogError = sanitizerError.sanitize()
-        assertNull(resultLogError.customPropertiesMap)
+        assertNull(resultLogError.customProperties)
     }
 
     @Test
@@ -42,7 +42,7 @@ internal class EventSanitizerTest {
 
         val sanitizerInfo = EventSanitizer(infoLogEvent, components)
         val resultInfo = sanitizerInfo.sanitize()
-        assertNull(resultInfo.customPropertiesMap)
+        assertNull(resultInfo.customProperties)
     }
 
     @Test
@@ -59,7 +59,7 @@ internal class EventSanitizerTest {
 
         val sanitizerWarning = EventSanitizer(warningLogEvent, components)
         val resultWarning = sanitizerWarning.sanitize()
-        assertNull(resultWarning.customPropertiesMap)
+        assertNull(resultWarning.customProperties)
     }
 
     @Test
@@ -75,7 +75,7 @@ internal class EventSanitizerTest {
         )
 
         val result = EventSanitizer(noLogEvent, components).sanitize()
-        assertNotNull(result.customPropertiesMap)
+        assertNotNull(result.customProperties)
     }
 
     @Test
@@ -102,8 +102,8 @@ internal class EventSanitizerTest {
         assertEquals(1000L, result.duration)
         assertEquals("state", result.appState)
         assertEquals(EmbraceEvent.Type.INFO_LOG, result.type)
-        assertEquals(null, result.customPropertiesMap)
-        assertEquals(null, result.sessionPropertiesMap)
+        assertEquals(null, result.customProperties)
+        assertEquals(null, result.sessionProperties)
         assertEquals(LogExceptionType.NONE.value, result.logExceptionType)
     }
 
@@ -128,7 +128,7 @@ internal class EventSanitizerTest {
         assertEquals(event.eventId, result.eventId)
         assertEquals(event.duration, result.duration)
         assertEquals(event.appState, result.appState)
-        assertEquals(event.sessionPropertiesMap, result.sessionPropertiesMap)
+        assertEquals(event.sessionProperties, result.sessionProperties)
         assertEquals(event.logExceptionType, result.logExceptionType)
     }
 }

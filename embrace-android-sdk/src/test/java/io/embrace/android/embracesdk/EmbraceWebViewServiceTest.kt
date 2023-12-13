@@ -82,7 +82,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        20,
+                        20L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }
@@ -119,7 +119,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        30,
+                        30L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }

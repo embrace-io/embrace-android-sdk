@@ -193,7 +193,8 @@ internal class EmbraceNdkServiceTest {
                 sessionProperties.get().toMap()
             )
 
-        verify { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
+        val expected = serializer.toJson(newDeviceMetaData)
+        verify { delegate._updateMetaData(expected) }
     }
 
     @Test
@@ -368,7 +369,8 @@ internal class EmbraceNdkServiceTest {
                 sessionProperties.get().toMap()
             )
 
-        verify { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
+        val expected = serializer.toJson(newDeviceMetaData)
+        verify { delegate._updateMetaData(expected) }
     }
 
     @Test

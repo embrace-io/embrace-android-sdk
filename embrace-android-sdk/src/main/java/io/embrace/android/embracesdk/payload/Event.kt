@@ -44,14 +44,14 @@ internal data class Event constructor(
     @JvmField
     val appState: String? = null,
 
-    @Transient
-    private val customProperties: Map<String, Any>? = null,
+    @SerializedName("pr")
+    val customProperties: Map<String, Any>? = null,
+
+    @SerializedName("sp")
+    val sessionProperties: Map<String, String>? = null,
 
     @Transient
-    private val sessionProperties: Map<String, String>? = null,
-
-    @Transient
-    private val activeEventIdsList: List<String>? = null,
+    val activeEventIds: List<String>? = null,
 
     @SerializedName("et")
     @JvmField
@@ -66,14 +66,4 @@ internal data class Event constructor(
     @SerializedName("f")
     @JvmField
     val framework: Int? = null,
-) {
-
-    @SerializedName("pr")
-    val customPropertiesMap: Map<String, Any>? = customProperties?.toMutableMap()
-
-    @SerializedName("sp")
-    val sessionPropertiesMap: Map<String, String>? = sessionProperties?.toMutableMap()
-
-    @Transient
-    val activeEventIds: List<String>? = activeEventIdsList?.toMutableList()
-}
+)

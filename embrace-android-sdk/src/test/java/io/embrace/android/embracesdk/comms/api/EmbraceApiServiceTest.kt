@@ -201,7 +201,7 @@ internal class EmbraceApiServiceTest {
         val crash = EventMessage(
             event = Event(
                 eventId = "crash-id",
-                activeEventIdsList = listOf("event-1", "event-2"),
+                activeEventIds = listOf("event-1", "event-2"),
                 type = EmbraceEvent.Type.CRASH
             )
         )

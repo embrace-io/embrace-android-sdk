@@ -25,8 +25,8 @@ internal class EmbraceDeliveryService(
 
     companion object {
         private const val TAG = "EmbraceDeliveryService"
-
         private const val SEND_SESSION_TIMEOUT = 1L
+        private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
     private val backgroundActivities by lazy { mutableSetOf<String>() }
@@ -135,9 +135,15 @@ internal class EmbraceDeliveryService(
         apiService.sendNetworkCall(networkEvent)
     }
 
-    override fun sendCrash(crash: EventMessage) {
-        cacheManager.saveCrash(crash)
-        apiService.sendCrash(crash)
+    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
+        runCatching {
+            cacheManager.saveCrash(crash)
+            val future = apiService.sendCrash(crash)
+
+            if (processTerminating) {
+                future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
+            }
+        }
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
@@ -233,9 +239,5 @@ internal class EmbraceDeliveryService(
         sendSessionsExecutorService.submit {
             apiService.sendEvent(eventMessage)
         }
-    }
-
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        apiService.sendEventAndWait(eventMessage)
     }
 }

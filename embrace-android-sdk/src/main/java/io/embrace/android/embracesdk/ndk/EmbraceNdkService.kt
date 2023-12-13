@@ -563,7 +563,7 @@ internal class EmbraceNdkService(
                 "EmbraceNDKService",
                 "About to send EventMessage from native crash."
             )
-            deliveryService.sendEventAndWait(nativeCrashMessageEvent)
+            deliveryService.sendCrash(nativeCrashMessageEvent, false)
             logger.logDeveloper(
                 "EmbraceNDKService",
                 "Finished send attempt for EventMessage from native crash."

@@ -123,7 +123,7 @@ internal class EmbraceCrashServiceTest {
         verify { CrashFactory.ofThrowable(testException, localJsException, any()) }
         verify { anrService.forceAnrTrackingStopOnCrash() }
 
-        verify { deliveryService.sendCrash(any()) }
+        verify { deliveryService.sendCrash(any(), true) }
         verify { sessionService.handleCrash(crash.crashId) }
 
         /*
@@ -132,7 +132,7 @@ internal class EmbraceCrashServiceTest {
         */
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
         verify(exactly = 1) { anrService.forceAnrTrackingStopOnCrash() }
-        verify(exactly = 1) { deliveryService.sendCrash(any()) }
+        verify(exactly = 1) { deliveryService.sendCrash(any(), true) }
         verify(exactly = 1) { sessionService.handleCrash(crash.crashId) }
     }
 
@@ -146,7 +146,7 @@ internal class EmbraceCrashServiceTest {
 
         verify { CrashFactory.ofThrowable(testException, localJsException, "Unity123") }
         verify { anrService.forceAnrTrackingStopOnCrash() }
-        verify { deliveryService.sendCrash(any()) }
+        verify { deliveryService.sendCrash(any(), true) }
         verify { sessionService.handleCrash(crash.crashId) }
     }
 

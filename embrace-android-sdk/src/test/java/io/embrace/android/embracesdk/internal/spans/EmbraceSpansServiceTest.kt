@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,7 +28,10 @@ internal class EmbraceSpansServiceTest {
         configService = FakeConfigService(
             spansBehavior = fakeSpansBehavior { spansRemoteConfig }
         )
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(clock), EmbraceTelemetryService())
+        spansService = EmbraceSpansService(
+            clock = OpenTelemetryClock(clock),
+            telemetryService = FakeTelemetryService()
+        )
         configService.addListener(spansService)
     }
 

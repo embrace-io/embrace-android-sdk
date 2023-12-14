@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 internal class EmbraceSpansService(
     private val clock: Clock,
-    private val embraceTelemetryService: EmbraceTelemetryService
+    private val telemetryService: TelemetryService
 ) : Initializable, SpansService, ConfigListener {
     /**
      * When this instance has been initialized with an instance of [SpansService] that does the proper spans logging
@@ -52,7 +52,7 @@ internal class EmbraceSpansService(
                         sdkInitStartTimeNanos = sdkInitStartTimeNanos,
                         sdkInitEndTimeNanos = sdkInitEndTimeNanos,
                         clock = clock,
-                        embraceTelemetryService = embraceTelemetryService
+                        telemetryService = telemetryService
                     )
                     initialized.set(true)
                     recordBufferedCalls()

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -26,7 +26,7 @@ internal class SpansServiceImpl(
     sdkInitStartTimeNanos: Long,
     sdkInitEndTimeNanos: Long,
     private val clock: Clock,
-    private val embraceTelemetryService: EmbraceTelemetryService
+    private val telemetryService: TelemetryService
 ) : SpansService {
     private val sdkTracerProvider: SdkTracerProvider
         by lazy {
@@ -160,8 +160,9 @@ internal class SpansServiceImpl(
 
     override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
         synchronized(completedSpans) {
-
-            val telemetryAttributes = embraceTelemetryService.getTelemetryAttributes()
+            // Right now, session spans don't survive native crashes and sudden process terminations,
+            // so telemetry will not be recorded in those cases, for now.
+            val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
 
             currentSessionSpan.get().setAllAttributes(Attributes.builder().fromMap(telemetryAttributes).build())
 

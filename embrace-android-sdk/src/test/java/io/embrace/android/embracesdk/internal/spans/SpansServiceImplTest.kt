@@ -685,7 +685,7 @@ internal class SpansServiceImplTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitStartTimeMillis),
             sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitEndTimeMillis),
             clock = FakeOpenTelemetryClock(embraceClock = clock),
-            EmbraceTelemetryService()
+            telemetryService = EmbraceTelemetryService()
         )
     }
 

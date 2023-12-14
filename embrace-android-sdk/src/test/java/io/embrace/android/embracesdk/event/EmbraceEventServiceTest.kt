@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
@@ -29,7 +30,6 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -117,7 +117,10 @@ internal class EmbraceEventServiceTest {
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = fakeClock), EmbraceTelemetryService())
+        spansService = EmbraceSpansService(
+            clock = OpenTelemetryClock(embraceClock = fakeClock),
+            telemetryService = FakeTelemetryService()
+        )
         configService.addListener(spansService)
         eventHandler = EventHandler(
             metadataService = metadataService,

@@ -92,7 +92,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService;
+import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
@@ -240,7 +240,7 @@ final class EmbraceImpl {
     private volatile WebViewService webViewService;
 
     @Nullable
-    private volatile EmbraceTelemetryService telemetryService;
+    private volatile TelemetryService telemetryService;
 
     @Nullable
     private NativeThreadSamplerService nativeThreadSampler;
@@ -463,7 +463,7 @@ final class EmbraceImpl {
         serviceRegistry.registerService(exceptionsService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
-        telemetryService = initModule.getEmbraceTelemetryService();
+        telemetryService = initModule.getTelemetryService();
         serviceRegistry.registerService(telemetryService);
 
         serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
@@ -775,7 +775,7 @@ final class EmbraceImpl {
      * @param userId the unique identifier for the user
      */
     void setUserIdentifier(@Nullable String userId) {
-        if (checkSdkStartedAndLogPublicApiUsage("set user identifier")) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_identifier")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
                 return;
@@ -790,7 +790,7 @@ final class EmbraceImpl {
      * Clears the currently set user ID. For example, if the user logs out.
      */
     void clearUserIdentifier() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear user identifier")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_identifier")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
                 return;
@@ -805,7 +805,7 @@ final class EmbraceImpl {
      * @param email the email address of the current user
      */
     void setUserEmail(@Nullable String email) {
-        if (checkSdkStartedAndLogPublicApiUsage("set user email")) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_email")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
                 return;
@@ -820,7 +820,7 @@ final class EmbraceImpl {
      * Clears the currently set user's email address.
      */
     void clearUserEmail() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear user email")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_email")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
                 return;
@@ -835,7 +835,7 @@ final class EmbraceImpl {
      * Sets this user as a paying user. This adds a persona to the user's identity.
      */
     void setUserAsPayer() {
-        if (checkSdkStartedAndLogPublicApiUsage("set user as payer")) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_as_payer")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
                 return;
@@ -851,7 +851,7 @@ final class EmbraceImpl {
      * paying for the service and has reverted back to a basic user.
      */
     void clearUserAsPayer() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear user as payer")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_as_payer")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
                 return;
@@ -868,7 +868,7 @@ final class EmbraceImpl {
      * @param persona the persona to set
      */
     void addUserPersona(@NonNull String persona) {
-        if (checkSdkStartedAndLogPublicApiUsage("set user persona")) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_persona")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -885,7 +885,7 @@ final class EmbraceImpl {
      * @param persona the persona to clear
      */
     void clearUserPersona(@NonNull String persona) {
-        if (checkSdkStartedAndLogPublicApiUsage("clear user persona")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_persona")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -900,7 +900,7 @@ final class EmbraceImpl {
      * Clears all custom user personas from the user.
      */
     void clearAllUserPersonas() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear user personas")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_personas")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -915,7 +915,7 @@ final class EmbraceImpl {
      * Adds a property to the current session.
      */
     boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
-        if (checkSdkStartedAndLogPublicApiUsage("add session property")) {
+        if (checkSdkStartedAndLogPublicApiUsage("add_session_property")) {
             return sessionPropertiesService.addProperty(key, value, permanent);
         }
         return false;
@@ -925,7 +925,7 @@ final class EmbraceImpl {
      * Removes a property from the current session.
      */
     boolean removeSessionProperty(@NonNull String key) {
-        if (checkSdkStartedAndLogPublicApiUsage("remove session property")) {
+        if (checkSdkStartedAndLogPublicApiUsage("remove_session_property")) {
             return sessionPropertiesService.removeProperty(key);
         }
         return false;
@@ -936,7 +936,7 @@ final class EmbraceImpl {
      */
     @Nullable
     Map<String, String> getSessionProperties() {
-        if (checkSdkStartedAndLogPublicApiUsage("get session properties")) {
+        if (checkSdkStartedAndLogPublicApiUsage("get_session_properties")) {
             return sessionPropertiesService.getProperties();
         }
         return null;
@@ -948,7 +948,7 @@ final class EmbraceImpl {
      * @param username the username to set
      */
     void setUsername(@Nullable String username) {
-        if (checkSdkStartedAndLogPublicApiUsage("set username")) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_username")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
                 return;
@@ -963,7 +963,7 @@ final class EmbraceImpl {
      * Clears the username of the currently logged in user, for example if the user has logged out.
      */
     void clearUsername() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear username")) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_username")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
                 return;
@@ -987,7 +987,7 @@ final class EmbraceImpl {
     void startMoment(@NonNull String name,
                      @Nullable String identifier,
                      @Nullable Map<String, Object> properties) {
-        if (checkSdkStartedAndLogPublicApiUsage("start moment")) {
+        if (checkSdkStartedAndLogPublicApiUsage("start_moment")) {
             eventService.startEvent(name, identifier, normalizeProperties(properties));
             onActivityReported();
         }
@@ -1003,7 +1003,7 @@ final class EmbraceImpl {
      * @param properties custom key-value pairs to provide with the moment
      */
     void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
-        if (checkSdkStartedAndLogPublicApiUsage("end moment")) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_moment")) {
             eventService.endEvent(name, identifier, normalizeProperties(properties));
             onActivityReported();
         }
@@ -1025,7 +1025,7 @@ final class EmbraceImpl {
      */
     @NonNull
     String getTraceIdHeader() {
-        if (checkSdkStartedAndLogPublicApiUsage("get traceIdHeader") && configService != null) {
+        if (checkSdkStartedAndLogPublicApiUsage("get_trace_id_header") && configService != null) {
             return configService.getNetworkBehavior().getTraceIdHeader();
         }
         return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE;
@@ -1037,13 +1037,13 @@ final class EmbraceImpl {
     }
 
     void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        if (checkSdkStartedAndLogPublicApiUsage("record network request") && embraceInternalInterface != null) {
+        if (checkSdkStartedAndLogPublicApiUsage("record_network_request") && embraceInternalInterface != null) {
             embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
         }
     }
 
     void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
-        if (checkSdkStartedAndLogPublicApiUsage("record network request")) {
+        if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
             logNetworkRequestImpl(
                 callId,
                 request.getNetworkCaptureData(),
@@ -1191,7 +1191,7 @@ final class EmbraceImpl {
         @Nullable String library,
         @Nullable String exceptionName,
         @Nullable String exceptionMessage) {
-        if (checkSdkStartedAndLogPublicApiUsage("log message")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_message")) {
             try {
                 remoteLogger.log(
                     message,
@@ -1220,7 +1220,7 @@ final class EmbraceImpl {
      * @param message the name of the breadcrumb to log
      */
     void addBreadcrumb(@NonNull String message) {
-        if (checkSdkStartedAndLogPublicApiUsage("log breadcrumb")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_breadcrumb")) {
             breadcrumbService.logCustom(message, sdkClock.now());
             onActivityReported();
         }
@@ -1230,7 +1230,7 @@ final class EmbraceImpl {
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     void logInternalError(@Nullable String message, @Nullable String details) {
-        if (checkSdkStartedAndLogPublicApiUsage("log internal error")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
             if (message == null) {
                 return;
             }
@@ -1249,7 +1249,7 @@ final class EmbraceImpl {
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     void logInternalError(@NonNull Throwable error) {
-        if (checkSdkStartedAndLogPublicApiUsage("log internal error")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
             exceptionsService.handleInternalError(error);
         }
     }
@@ -1260,7 +1260,7 @@ final class EmbraceImpl {
      * Cleans all the user info on the device.
      */
     void endSession(boolean clearUserInfo) {
-        if (checkSdkStartedAndLogPublicApiUsage("end session")) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_session")) {
             sessionService.endSessionManually(clearUserInfo);
         }
     }
@@ -1272,7 +1272,7 @@ final class EmbraceImpl {
      */
     @NonNull
     String getDeviceId() {
-        if (checkSdkStartedAndLogPublicApiUsage("get device ID")) {
+        if (checkSdkStartedAndLogPublicApiUsage("get_device_id")) {
             return preferencesService.getDeviceIdentifier();
         } else {
             return "";
@@ -1287,7 +1287,7 @@ final class EmbraceImpl {
      * @param name the name of the fragment to log
      */
     boolean startView(@NonNull String name) {
-        if (checkSdkStartedAndLogPublicApiUsage("start view")) {
+        if (checkSdkStartedAndLogPublicApiUsage("start_view")) {
             return breadcrumbService.startView(name);
         }
         return false;
@@ -1301,7 +1301,7 @@ final class EmbraceImpl {
      * @param name the name of the fragment to log
      */
     boolean endView(@NonNull String name) {
-        if (checkSdkStartedAndLogPublicApiUsage("end view")) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_view")) {
             return breadcrumbService.endView(name);
         }
         return false;
@@ -1316,7 +1316,7 @@ final class EmbraceImpl {
      * @param screen the name of the view to log
      */
     void logView(String screen) {
-        if (checkSdkStartedAndLogPublicApiUsage("log view")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_view")) {
             breadcrumbService.logView(screen, sdkClock.now());
             onActivityReported();
         }
@@ -1341,7 +1341,7 @@ final class EmbraceImpl {
         Integer messageDeliveredPriority,
         PushNotificationBreadcrumb.NotificationType type) {
 
-        if (checkSdkStartedAndLogPublicApiUsage("log push notification")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_push_notification")) {
             pushNotificationService.logPushNotification(
                 title,
                 body,
@@ -1361,7 +1361,7 @@ final class EmbraceImpl {
      * @param url the url to log
      */
     void logWebView(String url) {
-        if (checkSdkStartedAndLogPublicApiUsage("log WebView")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_web_view")) {
             breadcrumbService.logWebView(url, sdkClock.now());
             onActivityReported();
         }
@@ -1375,7 +1375,7 @@ final class EmbraceImpl {
      * @param type        the type of tap that occurred
      */
     void logTap(Pair<Float, Float> point, String elementName, TapBreadcrumb.TapBreadcrumbType type) {
-        if (checkSdkStartedAndLogPublicApiUsage("log tap")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_tap")) {
             breadcrumbService.logTap(point, elementName, sdkClock.now(), type);
             onActivityReported();
         }
@@ -1396,7 +1396,7 @@ final class EmbraceImpl {
     @Nullable
     String getCurrentSessionId() {
         MetadataService localMetaDataService = metadataService;
-        if (checkSdkStartedAndLogPublicApiUsage("get current session ID") && localMetaDataService != null) {
+        if (checkSdkStartedAndLogPublicApiUsage("get_current_session_id") && localMetaDataService != null) {
             String sessionId = localMetaDataService.getActiveSessionId();
             if (sessionId != null) {
                 return sessionId;
@@ -1496,7 +1496,7 @@ final class EmbraceImpl {
      */
     void logRnAction(@NonNull String name, long startTime, long endTime,
                      @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (checkSdkStartedAndLogPublicApiUsage("log React Native action")) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_react_native_action")) {
             breadcrumbService.logRnAction(name, startTime, endTime, properties, bytesSent, output);
         }
     }
@@ -1528,7 +1528,7 @@ final class EmbraceImpl {
     }
 
     void installUnityThreadSampler() {
-        if (checkSdkStartedAndLogPublicApiUsage("install Unity thread sampler")) {
+        if (checkSdkStartedAndLogPublicApiUsage("install_unity_thread_sampler")) {
             sampleCurrentThreadDuringAnrs();
         }
     }

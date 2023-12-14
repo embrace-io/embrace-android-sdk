@@ -28,6 +28,11 @@ private const val EMBRACE_SPAN_NAME_PREFIX = "emb-"
 private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 
 /**
+ * Prefix added to all [Span] attribute keys for all usage attributes added by the SDK
+ */
+private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
+
+/**
  * Attribute name for the monotonically increasing sequence ID given to completed [Span] that expected to sent to the server
  */
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
@@ -171,6 +176,11 @@ internal fun String.toEmbraceSpanName(): String = EMBRACE_SPAN_NAME_PREFIX + thi
  * Return the appropriate internal Embrace attribute name given the current string
  */
 internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PREFIX + this
+
+/**
+ * Return the appropriate internal Embrace attribute usage name given the current string
+ */
+internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
 
 /**
  * Contains the set of attributes (i.e. implementers of the [Attribute] interface) set on a [Span] by the SDK that has special meaning

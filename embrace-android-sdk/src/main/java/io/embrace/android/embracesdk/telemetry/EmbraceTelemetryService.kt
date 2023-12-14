@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.telemetry
 
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
+import java.util.Locale
 
 /*
     Service for tracking usage of public APIs, and different internal metrics about the app.
@@ -14,10 +15,14 @@ internal class EmbraceTelemetryService(
     private val appAttributesMap = mutableMapOf<String, String>()
 
     /*
-        Tracks the usage of a public API by name. Adds a suffix for easier identification.
+        Tracks the usage of a public API by name. Adds a suffix for easier identification. Replaces whitespaces with underscores.
     */
     fun onPublicApiCalled(name: String) {
-        val suffixedName = "usage - $name"
+        val suffixedName = "emb.usage.${
+            name.toLowerCase(Locale.ENGLISH)
+                .trim()
+                .replace(" ", "_")
+        }"
         usageCountMap[suffixedName] = (usageCountMap[suffixedName] ?: 0) + 1
     }
 

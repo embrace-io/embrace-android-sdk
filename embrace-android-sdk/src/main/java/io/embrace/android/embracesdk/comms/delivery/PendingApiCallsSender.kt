@@ -19,9 +19,14 @@ internal interface PendingApiCallsSender {
     fun shouldRetry(response: ApiResponse): Boolean
 
     /**
-     * Saves an API call to be sent later.
+     * Saves an API call to be sent later and returns the corresponding [PendingApiCall].
      */
-    fun savePendingApiCall(request: ApiRequest, payload: ByteArray)
+    fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall
+
+    /**
+     * Removes a pending API call.
+     */
+    fun removePendingApiCall(pendingApiCall: PendingApiCall)
 
     /**
      * Schedules an API call to be sent later.

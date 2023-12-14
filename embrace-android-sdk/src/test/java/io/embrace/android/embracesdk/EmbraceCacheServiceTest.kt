@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -198,7 +199,9 @@ internal class EmbraceCacheServiceTest {
             PendingApiCalls::class.java
         )
         val cachedPendingCalls =
-            service.loadObject(cacheKey, PendingApiCalls::class.java)
+            service.loadObject(cacheKey, PendingApiCalls::class.java).also {
+                it?.setRateLimitHandler(FakeRateLimitHandler())
+            }
 
         checkNotNull(cachedPendingCalls)
         assertTrue(cachedPendingCalls.hasPendingApiCallsToSend())

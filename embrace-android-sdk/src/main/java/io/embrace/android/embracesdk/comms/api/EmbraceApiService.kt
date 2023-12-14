@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityLis
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
+import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -179,26 +179,31 @@ internal class EmbraceApiService(
         return scheduledExecutorService.submit {
             val endpoint = request.url.endpoint()
 
+            // Always save the API call to be sent later.
+            // If the device is offline, the API call will be sent once the device is online again.
+            // If the endpoint is rate limited, the API call will be sent once the rate limit is lifted.
+            // If the API call fails, it will be retried and if it succeeds, it will be removed from cache.
+            val pendingApiCall = pendingApiCallsSender.savePendingApiCall(request, payload)
+
             if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
                 !rateLimitHandler.isRateLimited(endpoint)
             ) {
                 // Execute the request if the device is online and the endpoint is not rate limited.
                 val response: ApiResponse = executePost(request, payload)
 
-                if (pendingApiCallsSender.shouldRetry(response)) {
-                    pendingApiCallsSender.savePendingApiCall(request, payload)
-                    pendingApiCallsSender.scheduleApiCall(response)
-                }
-
-                if (response !is ApiResponse.Success) {
+                if (response is ApiResponse.Success) {
+                    // Remove the API call from cache if it was sent successfully.
+                    pendingApiCallsSender.removePendingApiCall(pendingApiCall)
+                    onComplete?.invoke()
+                } else {
+                    // Schedule the API call to be sent later if it should be retried.
+                    if (pendingApiCallsSender.shouldRetry(response)) {
+                        pendingApiCallsSender.scheduleApiCall(response)
+                    }
                     onComplete?.invoke()
                     error("Failed to post Embrace API call. ")
                 }
-            } else {
-                // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
-                pendingApiCallsSender.savePendingApiCall(request, payload)
             }
-            onComplete?.invoke()
         }
     }
 

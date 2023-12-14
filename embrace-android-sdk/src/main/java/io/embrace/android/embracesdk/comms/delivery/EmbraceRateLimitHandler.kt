@@ -1,33 +1,96 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
-internal class EmbraceRateLimitHandler : RateLimitHandler {
+/**
+ * Handles rate limit responses from the server and schedules the retry of the api calls.
+ * The retry is scheduled after the given retry after time or the exponential backoff delay
+ * calculated from the number of retries.
+ */
+internal class EmbraceRateLimitHandler(
+    private val scheduledExecutorService: ScheduledExecutorService,
+) : RateLimitHandler {
 
-    private val rateLimitMap = mutableMapOf<Endpoint, RateLimit>()
+    /**
+     * A map containing the number of retries for each endpoint.
+     */
+    private val rateLimitMap = ConcurrentHashMap<Endpoint, Int>()
 
-    override fun setRateLimit(endpoint: Endpoint, retryAfter: Long?) {
-        val retries = rateLimitMap[endpoint]?.retries?.plus(1) ?: 1
-        rateLimitMap[endpoint] = RateLimit(retries, retryAfter ?: calculateRetryAfter(endpoint))
+    /**
+     * Sets the rate limit for the given endpoint and schedules a task to execute the api calls ofter
+     * the given retry after time or the exponential backoff delay calculated from the number of retries.
+     */
+    override fun setRateLimitAndScheduleRetry(
+        endpoint: Endpoint,
+        retryAfter: Long?,
+        retryMethod: () -> Unit,
+    ) {
+        synchronized(this) {
+            rateLimitMap[endpoint] = rateLimitMap[endpoint]?.plus(1) ?: 1
+            rateLimitMap[endpoint]?.let { retries ->
+                scheduleRetryTask(retryAfter, retries, retryMethod)
+            }
+        }
     }
 
+    /**
+     * Returns true if the given endpoint is rate limited.
+     */
     override fun isRateLimited(endpoint: Endpoint): Boolean {
         return rateLimitMap.containsKey(endpoint)
     }
 
+    /**
+     * Clears the rate limit for the given endpoint.
+     */
     override fun clearRateLimit(endpoint: Endpoint) {
-        rateLimitMap.remove(endpoint)
+        synchronized(this) {
+            if (rateLimitMap.containsKey(endpoint)) {
+                rateLimitMap.remove(endpoint)
+            }
+        }
     }
 
-    override fun getInitialDelay(retryAfter: Long?): Long {
-        return retryAfter ?: INITIAL_RETRY_AFTER_IN_SECONDS
+    /**
+     * Schedules a task to execute the api calls again after the given retry after time or
+     * the exponential backoff delay calculated from the number of retries.
+     */
+    private fun scheduleRetryTask(
+        retryAfter: Long?,
+        retries: Int,
+        retryMethod: () -> Unit,
+    ) {
+        try {
+            val retryTask = Runnable {
+                retryMethod()
+            }
+            val delay = calculateDelay(retryAfter, retries)
+            scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
+        } catch (e: RejectedExecutionException) {
+            InternalStaticEmbraceLogger.logger.logError(
+                "Cannot schedule clear rate limit failed calls.",
+                e
+            )
+        }
     }
 
-    private fun calculateRetryAfter(endpoint: Endpoint): Long {
-        return rateLimitMap[endpoint]?.let {
-            it.retryAfter * 2
-        } ?: INITIAL_RETRY_AFTER_IN_SECONDS
+    /**
+     * Calculates the delay for the retry task.
+     * If the retryAfter is not null, it will use that value.
+     * Otherwise, it will calculate the delay using exponential backoff.
+     */
+    private fun calculateDelay(retryAfter: Long?, retries: Int): Long {
+        return if (retryAfter != null) {
+            retryAfter
+        } else {
+            val base = 3.0
+            base.pow(retries).toLong()
+        }
     }
 }
-
-private const val INITIAL_RETRY_AFTER_IN_SECONDS = 3L

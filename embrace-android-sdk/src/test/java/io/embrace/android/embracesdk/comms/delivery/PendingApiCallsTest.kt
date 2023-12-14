@@ -19,7 +19,7 @@ internal class PendingApiCallsTest {
     @Before
     fun setUp() {
         pendingApiCalls = PendingApiCalls()
-        rateLimitHandler = EmbraceRateLimitHandler()
+        rateLimitHandler = FakeRateLimitHandler()
         pendingApiCalls.setRateLimitHandler(rateLimitHandler)
     }
 
@@ -160,7 +160,7 @@ internal class PendingApiCallsTest {
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
 
-        rateLimitHandler.setRateLimit(Endpoint.EVENTS, 1000)
+        rateLimitHandler.setRateLimitAndScheduleRetry(Endpoint.EVENTS, 1000, {})
         assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
 
         rateLimitHandler.clearRateLimit(Endpoint.EVENTS)

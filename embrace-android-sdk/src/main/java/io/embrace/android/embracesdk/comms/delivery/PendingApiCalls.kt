@@ -31,6 +31,18 @@ internal class PendingApiCalls {
     }
 
     /**
+     * Removes a pending API call from the corresponding endpoint's queue.
+     */
+    fun remove(pendingApiCall: PendingApiCall) {
+        val endpoint = pendingApiCall.apiRequest.url.endpoint()
+        val pendingApiCallsForEndpoint = pendingApiCallsMap.getOrPut(endpoint) { PendingApiCallsQueue() }
+
+        synchronized(pendingApiCallsForEndpoint) {
+            pendingApiCallsForEndpoint.remove(pendingApiCall)
+        }
+    }
+
+    /**
      * Sets the [RateLimitHandler] to be used to determine if a queue is rate limited or not.
      */
     fun setRateLimitHandler(rateLimitHandler: RateLimitHandler) {

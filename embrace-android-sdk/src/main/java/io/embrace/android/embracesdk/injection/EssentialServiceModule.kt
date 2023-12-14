@@ -138,7 +138,7 @@ internal class EssentialServiceModuleImpl(
     private val deliveryCacheExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
 
-    private val rateLimitHandler = EmbraceRateLimitHandler()
+    private val rateLimitHandler = EmbraceRateLimitHandler(apiRetryExecutor)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()

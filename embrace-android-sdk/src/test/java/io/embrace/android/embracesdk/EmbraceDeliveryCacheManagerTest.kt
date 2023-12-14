@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsQueue
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -336,7 +337,9 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall3)
 
         deliveryCacheManager.savePendingApiCalls(pendingApiCalls)
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls().also {
+            it.setRateLimitHandler(FakeRateLimitHandler())
+        }
 
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
@@ -384,7 +387,9 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } returns null
 
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls().also {
+            it.setRateLimitHandler(FakeRateLimitHandler())
+        }
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
         assertEquals(null, cachedCalls.pollNextPendingApiCall())
@@ -430,7 +435,9 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } throws Exception()
 
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls().also {
+            it.setRateLimitHandler(FakeRateLimitHandler())
+        }
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
         assertEquals(null, cachedCalls.pollNextPendingApiCall())

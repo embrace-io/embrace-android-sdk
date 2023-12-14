@@ -5,9 +5,14 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpo
 internal interface RateLimitHandler {
 
     /**
-     * Sets the rate limit for the given endpoint.
+     * Sets the rate limit for the given endpoint and schedules a task to execute the api calls ofter
+     * the given retry after time or the exponential backoff delay calculated from the number of retries.
      */
-    fun setRateLimit(endpoint: Endpoint, retryAfter: Long? = null)
+    fun setRateLimitAndScheduleRetry(
+        endpoint: Endpoint,
+        retryAfter: Long?,
+        retryMethod: () -> Unit
+    )
 
     /**
      * Returns true if the given endpoint is rate limited.
@@ -18,9 +23,4 @@ internal interface RateLimitHandler {
      * Clears the rate limit for the given endpoint.
      */
     fun clearRateLimit(endpoint: Endpoint)
-
-    /**
-     * Returns the initial delay for the given retry after value.
-     */
-    fun getInitialDelay(retryAfter: Long?): Long
 }

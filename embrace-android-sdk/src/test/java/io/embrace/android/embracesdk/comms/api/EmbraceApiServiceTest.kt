@@ -4,15 +4,14 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceRateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
+import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -44,6 +43,7 @@ internal class EmbraceApiServiceTest {
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
     private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
+    private lateinit var fakeRateLimitHandler: FakeRateLimitHandler
 
     @Before
     fun setUp() {
@@ -62,6 +62,7 @@ internal class EmbraceApiServiceTest {
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
         fakePendingApiCallsSender = FakePendingApiCallsSender()
+        fakeRateLimitHandler = FakeRateLimitHandler()
         initApiService()
     }
 
@@ -275,7 +276,7 @@ internal class EmbraceApiServiceTest {
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
             pendingApiCallsSender = fakePendingApiCallsSender,
-            rateLimitHandler = EmbraceRateLimitHandler(),
+            rateLimitHandler = fakeRateLimitHandler,
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )

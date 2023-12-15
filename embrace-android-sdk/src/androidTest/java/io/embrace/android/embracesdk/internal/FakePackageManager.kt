@@ -1,6 +1,6 @@
 @file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
 
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal
 
 import android.content.ComponentName
 import android.content.Intent

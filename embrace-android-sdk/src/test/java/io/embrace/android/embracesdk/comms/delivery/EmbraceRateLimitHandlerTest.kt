@@ -34,7 +34,6 @@ internal class EmbraceRateLimitHandlerTest {
 
     @Test
     fun `test setRateLimitAndRetry retries api calls and clears rate limit after succeed`() {
-
         val retryAfter = 3L
         // clear rate limit after calling executeApiCalls
         every { mockExecuteApiCalls.invoke() } answers { rateLimitHandler.clearRateLimit(endpoint) }

@@ -34,7 +34,7 @@ internal data class RnActionBreadcrumb(
     /**
      * The timestamp at which the action ended.
      */
-    @SerializedName("pz") var bytesSent: Int,
+    @SerializedName("pz") val bytesSent: Int,
 
     /**
      * The output message SUCCESS | FAIL | INCOMPLETE

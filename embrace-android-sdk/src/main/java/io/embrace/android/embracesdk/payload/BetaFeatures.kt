@@ -12,5 +12,5 @@ import com.google.gson.annotations.SerializedName
 internal data class BetaFeatures(
 
     @SerializedName("ts")
-    internal var thermalStates: List<ThermalState>? = null
+    internal val thermalStates: List<ThermalState>? = null
 )

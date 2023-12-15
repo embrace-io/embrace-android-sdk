@@ -64,3 +64,11 @@ style:
     active: true
   UnusedImports:
     active: true
+
+  # Avoid business logic in payload/config classes
+  DataClassShouldBeImmutable:
+    active: true
+    includes: [ '**/io/embrace/android/embracesdk/payload/**' ]
+  DataClassContainsFunctions:
+    active: true
+    includes: [ '**/io/embrace/android/embracesdk/payload/**' ]

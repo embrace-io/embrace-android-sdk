@@ -64,8 +64,6 @@ internal class EmbracePendingApiCallsSenderTest {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
         fakeRateLimitHandler = FakeRateLimitHandler()
-        pendingApiCalls = PendingApiCalls()
-        pendingApiCalls.setRateLimitHandler(fakeRateLimitHandler)
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
@@ -117,7 +115,7 @@ internal class EmbracePendingApiCallsSenderTest {
     @Test
     fun `retryTask will be scheduled again if retry fails`() {
         connectedNetworkStatuses.forEach { status ->
-            every { mockRetryMethod(any(), any()) } throws Exception()
+            every { mockRetryMethod(any(), any()) } returns ApiResponse.Incomplete(Throwable())
             initPendingApiCallsSender(status = status, runRetryJobAfterScheduling = true)
             retryTaskActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
@@ -304,18 +302,18 @@ internal class EmbracePendingApiCallsSenderTest {
     ) {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
+        pendingApiCalls = PendingApiCalls()
+        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
+
         pendingApiCallsSender = EmbracePendingApiCallsSender(
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
-            rateLimitHandler = mockk(relaxed = true),
+            rateLimitHandler = fakeRateLimitHandler,
             clock = FakeClock()
         )
 
         pendingApiCallsSender.setSendMethod(mockRetryMethod)
-
-        pendingApiCalls = PendingApiCalls()
-        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
 
         if (loadFailedRequest) {
             val mockApiRequest = mockk<ApiRequest>(relaxed = true) {

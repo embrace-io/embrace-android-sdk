@@ -170,6 +170,7 @@ internal class EmbracePendingApiCallsSender(
         try {
             logger.logDeveloper(TAG, "Sending Pending API calls")
 
+            val failedApiCallsToRetry = mutableListOf<PendingApiCall>()
             var applyExponentialBackoff = false
 
             while (true) {
@@ -189,18 +190,23 @@ internal class EmbracePendingApiCallsSender(
                             }
                             is ApiResponse.Incomplete -> {
                                 applyExponentialBackoff = true
-                                // scheduleApiCallsDelivery(RETRY_PERIOD)
                             }
                             else -> {
                                 // Not expected
                             }
                         }
+                        // Should retry, so we add it back to the queue.
+                        failedApiCallsToRetry.add(pendingApiCall)
                     } else {
-                        // API call doesn't need to be retried and it was already removed by poll method,
-                        // so we need to save the updated list.
+                        // Shouldn't retry, so save the pending api calls without the removed one.
                         cacheManager.savePendingApiCalls(pendingApiCalls)
                     }
                 }
+            }
+
+            // Add back to the queue all retries that failed.
+            failedApiCallsToRetry.forEach {
+                pendingApiCalls.add(it)
             }
 
             if (pendingApiCalls.hasPendingApiCallsToSend()) {

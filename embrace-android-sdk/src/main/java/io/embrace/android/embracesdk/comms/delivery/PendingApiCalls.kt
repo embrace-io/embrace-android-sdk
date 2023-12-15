@@ -11,7 +11,7 @@ internal class PendingApiCalls {
     private val pendingApiCallsMap = ConcurrentHashMap<Endpoint, PendingApiCallsQueue>()
 
     @Transient
-    private lateinit var rateLimitHandler: RateLimitHandler
+    private var rateLimitHandler: RateLimitHandler? = null
 
     /**
      * Adds a pending API call in the corresponding endpoint's queue.
@@ -91,7 +91,7 @@ internal class PendingApiCalls {
      * Returns true if the queue has at least one pending API call and the endpoint is not rate limited.
      */
     private fun PendingApiCallsQueue.hasPendingApiCallsToSend(endpoint: Endpoint): Boolean {
-        return this.isNotEmpty() && !rateLimitHandler.isRateLimited(endpoint)
+        return this.isNotEmpty() && rateLimitHandler?.isRateLimited(endpoint) != true
     }
 
     /**

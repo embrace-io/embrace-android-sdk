@@ -13,16 +13,17 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import java.io.ByteArrayInputStream
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
-    private val scheduledExecutorService: ScheduledExecutorService,
+    private val executorService: ExecutorService,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
@@ -174,22 +175,24 @@ internal class EmbraceApiService(
         request: ApiRequest,
         onComplete: (() -> Any)?
     ): Future<*> {
-        return scheduledExecutorService.submit {
-            try {
-                if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                    executePost(request, payload)
-                } else {
+        return executorService.submit(
+            NetworkRequestRunnable(request) {
+                try {
+                    if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
+                        executePost(request, payload)
+                    } else {
+                        pendingApiCallsSender.scheduleApiCall(request, payload)
+                        logger.logWarning("No connection available. Request was queued to retry later.")
+                    }
+                } catch (ex: Exception) {
+                    logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
                     pendingApiCallsSender.scheduleApiCall(request, payload)
-                    logger.logWarning("No connection available. Request was queued to retry later.")
+                    throw ex
+                } finally {
+                    onComplete?.invoke()
                 }
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                pendingApiCallsSender.scheduleApiCall(request, payload)
-                throw ex
-            } finally {
-                onComplete?.invoke()
             }
-        }
+        )
     }
 
     @Suppress("UseCheckOrError")

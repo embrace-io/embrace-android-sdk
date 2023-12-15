@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.SessionMessageSerializer
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.regex.Pattern
@@ -19,10 +17,6 @@ internal class EmbraceCacheService(
 ) : CacheService {
 
     private val storageDir: File by fileProvider
-
-    private val sessionMessageSerializer by threadLocal {
-        SessionMessageSerializer(serializer)
-    }
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
@@ -151,9 +145,7 @@ internal class EmbraceCacheService(
         try {
             logger.logDeveloper(TAG, "Attempting to write bytes to $name")
             val file = File(storageDir, EMBRACE_PREFIX + name)
-            file.bufferedWriter().use {
-                sessionMessageSerializer.serialize(sessionMessage, it)
-            }
+            serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
             logger.logDeveloper(TAG, "Bytes cached")
         } catch (ex: Throwable) {
             logger.logWarning("Failed to write session with buffered writer", ex)

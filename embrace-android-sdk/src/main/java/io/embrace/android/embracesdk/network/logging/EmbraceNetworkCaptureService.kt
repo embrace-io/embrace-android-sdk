@@ -76,7 +76,6 @@ internal class EmbraceNetworkCaptureService(
         networkCaptureData: NetworkCaptureData?,
         errorMessage: String?
     ) {
-
         val duration = max(endTime - startTime, 0)
 
         getNetworkCaptureRules(url, httpMethod).forEach { rule ->
@@ -124,7 +123,6 @@ internal class EmbraceNetworkCaptureService(
     }
 
     private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall {
-
         return if (configService.networkBehavior.isCaptureBodyEncryptionEnabled()) {
             val encryptedPayload = encryptNetworkCall(capturedNetworkCall)
             NetworkCapturedCall(encryptedPayload = encryptedPayload)

@@ -19,8 +19,10 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -204,7 +206,7 @@ internal class EmbraceApiServiceTest {
         val crash = EventMessage(
             event = Event(
                 eventId = "crash-id",
-                activeEventIdsList = listOf("event-1", "event-2"),
+                activeEventIds = listOf("event-1", "event-2"),
                 type = EmbraceEvent.Type.CRASH
             )
         )
@@ -227,6 +229,25 @@ internal class EmbraceApiServiceTest {
             expectedPayload = payload
         )
         assertTrue(finished)
+    }
+
+    @Test
+    fun `validate all API endpoint URLs`() {
+        EmbraceApiService.Companion.Endpoint.values().forEach {
+            assertEquals(
+                "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
+                apiUrlBuilder.getEmbraceUrlWithSuffix(it.path)
+            )
+        }
+    }
+
+    @Test
+    fun `network request runnable is used`() {
+        testScheduledExecutor = mockk(relaxed = true)
+        initApiService()
+        val payload = "{}".toByteArray(Charsets.UTF_8)
+        apiService.sendSession(payload) {}
+        verify(exactly = 1) { testScheduledExecutor.submit(any<NetworkRequestRunnable>()) }
     }
 
     private fun verifyOnlyRequest(
@@ -257,13 +278,6 @@ internal class EmbraceApiServiceTest {
         } ?: assertNull(fakeApiClient.sentRequests[0].second)
     }
 
-    @Test
-    fun `validate all API endpoint URLs`() {
-        EmbraceApiService.Companion.Endpoint.values().forEach {
-            assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}", apiUrlBuilder.getEmbraceUrlWithSuffix(it.path))
-        }
-    }
-
     private fun initApiService() {
         networkConnectivityService.networkStatus = NetworkStatus.WIFI
         apiService = EmbraceApiService(
@@ -271,7 +285,7 @@ internal class EmbraceApiServiceTest {
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = InternalEmbraceLogger(),
-            scheduledExecutorService = testScheduledExecutor,
+            executorService = testScheduledExecutor,
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
@@ -286,7 +300,8 @@ internal class EmbraceApiServiceTest {
         private const val fakeAppId = "A1B2C"
         private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
-        private val defaultConfigResponseBody = ResourceReader.readResourceAsText("remote_config_response.json")
+        private val defaultConfigResponseBody =
+            ResourceReader.readResourceAsText("remote_config_response.json")
         private val successfulPostResponse = ApiResponse.Success(
             headers = emptyMap(),
             body = ""

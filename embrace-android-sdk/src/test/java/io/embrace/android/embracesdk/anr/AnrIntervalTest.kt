@@ -20,7 +20,10 @@ import org.junit.Test
 internal class AnrIntervalTest {
 
     private val threadInfo = ThreadInfo(
-        13, Thread.State.RUNNABLE, "my-thread", 5,
+        13,
+        Thread.State.RUNNABLE,
+        "my-thread",
+        5,
         listOf(
             "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
             "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"

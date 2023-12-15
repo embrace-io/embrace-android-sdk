@@ -194,8 +194,8 @@ internal class EventHandler(
             appState = metadataService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
-            sessionProperties = sessionProperties.get(),
-            customProperties = eventProperties
+            sessionProperties = sessionProperties.get().toMap(),
+            customProperties = eventProperties?.toMap()
         )
     }
 
@@ -215,8 +215,8 @@ internal class EventHandler(
             duration = duration,
             appState = metadataService.getAppState(),
             type = if (late) EmbraceEvent.Type.LATE else EmbraceEvent.Type.END,
-            customProperties = eventProperties,
-            sessionProperties = sessionProperties.get()
+            customProperties = eventProperties?.toMap(),
+            sessionProperties = sessionProperties.get().toMap()
         )
     }
 

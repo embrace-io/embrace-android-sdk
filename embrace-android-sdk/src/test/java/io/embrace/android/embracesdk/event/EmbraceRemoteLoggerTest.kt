@@ -145,7 +145,7 @@ internal class EmbraceRemoteLoggerTest {
                     assertEquals("Hello world", eventMessage.event.name)
                     assertNotNull(eventMessage.event.timestamp)
                     assertEquals(EmbraceEvent.Type.INFO_LOG, eventMessage.event.type)
-                    assertEquals(props, eventMessage.event.customPropertiesMap)
+                    assertEquals(props, eventMessage.event.customProperties)
                     assertNotNull(eventMessage.event.messageId)
                     assertNotNull(eventMessage.event.eventId)
                     assertNotNull(eventMessage.event.sessionId)
@@ -160,7 +160,7 @@ internal class EmbraceRemoteLoggerTest {
                 withArg {
                     assertEquals("Warning world", it.event.name)
                     assertEquals(EmbraceEvent.Type.WARNING_LOG, it.event.type)
-                    assertNull(it.event.customPropertiesMap)
+                    assertNull(it.event.customProperties)
                     assertNotNull(it.event.messageId)
                     assertNotNull(it.event.eventId)
                     assertNotNull(it.event.sessionId)
@@ -175,7 +175,7 @@ internal class EmbraceRemoteLoggerTest {
                 withArg { eventMessage ->
                     assertEquals("Hello errors", eventMessage.event.name)
                     assertEquals(EmbraceEvent.Type.ERROR_LOG, eventMessage.event.type)
-                    assertNull(eventMessage.event.customPropertiesMap)
+                    assertNull(eventMessage.event.customProperties)
                     assertNotNull(eventMessage.event.messageId)
                     assertNotNull(eventMessage.event.eventId)
                     assertNotNull(eventMessage.event.sessionId)

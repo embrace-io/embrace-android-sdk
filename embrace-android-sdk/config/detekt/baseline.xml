@@ -1,6 +1,9 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
+    <ID>DataClassContainsFunctions:ExceptionError.kt$ExceptionError$fun addException(ex: Throwable?, appState: String?, clock: Clock)</ID>
+    <ID>DataClassContainsFunctions:ExceptionError.kt$ExceptionError$private fun getExceptionInfo(ex: Throwable?): List&lt;ExceptionInfo&gt;</ID>
+    <ID>DataClassShouldBeImmutable:ExceptionError.kt$ExceptionError$@SerializedName("c") var occurrences = 0</ID>
   </CurrentIssues>
 </SmellBaseline>

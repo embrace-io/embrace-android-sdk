@@ -18,7 +18,7 @@ import org.junit.Test
 internal class PerformanceInfoTest {
 
     private val diskUsage: DiskUsage = DiskUsage(10000000, 2000000)
-    private val networkRequests: NetworkRequests = mockk()
+    private val networkRequests: NetworkRequests = mockk(relaxed = true)
     private val memoryWarnings: List<MemoryWarning> = emptyList()
     private val networkInterfaceIntervals: List<Interval> = emptyList()
     private val googleAnrTimestamps: List<Long> = emptyList()

@@ -27,7 +27,7 @@ internal fun assertLogMessageReceived(
         assertEquals(logType.value, logExceptionType)
         assertEquals(eventType, type)
         assertEquals(Embrace.AppFramework.NATIVE.value, framework)
-        assertEquals(properties, customPropertiesMap)
+        assertEquals(properties, customProperties)
         exception?.let {
             assertEquals(it.message, exceptionMessage)
             assertEquals(it.javaClass.simpleName, exceptionName)

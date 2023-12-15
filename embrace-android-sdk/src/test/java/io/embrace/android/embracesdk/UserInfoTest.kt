@@ -66,22 +66,6 @@ internal class UserInfoTest {
     }
 
     /**
-     * Construct UserInfo object with nulls then set values
-     */
-    @Test
-    fun testNullsInCtor() {
-        val info = UserInfo(null, null, null, null)
-        info.userId = "5"
-        info.username = "root"
-        info.email = "faker22@example.com"
-        info.personas = setOf("payer")
-        assertEquals("5", info.userId)
-        assertEquals("faker22@example.com", info.email)
-        assertEquals("root", info.username)
-        assertEquals(setOf("payer"), info.personas)
-    }
-
-    /**
      * Construct UserInfo from an empty PreferenceService
      */
     @Test

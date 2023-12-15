@@ -19,7 +19,8 @@ internal class ExceptionErrorInfoTest {
     @Test
     fun testExceptionErrorInfoSerialization() {
         val exceptionErrorInfo = ExceptionErrorInfo(
-            0, "STATE",
+            0,
+            "STATE",
             listOf(
                 info,
             )

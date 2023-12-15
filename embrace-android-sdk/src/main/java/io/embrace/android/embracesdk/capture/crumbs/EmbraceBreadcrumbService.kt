@@ -220,7 +220,8 @@ internal class EmbraceBreadcrumbService(
             val limit = configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
             tryAddBreadcrumb(
                 rnActionBreadcrumbs,
-                RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output), limit
+                RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output),
+                limit
             )
         } catch (ex: Exception) {
             logger.logDebug("Failed to log RN Action breadcrumb with name $name", ex)

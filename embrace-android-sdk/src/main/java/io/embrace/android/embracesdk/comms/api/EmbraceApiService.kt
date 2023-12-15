@@ -14,16 +14,17 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import java.io.ByteArrayInputStream
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
-    private val scheduledExecutorService: ScheduledExecutorService,
+    private val executorService: ExecutorService,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
     private val rateLimitHandler: RateLimitHandler,
@@ -171,40 +172,41 @@ internal class EmbraceApiService(
         return postOnExecutor(bytes, request, onComplete)
     }
 
+    /**
+     * Posts an API call to the API.
+     * If the device is offline or the endpoint is rate limited, the API call is saved to be sent later.
+     * If the API call fails, it is retried and if it succeeds, it is removed from cache.
+     */
     private fun postOnExecutor(
         payload: ByteArray,
         request: ApiRequest,
         onComplete: (() -> Any)?
     ): Future<*> {
-        return scheduledExecutorService.submit {
-            val endpoint = request.url.endpoint()
+        return executorService.submit(
+            NetworkRequestRunnable(request) {
+                val pendingApiCall = pendingApiCallsSender.savePendingApiCall(request, payload)
 
-            // Always save the API call to be sent later.
-            // If the device is offline, the API call will be sent once the device is online again.
-            // If the endpoint is rate limited, the API call will be sent once the rate limit is lifted.
-            // If the API call fails, it will be retried and if it succeeds, it will be removed from cache.
-            val pendingApiCall = pendingApiCallsSender.savePendingApiCall(request, payload)
+                if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
+                    !rateLimitHandler.isRateLimited(request.url.endpoint())
+                ) {
+                    // Execute the request if the device is online and the endpoint is not rate limited.
+                    val response: ApiResponse = executePost(request, payload)
 
-            if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
-                !rateLimitHandler.isRateLimited(endpoint)
-            ) {
-                // Execute the request if the device is online and the endpoint is not rate limited.
-                val response: ApiResponse = executePost(request, payload)
-
-                if (response is ApiResponse.Success) {
-                    // Remove the API call from cache if it was sent successfully.
-                    pendingApiCallsSender.removePendingApiCall(pendingApiCall)
-                    onComplete?.invoke()
-                } else {
-                    // Schedule the API call to be sent later if it should be retried.
-                    if (pendingApiCallsSender.shouldRetry(response)) {
-                        pendingApiCallsSender.scheduleApiCall(response)
+                    if (response is ApiResponse.Success) {
+                        // Remove the API call from cache if it was sent successfully.
+                        pendingApiCallsSender.removePendingApiCall(pendingApiCall)
+                        onComplete?.invoke()
+                    } else {
+                        // Schedule the API call to be sent later if it should be retried.
+                        if (pendingApiCallsSender.shouldRetry(response)) {
+                            pendingApiCallsSender.scheduleApiCall(response)
+                        }
+                        onComplete?.invoke()
+                        error("Failed to post Embrace API call. ")
                     }
-                    onComplete?.invoke()
-                    error("Failed to post Embrace API call. ")
                 }
             }
-        }
+        )
     }
 
     private fun executePost(request: ApiRequest, payload: ByteArray) =

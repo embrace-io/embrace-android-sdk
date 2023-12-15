@@ -181,7 +181,11 @@ internal class PushNotificationCaptureServiceTest {
 
         // if only reserved words it should return empty map
         every { mockBundle.keySet() } returns setOf(
-            "google.key", "gcm.key", "from", "message_type", "collapse_key"
+            "google.key",
+            "gcm.key",
+            "from",
+            "message_type",
+            "collapse_key"
         )
         assertTrue(
             PushNotificationCaptureService.extractDeveloperDefinedPayload(mockBundle).isEmpty()
@@ -192,7 +196,12 @@ internal class PushNotificationCaptureServiceTest {
 
         // if reserved words plus user defined keys it should return user defined keys only
         every { mockBundle.keySet() } returns setOf(
-            "google.key", "gcm.key", "from", "message_type", "collapse_key", "user_defined_key1",
+            "google.key",
+            "gcm.key",
+            "from",
+            "message_type",
+            "collapse_key",
+            "user_defined_key1",
             "user_defined_key2"
         )
         every { mockBundle.getString("user_defined_key1") } returns "value1"

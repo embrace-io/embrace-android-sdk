@@ -40,7 +40,9 @@ internal class SystemServiceModuleImpl @JvmOverloads constructor(
     override val storageManager: StorageStatsManager? =
         if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
             getSystemServiceSafe(Context.STORAGE_STATS_SERVICE)
-        } else null
+        } else {
+            null
+        }
 
     override val windowManager: WindowManager? by singleton {
         getSystemServiceSafe(Context.WINDOW_SERVICE)

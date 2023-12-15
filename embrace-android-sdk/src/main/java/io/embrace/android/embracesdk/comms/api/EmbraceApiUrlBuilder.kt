@@ -26,7 +26,8 @@ internal class EmbraceApiUrlBuilder(
 
     override fun getEmbraceUrlWithSuffix(suffix: String): String {
         InternalStaticEmbraceLogger.logDeveloper(
-            "ApiUrlBuilder", "getEmbraceUrlWithSuffix - suffix: $suffix"
+            "ApiUrlBuilder",
+            "getEmbraceUrlWithSuffix - suffix: $suffix"
         )
         return "$coreBaseUrl/v$API_VERSION/log/$suffix"
     }

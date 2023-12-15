@@ -9,16 +9,16 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 internal data class UserInfo(
 
     @SerializedName("id")
-    var userId: String? = null,
+    val userId: String? = null,
 
     @SerializedName("em")
-    var email: String? = null,
+    val email: String? = null,
 
     @SerializedName("un")
-    var username: String? = null,
+    val username: String? = null,
 
     @SerializedName("per")
-    var personas: Set<String>? = null
+    val personas: Set<String>? = null
 ) {
 
     companion object {

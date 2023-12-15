@@ -141,6 +141,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertTrue(result.isEmpty())
     }
+
     @Test
     fun `test capture rule duration`() {
         // capture calls that exceeds 5000ms
@@ -150,14 +151,22 @@ internal class EmbraceNetworkCaptureServiceTest {
         val service = getService()
         // duration = 2000ms shouldn't be captured
         service.logNetworkCapturedData(
-            "https://embrace.io/changelog", "GET", 200, 0, 2000,
+            "https://embrace.io/changelog",
+            "GET",
+            200,
+            0,
+            2000,
             mockk(relaxed = true)
         )
         verify(exactly = 0) { mockRemoteLogger.logNetwork(any()) }
 
         // duration = 6000ms should be captured
         service.logNetworkCapturedData(
-            "https://embrace.io/changelog", "GET", 200, 0, 6000,
+            "https://embrace.io/changelog",
+            "GET",
+            200,
+            0,
+            6000,
             mockk(relaxed = true)
         )
         verify(exactly = 1) { mockRemoteLogger.logNetwork(any()) }
@@ -170,19 +179,31 @@ internal class EmbraceNetworkCaptureServiceTest {
 
         val service = getService()
         service.logNetworkCapturedData(
-            "https://embrace.io/changelog", "GET", 200, 0, 2000,
+            "https://embrace.io/changelog",
+            "GET",
+            200,
+            0,
+            2000,
             mockk(relaxed = true)
         )
         verify(exactly = 1) { mockRemoteLogger.logNetwork(any()) }
 
         service.logNetworkCapturedData(
-            "https://embrace.io/changelog", "GET", 404, 0, 2000,
+            "https://embrace.io/changelog",
+            "GET",
+            404,
+            0,
+            2000,
             mockk(relaxed = true)
         )
         verify(exactly = 2) { mockRemoteLogger.logNetwork(any()) }
 
         service.logNetworkCapturedData(
-            "https://embrace.io/changelog", "GET", 500, 0, 2000,
+            "https://embrace.io/changelog",
+            "GET",
+            500,
+            0,
+            2000,
             mockk(relaxed = true)
         )
         verify(exactly = 2) { mockRemoteLogger.logNetwork(any()) }

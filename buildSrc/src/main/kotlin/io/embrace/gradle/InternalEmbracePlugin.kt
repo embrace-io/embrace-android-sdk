@@ -22,9 +22,7 @@ class InternalEmbracePlugin : Plugin<Project> {
         configureBuildPlugins(project)
 
         // TODO: (future) - these scripts should be integrated into this class.
-        if (project.name != "test-server") { // don't want to release our test code...
-            project.apply(from = project.file("../scripts/release.gradle"))
-        }
+        project.apply(from = project.file("../scripts/release.gradle"))
 
         project.pluginManager.withPlugin("com.android.library") {
             val android = project.extensions.getByType(LibraryExtension::class.java)

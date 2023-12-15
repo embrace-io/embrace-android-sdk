@@ -132,8 +132,8 @@ internal class EssentialServiceModuleImpl(
     private val backgroundExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
 
-    private val apiRetryExecutor =
-        workerThreadModule.scheduledExecutor(ExecutorName.API_RETRY)
+    private val networkRequestExecutor =
+        workerThreadModule.backgroundExecutor(ExecutorName.NETWORK_REQUEST)
 
     private val deliveryCacheExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
@@ -280,7 +280,7 @@ internal class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         EmbracePendingApiCallsSender(
             networkConnectivityService,
-            apiRetryExecutor,
+            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
             deliveryCacheManager,
             rateLimitHandler,
             initModule.clock
@@ -293,7 +293,7 @@ internal class EssentialServiceModuleImpl(
             serializer = coreModule.jsonSerializer,
             cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
             logger = coreModule.logger,
-            scheduledExecutorService = apiRetryExecutor,
+            executorService = networkRequestExecutor,
             cacheManager = deliveryCacheManager,
             pendingApiCallsSender = pendingApiCallsSender,
             rateLimitHandler = rateLimitHandler,

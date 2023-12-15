@@ -135,10 +135,13 @@ internal class EssentialServiceModuleImpl(
     private val networkRequestExecutor =
         workerThreadModule.backgroundExecutor(ExecutorName.NETWORK_REQUEST)
 
+    private val pendingApiCallsExecutor =
+        workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+
     private val deliveryCacheExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
 
-    private val rateLimitHandler = EmbraceRateLimitHandler(apiRetryExecutor)
+    private val rateLimitHandler = EmbraceRateLimitHandler(pendingApiCallsExecutor)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -280,7 +283,7 @@ internal class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         EmbracePendingApiCallsSender(
             networkConnectivityService,
-            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            pendingApiCallsExecutor,
             deliveryCacheManager,
             rateLimitHandler,
             initModule.clock

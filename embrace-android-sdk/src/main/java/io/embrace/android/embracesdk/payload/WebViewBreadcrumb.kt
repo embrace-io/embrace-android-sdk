@@ -11,7 +11,7 @@ internal class WebViewBreadcrumb(
     val url: String,
 
     @SerializedName("st")
-    private val startTime: Long
+    internal val startTime: Long
 ) : Breadcrumb {
     override fun getStartTime(): Long = startTime
 }

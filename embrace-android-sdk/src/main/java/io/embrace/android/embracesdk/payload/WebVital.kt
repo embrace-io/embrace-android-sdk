@@ -17,11 +17,11 @@ internal data class WebVital(
     val startTime: Long,
 
     @SerializedName("d")
-    val duration: Long,
+    val duration: Long? = null,
 
     @SerializedName("p")
-    val properties: Map<String, Any>,
+    val properties: Map<String, Any>? = null,
 
     @SerializedName("s")
-    val score: Double
+    val score: Double? = null
 )

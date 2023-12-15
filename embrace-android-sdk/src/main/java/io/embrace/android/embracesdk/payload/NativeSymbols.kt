@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 internal class NativeSymbols(
     @SerializedName("symbols")
-    private val symbols: Map<String, Map<String, String>>
+    internal val symbols: Map<String, Map<String, String>>
 ) {
 
     fun getSymbolByArchitecture(arch: String?): Map<String, String> {

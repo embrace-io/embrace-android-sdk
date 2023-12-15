@@ -4,13 +4,14 @@ import androidx.annotation.VisibleForTesting
 import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
+import io.embrace.android.embracesdk.Embrace.AppFramework.NATIVE
 import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.Embrace.AppFramework.UNITY
 
 internal class Stacktraces @JvmOverloads constructor(
-    stacktraces: List<String>?,
-    customStacktrace: String?,
-    framework: AppFramework,
+    stacktraces: List<String>? = null,
+    customStacktrace: String? = null,
+    framework: AppFramework = NATIVE,
 
     @SerializedName("c")
     @get:VisibleForTesting

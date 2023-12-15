@@ -183,7 +183,7 @@ internal class EmbraceEventServiceTest {
         eventService.startEvent(eventName, null, customProperties)
         val eventDescription = eventService.getActiveEvent(eventName, null)
         assertNotNull(eventDescription)
-        val eventProperties = eventDescription?.event?.customPropertiesMap
+        val eventProperties = eventDescription?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
         customProperties.forEach {
@@ -198,7 +198,7 @@ internal class EmbraceEventServiceTest {
         eventService.startEvent(eventName, null, customProperties)
         val eventDescription = eventService.getActiveEvent(eventName, null)
         assertNotNull(eventDescription)
-        val eventProperties = eventDescription?.event?.customPropertiesMap
+        val eventProperties = eventDescription?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
         customProperties.forEach {
@@ -244,7 +244,7 @@ internal class EmbraceEventServiceTest {
         assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName, customProperties)
         assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
-        val eventProperties = deliveryService.lastEventSentAsync?.event?.customPropertiesMap
+        val eventProperties = deliveryService.lastEventSentAsync?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
         customProperties.forEach {
@@ -260,7 +260,7 @@ internal class EmbraceEventServiceTest {
         assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName, customProperties)
         assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
-        val eventProperties = deliveryService.lastEventSentAsync?.event?.customPropertiesMap
+        val eventProperties = deliveryService.lastEventSentAsync?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
         customProperties.forEach {

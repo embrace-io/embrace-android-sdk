@@ -188,7 +188,8 @@ internal class EmbraceSessionPropertiesTest {
             sessionProperties.add("prop0", otherValue, true)
         )
         assertEquals(
-            "property was updated", otherValue,
+            "property was updated",
+            otherValue,
             sessionProperties.get()["prop0"]
         )
         assertTrue(sessionProperties.remove("prop0"))

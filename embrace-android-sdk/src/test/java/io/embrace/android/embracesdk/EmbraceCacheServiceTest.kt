@@ -31,7 +31,6 @@ internal class EmbraceCacheServiceTest {
 
     @Before
     fun setUp() {
-
         dir = Files.createTempDirectory("tmpDirPrefix").toFile()
         service = EmbraceCacheService(
             lazy { dir },

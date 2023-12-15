@@ -261,6 +261,7 @@ internal class EventHandlerTest {
         verify { mockDeliveryService.sendMoment(any()) }
         assertEquals(builtEndEventMessage, result)
     }
+
     @Test
     fun `verify onEventEnded builds event and sends the event`() {
         val eventProperties = mapOf<String, Any>()

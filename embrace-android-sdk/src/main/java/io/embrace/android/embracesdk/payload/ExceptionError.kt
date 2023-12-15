@@ -8,11 +8,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  */
 internal data class ExceptionError(@Transient private val logStrictMode: Boolean) {
     @SerializedName("c")
-
     var occurrences = 0
 
     @SerializedName("rep")
-
     val exceptionErrors = mutableListOf<ExceptionErrorInfo>()
 
     /**

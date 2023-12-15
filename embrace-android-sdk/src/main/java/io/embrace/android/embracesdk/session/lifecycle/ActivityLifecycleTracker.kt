@@ -46,7 +46,8 @@ internal class ActivityLifecycleTracker(
     @Synchronized
     fun updateStateWithActivity(activity: Activity?) {
         logger.logDeveloper(
-            "EmbraceActivityService", "Current activity: " + getActivityName(activity)
+            "EmbraceActivityService",
+            "Current activity: " + getActivityName(activity)
         )
         currentActivity = WeakReference(activity)
     }
@@ -59,7 +60,8 @@ internal class ActivityLifecycleTracker(
             val foregroundActivity = currentActivity.get()
             if (foregroundActivity == null || foregroundActivity.isFinishing) {
                 logger.logDeveloper(
-                    "EmbraceActivityService", "Foreground activity not present"
+                    "EmbraceActivityService",
+                    "Foreground activity not present"
                 )
                 return null
             }
@@ -89,7 +91,8 @@ internal class ActivityLifecycleTracker(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         logger.logDeveloper(
-            "ActivityLifecycleTracker", "Activity created: " + getActivityName(activity)
+            "ActivityLifecycleTracker",
+            "Activity created: " + getActivityName(activity)
         )
         updateStateWithActivity(activity)
         updateOrientationWithActivity(activity)
@@ -104,7 +107,8 @@ internal class ActivityLifecycleTracker(
 
     override fun onActivityStarted(activity: Activity) {
         logger.logDeveloper(
-            "ActivityLifecycleTracker", "Activity started: " + getActivityName(activity)
+            "ActivityLifecycleTracker",
+            "Activity started: " + getActivityName(activity)
         )
         updateStateWithActivity(activity)
         stream(listeners) { listener: ActivityLifecycleListener ->
@@ -118,13 +122,15 @@ internal class ActivityLifecycleTracker(
 
     override fun onActivityResumed(activity: Activity) {
         logger.logDeveloper(
-            "ActivityLifecycleTracker", "Activity resumed: " + getActivityName(activity)
+            "ActivityLifecycleTracker",
+            "Activity resumed: " + getActivityName(activity)
         )
         if (!activity.javaClass.isAnnotationPresent(StartupActivity::class.java)) {
             // If the activity coming to foreground doesn't have the StartupActivity annotation
             // the the SDK will finalize any pending startup moment.
             logger.logDeveloper(
-                "ActivityLifecycleTracker", "Activity resumed: " + getActivityName(activity)
+                "ActivityLifecycleTracker",
+                "Activity resumed: " + getActivityName(activity)
             )
             stream(listeners) { listener: ActivityLifecycleListener ->
                 try {
@@ -135,7 +141,8 @@ internal class ActivityLifecycleTracker(
             }
         } else {
             logger.logDeveloper(
-                "ActivityLifecycleTracker", getActivityName(activity) + " is @StartupActivity"
+                "ActivityLifecycleTracker",
+                getActivityName(activity) + " is @StartupActivity"
             )
         }
     }
@@ -143,7 +150,8 @@ internal class ActivityLifecycleTracker(
     override fun onActivityPaused(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {
         logger.logDeveloper(
-            "ActivityLifecycleTracker", "Activity stopped: " + getActivityName(activity)
+            "ActivityLifecycleTracker",
+            "Activity stopped: " + getActivityName(activity)
         )
         stream(listeners) { listener: ActivityLifecycleListener ->
             try {

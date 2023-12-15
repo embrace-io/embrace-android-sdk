@@ -18,6 +18,7 @@ internal interface TracingApi {
      */
     @BetaApi
     fun isTracingAvailable(): Boolean
+
     /**
      * Create an [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the [EmbraceSpan] cannot
      * be created given the current conditions of the SDK or an invalid name.

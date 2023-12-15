@@ -23,6 +23,7 @@ internal class EmbraceUrlTest {
         assertEquals(Endpoint.NETWORK, embraceUrlNetwork.endpoint())
         assertEquals(Endpoint.UNKNOWN, embraceUrlOther.endpoint())
     }
+
     @Test
     fun `test equality`() {
         val embraceUrl1 = EmbraceUrl.create("https://embrace.io")

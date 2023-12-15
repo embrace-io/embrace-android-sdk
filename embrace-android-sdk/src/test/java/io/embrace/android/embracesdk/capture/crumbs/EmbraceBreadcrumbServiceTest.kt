@@ -74,7 +74,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val message = SessionMessage(
             session = fakeSession(),
             breadcrumbs = service.getBreadcrumbs(
-                0, clock.now()
+                0,
+                clock.now()
             )
         )
         assertJsonMatchesGoldenFile(expected, message)
@@ -412,6 +413,7 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(0, breadcrumbsAfterClean.customBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.fragmentBreadcrumbs?.size)
     }
+
     @Test
     fun testGetBreadcrumbs() {
         val service = initializeBreadcrumbService()
@@ -434,7 +436,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val message = SessionMessage(
             session = fakeSession(),
             breadcrumbs = service.getBreadcrumbs(
-                0, clock.now()
+                0,
+                clock.now()
             )
         )
         assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)

@@ -22,19 +22,15 @@ internal class Stacktraces @JvmOverloads constructor(
 ) {
 
     @SerializedName("tt")
-
     val jvmStacktrace: List<String>?
 
     @SerializedName("jsk")
-
     val javascriptStacktrace: String?
 
     @SerializedName("u")
-
     val unityStacktrace: String?
 
     @SerializedName("f")
-
     val flutterStacktrace: String?
 
     init {

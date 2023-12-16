@@ -54,8 +54,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
-	public fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
-	public fun logRnView (Ljava/lang/String;)V
 	public fun logWarning (Ljava/lang/String;)V
 	public fun recordCompletedSpan (Ljava/lang/String;JJ)Z
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z

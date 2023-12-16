@@ -109,4 +109,19 @@ internal class ReactNativeInternalInterfaceImpl(
             logger.logSDKNotInitialized("set JavaScript bundle URL")
         }
     }
+
+    override fun logRnAction(
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        properties: Map<String?, Any?>,
+        bytesSent: Int,
+        output: String
+    ) {
+        embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+    }
+
+    override fun logRnView(screen: String) {
+        embrace.logRnView(screen)
+    }
 }

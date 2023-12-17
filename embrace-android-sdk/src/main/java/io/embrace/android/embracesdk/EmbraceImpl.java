@@ -1300,23 +1300,6 @@ final class EmbraceImpl {
         return false;
     }
 
-    void sampleCurrentThreadDuringAnrs() {
-        try {
-            AnrService service = anrService;
-            if (service != null && nativeThreadSamplerInstaller != null) {
-                nativeThreadSamplerInstaller.monitorCurrentThread(
-                    nativeThreadSampler,
-                    configService,
-                    service
-                );
-            } else {
-                internalEmbraceLogger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread");
-            }
-        } catch (Exception exc) {
-            internalEmbraceLogger.logError("Failed to sample current thread during ANRs", exc);
-        }
-    }
-
     /**
      * Logs the fact that a particular view was entered.
      * <p>
@@ -1594,6 +1577,23 @@ final class EmbraceImpl {
     private void onActivityReported() {
         if (backgroundActivityService != null) {
             backgroundActivityService.save();
+        }
+    }
+
+    private void sampleCurrentThreadDuringAnrs() {
+        try {
+            AnrService service = anrService;
+            if (service != null && nativeThreadSamplerInstaller != null) {
+                nativeThreadSamplerInstaller.monitorCurrentThread(
+                    nativeThreadSampler,
+                    configService,
+                    service
+                );
+            } else {
+                internalEmbraceLogger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread");
+            }
+        } catch (Exception exc) {
+            internalEmbraceLogger.logError("Failed to sample current thread during ANRs", exc);
         }
     }
 

@@ -2,7 +2,15 @@ package io.embrace.android.embracesdk
 
 import android.net.Uri
 import android.webkit.URLUtil
+import io.embrace.android.embracesdk.config.local.LocalConfig
+import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
@@ -20,28 +28,31 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketException
 
 internal class EmbraceInternalInterfaceImplTest {
 
-    private lateinit var impl: EmbraceInternalInterfaceImpl
-    private lateinit var embrace: EmbraceImpl
+    private lateinit var internalImpl: EmbraceInternalInterfaceImpl
+    private lateinit var embraceImpl: EmbraceImpl
     private lateinit var fakeClock: FakeClock
     private lateinit var initModule: InitModule
+    private lateinit var fakeConfigService: FakeConfigService
 
     @Before
     fun setUp() {
-        embrace = mockk(relaxed = true)
+        embraceImpl = mockk(relaxed = true)
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock)
-        impl = EmbraceInternalInterfaceImpl(embrace, initModule)
+        fakeConfigService = FakeConfigService()
+        internalImpl = EmbraceInternalInterfaceImpl(embraceImpl, initModule, fakeConfigService)
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test
     fun testLogInfo() {
-        impl.logInfo("", emptyMap())
+        internalImpl.logInfo("", emptyMap())
         verify(exactly = 1) {
-            embrace.logMessage(
+            embraceImpl.logMessage(
                 EmbraceEvent.Type.INFO_LOG,
                 "",
                 emptyMap(),
@@ -56,9 +67,9 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Test
     fun testLogWarning() {
-        impl.logWarning("", emptyMap(), null)
+        internalImpl.logWarning("", emptyMap(), null)
         verify(exactly = 1) {
-            embrace.logMessage(
+            embraceImpl.logMessage(
                 EmbraceEvent.Type.WARNING_LOG,
                 "",
                 emptyMap(),
@@ -73,9 +84,9 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Test
     fun testLogError() {
-        impl.logError("", emptyMap(), null, false)
+        internalImpl.logError("", emptyMap(), null, false)
         verify(exactly = 1) {
-            embrace.logMessage(
+            embraceImpl.logMessage(
                 EmbraceEvent.Type.ERROR_LOG,
                 "",
                 emptyMap(),
@@ -92,9 +103,9 @@ internal class EmbraceInternalInterfaceImplTest {
     @Test
     fun testLogHandledException() {
         val exception = Throwable("handled exception")
-        impl.logHandledException(exception, LogType.ERROR, emptyMap(), null)
+        internalImpl.logHandledException(exception, LogType.ERROR, emptyMap(), null)
         verify(exactly = 1) {
-            embrace.logMessage(
+            embraceImpl.logMessage(
                 EmbraceEvent.Type.ERROR_LOG,
                 "handled exception",
                 emptyMap(),
@@ -113,7 +124,7 @@ internal class EmbraceInternalInterfaceImplTest {
         mockkStatic(URLUtil::class)
         every { Uri.parse("https://google.com") } returns mockk(relaxed = true)
         every { URLUtil.isHttpsUrl("https://google.com") } returns true
-        impl.recordCompletedNetworkRequest(
+        internalImpl.recordCompletedNetworkRequest(
             "https://google.com",
             "get",
             15092342340,
@@ -126,7 +137,7 @@ internal class EmbraceInternalInterfaceImplTest {
         )
         val captor = slot<EmbraceNetworkRequest>()
         verify(exactly = 1) {
-            embrace.recordNetworkRequest(capture(captor))
+            embraceImpl.recordNetworkRequest(capture(captor))
         }
 
         val request = captor.captured
@@ -149,7 +160,7 @@ internal class EmbraceInternalInterfaceImplTest {
         every { URLUtil.isHttpsUrl("https://google.com") } returns true
 
         val exc = RuntimeException("Whoops")
-        impl.recordIncompleteNetworkRequest(
+        internalImpl.recordIncompleteNetworkRequest(
             "https://google.com",
             "get",
             15092342340L,
@@ -160,7 +171,7 @@ internal class EmbraceInternalInterfaceImplTest {
         )
         val captor = slot<EmbraceNetworkRequest>()
         verify(exactly = 1) {
-            embrace.recordNetworkRequest(capture(captor))
+            embraceImpl.recordNetworkRequest(capture(captor))
         }
 
         val request = captor.captured
@@ -181,10 +192,14 @@ internal class EmbraceInternalInterfaceImplTest {
         val networkRequest: EmbraceNetworkRequest = mockk()
         every { networkRequest.url } answers { url }
 
-        impl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
+        defaultImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
+        verify(exactly = 0) {
+            embraceImpl.recordAndDeduplicateNetworkRequest(any(), any())
+        }
 
+        internalImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
         verify(exactly = 1) {
-            embrace.recordAndDeduplicateNetworkRequest(callId, capture(captor))
+            embraceImpl.recordAndDeduplicateNetworkRequest(callId, capture(captor))
         }
 
         assertEquals(url, captor.captured.url)
@@ -192,10 +207,10 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Test
     fun `check usage of SDK time`() {
-        assertEquals(beforeObjectInitTime, impl.getSdkCurrentTime())
-        assertTrue(impl.getSdkCurrentTime() < System.currentTimeMillis())
+        assertEquals(beforeObjectInitTime, internalImpl.getSdkCurrentTime())
+        assertTrue(internalImpl.getSdkCurrentTime() < System.currentTimeMillis())
         fakeClock.tick(10L)
-        assertEquals(fakeClock.now(), impl.getSdkCurrentTime())
+        assertEquals(fakeClock.now(), internalImpl.getSdkCurrentTime())
     }
 
     @Test
@@ -206,13 +221,65 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Test
     fun `test isInternalNetworkCaptureDisabled`() {
-        assertFalse(impl.isInternalNetworkCaptureDisabled())
+        assertFalse(internalImpl.isInternalNetworkCaptureDisabled())
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
-        assertTrue(impl.isInternalNetworkCaptureDisabled())
+        assertTrue(internalImpl.isInternalNetworkCaptureDisabled())
         assertFalse(defaultImpl.isInternalNetworkCaptureDisabled())
     }
 
+    @Test
+    fun `check isNetworkSpanForwardingEnabled`() {
+        assertFalse(internalImpl.isNetworkSpanForwardingEnabled())
+        fakeConfigService.networkSpanForwardingBehavior =
+            fakeNetworkSpanForwardingBehavior(remoteConfig = { NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f) })
+        assertTrue(internalImpl.isNetworkSpanForwardingEnabled())
+    }
+
+    @Test
+    fun `check isAnrCaptureEnabled`() {
+        assertTrue(internalImpl.isAnrCaptureEnabled())
+        fakeConfigService.anrBehavior = fakeAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 0) })
+        assertFalse(internalImpl.isAnrCaptureEnabled())
+        fakeConfigService.anrBehavior = fakeAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 100) })
+        assertTrue(internalImpl.isAnrCaptureEnabled())
+        assertFalse(defaultImpl.isAnrCaptureEnabled())
+    }
+
+    @Test
+    fun `check isNdkEnabled`() {
+        assertFalse(internalImpl.isNdkEnabled())
+        fakeConfigService.autoDataCaptureBehavior =
+            fakeAutoDataCaptureBehavior(localCfg = { LocalConfig("abcde", true, SdkLocalConfig()) })
+        assertTrue(internalImpl.isNdkEnabled())
+        assertFalse(defaultImpl.isNdkEnabled())
+    }
+
+    @Test
+    fun `check logInternalError with exception`() {
+        val expectedException = SocketException()
+        defaultImpl.logInternalError(expectedException)
+        verify(exactly = 0) {
+            embraceImpl.logInternalError(any())
+        }
+        internalImpl.logInternalError(expectedException)
+        verify(exactly = 1) {
+            embraceImpl.logInternalError(expectedException)
+        }
+    }
+
+    @Test
+    fun `check logInternalError with error type and message`() {
+        defaultImpl.logInternalError("err", "message")
+        verify(exactly = 0) {
+            embraceImpl.logInternalError(any(), any())
+        }
+        internalImpl.logInternalError("err", "message")
+        verify(exactly = 1) {
+            embraceImpl.logInternalError("err", "message")
+        }
+    }
+
     companion object {
-        val beforeObjectInitTime = System.currentTimeMillis() - 1
+        private val beforeObjectInitTime = System.currentTimeMillis() - 1
     }
 }

@@ -50,7 +50,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
-	public fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logInfo (Ljava/lang/String;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
@@ -70,8 +69,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
 	public fun setAppId (Ljava/lang/String;)Z
-	public fun setDartVersion (Ljava/lang/String;)V
-	public fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
 	public fun setUserAsPayer ()V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V

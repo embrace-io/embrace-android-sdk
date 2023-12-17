@@ -158,4 +158,8 @@ internal class UnityInternalInterfaceImpl(
             )
         )
     }
+
+    override fun installUnityThreadSampler() {
+        embrace.installUnityThreadSampler()
+    }
 }

@@ -9,17 +9,17 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 internal interface FlutterInternalInterface : EmbraceInternalInterface {
 
     /**
-     * See [Embrace.setEmbraceFlutterSdkVersion]
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
      */
     fun setEmbraceFlutterSdkVersion(version: String?)
 
     /**
-     * See [Embrace.setDartVersion]
+     * Sets the Dart version - this is not intended for public use.
      */
     fun setDartVersion(version: String?)
 
     /**
-     * See [Embrace.logHandledDartException]
+     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
      */
     fun logHandledDartException(
         stack: String?,
@@ -30,7 +30,7 @@ internal interface FlutterInternalInterface : EmbraceInternalInterface {
     )
 
     /**
-     * See [Embrace.logUnhandledDartException]
+     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
      */
     fun logUnhandledDartException(
         stack: String?,

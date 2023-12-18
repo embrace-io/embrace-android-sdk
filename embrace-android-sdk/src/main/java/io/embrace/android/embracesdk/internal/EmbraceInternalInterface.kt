@@ -137,22 +137,37 @@ public interface EmbraceInternalInterface {
      * Whether network capture has been disabled through an internal, not-publicly supported means
      */
     public fun isInternalNetworkCaptureDisabled(): Boolean
+
+    public fun isAnrCaptureEnabled(): Boolean
+
+    public fun isNdkEnabled(): Boolean
+
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    public fun logInternalError(message: String?, details: String?)
+
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    public fun logInternalError(error: Throwable)
 }
 
 internal val defaultImpl = object : EmbraceInternalInterface {
 
-    override fun logInfo(message: String, properties: Map<String, Any>?) { }
+    override fun logInfo(message: String, properties: Map<String, Any>?) {}
 
-    override fun logWarning(message: String, properties: Map<String, Any>?, stacktrace: String?) { }
+    override fun logWarning(message: String, properties: Map<String, Any>?, stacktrace: String?) {}
 
-    override fun logError(message: String, properties: Map<String, Any>?, stacktrace: String?, isException: Boolean) { }
+    override fun logError(message: String, properties: Map<String, Any>?, stacktrace: String?, isException: Boolean) {}
 
     override fun logHandledException(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
         customStackTrace: Array<StackTraceElement>?
-    ) { }
+    ) {
+    }
 
     override fun recordCompletedNetworkRequest(
         url: String,
@@ -164,7 +179,8 @@ internal val defaultImpl = object : EmbraceInternalInterface {
         statusCode: Int,
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
-    ) { }
+    ) {
+    }
 
     override fun recordIncompleteNetworkRequest(
         url: String,
@@ -174,7 +190,8 @@ internal val defaultImpl = object : EmbraceInternalInterface {
         error: Throwable?,
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
-    ) { }
+    ) {
+    }
 
     override fun recordIncompleteNetworkRequest(
         url: String,
@@ -185,19 +202,28 @@ internal val defaultImpl = object : EmbraceInternalInterface {
         errorMessage: String?,
         traceId: String?,
         networkCaptureData: NetworkCaptureData?
-    ) { }
+    ) {
+    }
 
-    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) { }
+    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) {}
 
-    override fun logComposeTap(point: Pair<Float, Float>, elementName: String) { }
+    override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {}
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
 
-    override fun setProcessStartedByNotification() { }
+    override fun setProcessStartedByNotification() {}
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
 
     override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
 
     override fun isInternalNetworkCaptureDisabled(): Boolean = false
+
+    override fun isAnrCaptureEnabled(): Boolean = false
+
+    override fun isNdkEnabled(): Boolean = false
+
+    override fun logInternalError(message: String?, details: String?) {}
+
+    override fun logInternalError(error: Throwable) {}
 }

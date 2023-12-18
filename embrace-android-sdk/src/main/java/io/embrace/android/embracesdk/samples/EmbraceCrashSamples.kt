@@ -12,7 +12,7 @@ internal object EmbraceCrashSamples {
 
     private val logger = InternalEmbraceLogger()
 
-    val ndkCrashSamplesNdkDelegate = EmbraceCrashSamplesNdkDelegateImpl()
+    private val ndkCrashSamplesNdkDelegate = EmbraceCrashSamplesNdkDelegateImpl()
 
     /**
      * Verifies if Embrace is initialized
@@ -35,7 +35,7 @@ internal object EmbraceCrashSamples {
      */
 
     fun checkAnrDetectionEnabled() {
-        if (Embrace.getInstance().configService?.anrBehavior?.isAnrCaptureEnabled() == false) {
+        if (!Embrace.getInstance().internalInterface.isAnrCaptureEnabled()) {
             val e = EmbraceSampleCodeException(
                 "ANR capture disabled - you need to enable it to test Embrace's ANR functionality:\n" +
                     " - add [\"anr\":{\"pct_enabled\": 100 }]" +
@@ -91,7 +91,7 @@ internal object EmbraceCrashSamples {
         // First verifies is Embrace SDK is initialized
         isSdkStarted()
 
-        if (Embrace.getInstance().configService?.autoDataCaptureBehavior?.isNdkEnabled() != true) {
+        if (!Embrace.getInstance().internalInterface.isNdkEnabled()) {
             val e = EmbraceSampleCodeException(
                 "NDK crash capture is disabled - you need to enable it to test Embrace's NDK functionality" +
                     " - To enable it, add [\"ndk_enabled\": true] inside the configuration file"

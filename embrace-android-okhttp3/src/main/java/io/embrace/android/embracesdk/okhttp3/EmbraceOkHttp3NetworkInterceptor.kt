@@ -191,7 +191,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
                 i++
             }
             dataCaptureErrorMessage = "There were errors in capturing the following part(s) of the network call: %s$errors"
-            embrace.logInternalError(
+            embrace.internalInterface.logInternalError(
                 RuntimeException("Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage", e)
             )
         }
@@ -227,7 +227,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            embrace.logInternalError("Failed to capture okhttp request body.", e.javaClass.toString())
+            embrace.internalInterface.logInternalError("Failed to capture okhttp request body.", e.javaClass.toString())
         }
         return null
     }

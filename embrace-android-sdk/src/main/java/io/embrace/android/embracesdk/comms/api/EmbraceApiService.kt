@@ -184,27 +184,28 @@ internal class EmbraceApiService(
     ): Future<*> {
         return executorService.submit(
             NetworkRequestRunnable(request) {
-                val pendingApiCall = pendingApiCallsSender.savePendingApiCall(request, payload)
+                val endpoint = request.url.endpoint()
 
                 if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
-                    !rateLimitHandler.isRateLimited(request.url.endpoint())
+                    !rateLimitHandler.isRateLimited(endpoint)
                 ) {
                     // Execute the request if the device is online and the endpoint is not rate limited.
-                    val response: ApiResponse = executePost(request, payload)
+                    val response = executePost(request, payload)
 
-                    if (response is ApiResponse.Success) {
-                        // Remove the API call from cache if it was sent successfully.
-                        pendingApiCallsSender.removePendingApiCall(pendingApiCall)
-                        onComplete?.invoke()
-                    } else {
-                        // Schedule the API call to be sent later if it should be retried.
-                        if (pendingApiCallsSender.shouldRetry(response)) {
-                            pendingApiCallsSender.scheduleApiCall(response)
-                        }
+                    if (pendingApiCallsSender.shouldRetry(response)) {
+                        pendingApiCallsSender.savePendingApiCall(request, payload)
+                        pendingApiCallsSender.scheduleApiCall(response)
+                    }
+
+                    if (response !is ApiResponse.Success) {
                         onComplete?.invoke()
                         error("Failed to post Embrace API call. ")
                     }
+                } else {
+                    // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
+                    pendingApiCallsSender.savePendingApiCall(request, payload)
                 }
+                onComplete?.invoke()
             }
         )
     }

@@ -26,12 +26,6 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
         return pendingApiCall
     }
 
-    override fun removePendingApiCall(pendingApiCall: PendingApiCall) {
-        if (pendingApiCalls.contains(pendingApiCall)) {
-            pendingApiCalls.remove(pendingApiCall)
-        }
-    }
-
     override fun shouldRetry(response: ApiResponse): Boolean {
         return when (response) {
             is ApiResponse.Success,

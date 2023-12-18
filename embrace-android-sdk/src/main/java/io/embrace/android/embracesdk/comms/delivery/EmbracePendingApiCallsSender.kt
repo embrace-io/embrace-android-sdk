@@ -65,15 +65,6 @@ internal class EmbracePendingApiCallsSender(
         return pendingApiCall
     }
 
-    override fun removePendingApiCall(pendingApiCall: PendingApiCall) {
-        // Delete the payload from disk.
-        cacheManager.deletePayload(pendingApiCall.cachedPayloadFilename)
-
-        // Delete the pending api call from disk.
-        pendingApiCalls.remove(pendingApiCall)
-        cacheManager.savePendingApiCalls(pendingApiCalls)
-    }
-
     override fun scheduleApiCall(response: ApiResponse) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 

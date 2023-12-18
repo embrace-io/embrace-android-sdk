@@ -24,11 +24,6 @@ internal interface PendingApiCallsSender {
     fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall
 
     /**
-     * Removes a pending API call.
-     */
-    fun removePendingApiCall(pendingApiCall: PendingApiCall)
-
-    /**
      * Schedules an API call to be sent later.
      */
     fun scheduleApiCall(response: ApiResponse)

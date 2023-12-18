@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal
 
 import android.os.FileObserver
 import java.util.concurrent.CountDownLatch

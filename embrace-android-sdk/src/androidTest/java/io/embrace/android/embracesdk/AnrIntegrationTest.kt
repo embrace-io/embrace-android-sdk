@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import io.embrace.android.embracesdk.BaseTest
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
@@ -94,7 +96,6 @@ internal class AnrIntegrationTest : BaseTest() {
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var latch: CountDownLatch
-    private val serializer = EmbraceSerializer()
 
     @Before
     fun setup() {
@@ -104,10 +105,8 @@ internal class AnrIntegrationTest : BaseTest() {
     }
 
     private fun readBodyAsSessionMessage(request: RecordedRequest): SessionMessage {
-        val stream = request.body.inputStream()
-        GZIPInputStream(stream).bufferedReader().use {
-            return gson.fromJson(it, SessionMessage::class.java)
-        }
+        val stream = GZIPInputStream(request.body.inputStream())
+        return serializer.fromJson(stream, SessionMessage::class.java)
     }
 
     /**

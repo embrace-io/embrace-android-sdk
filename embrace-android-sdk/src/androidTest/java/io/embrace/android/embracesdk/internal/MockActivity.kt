@@ -6,7 +6,6 @@ import android.app.FragmentManager
 import android.content.Context
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
-import io.embrace.android.embracesdk.EmbraceContext
 
 /**
  * Used to Mock an Activity instance, which will return the Mocked FragmentManager

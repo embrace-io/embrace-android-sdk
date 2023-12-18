@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal
 
 import android.app.Application
 import android.content.ComponentCallbacks
@@ -13,6 +13,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MockReportFragment
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwnerAccess
+import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.FakePackageManager
 import io.embrace.android.embracesdk.internal.MockActivity
 import io.embrace.android.embracesdk.internal.PauseProcessListener
 import io.embrace.android.embracesdk.utils.BitmapFactory
@@ -88,24 +90,30 @@ public class EmbraceContext(public val context: Context) : Application() {
             Lifecycle.Event.ON_CREATE -> activityLifecycleCallbacks.forEach {
                 it.onActivityCreated(activity, bundle)
             }
+
             Lifecycle.Event.ON_START -> activityLifecycleCallbacks.forEach {
                 it.onActivityStarted(activity)
             }
+
             Lifecycle.Event.ON_RESUME -> activityLifecycleCallbacks.forEach {
                 it.onActivityResumed(activity)
             }
+
             Lifecycle.Event.ON_PAUSE -> {
                 pauseProcessListener.onPauseCallback = { pauseLatch.countDown() }
                 activityLifecycleCallbacks.forEach {
                     it.onActivityPaused(activity)
                 }
             }
+
             Lifecycle.Event.ON_STOP -> activityLifecycleCallbacks.forEach {
                 it.onActivityStopped(activity)
             }
+
             Lifecycle.Event.ON_DESTROY -> activityLifecycleCallbacks.forEach {
                 it.onActivityDestroyed(activity)
             }
+
             Lifecycle.Event.ON_ANY ->
                 throw IllegalArgumentException("ON_ANY must not been send by anybody") // copy from the Android SDK code
         }
@@ -121,12 +129,18 @@ public class EmbraceContext(public val context: Context) : Application() {
                     currentState.nextEvent()?.let { triggerActivityLifecycleEvent(it) }
                 }
             }
+
             Lifecycle.Event.ON_STOP -> {
                 triggerActivityLifecycleEvent(Lifecycle.Event.ON_START)
             }
+
             else -> error("Cannot send App to foreground when current state is: $currentState")
         }
-        assertEquals("Failed to send application to Foreground", Lifecycle.Event.ON_START, currentState)
+        assertEquals(
+            "Failed to send application to Foreground",
+            Lifecycle.Event.ON_START,
+            currentState
+        )
     }
 
     override fun getPackageManager(): PackageManager {
@@ -144,15 +158,22 @@ public class EmbraceContext(public val context: Context) : Application() {
                     }
                 }
             }
+
             Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                 error("Application is already in the background, current state = $currentState")
             }
+
             null, Lifecycle.Event.ON_CREATE -> {
                 error("Application has not entered foreground, call sendForeground() first")
             }
+
             else -> {}
         }
-        assertEquals("Failed to send application to Background", currentState, Lifecycle.Event.ON_STOP)
+        assertEquals(
+            "Failed to send application to Background",
+            currentState,
+            Lifecycle.Event.ON_STOP
+        )
     }
 
     override fun getResources(): Resources {
@@ -201,7 +222,19 @@ public class EmbraceResources(
     resources.configuration
 ) {
 
-    private val mapping = BuildInfoHooks.getResourceValues(appId, sdkConfig)
+    private val buildInfo = BuildInfo(
+        buildId = "default test build id",
+        buildType = "default test build type",
+        buildFlavor = "default test build flavor"
+    )
+
+    private val resources = mapOf(
+        BuildInfo.BUILD_INFO_BUILD_ID.hashCode() to buildInfo.buildId,
+        BuildInfo.BUILD_INFO_BUILD_FLAVOR.hashCode() to buildInfo.buildFlavor,
+        BuildInfo.BUILD_INFO_BUILD_TYPE.hashCode() to buildInfo.buildType,
+        "emb_app_id".hashCode() to appId,
+        "emb_sdk_config".hashCode() to sdkConfig
+    )
 
     @SuppressWarnings("DiscouragedApi")
     override fun getIdentifier(name: String?, defType: String?, defPackage: String?): Int {
@@ -209,6 +242,6 @@ public class EmbraceResources(
     }
 
     override fun getString(id: Int): String {
-        return mapping[id] ?: ""
+        return resources[id] ?: ""
     }
 }

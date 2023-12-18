@@ -3,11 +3,9 @@ package io.embrace.android.embracesdk
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsQueue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -40,7 +38,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private val serializer = EmbraceSerializer()
     private val executor = MoreExecutors.newDirectExecutorService()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
-    private lateinit var cacheService: CacheService
+    private lateinit var cacheService: TestCacheService
     private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var fakeClock: FakeClock
 
@@ -352,7 +350,7 @@ internal class EmbraceDeliveryCacheManagerTest {
      */
     @Test
     fun `load old version of pending api calls file as new version when load cache returns null`() {
-        val pendingApiCallsQueue = PendingApiCallsQueue()
+        val pendingApiCallsQueue = ArrayList<PendingApiCall>()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -376,60 +374,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
         pendingApiCallsQueue.add(pendingApiCall2)
 
-        cacheService.cacheObject(
-            PENDING_API_CALLS_FILE_NAME,
-            pendingApiCallsQueue,
-            PendingApiCallsQueue::class.java
-        )
-
-        every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } returns null
-
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
-        assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
-        assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
-        assertEquals(null, cachedCalls.pollNextPendingApiCall())
-    }
-
-    /**
-     * The current version is storing [PendingApiCalls] in a file, but previous versions
-     * were storing [PendingApiCallsQueue]. This test checks that the current
-     * version can read the old version and convert it to the new one.
-     * Test that the load works even if the cache throws an exception when loading the file.
-     */
-    @Test
-    fun `load old version of pending api calls file as new version when load cache throws exception`() {
-        val pendingApiCallsQueue = PendingApiCallsQueue()
-        val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id_1",
-            deviceId = "test_device_id",
-            eventId = "request_1",
-            contentEncoding = "gzip"
-        )
-        val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
-        pendingApiCallsQueue.add(pendingApiCall1)
-
-        val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
-            httpMethod = HttpMethod.POST,
-            appId = "test_app_id",
-            deviceId = "test_device_id",
-            eventId = "request_2",
-            contentEncoding = "gzip"
-        )
-        fakeClock.tickSecond()
-        val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
-        pendingApiCallsQueue.add(pendingApiCall2)
-
-        cacheService.cacheObject(
-            PENDING_API_CALLS_FILE_NAME,
-            pendingApiCallsQueue,
-            PendingApiCallsQueue::class.java
-        )
-
-        every { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) } throws Exception()
-
+        cacheService.oldPendingApiCalls = pendingApiCallsQueue
         val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
@@ -462,5 +407,3 @@ internal class EmbraceDeliveryCacheManagerTest {
         return EmbraceDeliveryCacheManager.CachedSession(sessionId, timestamp).filename
     }
 }
-
-private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"

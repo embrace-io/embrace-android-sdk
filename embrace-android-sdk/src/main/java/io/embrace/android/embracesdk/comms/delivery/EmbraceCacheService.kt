@@ -160,6 +160,20 @@ internal class EmbraceCacheService(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
+        val file = File(storageDir, EMBRACE_PREFIX + name)
+        try {
+            val results = serializer.fromJson(file.inputStream(), ArrayList::class.java)
+            return results as List<PendingApiCall>? ?: return null
+        } catch (ex: FileNotFoundException) {
+            logger.logDebug("Cache file cannot be found " + file.path)
+        } catch (ex: Exception) {
+            logger.logDebug("Failed to read cache object " + file.path, ex)
+        }
+        return null
+    }
+
     companion object {
         private const val EMBRACE_PREFIX = "emb_"
         private const val TAG = "EmbraceCacheService"

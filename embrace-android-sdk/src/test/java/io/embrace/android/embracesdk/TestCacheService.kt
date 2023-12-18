@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.util.concurrent.ConcurrentHashMap
@@ -65,5 +66,11 @@ internal class TestCacheService : CacheService {
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         cacheBytes(name, serializer.toJson(sessionMessage).toByteArray())
+    }
+
+    var oldPendingApiCalls: List<PendingApiCall>? = null
+
+    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
+        return oldPendingApiCalls
     }
 }

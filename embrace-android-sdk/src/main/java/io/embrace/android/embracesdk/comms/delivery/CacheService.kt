@@ -87,4 +87,9 @@ internal interface CacheService {
      * @return list of file names
      */
     fun listFilenamesByPrefix(prefix: String): List<String>?
+
+    /**
+     * Loads pending API calls from their old location on disk.
+     */
+    fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
 }

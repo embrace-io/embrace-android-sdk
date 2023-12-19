@@ -131,7 +131,7 @@ internal class EmbracePendingApiCallsSender(
         }
     }
     private fun executeDelivery(delayInSeconds: Long) {
-        if (lastNetworkStatus.isReachable.not()) {
+        if (!lastNetworkStatus.isReachable) {
             logger.logInfo("Did not retry api calls as scheduled because network is not reachable")
             return
         }

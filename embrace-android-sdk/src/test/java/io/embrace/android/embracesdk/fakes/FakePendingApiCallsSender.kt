@@ -25,16 +25,4 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
         pendingApiCalls.add(pendingApiCall)
         return pendingApiCall
     }
-
-    override fun shouldRetry(response: ApiResponse): Boolean {
-        return when (response) {
-            is ApiResponse.Success,
-            is ApiResponse.NotModified,
-            is ApiResponse.PayloadTooLarge,
-            is ApiResponse.Failure -> false
-
-            is ApiResponse.TooManyRequests,
-            is ApiResponse.Incomplete -> true
-        }
-    }
 }

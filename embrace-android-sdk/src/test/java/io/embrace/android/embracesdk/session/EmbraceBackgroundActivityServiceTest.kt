@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -75,7 +76,10 @@ internal class EmbraceBackgroundActivityServiceTest {
             preferencesService,
             mockk()
         )
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
+        spansService = EmbraceSpansService(
+            clock = OpenTelemetryClock(embraceClock = clock),
+            telemetryService = FakeTelemetryService()
+        )
         spansRemoteConfig = SpansRemoteConfig(pctEnabled = 100f)
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,

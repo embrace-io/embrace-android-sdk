@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -63,7 +64,10 @@ internal class EmbraceSessionServiceTest {
     @Before
     fun before() {
         deliveryService = FakeDeliveryService()
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
+        spansService = EmbraceSpansService(
+            clock = OpenTelemetryClock(embraceClock = clock),
+            telemetryService = FakeTelemetryService()
+        )
         configService = FakeConfigService(
             spansBehavior = fakeSpansBehavior { SpansRemoteConfig(pctEnabled = 100f) }
         )

@@ -83,9 +83,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache")
         val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
-        val serialized = deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
-
-        assertArrayEquals(expectedBytes, serialized)
+        deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
         verify {
             cacheService.cacheBytes(
@@ -95,9 +93,6 @@ internal class EmbraceDeliveryCacheManagerTest {
         }
 
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
-
-        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
-        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
     @Test
@@ -114,9 +109,6 @@ internal class EmbraceDeliveryCacheManagerTest {
         }
 
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
-
-        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
-        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
     @Test
@@ -133,13 +125,12 @@ internal class EmbraceDeliveryCacheManagerTest {
             )
         }
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
-        assertArrayEquals(expectedByteArray, checkNotNull(deliveryCacheManager.loadSessionBytes("test_cache")))
     }
 
     @Test
     fun `session not found in cache`() {
         assertNull(deliveryCacheManager.loadSession("not_found_session"))
-        assertNull(deliveryCacheManager.loadSessionBytes("not_found_session"))
+        assertNull(deliveryCacheManager.loadSessionAsAction("not_found_session"))
     }
 
     @Test
@@ -164,14 +155,10 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache_fails")
         val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
-        val serialized = checkNotNull(deliveryCacheManager.saveSession(sessionMessage, NORMAL_END))
+        deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
         val charset = Charset.defaultCharset()
-        val expectedStr = String(expectedBytes, charset)
-        val observedStr = String(serialized)
-        assertEquals(expectedStr, observedStr)
-
-        every { cacheService.cacheBytes(any(), any()) } answers { callOriginal() }
+        assertNull(deliveryCacheManager.loadSessionAsAction("test_cache_fails"))
     }
 
     @Test

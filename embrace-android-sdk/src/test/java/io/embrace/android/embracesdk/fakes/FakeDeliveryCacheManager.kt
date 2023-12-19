@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 
-    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType): ByteArray {
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         TODO("Not yet implemented")
     }
 
@@ -18,7 +18,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         TODO("Not yet implemented")
     }
 
@@ -70,7 +70,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun loadPayloadAsAction(name: String): SerializationAction? {
+    override fun loadPayloadAsAction(name: String): SerializationAction {
         TODO("Not yet implemented")
     }
 }

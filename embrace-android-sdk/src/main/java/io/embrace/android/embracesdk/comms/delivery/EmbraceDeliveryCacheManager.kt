@@ -54,34 +54,16 @@ internal class EmbraceDeliveryCacheManager(
     override fun saveSession(
         sessionMessage: SessionMessage,
         snapshotType: SessionSnapshotType
-    ): ByteArray? {
-        return when (snapshotType) {
-            SessionSnapshotType.PERIODIC_CACHE -> {
-                saveSessionImpl(sessionMessage, false) { filename ->
-                    cacheService.writeSession(filename, sessionMessage)
-                }
-                null
-            }
-            else -> {
-                val sessionBytes: ByteArray = serializer.toJson(sessionMessage).toByteArray()
-                saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
-                    cacheService.cacheBytes(filename, sessionBytes)
-                }
-                sessionBytes
-            }
-        }
-    }
-
-    private fun saveSessionImpl(
-        sessionMessage: SessionMessage,
-        writeSync: Boolean,
-        saveAction: (filename: String) -> Unit
     ) {
         try {
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
                 deleteOldestSessions()
             }
-            saveBytes(sessionMessage.session.sessionId, writeSync, saveAction)
+            val sessionId = sessionMessage.session.sessionId
+            val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
+            saveBytes(sessionId, writeSync) { filename: String ->
+                cacheService.writeSession(filename, sessionMessage)
+            }
         } catch (exc: Throwable) {
             logger.logError("Save session failed", exc, true)
             throw exc
@@ -96,9 +78,9 @@ internal class EmbraceDeliveryCacheManager(
         return null
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         cachedSessions[sessionId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            loadPayloadAsAction(cachedSession.filename)
         }
         logger.logError("Session $sessionId is not in cache")
         return null
@@ -193,7 +175,7 @@ internal class EmbraceDeliveryCacheManager(
         return cacheService.loadBytes(name)
     }
 
-    override fun loadPayloadAsAction(name: String): SerializationAction? {
+    override fun loadPayloadAsAction(name: String): SerializationAction {
         return cacheService.loadPayload(name)
     }
 

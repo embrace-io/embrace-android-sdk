@@ -153,11 +153,8 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        val request: ApiRequest = mapper.sessionRequest()
-        return postOnExecutor({
-            it.write(sessionPayload)
-        }, request, onFinish)
+    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
+        return postOnExecutor(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(

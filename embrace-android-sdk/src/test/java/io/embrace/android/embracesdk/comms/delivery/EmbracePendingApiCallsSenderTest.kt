@@ -32,7 +32,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
     companion object {
         private val connectedNetworkStatuses =
-            NetworkStatus.values().filter { it != NetworkStatus.NOT_REACHABLE }
+            NetworkStatus.values().filter { it.isReachable }
 
         private lateinit var networkConnectivityService: NetworkConnectivityService
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService

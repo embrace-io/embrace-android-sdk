@@ -186,7 +186,7 @@ internal class EmbraceApiService(
             NetworkRequestRunnable(request) {
                 val endpoint = request.url.endpoint()
 
-                if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE &&
+                if (lastNetworkStatus.isReachable &&
                     !rateLimitHandler.isRateLimited(endpoint)
                 ) {
                     // Execute the request if the device is online and the endpoint is not rate limited.

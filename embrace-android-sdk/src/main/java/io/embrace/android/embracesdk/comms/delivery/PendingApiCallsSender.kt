@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.comms.api.ApiResponse
 internal interface PendingApiCallsSender {
 
     /**
-     * Sets the method to be used when sending an [ApiRequest]
+     * Sets the method to be used when sending an [ApiRequest].
      */
     fun setSendMethod(sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse)
 

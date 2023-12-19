@@ -59,9 +59,8 @@ internal class EmbracePendingApiCallsSender(
                 scheduleApiCallsDelivery(RETRY_PERIOD)
             }
             is ApiResponse.TooManyRequests -> {
-                val rateLimitedEndpoint = response.endpoint
                 rateLimitHandler.setRateLimitAndScheduleRetry(
-                    rateLimitedEndpoint,
+                    response.endpoint,
                     response.retryAfter,
                     this::scheduleApiCallsDelivery
                 )
@@ -77,23 +76,16 @@ internal class EmbracePendingApiCallsSender(
      */
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         lastNetworkStatus = status
-        when (status) {
-            NetworkStatus.UNKNOWN,
-            NetworkStatus.WIFI,
-            NetworkStatus.WAN,
-            -> {
-                scheduleApiCallsDelivery()
-            }
-
-            NetworkStatus.NOT_REACHABLE -> {
-                synchronized(this) {
-                    lastDeliveryTask?.let { task ->
-                        if (task.cancel(false)) {
-                            logger.logDebug("Api Calls Delivery Action was stopped because there is no connection. ")
-                            lastDeliveryTask = null
-                        } else {
-                            logger.logError("Api Calls Delivery Action could not be stopped.")
-                        }
+        if (status.isReachable) {
+            scheduleApiCallsDelivery()
+        } else {
+            synchronized(this) {
+                lastDeliveryTask?.let { task ->
+                    if (task.cancel(false)) {
+                        logger.logDebug("Api Calls Delivery Action was stopped because there is no connection. ")
+                        lastDeliveryTask = null
+                    } else {
+                        logger.logError("Api Calls Delivery Action could not be stopped.")
                     }
                 }
             }
@@ -138,9 +130,8 @@ internal class EmbracePendingApiCallsSender(
             logger.logError("Cannot schedule delivery of pending api calls.", e)
         }
     }
-
     private fun executeDelivery(delayInSeconds: Long) {
-        if (lastNetworkStatus == NetworkStatus.NOT_REACHABLE) {
+        if (lastNetworkStatus.isReachable.not()) {
             logger.logInfo("Did not retry api calls as scheduled because network is not reachable")
             return
         }

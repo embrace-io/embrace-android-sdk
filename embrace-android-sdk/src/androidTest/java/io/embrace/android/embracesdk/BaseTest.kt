@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwnerAccess
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig

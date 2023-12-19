@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -61,9 +62,8 @@ internal class SessionMessageTest {
         assertEquals(spans, obj.spans)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<SessionMessage>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<SessionMessage>()
     }
 }

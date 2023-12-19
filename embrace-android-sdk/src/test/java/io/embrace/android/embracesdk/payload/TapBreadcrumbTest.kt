@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.payload
 
 import android.util.Pair
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class TapBreadcrumbTest {
@@ -31,9 +31,8 @@ internal class TapBreadcrumbTest {
         assertEquals(TapBreadcrumb.TapBreadcrumbType.TAP, obj.type)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<TapBreadcrumb>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<TapBreadcrumb>()
     }
 }

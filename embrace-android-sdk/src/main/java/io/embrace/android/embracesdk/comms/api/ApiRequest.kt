@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.comms.api
 
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.io.IOException
 
+@JsonClass(generateAdapter = true)
 internal data class ApiRequest(
     val contentType: String = "application/json",
 

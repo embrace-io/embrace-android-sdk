@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class LocalConfig(
 
     /**
@@ -12,7 +14,7 @@ internal class LocalConfig(
     /**
      * Control whether the Embrace SDK is able to capture native crashes.
      */
-    @SerializedName("ndk_enabled")
+    @Json(name = "ndk_enabled")
     val ndkEnabled: Boolean,
 
     /**

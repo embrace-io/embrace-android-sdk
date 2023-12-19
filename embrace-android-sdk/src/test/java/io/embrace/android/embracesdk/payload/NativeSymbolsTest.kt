@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class NativeSymbolsTest {
@@ -55,9 +55,8 @@ internal class NativeSymbolsTest {
         assertEquals(x86Symbols, obj.getSymbolByArchitecture("x86_64"))
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<NativeSymbols>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<NativeSymbols>()
     }
 }

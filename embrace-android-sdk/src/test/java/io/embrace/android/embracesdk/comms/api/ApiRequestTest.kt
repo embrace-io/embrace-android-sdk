@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
@@ -7,7 +8,6 @@ import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -85,10 +85,9 @@ internal class ApiRequestTest {
         )
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<ApiRequest>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<ApiRequest>()
     }
 
     @Test

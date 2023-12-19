@@ -14,11 +14,6 @@ internal interface PendingApiCallsSender {
     fun setSendMethod(sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse)
 
     /**
-     * Determines if a failed API call should be retried.
-     */
-    fun shouldRetry(response: ApiResponse): Boolean
-
-    /**
      * Saves an API call to be sent later and returns the corresponding [PendingApiCall].
      */
     fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall

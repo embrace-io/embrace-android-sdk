@@ -6,6 +6,17 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpo
  * ApiResponse is a sealed class that represents the result of an API call.
  */
 internal sealed class ApiResponse {
+
+    /**
+     * Returns true if the API call should be retried.
+     */
+    val shouldRetry: Boolean
+        get() = when (this) {
+            is TooManyRequests -> true
+            is Incomplete -> true
+            else -> false
+        }
+
     /**
      * Represents an API call that returned a 200 OK status code.
      */

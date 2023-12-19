@@ -40,20 +40,6 @@ internal class EmbracePendingApiCallsSender(
         this.sendMethod = sendMethod
     }
 
-    override fun shouldRetry(response: ApiResponse): Boolean {
-        return when (response) {
-            is ApiResponse.Success,
-            is ApiResponse.NotModified,
-            is ApiResponse.PayloadTooLarge,
-            is ApiResponse.Failure,
-            -> false
-
-            is ApiResponse.TooManyRequests,
-            is ApiResponse.Incomplete,
-            -> true
-        }
-    }
-
     override fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall {
         // Save the payload to disk.
         val cachedPayloadName = cacheManager.savePayload(payload)
@@ -170,7 +156,7 @@ internal class EmbracePendingApiCallsSender(
                 response?.let {
                     clearRateLimitIfApplies(pendingApiCall.apiRequest.url.endpoint(), response)
 
-                    if (shouldRetry(response)) {
+                    if (response.shouldRetry) {
                         when (response) {
                             is ApiResponse.TooManyRequests -> {
                                 rateLimitHandler.setRateLimitAndScheduleRetry(

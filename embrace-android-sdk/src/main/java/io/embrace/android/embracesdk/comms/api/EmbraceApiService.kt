@@ -192,7 +192,7 @@ internal class EmbraceApiService(
                     // Execute the request if the device is online and the endpoint is not rate limited.
                     val response = executePost(request, payload)
 
-                    if (pendingApiCallsSender.shouldRetry(response)) {
+                    if (response.shouldRetry) {
                         pendingApiCallsSender.savePendingApiCall(request, payload)
                         pendingApiCallsSender.scheduleApiCall(response)
                     }

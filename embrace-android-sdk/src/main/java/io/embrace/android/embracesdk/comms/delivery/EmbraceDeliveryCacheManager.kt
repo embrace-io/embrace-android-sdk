@@ -203,9 +203,8 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
         logger.logDeveloper(TAG, "Saving pending api calls")
-        val bytes = serializer.toJson(pendingApiCalls).toByteArray()
         executorService.submit {
-            cacheService.cacheBytes(PENDING_API_CALLS_FILE_NAME, bytes)
+            cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
         }
     }
 

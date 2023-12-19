@@ -1,14 +1,17 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import com.google.gson.annotations.SerializedName
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A map containing a queue of pending API calls for each endpoint.
  */
-internal class PendingApiCalls {
-
-    private val pendingApiCallsMap = ConcurrentHashMap<Endpoint, PendingApiCallsQueue>()
+internal class PendingApiCalls(
+    @SerializedName("pendingApiCallsMap")
+    internal val pendingApiCallsMap: MutableMap<Endpoint, MutableList<PendingApiCall>> = ConcurrentHashMap<
+        Endpoint, MutableList<PendingApiCall>>()
+) {
 
     /**
      * Adds a pending API call in the corresponding endpoint's queue.
@@ -17,11 +20,11 @@ internal class PendingApiCalls {
      */
     fun add(pendingApiCall: PendingApiCall) {
         val endpoint = pendingApiCall.apiRequest.url.endpoint()
-        val pendingApiCallsForEndpoint = pendingApiCallsMap.getOrPut(endpoint) { PendingApiCallsQueue() }
+        val pendingApiCallsForEndpoint = pendingApiCallsMap.getOrPut(endpoint, ::mutableListOf)
 
         synchronized(pendingApiCallsForEndpoint) {
             if (pendingApiCallsForEndpoint.hasReachedLimit(endpoint)) {
-                pendingApiCallsForEndpoint.remove()
+                pendingApiCallsForEndpoint.removeFirstOrNull()
             }
             pendingApiCallsForEndpoint.add(pendingApiCall)
         }
@@ -35,7 +38,7 @@ internal class PendingApiCalls {
         pendingApiCallsMap[Endpoint.SESSIONS]?.let { sessionsQueue ->
             synchronized(sessionsQueue) {
                 if (sessionsQueue.isNotEmpty()) {
-                    return sessionsQueue.poll()
+                    return sessionsQueue.removeFirstOrNull()
                 }
             }
         }
@@ -43,12 +46,12 @@ internal class PendingApiCalls {
         val queueWithMinTime = pendingApiCallsMap
             .entries
             .filter { it.value.isNotEmpty() }
-            .minByOrNull { it.value.peek()?.queueTime ?: Long.MAX_VALUE }
+            .minByOrNull { it.value.firstOrNull()?.queueTime ?: Long.MAX_VALUE }
             ?.value
 
         return queueWithMinTime?.let { queue ->
             synchronized(queue) {
-                queue.poll()
+                queue.removeFirstOrNull()
             }
         }
     }
@@ -56,7 +59,7 @@ internal class PendingApiCalls {
     /**
      * Returns true if the endpoint's queue has reached its limit.
      */
-    private fun PendingApiCallsQueue.hasReachedLimit(endpoint: Endpoint): Boolean {
+    private fun MutableList<PendingApiCall>.hasReachedLimit(endpoint: Endpoint): Boolean {
         return this.size >= endpoint.getMaxPendingApiCalls()
     }
 

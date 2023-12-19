@@ -244,7 +244,7 @@ internal class EmbraceDeliveryCacheManager(
         logger.logDeveloper(TAG, "Loading old version of pending api calls")
         var cachedApiCallsPerEndpoint: PendingApiCalls? = null
         val loadPendingApiCallsQueue = runCatching {
-            cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCallsQueue::class.java)
+            cacheService.loadOldPendingApiCalls(PENDING_API_CALLS_FILE_NAME)
         }
 
         if (loadPendingApiCallsQueue.isSuccess) {

@@ -614,58 +614,6 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getFlutterInternalInterface();
     }
 
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     *
-     * @hide
-     */
-    @InternalApi
-    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        impl.setEmbraceFlutterSdkVersion(version);
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     *
-     * @hide
-     */
-    @InternalApi
-    public void setDartVersion(@Nullable String version) {
-        impl.setDartVersion(version);
-    }
-
-    /**
-     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
-     *
-     * @hide
-     */
-    @InternalApi
-    public void logHandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.HANDLED);
-    }
-
-    /**
-     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
-     *
-     * @hide
-     */
-    @InternalApi
-    public void logUnhandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED);
-    }
-
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {
         for (Object param : params) {
             if (param == null) {

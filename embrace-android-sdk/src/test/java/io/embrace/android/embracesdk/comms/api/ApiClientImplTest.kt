@@ -49,7 +49,9 @@ internal class ApiClientImplTest {
     fun testUnreachableHost() {
         // attempt some unreachable port
         val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
-        val response = apiClient.executePost(request, "Hello world".toByteArray().inputStream())
+        val response = apiClient.executePost(request) {
+            it.write("Hello world".toByteArray())
+        }
         check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is IllegalStateException)
     }
@@ -117,7 +119,9 @@ internal class ApiClientImplTest {
 
     @Test
     fun testPostConnectionThrows() {
-        val response = apiClient.executePost(createThrowingRequest(), DEFAULT_REQUEST_BODY.toByteArray().inputStream())
+        val response = apiClient.executePost(createThrowingRequest()) {
+            it.write(DEFAULT_REQUEST_BODY.toByteArray())
+        }
         check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is java.lang.IllegalStateException)
     }
@@ -176,7 +180,9 @@ internal class ApiClientImplTest {
             EmbraceUrl.create(baseUrl)
         )
         server.enqueue(response200)
-        apiClient.executePost(postRequest, DEFAULT_REQUEST_BODY.toByteArray().inputStream())
+        apiClient.executePost(postRequest) {
+            it.write(DEFAULT_REQUEST_BODY.toByteArray())
+        }
 
         // assert all request headers were set
         val delivered = server.takeRequest()
@@ -215,9 +221,10 @@ internal class ApiClientImplTest {
             ApiRequest(
                 url = EmbraceUrl.create(baseUrl),
                 httpMethod = HttpMethod.POST
-            ),
-            payload.inputStream()
-        )
+            )
+        ) {
+            it.write(payload)
+        }
 
     private fun createThrowingRequest(): ApiRequest {
         val mockEmbraceUrl: EmbraceUrl = mockk(relaxed = true)

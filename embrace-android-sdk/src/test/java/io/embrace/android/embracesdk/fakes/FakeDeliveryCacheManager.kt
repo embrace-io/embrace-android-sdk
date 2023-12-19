@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
@@ -49,10 +50,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun savePayload(bytes: ByteArray): String {
-        TODO("Not yet implemented")
-    }
-
     override fun loadPayload(name: String): ByteArray? {
         TODO("Not yet implemented")
     }
@@ -66,6 +63,14 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun loadPendingApiCalls(): PendingApiCalls {
+        TODO("Not yet implemented")
+    }
+
+    override fun savePayload(action: SerializationAction): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction? {
         TODO("Not yet implemented")
     }
 }

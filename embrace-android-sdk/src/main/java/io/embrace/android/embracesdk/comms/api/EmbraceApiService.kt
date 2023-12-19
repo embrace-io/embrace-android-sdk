@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
-import java.io.ByteArrayInputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
@@ -156,7 +155,9 @@ internal class EmbraceApiService(
 
     override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
         val request: ApiRequest = mapper.sessionRequest()
-        return postOnExecutor(sessionPayload, request, onFinish)
+        return postOnExecutor({
+            it.write(sessionPayload)
+        }, request, onFinish)
     }
 
     private inline fun <reified T> post(
@@ -164,14 +165,17 @@ internal class EmbraceApiService(
         mapper: (T) -> ApiRequest,
         noinline onComplete: (() -> Unit)? = null
     ): Future<*> {
-        val bytes = serializer.toJson(payload).toByteArray()
         val request: ApiRequest = mapper(payload)
         logger.logDeveloper(TAG, "Post event")
-        return postOnExecutor(bytes, request, onComplete)
+
+        val action: SerializationAction = { stream ->
+            serializer.toJson(payload, T::class.java, stream)
+        }
+        return postOnExecutor(action, request, onComplete)
     }
 
     private fun postOnExecutor(
-        payload: ByteArray,
+        action: SerializationAction,
         request: ApiRequest,
         onComplete: (() -> Any)?
     ): Future<*> {
@@ -179,14 +183,14 @@ internal class EmbraceApiService(
             NetworkRequestRunnable(request) {
                 try {
                     if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                        executePost(request, payload)
+                        executePost(request, action)
                     } else {
-                        pendingApiCallsSender.scheduleApiCall(request, payload)
+                        pendingApiCallsSender.scheduleApiCall(request, action)
                         logger.logWarning("No connection available. Request was queued to retry later.")
                     }
                 } catch (ex: Exception) {
                     logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                    pendingApiCallsSender.scheduleApiCall(request, payload)
+                    pendingApiCallsSender.scheduleApiCall(request, action)
                     throw ex
                 } finally {
                     onComplete?.invoke()
@@ -196,8 +200,8 @@ internal class EmbraceApiService(
     }
 
     @Suppress("UseCheckOrError")
-    private fun executePost(request: ApiRequest, payload: ByteArray) {
-        val response = apiClient.executePost(request, ByteArrayInputStream(payload))
+    private fun executePost(request: ApiRequest, action: SerializationAction) {
+        val response = apiClient.executePost(request, action)
         if (response !is ApiResponse.Success) {
             throw IllegalStateException("Failed to retrieve from Embrace server.")
         }

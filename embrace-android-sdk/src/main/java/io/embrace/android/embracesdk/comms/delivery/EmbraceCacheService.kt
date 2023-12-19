@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -44,6 +45,34 @@ internal class EmbraceCacheService(
             logger.logWarning("Failed to read cache object " + file.path, ex)
         }
         return null
+    }
+
+    override fun cachePayload(name: String, action: SerializationAction) {
+        logger.logDeveloper(TAG, "Attempting to write bytes to $name")
+        val file = File(storageDir, EMBRACE_PREFIX + name)
+        try {
+            file.outputStream().buffered().use(action)
+            logger.logDeveloper(TAG, "Bytes cached")
+        } catch (ex: Exception) {
+            runCatching { file.delete() }
+            logger.logWarning("Failed to store cache object " + file.path, ex)
+        }
+    }
+
+    override fun loadPayload(name: String): SerializationAction {
+        logger.logDeveloper(TAG, "Attempting to read bytes from $name")
+        return { stream ->
+            val file = File(storageDir, EMBRACE_PREFIX + name)
+            try {
+                file.inputStream().buffered().use { input ->
+                    input.copyTo(stream)
+                }
+            } catch (ex: FileNotFoundException) {
+                logger.logWarning("Cache file cannot be found " + file.path)
+            } catch (ex: Exception) {
+                logger.logWarning("Failed to read cache object " + file.path, ex)
+            }
+        }
     }
 
     /**

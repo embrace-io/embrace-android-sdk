@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -180,16 +181,20 @@ internal class EmbraceDeliveryCacheManager(
         cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
-    override fun savePayload(bytes: ByteArray): String {
+    override fun savePayload(action: SerializationAction): String {
         val name = "payload_" + Uuid.getEmbUuid()
         executorService.submit {
-            cacheService.cacheBytes(name, bytes)
+            cacheService.cachePayload(name, action)
         }
         return name
     }
 
     override fun loadPayload(name: String): ByteArray? {
         return cacheService.loadBytes(name)
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction? {
+        return cacheService.loadPayload(name)
     }
 
     override fun deletePayload(name: String) {

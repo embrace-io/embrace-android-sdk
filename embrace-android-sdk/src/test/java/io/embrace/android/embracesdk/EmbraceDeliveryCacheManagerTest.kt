@@ -30,6 +30,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.nio.charset.Charset
 
 internal class EmbraceDeliveryCacheManagerTest {
@@ -288,11 +290,30 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `save and load payloads`() {
         val payload = "{ json payload }".toByteArray()
-        val cacheName = deliveryCacheManager.savePayload(payload)
+        val action: (outputStream: OutputStream) -> Unit = {
+            it.write(payload)
+        }
+        val cacheName = deliveryCacheManager.savePayload(action)
 
-        verify { cacheService.cacheBytes(cacheName, payload) }
+        verify { cacheService.cachePayload(cacheName, action) }
 
         assertArrayEquals(payload, deliveryCacheManager.loadPayload(cacheName))
+    }
+
+    @Test
+    fun `load payload as action`() {
+        val payload = "{ json payload }".toByteArray()
+        val action: (outputStream: OutputStream) -> Unit = {
+            it.write(payload)
+        }
+        val cacheName = deliveryCacheManager.savePayload(action)
+
+        verify { cacheService.cachePayload(cacheName, action) }
+
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(cacheName))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        assertArrayEquals(payload, stream.toByteArray())
     }
 
     @Test

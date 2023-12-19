@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -46,6 +47,14 @@ internal class FakeCacheService : CacheService {
     }
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
+        TODO("Not yet implemented")
+    }
+
+    override fun cachePayload(name: String, action: SerializationAction) {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayload(name: String): SerializationAction {
         TODO("Not yet implemented")
     }
 }

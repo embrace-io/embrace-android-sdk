@@ -4,16 +4,17 @@ import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
-import java.util.LinkedList
-import java.util.Queue
 
 internal class FakePendingApiCallsSender : PendingApiCallsSender {
 
-    val pendingApiCalls: Queue<PendingApiCall> = LinkedList()
+    val pendingApiCalls = mutableListOf<PendingApiCall>()
+    var didScheduleApiCall = false
     private var sendMethod: ((ApiRequest, ByteArray) -> ApiResponse)? = null
+
 
     override fun scheduleApiCall(response: ApiResponse) {
         check(sendMethod != null) { "Retried to schedule retry before component is ready" }
+        didScheduleApiCall = true
     }
 
     override fun setSendMethod(sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse) {

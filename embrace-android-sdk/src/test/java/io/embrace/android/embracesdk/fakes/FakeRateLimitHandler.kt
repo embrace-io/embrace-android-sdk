@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 internal class FakeRateLimitHandler : RateLimitHandler {
 
     private val rateLimitMap = mutableMapOf<Endpoint, Int>()
+    var didScheduledRetry = false
 
     override fun setRateLimitAndScheduleRetry(
         endpoint: Endpoint,
@@ -13,6 +14,8 @@ internal class FakeRateLimitHandler : RateLimitHandler {
         retryMethod: () -> Unit
     ) {
         rateLimitMap[endpoint] = rateLimitMap[endpoint]?.plus(1) ?: 1
+        didScheduledRetry = true
+        retryMethod()
     }
 
     override fun isRateLimited(endpoint: Endpoint): Boolean {

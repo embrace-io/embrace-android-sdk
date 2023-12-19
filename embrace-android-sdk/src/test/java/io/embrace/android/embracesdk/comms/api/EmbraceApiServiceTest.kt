@@ -433,7 +433,6 @@ internal class EmbraceApiServiceTest {
         // assert that the pending api call was not scheduled, since all pending api calls
         // are executed once the network connection is restored.
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
-
     }
 
     private fun verifyOnlyRequest(

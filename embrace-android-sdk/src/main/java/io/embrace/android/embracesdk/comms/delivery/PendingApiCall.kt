@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 
 /**
  * A pending API call.
  */
+@JsonClass(generateAdapter = true)
 internal data class PendingApiCall(
-    @SerializedName("apiRequest") val apiRequest: ApiRequest,
-    @SerializedName("cachedPayload") val cachedPayloadFilename: String,
-    @SerializedName("queueTime") val queueTime: Long? = null
+    @Json(name = "apiRequest") val apiRequest: ApiRequest,
+    @Json(name = "cachedPayload") val cachedPayloadFilename: String,
+    @Json(name = "queueTime") val queueTime: Long? = null
 )

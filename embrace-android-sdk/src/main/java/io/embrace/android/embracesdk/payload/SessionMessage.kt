@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 
@@ -8,47 +9,48 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
  * The session message, containing the session itself, as well as performance information about the
  * device which occurred during the session.
  */
+@JsonClass(generateAdapter = true)
 internal data class SessionMessage @JvmOverloads internal constructor(
 
     /**
      * The session information.
      */
-    @SerializedName("s")
+    @Json(name = "s")
     val session: Session,
 
     /**
      * The user information.
      */
-    @SerializedName("u")
+    @Json(name = "u")
     val userInfo: UserInfo? = null,
 
     /**
      * The app information.
      */
-    @SerializedName("a")
+    @Json(name = "a")
     val appInfo: AppInfo? = null,
 
     /**
      * The device information.
      */
-    @SerializedName("d")
+    @Json(name = "d")
     val deviceInfo: DeviceInfo? = null,
 
     /**
      * The device's performance info, such as power, cpu, network.
      */
-    @SerializedName("p")
+    @Json(name = "p")
     val performanceInfo: PerformanceInfo? = null,
 
     /**
      * Breadcrumbs which occurred as part of this session.
      */
-    @SerializedName("br")
+    @Json(name = "br")
     val breadcrumbs: Breadcrumbs? = null,
 
-    @SerializedName("spans")
+    @Json(name = "spans")
     val spans: List<EmbraceSpanData>? = null,
 
-    @SerializedName("v")
+    @Json(name = "v")
     val version: Int = ApiClient.MESSAGE_VERSION
 )

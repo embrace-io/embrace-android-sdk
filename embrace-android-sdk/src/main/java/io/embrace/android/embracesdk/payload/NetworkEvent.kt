@@ -1,29 +1,31 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class NetworkEvent(
-    @SerializedName("app_id")
+    @Json(name = "app_id")
     val appId: String,
 
-    @SerializedName("a")
+    @Json(name = "a")
     val appInfo: AppInfo,
 
-    @SerializedName("device_id")
+    @Json(name = "device_id")
     val deviceId: String,
 
-    @SerializedName("id")
+    @Json(name = "id")
     val eventId: String,
 
-    @SerializedName("n")
+    @Json(name = "n")
     val networkCaptureCall: NetworkCapturedCall,
 
-    @SerializedName("ts")
+    @Json(name = "ts")
     val timestamp: String,
 
-    @SerializedName("ip")
+    @Json(name = "ip")
     val ipAddress: String?,
 
-    @SerializedName("si")
+    @Json(name = "si")
     val sessionId: String? = null
 )

@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class AnrLocalConfig(
-    @SerializedName("capture_google")
+    @Json(name = "capture_google")
     val captureGoogle: Boolean? = null,
 
-    @SerializedName("capture_unity_thread")
+    @Json(name = "capture_unity_thread")
     val captureUnityThread: Boolean? = null
 )

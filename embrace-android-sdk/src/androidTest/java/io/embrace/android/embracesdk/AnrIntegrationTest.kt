@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.BaseTest
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -165,7 +166,8 @@ internal class AnrIntegrationTest : BaseTest() {
     ) {
         val interval = intervals[index]
         val errMsg: String by lazy {
-            "Assertion failed for interval $index. ${serializer.toJson(intervals)}"
+            val type = Types.newParameterizedType(List::class.java, AnrInterval::class.java)
+            "Assertion failed for interval $index. ${serializer.toJson(intervals, type)}"
         }
 
         // validate interval code

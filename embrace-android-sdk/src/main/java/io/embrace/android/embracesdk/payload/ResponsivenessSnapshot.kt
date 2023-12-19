@@ -1,27 +1,29 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Data structure representing statistics tracking how responsive a component is, measured by looking at the duration of the gaps
  * between pings.
  */
+@JsonClass(generateAdapter = true)
 internal data class ResponsivenessSnapshot(
-    @SerializedName("name")
+    @Json(name = "name")
     val name: String,
 
-    @SerializedName("first")
+    @Json(name = "first")
     val firstPing: Long,
 
-    @SerializedName("last")
+    @Json(name = "last")
     val lastPing: Long,
 
-    @SerializedName("gaps")
+    @Json(name = "gaps")
     val gaps: Map<String, Long>,
 
-    @SerializedName("outliers")
+    @Json(name = "outliers")
     val outliers: List<ResponsivenessOutlier>,
 
-    @SerializedName("errors")
+    @Json(name = "errors")
     val errors: Long,
 )

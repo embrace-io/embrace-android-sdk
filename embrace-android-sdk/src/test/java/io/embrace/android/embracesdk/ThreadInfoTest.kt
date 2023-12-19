@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class ThreadInfoTest {
@@ -51,9 +51,8 @@ internal class ThreadInfoTest {
         )
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testThreadInfoEmptyObject() {
-        val obj = deserializeEmptyJsonString<ThreadInfo>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<ThreadInfo>()
     }
 }

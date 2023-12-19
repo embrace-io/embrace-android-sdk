@@ -1,48 +1,50 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class DeviceInfo(
 
-    @SerializedName("dm")
+    @Json(name = "dm")
     val manufacturer: String? = null,
 
-    @SerializedName("do")
+    @Json(name = "do")
     val model: String? = null,
 
-    @SerializedName("da")
+    @Json(name = "da")
     val architecture: String? = null,
 
-    @SerializedName("jb")
+    @Json(name = "jb")
     val jailbroken: Boolean? = null,
 
-    @SerializedName("lc")
+    @Json(name = "lc")
     val locale: String? = null,
 
-    @SerializedName("ms")
+    @Json(name = "ms")
     val internalStorageTotalCapacity: Long? = null,
 
-    @SerializedName("os")
+    @Json(name = "os")
     val operatingSystemType: String? = null,
 
-    @SerializedName("ov")
+    @Json(name = "ov")
     val operatingSystemVersion: String? = null,
 
-    @SerializedName("oc")
+    @Json(name = "oc")
     val operatingSystemVersionCode: Int? = null,
 
-    @SerializedName("sr")
+    @Json(name = "sr")
     val screenResolution: String? = null,
 
-    @SerializedName("tz")
+    @Json(name = "tz")
     val timezoneDescription: String? = null,
 
-    @SerializedName("nc")
+    @Json(name = "nc")
     val cores: Int? = null,
 
-    @SerializedName("pt")
+    @Json(name = "pt")
     val cpuName: String? = null,
 
-    @SerializedName("gp")
+    @Json(name = "gp")
     val egl: String? = null
 )

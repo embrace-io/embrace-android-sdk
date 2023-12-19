@@ -1,18 +1,20 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class Crash(
-    @SerializedName("id")
+    @Json(name = "id")
     @JvmField
     val crashId: String,
 
-    @SerializedName("ex")
+    @Json(name = "ex")
     val exceptions: List<ExceptionInfo>? = null,
 
-    @SerializedName("rep_js")
+    @Json(name = "rep_js")
     val jsExceptions: List<String>? = null,
 
-    @SerializedName("th")
+    @Json(name = "th")
     val threads: List<ThreadInfo>? = null
 )

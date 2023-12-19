@@ -1,14 +1,16 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A map containing a queue of pending API calls for each endpoint.
  */
+@JsonClass(generateAdapter = true)
 internal class PendingApiCalls(
-    @SerializedName("pendingApiCallsMap")
+    @Json(name = "pendingApiCallsMap")
     internal val pendingApiCallsMap: MutableMap<Endpoint, MutableList<PendingApiCall>> = ConcurrentHashMap<
         Endpoint, MutableList<PendingApiCall>>()
 ) {

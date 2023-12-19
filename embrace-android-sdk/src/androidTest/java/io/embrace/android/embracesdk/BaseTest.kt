@@ -142,7 +142,7 @@ internal open class BaseTest {
 
     /**
      * send the Application to the Background by triggering the ON_STOP lifecycle callbacks. This method will "catch up"
-     * your current lifecycle state to ON_STOP by calling all methods between. For example, if your current
+     * your current lifecycle state to ON_STOP by calling all methods inbetween. For example, if your current
      * lifecycle state is ON_RESUME, we will trigger ON_PAUSE and then trigger ON_START when this method is invoked
      */
     fun sendBackground() {

@@ -625,11 +625,6 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getUnityInternalInterface();
     }
 
-    @InternalApi
-    void installUnityThreadSampler() {
-        impl.installUnityThreadSampler();
-    }
-
     /**
      * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Flutter.

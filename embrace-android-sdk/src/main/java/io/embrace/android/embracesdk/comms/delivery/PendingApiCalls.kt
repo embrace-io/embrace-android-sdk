@@ -83,14 +83,14 @@ internal class PendingApiCalls(
     /**
      * Returns true if the queue has at least one pending API call and the endpoint is not rate limited.
      */
-    private fun MutableList<PendingApiCall>.hasPendingApiCallsToSend(endpoint: Endpoint): Boolean {
+    private fun List<PendingApiCall>.hasPendingApiCallsToSend(endpoint: Endpoint): Boolean {
         return this.isNotEmpty() && rateLimitHandler?.isRateLimited(endpoint) != true
     }
 
     /**
      * Returns true if the endpoint's queue has reached its limit.
      */
-    private fun MutableList<PendingApiCall>.hasReachedLimit(endpoint: Endpoint): Boolean {
+    private fun List<PendingApiCall>.hasReachedLimit(endpoint: Endpoint): Boolean {
         return this.size >= endpoint.getMaxPendingApiCalls()
     }
 

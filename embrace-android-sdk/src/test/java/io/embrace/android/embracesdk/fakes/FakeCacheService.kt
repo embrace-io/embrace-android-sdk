@@ -14,14 +14,6 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun cacheBytes(name: String, bytes: ByteArray?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun loadBytes(name: String): ByteArray? {
-        TODO("Not yet implemented")
-    }
-
     override fun deleteFile(name: String): Boolean {
         TODO("Not yet implemented")
     }

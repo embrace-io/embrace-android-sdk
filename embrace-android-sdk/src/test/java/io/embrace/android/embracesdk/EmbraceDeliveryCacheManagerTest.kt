@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
@@ -32,7 +33,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
-import java.nio.charset.Charset
 
 internal class EmbraceDeliveryCacheManagerTest {
 
@@ -43,6 +43,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private lateinit var cacheService: TestCacheService
     private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var fakeClock: FakeClock
+    private val fakeSession = fakeSession()
 
     companion object {
         private const val clockInit = 1663800000000
@@ -81,14 +82,13 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `cache current session successfully`() {
         val sessionMessage = createSessionMessage("test_cache")
-        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
         deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
         verify {
-            cacheService.cacheBytes(
+            cacheService.writeSession(
                 "$prefix.$clockInit.test_cache.json",
-                expectedBytes
+                sessionMessage
             )
         }
 
@@ -116,12 +116,11 @@ internal class EmbraceDeliveryCacheManagerTest {
         val sessionMessage = createSessionMessage("test_cache")
 
         deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
-        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
 
         verify(exactly = 1) {
-            cacheService.cacheBytes(
+            cacheService.writeSession(
                 "$prefix.$clockInit.test_cache.json",
-                expectedByteArray
+                sessionMessage
             )
         }
         assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
@@ -150,14 +149,12 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.cacheBytes(any(), any()) } throws Exception()
+        every { cacheService.cachePayload(any(), any()) } throws Exception()
 
         val sessionMessage = createSessionMessage("test_cache_fails")
-        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
         deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
-        val charset = Charset.defaultCharset()
         assertNull(deliveryCacheManager.loadSessionAsAction("test_cache_fails"))
     }
 
@@ -198,17 +195,20 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `read cached sessions`() {
-        cacheService.cacheBytes(
+        cacheService.cacheObject(
             getCachedSessionName("session1", clockInit - 300000),
-            "{ cached_session }".toByteArray()
+            fakeSession,
+            Session::class.java
         )
-        cacheService.cacheBytes(
+        cacheService.cacheObject(
             getCachedSessionName("session2", clockInit - 360000),
-            "{ cached_session }".toByteArray()
+            fakeSession,
+            Session::class.java
         )
-        cacheService.cacheBytes(
+        cacheService.cacheObject(
             getCachedSessionName("session3", clockInit - 420000),
-            "{ cached_session }".toByteArray()
+            fakeSession,
+            Session::class.java
         )
 
         assertEquals(
@@ -219,13 +219,10 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `malformed file names do not trigger an exception`() {
-        cacheService.cacheBytes("$prefix.session1.json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes("$prefix.$clockInit.json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes("$prefix..json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes(
-            "$prefix.session1.$clockInit.json",
-            "{ cached_session }".toByteArray()
-        )
+        cacheService.cacheObject("$prefix.session1.json", fakeSession, Session::class.java)
+        cacheService.cacheObject("$prefix.$clockInit.json", fakeSession, Session::class.java)
+        cacheService.cacheObject("$prefix..json", fakeSession, Session::class.java)
+        cacheService.cacheObject("$prefix.session1.$clockInit.json", fakeSession, Session::class.java)
 
         assertTrue(deliveryCacheManager.getAllCachedSessionIds().isEmpty())
     }
@@ -238,7 +235,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         }
         for (i in 0..99) {
             verify(exactly = 1) {
-                cacheService.cacheBytes(
+                cacheService.writeSession(
                     eq(
                         getCachedSessionName(
                             "test$i",
@@ -284,7 +281,10 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         verify { cacheService.cachePayload(cacheName, action) }
 
-        assertArrayEquals(payload, deliveryCacheManager.loadPayload(cacheName))
+        val loadPayloadAsAction = deliveryCacheManager.loadPayloadAsAction(cacheName)
+        val stream = ByteArrayOutputStream()
+        loadPayloadAsAction(stream)
+        assertArrayEquals(payload, stream.toByteArray())
     }
 
     @Test

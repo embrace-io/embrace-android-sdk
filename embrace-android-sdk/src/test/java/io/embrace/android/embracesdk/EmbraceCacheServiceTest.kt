@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -42,39 +41,6 @@ internal class EmbraceCacheServiceTest {
 
         // always assert that nothing is in the dir
         assertTrue(checkNotNull(dir.listFiles()).isEmpty())
-    }
-
-    @Test
-    fun `test cacheBytes and loadBytes`() {
-        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
-        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-        val children = checkNotNull(dir.listFiles())
-        val file = children.single()
-        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
-
-        val loadedObject = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertArrayEquals(myBytes, loadedObject)
-    }
-
-    @Test
-    fun `test loadBytes with non-existent file returns empty optional`() {
-        val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNull(loadedBytes)
-    }
-
-    @Test
-    fun `test cacheBytes with non-writable file does not throw exception`() {
-        val cacheFile = File(dir, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
-        cacheFile.writeText("locked file")
-        cacheFile.setReadOnly()
-
-        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
-        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-
-        val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNotNull(loadedBytes)
-        assertArrayEquals("locked file".toByteArray(), loadedBytes)
-        cacheFile.delete()
     }
 
     @Test

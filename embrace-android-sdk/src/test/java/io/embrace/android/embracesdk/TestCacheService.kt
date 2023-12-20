@@ -27,14 +27,6 @@ internal class TestCacheService : CacheService {
         return serializer.fromJson(json, clazz)
     }
 
-    override fun cacheBytes(name: String, bytes: ByteArray?) {
-        bytes?.let { cache[name] = it }
-    }
-
-    override fun loadBytes(name: String): ByteArray? {
-        return cache[name]
-    }
-
     override fun deleteFile(name: String): Boolean {
         return (cache.remove(name) != null)
     }
@@ -67,7 +59,7 @@ internal class TestCacheService : CacheService {
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        cacheBytes(name, serializer.toJson(sessionMessage).toByteArray())
+        serializer.toJson(sessionMessage).toByteArray()?.let { cache[name] = it }
     }
 
     var oldPendingApiCalls: List<PendingApiCall>? = null

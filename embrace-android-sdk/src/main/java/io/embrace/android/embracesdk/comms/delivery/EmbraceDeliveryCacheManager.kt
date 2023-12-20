@@ -80,7 +80,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         cachedSessions[sessionId]?.let { cachedSession ->
-            loadPayloadAsAction(cachedSession.filename)
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logError("Session $sessionId is not in cache")
         return null
@@ -131,21 +131,21 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray {
-        val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
+    override fun saveBackgroundActivity(message: BackgroundActivityMessage) {
+        val id = message.backgroundActivity.sessionId
         // Do not add background activities to disk if we are over the limit
-        if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
-            saveBytes(baId) { filename ->
-                cacheService.cacheBytes(filename, baBytes)
+        if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(id)) {
+            saveBytes(id, true) { filename: String ->
+                cacheService.cachePayload(id) { stream ->
+                    serializer.toJson(message, BackgroundActivityMessage::class.java, stream)
+                }
             }
         }
-        return baBytes
     }
 
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
+    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         cachedSessions[backgroundActivityId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logWarning("Background activity $backgroundActivityId is not in cache")
         return null
@@ -169,10 +169,6 @@ internal class EmbraceDeliveryCacheManager(
             cacheService.cachePayload(name, action)
         }
         return name
-    }
-
-    override fun loadPayload(name: String): ByteArray? {
-        return cacheService.loadBytes(name)
     }
 
     override fun loadPayloadAsAction(name: String): SerializationAction {

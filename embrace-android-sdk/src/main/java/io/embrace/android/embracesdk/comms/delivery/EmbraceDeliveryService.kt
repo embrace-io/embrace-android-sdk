@@ -85,24 +85,18 @@ internal class EmbraceDeliveryService(
 
         sendSessionsExecutorService.submit {
             logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val baBytes = cacheManager.saveBackgroundActivity(backgroundActivityMessage)
-
-            baBytes?.also { backgroundActivity ->
-                logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                try {
-                    val onFinish: (() -> Unit) =
-                        { cacheManager.deleteSession(backgroundActivityMessage.backgroundActivity.sessionId) }
-                    apiService.sendSession({
-                        it.write(backgroundActivity)
-                    }, onFinish)
-                    logger.logDeveloper(TAG, "Session message queued to be sent.")
-                } catch (ex: Exception) {
-                    logger.logInfo(
-                        "Failed to send background activity message. Embrace will " +
-                            "attempt to deliver it at a future date."
-                    )
+            cacheManager.saveBackgroundActivity(backgroundActivityMessage)
+            val id = backgroundActivityMessage.backgroundActivity.sessionId
+            val action = cacheManager.loadBackgroundActivity(id) ?: return@submit
+            try {
+                apiService.sendSession(action) {
+                    cacheManager.deleteSession(id)
                 }
+            } catch (ex: Exception) {
+                logger.logInfo(
+                    "Failed to send background activity message. Embrace will " +
+                        "attempt to deliver it at a future date."
+                )
             }
         }
     }
@@ -117,23 +111,17 @@ internal class EmbraceDeliveryService(
         sendSessionsExecutorService.submit {
             backgroundActivities.forEach { backgroundActivityId ->
                 logger.logDeveloper(TAG, "Sending background activity message - background job started")
-                val baBytes = cacheManager.loadBackgroundActivity(backgroundActivityId)
+                val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@submit
 
-                baBytes?.also { backgroundActivity ->
-                    logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                    try {
-                        val onFinish: () -> Unit = { cacheManager.deleteSession(backgroundActivityId) }
-                        apiService.sendSession({
-                            it.write(backgroundActivity)
-                        }, onFinish)
-                        logger.logDeveloper(TAG, "Session message queued to be sent.")
-                    } catch (ex: Exception) {
-                        logger.logInfo(
-                            "Failed to send background activity message. Embrace will " +
-                                "attempt to deliver it at a future date."
-                        )
+                try {
+                    apiService.sendSession(action) {
+                        cacheManager.deleteSession(backgroundActivityId)
                     }
+                } catch (ex: Exception) {
+                    logger.logInfo(
+                        "Failed to send background activity message. Embrace will " +
+                            "attempt to deliver it at a future date."
+                    )
                 }
             }
         }

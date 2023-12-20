@@ -30,11 +30,11 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
+    override fun saveBackgroundActivity(message: BackgroundActivityMessage) {
         TODO("Not yet implemented")
     }
 
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
+    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         TODO("Not yet implemented")
     }
 
@@ -47,10 +47,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun deleteCrash() {
-        TODO("Not yet implemented")
-    }
-
-    override fun loadPayload(name: String): ByteArray? {
         TODO("Not yet implemented")
     }
 

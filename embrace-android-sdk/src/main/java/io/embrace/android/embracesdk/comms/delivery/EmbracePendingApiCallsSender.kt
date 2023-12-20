@@ -17,14 +17,10 @@ internal class EmbracePendingApiCallsSender(
     networkConnectivityService: NetworkConnectivityService,
     private val scheduledExecutorService: ScheduledExecutorService,
     private val cacheManager: DeliveryCacheManager,
-    private val rateLimitHandler: RateLimitHandler,
     private val clock: Clock,
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
-    private val pendingApiCalls: PendingApiCalls =
-        cacheManager.loadPendingApiCalls().also {
-            it.setRateLimitHandler(rateLimitHandler)
-        }
+    private val pendingApiCalls: PendingApiCalls = cacheManager.loadPendingApiCalls()
     private var lastDeliveryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
     private lateinit var sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse
@@ -59,12 +55,14 @@ internal class EmbracePendingApiCallsSender(
                 scheduleApiCallsDelivery(RETRY_PERIOD)
             }
             is ApiResponse.TooManyRequests -> {
-                response.endpoint.setRateLimited()
-                rateLimitHandler.scheduleRetry(
-                    response.endpoint,
-                    response.retryAfter,
-                    this::scheduleApiCallsDelivery
-                )
+                with(response.endpoint) {
+                    setRateLimited()
+                    scheduleRetry(
+                        scheduledExecutorService,
+                        response.retryAfter,
+                        this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
+                    )
+                }
             }
             else -> {
                 // Not expected, shouldRetry() should be called before scheduleForRetry().
@@ -155,12 +153,14 @@ internal class EmbracePendingApiCallsSender(
                     if (response.shouldRetry) {
                         when (response) {
                             is ApiResponse.TooManyRequests -> {
-                                response.endpoint.setRateLimited()
-                                rateLimitHandler.scheduleRetry(
-                                    response.endpoint,
-                                    response.retryAfter,
-                                    this::scheduleApiCallsDelivery
-                                )
+                                with(response.endpoint) {
+                                    setRateLimited()
+                                    scheduleRetry(
+                                        scheduledExecutorService,
+                                        response.retryAfter,
+                                        this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
+                                    )
+                                }
                             }
                             is ApiResponse.Incomplete -> {
                                 applyExponentialBackoff = true

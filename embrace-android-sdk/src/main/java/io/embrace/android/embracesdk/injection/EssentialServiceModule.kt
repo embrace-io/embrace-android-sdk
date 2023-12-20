@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
-import io.embrace.android.embracesdk.comms.delivery.EmbraceRateLimitHandler
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
@@ -279,13 +278,10 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
-        val rateLimitHandler = EmbraceRateLimitHandler(pendingApiCallsExecutor)
-
         EmbracePendingApiCallsSender(
             networkConnectivityService,
             pendingApiCallsExecutor,
             deliveryCacheManager,
-            rateLimitHandler,
             initModule.clock
         )
     }

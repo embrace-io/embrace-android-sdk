@@ -15,9 +15,6 @@ internal class PendingApiCalls(
         ConcurrentHashMap<Endpoint, MutableList<PendingApiCall>>()
 ) {
 
-    @Transient
-    private var rateLimitHandler: RateLimitHandler? = null
-
     /**
      * Adds a pending API call in the corresponding endpoint's queue.
      * If the endpoint's queue has reached its limit, the oldest pending API call is removed and
@@ -33,13 +30,6 @@ internal class PendingApiCalls(
             }
             pendingApiCallsForEndpoint.add(pendingApiCall)
         }
-    }
-
-    /**
-     * Sets the [RateLimitHandler] to be used to determine if a queue is rate limited or not.
-     */
-    fun setRateLimitHandler(rateLimitHandler: RateLimitHandler) {
-        this.rateLimitHandler = rateLimitHandler
     }
 
     /**

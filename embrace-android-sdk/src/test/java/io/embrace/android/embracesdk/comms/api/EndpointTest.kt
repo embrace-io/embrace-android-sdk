@@ -1,6 +1,5 @@
-package io.embrace.android.embracesdk.comms.delivery
+package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.mockk.clearMocks
 import io.mockk.every
@@ -12,17 +11,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class EmbraceRateLimitHandlerTest {
+internal class EndpointTest {
 
     private lateinit var scheduledExecutorService: BlockingScheduledExecutorService
-    private lateinit var rateLimitHandler: RateLimitHandler
     private lateinit var mockExecuteApiCalls: () -> Unit
     private val endpoint = Endpoint.EVENTS
 
     @Before
     fun setUp() {
         scheduledExecutorService = BlockingScheduledExecutorService()
-        rateLimitHandler = EmbraceRateLimitHandler(scheduledExecutorService)
         mockExecuteApiCalls = mockk()
     }
 
@@ -38,7 +35,11 @@ internal class EmbraceRateLimitHandlerTest {
         // clear rate limit after calling executeApiCalls
         every { mockExecuteApiCalls.invoke() } answers { endpoint.clearRateLimit() }
         endpoint.setRateLimited()
-        rateLimitHandler.scheduleRetry(endpoint, retryAfter, mockExecuteApiCalls)
+        endpoint.scheduleRetry(
+            scheduledExecutorService,
+            retryAfter,
+            mockExecuteApiCalls
+        )
 
         assertTrue(endpoint.isRateLimited)
         scheduledExecutorService.moveForwardAndRunBlocked(3000)
@@ -52,17 +53,29 @@ internal class EmbraceRateLimitHandlerTest {
         // emulate 2 rate limit responses and 1 success response
         every { mockExecuteApiCalls.invoke() } answers {
             endpoint.setRateLimited()
-            rateLimitHandler.scheduleRetry(endpoint, null, mockExecuteApiCalls)
+            endpoint.scheduleRetry(
+                scheduledExecutorService,
+                null,
+                mockExecuteApiCalls
+            )
         } andThenAnswer {
             endpoint.setRateLimited()
-            rateLimitHandler.scheduleRetry(endpoint, null, mockExecuteApiCalls)
+            endpoint.scheduleRetry(
+                scheduledExecutorService,
+                null,
+                mockExecuteApiCalls
+            )
         } andThenAnswer {
             endpoint.clearRateLimit()
         }
 
         // set rate limit for the first call
         endpoint.setRateLimited()
-        rateLimitHandler.scheduleRetry(endpoint, null, mockExecuteApiCalls)
+        endpoint.scheduleRetry(
+            scheduledExecutorService,
+            null,
+            mockExecuteApiCalls
+        )
 
         // asserts for the first call
         assertTrue(endpoint.isRateLimited)

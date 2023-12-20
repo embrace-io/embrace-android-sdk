@@ -3,24 +3,24 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.Endpoint
-import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.ScheduledExecutorService
 
 internal class PendingApiCallsTest {
 
-    private lateinit var rateLimitHandler: RateLimitHandler
+    private lateinit var testScheduledExecutor: ScheduledExecutorService
     private lateinit var pendingApiCalls: PendingApiCalls
 
     @Before
     fun setUp() {
+        testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         pendingApiCalls = PendingApiCalls()
-        rateLimitHandler = FakeRateLimitHandler()
-        pendingApiCalls.setRateLimitHandler(rateLimitHandler)
     }
 
     @Test
@@ -105,7 +105,6 @@ internal class PendingApiCallsTest {
     fun `test add on a full queue, removes the oldest API call and adds the new one`() {
         Endpoint.values().forEach {
             pendingApiCalls = PendingApiCalls()
-            pendingApiCalls.setRateLimitHandler(rateLimitHandler)
             val queueLimit = it.getMaxPendingApiCalls()
             val path = it.path
             repeat(queueLimit) {
@@ -160,11 +159,17 @@ internal class PendingApiCallsTest {
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
 
-        Endpoint.EVENTS.setRateLimited()
-        rateLimitHandler.scheduleRetry(Endpoint.EVENTS, 1000, {})
+        val endpoint = Endpoint.EVENTS
+        with(endpoint) {
+            setRateLimited()
+            scheduleRetry(
+                scheduledExecutorService = testScheduledExecutor,
+                1000
+            ) {}
+        }
         assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
 
-        Endpoint.EVENTS.clearRateLimit()
+        endpoint.clearRateLimit()
         assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
     }
 

@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.mockk.clearMocks
@@ -40,7 +39,6 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
-        private lateinit var fakeRateLimitHandler: FakeRateLimitHandler
         private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse
 
         @BeforeClass
@@ -63,7 +61,6 @@ internal class EmbracePendingApiCallsSenderTest {
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
-        fakeRateLimitHandler = FakeRateLimitHandler()
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
@@ -315,7 +312,6 @@ internal class EmbracePendingApiCallsSenderTest {
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
-            rateLimitHandler = fakeRateLimitHandler,
             clock = FakeClock()
         )
 

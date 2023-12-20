@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
-import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -46,7 +45,6 @@ internal class EmbraceApiServiceTest {
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
     private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
-    private lateinit var fakeRateLimitHandler: FakeRateLimitHandler
 
     @Before
     fun setUp() {
@@ -65,7 +63,6 @@ internal class EmbraceApiServiceTest {
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
         fakePendingApiCallsSender = FakePendingApiCallsSender()
-        fakeRateLimitHandler = FakeRateLimitHandler()
         initApiService()
     }
 
@@ -400,9 +397,10 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
         val callback = mockk<() -> Unit>(relaxed = true)
-        Endpoint.LOGGING.setRateLimited()
-        fakeRateLimitHandler.scheduleRetry(
-            endpoint = Endpoint.LOGGING,
+        val endpoint = Endpoint.LOGGING
+        endpoint.setRateLimited()
+        endpoint.scheduleRetry(
+            scheduledExecutorService = testScheduledExecutor,
             retryAfter = 3,
             retryMethod = callback
         )

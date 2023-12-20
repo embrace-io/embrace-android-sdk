@@ -19,7 +19,7 @@ internal interface PendingApiCallsSender {
     fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall
 
     /**
-     * Schedules an API call to be sent later.
+     * Schedules the retry of all pending API calls.
      */
-    fun scheduleApiCall(response: ApiResponse)
+    fun scheduleRetry(response: ApiResponse)
 }

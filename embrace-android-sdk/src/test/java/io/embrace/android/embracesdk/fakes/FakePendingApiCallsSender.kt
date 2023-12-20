@@ -11,7 +11,7 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
     var didScheduleApiCall = false
     private var sendMethod: ((ApiRequest, ByteArray) -> ApiResponse)? = null
 
-    override fun scheduleApiCall(response: ApiResponse) {
+    override fun scheduleRetry(response: ApiResponse) {
         check(sendMethod != null) { "Retried to schedule retry before component is ready" }
         didScheduleApiCall = true
     }

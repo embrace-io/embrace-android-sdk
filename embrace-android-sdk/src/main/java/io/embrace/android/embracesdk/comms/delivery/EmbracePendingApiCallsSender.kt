@@ -51,7 +51,7 @@ internal class EmbracePendingApiCallsSender(
         return pendingApiCall
     }
 
-    override fun scheduleApiCall(response: ApiResponse) {
+    override fun scheduleRetry(response: ApiResponse) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
         when (response) {

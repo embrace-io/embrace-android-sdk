@@ -194,7 +194,7 @@ internal class EmbraceApiService(
 
                     if (response.shouldRetry) {
                         pendingApiCallsSender.savePendingApiCall(request, payload)
-                        pendingApiCallsSender.scheduleApiCall(response)
+                        pendingApiCallsSender.scheduleRetry(response)
                     }
 
                     if (response !is ApiResponse.Success) {

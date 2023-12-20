@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -18,42 +17,16 @@ internal class EmbraceRateLimitHandler(
 ) : RateLimitHandler {
 
     /**
-     * A map containing the number of retries for each endpoint.
-     */
-    private val rateLimitMap = ConcurrentHashMap<Endpoint, Int>()
-
-    /**
      * Sets the rate limit for the given endpoint and schedules a task to execute the api calls ofter
      * the given retry after time or the exponential backoff delay calculated from the number of retries.
      */
-    override fun setRateLimitAndScheduleRetry(
+    override fun scheduleRetry(
         endpoint: Endpoint,
         retryAfter: Long?,
         retryMethod: () -> Unit,
     ) {
         synchronized(this) {
-            rateLimitMap[endpoint] = rateLimitMap[endpoint]?.plus(1) ?: 1
-            rateLimitMap[endpoint]?.let { retries ->
-                scheduleRetryTask(retryAfter, retries, retryMethod)
-            }
-        }
-    }
-
-    /**
-     * Returns true if the given endpoint is rate limited.
-     */
-    override fun isRateLimited(endpoint: Endpoint): Boolean {
-        return rateLimitMap.containsKey(endpoint)
-    }
-
-    /**
-     * Clears the rate limit for the given endpoint.
-     */
-    override fun clearRateLimit(endpoint: Endpoint) {
-        synchronized(this) {
-            if (rateLimitMap.containsKey(endpoint)) {
-                rateLimitMap.remove(endpoint)
-            }
+            scheduleRetryTask(retryAfter, endpoint.rateLimitRetryCount, retryMethod)
         }
     }
 

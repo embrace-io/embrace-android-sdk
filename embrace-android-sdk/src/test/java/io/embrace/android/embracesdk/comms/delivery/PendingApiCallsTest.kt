@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.fakes.FakeRateLimitHandler
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
@@ -160,10 +160,11 @@ internal class PendingApiCallsTest {
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
 
-        rateLimitHandler.setRateLimitAndScheduleRetry(Endpoint.EVENTS, 1000, {})
+        Endpoint.EVENTS.setRateLimited()
+        rateLimitHandler.scheduleRetry(Endpoint.EVENTS, 1000, {})
         assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
 
-        rateLimitHandler.clearRateLimit(Endpoint.EVENTS)
+        Endpoint.EVENTS.clearRateLimit()
         assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
     }
 

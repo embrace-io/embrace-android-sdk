@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -66,6 +67,13 @@ internal class EmbraceApiServiceTest {
         fakePendingApiCallsSender = FakePendingApiCallsSender()
         fakeRateLimitHandler = FakeRateLimitHandler()
         initApiService()
+    }
+
+    @After
+    fun tearDown() {
+        Endpoint.values().forEach {
+            it.clearRateLimit()
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -233,7 +241,7 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `validate all API endpoint URLs`() {
-        EmbraceApiService.Companion.Endpoint.values().forEach {
+        Endpoint.values().forEach {
             assertEquals(
                 "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
                 apiUrlBuilder.getEmbraceUrlWithSuffix(it.path)
@@ -253,7 +261,7 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `test that requests returning a TooManyRequests response, saves and schedule a pending api call`() {
         val response = ApiResponse.TooManyRequests(
-            endpoint = EmbraceApiService.Companion.Endpoint.LOGGING,
+            endpoint = Endpoint.LOGGING,
             retryAfter = 3
         )
         fakeApiClient.queueResponse(response)
@@ -392,8 +400,9 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
         val callback = mockk<() -> Unit>(relaxed = true)
-        fakeRateLimitHandler.setRateLimitAndScheduleRetry(
-            endpoint = EmbraceApiService.Companion.Endpoint.LOGGING,
+        Endpoint.LOGGING.setRateLimited()
+        fakeRateLimitHandler.scheduleRetry(
+            endpoint = Endpoint.LOGGING,
             retryAfter = 3,
             retryMethod = callback
         )
@@ -475,7 +484,6 @@ internal class EmbraceApiServiceTest {
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
             pendingApiCallsSender = fakePendingApiCallsSender,
-            rateLimitHandler = fakeRateLimitHandler,
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )

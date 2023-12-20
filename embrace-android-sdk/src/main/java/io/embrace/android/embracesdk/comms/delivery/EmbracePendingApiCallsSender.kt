@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityLis
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import java.util.concurrent.RejectedExecutionException
@@ -59,7 +59,8 @@ internal class EmbracePendingApiCallsSender(
                 scheduleApiCallsDelivery(RETRY_PERIOD)
             }
             is ApiResponse.TooManyRequests -> {
-                rateLimitHandler.setRateLimitAndScheduleRetry(
+                response.endpoint.setRateLimited()
+                rateLimitHandler.scheduleRetry(
                     response.endpoint,
                     response.retryAfter,
                     this::scheduleApiCallsDelivery
@@ -154,7 +155,8 @@ internal class EmbracePendingApiCallsSender(
                     if (response.shouldRetry) {
                         when (response) {
                             is ApiResponse.TooManyRequests -> {
-                                rateLimitHandler.setRateLimitAndScheduleRetry(
+                                response.endpoint.setRateLimited()
+                                rateLimitHandler.scheduleRetry(
                                     response.endpoint,
                                     response.retryAfter,
                                     this::scheduleApiCallsDelivery
@@ -230,7 +232,7 @@ internal class EmbracePendingApiCallsSender(
      */
     private fun clearRateLimitIfApplies(endpoint: Endpoint, response: ApiResponse) {
         if (response !is ApiResponse.TooManyRequests) {
-            rateLimitHandler.clearRateLimit(endpoint)
+            endpoint.clearRateLimit()
         }
     }
 }

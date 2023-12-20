@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.comms.delivery.RateLimitHandler
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -27,7 +26,6 @@ internal class EmbraceApiService(
     private val executorService: ExecutorService,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
-    private val rateLimitHandler: RateLimitHandler,
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
@@ -204,9 +202,7 @@ internal class EmbraceApiService(
     private fun handleApiRequest(request: ApiRequest, payload: ByteArray) {
         val endpoint = request.url.endpoint()
 
-        if (lastNetworkStatus.isReachable &&
-            !rateLimitHandler.isRateLimited(endpoint)
-        ) {
+        if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
             // Execute the request if the device is online and the endpoint is not rate limited.
             val response = executePost(request, payload)
 
@@ -230,17 +226,6 @@ internal class EmbraceApiService(
      */
     private fun executePost(request: ApiRequest, payload: ByteArray) =
         apiClient.executePost(request, ByteArrayInputStream(payload))
-
-    companion object {
-        enum class Endpoint(val path: String) {
-            EVENTS("events"),
-            BLOBS("blobs"),
-            LOGGING("logging"),
-            NETWORK("network"),
-            SESSIONS("sessions"),
-            UNKNOWN("unknown")
-        }
-    }
 }
 
 private const val TAG = "EmbraceApiService"

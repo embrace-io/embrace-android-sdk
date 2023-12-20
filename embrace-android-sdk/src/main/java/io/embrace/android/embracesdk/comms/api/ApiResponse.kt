@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
-
 /**
  * ApiResponse is a sealed class that represents the result of an API call.
  */

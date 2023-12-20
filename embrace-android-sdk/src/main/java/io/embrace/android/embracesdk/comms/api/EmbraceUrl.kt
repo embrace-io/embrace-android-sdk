@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.MalformedURLException

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 @JsonClass(generateAdapter = true)
 internal class PendingApiCalls(
     @Json(name = "pendingApiCallsMap")
-    internal val pendingApiCallsMap: MutableMap<Endpoint, MutableList<PendingApiCall>> = ConcurrentHashMap<
-        Endpoint, MutableList<PendingApiCall>>()
+    internal val pendingApiCallsMap: MutableMap<Endpoint, MutableList<PendingApiCall>> =
+        ConcurrentHashMap<Endpoint, MutableList<PendingApiCall>>()
 ) {
 
     @Transient
@@ -84,7 +84,7 @@ internal class PendingApiCalls(
      * Returns true if the queue has at least one pending API call and the endpoint is not rate limited.
      */
     private fun List<PendingApiCall>.hasPendingApiCallsToSend(endpoint: Endpoint): Boolean {
-        return this.isNotEmpty() && rateLimitHandler?.isRateLimited(endpoint) != true
+        return this.isNotEmpty() && !endpoint.isRateLimited
     }
 
     /**

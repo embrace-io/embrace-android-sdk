@@ -130,6 +130,10 @@ internal class EmbracePendingApiCallsSender(
             logger.logError("Cannot schedule delivery of pending api calls.", e)
         }
     }
+
+    /**
+     * Sends all pending API calls.
+     */
     private fun executeDelivery(delayInSeconds: Long) {
         if (!lastNetworkStatus.isReachable) {
             logger.logInfo("Did not retry api calls as scheduled because network is not reachable")

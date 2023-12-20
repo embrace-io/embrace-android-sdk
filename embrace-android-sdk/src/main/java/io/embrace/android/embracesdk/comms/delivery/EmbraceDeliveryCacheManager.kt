@@ -131,21 +131,22 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): SerializationAction? {
         val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
             saveBytes(baId) { filename ->
+                val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
                 cacheService.cacheBytes(filename, baBytes)
             }
+            return loadBackgroundActivity(baId)
         }
-        return baBytes
+        return null
     }
 
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
+    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         cachedSessions[backgroundActivityId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logWarning("Background activity $backgroundActivityId is not in cache")
         return null

@@ -7,13 +7,11 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -143,9 +141,6 @@ internal class IntegrationTestRule(
             ),
             networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
                 NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
-            },
-            spansBehavior = fakeSpansBehavior {
-                SpansRemoteConfig(pctEnabled = 100f)
             }
         ),
         val systemServiceModule: SystemServiceModule =

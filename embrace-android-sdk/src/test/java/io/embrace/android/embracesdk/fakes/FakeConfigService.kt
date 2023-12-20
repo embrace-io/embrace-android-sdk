@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 
@@ -34,7 +33,6 @@ internal class FakeConfigService(
     override var anrBehavior: AnrBehavior = fakeAnrBehavior(),
     override var sessionBehavior: SessionBehavior = fakeSessionBehavior(),
     override var networkBehavior: NetworkBehavior = fakeNetworkBehavior(),
-    override var spansBehavior: SpansBehavior = fakeSpansBehavior(),
     override var startupBehavior: StartupBehavior = fakeStartupBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = fakeDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = fakeSdkModeBehavior(),

@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -57,7 +55,6 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var spansService: EmbraceSpansService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockableExecutorService: BlockableExecutorService
-    private lateinit var spansRemoteConfig: SpansRemoteConfig
 
     @Before
     fun init() {
@@ -80,12 +77,9 @@ internal class EmbraceBackgroundActivityServiceTest {
             clock = OpenTelemetryClock(embraceClock = clock),
             telemetryService = FakeTelemetryService()
         )
-        spansRemoteConfig = SpansRemoteConfig(pctEnabled = 100f)
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true,
-            spansBehavior = fakeSpansBehavior { spansRemoteConfig }
+            backgroundActivityCaptureEnabled = true
         )
-        configService.addListener(spansService)
         configService.updateListeners()
         localConfig = spyk(
             LocalConfigParser.buildConfig(

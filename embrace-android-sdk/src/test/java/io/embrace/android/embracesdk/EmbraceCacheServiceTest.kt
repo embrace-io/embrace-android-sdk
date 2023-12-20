@@ -20,6 +20,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files
 
@@ -86,6 +87,34 @@ internal class EmbraceCacheServiceTest {
 
         val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
         assertEquals(myObject, checkNotNull(loadedObject))
+    }
+
+    @Test
+    fun `test cachePayload and loadPayload`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
+        val children = checkNotNull(dir.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        assertEquals("test", String(stream.toByteArray()))
+    }
+
+    @Test
+    fun `cachePayload action throws exception`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { error("Whoops") }
+        val children = checkNotNull(dir.listFiles())
+        assertTrue(children.isEmpty())
+    }
+
+    @Test
+    fun `test loadPayload with non-existent file returns null`() {
+        val action = service.loadPayload("some_file.jpeg")
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        assertEquals("", String(stream.toByteArray()))
     }
 
     @Test

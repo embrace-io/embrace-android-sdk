@@ -247,6 +247,22 @@ internal class EmbraceApiServiceTest {
         verify(exactly = 1) { testScheduledExecutor.submit(any<NetworkRequestRunnable>()) }
     }
 
+    @Test
+    fun `unsuccessful requests are queued for later`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        apiService.sendLog(event)
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        val request = fakePendingApiCallsSender.retryQueue.single().first
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.toString())
+    }
+
     private fun verifyOnlyRequest(
         expectedUrl: String,
         expectedMethod: HttpMethod = HttpMethod.POST,

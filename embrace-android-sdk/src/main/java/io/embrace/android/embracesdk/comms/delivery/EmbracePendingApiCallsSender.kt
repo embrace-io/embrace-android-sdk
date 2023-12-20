@@ -170,7 +170,8 @@ internal class EmbracePendingApiCallsSender(
                         // Should retry, so we add it back to the queue.
                         failedApiCallsToRetry.add(pendingApiCall)
                     } else {
-                        // Shouldn't retry, so save the pending api calls without the removed one.
+                        // Shouldn't retry, so delete the payload and save the pending api calls.
+                        cacheManager.deletePayload(pendingApiCall.cachedPayloadFilename)
                         cacheManager.savePendingApiCalls(pendingApiCalls)
                     }
                 }

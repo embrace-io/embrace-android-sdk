@@ -146,7 +146,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
-        val payload = checkNotNull(deliveryService.lastSavedBackgroundActivity)
+        val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(5, payload.backgroundActivity.number)
     }
 
@@ -160,7 +160,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     @Test
     fun `activity is cached on start capture`() {
         this.service = createService()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
 
     @Test
@@ -168,7 +168,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         val startTime = clock.now()
 
         this.service = createService()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 1000)
@@ -185,11 +185,11 @@ internal class EmbraceBackgroundActivityServiceTest {
         activityService.isInBackground = false
         this.service = createService()
 
-        assertNull(deliveryService.lastSavedBackgroundActivity)
+        assertNull(deliveryService.lastSavedBackgroundActivities.singleOrNull())
 
         service.onBackground(clock.now())
 
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
 
     @Test
@@ -259,9 +259,9 @@ internal class EmbraceBackgroundActivityServiceTest {
         // move time ahead so the save will actually persist the new background activity message
         clock.tick(6000)
         service.save()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
-        assertEquals(1, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
         assertEquals(1, spansService.completedSpans()?.size)
     }
 
@@ -273,11 +273,11 @@ internal class EmbraceBackgroundActivityServiceTest {
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now, now + 10L)
         service.handleCrash("crashId")
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
         // there should be 2 completed spans: session span and the sdk init span
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
-        assertEquals(2, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        assertEquals(2, deliveryService.lastSavedBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -287,10 +287,10 @@ internal class EmbraceBackgroundActivityServiceTest {
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now, now + 10L)
         service.onForeground(false, now, clock.now())
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
 
         // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        assertEquals(2, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -300,10 +300,10 @@ internal class EmbraceBackgroundActivityServiceTest {
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now, now + 10L)
         service.sendBackgroundActivity()
-        assertNotNull(deliveryService.lastSentBackgroundActivity)
+        assertNotNull(deliveryService.lastSentBackgroundActivities.single())
 
         // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSentBackgroundActivity?.spans?.size)
+        assertEquals(2, deliveryService.lastSentBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -312,7 +312,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         clock.tick(1000L)
         service.onForeground(false, 0, clock.now())
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         verify(exactly = 1) { mockBreadcrumbService.flushBreadcrumbs() }
     }
 
@@ -321,7 +321,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         clock.tick(1000L)
         service.save()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         verify(exactly = 0) { mockBreadcrumbService.flushBreadcrumbs() }
     }
 

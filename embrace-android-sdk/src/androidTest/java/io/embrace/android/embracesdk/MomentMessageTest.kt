@@ -52,7 +52,7 @@ internal class MomentMessageTest : BaseTest() {
     @Test
     fun startMomentWithPropertiesTest() {
         // ignore startup event
-        Embrace.getImpl().endAppStartup(null)
+        Embrace.getInstance().endAppStartup()
         waitForRequest()
 
         val properties = HashMap<String, Any>()

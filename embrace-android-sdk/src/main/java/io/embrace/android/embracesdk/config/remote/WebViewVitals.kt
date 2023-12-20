@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.config.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class WebViewVitals @JvmOverloads constructor(
-    @SerializedName("pct_enabled")
+    @Json(name = "pct_enabled")
     val pctEnabled: Float? = null,
 
-    @SerializedName("max_vitals")
+    @Json(name = "max_vitals")
     val maxVitals: Int? = null
 )

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -19,6 +20,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files
 
@@ -31,7 +33,6 @@ internal class EmbraceCacheServiceTest {
 
     @Before
     fun setUp() {
-
         dir = Files.createTempDirectory("tmpDirPrefix").toFile()
         service = EmbraceCacheService(
             lazy { dir },
@@ -78,39 +79,67 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test cacheObject and loadObject`() {
-        val myObject = CustomObject(CUSTOM_OBJECT_1_FILE_NAME)
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, CustomObject::class.java)
+        val myObject = fakeSession()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
         val children = checkNotNull(dir.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
-        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, CustomObject::class.java)
+        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
         assertEquals(myObject, checkNotNull(loadedObject))
     }
 
     @Test
+    fun `test cachePayload and loadPayload`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
+        val children = checkNotNull(dir.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        assertEquals("test", String(stream.toByteArray()))
+    }
+
+    @Test
+    fun `cachePayload action throws exception`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { error("Whoops") }
+        val children = checkNotNull(dir.listFiles())
+        assertTrue(children.isEmpty())
+    }
+
+    @Test
+    fun `test loadPayload with non-existent file returns null`() {
+        val action = service.loadPayload("some_file.jpeg")
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        assertEquals("", String(stream.toByteArray()))
+    }
+
+    @Test
     fun `test loadObject with non-existent file returns empty optional`() {
-        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, CustomObject::class.java)
+        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
         assertNull(loadedObject)
     }
 
     @Test
     fun `test loadObject with malformed file returns empty optional`() {
-        val myObject1 = CustomObject(CUSTOM_OBJECT_1_FILE_NAME)
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, CustomObject::class.java)
+        val myObject1 = fakeSession()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
 
         val children = checkNotNull(dir.listFiles())
         val file = children.single()
         file.writeText("malformed content")
 
-        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, CustomObject::class.java)
+        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
         assertNull(loadedObject)
     }
 
     @Test
     fun `test deleteObject returns true and deletes the file correctly`() {
-        val myObject = CustomObject(CUSTOM_OBJECT_1_FILE_NAME)
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, CustomObject::class.java)
+        val myObject = fakeSession()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
 
         val deleted = service.deleteObject(CUSTOM_OBJECT_1_FILE_NAME)
         val children = checkNotNull(dir.listFiles())
@@ -130,12 +159,12 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test deleteObjectsByRegex`() {
-        val myObject1 = CustomObject(CUSTOM_OBJECT_1_FILE_NAME)
-        val myObject2 = CustomObject(CUSTOM_OBJECT_2_FILE_NAME)
-        val myObject3 = CustomObject(CUSTOM_OBJECT_3_FILE_NAME)
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, CustomObject::class.java)
-        service.cacheObject(CUSTOM_OBJECT_2_FILE_NAME, myObject2, CustomObject::class.java)
-        service.cacheObject(CUSTOM_OBJECT_3_FILE_NAME, myObject3, CustomObject::class.java)
+        val myObject1 = fakeSession()
+        val myObject2 = fakeSession()
+        val myObject3 = fakeSession()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
+        service.cacheObject(CUSTOM_OBJECT_2_FILE_NAME, myObject2, Session::class.java)
+        service.cacheObject(CUSTOM_OBJECT_3_FILE_NAME, myObject3, Session::class.java)
 
         val deleted = service.deleteObjectsByRegex(".*object.*")
         val children = checkNotNull(dir.listFiles())
@@ -162,8 +191,8 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test moveObject with existent source`() {
-        val myObject = CustomObject(CUSTOM_OBJECT_1_FILE_NAME)
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, CustomObject::class.java)
+        val myObject = fakeSession()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
 
         val moved = service.moveObject(CUSTOM_OBJECT_1_FILE_NAME, CUSTOM_OBJECT_2_FILE_NAME)
         val children = checkNotNull(dir.listFiles())
@@ -225,8 +254,6 @@ internal class EmbraceCacheServiceTest {
         assertEquals(original, loadObject)
     }
 }
-
-internal data class CustomObject(val name: String)
 
 internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"
 internal const val CUSTOM_OBJECT_2_FILE_NAME = "custom_object_2.json"

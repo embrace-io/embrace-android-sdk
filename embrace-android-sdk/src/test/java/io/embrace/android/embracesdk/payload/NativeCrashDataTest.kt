@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -52,9 +53,8 @@ internal class NativeCrashDataTest {
         assertEquals("map", obj.map)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<NativeCrashData>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<NativeCrashData>()
     }
 }

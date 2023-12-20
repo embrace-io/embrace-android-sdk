@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.payload.Event
@@ -38,7 +39,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
-        private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> Unit
+        private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> Unit
 
         @BeforeClass
         @JvmStatic
@@ -64,7 +65,7 @@ internal class EmbracePendingApiCallsSenderTest {
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
-        every { mockCacheManager.loadPayload("cached_payload_1") } returns "{payload 1}".toByteArray()
+        every { mockCacheManager.loadPayloadAsAction("cached_payload_1") } returns { "{payload 1}".toByteArray() }
         every { mockCacheManager.savePayload(any()) } returns "fake_cache"
         every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
     }
@@ -87,7 +88,9 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask is not active and doesn't run if there are no failed API requests`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = status, loadFailedRequest = false, runRetryJobAfterScheduling = true
+                status = status,
+                loadFailedRequest = false,
+                runRetryJobAfterScheduling = true
             )
             retryTaskNotActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
@@ -161,7 +164,8 @@ internal class EmbracePendingApiCallsSenderTest {
     @Test
     fun `retryTask is not active and doesn't run after init if network not reachable`() {
         initPendingApiCallsSender(
-            status = NetworkStatus.NOT_REACHABLE, runRetryJobAfterScheduling = true
+            status = NetworkStatus.NOT_REACHABLE,
+            runRetryJobAfterScheduling = true
         )
         blockingScheduledExecutorService.runCurrentlyBlocked()
         retryTaskNotActive(NetworkStatus.NOT_REACHABLE)
@@ -190,7 +194,8 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask is active and runs after connection changes from not reachable to connected after retry job runs`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = NetworkStatus.NOT_REACHABLE, runRetryJobAfterScheduling = true
+                status = NetworkStatus.NOT_REACHABLE,
+                runRetryJobAfterScheduling = true
             )
             blockingScheduledExecutorService.runCurrentlyBlocked()
             pendingApiCallsSender.onNetworkConnectivityStatusChanged(status)
@@ -206,7 +211,8 @@ internal class EmbracePendingApiCallsSenderTest {
     fun `retryTask isn't active and doesn't run if there are no failed request after getting a connection before retry job is scheduled`() {
         connectedNetworkStatuses.forEach { status ->
             initPendingApiCallsSender(
-                status = NetworkStatus.NOT_REACHABLE, loadFailedRequest = false
+                status = NetworkStatus.NOT_REACHABLE,
+                loadFailedRequest = false
             )
             pendingApiCallsSender.onNetworkConnectivityStatusChanged(status)
             retryTaskNotActive(status)
@@ -254,7 +260,8 @@ internal class EmbracePendingApiCallsSenderTest {
                 lazy { "deviceId" },
                 lazy { "appVersionName" }
             ),
-            lazy { "deviceId" }, "appId"
+            lazy { "deviceId" },
+            "appId"
         )
         repeat(105) { k ->
             val request = mapper.logRequest(
@@ -266,7 +273,7 @@ internal class EmbracePendingApiCallsSenderTest {
                     )
                 )
             )
-            pendingApiCallsSender.scheduleApiCall(request, ByteArray(0))
+            pendingApiCallsSender.scheduleApiCall(request) {}
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
@@ -275,7 +282,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
-        pendingApiCallsSender.scheduleApiCall(sessionRequest, ByteArray(0))
+        pendingApiCallsSender.scheduleApiCall(sessionRequest) {}
         assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }
 
@@ -318,17 +325,23 @@ internal class EmbracePendingApiCallsSenderTest {
     }
 
     private fun retryTaskActive(status: NetworkStatus) {
-        assertTrue("Failed for network status = $status", pendingApiCallsSender.isDeliveryTaskActive())
+        assertTrue(
+            "Failed for network status = $status",
+            pendingApiCallsSender.isDeliveryTaskActive()
+        )
     }
 
     private fun retryTaskNotActive(status: NetworkStatus) {
         assertFalse(
-            "Failed for network status = $status", pendingApiCallsSender.isDeliveryTaskActive()
+            "Failed for network status = $status",
+            pendingApiCallsSender.isDeliveryTaskActive()
         )
     }
 
     private fun checkRequestSendAttempt(count: Int = 1) {
-        verify(exactly = count) { mockRetryMethod(any(), "{payload 1}".toByteArray()) }
+        verify(exactly = count) {
+            mockRetryMethod(any(), any())
+        }
     }
 
     private fun checkNoApiRequestSent() {

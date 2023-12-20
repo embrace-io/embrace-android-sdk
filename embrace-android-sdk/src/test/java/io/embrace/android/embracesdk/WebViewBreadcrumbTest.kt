@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class WebViewBreadcrumbTest {
@@ -24,9 +24,8 @@ internal class WebViewBreadcrumbTest {
         assertEquals(1600000000, obj.getStartTime())
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<WebViewBreadcrumb>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<WebViewBreadcrumb>()
     }
 }

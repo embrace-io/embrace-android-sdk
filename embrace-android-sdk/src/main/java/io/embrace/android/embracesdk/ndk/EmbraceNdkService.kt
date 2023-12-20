@@ -396,7 +396,8 @@ internal class EmbraceNdkService(
         } else {
             logger.logError(
                 String.format(
-                    Locale.getDefault(), "Failed to find symbols in resources {resourceId=%d}.",
+                    Locale.getDefault(),
+                    "Failed to find symbols in resources {resourceId=%d}.",
                     resourceId
                 )
             )

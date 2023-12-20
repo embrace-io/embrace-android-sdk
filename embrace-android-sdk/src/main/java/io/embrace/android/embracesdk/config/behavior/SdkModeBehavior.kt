@@ -78,7 +78,8 @@ internal class SdkModeBehavior(
      * @return true if the sdk is enabled, false otherwise
      */
     fun isSdkDisabled(): Boolean {
-        @Suppress("DEPRECATION") val result = thresholdCheck.getNormalizedDeviceId()
+        @Suppress("DEPRECATION")
+        val result = thresholdCheck.getNormalizedDeviceId()
         // Check if this is lower than the threshold, to determine whether
         // we should enable/disable the SDK.
         val lowerBound = max(0, getOffset())

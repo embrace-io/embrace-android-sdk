@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.anr
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -12,7 +13,6 @@ import io.embrace.android.embracesdk.payload.extensions.deepCopy
 import io.embrace.android.embracesdk.payload.extensions.duration
 import io.embrace.android.embracesdk.payload.extensions.size
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -20,7 +20,10 @@ import org.junit.Test
 internal class AnrIntervalTest {
 
     private val threadInfo = ThreadInfo(
-        13, Thread.State.RUNNABLE, "my-thread", 5,
+        13,
+        Thread.State.RUNNABLE,
+        "my-thread",
+        5,
         listOf(
             "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
             "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
@@ -68,10 +71,9 @@ internal class AnrIntervalTest {
         assertEquals(anrSampleList, obj.anrSampleList)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testAnrIntervalEmptyObject() {
-        val anrInterval = deserializeEmptyJsonString<AnrInterval>()
-        assertNotNull(anrInterval)
+        deserializeEmptyJsonString<AnrInterval>()
     }
 
     @Test

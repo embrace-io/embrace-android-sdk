@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import java.util.concurrent.RejectedExecutionException
@@ -23,7 +24,7 @@ internal class EmbracePendingApiCallsSender(
     }
     private var lastDeliveryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private lateinit var sendMethod: (request: ApiRequest, payload: ByteArray) -> Unit
+    private lateinit var sendMethod: (request: ApiRequest, action: SerializationAction) -> Unit
 
     init {
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
@@ -32,14 +33,17 @@ internal class EmbracePendingApiCallsSender(
         scheduledExecutorService.submit(this::scheduleApiCallsDelivery)
     }
 
-    override fun setSendMethod(sendMethod: (request: ApiRequest, payload: ByteArray) -> Unit) {
+    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> Unit) {
         this.sendMethod = sendMethod
     }
 
-    override fun scheduleApiCall(request: ApiRequest, payload: ByteArray) {
+    override fun scheduleApiCall(
+        request: ApiRequest,
+        action: SerializationAction
+    ) {
         logger.logDeveloper(TAG, "Scheduling api call for retry")
 
-        val cachedPayloadName = cacheManager.savePayload(payload)
+        val cachedPayloadName = cacheManager.savePayload(action)
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
 
         val scheduleJob = pendingApiCalls.hasAnyPendingApiCall().not()
@@ -168,7 +172,7 @@ internal class EmbracePendingApiCallsSender(
      * Send the request for a PendingApiCall.
      */
     private fun sendPendingApiCall(call: PendingApiCall): Boolean {
-        val payload = cacheManager.loadPayload(call.cachedPayloadFilename)
+        val payload: SerializationAction? = cacheManager.loadPayloadAsAction(call.cachedPayloadFilename)
         if (payload != null) {
             try {
                 logger.logDeveloper(TAG, "Sending a Pending API call")

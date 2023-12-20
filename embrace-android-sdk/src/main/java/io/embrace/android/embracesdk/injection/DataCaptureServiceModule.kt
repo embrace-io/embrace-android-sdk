@@ -120,7 +120,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
         PushNotificationCaptureService(
-            breadcrumbService, coreModule.logger
+            breadcrumbService,
+            coreModule.logger
         )
     }
 

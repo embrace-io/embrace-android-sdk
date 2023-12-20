@@ -51,7 +51,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test messages complete group by url and timestamp`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
 
         assertEquals(1, embraceWebViewService.getCapturedData().size)
@@ -60,7 +59,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test two complete groups by url and timestamp`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
 
@@ -71,7 +69,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test two complete groups whit same url and timestamp keep correct CLS and LCP`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
 
@@ -82,7 +79,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        20,
+                        20L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }
@@ -97,7 +94,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test 3 groups 2 diff timestamps `() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
@@ -109,7 +105,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test repeated elements in one message`() {
-
         embraceWebViewService.collectWebData("webView1", repeatedElementsSameMessage)
 
         assertEquals(1, embraceWebViewService.getCapturedData().size)
@@ -119,7 +114,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        30,
+                        30L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }

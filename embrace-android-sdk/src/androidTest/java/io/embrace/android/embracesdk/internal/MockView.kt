@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal
 
 import android.graphics.Canvas
 import android.view.View
-import io.embrace.android.embracesdk.EmbraceContext
 
 public class MockView(public val context: EmbraceContext) : View(context) {
 

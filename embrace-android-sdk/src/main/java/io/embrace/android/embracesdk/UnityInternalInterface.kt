@@ -51,4 +51,6 @@ internal interface UnityInternalInterface : EmbraceInternalInterface {
         statusCode: Int,
         traceId: String?
     )
+
+    fun installUnityThreadSampler()
 }

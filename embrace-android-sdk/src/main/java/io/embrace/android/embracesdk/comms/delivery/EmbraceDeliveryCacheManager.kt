@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.SessionMessageSerializer
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 import java.io.Closeable
 import java.util.concurrent.ExecutorService
@@ -48,10 +47,6 @@ internal class EmbraceDeliveryCacheManager(
         private const val TAG = "DeliveryCacheManager"
     }
 
-    private val sessionMessageSerializer by threadLocal {
-        SessionMessageSerializer(serializer)
-    }
-
     // The session id is used as key for this map
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
@@ -68,7 +63,7 @@ internal class EmbraceDeliveryCacheManager(
                 null
             }
             else -> {
-                val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
+                val sessionBytes: ByteArray = serializer.toJson(sessionMessage).toByteArray()
                 saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
                     cacheService.cacheBytes(filename, sessionBytes)
                 }
@@ -186,16 +181,20 @@ internal class EmbraceDeliveryCacheManager(
         cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
-    override fun savePayload(bytes: ByteArray): String {
+    override fun savePayload(action: SerializationAction): String {
         val name = "payload_" + Uuid.getEmbUuid()
         executorService.submit {
-            cacheService.cacheBytes(name, bytes)
+            cacheService.cachePayload(name, action)
         }
         return name
     }
 
     override fun loadPayload(name: String): ByteArray? {
         return cacheService.loadBytes(name)
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction? {
+        return cacheService.loadPayload(name)
     }
 
     override fun deletePayload(name: String) {
@@ -209,9 +208,8 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
         logger.logDeveloper(TAG, "Saving pending api calls")
-        val bytes = serializer.toJson(pendingApiCalls).toByteArray()
         executorService.submit {
-            cacheService.cacheBytes(PENDING_API_CALLS_FILE_NAME, bytes)
+            cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
         }
     }
 
@@ -244,7 +242,7 @@ internal class EmbraceDeliveryCacheManager(
         logger.logDeveloper(TAG, "Loading old version of pending api calls")
         var cachedApiCallsPerEndpoint: PendingApiCalls? = null
         val loadPendingApiCallsQueue = runCatching {
-            cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCallsQueue::class.java)
+            cacheService.loadOldPendingApiCalls(PENDING_API_CALLS_FILE_NAME)
         }
 
         if (loadPendingApiCallsQueue.isSuccess) {

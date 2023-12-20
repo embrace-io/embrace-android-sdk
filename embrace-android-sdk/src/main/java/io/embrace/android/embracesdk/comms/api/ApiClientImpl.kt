@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPO
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -47,7 +46,7 @@ internal class ApiClientImpl(
 
     override fun executePost(
         request: ApiRequest,
-        payloadStream: ByteArrayInputStream
+        action: SerializationAction
     ): ApiResponse {
         logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
         logger.logDeveloper("ApiClient", "Request details: $request")
@@ -57,9 +56,7 @@ internal class ApiClientImpl(
             setTimeouts(connection)
 
             connection.outputStream?.let { httpStream ->
-                GZIPOutputStream(httpStream).use { outputStream ->
-                    payloadStream.copyTo(outputStream)
-                }
+                GZIPOutputStream(httpStream).use(action)
             }
             connection.connect()
             val response = executeHttpRequest(connection)

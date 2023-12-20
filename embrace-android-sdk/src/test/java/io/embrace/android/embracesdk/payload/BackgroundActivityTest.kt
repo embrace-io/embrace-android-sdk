@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -70,9 +71,8 @@ internal class BackgroundActivityTest {
         }
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<BackgroundActivity>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<BackgroundActivity>()
     }
 }

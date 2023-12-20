@@ -85,7 +85,7 @@ internal class ApiRequestMapperTest {
                 Event(
                     type = EmbraceEvent.Type.CRASH,
                     eventId = "eventId",
-                    activeEventIdsList = listOf("activeEventId1", "activeEventId2")
+                    activeEventIds = listOf("activeEventId1", "activeEventId2")
                 )
             )
         )

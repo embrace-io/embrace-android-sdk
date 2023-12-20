@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class NativeCrashDataError(
-    @SerializedName("n") val number: Int?,
-    @SerializedName("c") val context: Int?
+    @Json(name = "n") val number: Int?,
+    @Json(name = "c") val context: Int?
 )

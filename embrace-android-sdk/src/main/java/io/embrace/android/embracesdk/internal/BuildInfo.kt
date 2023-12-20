@@ -57,7 +57,9 @@ internal class BuildInfo internal constructor(
                 // Flavor value is optional, so we should not hard fail if doesn't exists.
                 if (buildProperty == BUILD_INFO_BUILD_FLAVOR && resourceId == 0) {
                     null
-                } else resources.getString(resourceId)
+                } else {
+                    resources.getString(resourceId)
+                }
             } catch (ex: NullPointerException) {
                 throw IllegalArgumentException(
                     "No resource found for $buildProperty property. Failed to create build info.",

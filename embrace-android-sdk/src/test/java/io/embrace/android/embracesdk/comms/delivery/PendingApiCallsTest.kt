@@ -99,7 +99,6 @@ internal class PendingApiCallsTest {
 
     @Test
     fun `Test that when the queue is full, the oldest api call is removed and the new one is added`() {
-
         Endpoint.values().forEach {
             pendingApiCalls = PendingApiCalls()
             val queueLimit = it.getMaxPendingApiCalls()

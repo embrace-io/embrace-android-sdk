@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 /**
@@ -35,6 +36,14 @@ internal interface CacheService {
     fun cacheBytes(name: String, bytes: ByteArray?)
 
     /**
+     * Caches a payload to disk.
+     *
+     * @param name   the name of this cache in disk
+     * @param action action that writes bytes
+     */
+    fun cachePayload(name: String, action: SerializationAction)
+
+    /**
      * Serializes a session object to disk via a stream. This saves memory when the session is
      * large & the return value isn't used (e.g. for a crash & periodic caching)
      */
@@ -47,6 +56,15 @@ internal interface CacheService {
      * @return the byte array, if it can be read successfully
      */
     fun loadBytes(name: String): ByteArray?
+
+    /**
+     * Provides a function that writes the bytes from a cached file, if it exists, to an
+     * outputstream
+     *
+     * @param name  the name of the file to read
+     * @return a function that writes the byte array, if it can be read successfully
+     */
+    fun loadPayload(name: String): SerializationAction
 
     /**
      * Delete a file from the cache
@@ -87,4 +105,9 @@ internal interface CacheService {
      * @return list of file names
      */
     fun listFilenamesByPrefix(prefix: String): List<String>?
+
+    /**
+     * Loads pending API calls from their old location on disk.
+     */
+    fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
 }

@@ -29,7 +29,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun endSession (Z)V
 	public fun endView (Ljava/lang/String;)Z
 	public fun generateW3cTraceparent ()Ljava/lang/String;
-	public fun getConfigService ()Lio/embrace/android/embracesdk/config/ConfigService;
 	public fun getCurrentSessionId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
 	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
@@ -53,8 +52,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
 	public fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logInfo (Ljava/lang/String;)V
-	public fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
-	public fun logInternalError (Ljava/lang/Throwable;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
@@ -72,7 +69,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
-	public fun sampleCurrentThreadDuringAnrs ()V
 	public fun setAppId (Ljava/lang/String;)Z
 	public fun setDartVersion (Ljava/lang/String;)V
 	public fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
@@ -173,12 +169,16 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 
 public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
 	public abstract fun getSdkCurrentTime ()J
+	public abstract fun isAnrCaptureEnabled ()Z
 	public abstract fun isInternalNetworkCaptureDisabled ()Z
+	public abstract fun isNdkEnabled ()Z
 	public abstract fun isNetworkSpanForwardingEnabled ()Z
 	public abstract fun logComposeTap (Landroid/util/Pair;Ljava/lang/String;)V
 	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
 	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
 	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logInternalError (Ljava/lang/Throwable;)V
 	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
 	public abstract fun recordAndDeduplicateNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
@@ -301,6 +301,15 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion {
 	public final fun create (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+}
+
+public final class io/embrace/android/embracesdk/spans/EmbraceSpanEventJsonAdapter : com/squareup/moshi/JsonAdapter {
+	public fun <init> (Lcom/squareup/moshi/Moshi;)V
+	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
+	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
+	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;)V
+	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum, io/embrace/android/embracesdk/internal/spans/EmbraceAttributes$Attribute {

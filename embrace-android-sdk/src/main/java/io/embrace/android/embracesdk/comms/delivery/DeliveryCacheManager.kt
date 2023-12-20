@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -16,8 +17,9 @@ internal interface DeliveryCacheManager {
     fun saveCrash(crash: EventMessage)
     fun loadCrash(): EventMessage?
     fun deleteCrash()
-    fun savePayload(bytes: ByteArray): String
+    fun savePayload(action: SerializationAction): String
     fun loadPayload(name: String): ByteArray?
+    fun loadPayloadAsAction(name: String): SerializationAction?
     fun deletePayload(name: String)
     fun savePendingApiCalls(pendingApiCalls: PendingApiCalls)
     fun loadPendingApiCalls(): PendingApiCalls

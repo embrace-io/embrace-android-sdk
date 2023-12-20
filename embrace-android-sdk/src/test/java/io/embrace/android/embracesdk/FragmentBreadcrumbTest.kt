@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -26,7 +27,7 @@ internal class FragmentBreadcrumbTest {
         assertEquals(1600001000, obj.endTime)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
         val obj = deserializeEmptyJsonString<FragmentBreadcrumb>()
         assertNotNull(obj)

@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
@@ -168,7 +169,7 @@ internal class SessionHandlerTest {
             userService,
             clock
         )
-        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock))
+        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
         spansService.onConfigChange(configService)
         sessionHandler = SessionHandler(
             logger,

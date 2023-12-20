@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class PushNotificationBreadcrumbTest {
@@ -34,9 +34,8 @@ internal class PushNotificationBreadcrumbTest {
         assertEquals(1600000000, obj.getStartTime())
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<PushNotificationBreadcrumb>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<PushNotificationBreadcrumb>()
     }
 }

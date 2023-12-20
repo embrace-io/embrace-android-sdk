@@ -1,15 +1,18 @@
 package io.embrace.android.embracesdk
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class AnrSampleTest {
 
     private val threadInfo = ThreadInfo(
-        13, Thread.State.RUNNABLE, "my-thread", 5,
+        13,
+        Thread.State.RUNNABLE,
+        "my-thread",
+        5,
         listOf(
             "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
             "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
@@ -30,9 +33,8 @@ internal class AnrSampleTest {
         assertEquals(listOf(threadInfo), obj.threads)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testThreadInfoEmptyObject() {
-        val obj = deserializeEmptyJsonString<AnrSample>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<AnrSample>()
     }
 }

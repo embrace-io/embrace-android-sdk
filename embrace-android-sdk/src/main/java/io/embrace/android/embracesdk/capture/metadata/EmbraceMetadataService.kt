@@ -233,7 +233,9 @@ internal class EmbraceMetadataService private constructor(
                 val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
                 if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                     val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
-                        storageStatsManager, packageManager, packageName
+                        storageStatsManager,
+                        packageManager,
+                        packageName
                     )
                     if (deviceDiskAppUsage != null) {
                         logDeveloper("EmbraceMetadataService", "Disk usage is present")

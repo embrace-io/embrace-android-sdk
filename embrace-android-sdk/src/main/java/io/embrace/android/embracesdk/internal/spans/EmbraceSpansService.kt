@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
@@ -18,7 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * by calling the [initializeService] method. It is recommended that this is done in the background rather than on the main thread because
  * it may not be fast and doing it in the background doesn't affect how it works.
  */
-internal class EmbraceSpansService(private val clock: Clock) : Initializable, SpansService, ConfigListener {
+internal class EmbraceSpansService(
+    private val clock: Clock,
+    private val telemetryService: TelemetryService
+) : Initializable, SpansService, ConfigListener {
     /**
      * When this instance has been initialized with an instance of [SpansService] that does the proper spans logging
      */
@@ -47,7 +51,8 @@ internal class EmbraceSpansService(private val clock: Clock) : Initializable, Sp
                     currentDelegate = SpansServiceImpl(
                         sdkInitStartTimeNanos = sdkInitStartTimeNanos,
                         sdkInitEndTimeNanos = sdkInitEndTimeNanos,
-                        clock = clock
+                        clock = clock,
+                        telemetryService = telemetryService
                     )
                     initialized.set(true)
                     recordBufferedCalls()
@@ -61,7 +66,13 @@ internal class EmbraceSpansService(private val clock: Clock) : Initializable, Sp
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? =
         currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal)
 
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean, code: () -> T): T =
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: EmbraceAttributes.Type,
+        internal: Boolean,
+        code: () -> T
+    ): T =
         currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
 
     override fun recordCompletedSpan(

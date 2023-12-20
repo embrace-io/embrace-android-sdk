@@ -35,7 +35,7 @@ internal enum class ExecutorName(internal val threadName: String) {
     CACHED_SESSIONS("cached-sessions"),
     SEND_SESSIONS("send-sessions"),
     DELIVERY_CACHE("delivery-cache"),
-    API_RETRY("api-retry"),
+    NETWORK_REQUEST("network-request"),
     NATIVE_CRASH_CLEANER("native-crash-cleaner"),
     NATIVE_STARTUP("native-startup"),
     SESSION_CACHE_EXECUTOR("session-cache"),

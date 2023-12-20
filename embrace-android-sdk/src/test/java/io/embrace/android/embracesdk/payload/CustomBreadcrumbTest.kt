@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class CustomBreadcrumbTest {
@@ -26,9 +26,8 @@ internal class CustomBreadcrumbTest {
         assertEquals(1600000000, obj.getStartTime())
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<CustomBreadcrumb>()
-        assertNotNull(obj)
+        deserializeEmptyJsonString<CustomBreadcrumb>()
     }
 }

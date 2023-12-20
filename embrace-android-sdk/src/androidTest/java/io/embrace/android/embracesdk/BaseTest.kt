@@ -6,11 +6,21 @@ import android.graphics.Canvas
 import android.os.FileObserver
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwnerAccess
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
+import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
+import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.config.remote.WebViewVitals
+import io.embrace.android.embracesdk.internal.EmbraceContext
+import io.embrace.android.embracesdk.internal.EmbraceFileObserver
+import io.embrace.android.embracesdk.internal.TestServer
+import io.embrace.android.embracesdk.internal.TestServerResponse
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.utils.BitmapFactory
 import io.embrace.android.embracesdk.utils.JsonValidator
 import okhttp3.mockwebserver.RecordedRequest
@@ -22,6 +32,7 @@ import org.junit.Before
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -31,14 +42,18 @@ import java.util.zip.GZIPInputStream
  * class will reset the Embrace instance as well as the TestServer before each individual test
  * is run
  */
-public open class BaseTest {
+internal open class BaseTest {
 
     protected lateinit var pendingApiCallsFilePath: String
     public lateinit var mContext: EmbraceContext
-    protected val gson: Gson = Gson()
+    protected val serializer = EmbraceSerializer()
     public val testServer: TestServer = TestServer()
     private var fileObserver: EmbraceFileObserver? = null
     private val storageDir by lazy { mContext.cacheDir }
+
+    private val remoteConfig = RemoteConfig(
+        webViewVitals = WebViewVitals(100f, 100)
+    )
 
     @SuppressLint("VisibleForTests")
     @Before
@@ -80,8 +95,7 @@ public open class BaseTest {
     }
 
     private fun getDefaultNetworkResponses(): Map<String, TestServerResponse> {
-        val config = ConfigHooks.getConfig()
-        val configMockResponse = TestServerResponse(HttpURLConnection.HTTP_OK, gson.toJson(config))
+        val configMockResponse = TestServerResponse(HttpURLConnection.HTTP_OK, serializer.toJson(remoteConfig))
 
         return mapOf(
             EmbraceEndpoint.LOGGING.url to TestServerResponse(HttpURLConnection.HTTP_OK),
@@ -95,7 +109,27 @@ public open class BaseTest {
     private fun setLocalConfig() {
         val baseUrl = testServer.getBaseUrl()
         mContext.appId = "default-test-app-Id"
-        mContext.sdkConfig = ConfigHooks.getSdkConfig(baseUrl)
+        mContext.sdkConfig = run {
+            val sdkConfig = SdkLocalConfig(
+                networking = NetworkLocalConfig(
+                    // When this config is true, an error related with openConnection reflection
+                    // method not found was being thrown on this test:
+                    // io.embrace.android.embracesdk.LogMessageTest.logHandledExceptionTest
+                    enableNativeMonitoring = false
+                ),
+                baseUrls = BaseUrlLocalConfig(
+                    config = baseUrl,
+                    data = baseUrl,
+                    dataDev = baseUrl,
+                    images = baseUrl
+                )
+            )
+            val json = serializer.toJson(sdkConfig)
+            Base64.encodeToString(
+                json.toByteArray(StandardCharsets.UTF_8),
+                Base64.DEFAULT
+            )
+        }
     }
 
     /**
@@ -201,9 +235,11 @@ public open class BaseTest {
                             )
                         }
                     }
+
                     EmbraceEndpoint.CONFIG.url -> {
                         assertEquals("GET", request.method)
                     }
+
                     else -> fail("Unexpected Request call. ${request.path}")
                 }
                 println("REQUEST: ${request.path}")

@@ -578,33 +578,6 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logInternalError(@Nullable String message, @Nullable String details) {
-        impl.logInternalError(message, details);
-    }
-
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logInternalError(@NonNull Throwable error) {
-        impl.logInternalError(error);
-    }
-
-    /**
-     * @hide
-     */
-    @Nullable
-    @InternalApi
-    public ConfigService getConfigService() {
-        return impl.getConfigService();
-    }
-
-    /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for React Native.
      * @hide
@@ -650,11 +623,6 @@ public final class Embrace implements EmbraceAndroidApi {
     @InternalApi
     public UnityInternalInterface getUnityInternalInterface() {
         return impl.getUnityInternalInterface();
-    }
-
-    @InternalApi
-    void installUnityThreadSampler() {
-        impl.installUnityThreadSampler();
     }
 
     /**
@@ -714,14 +682,6 @@ public final class Embrace implements EmbraceAndroidApi {
         @Nullable String library
     ) {
         impl.logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED);
-    }
-
-    /**
-     * @hide
-     */
-    @InternalApi
-    public void sampleCurrentThreadDuringAnrs() {
-        impl.sampleCurrentThreadDuringAnrs();
     }
 
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {

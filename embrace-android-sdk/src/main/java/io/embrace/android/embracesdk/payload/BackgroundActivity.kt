@@ -1,97 +1,99 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents a particular user's session within the app.
  */
+@JsonClass(generateAdapter = true)
 internal data class BackgroundActivity(
 
     /**
      * A unique ID which identifies the session.
      */
-    @SerializedName("id")
+    @Json(name = "id")
     val sessionId: String,
 
     /**
      * The time that the session started.
      */
-    @SerializedName("st")
+    @Json(name = "st")
     val startTime: Long?,
 
     /**
      * Application state for this session (foreground or background)
      */
-    @SerializedName("as")
+    @Json(name = "as")
     val appState: String?,
 
     /**
      * The time that the session ended.
      */
-    @SerializedName("et")
+    @Json(name = "et")
     val endTime: Long? = null,
 
     /**
      * The ordinal of the background activity, starting from 1.
      */
-    @SerializedName("sn")
+    @Json(name = "sn")
     val number: Int? = null,
 
     /**
      * Type of the session message (start or end)
      */
-    @SerializedName("ty")
+    @Json(name = "ty")
     val messageType: String? = null,
 
-    @SerializedName("ht")
+    @Json(name = "ht")
     val lastHeartbeatTime: Long? = null,
 
-    @SerializedName("ls")
+    @Json(name = "ls")
     val lastState: String? = null,
 
-    @SerializedName("ba")
+    @Json(name = "ba")
     val startingBatteryLevel: Double? = null,
 
-    @SerializedName("cs")
+    @Json(name = "cs")
     val isColdStart: Boolean? = null,
 
-    @SerializedName("ss")
+    @Json(name = "ss")
     val eventIds: List<String>? = null,
 
-    @SerializedName("il")
+    @Json(name = "il")
     val infoLogIds: List<String>? = null,
 
-    @SerializedName("wl")
+    @Json(name = "wl")
     val warningLogIds: List<String>? = null,
 
-    @SerializedName("el")
+    @Json(name = "el")
     val errorLogIds: List<String>? = null,
 
-    @SerializedName("lic")
+    @Json(name = "lic")
     val infoLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("lwc")
+    @Json(name = "lwc")
     val warnLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("lec")
+    @Json(name = "lec")
     val errorLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("e")
+    @Json(name = "e")
     val exceptionError: ExceptionError? = null,
 
-    @SerializedName("ri")
+    @Json(name = "ri")
     val crashReportId: String? = null,
 
-    @SerializedName("em")
+    @Json(name = "em")
     val endType: LifeEventType? = null,
 
-    @SerializedName("sm")
+    @Json(name = "sm")
     val startType: LifeEventType? = null,
 
-    @SerializedName("sp")
+    @Json(name = "sp")
     val properties: Map<String, String>? = null,
 
-    @SerializedName("ue")
+    @Json(name = "ue")
     val unhandledExceptions: Int? = null,
 
     @Transient
@@ -102,16 +104,16 @@ internal data class BackgroundActivity(
      * Enum to discriminate the different ways a background session can start / end
      */
     internal enum class LifeEventType {
-        @SerializedName("bs")
+        @Json(name = "bs")
         BKGND_STATE,
 
-        @SerializedName("bm")
+        @Json(name = "bm")
         BKGND_MANUAL,
 
-        @SerializedName("bt")
+        @Json(name = "bt")
         BKGND_TIME,
 
-        @SerializedName("be")
+        @Json(name = "be")
         BKGND_SIZE
     }
 }

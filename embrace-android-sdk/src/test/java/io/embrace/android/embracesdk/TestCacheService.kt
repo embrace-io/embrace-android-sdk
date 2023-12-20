@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.SessionMessage
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
@@ -65,5 +68,23 @@ internal class TestCacheService : CacheService {
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         cacheBytes(name, serializer.toJson(sessionMessage).toByteArray())
+    }
+
+    var oldPendingApiCalls: List<PendingApiCall>? = null
+
+    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
+        return oldPendingApiCalls
+    }
+
+    override fun cachePayload(name: String, action: SerializationAction) {
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        cache[name] = stream.toByteArray()
+    }
+
+    override fun loadPayload(name: String): SerializationAction {
+        return {
+            it.write(cache[name])
+        }
     }
 }

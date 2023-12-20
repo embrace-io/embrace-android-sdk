@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.mockk.unmockkAll
 import org.junit.AfterClass
@@ -24,6 +26,14 @@ internal class ExceptionErrorTest {
         fun afterClass() {
             unmockkAll()
         }
+    }
+
+    @Test
+    fun `serialize then deserialize default object`() {
+        val obj = ExceptionError(false)
+        assertJsonMatchesGoldenFile("exception_error_expected.json", obj)
+        val other = deserializeJsonFromResource<ExceptionError>("exception_error_expected.json")
+        assertEquals(obj, other)
     }
 
     @Test

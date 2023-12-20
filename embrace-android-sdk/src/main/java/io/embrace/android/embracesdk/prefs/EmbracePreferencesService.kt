@@ -140,7 +140,7 @@ internal class EmbracePreferencesService(
         val editor = edit()
         val mapString = when (value) {
             null -> null
-            else -> serializer.toJson(value)
+            else -> serializer.toJson(value, Map::class.java)
         }
         editor.putString(key, mapString)
         editor.apply()
@@ -150,7 +150,7 @@ internal class EmbracePreferencesService(
         key: String
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
-        return serializer.fromJsonWithTypeToken<HashMap<String, String>>(mapString)
+        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
     }
 
     override var appVersion: String?

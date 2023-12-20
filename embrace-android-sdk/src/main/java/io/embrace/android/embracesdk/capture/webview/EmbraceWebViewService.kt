@@ -70,7 +70,7 @@ internal class EmbraceWebViewService(
                 } else {
                     when (it.type) {
                         WebVitalType.CLS -> {
-                            if (newVital.duration > it.duration) { // largest CLS metric
+                            if ((newVital.duration ?: 0) > (it.duration ?: 0)) { // largest CLS metric
                                 storedMessage.webVitalMap[it.type] = newVital
                             }
                         }

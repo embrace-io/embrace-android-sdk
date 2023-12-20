@@ -31,7 +31,7 @@ internal class EmbraceApiService(
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
-    networkConnectivityService: NetworkConnectivityService
+    networkConnectivityService: NetworkConnectivityService,
 ) : ApiService, NetworkConnectivityListener {
 
     private val mapper = ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
@@ -68,23 +68,28 @@ internal class EmbraceApiService(
                     serializer.fromJson(it, RemoteConfig::class.java)
                 }
             }
+
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")
                 cachedResponse.remoteConfig
             }
+
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
                 logger.logWarning("Too many requests. ")
                 null
             }
+
             is ApiResponse.Failure -> {
                 logger.logInfo("Failed to fetch config (no response).")
                 null
             }
+
             is ApiResponse.Incomplete -> {
                 logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
             }
+
             ApiResponse.PayloadTooLarge -> {
                 // Not expected to receive a 413 response for a GET request.
                 null
@@ -164,7 +169,7 @@ internal class EmbraceApiService(
     private inline fun <reified T> post(
         payload: T,
         mapper: (T) -> ApiRequest,
-        noinline onComplete: (() -> Unit)? = null
+        noinline onComplete: (() -> Unit)? = null,
     ): Future<*> {
         val bytes = serializer.toJson(payload).toByteArray()
         val request: ApiRequest = mapper(payload)
@@ -173,43 +178,56 @@ internal class EmbraceApiService(
     }
 
     /**
-     * Posts an API call to the API.
-     * If the device is offline or the endpoint is rate limited, the API call is saved to be sent later.
-     * If the API call fails, it is retried and if it succeeds, it is removed from cache.
+     * Submits a [NetworkRequestRunnable] to the [executorService].
+     * This way, we prioritize the sending of sessions over other network requests.
      */
     private fun postOnExecutor(
         payload: ByteArray,
         request: ApiRequest,
-        onComplete: (() -> Any)?
+        onComplete: (() -> Any)?,
     ): Future<*> {
         return executorService.submit(
             NetworkRequestRunnable(request) {
-                val endpoint = request.url.endpoint()
-
-                if (lastNetworkStatus.isReachable &&
-                    !rateLimitHandler.isRateLimited(endpoint)
-                ) {
-                    // Execute the request if the device is online and the endpoint is not rate limited.
-                    val response = executePost(request, payload)
-
-                    if (response.shouldRetry) {
-                        pendingApiCallsSender.savePendingApiCall(request, payload)
-                        pendingApiCallsSender.scheduleRetry(response)
-                    }
-
-                    if (response !is ApiResponse.Success) {
-                        onComplete?.invoke()
-                        error("Failed to post Embrace API call. ")
-                    }
-                } else {
-                    // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
-                    pendingApiCallsSender.savePendingApiCall(request, payload)
+                try {
+                    handleApiRequest(request, payload)
+                } finally {
+                    onComplete?.invoke()
                 }
-                onComplete?.invoke()
             }
         )
     }
 
+    /**
+     * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
+     * Otherwise, the API call is saved to be sent later.
+     */
+    private fun handleApiRequest(request: ApiRequest, payload: ByteArray) {
+        val endpoint = request.url.endpoint()
+
+        if (lastNetworkStatus.isReachable &&
+            !rateLimitHandler.isRateLimited(endpoint)
+        ) {
+            // Execute the request if the device is online and the endpoint is not rate limited.
+            val response = executePost(request, payload)
+
+            if (response.shouldRetry) {
+                pendingApiCallsSender.savePendingApiCall(request, payload)
+                pendingApiCallsSender.scheduleRetry(response)
+            }
+
+            if (response !is ApiResponse.Success) {
+                // If the API call failed, propagate the error to the caller.
+                error("Failed to post Embrace API call. ")
+            }
+        } else {
+            // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
+            pendingApiCallsSender.savePendingApiCall(request, payload)
+        }
+    }
+
+    /**
+     * Executes a POST request by calling [ApiClient.executePost].
+     */
     private fun executePost(request: ApiRequest, payload: ByteArray) =
         apiClient.executePost(request, ByteArrayInputStream(payload))
 

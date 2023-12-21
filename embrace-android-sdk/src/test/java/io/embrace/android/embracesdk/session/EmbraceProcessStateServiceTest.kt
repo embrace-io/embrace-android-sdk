@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
+import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
@@ -32,7 +33,7 @@ internal class EmbraceProcessStateServiceTest {
     private lateinit var stateService: EmbraceProcessStateService
 
     companion object {
-        private lateinit var mockLooper: Looper
+        private lateinit var looper: Looper
         private lateinit var mockLifeCycleOwner: LifecycleOwner
         private lateinit var mockLifecycle: Lifecycle
         private lateinit var mockApplication: Application
@@ -41,7 +42,7 @@ internal class EmbraceProcessStateServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockLooper = mockk()
+            looper = mockLooper()
             mockLifeCycleOwner = mockk()
             mockLifecycle = mockk(relaxed = true)
             mockkStatic(Looper::class)
@@ -50,8 +51,7 @@ internal class EmbraceProcessStateServiceTest {
 
             fakeClock.setCurrentTime(1234)
             every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
-            every { Looper.getMainLooper() } returns mockLooper
-            every { mockLooper.thread } returns Thread.currentThread()
+            every { Looper.getMainLooper() } returns looper
             every { ProcessLifecycleOwner.get() } returns mockLifeCycleOwner
             every { mockLifeCycleOwner.lifecycle } returns mockLifecycle
             every { mockLifecycle.addObserver(any()) } returns Unit

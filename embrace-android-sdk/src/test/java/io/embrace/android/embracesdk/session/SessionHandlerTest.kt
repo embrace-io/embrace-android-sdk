@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -325,11 +326,9 @@ internal class SessionHandlerTest {
     @Test
     fun `onSession started and resuming with no previous screen name but with foregroundActivity, it should force log view breadcrumb`() {
         breadcrumbService.viewBreadcrumbScreenName = null
-        val mockActivity: Activity = mockk()
+        val mockActivity: Activity = mockActivity()
         // let's return a foreground activity
         activityLifecycleTracker.foregroundActivity = mockActivity
-        val activityClassName = "activity-class-name"
-        every { mockActivity.localClassName } returns activityClassName
         val sessionStartType = Session.SessionLifeEventType.STATE
 
         val sessionMessage = sessionHandler.onSessionStarted(
@@ -340,7 +339,7 @@ internal class SessionHandlerTest {
         )
 
         // verify we are forcing log view with foreground activity class name
-        assertEquals(activityClassName, breadcrumbService.logViewCalls.single())
+        assertEquals(mockActivity.localClassName, breadcrumbService.logViewCalls.single())
         checkNotNull(sessionMessage)
         assertNotNull(sessionMessage.session)
         // no need to verify anything else because it's already verified in another test case

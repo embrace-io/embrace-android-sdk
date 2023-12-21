@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.Context
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
+import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -15,18 +16,18 @@ import org.junit.Test
 internal class ComponentCallbackServiceTest {
 
     private lateinit var service: ComponentCallbackService
-    private lateinit var mockApplication: Application
+    private lateinit var application: Application
     private lateinit var memoryService: FakeMemoryService
     private lateinit var ctx: Context
 
     @Before
     fun setup() {
-        ctx = mockk(relaxed = true)
-        mockApplication = mockk(relaxed = true) {
+        ctx = mockContext()
+        application = mockk(relaxed = true) {
             every { applicationContext } returns ctx
         }
         memoryService = FakeMemoryService()
-        every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
+        every { application.registerActivityLifecycleCallbacks(any()) } returns Unit
     }
 
     @Before
@@ -39,7 +40,7 @@ internal class ComponentCallbackServiceTest {
         )
 
         service = ComponentCallbackService(
-            mockApplication,
+            application,
             memoryService
         )
     }

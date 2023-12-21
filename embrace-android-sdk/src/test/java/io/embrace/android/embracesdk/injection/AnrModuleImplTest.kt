@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -23,7 +23,7 @@ internal class AnrModuleImplTest {
     @Before
     fun setUp() {
         mockkStatic(Looper::class)
-        every { Looper.getMainLooper() } returns mockk(relaxed = true)
+        every { Looper.getMainLooper() } returns mockLooper()
     }
 
     @Test

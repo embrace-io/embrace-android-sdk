@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.mockk.mockk
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -53,7 +53,7 @@ internal class EmbraceBreadcrumbServiceTest {
             )
         )
         processStateService = FakeProcessStateService()
-        activity = mockk()
+        activity = mockActivity()
         memoryCleanerService = EmbraceMemoryCleanerService()
         clock.setCurrentTime(MILLIS_FOR_2020_01_01)
         clock.tickSecond()
@@ -547,7 +547,7 @@ internal class EmbraceBreadcrumbServiceTest {
     @Test
     fun testOnViewEnabled() {
         val service = initializeBreadcrumbService()
-        service.onView(mockk(relaxed = true))
+        service.onView(mockActivity())
 
         val crumbs = service.getViewBreadcrumbsForSession(0, Long.MAX_VALUE)
         val breadcrumb = checkNotNull(crumbs.single())

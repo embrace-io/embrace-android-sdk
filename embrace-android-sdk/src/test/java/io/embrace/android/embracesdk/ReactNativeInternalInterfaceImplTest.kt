@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -34,7 +35,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         crashService = mockk(relaxed = true)
         metadataService = FakeAndroidMetadataService()
         logger = mockk(relaxed = true)
-        context = mockk(relaxed = true)
+        context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),

@@ -15,6 +15,10 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -51,7 +55,7 @@ internal class EmbraceMetadataUnityTest {
             mockkStatic(MetadataUtils::class)
             mockkStatic(Environment::class)
 
-            context = mockk(relaxed = true)
+            context = mockContext()
             buildInfo = mockk()
             configService = mockk(relaxed = true)
             preferencesService = FakePreferenceService()
@@ -109,9 +113,9 @@ internal class EmbraceMetadataUnityTest {
         preferencesService,
         processStateService,
         MoreExecutors.newDirectExecutorService(),
-        mockk(),
-        mockk(),
-        mockk(),
+        mockStorageStatsManager(),
+        mockWindowManager(),
+        mockActivityManager(),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,

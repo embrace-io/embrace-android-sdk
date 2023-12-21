@@ -30,7 +30,7 @@ internal class TargetThreadHandlerTest {
 
     @Before
     fun setUp() {
-        runnable = mockk()
+        runnable = Runnable {}
         configService = FakeConfigService()
         anrMonitorThread = AtomicReference()
         executorService = BlockableExecutorService(blockingMode = true)

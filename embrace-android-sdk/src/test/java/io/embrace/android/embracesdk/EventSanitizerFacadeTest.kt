@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.gating.EventSanitizerFacade
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.payload.AppInfo
+import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.UserInfo
-import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -29,18 +30,13 @@ internal class EventSanitizerFacadeTest {
         email = "example@embrace.com"
     )
 
-    private val performanceInfo = PerformanceInfo(
-        anrIntervals = mockk(relaxed = true),
-        networkInterfaceIntervals = mockk(),
-        memoryWarnings = mockk(),
-        diskUsage = mockk()
-    )
+    private val performanceInfo = fakePerformanceInfo()
 
     private val eventMessage = EventMessage(
         event = event,
         userInfo = userInfo,
-        appInfo = mockk(),
-        deviceInfo = mockk(),
+        appInfo = AppInfo(),
+        deviceInfo = DeviceInfo(),
         performanceInfo = performanceInfo
     )
 

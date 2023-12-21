@@ -3,9 +3,10 @@ package io.embrace.android.embracesdk.internal.serialization
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.mockk.mockk
 import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 
 internal class EmbraceSerializerTest {
     private val serializer = EmbraceSerializer()
@@ -14,7 +15,9 @@ internal class EmbraceSerializerTest {
 
     @Test
     fun testWriteToFile() {
-        serializer.toJson(payload, SessionMessage::class.java, mockk(relaxed = true))
+        val stream = ByteArrayOutputStream()
+        serializer.toJson(payload, SessionMessage::class.java, stream)
+        assertTrue(stream.toByteArray().isNotEmpty())
     }
 
     @Test

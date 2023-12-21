@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -34,7 +32,6 @@ import java.util.concurrent.ExecutorService
 internal class EmbraceSessionServiceTest {
 
     private lateinit var service: EmbraceSessionService
-    private lateinit var configService: FakeConfigService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var spansService: EmbraceSpansService
 
@@ -68,11 +65,6 @@ internal class EmbraceSessionServiceTest {
             clock = OpenTelemetryClock(embraceClock = clock),
             telemetryService = FakeTelemetryService()
         )
-        configService = FakeConfigService(
-            spansBehavior = fakeSpansBehavior { SpansRemoteConfig(pctEnabled = 100f) }
-        )
-        configService.addListener(spansService)
-        configService.updateListeners()
     }
 
     @After

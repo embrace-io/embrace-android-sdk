@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceEventService.Companion.STARTUP_EVENT_NAME
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -106,7 +104,6 @@ internal class EmbraceEventServiceTest {
         deliveryService = FakeDeliveryService()
         startupMomentLocalConfig = StartupMomentLocalConfig()
         configService = FakeConfigService(
-            spansBehavior = fakeSpansBehavior { SpansRemoteConfig(pctEnabled = 100f) },
             startupBehavior = fakeStartupBehavior { startupMomentLocalConfig },
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior { remoteConfig }
         )
@@ -121,7 +118,6 @@ internal class EmbraceEventServiceTest {
             clock = OpenTelemetryClock(embraceClock = fakeClock),
             telemetryService = FakeTelemetryService()
         )
-        configService.addListener(spansService)
         eventHandler = EventHandler(
             metadataService = metadataService,
             configService = configService,

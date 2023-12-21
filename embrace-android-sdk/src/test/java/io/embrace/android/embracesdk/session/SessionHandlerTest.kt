@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -148,9 +146,6 @@ internal class SessionHandlerTest {
             ),
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior(
                 remoteCfg = { remoteConfig }
-            ),
-            spansBehavior = fakeSpansBehavior(
-                remoteConfig = { SpansRemoteConfig(100f) }
             )
         )
         gatingService = FakeGatingService(configService = configService)
@@ -170,7 +165,6 @@ internal class SessionHandlerTest {
             clock
         )
         spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
-        spansService.onConfigChange(configService)
         sessionHandler = SessionHandler(
             logger,
             configService,

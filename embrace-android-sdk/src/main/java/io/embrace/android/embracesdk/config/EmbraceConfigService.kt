@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -118,12 +117,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         StartupBehavior(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig.sdkConfig::startupMoment
-        )
-
-    override val spansBehavior: SpansBehavior =
-        SpansBehavior(
-            thresholdCheck = thresholdCheck,
-            remoteSupplier = { getConfig().spansConfig }
         )
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehavior(

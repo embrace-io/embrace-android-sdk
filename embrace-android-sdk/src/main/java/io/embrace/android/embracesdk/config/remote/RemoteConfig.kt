@@ -104,9 +104,6 @@ internal data class RemoteConfig(
     @Json(name = "max_session_properties")
     val maxSessionProperties: Int? = null,
 
-    @Json(name = "spans")
-    val spansConfig: SpansRemoteConfig? = null,
-
     @Json(name = "network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,
 

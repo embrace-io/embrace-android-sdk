@@ -3,14 +3,19 @@ package io.embrace.android.embracesdk.event
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
@@ -19,16 +24,12 @@ import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.slot
 import io.mockk.unmockkAll
-import io.mockk.verify
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -48,7 +49,7 @@ internal class EmbraceRemoteLoggerTest {
     companion object {
         private lateinit var remoteLogger: EmbraceRemoteLogger
         private lateinit var metadataService: FakeAndroidMetadataService
-        private lateinit var deliveryService: EmbraceDeliveryService
+        private lateinit var deliveryService: FakeDeliveryService
         private lateinit var userService: UserService
         private lateinit var configService: ConfigService
         private lateinit var sessionProperties: EmbraceSessionProperties
@@ -62,22 +63,13 @@ internal class EmbraceRemoteLoggerTest {
         @JvmStatic
         fun beforeClass() {
             metadataService = FakeAndroidMetadataService()
-            deliveryService = mockk(relaxed = true)
-            userService = mockk(relaxed = true)
-            sessionProperties = mockk(relaxed = true)
+            userService = FakeUserService()
             logcat = InternalEmbraceLogger()
-            configService = mockk(relaxed = true) {
-                every { sessionBehavior } returns fakeSessionBehavior()
-            }
             executor = Executors.newSingleThreadExecutor()
             tick = AtomicLong(1609823408L)
             clock = Clock { tick.incrementAndGet() }
             mockkStatic(Uuid::class)
             every { Uuid.getEmbUuid() } returns "id"
-
-            gatingService = EmbraceGatingService(
-                configService
-            )
         }
 
         @AfterClass
@@ -87,7 +79,7 @@ internal class EmbraceRemoteLoggerTest {
         }
     }
 
-    private var cfg: RemoteConfig? = RemoteConfig()
+    private lateinit var cfg: RemoteConfig
 
     @Before
     fun setUp() {
@@ -97,18 +89,26 @@ internal class EmbraceRemoteLoggerTest {
             constructorMocks = false,
             staticMocks = false
         )
+        deliveryService = FakeDeliveryService()
 
-        every { configService.sessionBehavior } returns fakeSessionBehavior {
-            cfg
-        }
-        every { configService.logMessageBehavior } returns fakeLogMessageBehavior {
-            LogRemoteConfig()
-        }
-        every { configService.dataCaptureEventBehavior.isLogMessageEnabled(any()) } returns true
-        every { configService.dataCaptureEventBehavior.isMessageTypeEnabled(any()) } returns true
+        cfg = RemoteConfig()
+
+        configService = FakeConfigService(
+            sessionBehavior = fakeSessionBehavior {
+                cfg
+            },
+            logMessageBehavior = fakeLogMessageBehavior {
+                cfg.logConfig
+            },
+            dataCaptureEventBehavior = fakeDataCaptureEventBehavior {
+                cfg
+            }
+        )
+        gatingService = EmbraceGatingService(configService)
         metadataService.setActiveSessionId("session-123", true)
         metadataService.setAppForeground()
         metadataService.setAppId("appId")
+        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
     }
 
     private fun getRemoteLogger(): EmbraceRemoteLogger {
@@ -122,7 +122,7 @@ internal class EmbraceRemoteLoggerTest {
             clock,
             MoreExecutors.newDirectExecutorService(),
             gatingService,
-            mockk(relaxed = true)
+            FakeNetworkConnectivityService()
         )
     }
 
@@ -136,51 +136,38 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger.log("Warning world", EmbraceEvent.Type.WARNING_LOG, null)
         remoteLogger.log("Hello errors", EmbraceEvent.Type.ERROR_LOG, null)
 
-        verify {
-            deliveryService.sendLog(
-                withArg { eventMessage ->
-                    assertEquals("Hello world", eventMessage.event.name)
-                    assertNotNull(eventMessage.event.timestamp)
-                    assertEquals(EmbraceEvent.Type.INFO_LOG, eventMessage.event.type)
-                    assertEquals(props, eventMessage.event.customProperties)
-                    assertNotNull(eventMessage.event.messageId)
-                    assertNotNull(eventMessage.event.eventId)
-                    assertNotNull(eventMessage.event.sessionId)
-                    eventMessage.event.screenshotTaken?.let { assertFalse(it) }
-                    assertEquals(LogExceptionType.NONE.value, eventMessage.event.logExceptionType)
-                }
-            )
-        }
+        val logs = deliveryService.lastSentLogs
+        assertEquals(3, logs.size)
+        val first = logs[0]
+        assertEquals("Hello world", first.event.name)
+        assertNotNull(first.event.timestamp)
+        assertEquals(EmbraceEvent.Type.INFO_LOG, first.event.type)
+        assertEquals(props, first.event.customProperties)
+        assertNotNull(first.event.messageId)
+        assertNotNull(first.event.eventId)
+        assertNotNull(first.event.sessionId)
+        first.event.screenshotTaken?.let { assertFalse(it) }
+        assertEquals(LogExceptionType.NONE.value, first.event.logExceptionType)
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertEquals("Warning world", it.event.name)
-                    assertEquals(EmbraceEvent.Type.WARNING_LOG, it.event.type)
-                    assertNull(it.event.customProperties)
-                    assertNotNull(it.event.messageId)
-                    assertNotNull(it.event.eventId)
-                    assertNotNull(it.event.sessionId)
-                    it.event.screenshotTaken?.let { st -> assertFalse(st) }
-                    assertEquals(LogExceptionType.NONE.value, it.event.logExceptionType)
-                }
-            )
-        }
+        val second = logs[1]
+        assertEquals("Warning world", second.event.name)
+        assertEquals(EmbraceEvent.Type.WARNING_LOG, second.event.type)
+        assertNull(second.event.customProperties)
+        assertNotNull(second.event.messageId)
+        assertNotNull(second.event.eventId)
+        assertNotNull(second.event.sessionId)
+        second.event.screenshotTaken?.let { st -> assertFalse(st) }
+        assertEquals(LogExceptionType.NONE.value, second.event.logExceptionType)
 
-        verify {
-            deliveryService.sendLog(
-                withArg { eventMessage ->
-                    assertEquals("Hello errors", eventMessage.event.name)
-                    assertEquals(EmbraceEvent.Type.ERROR_LOG, eventMessage.event.type)
-                    assertNull(eventMessage.event.customProperties)
-                    assertNotNull(eventMessage.event.messageId)
-                    assertNotNull(eventMessage.event.eventId)
-                    assertNotNull(eventMessage.event.sessionId)
-                    eventMessage.event.screenshotTaken?.let { assertFalse(it) }
-                    assertEquals(LogExceptionType.NONE.value, eventMessage.event.logExceptionType)
-                }
-            )
-        }
+        val third = logs[2]
+        assertEquals("Hello errors", third.event.name)
+        assertEquals(EmbraceEvent.Type.ERROR_LOG, third.event.type)
+        assertNull(third.event.customProperties)
+        assertNotNull(third.event.messageId)
+        assertNotNull(third.event.eventId)
+        assertNotNull(third.event.sessionId)
+        third.event.screenshotTaken?.let { assertFalse(it) }
+        assertEquals(LogExceptionType.NONE.value, third.event.logExceptionType)
 
         // verify sent counts
         assertEquals(1, remoteLogger.getInfoLogsAttemptedToSend())
@@ -208,42 +195,32 @@ internal class EmbraceRemoteLoggerTest {
             exception.message,
         )
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertEquals("Hello world", it.event.name)
-                    assertEquals(EmbraceEvent.Type.ERROR_LOG, it.event.type)
-                    assertEquals("NullPointerException", it.event.exceptionName)
-                    assertEquals("exception message", it.event.exceptionMessage)
-                    assertNotNull(it.event.messageId)
-                    assertNotNull(it.event.eventId)
-                    assertNotNull(it.event.sessionId)
-                    assertNotNull(it.event.sessionId)
-                    assertNotNull(it.event.sessionId)
-                    assertNotNull(it.event.logExceptionType)
-                    assertEquals(LogExceptionType.NONE.value, it.event.logExceptionType)
-                }
-            )
-        }
+        val message = deliveryService.lastSentLogs.single()
+        assertEquals("Hello world", message.event.name)
+        assertEquals(EmbraceEvent.Type.ERROR_LOG, message.event.type)
+        assertEquals("NullPointerException", message.event.exceptionName)
+        assertEquals("exception message", message.event.exceptionMessage)
+        assertNotNull(message.event.messageId)
+        assertNotNull(message.event.eventId)
+        assertNotNull(message.event.sessionId)
+        assertNotNull(message.event.sessionId)
+        assertNotNull(message.event.sessionId)
+        assertNotNull(message.event.logExceptionType)
+        assertEquals(LogExceptionType.NONE.value, message.event.logExceptionType)
     }
 
     @Test
     fun testLogNetwork() {
-        val networkCaptureCall: NetworkCapturedCall = mockk(relaxed = true)
+        val networkCaptureCall = NetworkCapturedCall()
 
         remoteLogger = getRemoteLogger()
         remoteLogger.logNetwork(networkCaptureCall)
 
-        verify {
-            deliveryService.sendNetworkCall(
-                withArg {
-                    assertEquals("appId", it.appId)
-                    assertEquals("session-123", it.sessionId)
-                    assertNotNull(it.appInfo)
-                    assertNotNull(it.networkCaptureCall)
-                }
-            )
-        }
+        val message = checkNotNull(deliveryService.lastSentNetworkCall)
+        assertEquals("appId", message.appId)
+        assertEquals("session-123", message.sessionId)
+        assertNotNull(message.appInfo)
+        assertNotNull(message.networkCaptureCall)
 
         assertEquals(1, remoteLogger.findNetworkLogIds(0, clock.now()).size)
     }
@@ -253,10 +230,7 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger = getRemoteLogger()
         remoteLogger.logNetwork(null)
 
-        verify(exactly = 0) {
-            deliveryService.sendNetworkCall(any())
-        }
-
+        assertNull(deliveryService.lastSentNetworkCall)
         assertEquals(0, remoteLogger.findNetworkLogIds(0, clock.now()).size)
     }
 
@@ -265,65 +239,46 @@ internal class EmbraceRemoteLoggerTest {
         remoteLogger = getRemoteLogger()
         remoteLogger.log("Hi".repeat(65), EmbraceEvent.Type.INFO_LOG, null)
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Hi".repeat(62) + "H...")
-                }
-            )
-        }
+        val message = deliveryService.lastSentLogs.single()
+        assertTrue(message.event.name == "Hi".repeat(62) + "H...")
     }
 
     @Test
     fun testCustomMaxMessageLength() {
-        every { configService.logMessageBehavior.getInfoLogLimit() } returns 50
-        every { configService.logMessageBehavior.getLogMessageMaximumAllowedLength() } returns 50
+        cfg = cfg.copy(
+            logConfig = LogRemoteConfig(
+                logMessageMaximumAllowedLength = 50,
+                logInfoLimit = 50
+            )
+        )
 
         remoteLogger = getRemoteLogger()
         remoteLogger.log("Hi".repeat(50), EmbraceEvent.Type.INFO_LOG, null)
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Hi".repeat(23) + "H...")
-                }
-            )
-        }
+        val message = deliveryService.lastSentLogs.single()
+        assertTrue(message.event.name == "Hi".repeat(23) + "H...")
     }
 
     @Test
     fun testLogMessageEnabled() {
-        every { configService.dataCaptureEventBehavior.isLogMessageEnabled("Hello World") } returns false
+        cfg = cfg.copy(disabledEventAndLogPatterns = setOf("Hello World"))
         remoteLogger = getRemoteLogger()
 
         remoteLogger.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
         remoteLogger.log("Another", EmbraceEvent.Type.INFO_LOG, null)
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Another")
-                }
-            )
-        }
-
-        verify(exactly = 0) {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Hello World")
-                }
-            )
+        deliveryService.lastSentLogs.single().let {
+            assertEquals("Another", it.event.name)
         }
     }
 
     @Test
     fun testMessageTypeEnabled() {
-        every { configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.LOG) } returns false
+        cfg = cfg.copy(disabledMessageTypes = setOf(MessageType.LOG.name.toLowerCase()))
         remoteLogger = getRemoteLogger()
 
         remoteLogger.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
-
-        verify(exactly = 0) { deliveryService.sendLog(any()) }
+        assertEquals(0, deliveryService.lastSentLogs.size)
     }
 
     @Test
@@ -362,15 +317,10 @@ internal class EmbraceRemoteLoggerTest {
             null
         )
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Unity".repeat(1000)) // log limit higher on unity
-                    assertTrue(it.stacktraces?.unityStacktrace == "my stacktrace")
-                    assertEquals(LogExceptionType.HANDLED.value, it.event.logExceptionType)
-                }
-            )
-        }
+        val message = deliveryService.lastSentLogs.single()
+        assertEquals("Unity".repeat(1000), message.event.name) // log limit higher on unity
+        assertEquals("my stacktrace", message.stacktraces?.unityStacktrace)
+        assertEquals(LogExceptionType.HANDLED.value, message.event.logExceptionType)
 
         assertEquals(0, remoteLogger.getUnhandledExceptionsSent())
     }
@@ -393,15 +343,10 @@ internal class EmbraceRemoteLoggerTest {
             null
         )
 
-        verify {
-            deliveryService.sendLog(
-                withArg {
-                    assertTrue(it.event.name == "Unity".repeat(1000)) // log limit higher on unity
-                    assertTrue(it.stacktraces?.unityStacktrace == "my stacktrace")
-                    assertEquals(LogExceptionType.UNHANDLED.value, it.event.logExceptionType)
-                }
-            )
-        }
+        val message = deliveryService.lastSentLogs.single()
+        assertTrue(message.event.name == "Unity".repeat(1000)) // log limit higher on unity
+        assertTrue(message.stacktraces?.unityStacktrace == "my stacktrace")
+        assertEquals(LogExceptionType.UNHANDLED.value, message.event.logExceptionType)
 
         assertEquals(1, remoteLogger.getUnhandledExceptionsSent())
     }
@@ -425,9 +370,7 @@ internal class EmbraceRemoteLoggerTest {
         executor.shutdown()
         executor.awaitTermination(1, TimeUnit.SECONDS)
 
-        val action = slot<EventMessage>()
-        verify(exactly = 1) { deliveryService.sendLog(capture(action)) }
-        val msg = action.captured
+        val msg = deliveryService.lastSentLogs.single()
         assertEquals("Dart error name", msg.event.exceptionName)
         assertEquals("Dart error message", msg.event.exceptionMessage)
         assertEquals("my stacktrace", msg.stacktraces?.flutterStacktrace)

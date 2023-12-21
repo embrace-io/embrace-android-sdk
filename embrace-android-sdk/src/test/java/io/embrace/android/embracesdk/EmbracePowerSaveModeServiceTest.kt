@@ -7,10 +7,6 @@ import android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.session.MemoryCleanerService
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -33,12 +29,9 @@ internal class EmbracePowerSaveModeServiceTest {
     companion object {
         private lateinit var mockContext: Context
         private lateinit var mockIntent: Intent
-        private lateinit var mockCleanerService: MemoryCleanerService
         private lateinit var executor: ExecutorService
         private lateinit var fakeClock: FakeClock
         private lateinit var powerManager: PowerManager
-        private lateinit var processStateService: ProcessStateService
-        private lateinit var processStateListener: ProcessStateListener
 
         /**
          * Setup before all tests get executed. Create mocks here.
@@ -48,12 +41,9 @@ internal class EmbracePowerSaveModeServiceTest {
         fun setupBeforeAll() {
             mockContext = mockk(relaxUnitFun = true)
             mockIntent = mockk()
-            mockCleanerService = mockk(relaxUnitFun = true)
             executor = MoreExecutors.newDirectExecutorService()
             fakeClock = FakeClock()
             powerManager = mockk()
-            processStateService = FakeProcessStateService()
-            processStateListener = mockk()
         }
 
         /**
@@ -63,7 +53,6 @@ internal class EmbracePowerSaveModeServiceTest {
         @JvmStatic
         fun tearDownAfterAll() {
             unmockkAll()
-            executor.shutdown()
         }
     }
 

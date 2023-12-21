@@ -48,7 +48,7 @@ internal class LivenessCheckSchedulerTest {
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
         logger = InternalEmbraceLogger()
         looper = mockk {
-            every { thread } returns mockk()
+            every { thread } returns Thread.currentThread()
         }
         state = ThreadMonitoringState(fakeClock)
         detector = BlockedThreadDetector(

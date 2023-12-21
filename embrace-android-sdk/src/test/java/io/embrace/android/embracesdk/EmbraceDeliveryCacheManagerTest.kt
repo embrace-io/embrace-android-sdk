@@ -12,13 +12,11 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
 import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.After
@@ -41,7 +39,6 @@ internal class EmbraceDeliveryCacheManagerTest {
     private val executor = MoreExecutors.newDirectExecutorService()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var cacheService: TestCacheService
-    private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var fakeClock: FakeClock
 
     companion object {
@@ -58,7 +55,6 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Before
     fun before() {
         cacheService = spyk(TestCacheService())
-        memoryCleanerService = mockk(relaxed = true)
         fakeClock = FakeClock(clockInit)
         initializeSessionCacheManager()
     }

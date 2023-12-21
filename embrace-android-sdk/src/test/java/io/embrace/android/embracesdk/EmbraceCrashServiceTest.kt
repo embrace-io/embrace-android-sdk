@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -88,11 +87,7 @@ internal class EmbraceCrashServiceTest {
             )
         )
 
-        val gatingService = EmbraceGatingService(
-            mockk(relaxed = true) {
-                every { sessionBehavior } returns fakeSessionBehavior()
-            }
-        )
+        val gatingService = EmbraceGatingService(FakeConfigService())
 
         embraceCrashService = EmbraceCrashService(
             configService,

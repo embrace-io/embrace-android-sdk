@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -53,34 +54,16 @@ internal class EmbraceDeliveryCacheManager(
     override fun saveSession(
         sessionMessage: SessionMessage,
         snapshotType: SessionSnapshotType
-    ): ByteArray? {
-        return when (snapshotType) {
-            SessionSnapshotType.PERIODIC_CACHE -> {
-                saveSessionImpl(sessionMessage, false) { filename ->
-                    cacheService.writeSession(filename, sessionMessage)
-                }
-                null
-            }
-            else -> {
-                val sessionBytes: ByteArray = serializer.toJson(sessionMessage).toByteArray()
-                saveSessionImpl(sessionMessage, snapshotType == SessionSnapshotType.JVM_CRASH) { filename ->
-                    cacheService.cacheBytes(filename, sessionBytes)
-                }
-                sessionBytes
-            }
-        }
-    }
-
-    private fun saveSessionImpl(
-        sessionMessage: SessionMessage,
-        writeSync: Boolean,
-        saveAction: (filename: String) -> Unit
     ) {
         try {
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
                 deleteOldestSessions()
             }
-            saveBytes(sessionMessage.session.sessionId, writeSync, saveAction)
+            val sessionId = sessionMessage.session.sessionId
+            val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
+            saveBytes(sessionId, writeSync) { filename: String ->
+                cacheService.writeSession(filename, sessionMessage)
+            }
         } catch (exc: Throwable) {
             logger.logError("Save session failed", exc, true)
             throw exc
@@ -95,9 +78,9 @@ internal class EmbraceDeliveryCacheManager(
         return null
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         cachedSessions[sessionId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logError("Session $sessionId is not in cache")
         return null
@@ -148,21 +131,22 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): SerializationAction? {
         val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
             saveBytes(baId) { filename ->
+                val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
                 cacheService.cacheBytes(filename, baBytes)
             }
+            return loadBackgroundActivity(baId)
         }
-        return baBytes
+        return null
     }
 
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
+    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         cachedSessions[backgroundActivityId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logWarning("Background activity $backgroundActivityId is not in cache")
         return null
@@ -180,16 +164,20 @@ internal class EmbraceDeliveryCacheManager(
         cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
-    override fun savePayload(bytes: ByteArray): String {
+    override fun savePayload(action: SerializationAction): String {
         val name = "payload_" + Uuid.getEmbUuid()
         executorService.submit {
-            cacheService.cacheBytes(name, bytes)
+            cacheService.cachePayload(name, action)
         }
         return name
     }
 
     override fun loadPayload(name: String): ByteArray? {
         return cacheService.loadBytes(name)
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction {
+        return cacheService.loadPayload(name)
     }
 
     override fun deletePayload(name: String) {

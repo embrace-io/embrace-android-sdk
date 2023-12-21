@@ -25,6 +25,7 @@ internal class DeliveryModuleImpl(
             essentialServiceModule.gatingService,
             cachedSessionsExecutorService,
             sendSessionsExecutorService,
+            coreModule.jsonSerializer,
             coreModule.logger
         )
     }

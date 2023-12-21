@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
 import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.Endpoint
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.payload.Event
@@ -39,7 +40,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
-        private lateinit var mockRetryMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse
+        private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
         @BeforeClass
         @JvmStatic
@@ -61,10 +62,11 @@ internal class EmbracePendingApiCallsSenderTest {
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         testScheduledExecutor = blockingScheduledExecutorService
+        pendingApiCalls = PendingApiCalls()
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
-        every { mockCacheManager.loadPayload("cached_payload_1") } returns "{payload 1}".toByteArray()
+        every { mockCacheManager.loadPayloadAsAction("cached_payload_1") } returns { "{payload 1}".toByteArray() }
         every { mockCacheManager.savePayload(any()) } returns "fake_cache"
         every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
     }
@@ -272,7 +274,7 @@ internal class EmbracePendingApiCallsSenderTest {
                     )
                 )
             )
-            pendingApiCallsSender.savePendingApiCall(request, ByteArray(0))
+            pendingApiCallsSender.savePendingApiCall(request) {}
             pendingApiCallsSender.scheduleRetry(
                 ApiResponse.Incomplete(
                     Throwable()
@@ -286,7 +288,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
-        pendingApiCallsSender.savePendingApiCall(sessionRequest, ByteArray(0))
+        pendingApiCallsSender.savePendingApiCall(sessionRequest) {}
         pendingApiCallsSender.scheduleRetry(ApiResponse.Incomplete(Throwable()))
         assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }
@@ -330,7 +332,10 @@ internal class EmbracePendingApiCallsSenderTest {
     }
 
     private fun retryTaskActive(status: NetworkStatus) {
-        assertTrue("Failed for network status = $status", pendingApiCallsSender.isDeliveryTaskActive())
+        assertTrue(
+            "Failed for network status = $status",
+            pendingApiCallsSender.isDeliveryTaskActive()
+        )
     }
 
     private fun retryTaskNotActive(status: NetworkStatus) {
@@ -341,7 +346,9 @@ internal class EmbracePendingApiCallsSenderTest {
     }
 
     private fun checkRequestSendAttempt(count: Int = 1) {
-        verify(exactly = count) { mockRetryMethod(any(), "{payload 1}".toByteArray()) }
+        verify(exactly = count) {
+            mockRetryMethod(any(), any())
+        }
     }
 
     private fun checkNoApiRequestSent() {

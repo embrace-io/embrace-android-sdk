@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
-import java.io.ByteArrayInputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
@@ -66,28 +65,23 @@ internal class EmbraceApiService(
                     serializer.fromJson(it, RemoteConfig::class.java)
                 }
             }
-
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")
                 cachedResponse.remoteConfig
             }
-
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
                 logger.logWarning("Too many requests. ")
                 null
             }
-
             is ApiResponse.Failure -> {
                 logger.logInfo("Failed to fetch config (no response).")
                 null
             }
-
             is ApiResponse.Incomplete -> {
                 logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
             }
-
             ApiResponse.PayloadTooLarge -> {
                 // Not expected to receive a 413 response for a GET request.
                 null
@@ -159,9 +153,8 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        val request: ApiRequest = mapper.sessionRequest()
-        return postOnExecutor(sessionPayload, request, onFinish)
+    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
+        return postOnExecutor(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(
@@ -169,10 +162,13 @@ internal class EmbraceApiService(
         mapper: (T) -> ApiRequest,
         noinline onComplete: (() -> Unit)? = null,
     ): Future<*> {
-        val bytes = serializer.toJson(payload).toByteArray()
         val request: ApiRequest = mapper(payload)
         logger.logDeveloper(TAG, "Post event")
-        return postOnExecutor(bytes, request, onComplete)
+
+        val action: SerializationAction = { stream ->
+            serializer.toJson(payload, T::class.java, stream)
+        }
+        return postOnExecutor(action, request, onComplete)
     }
 
     /**
@@ -180,14 +176,14 @@ internal class EmbraceApiService(
      * This way, we prioritize the sending of sessions over other network requests.
      */
     private fun postOnExecutor(
-        payload: ByteArray,
+        action: SerializationAction,
         request: ApiRequest,
         onComplete: (() -> Any)?,
     ): Future<*> {
         return executorService.submit(
             NetworkRequestRunnable(request) {
                 try {
-                    handleApiRequest(request, payload)
+                    handleApiRequest(request, action)
                 } finally {
                     onComplete?.invoke()
                 }
@@ -199,12 +195,12 @@ internal class EmbraceApiService(
      * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
      * Otherwise, the API call is saved to be sent later.
      */
-    private fun handleApiRequest(request: ApiRequest, payload: ByteArray) {
+    private fun handleApiRequest(request: ApiRequest, action: SerializationAction) {
         val endpoint = request.url.endpoint()
 
         if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
             // Execute the request if the device is online and the endpoint is not rate limited.
-            val response = executePost(request, payload)
+            val response = executePost(request, action)
 
             if (response.shouldRetry) {
                 pendingApiCallsSender.savePendingApiCall(request, payload)
@@ -224,8 +220,8 @@ internal class EmbraceApiService(
     /**
      * Executes a POST request by calling [ApiClient.executePost].
      */
-    private fun executePost(request: ApiRequest, payload: ByteArray) =
-        apiClient.executePost(request, ByteArrayInputStream(payload))
+    private fun executePost(request: ApiRequest, action: SerializationAction) =
+        apiClient.executePost(request, action)
 }
 
 private const val TAG = "EmbraceApiService"

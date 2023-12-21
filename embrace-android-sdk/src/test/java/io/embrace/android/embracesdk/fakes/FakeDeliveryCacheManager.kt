@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
@@ -9,7 +10,7 @@ import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 
-    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType): ByteArray {
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         TODO("Not yet implemented")
     }
 
@@ -17,7 +18,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         TODO("Not yet implemented")
     }
 
@@ -29,11 +30,11 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
+    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): SerializationAction? {
         TODO("Not yet implemented")
     }
 
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
+    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         TODO("Not yet implemented")
     }
 
@@ -46,10 +47,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun deleteCrash() {
-        TODO("Not yet implemented")
-    }
-
-    override fun savePayload(bytes: ByteArray): String {
         TODO("Not yet implemented")
     }
 
@@ -66,6 +63,14 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun loadPendingApiCalls(): PendingApiCalls {
+        TODO("Not yet implemented")
+    }
+
+    override fun savePayload(action: SerializationAction): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction {
         TODO("Not yet implemented")
     }
 }

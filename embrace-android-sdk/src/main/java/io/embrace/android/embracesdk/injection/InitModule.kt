@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
@@ -17,6 +19,11 @@ internal interface InitModule {
     val clock: Clock
 
     /**
+     * Service to track usage of public APIs and other internal metrics
+     */
+    val telemetryService: TelemetryService
+
+    /**
      * Service to log traces
      */
     val spansService: SpansService
@@ -24,5 +31,6 @@ internal interface InitModule {
 
 internal class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
-    override val spansService: SpansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
+    override val telemetryService: TelemetryService = EmbraceTelemetryService(),
+    override val spansService: SpansService = EmbraceSpansService(OpenTelemetryClock(clock), telemetryService)
 ) : InitModule

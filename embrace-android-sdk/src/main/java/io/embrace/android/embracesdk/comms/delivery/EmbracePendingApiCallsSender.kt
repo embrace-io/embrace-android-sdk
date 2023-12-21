@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.Endpoint
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import java.util.concurrent.RejectedExecutionException
@@ -20,10 +21,12 @@ internal class EmbracePendingApiCallsSender(
     private val clock: Clock,
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
-    private val pendingApiCalls: PendingApiCalls = cacheManager.loadPendingApiCalls()
+    private val pendingApiCalls: PendingApiCalls by lazy {
+        cacheManager.loadPendingApiCalls()
+    }
     private var lastDeliveryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private lateinit var sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse
+    private lateinit var sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
     init {
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
@@ -32,13 +35,13 @@ internal class EmbracePendingApiCallsSender(
         scheduledExecutorService.submit(this::scheduleApiCallsDelivery)
     }
 
-    override fun setSendMethod(sendMethod: (request: ApiRequest, payload: ByteArray) -> ApiResponse) {
+    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
         this.sendMethod = sendMethod
     }
 
-    override fun savePendingApiCall(request: ApiRequest, payload: ByteArray): PendingApiCall {
+    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction): PendingApiCall {
         // Save the payload to disk.
-        val cachedPayloadName = cacheManager.savePayload(payload)
+        val cachedPayloadName = cacheManager.savePayload(action)
 
         // Save the pending api call to disk.
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
@@ -94,9 +97,10 @@ internal class EmbracePendingApiCallsSender(
     /**
      * Returns true if there is an active pending retry task
      */
-    fun isDeliveryTaskActive(): Boolean = lastDeliveryTask?.let { task ->
-        !task.isCancelled && !task.isDone
-    } ?: false
+    fun isDeliveryTaskActive(): Boolean =
+        lastDeliveryTask?.let { task ->
+            !task.isCancelled && !task.isDone
+        } ?: false
 
     /**
      * Return true if the conditions are met for a delivery task to be scheduled
@@ -201,8 +205,7 @@ internal class EmbracePendingApiCallsSender(
      * Send the request for a PendingApiCall.
      */
     private fun sendPendingApiCall(call: PendingApiCall): ApiResponse? {
-        val payload = cacheManager.loadPayload(call.cachedPayloadFilename)
-
+        val payload: SerializationAction? = cacheManager.loadPayloadAsAction(call.cachedPayloadFilename)
         if (payload == null) {
             // If payload is null, the file could have been removed. We don't have to retry this call.
             logger.logDeveloper(TAG, "Could not retrieve cached api payload")

@@ -228,7 +228,7 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(successfulPostResponse)
         val payload = "{}".toByteArray(Charsets.UTF_8)
         var finished = false
-        apiService.sendSession(payload) { finished = true }
+        apiService.sendSession({ it.write(payload) }) { finished = true }
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
             expectedPayload = payload
@@ -251,8 +251,24 @@ internal class EmbraceApiServiceTest {
         testScheduledExecutor = mockk(relaxed = true)
         initApiService()
         val payload = "{}".toByteArray(Charsets.UTF_8)
-        apiService.sendSession(payload) {}
+        apiService.sendSession({ it.write(payload) }) {}
         verify(exactly = 1) { testScheduledExecutor.submit(any<NetworkRequestRunnable>()) }
+    }
+
+    @Test
+    fun `unsuccessful requests are queued for later`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        apiService.sendLog(event)
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        val request = fakePendingApiCallsSender.retryQueue.single().first
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.toString())
     }
 
     @Test

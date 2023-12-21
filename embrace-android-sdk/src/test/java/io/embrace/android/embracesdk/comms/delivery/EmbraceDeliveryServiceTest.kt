@@ -285,12 +285,11 @@ internal class EmbraceDeliveryServiceTest {
 
     @Test
     fun testSendBackgroundActivities() {
-        val bytes = ByteArray(5)
         initializeDeliveryService()
         val obj = fakeBackgroundActivity()
         deliveryService.saveBackgroundActivity(obj)
 
-        every { mockDeliveryCacheManager.loadBackgroundActivity(any()) } returns bytes
+        every { mockDeliveryCacheManager.loadBackgroundActivity(any()) } returns {}
         deliveryService.sendBackgroundActivities()
         verify(exactly = 1) { apiService.sendSession(any(), any()) }
     }

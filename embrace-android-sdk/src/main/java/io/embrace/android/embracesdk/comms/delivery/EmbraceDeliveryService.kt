@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -85,57 +86,44 @@ internal class EmbraceDeliveryService(
 
         sendSessionsExecutorService.submit {
             logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val baBytes = cacheManager.saveBackgroundActivity(backgroundActivityMessage)
-
-            baBytes?.also { backgroundActivity ->
-                logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                try {
-                    val onFinish: (() -> Unit) =
-                        { cacheManager.deleteSession(backgroundActivityMessage.backgroundActivity.sessionId) }
-                    apiService.sendSession({
-                        it.write(backgroundActivity)
-                    }, onFinish)
-                    logger.logDeveloper(TAG, "Session message queued to be sent.")
-                } catch (ex: Exception) {
-                    logger.logInfo(
-                        "Failed to send background activity message. Embrace will " +
-                            "attempt to deliver it at a future date."
-                    )
-                }
-            }
+            val id = backgroundActivityMessage.backgroundActivity.sessionId
+            val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return@submit
+            sendBackgroundActivityImpl(id, action)
         }
     }
 
     /**
      * Sends cached background activities messages
-     *
      */
     override fun sendBackgroundActivities() {
         logger.logDeveloper(TAG, "Sending background activity message")
 
         sendSessionsExecutorService.submit {
             backgroundActivities.forEach { backgroundActivityId ->
-                logger.logDeveloper(TAG, "Sending background activity message - background job started")
-                val baBytes = cacheManager.loadBackgroundActivity(backgroundActivityId)
-
-                baBytes?.also { backgroundActivity ->
-                    logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                    try {
-                        val onFinish: () -> Unit = { cacheManager.deleteSession(backgroundActivityId) }
-                        apiService.sendSession({
-                            it.write(backgroundActivity)
-                        }, onFinish)
-                        logger.logDeveloper(TAG, "Session message queued to be sent.")
-                    } catch (ex: Exception) {
-                        logger.logInfo(
-                            "Failed to send background activity message. Embrace will " +
-                                "attempt to deliver it at a future date."
-                        )
-                    }
-                }
+                logger.logDeveloper(
+                    TAG,
+                    "Sending background activity message - background job started"
+                )
+                val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
+                sendBackgroundActivityImpl(backgroundActivityId, action)
             }
+        }
+    }
+
+    private fun sendBackgroundActivityImpl(
+        backgroundActivityId: String,
+        action: SerializationAction
+    ) {
+        try {
+            apiService.sendSession(action) {
+                cacheManager.deleteSession(backgroundActivityId)
+            }
+            logger.logDeveloper(TAG, "Session message queued to be sent.")
+        } catch (ex: Exception) {
+            logger.logInfo(
+                "Failed to send background activity message. Embrace will " +
+                    "attempt to deliver it at a future date."
+            )
         }
     }
 

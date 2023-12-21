@@ -15,7 +15,6 @@ internal enum class Endpoint(val path: String) {
     SESSIONS("sessions"),
     UNKNOWN("unknown");
 
-    @Volatile
     private var rateLimitRetryCount = AtomicInteger(0)
 
     @Volatile

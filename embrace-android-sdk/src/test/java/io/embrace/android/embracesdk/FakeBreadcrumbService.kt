@@ -13,6 +13,8 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 internal class FakeBreadcrumbService : BreadcrumbService {
 
+    val logViewCalls = mutableListOf<String?>()
+
     override fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?> =
         emptyList()
 
@@ -52,6 +54,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun forceLogView(screen: String?, timestamp: Long) {
+        logViewCalls.add(screen)
     }
 
     override fun replaceFirstSessionView(screen: String?, timestamp: Long) {
@@ -89,8 +92,10 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     override fun logWebView(url: String?, startTime: Long) {
     }
 
+    var viewBreadcrumbScreenName: String? = null
+
     override fun getLastViewBreadcrumbScreenName(): String? {
-        return null
+        return viewBreadcrumbScreenName
     }
 
     override fun logPushNotification(

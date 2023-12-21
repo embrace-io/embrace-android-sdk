@@ -34,7 +34,7 @@ internal class BlockingScheduledExecutorService(
     private val fakeClock: FakeClock = FakeClock(),
     blockingMode: Boolean = true
 ) : AbstractExecutorService(), ScheduledExecutorService {
-    private val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
+    val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
     private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
 
     /**

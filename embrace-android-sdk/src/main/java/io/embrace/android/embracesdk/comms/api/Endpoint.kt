@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
 
 internal enum class Endpoint(val path: String) {
@@ -14,16 +15,18 @@ internal enum class Endpoint(val path: String) {
     SESSIONS("sessions"),
     UNKNOWN("unknown");
 
-    private var rateLimitRetryCount = 0
+    private var rateLimitRetryCount = AtomicInteger(0)
 
+    @Volatile
     var isRateLimited = false
         set(value) {
-            rateLimitRetryCount =
+            rateLimitRetryCount.set(
                 if (value) {
-                    rateLimitRetryCount + 1
+                    rateLimitRetryCount.incrementAndGet()
                 } else {
                     0
                 }
+            )
             field = value
         }
 
@@ -36,19 +39,17 @@ internal enum class Endpoint(val path: String) {
         retryAfter: Long?,
         retryMethod: () -> Unit
     ) {
-        synchronized(this) {
-            try {
-                val retryTask = Runnable {
-                    retryMethod()
-                }
-                val delay = calculateDelay(retryAfter)
-                scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
-            } catch (e: RejectedExecutionException) {
-                InternalStaticEmbraceLogger.logger.logError(
-                    "Cannot schedule clear rate limit failed calls.",
-                    e
-                )
+        try {
+            val retryTask = Runnable {
+                retryMethod()
             }
+            val delay = calculateDelay(retryAfter)
+            scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
+        } catch (e: RejectedExecutionException) {
+            InternalStaticEmbraceLogger.logger.logError(
+                "Cannot schedule clear rate limit failed calls.",
+                e
+            )
         }
     }
 
@@ -62,7 +63,7 @@ internal enum class Endpoint(val path: String) {
             retryAfter
         } else {
             val base = 3.0
-            base.pow(rateLimitRetryCount).toLong()
+            base.pow(rateLimitRetryCount.get()).toLong()
         }
     }
 }

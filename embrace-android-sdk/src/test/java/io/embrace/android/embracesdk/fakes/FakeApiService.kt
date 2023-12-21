@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -38,7 +39,7 @@ internal class FakeApiService : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
+    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*>? {
         TODO("Not yet implemented")
     }
 }

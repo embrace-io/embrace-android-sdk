@@ -203,7 +203,7 @@ internal class EmbraceApiService(
             val response = executePost(request, action)
 
             if (response.shouldRetry) {
-                pendingApiCallsSender.savePendingApiCall(request, payload)
+                pendingApiCallsSender.savePendingApiCall(request, action)
                 pendingApiCallsSender.scheduleRetry(response)
             }
 
@@ -213,7 +213,7 @@ internal class EmbraceApiService(
             }
         } else {
             // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
-            pendingApiCallsSender.savePendingApiCall(request, payload)
+            pendingApiCallsSender.savePendingApiCall(request, action)
         }
     }
 

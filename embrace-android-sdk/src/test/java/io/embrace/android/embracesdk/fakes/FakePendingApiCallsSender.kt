@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
-import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import java.io.ByteArrayOutputStream
@@ -24,10 +23,9 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
         this.sendMethod = sendMethod
     }
 
-    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction): PendingApiCall {
+    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction) {
         val stream = ByteArrayOutputStream()
         action(stream)
         retryQueue.add(Pair(request, stream.toByteArray()))
-
     }
 }

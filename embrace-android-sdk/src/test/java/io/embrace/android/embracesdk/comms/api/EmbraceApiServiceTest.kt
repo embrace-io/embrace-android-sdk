@@ -286,7 +286,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
 
         apiService.sendLog(event)
@@ -296,7 +296,7 @@ internal class EmbraceApiServiceTest {
             expectedLogId = "el:message-id",
             expectedPayload = serializer.toJson(event).toByteArray()
         )
-        assertEquals(1, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
@@ -312,7 +312,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
 
         apiService.sendLog(event)
@@ -322,7 +322,7 @@ internal class EmbraceApiServiceTest {
             expectedLogId = "el:message-id",
             expectedPayload = serializer.toJson(event).toByteArray()
         )
-        assertEquals(1, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
@@ -341,7 +341,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
 
         apiService.sendLog(event)
@@ -351,7 +351,7 @@ internal class EmbraceApiServiceTest {
             expectedLogId = "el:message-id",
             expectedPayload = serializer.toJson(event).toByteArray()
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
@@ -367,7 +367,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
 
         apiService.sendLog(event)
@@ -377,7 +377,7 @@ internal class EmbraceApiServiceTest {
             expectedLogId = "el:message-id",
             expectedPayload = serializer.toJson(event).toByteArray()
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
@@ -396,7 +396,7 @@ internal class EmbraceApiServiceTest {
                 type = EmbraceEvent.Type.ERROR_LOG
             )
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
 
         apiService.sendLog(event)
@@ -406,7 +406,7 @@ internal class EmbraceApiServiceTest {
             expectedLogId = "el:message-id",
             expectedPayload = serializer.toJson(event).toByteArray()
         )
-        assertEquals(0, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
@@ -432,7 +432,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLog(event)
 
         assertEquals(0, fakeApiClient.sentRequests.size)
-        assertEquals(1, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         // assert that the pending api call was not scheduled, since all pending api calls
         // are executed once the rate limit for the endpoint is lifted.
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
@@ -452,7 +452,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLog(event)
 
         assertEquals(0, fakeApiClient.sentRequests.size)
-        assertEquals(1, fakePendingApiCallsSender.pendingApiCalls.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         // assert that the pending api call was not scheduled, since all pending api calls
         // are executed once the network connection is restored.
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)

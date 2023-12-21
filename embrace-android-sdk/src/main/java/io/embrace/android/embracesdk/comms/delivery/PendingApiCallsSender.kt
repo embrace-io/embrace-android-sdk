@@ -17,7 +17,7 @@ internal interface PendingApiCallsSender {
     /**
      * Save an API call to be sent later.
      */
-    fun savePendingApiCall(request: ApiRequest, action: SerializationAction): PendingApiCall
+    fun savePendingApiCall(request: ApiRequest, action: SerializationAction)
 
     /**
      * Schedules the retry of all pending API calls.

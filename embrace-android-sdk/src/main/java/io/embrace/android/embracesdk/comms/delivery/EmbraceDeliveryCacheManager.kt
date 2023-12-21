@@ -136,8 +136,9 @@ internal class EmbraceDeliveryCacheManager(
         // Do not add background activities to disk if we are over the limit
         if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
             saveBytes(baId) { filename ->
-                val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
-                cacheService.cacheBytes(filename, baBytes)
+                cacheService.cachePayload(filename) {
+                    serializer.toJson(backgroundActivityMessage, BackgroundActivityMessage::class.java, it)
+                }
             }
             return loadBackgroundActivity(baId)
         }

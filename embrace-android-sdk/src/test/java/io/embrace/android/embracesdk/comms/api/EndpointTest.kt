@@ -26,20 +26,22 @@ internal class EndpointTest {
     @After
     fun tearDown() {
         clearMocks(mockExecuteApiCalls)
-        endpoint.clearRateLimit()
+        endpoint.isRateLimited = false
     }
 
     @Test
-    fun `test setRateLimitAndRetry retries api calls and clears rate limit after succeed`() {
+    fun `test setting a rate limit and scheduling a retry, clears rate limit after succeed`() {
         val retryAfter = 3L
         // clear rate limit after calling executeApiCalls
-        every { mockExecuteApiCalls.invoke() } answers { endpoint.clearRateLimit() }
-        endpoint.setRateLimited()
-        endpoint.scheduleRetry(
-            scheduledExecutorService,
-            retryAfter,
-            mockExecuteApiCalls
-        )
+        every { mockExecuteApiCalls.invoke() } answers { endpoint.isRateLimited = false }
+        with(endpoint) {
+            isRateLimited = true
+            scheduleRetry(
+                scheduledExecutorService,
+                retryAfter,
+                mockExecuteApiCalls
+            )
+        }
 
         assertTrue(endpoint.isRateLimited)
         scheduledExecutorService.moveForwardAndRunBlocked(3000)
@@ -48,34 +50,40 @@ internal class EndpointTest {
     }
 
     @Test
-    fun `test subsequent setRateLimitAndRetry calls without retryAfter are delayed exponentially`() {
+    fun `test subsequent rate limit calls without retryAfter are delayed exponentially`() {
         val endpoint = Endpoint.EVENTS
         // emulate 2 rate limit responses and 1 success response
         every { mockExecuteApiCalls.invoke() } answers {
-            endpoint.setRateLimited()
-            endpoint.scheduleRetry(
-                scheduledExecutorService,
-                null,
-                mockExecuteApiCalls
-            )
+            with(endpoint) {
+                isRateLimited = true
+                scheduleRetry(
+                    scheduledExecutorService,
+                    null,
+                    mockExecuteApiCalls
+                )
+            }
         } andThenAnswer {
-            endpoint.setRateLimited()
-            endpoint.scheduleRetry(
-                scheduledExecutorService,
-                null,
-                mockExecuteApiCalls
-            )
+            with(endpoint) {
+                isRateLimited = true
+                scheduleRetry(
+                    scheduledExecutorService,
+                    null,
+                    mockExecuteApiCalls
+                )
+            }
         } andThenAnswer {
-            endpoint.clearRateLimit()
+            endpoint.isRateLimited = false
         }
 
         // set rate limit for the first call
-        endpoint.setRateLimited()
-        endpoint.scheduleRetry(
-            scheduledExecutorService,
-            null,
-            mockExecuteApiCalls
-        )
+        with(endpoint) {
+            isRateLimited = true
+            scheduleRetry(
+                scheduledExecutorService,
+                null,
+                mockExecuteApiCalls
+            )
+        }
 
         // asserts for the first call
         assertTrue(endpoint.isRateLimited)

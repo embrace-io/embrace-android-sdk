@@ -14,21 +14,18 @@ internal enum class Endpoint(val path: String) {
     SESSIONS("sessions"),
     UNKNOWN("unknown");
 
+    private var rateLimitRetryCount = 0
+
     var isRateLimited = false
-        private set
-
-    var rateLimitRetryCount = 0
-        private set
-
-    fun setRateLimited() {
-        isRateLimited = true
-        rateLimitRetryCount++
-    }
-
-    fun clearRateLimit() {
-        isRateLimited = false
-        rateLimitRetryCount = 0
-    }
+        set(value) {
+            rateLimitRetryCount =
+                if (value) {
+                    rateLimitRetryCount + 1
+                } else {
+                    0
+                }
+            field = value
+        }
 
     /**
      * Schedules a task to execute the api calls ofter the given retry after time

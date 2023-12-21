@@ -58,7 +58,7 @@ internal class EmbracePendingApiCallsSender(
             }
             is ApiResponse.TooManyRequests -> {
                 with(response.endpoint) {
-                    setRateLimited()
+                    isRateLimited = true
                     scheduleRetry(
                         scheduledExecutorService,
                         response.retryAfter,
@@ -157,7 +157,7 @@ internal class EmbracePendingApiCallsSender(
                         when (response) {
                             is ApiResponse.TooManyRequests -> {
                                 with(response.endpoint) {
-                                    setRateLimited()
+                                    isRateLimited = true
                                     scheduleRetry(
                                         scheduledExecutorService,
                                         response.retryAfter,
@@ -234,7 +234,7 @@ internal class EmbracePendingApiCallsSender(
      */
     private fun clearRateLimitIfApplies(endpoint: Endpoint, response: ApiResponse) {
         if (response !is ApiResponse.TooManyRequests) {
-            endpoint.clearRateLimit()
+            endpoint.isRateLimited = false
         }
     }
 }

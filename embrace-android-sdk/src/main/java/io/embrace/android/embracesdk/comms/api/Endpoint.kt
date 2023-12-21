@@ -15,20 +15,26 @@ internal enum class Endpoint(val path: String) {
     SESSIONS("sessions"),
     UNKNOWN("unknown");
 
+    @Volatile
     private var rateLimitRetryCount = AtomicInteger(0)
 
     @Volatile
     var isRateLimited = false
-        set(value) {
-            rateLimitRetryCount.set(
-                if (value) {
-                    rateLimitRetryCount.incrementAndGet()
-                } else {
-                    0
-                }
-            )
-            field = value
+        private set
+
+    fun updateRateLimitStatus() {
+        synchronized(this) {
+            isRateLimited = true
+            rateLimitRetryCount.incrementAndGet()
         }
+    }
+
+    fun clearRateLimit() {
+        synchronized(this) {
+            isRateLimited = false
+            rateLimitRetryCount.set(0)
+        }
+    }
 
     /**
      * Schedules a task to execute the api calls ofter the given retry after time

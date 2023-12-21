@@ -69,7 +69,7 @@ internal class EmbraceApiServiceTest {
     @After
     fun tearDown() {
         Endpoint.values().forEach {
-            it.isRateLimited = false
+            it.clearRateLimit()
         }
     }
 
@@ -415,7 +415,7 @@ internal class EmbraceApiServiceTest {
         val callback = mockk<() -> Unit>(relaxed = true)
         val endpoint = Endpoint.LOGGING
         with(endpoint) {
-            isRateLimited = true
+            updateRateLimitStatus()
             scheduleRetry(
                 scheduledExecutorService = testScheduledExecutor,
                 retryAfter = 3,

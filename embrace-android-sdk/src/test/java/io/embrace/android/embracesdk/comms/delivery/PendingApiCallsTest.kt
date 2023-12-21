@@ -161,7 +161,7 @@ internal class PendingApiCallsTest {
 
         val endpoint = Endpoint.EVENTS
         with(endpoint) {
-            isRateLimited = true
+            updateRateLimitStatus()
             scheduleRetry(
                 scheduledExecutorService = testScheduledExecutor,
                 1000
@@ -169,7 +169,7 @@ internal class PendingApiCallsTest {
         }
         assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
 
-        endpoint.isRateLimited = false
+        endpoint.clearRateLimit()
         assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
     }
 

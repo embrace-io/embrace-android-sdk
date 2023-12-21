@@ -26,16 +26,16 @@ internal class EndpointTest {
     @After
     fun tearDown() {
         clearMocks(mockExecuteApiCalls)
-        endpoint.isRateLimited = false
+        endpoint.clearRateLimit()
     }
 
     @Test
     fun `test setting a rate limit and scheduling a retry, clears rate limit after succeed`() {
         val retryAfter = 3L
         // clear rate limit after calling executeApiCalls
-        every { mockExecuteApiCalls.invoke() } answers { endpoint.isRateLimited = false }
+        every { mockExecuteApiCalls.invoke() } answers { endpoint.clearRateLimit() }
         with(endpoint) {
-            isRateLimited = true
+            updateRateLimitStatus()
             scheduleRetry(
                 scheduledExecutorService,
                 retryAfter,
@@ -55,7 +55,7 @@ internal class EndpointTest {
         // emulate 2 rate limit responses and 1 success response
         every { mockExecuteApiCalls.invoke() } answers {
             with(endpoint) {
-                isRateLimited = true
+                updateRateLimitStatus()
                 scheduleRetry(
                     scheduledExecutorService,
                     null,
@@ -64,7 +64,7 @@ internal class EndpointTest {
             }
         } andThenAnswer {
             with(endpoint) {
-                isRateLimited = true
+                updateRateLimitStatus()
                 scheduleRetry(
                     scheduledExecutorService,
                     null,
@@ -72,12 +72,12 @@ internal class EndpointTest {
                 )
             }
         } andThenAnswer {
-            endpoint.isRateLimited = false
+            endpoint.clearRateLimit()
         }
 
         // set rate limit for the first call
         with(endpoint) {
-            isRateLimited = true
+            updateRateLimitStatus()
             scheduleRetry(
                 scheduledExecutorService,
                 null,

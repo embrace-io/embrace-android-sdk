@@ -246,9 +246,15 @@ internal class EmbraceBackgroundActivityServiceTest {
 
     @Test
     fun `saving will persist the current completed spans but will not flush`() {
+        val startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.now())
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(startTimeNanos)
+        clock.tick(1)
+        spansService.recordCompletedSpan(
+            name = "test-span",
+            startTimeNanos = startTimeNanos,
+            endTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.now())
+        )
         assertEquals(1, spansService.completedSpans()?.size)
         // move time ahead so the save will actually persist the new background activity message
         clock.tick(6000)
@@ -265,39 +271,37 @@ internal class EmbraceBackgroundActivityServiceTest {
         blockableExecutorService.blockingMode = true
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(now)
         service.handleCrash("crashId")
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
-        // there should be 2 completed spans: session span and the sdk init span
+        // there should be 1 completed span: the session span
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
-        assertEquals(2, deliveryService.lastSavedBackgroundActivities.single().spans?.size)
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
-        service.onForeground(false, now, clock.now())
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        service.onForeground(false, TimeUnit.MILLISECONDS.toNanos(clock.now()), clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
 
-        // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
+        // there should be 1 completed span: the session span
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         service.sendBackgroundActivity()
         assertNotNull(deliveryService.lastSentBackgroundActivities.single())
 
-        // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSentBackgroundActivities.single().spans?.size)
+        // there should be 1 completed span: the session span
+        assertEquals(1, deliveryService.lastSentBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 

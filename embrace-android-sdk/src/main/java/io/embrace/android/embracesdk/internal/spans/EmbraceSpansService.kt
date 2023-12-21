@@ -34,20 +34,15 @@ internal class EmbraceSpansService(
     private var sdkInitStartTime: Long? = null
 
     @Volatile
-    private var sdkInitEndTime: Long? = null
-
-    @Volatile
     private var currentDelegate: SpansService = SpansService.featureDisabledSpansService
 
-    override fun initializeService(sdkInitStartTimeNanos: Long, sdkInitEndTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeNanos: Long) {
         if (!initialized.get()) {
             sdkInitStartTime = sdkInitStartTimeNanos
-            sdkInitEndTime = sdkInitEndTimeNanos
             synchronized(initialized) {
                 if (!initialized.get()) {
                     currentDelegate = SpansServiceImpl(
                         sdkInitStartTimeNanos = sdkInitStartTimeNanos,
-                        sdkInitEndTimeNanos = sdkInitEndTimeNanos,
                         clock = clock,
                         telemetryService = telemetryService
                     )

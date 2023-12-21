@@ -69,8 +69,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
+import io.embrace.android.embracesdk.internal.spans.Initializable;
+import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
@@ -366,6 +367,14 @@ final class EmbraceImpl {
         final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke();
         workerThreadModule = nonNullWorkerThreadModule;
 
+        nonNullWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).submit(() -> {
+            final SpansService spansService = initModule.getSpansService();
+            if (spansService instanceof Initializable) {
+                ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
+            }
+            return null;
+        });
+
         final SystemServiceModule systemServiceModule = systemServiceModuleSupplier.invoke(coreModule);
         final AndroidServicesModule androidServicesModule =
             androidServicesModuleSupplier.invoke(initModule, coreModule, workerThreadModule);
@@ -640,15 +649,8 @@ final class EmbraceImpl {
         final long endTime = sdkClock.now();
         started.set(true);
 
-        nonNullWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).submit(() -> {
-            ((EmbraceSpansService) initModule.getSpansService()).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime),
-                TimeUnit.MILLISECONDS.toNanos(endTime));
-            return null;
-        });
-
-        long startupDuration = endTime - startTime;
-        sessionModule.getSessionHandler().setSdkStartupDuration(startupDuration);
-        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + startupDuration + " millis");
+        sessionModule.getSessionHandler().setSdkStartupInfo(startTime, endTime);
+        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + (endTime - startTime) + " millis");
 
         // Sets up the registered services. This method is called after the SDK has been started and
         // no more services can be added to the registry. It sets listeners for any services that were

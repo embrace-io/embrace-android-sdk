@@ -46,16 +46,8 @@ internal class EmbraceSpansServiceTest {
         var lambdaRan = false
         spansService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertEquals(3, spansService.completedSpans()?.size)
-        assertEquals(4, spansService.flushSpans()?.size)
-    }
-
-    @Test
-    fun `second sdk startup span will not be recorded if you try to initialize the service twice`() {
-        initializeService()
-        assertEquals(1, spansService.completedSpans()?.size)
-        spansService.initializeService(10, 20)
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(2, spansService.completedSpans()?.size)
+        assertEquals(3, spansService.flushSpans()?.size)
     }
 
     @Test
@@ -190,10 +182,10 @@ internal class EmbraceSpansServiceTest {
         assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
         assertTrue(spansService.recordCompletedSpan("test-span", 15, 25))
         initializeService()
-        assertEquals(3, spansService.completedSpans()?.size)
+        assertEquals(2, spansService.completedSpans()?.size)
     }
 
     private fun initializeService() {
-        spansService.initializeService(1, 5)
+        spansService.initializeService(1)
     }
 }

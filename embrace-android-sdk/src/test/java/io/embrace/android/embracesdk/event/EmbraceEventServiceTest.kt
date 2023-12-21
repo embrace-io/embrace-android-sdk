@@ -422,8 +422,7 @@ internal class EmbraceEventServiceTest {
     @Test
     fun `startup logged as span if startup moment automatic end is enabled`() {
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1),
-            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(3)
+            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
         spansService.flushSpans()
@@ -444,8 +443,7 @@ internal class EmbraceEventServiceTest {
     fun `startup logged as span if when startup moment manually ends`() {
         startupMomentLocalConfig = StartupMomentLocalConfig(automaticallyEnd = false)
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1),
-            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(3)
+            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
         spansService.flushSpans()
@@ -472,8 +470,7 @@ internal class EmbraceEventServiceTest {
     @Test
     fun `startup not logged as span if startup moment is ended via a timeout`() {
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1),
-            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(3)
+            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
         spansService.flushSpans()

@@ -73,7 +73,6 @@ internal class SessionHandlerTest {
     companion object {
         private val networkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
-
         private val eventService: EventService = mockk(relaxed = true)
         private val remoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
         private val clock = FakeClock()

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -10,8 +11,15 @@ import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 
+    val saveSessionRequests = mutableListOf<Pair<SessionMessage, SessionSnapshotType>>()
+    val saveBgActivityRequests = mutableListOf<BackgroundActivityMessage>()
+    val saveCrashRequests = mutableListOf<EventMessage>()
+
+    private val cachedSessions = mutableListOf<SessionMessage>()
+    private val serializer = EmbraceSerializer()
+
     override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
-        TODO("Not yet implemented")
+        saveSessionRequests.add(Pair(sessionMessage, snapshotType))
     }
 
     override fun loadSession(sessionId: String): SessionMessage? {
@@ -19,7 +27,10 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
-        TODO("Not yet implemented")
+        val message = cachedSessions.singleOrNull { it.session.sessionId == sessionId } ?: return null
+        return {
+            serializer.toJson(message, SessionMessage::class.java, it)
+        }
     }
 
     override fun deleteSession(sessionId: String) {
@@ -27,23 +38,31 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun getAllCachedSessionIds(): List<String> {
-        TODO("Not yet implemented")
+        return cachedSessions.map { it.session.sessionId }
     }
 
     override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): SerializationAction? {
-        TODO("Not yet implemented")
+        saveBgActivityRequests.add(backgroundActivityMessage)
+        return {
+            serializer.toJson(backgroundActivityMessage, BackgroundActivityMessage::class.java, it)
+        }
     }
 
     override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
-        TODO("Not yet implemented")
+        val message = saveBgActivityRequests.singleOrNull {
+            it.backgroundActivity.sessionId == backgroundActivityId
+        } ?: return null
+        return {
+            serializer.toJson(message, BackgroundActivityMessage::class.java, it)
+        }
     }
 
     override fun saveCrash(crash: EventMessage) {
-        TODO("Not yet implemented")
+        saveCrashRequests.add(crash)
     }
 
     override fun loadCrash(): EventMessage? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun deleteCrash() {
@@ -72,5 +91,9 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 
     override fun loadPayloadAsAction(name: String): SerializationAction {
         TODO("Not yet implemented")
+    }
+
+    fun addCachedSessions(vararg sessionMessages: SessionMessage) {
+        cachedSessions.addAll(sessionMessages)
     }
 }

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.NativeCrashData
 
 internal class FakeNdkService : NdkService {
+    var checkForNativeCrashCount: Int = 0
     val propUpdates = mutableListOf<Map<String, String>>()
 
     override fun updateSessionId(newSessionId: String) {
@@ -27,7 +28,8 @@ internal class FakeNdkService : NdkService {
     }
 
     override fun checkForNativeCrash(): NativeCrashData? {
-        TODO("Not yet implemented")
+        checkForNativeCrashCount++
+        return null
     }
 
     override fun getSymbolsForCurrentArch(): Map<String, String>? {

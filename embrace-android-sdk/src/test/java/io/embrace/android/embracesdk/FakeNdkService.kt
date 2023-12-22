@@ -7,8 +7,10 @@ internal class FakeNdkService : NdkService {
     var checkForNativeCrashCount: Int = 0
     val propUpdates = mutableListOf<Map<String, String>>()
 
+    var sessionId: String? = null
+
     override fun updateSessionId(newSessionId: String) {
-        TODO("Not yet implemented")
+        sessionId = newSessionId
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
@@ -16,7 +18,6 @@ internal class FakeNdkService : NdkService {
     }
 
     override fun onUserInfoUpdate() {
-        TODO("Not yet implemented")
     }
 
     override fun getUnityCrashId(): String? {

@@ -40,6 +40,7 @@ internal class FakePreferenceService(
 
     var networkCaptureRuleOver = false
     var firstDay: Boolean = false
+    var incrementAndGetSessionNumberCount = 0
 
     override fun isNetworkCaptureRuleOver(id: String): Boolean {
         return networkCaptureRuleOver
@@ -48,7 +49,10 @@ internal class FakePreferenceService(
     override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
     }
 
-    override fun incrementAndGetSessionNumber(): Int = sessionNumber()
+    override fun incrementAndGetSessionNumber(): Int {
+        incrementAndGetSessionNumberCount++
+        return sessionNumber()
+    }
 
     override fun incrementAndGetBackgroundActivityNumber(): Int = bgActivityNumber()
 

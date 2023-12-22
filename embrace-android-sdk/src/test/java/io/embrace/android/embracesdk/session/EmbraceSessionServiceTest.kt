@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
+import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.clearAllMocks
@@ -38,9 +39,8 @@ internal class EmbraceSessionServiceTest {
     companion object {
 
         private val processStateService = FakeProcessStateService()
-        private val mockNdkService: NdkService = mockk(relaxUnitFun = true)
-        private val mockSession: Session = mockk(relaxed = true)
-        private val mockSessionMessage: SessionMessage = mockk(relaxed = true)
+        private val ndkService: NdkService = FakeNdkService()
+        private val sessionMessage: SessionMessage = fakeSessionMessage()
         private val mockSessionHandler: SessionHandler = mockk(relaxed = true)
         private val clock = FakeClock()
 
@@ -48,7 +48,6 @@ internal class EmbraceSessionServiceTest {
         @JvmStatic
         fun beforeClass() {
             mockkStatic(ExecutorService::class)
-            every { mockSessionMessage.session } returns mockSession
         }
 
         @AfterClass
@@ -102,7 +101,7 @@ internal class EmbraceSessionServiceTest {
                 any(),
                 any()
             )
-        } returns mockSessionMessage
+        } returns sessionMessage
         service.startSession(true, SessionLifeEventType.STATE, clock.now())
 
         service.handleCrash(crashId)
@@ -226,7 +225,7 @@ internal class EmbraceSessionServiceTest {
 
         service = EmbraceSessionService(
             processStateService,
-            mockNdkService,
+            ndkService,
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
@@ -243,7 +242,7 @@ internal class EmbraceSessionServiceTest {
                 any(),
                 any()
             )
-        } returns mockSessionMessage
+        } returns sessionMessage
         service.startSession(true, SessionLifeEventType.STATE, clock.now())
     }
 }

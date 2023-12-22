@@ -3,13 +3,15 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,9 +28,9 @@ internal class BackgroundActivityCollatorTest {
         collator = BackgroundActivityCollator(
             userService = FakeUserService(),
             preferencesService = FakePreferenceService(),
-            eventService = mockk(relaxed = true),
-            logMessageService = mockk(relaxed = true),
-            internalErrorService = mockk(relaxed = true),
+            eventService = FakeEventService(),
+            logMessageService = FakeLogMessageService(),
+            internalErrorService = FakeInternalErrorService(),
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeAndroidMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),

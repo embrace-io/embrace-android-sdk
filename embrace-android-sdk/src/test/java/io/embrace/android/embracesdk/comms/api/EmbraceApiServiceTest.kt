@@ -14,12 +14,13 @@ import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
@@ -179,8 +180,16 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `send network request is as expected`() {
         fakeApiClient.queueResponse(successfulPostResponse)
-        val networkEvent: NetworkEvent = mockk(relaxed = true)
-        every { networkEvent.eventId } answers { "network-event-id" }
+        val networkEvent = NetworkEvent(
+            "",
+            AppInfo(),
+            "",
+            "network-event-id",
+            NetworkCapturedCall(),
+            "",
+            null,
+            null
+        )
         apiService.sendNetworkCall(networkEvent)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/network",

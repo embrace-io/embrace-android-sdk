@@ -7,14 +7,15 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
 import io.embrace.android.embracesdk.utils.at
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
@@ -25,11 +26,11 @@ internal class EmbraceNetworkLoggingServiceTest {
     private lateinit var configService: ConfigService
     private lateinit var sdkLocalConfig: SdkLocalConfig
     private lateinit var remoteConfig: RemoteConfig
-    private lateinit var mockNetworkCaptureService: EmbraceNetworkCaptureService
+    private lateinit var networkCaptureService: FakeNetworkCaptureService
 
     @Before
     fun setUp() {
-        mockNetworkCaptureService = mockk(relaxed = true)
+        networkCaptureService = FakeNetworkCaptureService()
         logger = InternalEmbraceLogger()
         configService = FakeConfigService(
             networkBehavior = fakeNetworkBehavior(
@@ -357,9 +358,10 @@ internal class EmbraceNetworkLoggingServiceTest {
 
     @Test
     fun `test logNetworkCall sends the network body if necessary`() {
+        val url = "www.example.com"
         networkLoggingService.logNetworkCall(
             randomId(),
-            "www.example.com",
+            url,
             "GET",
             200,
             10000L,
@@ -368,19 +370,16 @@ internal class EmbraceNetworkLoggingServiceTest {
             1000L,
             null,
             null,
-            mockk(relaxed = true)
-        )
-
-        verify(exactly = 1) {
-            mockNetworkCaptureService.logNetworkCapturedData(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
+            NetworkCaptureData(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
             )
-        }
+        )
+        assertEquals(url, networkCaptureService.urls.single())
     }
 
     @Test
@@ -398,17 +397,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             null,
             null
         )
-
-        verify(exactly = 0) {
-            mockNetworkCaptureService.logNetworkCapturedData(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        }
+        assertTrue(networkCaptureService.urls.isEmpty())
     }
 
     @Test
@@ -467,7 +456,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             EmbraceNetworkLoggingService(
                 configService,
                 logger,
-                mockNetworkCaptureService
+                networkCaptureService
             )
     }
 

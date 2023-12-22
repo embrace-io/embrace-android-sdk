@@ -1,33 +1,39 @@
 package io.embrace.android.embracesdk.logging
 
+import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
 internal class InternalErrorLoggerTest {
 
     private lateinit var internalErrorLogger: InternalErrorLogger
+    private lateinit var loggerAction: FakeLoggerAction
 
     companion object {
         private lateinit var internalErrorService: InternalErrorService
-        private lateinit var mockLogger: InternalEmbraceLogger.LoggerAction
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
             internalErrorService = mockk(relaxUnitFun = true)
-            mockLogger = mockk(relaxUnitFun = true)
         }
     }
 
     private fun setupService(strictModeEnabled: Boolean = false) {
         internalErrorLogger =
-            InternalErrorLogger(internalErrorService, mockLogger, strictModeEnabled)
+            InternalErrorLogger(internalErrorService, loggerAction, strictModeEnabled)
+    }
+
+    @Before
+    fun setUp() {
+        loggerAction = FakeLoggerAction()
     }
 
     @After
@@ -65,7 +71,10 @@ internal class InternalErrorLoggerTest {
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
-        verify { mockLogger.log(exceptionMessage, InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
+        loggerAction.msgQueue.single {
+            it.msg == exceptionMessage && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+                it.throwable == null && !it.logStacktrace
+        }
     }
 
     @Test
@@ -78,7 +87,11 @@ internal class InternalErrorLoggerTest {
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
-        verify { mockLogger.log("", InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
+
+        loggerAction.msgQueue.single {
+            it.msg == "" && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+                it.throwable == null && !it.logStacktrace
+        }
     }
 
     @Test
@@ -136,6 +149,10 @@ internal class InternalErrorLoggerTest {
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) }
-        verify { mockLogger.log(exceptionMessage, InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
+
+        loggerAction.msgQueue.single {
+            it.msg == exceptionMessage && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+                it.throwable == null && !it.logStacktrace
+        }
     }
 }

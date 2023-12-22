@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.system.mockBundle
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -20,9 +20,9 @@ import org.junit.Test
 internal class PushNotificationCaptureServiceTest {
 
     private lateinit var pushNotificationCaptureService: PushNotificationCaptureService
+    private lateinit var breadcrumbService: FakeBreadcrumbService
 
     companion object {
-        private val mockBreadCrumbService: BreadcrumbService = mockk(relaxUnitFun = true)
         private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
         private val mockBundle: Bundle = mockBundle()
         private val mockIntent: Intent = mockk {
@@ -39,8 +39,9 @@ internal class PushNotificationCaptureServiceTest {
         // for bundle let's clear answers too
         clearMocks(mockBundle)
 
+        breadcrumbService = FakeBreadcrumbService()
         pushNotificationCaptureService = PushNotificationCaptureService(
-            mockBreadCrumbService,
+            breadcrumbService,
             logger
         )
     }
@@ -64,18 +65,12 @@ internal class PushNotificationCaptureServiceTest {
             messageDeliveredPriority,
             type
         )
-
-        verify {
-            mockBreadCrumbService.logPushNotification(
-                title,
-                body,
-                from,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                type
-            )
-        }
+        val crumb = breadcrumbService.pushNotifications.single()
+        assertEquals(title, crumb.title)
+        assertEquals(body, crumb.body)
+        assertEquals(from, crumb.from)
+        assertEquals(id, crumb.id)
+        assertEquals(notificationPriority, crumb.priority)
     }
 
     @Test
@@ -97,18 +92,11 @@ internal class PushNotificationCaptureServiceTest {
 
         pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
 
-        verify {
-            mockBreadCrumbService.logPushNotification(
-                null,
-                null,
-                "123",
-                "456",
-                null,
-                // 2 is normal priority
-                2,
-                PushNotificationBreadcrumb.NotificationType.NOTIFICATION
-            )
-        }
+        val crumb = breadcrumbService.pushNotifications.single()
+        assertNull(crumb.title)
+        assertNull(crumb.body)
+        assertEquals("123", crumb.from)
+        assertEquals("456", crumb.id)
     }
 
     @Test
@@ -133,18 +121,11 @@ internal class PushNotificationCaptureServiceTest {
 
         pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
 
-        verify {
-            mockBreadCrumbService.logPushNotification(
-                null,
-                null,
-                "123",
-                "456",
-                null,
-                // 2 is normal priority
-                2,
-                PushNotificationBreadcrumb.NotificationType.NOTIFICATION_AND_DATA
-            )
-        }
+        val crumb = breadcrumbService.pushNotifications.single()
+        assertNull(crumb.title)
+        assertNull(crumb.body)
+        assertEquals("123", crumb.from)
+        assertEquals("456", crumb.id)
     }
 
     @Test
@@ -154,7 +135,7 @@ internal class PushNotificationCaptureServiceTest {
 
         pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
 
-        verify { mockBreadCrumbService wasNot Called }
+        assertTrue(breadcrumbService.pushNotifications.isEmpty())
     }
 
     @Test

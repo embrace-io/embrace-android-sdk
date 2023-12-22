@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test

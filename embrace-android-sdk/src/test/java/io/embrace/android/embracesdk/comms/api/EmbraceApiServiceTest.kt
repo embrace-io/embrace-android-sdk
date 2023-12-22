@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,6 +64,13 @@ internal class EmbraceApiServiceTest {
         fakeCacheManager = FakeDeliveryCacheManager()
         fakePendingApiCallsSender = FakePendingApiCallsSender()
         initApiService()
+    }
+
+    @After
+    fun tearDown() {
+        Endpoint.values().forEach {
+            it.clearRateLimit()
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -230,7 +238,7 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `validate all API endpoint URLs`() {
-        EmbraceApiService.Companion.Endpoint.values().forEach {
+        Endpoint.values().forEach {
             assertEquals(
                 "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
                 apiUrlBuilder.getEmbraceUrlWithSuffix(it.path)
@@ -261,6 +269,195 @@ internal class EmbraceApiServiceTest {
         assertEquals(0, fakeApiClient.sentRequests.size)
         val request = fakePendingApiCallsSender.retryQueue.single().first
         assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.toString())
+    }
+
+    @Test
+    fun `test that requests returning a TooManyRequests response, saves and schedule a pending api call`() {
+        val response = ApiResponse.TooManyRequests(
+            endpoint = Endpoint.LOGGING,
+            retryAfter = 3
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.toJson(event).toByteArray()
+        )
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Incomplete response, saves and schedule a pending api call`() {
+        val response = ApiResponse.Incomplete(Throwable())
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.toJson(event).toByteArray()
+        )
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Failure response, do not save a pending api call`() {
+        val response = ApiResponse.Failure(
+            code = 400,
+            headers = emptyMap()
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.toJson(event).toByteArray()
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a PayloadTooLarge response, do not save a pending api call`() {
+        val response = ApiResponse.PayloadTooLarge
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.toJson(event).toByteArray()
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Success response, do not save a pending api call`() {
+        val response = ApiResponse.Success(
+            headers = emptyMap(),
+            body = ""
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = serializer.toJson(event).toByteArray()
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
+        val callback = mockk<() -> Unit>(relaxed = true)
+        val endpoint = Endpoint.LOGGING
+        with(endpoint) {
+            updateRateLimitStatus()
+            scheduleRetry(
+                scheduledExecutorService = testScheduledExecutor,
+                retryAfter = 3,
+                retryMethod = callback
+            )
+        }
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+
+        apiService.sendLog(event)
+
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        // assert that the pending api call was not scheduled, since all pending api calls
+        // are executed once the rate limit for the endpoint is lifted.
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests with no connection, do not execute the request and save a pending api call`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EmbraceEvent.Type.ERROR_LOG
+            )
+        )
+
+        apiService.sendLog(event)
+
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        // assert that the pending api call was not scheduled, since all pending api calls
+        // are executed once the network connection is restored.
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
     }
 
     private fun verifyOnlyRequest(

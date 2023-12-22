@@ -28,7 +28,7 @@ internal class EmbraceApiService(
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
-    networkConnectivityService: NetworkConnectivityService
+    networkConnectivityService: NetworkConnectivityService,
 ) : ApiService, NetworkConnectivityListener {
 
     private val mapper = ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
@@ -160,7 +160,7 @@ internal class EmbraceApiService(
     private inline fun <reified T> post(
         payload: T,
         mapper: (T) -> ApiRequest,
-        noinline onComplete: (() -> Unit)? = null
+        noinline onComplete: (() -> Unit)? = null,
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
         logger.logDeveloper(TAG, "Post event")
@@ -171,24 +171,19 @@ internal class EmbraceApiService(
         return postOnExecutor(action, request, onComplete)
     }
 
+    /**
+     * Submits a [NetworkRequestRunnable] to the [executorService].
+     * This way, we prioritize the sending of sessions over other network requests.
+     */
     private fun postOnExecutor(
         action: SerializationAction,
         request: ApiRequest,
-        onComplete: (() -> Any)?
+        onComplete: (() -> Any)?,
     ): Future<*> {
         return executorService.submit(
             NetworkRequestRunnable(request) {
                 try {
-                    if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                        executePost(request, action)
-                    } else {
-                        pendingApiCallsSender.scheduleApiCall(request, action)
-                        logger.logWarning("No connection available. Request was queued to retry later.")
-                    }
-                } catch (ex: Exception) {
-                    logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                    pendingApiCallsSender.scheduleApiCall(request, action)
-                    throw ex
+                    handleApiRequest(request, action)
                 } finally {
                     onComplete?.invoke()
                 }
@@ -196,24 +191,37 @@ internal class EmbraceApiService(
         )
     }
 
-    @Suppress("UseCheckOrError")
-    private fun executePost(request: ApiRequest, action: SerializationAction) {
-        val response = apiClient.executePost(request, action)
-        if (response !is ApiResponse.Success) {
-            throw IllegalStateException("Failed to retrieve from Embrace server.")
+    /**
+     * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
+     * Otherwise, the API call is saved to be sent later.
+     */
+    private fun handleApiRequest(request: ApiRequest, action: SerializationAction) {
+        val endpoint = request.url.endpoint()
+
+        if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
+            // Execute the request if the device is online and the endpoint is not rate limited.
+            val response = executePost(request, action)
+
+            if (response.shouldRetry) {
+                pendingApiCallsSender.savePendingApiCall(request, action)
+                pendingApiCallsSender.scheduleRetry(response)
+            }
+
+            if (response !is ApiResponse.Success) {
+                // If the API call failed, propagate the error to the caller.
+                error("Failed to post Embrace API call. ")
+            }
+        } else {
+            // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
+            pendingApiCallsSender.savePendingApiCall(request, action)
         }
     }
 
-    companion object {
-        enum class Endpoint(val path: String) {
-            EVENTS("events"),
-            BLOBS("blobs"),
-            LOGGING("logging"),
-            NETWORK("network"),
-            SESSIONS("sessions"),
-            UNKNOWN("unknown")
-        }
-    }
+    /**
+     * Executes a POST request by calling [ApiClient.executePost].
+     */
+    private fun executePost(request: ApiRequest, action: SerializationAction) =
+        apiClient.executePost(request, action)
 }
 
 private const val TAG = "EmbraceApiService"

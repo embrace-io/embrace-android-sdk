@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.comms.api.ApiResponse
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
@@ -16,7 +18,7 @@ internal class EmbracePendingApiCallsSender(
     networkConnectivityService: NetworkConnectivityService,
     private val scheduledExecutorService: ScheduledExecutorService,
     private val cacheManager: DeliveryCacheManager,
-    private val clock: Clock
+    private val clock: Clock,
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
     private val pendingApiCalls: PendingApiCalls by lazy {
@@ -24,7 +26,7 @@ internal class EmbracePendingApiCallsSender(
     }
     private var lastDeliveryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private lateinit var sendMethod: (request: ApiRequest, action: SerializationAction) -> Unit
+    private lateinit var sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
     init {
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
@@ -33,28 +35,40 @@ internal class EmbracePendingApiCallsSender(
         scheduledExecutorService.submit(this::scheduleApiCallsDelivery)
     }
 
-    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> Unit) {
+    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
         this.sendMethod = sendMethod
     }
 
-    override fun scheduleApiCall(
-        request: ApiRequest,
-        action: SerializationAction
-    ) {
-        logger.logDeveloper(TAG, "Scheduling api call for retry")
-
+    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction) {
+        // Save the payload to disk.
         val cachedPayloadName = cacheManager.savePayload(action)
+
+        // Save the pending api calls to disk.
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
-
-        val scheduleJob = pendingApiCalls.hasAnyPendingApiCall().not()
-
         pendingApiCalls.add(pendingApiCall)
         cacheManager.savePendingApiCalls(pendingApiCalls)
+    }
 
-        // By default there are no scheduled retry jobs pending.
-        // If the retry map was initially empty, try to schedule a retry.
-        if (scheduleJob) {
-            scheduleApiCallsDelivery(RETRY_PERIOD)
+    override fun scheduleRetry(response: ApiResponse) {
+        logger.logDeveloper(TAG, "Scheduling api call for retry")
+
+        when (response) {
+            is ApiResponse.Incomplete -> {
+                scheduleApiCallsDelivery(RETRY_PERIOD)
+            }
+            is ApiResponse.TooManyRequests -> {
+                with(response.endpoint) {
+                    updateRateLimitStatus()
+                    scheduleRetry(
+                        scheduledExecutorService,
+                        response.retryAfter,
+                        this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
+                    )
+                }
+            }
+            else -> {
+                // Not expected, shouldRetry() should be called before scheduleForRetry().
+            }
         }
     }
 
@@ -63,22 +77,16 @@ internal class EmbracePendingApiCallsSender(
      */
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         lastNetworkStatus = status
-        when (status) {
-            NetworkStatus.UNKNOWN,
-            NetworkStatus.WIFI,
-            NetworkStatus.WAN -> {
-                scheduleApiCallsDelivery()
-            }
-
-            NetworkStatus.NOT_REACHABLE -> {
-                synchronized(this) {
-                    lastDeliveryTask?.let { task ->
-                        if (task.cancel(false)) {
-                            logger.logDebug("Api Calls Delivery Action was stopped because there is no connection. ")
-                            lastDeliveryTask = null
-                        } else {
-                            logger.logError("Api Calls Delivery Action could not be stopped.")
-                        }
+        if (status.isReachable) {
+            scheduleApiCallsDelivery()
+        } else {
+            synchronized(this) {
+                lastDeliveryTask?.let { task ->
+                    if (task.cancel(false)) {
+                        logger.logDebug("Api Calls Delivery Action was stopped because there is no connection. ")
+                        lastDeliveryTask = null
+                    } else {
+                        logger.logError("Api Calls Delivery Action could not be stopped.")
                     }
                 }
             }
@@ -97,7 +105,7 @@ internal class EmbracePendingApiCallsSender(
      * Return true if the conditions are met for a delivery task to be scheduled
      */
     private fun shouldScheduleDelivery(): Boolean {
-        return !isDeliveryTaskActive() && pendingApiCalls.hasAnyPendingApiCall()
+        return !isDeliveryTaskActive() && pendingApiCalls.hasPendingApiCallsToSend()
     }
 
     /**
@@ -110,55 +118,12 @@ internal class EmbracePendingApiCallsSender(
             synchronized(this) {
                 if (shouldScheduleDelivery()) {
                     lastDeliveryTask = scheduledExecutorService.schedule(
-                        {
-                            if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                                try {
-                                    logger.logDeveloper(TAG, "Sending Pending API calls")
-
-                                    val failedApiCallsToRetry = mutableListOf<PendingApiCall>()
-
-                                    while (true) {
-                                        val pendingApiCall = pendingApiCalls.pollNextPendingApiCall()
-                                        pendingApiCall?.let {
-                                            val callSucceeded = sendPendingApiCall(pendingApiCall)
-                                            if (callSucceeded) {
-                                                // if the retry succeeded, save the modified queue in cache.
-                                                cacheManager.savePendingApiCalls(pendingApiCalls)
-                                            } else {
-                                                // if the retry failed, it will be added back to the queue.
-                                                failedApiCallsToRetry.add(pendingApiCall)
-                                            }
-                                        } ?: break
-                                    }
-
-                                    // Add back to the queue all retries that failed.
-                                    failedApiCallsToRetry.forEach {
-                                        pendingApiCalls.add(it)
-                                    }
-
-                                    if (pendingApiCalls.hasAnyPendingApiCall()) {
-                                        scheduledExecutorService.submit {
-                                            val allApiCallsSent = failedApiCallsToRetry.isEmpty()
-                                            scheduleNextApiCallsDelivery(
-                                                allApiCallsSent,
-                                                delayInSeconds
-                                            )
-                                        }
-                                    }
-                                } catch (ex: Exception) {
-                                    logger.logDebug("Error when sending API call", ex)
-                                }
-                            } else {
-                                logger.logInfo(
-                                    "Did not retry network calls as scheduled because the network is not reachable"
-                                )
-                            }
-                        },
+                        { executeDelivery(delayInSeconds) },
                         delayInSeconds,
                         TimeUnit.SECONDS
                     )
                     logger.logInfo(
-                        "Scheduled API calls to be sent ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
+                        "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
                     )
                 }
             }
@@ -169,45 +134,107 @@ internal class EmbracePendingApiCallsSender(
     }
 
     /**
+     * Sends all pending API calls.
+     */
+    private fun executeDelivery(delayInSeconds: Long) {
+        if (!lastNetworkStatus.isReachable) {
+            logger.logInfo("Did not retry api calls as scheduled because network is not reachable")
+            return
+        }
+        try {
+            logger.logDeveloper(TAG, "Sending Pending API calls")
+
+            val failedApiCallsToRetry = mutableListOf<PendingApiCall>()
+            var applyExponentialBackoff = false
+
+            while (true) {
+                val pendingApiCall = pendingApiCalls.pollNextPendingApiCall() ?: break
+                val response = sendPendingApiCall(pendingApiCall)
+                response?.let {
+                    clearRateLimitIfApplies(pendingApiCall.apiRequest.url.endpoint(), response)
+
+                    if (response.shouldRetry) {
+                        when (response) {
+                            is ApiResponse.TooManyRequests -> {
+                                with(response.endpoint) {
+                                    updateRateLimitStatus()
+                                    scheduleRetry(
+                                        scheduledExecutorService,
+                                        response.retryAfter,
+                                        this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
+                                    )
+                                }
+                            }
+                            is ApiResponse.Incomplete -> {
+                                applyExponentialBackoff = true
+                            }
+                            else -> {
+                                // Not expected
+                            }
+                        }
+                        // Should retry, so we add it back to the queue.
+                        failedApiCallsToRetry.add(pendingApiCall)
+                    } else {
+                        // Shouldn't retry, so delete the payload and save the pending api calls.
+                        cacheManager.deletePayload(pendingApiCall.cachedPayloadFilename)
+                        cacheManager.savePendingApiCalls(pendingApiCalls)
+                    }
+                }
+            }
+
+            // Add back to the queue all retries that failed.
+            failedApiCallsToRetry.forEach {
+                pendingApiCalls.add(it)
+            }
+
+            if (pendingApiCalls.hasPendingApiCallsToSend()) {
+                scheduledExecutorService.submit {
+                    scheduleNextApiCallsDelivery(
+                        applyExponentialBackoff,
+                        delayInSeconds
+                    )
+                }
+            }
+        } catch (ex: Exception) {
+            logger.logDebug("Error when sending API call", ex)
+        }
+    }
+
+    /**
      * Send the request for a PendingApiCall.
      */
-    private fun sendPendingApiCall(call: PendingApiCall): Boolean {
+    private fun sendPendingApiCall(call: PendingApiCall): ApiResponse? {
         val payload: SerializationAction? = cacheManager.loadPayloadAsAction(call.cachedPayloadFilename)
-        if (payload != null) {
-            try {
-                logger.logDeveloper(TAG, "Sending a Pending API call")
-                sendMethod(call.apiRequest, payload)
-                cacheManager.deletePayload(call.cachedPayloadFilename)
-            } catch (ex: Exception) {
-                logger.logDeveloper(
-                    TAG,
-                    "Sending the Pending Api Call failed, scheduling to retry later",
-                    ex
-                )
-                return false
-            }
-        } else {
-            logger.logError("Could not retrieve cached api payload")
-            // If payload is null, the file could have been removed.
-            // We don't need to retry sending in the future as we'd get the same result.
-            // That's the reason for returning true.
+        if (payload == null) {
+            // If payload is null, the file could have been removed. We don't have to retry this call.
+            logger.logDeveloper(TAG, "Could not retrieve cached api payload")
+            return null
         }
-        return true
+        return sendMethod(call.apiRequest, payload)
     }
 
     /**
      * Schedules the next call to retry sending the pending api calls again.
-     * The delay will be extended if the previous retry yielded at least one failed request.
+     * If [applyExponentialBackoff] is true, it will double the delay time, up to a maximum of
+     * [MAX_EXPONENTIAL_RETRY_PERIOD].
      */
-    private fun scheduleNextApiCallsDelivery(allApiCallsSent: Boolean, delay: Long) {
-        val nextDelay = if (allApiCallsSent) {
-            RETRY_PERIOD
-        } else {
-            // if a network call failed, the retries will use exponential backoff
+    private fun scheduleNextApiCallsDelivery(applyExponentialBackoff: Boolean, delay: Long) {
+        val nextDelay = if (applyExponentialBackoff) {
             max(RETRY_PERIOD, delay * 2)
+        } else {
+            RETRY_PERIOD
         }
         if (nextDelay <= MAX_EXPONENTIAL_RETRY_PERIOD) {
             scheduleApiCallsDelivery(nextDelay)
+        }
+    }
+
+    /**
+     * Clears the rate limit for the given endpoint if the response is not a rate limit response.
+     */
+    private fun clearRateLimitIfApplies(endpoint: Endpoint, response: ApiResponse) {
+        if (response !is ApiResponse.TooManyRequests) {
+            endpoint.clearRateLimit()
         }
     }
 }

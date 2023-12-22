@@ -1,16 +1,14 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.os.FileObserver
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
 import android.util.Log
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwnerAccess
 import androidx.test.platform.app.InstrumentationRegistry
+import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -44,10 +42,10 @@ import java.util.zip.GZIPInputStream
  */
 internal open class BaseTest {
 
-    protected lateinit var pendingApiCallsFilePath: String
-    public lateinit var mContext: EmbraceContext
+    private lateinit var pendingApiCallsFilePath: String
+    lateinit var mContext: EmbraceContext
     protected val serializer = EmbraceSerializer()
-    public val testServer: TestServer = TestServer()
+    private val testServer: TestServer = TestServer()
     private var fileObserver: EmbraceFileObserver? = null
     private val storageDir by lazy { mContext.cacheDir }
 
@@ -57,7 +55,7 @@ internal open class BaseTest {
 
     @SuppressLint("VisibleForTests")
     @Before
-    public fun beforeEach() {
+    fun beforeEach() {
         testServer.start(getDefaultNetworkResponses())
 
         if (Looper.myLooper() == null) {
@@ -83,7 +81,7 @@ internal open class BaseTest {
     }
 
     @After
-    public fun afterEach() {
+    fun afterEach() {
         Log.e("TestServer", "Stop Embrace")
         Embrace.getImpl().stop()
         testServer.stop()
@@ -133,29 +131,12 @@ internal open class BaseTest {
     }
 
     /**
-     * trigger a specific Lifecycle event to fire in the application. For example, passing in Lifecycle.Event.ON_CREATE
-     * will trigger `ActivityLifecycleCallbacks.onCreate()` callbacks as well as those registered with the
-     * ProcessLifecycleOwner.
-     *
-     * Be careful, this method uses a good deal of internal Android code, so if you call lifecycle methods
-     * out of their normal order, you may get weird behavior or silent failures. If you would just like to
-     * send the application to the foreground or the background, you should call sendForeground() or sendBackground()
-     */
-    public fun triggerLifecycleEvent(event: Lifecycle.Event) {
-        mContext.triggerActivityLifecycleEvent(event)
-    }
-
-    public fun triggerOnLowMemory() {
-        mContext.triggerOnLowMemory()
-    }
-
-    /**
      * send the Application to the Foreground by triggering the ON_START lifecycle callbacks.
      * This method will "catch up" your current lifecycle state to ON_START by calling all methods
-     * inbetween. For example, if you do not have current lifecycle state,
+     * between. For example, if you do not have current lifecycle state,
      * we will trigger ON_CREATE and then trigger ON_START when this method is invoked
      */
-    public fun sendForeground() {
+    private fun sendForeground() {
         mContext.sendForeground()
     }
 
@@ -164,19 +145,8 @@ internal open class BaseTest {
      * your current lifecycle state to ON_STOP by calling all methods inbetween. For example, if your current
      * lifecycle state is ON_RESUME, we will trigger ON_PAUSE and then trigger ON_START when this method is invoked
      */
-    public fun sendBackground() {
+    fun sendBackground() {
         mContext.sendBackground()
-    }
-
-    public fun getScreenshot(): Bitmap {
-        val bitmap = Bitmap.createBitmap(
-            mContext.screenshotBitmap.width,
-            mContext.screenshotBitmap.height,
-            Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bitmap)
-        canvas.setBitmap(bitmap)
-        return bitmap
     }
 
     private fun refreshScreenshotBitmap() {
@@ -187,7 +157,7 @@ internal open class BaseTest {
      * Starts the Embrace SDK and simulates the application coming into the foreground (which
      * starts a session).
      */
-    public fun startEmbraceInForeground() {
+    fun startEmbraceInForeground() {
         Log.e("TestServer", "Start Embrace")
         Embrace.getInstance().start(mContext)
         assertTrue(Embrace.getInstance().isStarted)
@@ -256,7 +226,7 @@ internal open class BaseTest {
      * If the request is not received within a reasonable amount of time this method will
      * fail the test.
      */
-    public fun waitForRequest(action: (response: RecordedRequest) -> Unit = {}) {
+    fun waitForRequest(action: (response: RecordedRequest) -> Unit = {}) {
         val request = testServer.takeRequest()
         request?.let(action) ?: fail(
             "Expected request not sent after configured timeout. " +
@@ -264,7 +234,7 @@ internal open class BaseTest {
         )
     }
 
-    public fun waitForFailedRequest(
+    fun waitForFailedRequest(
         endpoint: EmbraceEndpoint,
         request: () -> Unit,
         action: () -> Unit,
@@ -278,7 +248,7 @@ internal open class BaseTest {
 
         testServer.addResponse(
             endpoint,
-            TestServerResponse(HttpURLConnection.HTTP_BAD_REQUEST)
+            TestServerResponse(ApiClient.NO_HTTP_RESPONSE)
         )
 
         request()
@@ -287,7 +257,7 @@ internal open class BaseTest {
         validate(file)
     }
 
-    public fun validateMessageAgainstGoldenFile(
+    fun validateMessageAgainstGoldenFile(
         request: RecordedRequest,
         goldenFileName: String
     ) {
@@ -320,7 +290,7 @@ internal open class BaseTest {
             data.use { String(it.readBytes()) }
         } catch (exc: IOException) {
             throw IllegalStateException(
-                "Failed to uncompress inputstream of request body. The SDK probably didn't send a " +
+                "Failed to uncompress input stream of request body. The SDK probably didn't send a " +
                     "request - check Logcat for any crashes in the process.",
                 exc
             )
@@ -344,7 +314,7 @@ internal open class BaseTest {
      * @param failedApiContent the content that was intended to send in the api call
      * @param failedCallFileName file name that contains our failed api request
      */
-    public fun readFileContent(failedApiContent: String, failedCallFileName: String) {
+    fun readFileContent(failedApiContent: String, failedCallFileName: String) {
         val failedApiFilePath = storageDir.path + "/emb_" + failedCallFileName
         val failedApiFile = File(failedApiFilePath)
         val failedApiJsonString: String =
@@ -355,7 +325,7 @@ internal open class BaseTest {
     /**
      * Reads the file that contains all the failed api request to get the one we need to validate
      */
-    public fun readFile(file: File, failedApiCall: String) {
+    fun readFile(file: File, failedApiCall: String) {
         try {
             assertTrue(file.exists() && !file.isDirectory)
             val jsonString: String = file.reader().use { it.readText() }

@@ -4,6 +4,17 @@ package io.embrace.android.embracesdk.comms.api
  * ApiResponse is a sealed class that represents the result of an API call.
  */
 internal sealed class ApiResponse {
+
+    /**
+     * Returns true if the API call should be retried.
+     */
+    val shouldRetry: Boolean
+        get() = when (this) {
+            is TooManyRequests -> true
+            is Incomplete -> true
+            else -> false
+        }
+
     /**
      * Represents an API call that returned a 200 OK status code.
      */
@@ -22,7 +33,7 @@ internal sealed class ApiResponse {
     /**
      * Represents an API call that returned a 429 Too Many Requests status code.
      */
-    data class TooManyRequests(val retryAfter: Long?) : ApiResponse()
+    data class TooManyRequests(val endpoint: Endpoint, val retryAfter: Long?) : ApiResponse()
 
     /**
      * Represents a failed API call. (status code 400-499 or 500-599 except 413 and 429)

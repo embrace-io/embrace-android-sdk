@@ -4,8 +4,9 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
+import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -31,7 +32,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
     companion object {
         private val connectedNetworkStatuses =
-            NetworkStatus.values().filter { it != NetworkStatus.NOT_REACHABLE }
+            NetworkStatus.values().filter { it.isReachable }
 
         private lateinit var networkConnectivityService: NetworkConnectivityService
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
@@ -39,7 +40,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var testScheduledExecutor: ScheduledExecutorService
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
-        private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> Unit
+        private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
         @BeforeClass
         @JvmStatic
@@ -115,7 +116,7 @@ internal class EmbracePendingApiCallsSenderTest {
     @Test
     fun `retryTask will be scheduled again if retry fails`() {
         connectedNetworkStatuses.forEach { status ->
-            every { mockRetryMethod(any(), any()) } throws Exception()
+            every { mockRetryMethod(any(), any()) } returns ApiResponse.Incomplete(Throwable())
             initPendingApiCallsSender(status = status, runRetryJobAfterScheduling = true)
             retryTaskActive(status)
             blockingScheduledExecutorService.runCurrentlyBlocked()
@@ -143,7 +144,7 @@ internal class EmbracePendingApiCallsSenderTest {
             blockingScheduledExecutorService.runCurrentlyBlocked()
 
             // Let the next retry succeed
-            every { mockRetryMethod(any(), any()) } returns Unit
+            every { mockRetryMethod(any(), any()) } returns ApiResponse.Success("", null)
 
             // Second failure will result in another retry in double the last time, 240 seconds
             // Go most of the way to check it didn't run, then go all the way to check that it did.
@@ -273,7 +274,12 @@ internal class EmbracePendingApiCallsSenderTest {
                     )
                 )
             )
-            pendingApiCallsSender.scheduleApiCall(request) {}
+            pendingApiCallsSender.savePendingApiCall(request) {}
+            pendingApiCallsSender.scheduleRetry(
+                ApiResponse.Incomplete(
+                    Throwable()
+                )
+            )
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
@@ -282,7 +288,8 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
-        pendingApiCallsSender.scheduleApiCall(sessionRequest) {}
+        pendingApiCallsSender.savePendingApiCall(sessionRequest) {}
+        pendingApiCallsSender.scheduleRetry(ApiResponse.Incomplete(Throwable()))
         assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }
 
@@ -300,6 +307,9 @@ internal class EmbracePendingApiCallsSenderTest {
     ) {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
+        pendingApiCalls = PendingApiCalls()
+        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
+
         pendingApiCallsSender = EmbracePendingApiCallsSender(
             scheduledExecutorService = testScheduledExecutor,
             networkConnectivityService = networkConnectivityService,
@@ -308,9 +318,6 @@ internal class EmbracePendingApiCallsSenderTest {
         )
 
         pendingApiCallsSender.setSendMethod(mockRetryMethod)
-
-        pendingApiCalls = PendingApiCalls()
-        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
 
         if (loadFailedRequest) {
             val mockApiRequest = mockk<ApiRequest>(relaxed = true) {

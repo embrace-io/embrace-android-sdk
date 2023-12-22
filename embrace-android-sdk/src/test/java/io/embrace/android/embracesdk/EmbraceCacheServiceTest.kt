@@ -230,7 +230,7 @@ internal class EmbraceCacheServiceTest {
             service.loadObject(cacheKey, PendingApiCalls::class.java)
 
         checkNotNull(cachedPendingCalls)
-        assertTrue(cachedPendingCalls.hasAnyPendingApiCall())
+        assertTrue(cachedPendingCalls.hasPendingApiCallsToSend())
         val cachedApiRequest = cachedPendingCalls.pollNextPendingApiCall()?.apiRequest
         assertNotNull(cachedApiRequest)
         assertEquals(apiRequest.contentType, cachedApiRequest?.contentType)

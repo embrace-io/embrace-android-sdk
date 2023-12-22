@@ -134,6 +134,9 @@ internal class EssentialServiceModuleImpl(
     private val networkRequestExecutor =
         workerThreadModule.backgroundExecutor(ExecutorName.NETWORK_REQUEST)
 
+    private val pendingApiCallsExecutor =
+        workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+
     private val deliveryCacheExecutorService =
         workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
 
@@ -277,7 +280,7 @@ internal class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         EmbracePendingApiCallsSender(
             networkConnectivityService,
-            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            pendingApiCallsExecutor,
             deliveryCacheManager,
             initModule.clock
         )

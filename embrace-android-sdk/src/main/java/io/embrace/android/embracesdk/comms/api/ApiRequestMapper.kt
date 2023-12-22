@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.EmbraceEvent
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage

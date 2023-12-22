@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiRequest
+import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 
 /**
@@ -9,12 +10,17 @@ import io.embrace.android.embracesdk.comms.api.SerializationAction
 internal interface PendingApiCallsSender {
 
     /**
-     * Sets the method to be used when sending an [ApiRequest]
+     * Sets the method to be used when sending an [ApiRequest].
      */
-    fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> Unit)
+    fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse)
 
     /**
-     * Schedules an API call to be sent later.
+     * Save an API call to be sent later.
      */
-    fun scheduleApiCall(request: ApiRequest, action: SerializationAction)
+    fun savePendingApiCall(request: ApiRequest, action: SerializationAction)
+
+    /**
+     * Schedules the retry of all pending API calls.
+     */
+    fun scheduleRetry(response: ApiResponse)
 }

@@ -348,7 +348,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     /**
      * The current version is storing [PendingApiCalls] in a file, but previous versions
-     * were storing [PendingApiCallsQueue]. This test checks that the current
+     * were storing a list of [PendingApiCall]. This test checks that the current
      * version can read the old version and convert it to the new one.
      * Test that the load works even if the cache returns null when loading the file
      */
@@ -388,7 +388,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `load empty set of delivery calls if non cached`() {
         val pendingApiCalls = deliveryCacheManager.loadPendingApiCalls()
-        assertFalse(pendingApiCalls.hasAnyPendingApiCall())
+        assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
     }
 
     private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {

@@ -46,7 +46,7 @@ internal class LivenessCheckSchedulerTest {
         fakeClock = FakeClock(160982340900)
         configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
-        logger = mockk(relaxUnitFun = true)
+        logger = InternalEmbraceLogger()
         looper = mockk {
             every { thread } returns mockk()
         }

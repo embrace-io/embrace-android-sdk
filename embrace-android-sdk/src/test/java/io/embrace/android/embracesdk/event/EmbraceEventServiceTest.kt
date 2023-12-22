@@ -25,12 +25,10 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.mockk.clearAllMocks
-import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -64,7 +62,6 @@ internal class EmbraceEventServiceTest {
         private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
         private lateinit var processStateService: ProcessStateService
-        private lateinit var mockMemoryCleanerService: MemoryCleanerService
         private lateinit var logger: InternalEmbraceLogger
 
         @BeforeClass
@@ -74,7 +71,6 @@ internal class EmbraceEventServiceTest {
             preferenceService = FakePreferenceService()
             performanceInfoService = FakePerformanceInfoService()
             processStateService = FakeProcessStateService()
-            mockMemoryCleanerService = mockk(relaxUnitFun = true)
             logger = InternalEmbraceLogger()
             userService = EmbraceUserService(
                 preferencesService = preferenceService,

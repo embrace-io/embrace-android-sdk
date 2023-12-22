@@ -92,8 +92,8 @@ internal class SessionHandlerTest {
         private var sessionNumber = 5
         private val mockSessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
-        private val mockUserInfo: UserInfo = mockk()
-        private val mockAutomaticSessionStopperRunnable: Runnable = mockk()
+        private val mockUserInfo: UserInfo = UserInfo()
+        private val mockAutomaticSessionStopperRunnable = Runnable {}
         private var mockActiveSession: Session = mockk(relaxed = true)
 
         @BeforeClass

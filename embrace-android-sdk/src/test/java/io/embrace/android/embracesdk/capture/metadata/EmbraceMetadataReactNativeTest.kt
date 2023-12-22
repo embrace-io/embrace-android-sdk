@@ -74,8 +74,8 @@ internal class EmbraceMetadataReactNativeTest {
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,
-        mockk(),
-        mockk()
+        lazy { "" },
+        lazy { "" }
     )
 
     @Test

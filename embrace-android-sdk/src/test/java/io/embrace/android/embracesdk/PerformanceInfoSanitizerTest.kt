@@ -1,21 +1,15 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.gating.PerformanceInfoSanitizer
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.payload.PerformanceInfo
-import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class PerformanceInfoSanitizerTest {
 
-    private val performanceInfo = PerformanceInfo(
-        anrIntervals = mockk(relaxed = true),
-        networkInterfaceIntervals = mockk(),
-        memoryWarnings = mockk(),
-        diskUsage = mockk()
-    )
+    private val performanceInfo = fakePerformanceInfo()
 
     @Test
     fun `test if it keeps all performance info fields`() {

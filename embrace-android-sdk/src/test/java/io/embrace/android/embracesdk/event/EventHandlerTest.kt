@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.EventDescription
@@ -76,7 +77,7 @@ internal class EventHandlerTest {
             logger = InternalEmbraceLogger()
             mockStartup = mockk(relaxed = true)
             mockLateTimer = mockk(relaxed = true)
-            mockUserInfo = mockk()
+            mockUserInfo = UserInfo()
             mockkStatic(StartupEventInfo::class)
             mockkStatic(Event::class)
             mockkStatic(EventMessage::class)
@@ -232,7 +233,7 @@ internal class EventHandlerTest {
             duration = endTime - startTime
         )
 
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         every { mockSessionProperties.get() } returns sessionPropertiesMap
         every {
@@ -272,7 +273,7 @@ internal class EventHandlerTest {
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
         val originEventName = "origin-event-name"
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         val originEvent = Event(
             timestamp = startTime,
@@ -383,7 +384,7 @@ internal class EventHandlerTest {
         val startTime = 123L
         val threshold = 100L
         val sessionPropertiesMap: Map<String, String> = mapOf()
-        val mockTimeoutCallback: Runnable = mockk()
+        val mockTimeoutCallback = Runnable {}
         clock.setCurrentTime(456)
 
         every { mockSessionProperties.get() } returns sessionPropertiesMap
@@ -415,7 +416,7 @@ internal class EventHandlerTest {
         val startTime = 123L
         val threshold = 100L
         val sessionPropertiesMap: Map<String, String> = mapOf()
-        val mockTimeoutCallback: Runnable = mockk()
+        val mockTimeoutCallback = Runnable {}
         clock.setCurrentTime(456)
 
         every { mockSessionProperties.get() } returns sessionPropertiesMap
@@ -447,7 +448,7 @@ internal class EventHandlerTest {
         val startTime = 123L
         val threshold = 100L
         val sessionPropertiesMap: Map<String, String> = mapOf()
-        val mockTimeoutCallback: Runnable = mockk()
+        val mockTimeoutCallback = Runnable {}
         clock.setCurrentTime(456)
 
         every { mockSessionProperties.get() } returns sessionPropertiesMap
@@ -479,7 +480,7 @@ internal class EventHandlerTest {
         val startTime = 123L
         val threshold = 100L
         val sessionPropertiesMap: Map<String, String> = mapOf()
-        val mockTimeoutCallback: Runnable = mockk()
+        val mockTimeoutCallback = Runnable {}
         clock.setCurrentTime(456)
 
         every { mockSessionProperties.get() } returns sessionPropertiesMap
@@ -513,7 +514,7 @@ internal class EventHandlerTest {
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
         val originEventName = "origin-event-name"
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         val originEvent = Event(
             timestamp = startTime,
@@ -552,7 +553,7 @@ internal class EventHandlerTest {
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
         val originEventName = "origin-event-name"
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         val originEvent = Event(
             timestamp = startTime,
@@ -592,7 +593,7 @@ internal class EventHandlerTest {
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
         val originEventName = EmbraceEventService.STARTUP_EVENT_NAME
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         val originEvent = Event(
             timestamp = startTime,
@@ -633,7 +634,7 @@ internal class EventHandlerTest {
         val originEventId = "origin-event-id"
         val originEventName = EmbraceEventService.STARTUP_EVENT_NAME
 
-        val mockPerformanceInfo: PerformanceInfo = mockk()
+        val mockPerformanceInfo: PerformanceInfo = fakePerformanceInfo()
 
         val originEvent = Event(
             timestamp = startTime,

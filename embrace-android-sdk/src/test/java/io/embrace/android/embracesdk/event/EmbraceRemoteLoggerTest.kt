@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -52,7 +51,6 @@ internal class EmbraceRemoteLoggerTest {
         private lateinit var deliveryService: EmbraceDeliveryService
         private lateinit var userService: UserService
         private lateinit var configService: ConfigService
-        private lateinit var memoryCleanerService: MemoryCleanerService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var gatingService: EmbraceGatingService
         private lateinit var logcat: InternalEmbraceLogger
@@ -66,9 +64,8 @@ internal class EmbraceRemoteLoggerTest {
             metadataService = FakeAndroidMetadataService()
             deliveryService = mockk(relaxed = true)
             userService = mockk(relaxed = true)
-            memoryCleanerService = mockk(relaxed = true)
             sessionProperties = mockk(relaxed = true)
-            logcat = mockk(relaxed = true)
+            logcat = InternalEmbraceLogger()
             configService = mockk(relaxed = true) {
                 every { sessionBehavior } returns fakeSessionBehavior()
             }

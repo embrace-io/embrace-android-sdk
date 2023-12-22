@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
@@ -7,10 +8,8 @@ import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Orientation
-import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
-import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -27,13 +26,7 @@ internal class SessionSanitizerFacadeTest {
         emptyList(),
     )
 
-    private val sessionPerformanceInfo = PerformanceInfo(
-        anrIntervals = mockk(relaxed = true),
-        networkInterfaceIntervals = mockk(),
-        memoryWarnings = mockk(),
-        diskUsage = mockk(),
-        networkRequests = mockk()
-    )
+    private val sessionPerformanceInfo = fakePerformanceInfo()
 
     private val userInfo = UserInfo(
         personas = setOf("personas"),

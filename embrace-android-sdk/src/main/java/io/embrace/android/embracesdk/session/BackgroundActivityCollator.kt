@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -20,7 +20,7 @@ internal class BackgroundActivityCollator(
     private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val eventService: EventService,
-    private val remoteLogger: EmbraceRemoteLogger,
+    private val logMessageService: LogMessageService,
     private val internalErrorService: InternalErrorService,
     private val breadcrumbService: BreadcrumbService,
     private val metadataService: MetadataService,
@@ -63,21 +63,21 @@ internal class BackgroundActivityCollator(
                     endTime
                 )
             },
-            infoLogIds = captureDataSafely { remoteLogger.findInfoLogIds(startTime, endTime) },
+            infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
             warningLogIds = captureDataSafely {
-                remoteLogger.findWarningLogIds(
+                logMessageService.findWarningLogIds(
                     startTime,
                     endTime
                 )
             },
-            errorLogIds = captureDataSafely { remoteLogger.findErrorLogIds(startTime, endTime) },
-            infoLogsAttemptedToSend = captureDataSafely(remoteLogger::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(remoteLogger::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(remoteLogger::getErrorLogsAttemptedToSend),
+            errorLogIds = captureDataSafely { logMessageService.findErrorLogIds(startTime, endTime) },
+            infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
+            warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
+            errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
             exceptionError = captureDataSafely(internalErrorService::currentExceptionError),
             lastHeartbeatTime = endTime,
             endType = endType,
-            unhandledExceptions = captureDataSafely(remoteLogger::getUnhandledExceptionsSent),
+            unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
     }

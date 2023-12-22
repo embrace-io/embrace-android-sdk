@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.fakes.injection
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
+import io.embrace.android.embracesdk.event.EmbraceLogMessageService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -19,7 +20,7 @@ import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 internal class FakeCustomerLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
 
-    override val remoteLogger: EmbraceRemoteLogger = EmbraceRemoteLogger(
+    override val logMessageService: LogMessageService = EmbraceLogMessageService(
         FakeAndroidMetadataService(),
         FakeDeliveryService(),
         FakeUserService(),

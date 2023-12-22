@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Stacktraces
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.sql.Timestamp
 import java.util.NavigableMap
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Logs messages remotely, so that they can be viewed as events during a user's session.
  */
-internal class EmbraceRemoteLogger constructor(
+internal class EmbraceLogMessageService constructor(
     private val metadataService: MetadataService,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
@@ -46,7 +45,7 @@ internal class EmbraceRemoteLogger constructor(
     private val executorService: ExecutorService,
     private val gatingService: GatingService,
     private val networkConnectivityService: NetworkConnectivityService
-) : MemoryCleanerListener {
+) : LogMessageService {
 
     private val lock = Any()
     private val infoLogIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
@@ -86,12 +85,7 @@ internal class EmbraceRemoteLogger constructor(
         networkConnectivityService
     )
 
-    /**
-     * Creates a network event.
-     *
-     * @param networkCaptureCall the captured network information
-     */
-    fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
+    override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
         val networkEventTimestamp = clock.now()
         if (networkCaptureCall == null) {
             logDebug("NetworkCaptureCall is null, nothing to log")
@@ -130,14 +124,7 @@ internal class EmbraceRemoteLogger constructor(
         }
     }
 
-    /**
-     * Creates a remote log.
-     *
-     * @param message        the message to log
-     * @param type           the type of message to log, which must be INFO_LOG, WARNING_LOG, or ERROR_LOG
-     * @param properties     custom properties to send as part of the event
-     */
-    fun log(
+    override fun log(
         message: String,
         type: EmbraceEvent.Type,
         properties: Map<String, Any>?
@@ -157,20 +144,8 @@ internal class EmbraceRemoteLogger constructor(
         )
     }
 
-    /**
-     * Creates a remote log.
-     *
-     * @param message            the message to log
-     * @param type               the type of message to log, which must be INFO_LOG, WARNING_LOG, or ERROR_LOG
-     * @param logExceptionType   whether the log is a handled exception, unhandled, or non an exception
-     * @param properties         custom properties to send as part of the event
-     * @param stackTraceElements the stacktrace elements of a throwable
-     * @param customStackTrace   stacktrace string for non-JVM exceptions
-     * @param exceptionName      the exception name of a Throwable is it is present
-     * @param exceptionMessage   the exception message of a Throwable is it is present
-     */
     @Suppress("CyclomaticComplexMethod", "ComplexMethod", "LongParameterList")
-    fun log(
+    override fun log(
         message: String,
         type: EmbraceEvent.Type,
         logExceptionType: LogExceptionType,
@@ -323,47 +298,19 @@ internal class EmbraceRemoteLogger constructor(
         )
     }
 
-    /**
-     * Finds all IDs of log events at info level within the given time window.
-     *
-     * @param startTime the beginning of the time window
-     * @param endTime   the end of the time window
-     * @return the list of log IDs within the specified range
-     */
-    fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
+    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
         return findLogIds(startTime, endTime, infoLogIdsCache, infoLogIds)
     }
 
-    /**
-     * Finds all IDs of log events at warning level within the given time window.
-     *
-     * @param startTime the beginning of the time window
-     * @param endTime   the end of the time window
-     * @return the list of log IDs within the specified range
-     */
-    fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
+    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
         return findLogIds(startTime, endTime, warningLogIdsCache, warningLogIds)
     }
 
-    /**
-     * Finds all IDs of log events at error level within the given time window.
-     *
-     * @param startTime the beginning of the time window
-     * @param endTime   the end of the time window
-     * @return the list of log IDs within the specified range
-     */
-    fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
+    override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return findLogIds(startTime, endTime, errorLogIdsCache, errorLogIds)
     }
 
-    /**
-     * Finds all IDs of log network events within the given time window.
-     *
-     * @param startTime the beginning of the time window
-     * @param endTime   the end of the time window
-     * @return the list of log IDs within the specified range
-     */
-    fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
+    override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
         return findLogIds(startTime, endTime, networkLogIdsCache, networkLogIds)
     }
 
@@ -376,21 +323,13 @@ internal class EmbraceRemoteLogger constructor(
         return cache.value { ArrayList(logIds.subMap(startTime, endTime).values) }
     }
 
-    /**
-     * The total number of info logs that the app attempted to send.
-     */
-    fun getInfoLogsAttemptedToSend(): Int = logsInfoCount.get()
+    override fun getInfoLogsAttemptedToSend(): Int = logsInfoCount.get()
 
-    /**
-     * The total number of warning logs that the app attempted to send.
-     */
-    fun getWarnLogsAttemptedToSend(): Int = logsWarnCount.get()
+    override fun getWarnLogsAttemptedToSend(): Int = logsWarnCount.get()
 
-    /**
-     * The total number of error logs that the app attempted to send.
-     */
-    fun getErrorLogsAttemptedToSend(): Int = logsErrorCount.get()
-    fun getUnhandledExceptionsSent(): Int {
+    override fun getErrorLogsAttemptedToSend(): Int = logsErrorCount.get()
+
+    override fun getUnhandledExceptionsSent(): Int {
         if (unhandledExceptionCount.get() > 0) {
             logDeveloper(
                 "EmbraceRemoteLogger",

@@ -9,13 +9,14 @@ import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -27,8 +28,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -45,7 +44,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
-    private lateinit var remoteLogger: EmbraceRemoteLogger
+    private lateinit var logMessageService: LogMessageService
     private lateinit var userService: UserService
     private lateinit var internalErrorService: InternalErrorService
     private lateinit var deliveryService: FakeDeliveryService
@@ -64,7 +63,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         breadcrumbService = FakeBreadcrumbService()
         activityService = FakeProcessStateService(isInBackground = true)
         eventService = FakeEventService()
-        remoteLogger = mockk()
+        logMessageService = FakeLogMessageService()
         internalErrorService = FakeInternalErrorService()
         deliveryService = FakeDeliveryService()
         ndkService = FakeNdkService()
@@ -86,14 +85,6 @@ internal class EmbraceBackgroundActivityServiceTest {
         )
 
         blockableExecutorService = BlockableExecutorService()
-
-        every { remoteLogger.findInfoLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.findWarningLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.findErrorLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.getInfoLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getWarnLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getErrorLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getUnhandledExceptionsSent() } returns 0
     }
 
     @Test
@@ -309,7 +300,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             userService,
             preferencesService,
             eventService,
-            remoteLogger,
+            logMessageService,
             internalErrorService,
             breadcrumbService,
             metadataService,

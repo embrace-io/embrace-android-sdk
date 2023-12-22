@@ -4,12 +4,27 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.payload.SessionMessage
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.Future
+import java.util.concurrent.FutureTask
 
 internal class FakeApiService : ApiService {
+
+    var throwExceptionSendSession: Boolean = false
+    private val serializer = EmbraceSerializer()
+    val logRequests = mutableListOf<EventMessage>()
+    val networkCallRequests = mutableListOf<NetworkEvent>()
+    val eventRequests = mutableListOf<EventMessage>()
+    val crashRequests = mutableListOf<EventMessage>()
+    val blobRequests = mutableListOf<BlobMessage>()
+    val sessionRequests = mutableListOf<SessionMessage>()
+    val bgActivityRequests = mutableListOf<BackgroundActivityMessage>()
 
     override fun getConfig(): RemoteConfig? {
         TODO("Not yet implemented")
@@ -20,26 +35,35 @@ internal class FakeApiService : ApiService {
     }
 
     override fun sendLog(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
+        logRequests.add(eventMessage)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        TODO("Not yet implemented")
+        networkCallRequests.add(networkEvent)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
+        eventRequests.add(eventMessage)
     }
 
     override fun sendCrash(crash: EventMessage): Future<*> {
-        TODO("Not yet implemented")
+        crashRequests.add(crash)
+        return FutureTask { }
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        TODO("Not yet implemented")
+        blobRequests.add(blobMessage)
     }
 
     override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*>? {
-        TODO("Not yet implemented")
+        if (throwExceptionSendSession) {
+            error("FakeApiService.sendSession")
+        }
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        val json = String(stream.toByteArray())
+        val obj = serializer.fromJson(json, SessionMessage::class.java)
+        sessionRequests.add(obj)
+        return FutureTask { }
     }
 }

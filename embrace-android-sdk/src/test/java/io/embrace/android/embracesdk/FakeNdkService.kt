@@ -8,6 +8,7 @@ internal class FakeNdkService : NdkService {
     val propUpdates = mutableListOf<Map<String, String>>()
 
     var sessionId: String? = null
+    var lastUnityCrashId: String? = null
 
     override fun updateSessionId(newSessionId: String) {
         sessionId = newSessionId
@@ -21,7 +22,7 @@ internal class FakeNdkService : NdkService {
     }
 
     override fun getUnityCrashId(): String? {
-        return null
+        return lastUnityCrashId
     }
 
     override fun testCrash(isCpp: Boolean) {

@@ -8,10 +8,10 @@ import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -44,7 +44,6 @@ internal class EmbraceMetadataUnityTest {
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
         private lateinit var processStateService: ProcessStateService
-        private lateinit var cacheService: EmbraceCacheService
         private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
         private val deviceArchitecture = FakeDeviceArchitecture()
 
@@ -56,11 +55,10 @@ internal class EmbraceMetadataUnityTest {
             mockkStatic(Environment::class)
 
             context = mockContext()
-            buildInfo = mockk()
-            configService = mockk(relaxed = true)
+            buildInfo = BuildInfo("1234", "debug", "debug")
+            configService = FakeConfigService()
             preferencesService = FakePreferenceService()
             processStateService = FakeProcessStateService()
-            cacheService = mockk()
             cpuInfoDelegate = mockk(relaxed = true)
 
             initContext()
@@ -85,10 +83,6 @@ internal class EmbraceMetadataUnityTest {
         }
 
         private fun initPreferences() {
-            every { buildInfo.buildId }.returns("1234")
-            every { buildInfo.buildType }.returns("debug")
-            every { buildInfo.buildFlavor }.returns("debug")
-
             preferencesService.appVersion = "app-version"
             preferencesService.osVersion = "os-version"
         }

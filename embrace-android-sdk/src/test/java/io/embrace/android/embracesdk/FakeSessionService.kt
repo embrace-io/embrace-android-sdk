@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.session.SessionService
 
 internal class FakeSessionService : SessionService {
 
+    var crashId: String? = null
+
     override fun startSession(
         coldStart: Boolean,
         startType: Session.SessionLifeEventType,
@@ -21,6 +23,7 @@ internal class FakeSessionService : SessionService {
     }
 
     override fun handleCrash(crashId: String) {
+        this.crashId = crashId
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {

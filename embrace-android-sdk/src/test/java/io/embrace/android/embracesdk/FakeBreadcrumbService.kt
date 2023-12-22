@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 internal class FakeBreadcrumbService : BreadcrumbService {
 
     val logViewCalls = mutableListOf<String?>()
+    var flushCount: Int = 0
 
     override fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?> =
         emptyList()
@@ -47,6 +48,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun flushBreadcrumbs(): Breadcrumbs {
+        flushCount++
         return Breadcrumbs()
     }
 

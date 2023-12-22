@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.session.SessionService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -22,14 +21,12 @@ internal class NativeThreadSamplerInstallerTest {
     private lateinit var sampler: EmbraceNativeThreadSamplerService
     private lateinit var configService: ConfigService
     private lateinit var anrService: AnrService
-    private lateinit var sessionService: SessionService
     private lateinit var delegate: EmbraceNativeThreadSamplerService.NdkDelegate
     private lateinit var cfg: AnrRemoteConfig
 
     @Before
     fun setUp() {
         anrService = mockk(relaxed = true)
-        sessionService = mockk(relaxed = true)
         delegate = mockk(relaxed = true)
         sampler = mockk(relaxed = true)
 

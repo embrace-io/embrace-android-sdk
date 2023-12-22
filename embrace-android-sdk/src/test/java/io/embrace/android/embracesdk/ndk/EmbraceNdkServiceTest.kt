@@ -6,14 +6,15 @@ import android.os.Build
 import android.util.Base64
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
@@ -27,7 +28,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
-import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -60,7 +60,7 @@ internal class EmbraceNdkServiceTest {
         private lateinit var configService: ConfigService
         private lateinit var activityService: FakeProcessStateService
         private lateinit var localConfig: LocalConfig
-        private lateinit var mockDeliveryService: EmbraceDeliveryService
+        private lateinit var deliveryService: FakeDeliveryService
         private lateinit var userService: UserService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var appFramework: Embrace.AppFramework
@@ -82,10 +82,10 @@ internal class EmbraceNdkServiceTest {
             metadataService = mockk(relaxed = true)
             configService = mockk(relaxed = true)
             activityService = FakeProcessStateService()
-            localConfig = mockk(relaxed = true)
-            mockDeliveryService = mockk()
+            localConfig = LocalConfig("", false, SdkLocalConfig())
+            deliveryService = FakeDeliveryService()
             userService = FakeUserService()
-            sessionProperties = mockk(relaxed = true)
+            sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
             appFramework = Embrace.AppFramework.NATIVE
             sharedObjectLoader = mockk()
             logger = InternalEmbraceLogger()
@@ -125,7 +125,7 @@ internal class EmbraceNdkServiceTest {
             metadataService,
             activityService,
             configService,
-            mockDeliveryService,
+            deliveryService,
             userService,
             sessionProperties,
             appFramework,
@@ -411,7 +411,7 @@ internal class EmbraceNdkServiceTest {
                 any() as NativeCrashData
             )
         }
-        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
+        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test
@@ -521,7 +521,7 @@ internal class EmbraceNdkServiceTest {
         verify(exactly = 0) { delegate._getCrashReport(any()) }
         verify(exactly = 0) { repository.errorFileForCrash(any()) }
         verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
+        assertTrue(deliveryService.sentMoments.isEmpty())
         verify(exactly = 0) {
             repository.deleteFiles(
                 any() as File,
@@ -530,7 +530,7 @@ internal class EmbraceNdkServiceTest {
                 any() as NativeCrashData
             )
         }
-        verify(exactly = 0) { mockDeliveryService.sendMoment(any() as EventMessage) }
+        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test

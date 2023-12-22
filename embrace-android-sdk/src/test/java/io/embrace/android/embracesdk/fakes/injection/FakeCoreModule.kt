@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
+import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -21,7 +22,7 @@ import org.robolectric.RuntimeEnvironment
  */
 internal class FakeCoreModule(
     override val application: Application =
-        if (RuntimeEnvironment.getApplication() == null) mockk(relaxed = true) else RuntimeEnvironment.getApplication(),
+        if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
     override val context: Context =
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val appFramework: AppFramework = AppFramework.NATIVE,

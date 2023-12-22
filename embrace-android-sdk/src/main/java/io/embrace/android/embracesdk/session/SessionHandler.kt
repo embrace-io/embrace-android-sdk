@@ -81,7 +81,19 @@ internal class SessionHandler(
     /**
      * SDK startup time. Only set for cold start sessions.
      */
-    var sdkStartupDuration: Long = 0
+    @Volatile
+    private var sdkStartupDuration: Long? = null
+
+    fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
+        if (sdkStartupDuration == null) {
+            spansService.recordCompletedSpan(
+                name = "sdk-init",
+                startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startTimeMs),
+                endTimeNanos = TimeUnit.MILLISECONDS.toNanos(endTimeMs)
+            )
+        }
+        sdkStartupDuration = endTimeMs - startTimeMs
+    }
 
     /**
      * It performs all corresponding operations in order to start a session.
@@ -320,15 +332,15 @@ internal class SessionHandler(
         }
 
         val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
-            activeSession,
+            originSession = activeSession,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,
-            crashId,
-            lifeEventType,
-            sessionProperties,
-            sdkStartupDuration,
-            endTime,
-            completedSpans
+            crashId = crashId,
+            endType = lifeEventType,
+            sessionProperties = sessionProperties,
+            sdkStartupDuration = sdkStartupDuration ?: 0,
+            endTime = endTime,
+            spans = completedSpans
         )
         logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
         return fullEndSessionMessage

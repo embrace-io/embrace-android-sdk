@@ -21,10 +21,9 @@ internal class EmbraceTracerTest {
     @Before
     fun setup() {
         spansService = SpansServiceImpl(
-            100L,
-            200L,
-            FakeOpenTelemetryClock(embraceClock = clock),
-            FakeTelemetryService()
+            sdkInitStartTimeNanos = 100L,
+            clock = FakeOpenTelemetryClock(embraceClock = clock),
+            telemetryService = FakeTelemetryService()
         )
         embraceTracer = EmbraceTracer(spansService)
         spansService.flushSpans()

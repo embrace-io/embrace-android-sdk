@@ -39,24 +39,6 @@ internal class SpansServiceImplTest {
     private val clock = FakeClock(1000L)
 
     @Test
-    fun `initialization records SDK startup span`() {
-        val startTimeMillis = clock.now()
-        val endTimeMillis = startTimeMillis + 10L
-        initService(startTimeMillis, endTimeMillis)
-        with(verifyAndReturnSoleCompletedSpan("emb-sdk-init")) {
-            assertEquals(SpanId.getInvalid(), parentSpanId)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(startTimeMillis), startTimeNanos)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(endTimeMillis), endTimeNanos)
-            assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
-            )
-            assertTrue(isPrivate())
-            assertEquals(StatusCode.OK, status)
-        }
-    }
-
-    @Test
     fun `create trace with default parameters`() {
         initAndFlushService()
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
@@ -671,7 +653,7 @@ internal class SpansServiceImplTest {
 
     @Test
     fun `after flushing with app termination, spans cannot be recorded`() {
-        initAndFlushService()
+        initService()
         spansService.flushSpans(EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
         spansService.recordSpan("test-span") {
             // do thing
@@ -680,19 +662,16 @@ internal class SpansServiceImplTest {
         assertEquals(0, spansService.completedSpans().size)
     }
 
-    private fun initService(sdkInitStartTimeMillis: Long, sdkInitEndTimeMillis: Long) {
+    private fun initService(sdkInitStartTimeMillis: Long = clock.now()) {
         spansService = SpansServiceImpl(
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitStartTimeMillis),
-            sdkInitEndTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitEndTimeMillis),
             clock = FakeOpenTelemetryClock(embraceClock = clock),
             telemetryService = EmbraceTelemetryService()
         )
     }
 
     private fun initAndFlushService() {
-        val start = clock.now()
-        val end = start + 50L
-        initService(sdkInitStartTimeMillis = start, sdkInitEndTimeMillis = end)
+        initService()
         spansService.flushSpans()
     }
 

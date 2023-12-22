@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class SpansServiceImpl(
     sdkInitStartTimeNanos: Long,
-    sdkInitEndTimeNanos: Long,
     private val clock: Clock,
     private val telemetryService: TelemetryService
 ) : SpansService {
@@ -66,14 +65,6 @@ internal class SpansServiceImpl(
      * should be cached along with the other data in the payload.
      */
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
-
-    init {
-        recordCompletedSpan(
-            name = "sdk-init",
-            startTimeNanos = sdkInitStartTimeNanos,
-            endTimeNanos = sdkInitEndTimeNanos
-        )
-    }
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && validateAndUpdateContext(parent, internal)) {

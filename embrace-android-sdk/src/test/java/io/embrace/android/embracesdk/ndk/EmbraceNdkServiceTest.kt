@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -81,9 +82,9 @@ internal class EmbraceNdkServiceTest {
             activityService = FakeProcessStateService()
             localConfig = mockk(relaxed = true)
             mockDeliveryService = mockk()
-            userService = mockk(relaxed = true)
+            userService = FakeUserService()
             sessionProperties = mockk(relaxed = true)
-            appFramework = mockk()
+            appFramework = Embrace.AppFramework.NATIVE
             sharedObjectLoader = mockk()
             logger = InternalEmbraceLogger()
             delegate = mockk(relaxed = true)

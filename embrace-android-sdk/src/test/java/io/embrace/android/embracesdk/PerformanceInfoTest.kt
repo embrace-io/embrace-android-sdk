@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.payload.Interval
 import io.embrace.android.embracesdk.payload.MemoryWarning
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NetworkRequests
+import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.PowerModeInterval
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -18,12 +18,12 @@ import org.junit.Test
 internal class PerformanceInfoTest {
 
     private val diskUsage: DiskUsage = DiskUsage(10000000, 2000000)
-    private val networkRequests: NetworkRequests = mockk(relaxed = true)
+    private val networkRequests: NetworkRequests = NetworkRequests(NetworkSessionV2(emptyList(), emptyMap()))
     private val memoryWarnings: List<MemoryWarning> = emptyList()
     private val networkInterfaceIntervals: List<Interval> = emptyList()
     private val googleAnrTimestamps: List<Long> = emptyList()
     private val anrIntervals: List<AnrInterval> = emptyList()
-    private val appExitInfoData: List<AppExitInfoData> = mockk(relaxed = true)
+    private val appExitInfoData: List<AppExitInfoData> = emptyList()
     private val nativeThreadAnrIntervals: List<NativeThreadAnrInterval> = emptyList()
     private val powerSaveModeIntervals: List<PowerModeInterval> = emptyList()
     private val threadMonitorSnapshots: List<ResponsivenessSnapshot> = emptyList()

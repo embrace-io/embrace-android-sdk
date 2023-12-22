@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.metadata
 
+import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageInfo
@@ -46,6 +47,9 @@ internal class EmbraceMetadataServiceTest {
         private val fakeClock = FakeClock()
         private val cpuInfoDelegate: EmbraceCpuInfoDelegate = mockk(relaxed = true)
         private val fakeArchitecture = FakeDeviceArchitecture()
+        private val storageStatsManager = mockk<StorageStatsManager>()
+        private val windowManager = mockk<WindowManager>()
+        private val activityManager = mockk<ActivityManager>()
 
         @BeforeClass
         @JvmStatic
@@ -115,8 +119,8 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Suppress("DEPRECATION")
-    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE) =
-        EmbraceMetadataService.ofContext(
+    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE): EmbraceMetadataService {
+        return EmbraceMetadataService.ofContext(
             context,
             buildInfo,
             configService,
@@ -124,15 +128,16 @@ internal class EmbraceMetadataServiceTest {
             preferencesService,
             activityService,
             MoreExecutors.newDirectExecutorService(),
-            mockk(),
-            mockk(),
-            mockk(),
+            storageStatsManager,
+            windowManager,
+            activityManager,
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
             lazy { packageInfo.versionName },
             lazy { packageInfo.versionCode.toString() }
         ).apply { precomputeValues() }
+    }
 
     @Suppress("DEPRECATION")
     private fun getReactNativeMetadataService() =
@@ -144,9 +149,9 @@ internal class EmbraceMetadataServiceTest {
             preferencesService,
             activityService,
             MoreExecutors.newDirectExecutorService(),
-            mockk(),
-            mockk(),
-            mockk(),
+            storageStatsManager,
+            windowManager,
+            activityManager,
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,

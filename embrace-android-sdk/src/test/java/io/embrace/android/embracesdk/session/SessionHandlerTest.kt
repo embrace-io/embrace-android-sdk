@@ -74,9 +74,9 @@ internal class SessionHandlerTest {
         private val networkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
 
-        private val clock = FakeClock()
         private val eventService: EventService = mockk(relaxed = true)
         private val remoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
+        private val clock = FakeClock()
         private val exceptionService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
         private val automaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
         private val sessionPeriodicCacheExecutorService: ScheduledExecutorService =

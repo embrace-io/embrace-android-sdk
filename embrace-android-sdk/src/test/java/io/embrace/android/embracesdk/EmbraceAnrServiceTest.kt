@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
+import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.WrongThreadException
 import io.embrace.android.embracesdk.payload.AnrInterval
@@ -455,24 +455,6 @@ internal class EmbraceAnrServiceTest {
                 action()
                 anrMonitorThread.set(previousAnrMonitoringThread)
             }
-        }
-    }
-
-    class FakeBlockedThreadListener : BlockedThreadListener {
-        var blockedCount = 0
-        var unblockedCount = 0
-        var intervalCount = 0
-
-        override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-            blockedCount++
-        }
-
-        override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-            intervalCount++
-        }
-
-        override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-            unblockedCount++
         }
     }
 }

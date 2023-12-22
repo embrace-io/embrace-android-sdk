@@ -8,10 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.WebVitalType
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.utils.at
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -36,14 +33,11 @@ internal class EmbraceWebViewServiceTest {
         ResourceReader.readResourceAsText("expected_core_vital_repeated_elements_script.json")
 
     private lateinit var configService: ConfigService
-    private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var embraceWebViewService: EmbraceWebViewService
     private var cfg: RemoteConfig? = RemoteConfig()
 
     @Before
     fun setup() {
-        memoryCleanerService = mockk()
-        every { memoryCleanerService.addListener(any()) } returns Unit
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
         configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
         embraceWebViewService = EmbraceWebViewService(configService, EmbraceSerializer())

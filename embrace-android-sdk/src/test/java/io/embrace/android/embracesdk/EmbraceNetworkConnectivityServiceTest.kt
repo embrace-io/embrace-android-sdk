@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityLis
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -30,7 +29,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     companion object {
         private lateinit var mockContext: Context
-        private lateinit var mockCleanerService: MemoryCleanerService
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var mockConnectivityManager: ConnectivityManager
         private lateinit var executor: ExecutorService
@@ -43,7 +41,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @JvmStatic
         fun setupBeforeAll() {
             mockContext = mockk(relaxUnitFun = true)
-            mockCleanerService = mockk(relaxUnitFun = true)
             logger = InternalEmbraceLogger()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()

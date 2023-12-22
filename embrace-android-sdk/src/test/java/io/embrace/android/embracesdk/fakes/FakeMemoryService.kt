@@ -5,7 +5,9 @@ import io.embrace.android.embracesdk.payload.MemoryWarning
 
 internal class FakeMemoryService : FakeDataCaptureService<MemoryWarning>(), MemoryService {
 
+    var callCount = 0
+
     override fun onMemoryWarning() {
-        TODO("Not yet implemented")
+        callCount++
     }
 }

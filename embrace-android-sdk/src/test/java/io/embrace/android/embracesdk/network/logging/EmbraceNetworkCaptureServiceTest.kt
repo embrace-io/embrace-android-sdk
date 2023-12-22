@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
@@ -32,6 +33,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         private val configService: ConfigService = mockk(relaxed = true)
         private val mockPreferenceService: EmbracePreferencesService = mockk(relaxed = true)
         private lateinit var mockLocalConfig: LocalConfig
+        private val networkCaptureData: NetworkCaptureData = mockk(relaxed = true)
 
         @BeforeClass
         @JvmStatic
@@ -156,7 +158,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             200,
             0,
             2000,
-            mockk(relaxed = true)
+            networkCaptureData
         )
         verify(exactly = 0) { mockRemoteLogger.logNetwork(any()) }
 
@@ -167,7 +169,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             200,
             0,
             6000,
-            mockk(relaxed = true)
+            networkCaptureData
         )
         verify(exactly = 1) { mockRemoteLogger.logNetwork(any()) }
     }
@@ -184,7 +186,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             200,
             0,
             2000,
-            mockk(relaxed = true)
+            networkCaptureData
         )
         verify(exactly = 1) { mockRemoteLogger.logNetwork(any()) }
 
@@ -194,7 +196,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             404,
             0,
             2000,
-            mockk(relaxed = true)
+            networkCaptureData
         )
         verify(exactly = 2) { mockRemoteLogger.logNetwork(any()) }
 
@@ -204,7 +206,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             500,
             0,
             2000,
-            mockk(relaxed = true)
+            networkCaptureData
         )
         verify(exactly = 2) { mockRemoteLogger.logNetwork(any()) }
     }

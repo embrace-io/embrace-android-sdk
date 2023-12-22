@@ -18,6 +18,7 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentCrash: EventMessage? = null
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
+    val sentMoments: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
     var lastSentBackgroundActivities: MutableList<BackgroundActivityMessage> = mutableListOf()
     var saveBackgroundActivityInvokedCount: Int = 0
@@ -46,6 +47,7 @@ internal class FakeDeliveryService : DeliveryService {
     override fun sendMoment(eventMessage: EventMessage) {
         eventSentAsyncInvokedCount++
         lastEventSentAsync = eventMessage
+        sentMoments.add(eventMessage)
     }
 
     override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {

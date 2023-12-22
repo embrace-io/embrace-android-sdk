@@ -76,6 +76,7 @@ import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
+import io.embrace.android.embracesdk.logging.InternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl;
@@ -229,7 +230,7 @@ final class EmbraceImpl {
     private volatile UserService userService;
 
     @Nullable
-    private volatile EmbraceInternalErrorService exceptionsService;
+    private volatile InternalErrorService internalErrorService;
 
     @Nullable
     private volatile NdkService ndkService;
@@ -467,9 +468,9 @@ final class EmbraceImpl {
             essentialServiceModule
         );
 
-        final EmbraceInternalErrorService nonNullExceptionsService = sdkObservabilityModule.getExceptionService();
-        exceptionsService = nonNullExceptionsService;
-        serviceRegistry.registerService(exceptionsService);
+        final InternalErrorService nonNullInternalErrorService = sdkObservabilityModule.getInternalErrorService();
+        internalErrorService = nonNullInternalErrorService;
+        serviceRegistry.registerService(internalErrorService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
         telemetryService = initModule.getTelemetryService();
@@ -496,7 +497,7 @@ final class EmbraceImpl {
             return;
         }
 
-        nonNullExceptionsService.setConfigService(configService);
+        nonNullInternalErrorService.setConfigService(configService);
         breadcrumbService = dataCaptureServiceModule.getBreadcrumbService();
         pushNotificationService = dataCaptureServiceModule.getPushNotificationService();
         serviceRegistry.registerServices(breadcrumbService, pushNotificationService);
@@ -1243,7 +1244,7 @@ final class EmbraceImpl {
             } else {
                 messageWithDetails = message;
             }
-            exceptionsService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
+            internalErrorService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
         }
     }
 
@@ -1252,7 +1253,7 @@ final class EmbraceImpl {
      */
     void logInternalError(@NonNull Throwable error) {
         if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
-            exceptionsService.handleInternalError(error);
+            internalErrorService.handleInternalError(error);
         }
     }
 
@@ -1444,8 +1445,8 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    EmbraceInternalErrorService getExceptionsService() {
-        return exceptionsService;
+    InternalErrorService getInternalErrorService() {
+        return internalErrorService;
     }
 
     @Nullable

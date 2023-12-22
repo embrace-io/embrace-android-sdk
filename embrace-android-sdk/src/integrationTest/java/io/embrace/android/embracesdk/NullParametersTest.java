@@ -313,11 +313,11 @@ public class NullParametersTest {
 
     private void assertError(@NonNull String functionName) {
         assertInternalErrorLogged(
-            IntegrationTestRuleExtensionsKt.exceptionsService().getCurrentExceptionError(),
+            IntegrationTestRuleExtensionsKt.internalErrorService().getCurrentExceptionError(),
             IllegalArgumentException.class.getCanonicalName(),
             functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE,
             IntegrationTestRule.DEFAULT_SDK_START_TIME_MS
         );
-        IntegrationTestRuleExtensionsKt.exceptionsService().resetExceptionErrorObject();
+        IntegrationTestRuleExtensionsKt.internalErrorService().resetExceptionErrorObject();
     }
 }

@@ -14,20 +14,20 @@ internal class InternalErrorLoggerTest {
     private lateinit var internalErrorLogger: InternalErrorLogger
 
     companion object {
-        private lateinit var mockExceptionService: EmbraceInternalErrorService
+        private lateinit var internalErrorService: InternalErrorService
         private lateinit var mockLogger: InternalEmbraceLogger.LoggerAction
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockExceptionService = mockk(relaxUnitFun = true)
+            internalErrorService = mockk(relaxUnitFun = true)
             mockLogger = mockk(relaxUnitFun = true)
         }
     }
 
     private fun setupService(strictModeEnabled: Boolean = false) {
         internalErrorLogger =
-            InternalErrorLogger(mockExceptionService, mockLogger, strictModeEnabled)
+            InternalErrorLogger(internalErrorService, mockLogger, strictModeEnabled)
     }
 
     @After
@@ -40,7 +40,7 @@ internal class InternalErrorLoggerTest {
         setupService()
         internalErrorLogger.log("message", InternalStaticEmbraceLogger.Severity.DEBUG, null, true)
 
-        verify { mockExceptionService wasNot Called }
+        verify { internalErrorService wasNot Called }
     }
 
     @Test
@@ -49,7 +49,7 @@ internal class InternalErrorLoggerTest {
         val exception = Exception()
         internalErrorLogger.log("message", InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
-        verify { mockExceptionService.handleInternalError(exception) }
+        verify { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
@@ -58,13 +58,13 @@ internal class InternalErrorLoggerTest {
         val exceptionMessage = "root cause"
         val exception = Exception()
         val msg = "message"
-        every { mockExceptionService.handleInternalError(exception) } throws RuntimeException(
+        every { internalErrorService.handleInternalError(exception) } throws RuntimeException(
             exceptionMessage
         )
 
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
-        verify { mockExceptionService.handleInternalError(exception) }
+        verify { internalErrorService.handleInternalError(exception) }
         verify { mockLogger.log(exceptionMessage, InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
     }
 
@@ -73,11 +73,11 @@ internal class InternalErrorLoggerTest {
         setupService()
         val exception = Exception()
         val msg = "message"
-        every { mockExceptionService.handleInternalError(exception) } throws RuntimeException()
+        every { internalErrorService.handleInternalError(exception) } throws RuntimeException()
 
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
-        verify { mockExceptionService.handleInternalError(exception) }
+        verify { internalErrorService.handleInternalError(exception) }
         verify { mockLogger.log("", InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
     }
 
@@ -88,7 +88,7 @@ internal class InternalErrorLoggerTest {
         val errorMsg = "Error message"
         internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, exception, true)
 
-        verify { mockExceptionService.handleInternalError(exception) }
+        verify { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
@@ -98,7 +98,7 @@ internal class InternalErrorLoggerTest {
         internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, null, true)
 
         verify(exactly = 1) {
-            mockExceptionService.handleInternalError(
+            internalErrorService.handleInternalError(
                 any() as InternalErrorLogger.LogStrictModeException
             )
         }
@@ -110,7 +110,7 @@ internal class InternalErrorLoggerTest {
         val errorMsg = "Error message"
         internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.INFO, null, true)
 
-        verify(exactly = 0) { mockExceptionService.handleInternalError(any() as Exception) }
+        verify(exactly = 0) { internalErrorService.handleInternalError(any() as Exception) }
     }
 
     @Test
@@ -120,7 +120,7 @@ internal class InternalErrorLoggerTest {
         val errorMsg = "Error message"
         internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, exception, true)
 
-        verify { mockExceptionService.handleInternalError(exception) }
+        verify { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
@@ -129,13 +129,13 @@ internal class InternalErrorLoggerTest {
         val exceptionMessage = "root cause"
         val exception = Exception()
         val msg = "message"
-        every { mockExceptionService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) } throws RuntimeException(
+        every { internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) } throws RuntimeException(
             exceptionMessage
         )
 
         internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
 
-        verify { mockExceptionService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) }
+        verify { internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) }
         verify { mockLogger.log(exceptionMessage, InternalStaticEmbraceLogger.Severity.ERROR, null, false) }
     }
 }

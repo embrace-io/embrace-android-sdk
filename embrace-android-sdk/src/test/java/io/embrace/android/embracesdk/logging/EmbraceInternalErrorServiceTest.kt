@@ -15,7 +15,7 @@ import java.net.SocketException
 
 internal class EmbraceInternalErrorServiceTest {
 
-    private lateinit var service: EmbraceInternalErrorService
+    private lateinit var service: InternalErrorService
     private lateinit var cfgService: ConfigService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var cfg: RemoteConfig

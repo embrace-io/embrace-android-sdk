@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -24,7 +24,7 @@ internal class SessionMessageCollator(
     private val metadataService: MetadataService,
     private val eventService: EventService,
     private val remoteLogger: EmbraceRemoteLogger,
-    private val exceptionService: EmbraceInternalErrorService,
+    private val internalErrorService: InternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val thermalStatusService: ThermalStatusService,
@@ -132,7 +132,7 @@ internal class SessionMessageCollator(
         val breadcrumbs = captureDataSafely { breadcrumbService.getBreadcrumbs(startTime, endTime) }
 
         val endSessionWithAllErrors =
-            endSession.copy(exceptionError = exceptionService.currentExceptionError)
+            endSession.copy(exceptionError = internalErrorService.currentExceptionError)
 
         return SessionMessage(
             session = endSessionWithAllErrors,

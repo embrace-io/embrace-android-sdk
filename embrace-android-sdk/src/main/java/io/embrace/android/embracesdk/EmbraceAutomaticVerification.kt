@@ -122,7 +122,7 @@ internal class EmbraceAutomaticVerification(
     private fun verifyLifecycle() {
         if (!foregroundEventTriggered) {
             logger.logError("$TAG OnForeground event was not triggered")
-            val exceptionsService = checkNotNull(Embrace.getImpl().exceptionsService)
+            val exceptionsService = checkNotNull(Embrace.getImpl().internalErrorService)
             if (verifyIfInitializerIsDisabled()) {
                 exceptionsService.handleInternalError(
                     VerifyIntegrationException("ProcessLifecycleInitializer disabled")

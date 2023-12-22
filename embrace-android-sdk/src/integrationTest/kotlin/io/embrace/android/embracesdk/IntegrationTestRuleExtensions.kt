@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -102,7 +102,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
     return getLastSentSessionMessage()
 }
 
-internal fun exceptionsService(): EmbraceInternalErrorService? = Embrace.getImpl().exceptionsService
+internal fun internalErrorService(): InternalErrorService? = Embrace.getImpl().internalErrorService
 
 /**
  * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs] elapses. Otherwise, throws [TimeoutException]

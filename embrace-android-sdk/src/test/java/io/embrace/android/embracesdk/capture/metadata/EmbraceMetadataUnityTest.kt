@@ -7,11 +7,11 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -44,7 +44,7 @@ internal class EmbraceMetadataUnityTest {
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
         private lateinit var processStateService: ProcessStateService
-        private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
+        private lateinit var cpuInfoDelegate: FakeCpuInfoDelegate
         private val deviceArchitecture = FakeDeviceArchitecture()
 
         @BeforeClass
@@ -59,7 +59,7 @@ internal class EmbraceMetadataUnityTest {
             configService = FakeConfigService()
             preferencesService = FakePreferenceService()
             processStateService = FakeProcessStateService()
-            cpuInfoDelegate = mockk(relaxed = true)
+            cpuInfoDelegate = FakeCpuInfoDelegate()
 
             initContext()
             initPreferences()

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.returnIfConditionMet
 import io.embrace.android.embracesdk.session.SessionSnapshotType
@@ -39,7 +40,6 @@ internal class TracingApiTest {
             harness.fakeClock.tick(100L)
             embrace.start(harness.fakeCoreModule.context)
             harness.recordSession {
-                harness.fakeConfigService.updateListeners()
                 assertTrue(
                     returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) { embrace.isTracingAvailable() }
                 )
@@ -88,9 +88,10 @@ internal class TracingApiTest {
                 )
                 harness.fakeClock.tick(300L)
                 embrace.endAppStartup()
+                val backgroundActivitySpansCount = getSdkInitSpanFromBackgroundActivity().size
                 assertTrue(
                     returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) {
-                        checkNotNull(harness.initModule.spansService.completedSpans()).size == 5
+                        checkNotNull(harness.initModule.spansService.completedSpans()).size == (5 - backgroundActivitySpansCount)
                     }
                 )
             }
@@ -98,87 +99,89 @@ internal class TracingApiTest {
             assertEquals(1, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[0]
             assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
-            with(sessionMessage.first) {
-                checkNotNull(spans)
-                assertEquals(6, spans.size)
-                val spansMap = spans.associateBy { it.name }
-                val sessionSpan = checkNotNull(spansMap["emb-session-span"])
-                val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
-                assertEmbraceSpanData(
-                    span = spansMap["emb-sdk-init"],
-                    expectedStartTimeMs = testStartTime + 100,
-                    expectedEndTimeMs = testStartTime + 100,
-                    expectedParentId = SpanId.getInvalid(),
-                    private = true,
-                    key = true
-                )
-                assertEmbraceSpanData(
-                    span = spansMap["emb-startup-moment"],
-                    expectedStartTimeMs = testStartTime + 100,
-                    expectedEndTimeMs = testStartTime + 700,
-                    expectedParentId = SpanId.getInvalid(),
-                    key = true
-                )
-                assertEmbraceSpanData(
-                    span = traceRootSpan,
-                    expectedStartTimeMs = testStartTime + 100,
-                    expectedEndTimeMs = testStartTime + 400,
-                    expectedParentId = SpanId.getInvalid(),
-                    expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
-                    expectedEvents = listOf(
-                        checkNotNull(
-                            EmbraceSpanEvent.create(
-                                name = "parent event",
-                                timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 200),
-                                attributes = null
-                            )
-                        ),
-                        checkNotNull(
-                            EmbraceSpanEvent.create(
-                                name = "delayed event",
-                                timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 350),
-                                attributes = null
-                            ),
+            val allSpans = getSdkInitSpanFromBackgroundActivity() + checkNotNull(sessionMessage.first.spans)
+            assertEquals(6, allSpans.size)
+            val spansMap = allSpans.associateBy { it.name }
+            val sessionSpan = checkNotNull(spansMap["emb-session-span"])
+            val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
+            assertEmbraceSpanData(
+                span = spansMap["emb-sdk-init"],
+                expectedStartTimeMs = testStartTime + 100,
+                expectedEndTimeMs = testStartTime + 100,
+                expectedParentId = SpanId.getInvalid(),
+                private = true,
+                key = true
+            )
+            assertEmbraceSpanData(
+                span = spansMap["emb-startup-moment"],
+                expectedStartTimeMs = testStartTime + 100,
+                expectedEndTimeMs = testStartTime + 700,
+                expectedParentId = SpanId.getInvalid(),
+                key = true
+            )
+            assertEmbraceSpanData(
+                span = traceRootSpan,
+                expectedStartTimeMs = testStartTime + 100,
+                expectedEndTimeMs = testStartTime + 400,
+                expectedParentId = SpanId.getInvalid(),
+                expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
+                expectedEvents = listOf(
+                    checkNotNull(
+                        EmbraceSpanEvent.create(
+                            name = "parent event",
+                            timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 200),
+                            attributes = null
                         )
                     ),
-                    key = true
-                )
-                assertEmbraceSpanData(
-                    span = spansMap["record-span-span"],
-                    expectedStartTimeMs = testStartTime + 100,
-                    expectedEndTimeMs = testStartTime + 200,
-                    expectedParentId = traceRootSpan.spanId,
-                    expectedTraceId = traceRootSpan.traceId
-                )
+                    checkNotNull(
+                        EmbraceSpanEvent.create(
+                            name = "delayed event",
+                            timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 350),
+                            attributes = null
+                        ),
+                    )
+                ),
+                key = true
+            )
+            assertEmbraceSpanData(
+                span = spansMap["record-span-span"],
+                expectedStartTimeMs = testStartTime + 100,
+                expectedEndTimeMs = testStartTime + 200,
+                expectedParentId = traceRootSpan.spanId,
+                expectedTraceId = traceRootSpan.traceId
+            )
 
-                assertEmbraceSpanData(
-                    span = spansMap["completed-span"],
-                    expectedStartTimeMs = testStartTime + 200,
-                    expectedEndTimeMs = testStartTime + 400,
-                    expectedParentId = traceRootSpan.spanId,
-                    expectedTraceId = traceRootSpan.traceId,
-                    expectedStatus = StatusCode.ERROR,
-                    expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
-                    expectedEvents = listOf(
-                        checkNotNull(
-                            EmbraceSpanEvent.create(
-                                name = "failure time",
-                                timestampNanos = testStartTime + 400,
-                                attributes = mapOf(
-                                    Pair("retry", "1")
-                                )
+            assertEmbraceSpanData(
+                span = spansMap["completed-span"],
+                expectedStartTimeMs = testStartTime + 200,
+                expectedEndTimeMs = testStartTime + 400,
+                expectedParentId = traceRootSpan.spanId,
+                expectedTraceId = traceRootSpan.traceId,
+                expectedStatus = StatusCode.ERROR,
+                expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
+                expectedEvents = listOf(
+                    checkNotNull(
+                        EmbraceSpanEvent.create(
+                            name = "failure time",
+                            timestampNanos = testStartTime + 400,
+                            attributes = mapOf(
+                                Pair("retry", "1")
                             )
                         )
                     )
                 )
-                assertEmbraceSpanData(
-                    span = sessionSpan,
-                    expectedStartTimeMs = testStartTime + 100,
-                    expectedEndTimeMs = sessionEndTime,
-                    expectedParentId = SpanId.getInvalid(),
-                    private = true
-                )
-            }
+            )
+            assertEmbraceSpanData(
+                span = sessionSpan,
+                expectedStartTimeMs = testStartTime + 100,
+                expectedEndTimeMs = sessionEndTime,
+                expectedParentId = SpanId.getInvalid(),
+                private = true
+            )
         }
     }
+
+    private fun getSdkInitSpanFromBackgroundActivity(): List<EmbraceSpanData> =
+        checkNotNull(testRule.harness.fakeDeliveryModule.deliveryService.lastSentBackgroundActivities.last().spans)
+            .filter { it.name == "emb-sdk-init" }
 }

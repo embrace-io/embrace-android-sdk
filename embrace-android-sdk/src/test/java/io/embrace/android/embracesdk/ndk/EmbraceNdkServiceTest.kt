@@ -17,6 +17,8 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
@@ -76,7 +78,7 @@ internal class EmbraceNdkServiceTest {
             mockkStatic(ExecutorService::class)
             mockkStatic(Uuid::class)
             mockkStatic(Embrace::class)
-            context = mockk(relaxed = true)
+            context = mockContext()
             metadataService = mockk(relaxed = true)
             configService = mockk(relaxed = true)
             activityService = FakeProcessStateService()
@@ -89,7 +91,7 @@ internal class EmbraceNdkServiceTest {
             logger = InternalEmbraceLogger()
             delegate = mockk(relaxed = true)
             repository = mockk(relaxUnitFun = true)
-            resources = mockk(relaxUnitFun = true)
+            resources = mockResources()
 
             val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
             every { metadataService.getAppInfo() } returns appInfo

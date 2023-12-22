@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import io.embrace.android.embracesdk.fakes.system.mockBundle
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.mockk.Called
@@ -23,7 +24,7 @@ internal class PushNotificationCaptureServiceTest {
     companion object {
         private val mockBreadCrumbService: BreadcrumbService = mockk(relaxUnitFun = true)
         private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
-        private val mockBundle: Bundle = mockk()
+        private val mockBundle: Bundle = mockBundle()
         private val mockIntent: Intent = mockk {
             every { extras } returns mockBundle
         }

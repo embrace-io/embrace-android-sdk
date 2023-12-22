@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk
 import android.os.PowerManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
+import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.ThermalState
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -20,7 +20,7 @@ internal class EmbraceThermalStatusServiceTest {
             MoreExecutors.directExecutor(),
             { 0 },
             InternalEmbraceLogger(),
-            mockk(relaxed = true)
+            mockPowerManager()
         )
     }
 

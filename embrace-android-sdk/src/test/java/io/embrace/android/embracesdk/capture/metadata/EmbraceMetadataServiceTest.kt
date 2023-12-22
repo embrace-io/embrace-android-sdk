@@ -20,6 +20,10 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
@@ -40,7 +44,7 @@ import java.io.File
 internal class EmbraceMetadataServiceTest {
 
     companion object {
-        private val context: Context = mockk(relaxed = true)
+        private val context: Context = mockContext()
         private val packageInfo = PackageInfo()
         private val serializer = EmbraceSerializer()
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
@@ -283,9 +287,9 @@ internal class EmbraceMetadataServiceTest {
             preferencesService,
             activityService,
             mockk(relaxed = true), // No background worker to run async calculations
-            mockk(),
-            mockk(),
-            mockk(),
+            mockStorageStatsManager(),
+            mockWindowManager(),
+            mockActivityManager(),
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,

@@ -11,6 +11,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.system.mockApplication
+import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.mockk.Called
@@ -36,25 +38,24 @@ internal class ActivityLifecycleTrackerTest {
         private lateinit var mockLooper: Looper
         private lateinit var mockLifeCycleOwner: LifecycleOwner
         private lateinit var mockLifecycle: Lifecycle
-        private lateinit var mockApplication: Application
+        private lateinit var application: Application
         private lateinit var mockOrientationService: OrientationService
         private val fakeClock = FakeClock()
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockLooper = mockk()
+            mockLooper = mockLooper()
             mockLifeCycleOwner = mockk()
             mockLifecycle = mockk(relaxed = true)
             mockkStatic(Looper::class)
             mockkStatic(ProcessLifecycleOwner::class)
-            mockApplication = mockk(relaxed = true)
+            application = mockApplication()
             mockOrientationService = mockk()
 
             fakeClock.setCurrentTime(1234)
-            every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
+            every { application.registerActivityLifecycleCallbacks(any()) } returns Unit
             every { Looper.getMainLooper() } returns mockLooper
-            every { mockLooper.thread } returns Thread.currentThread()
             every { ProcessLifecycleOwner.get() } returns mockLifeCycleOwner
             every { mockLifeCycleOwner.lifecycle } returns mockLifecycle
             every { mockLifecycle.addObserver(any()) } returns Unit
@@ -77,14 +78,14 @@ internal class ActivityLifecycleTrackerTest {
         )
 
         activityLifecycleTracker = ActivityLifecycleTracker(
-            mockApplication,
+            application,
             mockOrientationService,
         )
     }
 
     @Test
     fun `test we are adding lifecycle observer on constructor`() {
-        verify { mockApplication.registerActivityLifecycleCallbacks(activityLifecycleTracker) }
+        verify { application.registerActivityLifecycleCallbacks(activityLifecycleTracker) }
     }
 
     @Test
@@ -232,11 +233,11 @@ internal class ActivityLifecycleTrackerTest {
         // add a listener first, so we then check that listener have been cleared
         val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
         activityLifecycleTracker.addListener(mockActivityLifecycleListener)
-        every { mockApplication.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) } returns Unit
+        every { application.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) } returns Unit
 
         activityLifecycleTracker.close()
 
-        verify { mockApplication.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) }
+        verify { application.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) }
         assertTrue(activityLifecycleTracker.listeners.isEmpty())
     }
 

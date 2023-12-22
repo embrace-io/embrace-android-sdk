@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.session
 
+import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -42,7 +41,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
-    private lateinit var breadcrumbService: BreadcrumbService
+    private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
     private lateinit var remoteLogger: EmbraceRemoteLogger
@@ -61,7 +60,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         clock = FakeClock(10000L)
         performanceInfoService = FakePerformanceInfoService()
         metadataService = FakeAndroidMetadataService()
-        breadcrumbService = mockk(relaxed = true)
+        breadcrumbService = FakeBreadcrumbService()
         activityService = FakeProcessStateService(isInBackground = true)
         eventService = FakeEventService()
         remoteLogger = mockk()
@@ -293,7 +292,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         clock.tick(1000L)
         service.onForeground(false, 0, clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
-        verify(exactly = 1) { breadcrumbService.flushBreadcrumbs() }
+        assertEquals(1, breadcrumbService.flushCount)
     }
 
     @Test
@@ -302,7 +301,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         clock.tick(1000L)
         service.save()
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
-        verify(exactly = 0) { breadcrumbService.flushBreadcrumbs() }
+        assertEquals(0, breadcrumbService.flushCount)
     }
 
     private fun createService(): EmbraceBackgroundActivityService {

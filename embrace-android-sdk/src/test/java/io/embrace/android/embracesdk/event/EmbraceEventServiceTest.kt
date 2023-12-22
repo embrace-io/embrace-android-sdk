@@ -122,7 +122,7 @@ internal class EmbraceEventServiceTest {
             deliveryService = deliveryService,
             logger = logger,
             clock = fakeClock,
-            scheduledExecutor = fakeWorkerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+            scheduledExecutor = fakeWorkerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         )
         eventService = EmbraceEventService(
             1,
@@ -473,8 +473,7 @@ internal class EmbraceEventServiceTest {
         eventService.sendStartupMoment()
         assertNull(eventService.getStartupMomentInfo())
         fakeClock.tick(10000L)
-        fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
-        fakeWorkerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION).runCurrentlyBlocked()
+        fakeWorkerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
         assertNotNull(eventService.getStartupMomentInfo())
         val completedSpans = checkNotNull(spansService.completedSpans())
         assertEquals(0, completedSpans.size)

@@ -75,7 +75,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 ) : DataCaptureServiceModule {
 
     private val backgroundExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
     private val configService = essentialServiceModule.configService
 
     override val memoryService: MemoryService by singleton {

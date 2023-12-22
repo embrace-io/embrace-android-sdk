@@ -77,7 +77,7 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         )
         executorService =
             workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)

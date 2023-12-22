@@ -35,7 +35,7 @@ internal class PeriodicSessionCacheTest {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         IntegrationTestRule.Harness(
             fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock, SESSION_CACHING)
+            workerThreadModule = FakeWorkerThreadModule(clock, PERIODIC_CACHE)
         )
     }
 
@@ -43,7 +43,7 @@ internal class PeriodicSessionCacheTest {
     fun `session is periodically cached`() {
         with(testRule) {
             val executor =
-                harness.workerThreadModule.scheduledExecutor(SESSION_CACHING) as BlockingScheduledExecutorService
+                harness.workerThreadModule.scheduledExecutor(PERIODIC_CACHE) as BlockingScheduledExecutorService
 
             harness.recordSession {
                 executor.runCurrentlyBlocked()

@@ -73,8 +73,8 @@ internal class SessionModuleImpl(
             sessionProperties,
             initModule.clock,
             initModule.spansService,
-            workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CLOSER),
-            workerThreadModule.scheduledExecutor(ExecutorName.SESSION_CACHING)
+            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            workerThreadModule.scheduledExecutor(ExecutorName.PERIODIC_CACHE)
         )
     }
 
@@ -108,7 +108,7 @@ internal class SessionModuleImpl(
                 nativeModule.ndkService,
                 initModule.clock,
                 backgroundActivityCollator,
-                lazy { workerThreadModule.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR) }
+                lazy { workerThreadModule.backgroundExecutor(ExecutorName.PERIODIC_CACHE) }
             )
         } else {
             null

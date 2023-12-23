@@ -569,6 +569,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Get internal interface for the intra-Embrace, not-publicly-supported API
+     *
      * @hide
      */
     @NonNull
@@ -580,6 +581,7 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for React Native.
+     *
      * @hide
      */
     @Nullable
@@ -589,34 +591,9 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Logs a React Native Redux Action - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logRnAction(@NonNull String name, long startTime, long endTime,
-                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
-            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        }
-    }
-
-    /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     * @hide
-     *
-     * @param screen the name of the view to log
-     */
-    @InternalApi
-    public void logRnView(@NonNull String screen) {
-        impl.logRnView(screen);
-    }
-
-    /**
      * Gets the {@link UnityInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Unity.
+     *
      * @hide
      */
     @Nullable
@@ -628,6 +605,7 @@ public final class Embrace implements EmbraceAndroidApi {
     /**
      * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Flutter.
+     *
      * @hide
      */
     @Nullable
@@ -638,6 +616,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     *
      * @hide
      */
     @InternalApi
@@ -647,6 +626,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Sets the Dart version - this is not intended for public use.
+     *
      * @hide
      */
     @InternalApi
@@ -656,6 +636,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
+     *
      * @hide
      */
     @InternalApi
@@ -671,6 +652,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
+     *
      * @hide
      */
     @InternalApi

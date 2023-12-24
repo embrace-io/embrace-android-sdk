@@ -395,12 +395,7 @@ HSPLio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService;
 HSPLio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService;->getCapturedData()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService;->onForeground(ZJJ)V
 HSPLio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService;->registerPowerSaveModeReceiver()V
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService$thermalStatusListener$1;-><init>(Lio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;)V
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService$thermalStatusListener$1;->onThermalStatusChanged(I)V
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;-><init>(Ljava/util/concurrent/Executor;Lio/embrace/android/embracesdk/internal/clock/Clock;Lio/embrace/android/embracesdk/logging/InternalEmbraceLogger;Landroid/os/PowerManager;)V
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;->getCapturedData()Ljava/lang/Object;
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;->getCapturedData()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;->handleThermalStateChange(Ljava/lang/Integer;)V
+HSPLio/embrace/android/embracesdk/capture/thermalstate/NoOpThermalStatusService;-><init>()V
 HSPLio/embrace/android/embracesdk/capture/user/EmbraceUserService$Companion;-><init>()V
 HSPLio/embrace/android/embracesdk/capture/user/EmbraceUserService$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 HSPLio/embrace/android/embracesdk/capture/user/EmbraceUserService;-><clinit>()V
@@ -1176,7 +1171,6 @@ HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;-><init
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;-><init>(Lio/embrace/android/embracesdk/injection/InitModule;Lio/embrace/android/embracesdk/injection/CoreModule;Lio/embrace/android/embracesdk/injection/SystemServiceModule;Lio/embrace/android/embracesdk/injection/EssentialServiceModule;Lio/embrace/android/embracesdk/worker/WorkerThreadModule;Lio/embrace/android/embracesdk/utils/VersionChecker;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->access$getBackgroundExecutorService$p(Lio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;)Ljava/util/concurrent/ExecutorService;
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->access$getConfigService$p(Lio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;)Lio/embrace/android/embracesdk/config/ConfigService;
-HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->access$getScheduledExecutor$p(Lio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;)Ljava/util/concurrent/ScheduledExecutorService;
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->getBreadcrumbService()Lio/embrace/android/embracesdk/capture/crumbs/BreadcrumbService;
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->getComponentCallbackService()Lio/embrace/android/embracesdk/capture/memory/ComponentCallbackService;
 HSPLio/embrace/android/embracesdk/injection/DataCaptureServiceModuleImpl;->getMemoryService()Lio/embrace/android/embracesdk/capture/memory/MemoryService;
@@ -1685,12 +1679,7 @@ HSPLio/embrace/android/embracesdk/payload/AppInfo;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;->toJson(Lcom/squareup/moshi/s;Lio/embrace/android/embracesdk/payload/AppInfo;)V
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;->toJson(Lcom/squareup/moshi/s;Ljava/lang/Object;)V
-HSPLio/embrace/android/embracesdk/payload/BetaFeatures;-><init>(Ljava/util/List;)V
-HSPLio/embrace/android/embracesdk/payload/BetaFeatures;->getThermalStates$embrace_android_sdk_release()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/payload/BetaFeatures;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/BetaFeaturesJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
-HSPLio/embrace/android/embracesdk/payload/BetaFeaturesJsonAdapter;->toJson(Lcom/squareup/moshi/s;Lio/embrace/android/embracesdk/payload/BetaFeatures;)V
-HSPLio/embrace/android/embracesdk/payload/BetaFeaturesJsonAdapter;->toJson(Lcom/squareup/moshi/s;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;-><init>(Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getCustomBreadcrumbs()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getFragmentBreadcrumbs()Ljava/util/List;
@@ -1823,6 +1812,7 @@ HSPLio/embrace/android/embracesdk/payload/PerformanceInfoJsonAdapter;->toJson(Lc
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/s;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/payload/PowerModeIntervalJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
 HSPLio/embrace/android/embracesdk/payload/PushNotificationBreadcrumbJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
+HSPLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;-><init>(Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;J)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getErrors()J
@@ -1902,13 +1892,7 @@ HSPLio/embrace/android/embracesdk/payload/TapBreadcrumb$TapBreadcrumbType;-><cli
 HSPLio/embrace/android/embracesdk/payload/TapBreadcrumb$TapBreadcrumbType;-><init>(Ljava/lang/String;I)V
 HSPLio/embrace/android/embracesdk/payload/TapBreadcrumb$TapBreadcrumbType;->values()[Lio/embrace/android/embracesdk/payload/TapBreadcrumb$TapBreadcrumbType;
 HSPLio/embrace/android/embracesdk/payload/TapBreadcrumbJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
-HSPLio/embrace/android/embracesdk/payload/ThermalState;-><init>(JI)V
-HSPLio/embrace/android/embracesdk/payload/ThermalState;->getStatus$embrace_android_sdk_release()I
-HSPLio/embrace/android/embracesdk/payload/ThermalState;->getTimestamp$embrace_android_sdk_release()J
-HSPLio/embrace/android/embracesdk/payload/ThermalState;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/ThermalStateJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
-HSPLio/embrace/android/embracesdk/payload/ThermalStateJsonAdapter;->toJson(Lcom/squareup/moshi/s;Lio/embrace/android/embracesdk/payload/ThermalState;)V
-HSPLio/embrace/android/embracesdk/payload/ThermalStateJsonAdapter;->toJson(Lcom/squareup/moshi/s;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/payload/ThreadInfoJsonAdapter;-><init>(Lcom/squareup/moshi/v;)V
 HSPLio/embrace/android/embracesdk/payload/UserInfo$Companion;-><init>()V
 HSPLio/embrace/android/embracesdk/payload/UserInfo$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -2275,8 +2259,7 @@ Lio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService$Com
 Lio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService$registerPowerSaveModeReceiver$1;
 Lio/embrace/android/embracesdk/capture/powersave/EmbracePowerSaveModeService;
 Lio/embrace/android/embracesdk/capture/powersave/PowerSaveModeService;
-Lio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService$thermalStatusListener$1;
-Lio/embrace/android/embracesdk/capture/thermalstate/EmbraceThermalStatusService;
+Lio/embrace/android/embracesdk/capture/thermalstate/NoOpThermalStatusService;
 Lio/embrace/android/embracesdk/capture/thermalstate/ThermalStatusService;
 Lio/embrace/android/embracesdk/capture/user/EmbraceUserService$Companion;
 Lio/embrace/android/embracesdk/capture/user/EmbraceUserService;
@@ -2994,7 +2977,6 @@ PLio/embrace/android/embracesdk/payload/DiskUsage;->getDeviceDiskFree()Ljava/lan
 PLio/embrace/android/embracesdk/payload/DiskUsage;->toString()Ljava/lang/String;
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/s;Lio/embrace/android/embracesdk/payload/DiskUsage;)V
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/s;Ljava/lang/Object;)V
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getEndMs()J
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getStartMs()J
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->toString()Ljava/lang/String;

@@ -26,18 +26,6 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun deleteObject(name: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun deleteObjectsByRegex(regex: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun moveObject(src: String, dst: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override fun listFilenamesByPrefix(prefix: String): List<String>? {
         TODO("Not yet implemented")
     }

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.regex.Pattern
 
 /**
  * Handles the reading and writing of objects from the app's cache.
@@ -117,51 +116,6 @@ internal class EmbraceCacheService(
             logger.logDebug("Failed to delete cache object " + file.path)
         }
         return false
-    }
-
-    override fun deleteObject(name: String): Boolean {
-        logger.logDeveloper("EmbraceCacheService", "Attempting to delete: $name")
-        val file = File(storageDir, EMBRACE_PREFIX + name)
-        try {
-            return file.delete()
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to delete cache object " + file.path)
-        }
-        return false
-    }
-
-    override fun deleteObjectsByRegex(regex: String): Boolean {
-        logger.logDeveloper("EmbraceCacheService", "Attempting to delete objects by regex: $regex")
-        val pattern = Pattern.compile(regex)
-        var result = false
-        val filesInCache = storageDir.listFiles()
-        if (filesInCache != null) {
-            for (cache in filesInCache) {
-                if (pattern.matcher(cache.name).find()) {
-                    try {
-                        result = cache.delete()
-                    } catch (ex: Exception) {
-                        logger.logDebug("Failed to delete cache object " + cache.path)
-                    }
-                } else {
-                    logger.logDeveloper("EmbraceCacheService", "Objects not found by regex")
-                }
-            }
-        } else {
-            logger.logDeveloper("EmbraceCacheService", "There are not files in cache")
-        }
-        return result
-    }
-
-    override fun moveObject(src: String, dst: String): Boolean {
-        val srcFile = File(storageDir, EMBRACE_PREFIX + src)
-        if (!srcFile.exists()) {
-            logger.logDeveloper("EmbraceCacheService", "Source file doesn't exist: $src")
-            return false
-        }
-        val dstFile = File(storageDir, EMBRACE_PREFIX + dst)
-        logger.logDeveloper("EmbraceCacheService", "Object moved from $src to $dst")
-        return srcFile.renameTo(dstFile)
     }
 
     override fun listFilenamesByPrefix(prefix: String): List<String>? {

@@ -74,31 +74,6 @@ internal interface CacheService {
     fun deleteFile(name: String): Boolean
 
     /**
-     * Deletes the specified object from the cache.
-     *
-     * @param name the name of the object to delete
-     * @return true if the file was successfully deleted, false otherwise
-     */
-    fun deleteObject(name: String): Boolean
-
-    /**
-     * Deletes the objects which names match with the specified regex from the cache.
-     *
-     * @param regex the regex to match to the name of the object to delete
-     * @return true if the files were successfully deleted, false otherwise
-     */
-    fun deleteObjectsByRegex(regex: String): Boolean
-
-    /**
-     * Moves the object using the current name to a new file called name.
-     *
-     * @param src the source file name
-     * @param dst the destination file name
-     * @return true if the file was successfully moved, false otherwise
-     */
-    fun moveObject(src: String, dst: String): Boolean
-
-    /**
      * Get file names in cache that start with a given prefix.
      *
      * @param prefix    start of the file names to look for

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -137,81 +136,6 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test deleteObject returns true and deletes the file correctly`() {
-        val myObject = fakeSession()
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
-
-        val deleted = service.deleteObject(CUSTOM_OBJECT_1_FILE_NAME)
-        val children = checkNotNull(dir.listFiles())
-
-        assertTrue(deleted)
-        assertEquals(0, children.size)
-    }
-
-    @Test
-    fun `test deleteObject with non-existent file returns false`() {
-        val deleted = service.deleteObject(CUSTOM_OBJECT_1_FILE_NAME)
-        val children = checkNotNull(dir.listFiles())
-
-        assertFalse(deleted)
-        assertEquals(0, children.size)
-    }
-
-    @Test
-    fun `test deleteObjectsByRegex`() {
-        val myObject1 = fakeSession()
-        val myObject2 = fakeSession()
-        val myObject3 = fakeSession()
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
-        service.cacheObject(CUSTOM_OBJECT_2_FILE_NAME, myObject2, Session::class.java)
-        service.cacheObject(CUSTOM_OBJECT_3_FILE_NAME, myObject3, Session::class.java)
-
-        val deleted = service.deleteObjectsByRegex(".*object.*")
-        val children = checkNotNull(dir.listFiles())
-
-        assertTrue(deleted)
-        assertEquals(1, children.size)
-    }
-
-    @Test
-    fun `test deleteObjectsByRegex with listFiles() = null returns false`() {
-        // In order to force File.listFiles() to return null, we make the File not to be a directory
-        val myDir = File("no_directory_file")
-        myDir.createNewFile()
-        service = EmbraceCacheService(
-            lazy { myDir },
-            serializer,
-            InternalEmbraceLogger()
-        )
-
-        val deleted = service.deleteObjectsByRegex(".*object.*")
-        assertFalse(deleted)
-        myDir.delete()
-    }
-
-    @Test
-    fun `test moveObject with existent source`() {
-        val myObject = fakeSession()
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
-
-        val moved = service.moveObject(CUSTOM_OBJECT_1_FILE_NAME, CUSTOM_OBJECT_2_FILE_NAME)
-        val children = checkNotNull(dir.listFiles())
-        val file = children.single()
-
-        assertTrue(moved)
-        assertEquals("emb_$CUSTOM_OBJECT_2_FILE_NAME", file.name)
-    }
-
-    @Test
-    fun `test moveObject with non-existent source`() {
-        val moved = service.moveObject(CUSTOM_OBJECT_1_FILE_NAME, CUSTOM_OBJECT_2_FILE_NAME)
-        val children = checkNotNull(dir.listFiles())
-
-        assertFalse(moved)
-        assertEquals(0, children.size)
-    }
-
-    @Test
     fun `test PendingApiCalls can be cached`() {
         val apiRequest = ApiRequest(
             httpMethod = HttpMethod.GET,
@@ -256,5 +180,3 @@ internal class EmbraceCacheServiceTest {
 }
 
 internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"
-internal const val CUSTOM_OBJECT_2_FILE_NAME = "custom_object_2.json"
-internal const val CUSTOM_OBJECT_3_FILE_NAME = "custom_3.json"

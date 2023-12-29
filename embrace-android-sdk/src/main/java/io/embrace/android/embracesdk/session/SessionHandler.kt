@@ -322,16 +322,18 @@ internal class SessionHandler(
         if (endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
         }
+
         if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
             logger.logWarning("Session messages disabled. Ignoring all Sessions.")
             return null
         }
+
         if (!isAllowedToEnd(lifeEventType, activeSession)) {
             logger.logDebug("Session not allowed to end.")
             return null
         }
 
-        val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
+        return sessionMessageCollator.buildEndSessionMessage(
             originSession = activeSession,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,
@@ -342,8 +344,6 @@ internal class SessionHandler(
             endTime = endTime,
             spans = completedSpans
         )
-        logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-        return fullEndSessionMessage
     }
 
     /**

@@ -690,7 +690,6 @@ internal class EmbraceMetadataService private constructor(
             if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
                 bundleStream = getBundleAsset(context, bundleUrl)
-                logDeveloper("EmbraceMetadataService", "Loaded bundle file asset: $bundleStream")
             } else {
                 // looks for the bundle file from the custom path
                 bundleStream = getCustomBundleStream(bundleUrl)

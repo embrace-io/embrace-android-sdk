@@ -18,8 +18,6 @@ internal class EmbraceWebViewService(
     private val webViewInfoMap = hashMapOf<String, WebViewInfo>()
 
     override fun collectWebData(tag: String, message: String) {
-        InternalStaticEmbraceLogger.logger.logDeveloper("EmbraceWebViewService", "Collecting WebView log: $message")
-
         if (message.contains(MESSAGE_KEY_FOR_METRICS)) {
             collectWebVital(message, tag)
         } else {
@@ -50,8 +48,6 @@ internal class EmbraceWebViewService(
             }
 
             webViewInfoMap[it.url + it.startTime] = processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
-
-            InternalStaticEmbraceLogger.logger.logDebug("Collected WebView core vital: $message")
         }
     }
 

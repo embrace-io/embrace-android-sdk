@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -286,7 +287,7 @@ internal class EmbraceMetadataServiceTest {
             Embrace.AppFramework.NATIVE,
             preferencesService,
             activityService,
-            mockk(relaxed = true), // No background worker to run async calculations
+            BlockingScheduledExecutorService(),
             mockStorageStatsManager(),
             mockWindowManager(),
             mockActivityManager(),

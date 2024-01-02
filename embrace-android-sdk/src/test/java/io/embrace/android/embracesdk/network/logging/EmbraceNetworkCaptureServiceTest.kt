@@ -8,14 +8,12 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -26,6 +24,8 @@ import org.junit.Test
 
 internal class EmbraceNetworkCaptureServiceTest {
 
+    private lateinit var preferenceService: FakePreferenceService
+
     companion object {
         private var cfg: RemoteConfig = RemoteConfig()
         private val metadataService: FakeAndroidMetadataService = FakeAndroidMetadataService()
@@ -34,7 +34,6 @@ internal class EmbraceNetworkCaptureServiceTest {
             networkBehavior = fakeNetworkBehavior { cfg },
             sdkEndpointBehavior = fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
         )
-        private val preferenceService: EmbracePreferencesService = mockk(relaxed = true)
         private lateinit var mockLocalConfig: LocalConfig
         private val networkCaptureData: NetworkCaptureData = NetworkCaptureData(
             null,
@@ -67,6 +66,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     @Before
     fun setUp() {
         clearAllMocks()
+        preferenceService = FakePreferenceService()
         logMessageService = FakeLogMessageService()
         metadataService.setActiveSessionId("session-123", true)
     }
@@ -112,10 +112,10 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun `test capture rule maxCount discount 1`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        every { preferenceService.isNetworkCaptureRuleOver(any()) } returns false
+        preferenceService.networkCaptureRuleOver = false
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(1, result.size)
-        every { preferenceService.isNetworkCaptureRuleOver(any()) } returns true
+        preferenceService.networkCaptureRuleOver = true
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }
@@ -124,7 +124,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun `test capture rule maxCount is over`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        every { preferenceService.isNetworkCaptureRuleOver(any()) } returns true
+        preferenceService.networkCaptureRuleOver = true
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }

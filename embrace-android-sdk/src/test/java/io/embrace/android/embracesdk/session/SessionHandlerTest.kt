@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
@@ -75,7 +76,7 @@ internal class SessionHandlerTest {
     companion object {
         private val networkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
-        private val eventService: EventService = mockk(relaxed = true)
+        private val eventService: EventService = FakeEventService()
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)

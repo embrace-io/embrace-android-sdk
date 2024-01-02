@@ -50,7 +50,7 @@ internal class FakeEventService : EventService {
     }
 
     override fun getStartupMomentInfo(): StartupEventInfo? {
-        TODO("Not yet implemented")
+        return StartupEventInfo(0, 0)
     }
 
     override fun sendStartupMoment() {

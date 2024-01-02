@@ -77,7 +77,7 @@ internal class SessionHandlerTest {
         private val eventService: EventService = mockk(relaxed = true)
         private val remoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
         private val clock = FakeClock()
-        private val exceptionService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
+        private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
         private val automaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
         private val sessionPeriodicCacheExecutorService: ScheduledExecutorService =
             mockk(relaxed = true)
@@ -165,7 +165,7 @@ internal class SessionHandlerTest {
             metadataService,
             eventService,
             remoteLogger,
-            exceptionService,
+            internalErrorService,
             performanceInfoService,
             webViewService,
             NoOpThermalStatusService(),
@@ -185,7 +185,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             activityLifecycleTracker,
             ndkService,
-            exceptionService,
+            internalErrorService,
             memoryCleanerService,
             deliveryService,
             sessionMessageCollator,

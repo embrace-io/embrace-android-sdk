@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -21,7 +21,7 @@ internal class BackgroundActivityCollator(
     private val preferencesService: PreferencesService,
     private val eventService: EventService,
     private val remoteLogger: EmbraceRemoteLogger,
-    private val exceptionService: EmbraceInternalErrorService,
+    private val internalErrorService: InternalErrorService,
     private val breadcrumbService: BreadcrumbService,
     private val metadataService: MetadataService,
     private val performanceInfoService: PerformanceInfoService,
@@ -74,7 +74,7 @@ internal class BackgroundActivityCollator(
             infoLogsAttemptedToSend = captureDataSafely(remoteLogger::getInfoLogsAttemptedToSend),
             warnLogsAttemptedToSend = captureDataSafely(remoteLogger::getWarnLogsAttemptedToSend),
             errorLogsAttemptedToSend = captureDataSafely(remoteLogger::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(exceptionService::currentExceptionError),
+            exceptionError = captureDataSafely(internalErrorService::currentExceptionError),
             lastHeartbeatTime = endTime,
             endType = endType,
             unhandledExceptions = captureDataSafely(remoteLogger::getUnhandledExceptionsSent),

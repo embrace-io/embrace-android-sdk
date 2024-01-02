@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -24,7 +25,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.mockk.every
 import io.mockk.mockk
@@ -46,7 +47,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var eventService: EventService
     private lateinit var remoteLogger: EmbraceRemoteLogger
     private lateinit var userService: UserService
-    private lateinit var exceptionService: EmbraceInternalErrorService
+    private lateinit var internalErrorService: InternalErrorService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
@@ -64,7 +65,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         activityService = FakeProcessStateService(isInBackground = true)
         eventService = FakeEventService()
         remoteLogger = mockk()
-        exceptionService = mockk()
+        internalErrorService = FakeInternalErrorService()
         deliveryService = FakeDeliveryService()
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
@@ -93,7 +94,6 @@ internal class EmbraceBackgroundActivityServiceTest {
         every { remoteLogger.getWarnLogsAttemptedToSend() } returns 0
         every { remoteLogger.getErrorLogsAttemptedToSend() } returns 0
         every { remoteLogger.getUnhandledExceptionsSent() } returns 0
-        every { exceptionService.currentExceptionError } returns mockk()
     }
 
     @Test
@@ -310,7 +310,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             preferencesService,
             eventService,
             remoteLogger,
-            exceptionService,
+            internalErrorService,
             breadcrumbService,
             metadataService,
             performanceInfoService,

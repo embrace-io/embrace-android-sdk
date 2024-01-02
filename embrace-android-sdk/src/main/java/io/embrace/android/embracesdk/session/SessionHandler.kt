@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
@@ -38,7 +38,7 @@ internal class SessionHandler(
     private val breadcrumbService: BreadcrumbService,
     private val activityLifecycleTracker: ActivityTracker,
     private val ndkService: NdkService,
-    private val exceptionService: EmbraceInternalErrorService,
+    private val internalErrorService: InternalErrorService,
     private val memoryCleanerService: MemoryCleanerService,
     private val deliveryService: DeliveryService,
     private val sessionMessageCollator: SessionMessageCollator,
@@ -168,7 +168,7 @@ internal class SessionHandler(
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
-            memoryCleanerService.cleanServicesCollections(exceptionService)
+            memoryCleanerService.cleanServicesCollections(internalErrorService)
             metadataService.removeActiveSessionId(session.sessionId)
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()

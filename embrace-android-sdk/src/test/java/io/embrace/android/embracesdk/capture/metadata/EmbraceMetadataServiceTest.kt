@@ -10,12 +10,12 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
@@ -49,7 +49,7 @@ internal class EmbraceMetadataServiceTest {
         private val serializer = EmbraceSerializer()
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
-        private val cpuInfoDelegate: EmbraceCpuInfoDelegate = mockk(relaxed = true)
+        private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
         private val windowManager = mockk<WindowManager>()
@@ -367,12 +367,10 @@ internal class EmbraceMetadataServiceTest {
     fun `test async additional device info`() {
         every { preferencesService.cpuName } returns null
         every { preferencesService.egl } returns null
-        every { cpuInfoDelegate.getCpuName() } returns "cpu"
-        every { cpuInfoDelegate.getElg() } returns "egl"
 
         val metadataService = getMetadataService()
 
-        assertEquals("cpu", metadataService.getCpuName())
-        assertEquals("egl", metadataService.getEgl())
+        assertEquals("fake_cpu", metadataService.getCpuName())
+        assertEquals("fake_elg", metadataService.getEgl())
     }
 }

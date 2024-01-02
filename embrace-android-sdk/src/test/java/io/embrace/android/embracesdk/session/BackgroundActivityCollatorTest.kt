@@ -28,7 +28,7 @@ internal class BackgroundActivityCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = mockk(relaxed = true),
             remoteLogger = mockk(relaxed = true),
-            exceptionService = mockk(relaxed = true),
+            internalErrorService = mockk(relaxed = true),
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeAndroidMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),

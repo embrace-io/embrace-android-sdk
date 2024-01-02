@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.network.logging
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -17,7 +17,7 @@ import kotlin.math.max
 internal class EmbraceNetworkCaptureService(
     private val metadataService: MetadataService,
     private val preferencesService: PreferencesService,
-    private val remoteLogger: EmbraceRemoteLogger,
+    private val logMessageService: LogMessageService,
     private val configService: ConfigService,
     private val serializer: EmbraceSerializer
 ) : NetworkCaptureService {
@@ -110,7 +110,7 @@ internal class EmbraceNetworkCaptureService(
                 val networkLog = getNetworkPayload(capturedNetworkCall)
 
                 // we will create an event with the network request type
-                remoteLogger.logNetwork(
+                logMessageService.logNetwork(
                     networkLog
                 )
 

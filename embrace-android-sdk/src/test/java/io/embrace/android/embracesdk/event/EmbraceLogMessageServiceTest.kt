@@ -44,10 +44,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-internal class EmbraceRemoteLoggerTest {
+internal class EmbraceLogMessageServiceTest {
 
     companion object {
-        private lateinit var remoteLogger: EmbraceRemoteLogger
+        private lateinit var logMessageService: EmbraceLogMessageService
         private lateinit var metadataService: FakeAndroidMetadataService
         private lateinit var deliveryService: FakeDeliveryService
         private lateinit var userService: UserService
@@ -111,8 +111,8 @@ internal class EmbraceRemoteLoggerTest {
         sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
     }
 
-    private fun getRemoteLogger(): EmbraceRemoteLogger {
-        return EmbraceRemoteLogger(
+    private fun getLogMessageService(): EmbraceLogMessageService {
+        return EmbraceLogMessageService(
             metadataService,
             deliveryService,
             userService,
@@ -129,12 +129,12 @@ internal class EmbraceRemoteLoggerTest {
     @Test
     fun testLogSimple() {
         every { Uuid.getEmbUuid() } returns "id"
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
         val props = mapOf("foo" to "bar")
-        remoteLogger.log("Hello world", EmbraceEvent.Type.INFO_LOG, props)
-        remoteLogger.log("Warning world", EmbraceEvent.Type.WARNING_LOG, null)
-        remoteLogger.log("Hello errors", EmbraceEvent.Type.ERROR_LOG, null)
+        logMessageService.log("Hello world", EmbraceEvent.Type.INFO_LOG, props)
+        logMessageService.log("Warning world", EmbraceEvent.Type.WARNING_LOG, null)
+        logMessageService.log("Hello errors", EmbraceEvent.Type.ERROR_LOG, null)
 
         val logs = deliveryService.lastSentLogs
         assertEquals(3, logs.size)
@@ -170,18 +170,18 @@ internal class EmbraceRemoteLoggerTest {
         assertEquals(LogExceptionType.NONE.value, third.event.logExceptionType)
 
         // verify sent counts
-        assertEquals(1, remoteLogger.getInfoLogsAttemptedToSend())
-        assertEquals(1, remoteLogger.getWarnLogsAttemptedToSend())
-        assertEquals(1, remoteLogger.getErrorLogsAttemptedToSend())
-        assertEquals(0, remoteLogger.getUnhandledExceptionsSent())
+        assertEquals(1, logMessageService.getInfoLogsAttemptedToSend())
+        assertEquals(1, logMessageService.getWarnLogsAttemptedToSend())
+        assertEquals(1, logMessageService.getErrorLogsAttemptedToSend())
+        assertEquals(0, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
     fun testExceptionLog() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
         val exception = NullPointerException("exception message")
 
-        remoteLogger.log(
+        logMessageService.log(
             "Hello world",
             EmbraceEvent.Type.ERROR_LOG,
             LogExceptionType.NONE,
@@ -213,8 +213,8 @@ internal class EmbraceRemoteLoggerTest {
     fun testLogNetwork() {
         val networkCaptureCall = NetworkCapturedCall()
 
-        remoteLogger = getRemoteLogger()
-        remoteLogger.logNetwork(networkCaptureCall)
+        logMessageService = getLogMessageService()
+        logMessageService.logNetwork(networkCaptureCall)
 
         val message = checkNotNull(deliveryService.lastSentNetworkCall)
         assertEquals("appId", message.appId)
@@ -222,22 +222,22 @@ internal class EmbraceRemoteLoggerTest {
         assertNotNull(message.appInfo)
         assertNotNull(message.networkCaptureCall)
 
-        assertEquals(1, remoteLogger.findNetworkLogIds(0, clock.now()).size)
+        assertEquals(1, logMessageService.findNetworkLogIds(0, clock.now()).size)
     }
 
     @Test
     fun `testLogNetwork with no info`() {
-        remoteLogger = getRemoteLogger()
-        remoteLogger.logNetwork(null)
+        logMessageService = getLogMessageService()
+        logMessageService.logNetwork(null)
 
         assertNull(deliveryService.lastSentNetworkCall)
-        assertEquals(0, remoteLogger.findNetworkLogIds(0, clock.now()).size)
+        assertEquals(0, logMessageService.findNetworkLogIds(0, clock.now()).size)
     }
 
     @Test
     fun testDefaultMaxMessageLength() {
-        remoteLogger = getRemoteLogger()
-        remoteLogger.log("Hi".repeat(65), EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService = getLogMessageService()
+        logMessageService.log("Hi".repeat(65), EmbraceEvent.Type.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(62) + "H...")
@@ -252,8 +252,8 @@ internal class EmbraceRemoteLoggerTest {
             )
         )
 
-        remoteLogger = getRemoteLogger()
-        remoteLogger.log("Hi".repeat(50), EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService = getLogMessageService()
+        logMessageService.log("Hi".repeat(50), EmbraceEvent.Type.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(23) + "H...")
@@ -262,10 +262,10 @@ internal class EmbraceRemoteLoggerTest {
     @Test
     fun testLogMessageEnabled() {
         cfg = cfg.copy(disabledEventAndLogPatterns = setOf("Hello World"))
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
-        remoteLogger.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
-        remoteLogger.log("Another", EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Another", EmbraceEvent.Type.INFO_LOG, null)
 
         deliveryService.lastSentLogs.single().let {
             assertEquals("Another", it.event.name)
@@ -275,35 +275,35 @@ internal class EmbraceRemoteLoggerTest {
     @Test
     fun testMessageTypeEnabled() {
         cfg = cfg.copy(disabledMessageTypes = setOf(MessageType.LOG.name.toLowerCase()))
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
-        remoteLogger.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
         assertEquals(0, deliveryService.lastSentLogs.size)
     }
 
     @Test
     fun testDefaultMaxMessageCountLimits() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
         repeat(500) { k ->
-            remoteLogger.log("Test info $k", EmbraceEvent.Type.INFO_LOG, null)
-            remoteLogger.log("Test warning $k", EmbraceEvent.Type.WARNING_LOG, null)
-            remoteLogger.log("Test error $k", EmbraceEvent.Type.ERROR_LOG, null)
+            logMessageService.log("Test info $k", EmbraceEvent.Type.INFO_LOG, null)
+            logMessageService.log("Test warning $k", EmbraceEvent.Type.WARNING_LOG, null)
+            logMessageService.log("Test error $k", EmbraceEvent.Type.ERROR_LOG, null)
         }
 
-        assertEquals(100, remoteLogger.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, remoteLogger.getInfoLogsAttemptedToSend())
-        assertEquals(100, remoteLogger.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, remoteLogger.getWarnLogsAttemptedToSend())
-        assertEquals(250, remoteLogger.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, remoteLogger.getErrorLogsAttemptedToSend())
+        assertEquals(100, logMessageService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logMessageService.getInfoLogsAttemptedToSend())
+        assertEquals(100, logMessageService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logMessageService.getWarnLogsAttemptedToSend())
+        assertEquals(250, logMessageService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logMessageService.getErrorLogsAttemptedToSend())
     }
 
     @Test
     fun testLoggingUnityMessage() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
-        remoteLogger.log(
+        logMessageService.log(
             "Unity".repeat(1000),
             EmbraceEvent.Type.INFO_LOG,
             LogExceptionType.HANDLED,
@@ -322,14 +322,14 @@ internal class EmbraceRemoteLoggerTest {
         assertEquals("my stacktrace", message.stacktraces?.unityStacktrace)
         assertEquals(LogExceptionType.HANDLED.value, message.event.logExceptionType)
 
-        assertEquals(0, remoteLogger.getUnhandledExceptionsSent())
+        assertEquals(0, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
     fun testLoggingUnityUnhandledException() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
 
-        remoteLogger.log(
+        logMessageService.log(
             "Unity".repeat(1000),
             EmbraceEvent.Type.INFO_LOG,
             LogExceptionType.UNHANDLED,
@@ -348,13 +348,13 @@ internal class EmbraceRemoteLoggerTest {
         assertTrue(message.stacktraces?.unityStacktrace == "my stacktrace")
         assertEquals(LogExceptionType.UNHANDLED.value, message.event.logExceptionType)
 
-        assertEquals(1, remoteLogger.getUnhandledExceptionsSent())
+        assertEquals(1, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
     fun testLoggingFlutterMessage() {
-        remoteLogger = getRemoteLogger()
-        remoteLogger.log(
+        logMessageService = getLogMessageService()
+        logMessageService.log(
             "Dart error",
             EmbraceEvent.Type.ERROR_LOG,
             LogExceptionType.UNHANDLED,
@@ -376,25 +376,25 @@ internal class EmbraceRemoteLoggerTest {
         assertEquals("my stacktrace", msg.stacktraces?.flutterStacktrace)
         assertEquals("dart context", msg.stacktraces?.context)
         assertEquals("dart library", msg.stacktraces?.library)
-        assertEquals(1, remoteLogger.getUnhandledExceptionsSent())
+        assertEquals(1, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
     fun testIfShouldGateInfoLog() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
         cfg = buildCustomRemoteConfig(setOf())
-        assertTrue(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
-        assertTrue(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
+        assertTrue(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
+        assertTrue(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
     }
 
     @Test
     fun testIfShouldNotGateInfoLog() {
-        remoteLogger = getRemoteLogger()
+        logMessageService = getLogMessageService()
         cfg = buildCustomRemoteConfig(
             setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN)
         )
-        assertFalse(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
-        assertFalse(remoteLogger.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
+        assertFalse(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
+        assertFalse(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =

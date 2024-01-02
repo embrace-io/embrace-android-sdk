@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
+import io.embrace.android.embracesdk.event.EmbraceLogMessageService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
@@ -15,7 +16,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
     val networkLoggingService: NetworkLoggingService
-    val remoteLogger: EmbraceRemoteLogger
+    val logMessageService: LogMessageService
 }
 
 internal class CustomerLogModuleImpl(
@@ -32,7 +33,7 @@ internal class CustomerLogModuleImpl(
         EmbraceNetworkCaptureService(
             essentialServiceModule.metadataService,
             androidServicesModule.preferencesService,
-            remoteLogger,
+            logMessageService,
             essentialServiceModule.configService,
             coreModule.jsonSerializer
         )
@@ -46,8 +47,8 @@ internal class CustomerLogModuleImpl(
         )
     }
 
-    override val remoteLogger: EmbraceRemoteLogger by singleton {
-        EmbraceRemoteLogger(
+    override val logMessageService: LogMessageService by singleton {
+        EmbraceLogMessageService(
             essentialServiceModule.metadataService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,

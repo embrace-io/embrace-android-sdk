@@ -12,7 +12,12 @@ import io.opentelemetry.sdk.trace.data.SpanData
  */
 @InternalApi
 internal class FeatureDisabledSpansService : SpansService {
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? = null
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: EmbraceAttributes.Type,
+        internal: Boolean
+    ): EmbraceSpan? = null
 
     override fun <T> recordSpan(
         name: String,

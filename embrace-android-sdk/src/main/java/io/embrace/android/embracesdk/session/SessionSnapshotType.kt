@@ -35,5 +35,5 @@ internal enum class SessionSnapshotType(
     /**
      * The end session is being constructed because of a JVM crash.
      */
-    JVM_CRASH(false, false, true);
+    JVM_CRASH(false, false, true)
 }

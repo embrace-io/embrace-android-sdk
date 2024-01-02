@@ -12,7 +12,6 @@ internal class EmbraceUserService(
 ) : UserService {
 
     @Volatile
-
     internal var info: UserInfo = ofStored(preferencesService)
 
     override fun loadUserInfoFromDisk(): UserInfo? {

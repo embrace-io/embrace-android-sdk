@@ -124,7 +124,9 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Suppress("DEPRECATION")
-    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE): EmbraceMetadataService {
+    private fun getMetadataService(
+        framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE
+    ): EmbraceMetadataService {
         return EmbraceMetadataService.ofContext(
             context,
             buildInfo,

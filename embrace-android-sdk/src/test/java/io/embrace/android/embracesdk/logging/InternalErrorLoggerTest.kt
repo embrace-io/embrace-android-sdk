@@ -142,7 +142,9 @@ internal class InternalErrorLoggerTest {
         val exceptionMessage = "root cause"
         val exception = Exception()
         val msg = "message"
-        every { internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) } throws RuntimeException(
+        every {
+            internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException)
+        } throws RuntimeException(
             exceptionMessage
         )
 

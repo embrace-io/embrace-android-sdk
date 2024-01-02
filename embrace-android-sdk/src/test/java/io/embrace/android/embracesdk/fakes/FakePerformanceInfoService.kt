@@ -10,7 +10,11 @@ internal class FakePerformanceInfoService(
     var performanceInfo: PerformanceInfo = PerformanceInfo(),
     var sessionPerformanceInfo: PerformanceInfo = PerformanceInfo()
 ) : PerformanceInfoService {
-    override fun getPerformanceInfo(startTime: Long, endTime: Long, coldStart: Boolean): PerformanceInfo = performanceInfo
+    override fun getPerformanceInfo(
+        startTime: Long,
+        endTime: Long,
+        coldStart: Boolean
+    ): PerformanceInfo = performanceInfo
 
     override fun getSessionPerformanceInfo(
         sessionStart: Long,

@@ -271,7 +271,8 @@ internal class SessionHandlerTest {
 
         val sessionMessage = sessionHandler.onSessionStarted(
             true,
-            /* any event type */ Session.SessionLifeEventType.STATE,
+            /* any event type */
+            Session.SessionLifeEventType.STATE,
             now,
             automaticSessionStopperRunnable
         )
@@ -406,7 +407,8 @@ internal class SessionHandlerTest {
         sessionHandler.scheduledFuture = mockk(relaxed = true)
 
         sessionHandler.onSessionEnded(
-            /* any type */ Session.SessionLifeEventType.STATE,
+            /* any type */
+            Session.SessionLifeEventType.STATE,
             1000,
             false
         )

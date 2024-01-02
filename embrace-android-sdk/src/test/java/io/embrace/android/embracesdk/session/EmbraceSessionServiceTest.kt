@@ -80,7 +80,8 @@ internal class EmbraceSessionServiceTest {
         // verify that a STATE session is started
         verify {
             mockSessionHandler.onSessionStarted(
-                /* automatically detecting a cold start */ true,
+                /* automatically detecting a cold start */
+                true,
                 SessionLifeEventType.STATE,
                 any(),
                 any()

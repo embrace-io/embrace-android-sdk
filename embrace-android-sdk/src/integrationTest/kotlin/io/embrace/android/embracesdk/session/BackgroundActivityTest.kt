@@ -24,13 +24,7 @@ internal class BackgroundActivityTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        IntegrationTestRule.Harness(
-            fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock, ExecutorName.SEND_SESSIONS)
-        )
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `bg activity messages are recorded`() {
@@ -38,10 +32,6 @@ internal class BackgroundActivityTest {
             harness.recordSession()
             harness.fakeClock.tick(30000)
             harness.recordSession()
-
-            val executor =
-                harness.workerThreadModule.scheduledExecutor(ExecutorName.SEND_SESSIONS) as BlockingScheduledExecutorService
-            executor.runCurrentlyBlocked()
 
             // filter out dupes from overwritten saves
             val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.session.sessionId }

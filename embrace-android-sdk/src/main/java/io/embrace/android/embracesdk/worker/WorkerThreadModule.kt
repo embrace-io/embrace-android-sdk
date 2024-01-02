@@ -44,11 +44,6 @@ internal enum class ExecutorName(internal val threadName: String) {
     CACHED_SESSIONS("cached-sessions"),
 
     /**
-     * Loads background activities & moments from disk.
-     */
-    SEND_SESSIONS("send-sessions"),
-
-    /**
      * Saves/loads request information from files cached on disk.
      */
     DELIVERY_CACHE("delivery-cache"),

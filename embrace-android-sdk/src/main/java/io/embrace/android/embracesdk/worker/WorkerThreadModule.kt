@@ -31,15 +31,10 @@ internal interface WorkerThreadModule : Closeable {
  */
 internal enum class ExecutorName(internal val threadName: String) {
     BACKGROUND_REGISTRATION("background-reg"),
-    SCHEDULED_REGISTRATION("scheduled-reg"),
     CACHED_SESSIONS("cached-sessions"),
     SEND_SESSIONS("send-sessions"),
     DELIVERY_CACHE("delivery-cache"),
     NETWORK_REQUEST("network-request"),
-    NATIVE_CRASH_CLEANER("native-crash-cleaner"),
-    NATIVE_STARTUP("native-startup"),
-    SESSION_CACHE_EXECUTOR("session-cache"),
+    PERIODIC_CACHE("periodic-cache"),
     REMOTE_LOGGING("remote-logging"),
-    SESSION_CLOSER("session-closer"),
-    SESSION_CACHING("session-caching"),
 }

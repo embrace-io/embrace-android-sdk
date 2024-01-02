@@ -35,7 +35,7 @@ internal class TimedSessionTest {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         IntegrationTestRule.Harness(
             fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock, SESSION_CLOSER),
+            workerThreadModule = FakeWorkerThreadModule(clock, BACKGROUND_REGISTRATION),
         )
     }
 
@@ -43,7 +43,7 @@ internal class TimedSessionTest {
     fun `timed session automatically ends session`() {
         with(testRule) {
             val executor =
-                harness.workerThreadModule.scheduledExecutor(SESSION_CLOSER) as BlockingScheduledExecutorService
+                harness.workerThreadModule.scheduledExecutor(BACKGROUND_REGISTRATION) as BlockingScheduledExecutorService
             harness.fakeConfigService.sessionBehavior = fakeSessionBehavior(
                 localCfg = { SessionLocalConfig(90) }) {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
@@ -68,7 +68,7 @@ internal class TimedSessionTest {
     fun `timed session has no effect when config disabled`() {
         with(testRule) {
             val executor =
-                harness.workerThreadModule.scheduledExecutor(SESSION_CLOSER) as BlockingScheduledExecutorService
+                harness.workerThreadModule.scheduledExecutor(BACKGROUND_REGISTRATION) as BlockingScheduledExecutorService
             harness.fakeConfigService.sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }

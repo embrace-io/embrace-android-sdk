@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -38,13 +37,10 @@ internal class EmbracePreferencesService(
     override fun applicationStartupComplete() = alterStartupStatus(SDK_STARTUP_COMPLETED)
 
     private fun alterStartupStatus(status: String) {
-        registrationExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbracePreferencesService", "Startup key: $status")
-                prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
-                null
-            }
-        )
+        registrationExecutorService.submit {
+            logDeveloper("EmbracePreferencesService", "Startup key: $status")
+            prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
+        }
     }
 
     // fallback from this very unlikely case by just loading on the main thread

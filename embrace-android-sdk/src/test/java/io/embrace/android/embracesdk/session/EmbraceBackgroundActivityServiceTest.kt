@@ -316,7 +316,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             ndkService,
             clock,
             collator,
-            lazy { blockableExecutorService }
+            blockableExecutorService
         )
     }
 }

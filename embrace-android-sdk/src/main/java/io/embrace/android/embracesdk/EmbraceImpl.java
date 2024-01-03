@@ -31,8 +31,8 @@ import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger;
 import io.embrace.android.embracesdk.event.EventService;
+import io.embrace.android.embracesdk.event.LogMessageService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl;
 import io.embrace.android.embracesdk.injection.AnrModuleImpl;
@@ -75,9 +75,9 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.spans.Initializable;
 import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
+import io.embrace.android.embracesdk.logging.InternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl;
@@ -217,11 +217,8 @@ final class EmbraceImpl {
     @Nullable
     private volatile AnrService anrService;
 
-    /**
-     * TODO: rename to match convention
-     */
     @Nullable
-    private volatile EmbraceRemoteLogger remoteLogger;
+    private volatile LogMessageService logMessageService;
 
     @Nullable
     private volatile ConfigService configService;
@@ -236,7 +233,7 @@ final class EmbraceImpl {
     private volatile UserService userService;
 
     @Nullable
-    private volatile EmbraceInternalErrorService exceptionsService;
+    private volatile InternalErrorService internalErrorService;
 
     @Nullable
     private volatile NdkService ndkService;
@@ -484,9 +481,9 @@ final class EmbraceImpl {
             essentialServiceModule
         );
 
-        final EmbraceInternalErrorService nonNullExceptionsService = sdkObservabilityModule.getExceptionService();
-        exceptionsService = nonNullExceptionsService;
-        serviceRegistry.registerService(exceptionsService);
+        final InternalErrorService nonNullInternalErrorService = sdkObservabilityModule.getInternalErrorService();
+        internalErrorService = nonNullInternalErrorService;
+        serviceRegistry.registerService(internalErrorService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
         telemetryService = initModule.getTelemetryService();
@@ -514,7 +511,7 @@ final class EmbraceImpl {
             return;
         }
 
-        nonNullExceptionsService.setConfigService(configService);
+        nonNullInternalErrorService.setConfigService(configService);
         breadcrumbService = dataCaptureServiceModule.getBreadcrumbService();
         pushNotificationService = dataCaptureServiceModule.getPushNotificationService();
         serviceRegistry.registerServices(breadcrumbService, pushNotificationService);
@@ -531,11 +528,11 @@ final class EmbraceImpl {
             sessionProperties,
             nonNullWorkerThreadModule
         );
-        remoteLogger = customerLogModule.getRemoteLogger();
+        logMessageService = customerLogModule.getLogMessageService();
         networkCaptureService = customerLogModule.getNetworkCaptureService();
         networkLoggingService = customerLogModule.getNetworkLoggingService();
         serviceRegistry.registerServices(
-            remoteLogger,
+            logMessageService,
             networkCaptureService,
             networkLoggingService
         );
@@ -1215,7 +1212,7 @@ final class EmbraceImpl {
         @Nullable String exceptionMessage) {
         if (checkSdkStartedAndLogPublicApiUsage("log_message")) {
             try {
-                remoteLogger.log(
+                logMessageService.log(
                     message,
                     type,
                     logExceptionType,
@@ -1263,7 +1260,7 @@ final class EmbraceImpl {
             } else {
                 messageWithDetails = message;
             }
-            exceptionsService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
+            internalErrorService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
         }
     }
 
@@ -1272,7 +1269,7 @@ final class EmbraceImpl {
      */
     void logInternalError(@NonNull Throwable error) {
         if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
-            exceptionsService.handleInternalError(error);
+            internalErrorService.handleInternalError(error);
         }
     }
 
@@ -1464,8 +1461,8 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    EmbraceInternalErrorService getExceptionsService() {
-        return exceptionsService;
+    InternalErrorService getInternalErrorService() {
+        return internalErrorService;
     }
 
     @Nullable

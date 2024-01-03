@@ -13,13 +13,13 @@ internal class WorkerThreadModuleImplTest {
         val module = WorkerThreadModuleImpl()
         assertNotNull(module)
 
-        val backgroundExecutor = module.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR)
+        val backgroundExecutor = module.backgroundExecutor(ExecutorName.PERIODIC_CACHE)
         assertNotNull(backgroundExecutor)
-        val scheduledExecutor = module.scheduledExecutor(ExecutorName.SESSION_CACHE_EXECUTOR)
+        val scheduledExecutor = module.scheduledExecutor(ExecutorName.PERIODIC_CACHE)
         assertNotNull(scheduledExecutor)
 
         // test caching
-        assertSame(backgroundExecutor, module.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR))
+        assertSame(backgroundExecutor, module.backgroundExecutor(ExecutorName.PERIODIC_CACHE))
         assertSame(backgroundExecutor, scheduledExecutor)
 
         // test shutting down module

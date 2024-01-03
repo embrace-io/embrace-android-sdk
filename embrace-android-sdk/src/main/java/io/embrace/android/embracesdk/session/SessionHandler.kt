@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
@@ -38,7 +38,7 @@ internal class SessionHandler(
     private val breadcrumbService: BreadcrumbService,
     private val activityLifecycleTracker: ActivityTracker,
     private val ndkService: NdkService,
-    private val exceptionService: EmbraceInternalErrorService,
+    private val internalErrorService: InternalErrorService,
     private val memoryCleanerService: MemoryCleanerService,
     private val deliveryService: DeliveryService,
     private val sessionMessageCollator: SessionMessageCollator,
@@ -168,7 +168,7 @@ internal class SessionHandler(
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
-            memoryCleanerService.cleanServicesCollections(exceptionService)
+            memoryCleanerService.cleanServicesCollections(internalErrorService)
             metadataService.removeActiveSessionId(session.sessionId)
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()
@@ -322,16 +322,18 @@ internal class SessionHandler(
         if (endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
         }
+
         if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
             logger.logWarning("Session messages disabled. Ignoring all Sessions.")
             return null
         }
+
         if (!isAllowedToEnd(lifeEventType, activeSession)) {
             logger.logDebug("Session not allowed to end.")
             return null
         }
 
-        val fullEndSessionMessage = sessionMessageCollator.buildEndSessionMessage(
+        return sessionMessageCollator.buildEndSessionMessage(
             originSession = activeSession,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,
@@ -342,8 +344,6 @@ internal class SessionHandler(
             endTime = endTime,
             spans = completedSpans
         )
-        logger.logDeveloper("SessionHandler", "End session message=$fullEndSessionMessage")
-        return fullEndSessionMessage
     }
 
     /**

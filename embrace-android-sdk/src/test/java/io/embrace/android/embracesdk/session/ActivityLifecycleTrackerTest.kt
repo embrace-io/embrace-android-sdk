@@ -9,8 +9,8 @@ import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeOrientationService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
@@ -33,13 +33,13 @@ import org.junit.Test
 internal class ActivityLifecycleTrackerTest {
 
     private lateinit var activityLifecycleTracker: ActivityLifecycleTracker
+    private lateinit var orientationService: FakeOrientationService
 
     companion object {
         private lateinit var mockLooper: Looper
         private lateinit var mockLifeCycleOwner: LifecycleOwner
         private lateinit var mockLifecycle: Lifecycle
         private lateinit var application: Application
-        private lateinit var mockOrientationService: OrientationService
         private val fakeClock = FakeClock()
 
         @BeforeClass
@@ -51,7 +51,6 @@ internal class ActivityLifecycleTrackerTest {
             mockkStatic(Looper::class)
             mockkStatic(ProcessLifecycleOwner::class)
             application = mockApplication()
-            mockOrientationService = mockk()
 
             fakeClock.setCurrentTime(1234)
             every { application.registerActivityLifecycleCallbacks(any()) } returns Unit
@@ -77,9 +76,10 @@ internal class ActivityLifecycleTrackerTest {
             staticMocks = false
         )
 
+        orientationService = FakeOrientationService()
         activityLifecycleTracker = ActivityLifecycleTracker(
             application,
-            mockOrientationService,
+            orientationService,
         )
     }
 
@@ -108,7 +108,7 @@ internal class ActivityLifecycleTrackerTest {
         activityLifecycleTracker.onActivityCreated(mockActivity, bundle)
 
         assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
-        verify { mockOrientationService.onOrientationChanged(orientation) }
+        assertEquals(orientation, orientationService.changes.single())
         verify { mockActivityLifecycleListener.onActivityCreated(mockActivity, bundle) }
     }
 

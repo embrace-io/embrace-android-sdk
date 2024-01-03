@@ -189,8 +189,15 @@ internal class EmbraceInternalInterfaceImplTest {
         val url = "https://embrace.io"
         val callId = "testID"
         val captor = slot<EmbraceNetworkRequest>()
-        val networkRequest: EmbraceNetworkRequest = mockk()
-        every { networkRequest.url } answers { url }
+        val networkRequest: EmbraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
+            url,
+            HttpMethod.GET,
+            15092342340L,
+            15092342799L,
+            140L,
+            2509L,
+            200
+        )
 
         defaultImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
         verify(exactly = 0) {

@@ -1556,7 +1556,6 @@ HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;->getSpanId()Lj
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;->getStartTimeNanos()J
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;->getStatus()Lio/opentelemetry/api/trace/StatusCode;
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;->getTraceId()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanDataJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanDataJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/spans/EmbraceSpanData;)V
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanDataJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1750,7 +1749,6 @@ HSPLio/embrace/android/embracesdk/payload/AppInfo;->getReactNativeBundleId()Ljav
 HSPLio/embrace/android/embracesdk/payload/AppInfo;->getReactNativeVersion()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/AppInfo;->getSdkSimpleVersion()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/AppInfo;->getSdkVersion()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/payload/AppInfo;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/AppInfo;)V
 HSPLio/embrace/android/embracesdk/payload/AppInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1763,7 +1761,6 @@ HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getRnActionBreadcrumbs()
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getTapBreadcrumbs()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getViewBreadcrumbs()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->getWebViewBreadcrumbs()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/payload/Breadcrumbs;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/BreadcrumbsJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/BreadcrumbsJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/Breadcrumbs;)V
 HSPLio/embrace/android/embracesdk/payload/BreadcrumbsJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1784,7 +1781,6 @@ HSPLio/embrace/android/embracesdk/payload/DeviceInfo;->getOperatingSystemVersion
 HSPLio/embrace/android/embracesdk/payload/DeviceInfo;->getOperatingSystemVersionCode()Ljava/lang/Integer;
 HSPLio/embrace/android/embracesdk/payload/DeviceInfo;->getScreenResolution()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/DeviceInfo;->getTimezoneDescription()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/payload/DeviceInfo;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DeviceInfo;)V
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1821,7 +1817,6 @@ HSPLio/embrace/android/embracesdk/payload/Interval;-><init>(JJLjava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/Interval;->getEndTime()J
 HSPLio/embrace/android/embracesdk/payload/Interval;->getStartTime()J
 HSPLio/embrace/android/embracesdk/payload/Interval;->getValue()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/payload/Interval;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/IntervalJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/IntervalJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/Interval;)V
 HSPLio/embrace/android/embracesdk/payload/IntervalJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1845,13 +1840,11 @@ HSPLio/embrace/android/embracesdk/payload/NetworkCallV2;->getStartTime()J
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2;->getTraceId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2;->getUrl()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2;->getW3cTraceparent()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/payload/NetworkCallV2;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2JsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2JsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/NetworkCallV2;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkCallV2JsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkRequests;-><init>(Lio/embrace/android/embracesdk/payload/NetworkSessionV2;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkRequests;->getNetworkSessionV2()Lio/embrace/android/embracesdk/payload/NetworkSessionV2;
-HSPLio/embrace/android/embracesdk/payload/NetworkRequests;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/NetworkRequestsJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkRequestsJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/NetworkRequests;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkRequestsJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1861,7 +1854,6 @@ HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2$DomainCount;->getRequ
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2;-><init>(Ljava/util/List;Ljava/util/Map;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2;->getRequestCounts()Ljava/util/Map;
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2;->getRequests()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2JsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2JsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/NetworkSessionV2;)V
 HSPLio/embrace/android/embracesdk/payload/NetworkSessionV2JsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1881,13 +1873,11 @@ HSPLio/embrace/android/embracesdk/payload/PerformanceInfo;->getNetworkInterfaceI
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfo;->getNetworkRequests()Lio/embrace/android/embracesdk/payload/NetworkRequests;
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfo;->getPowerSaveModeIntervals()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfo;->getResponsivenessMonitorSnapshots()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/payload/PerformanceInfo;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/PerformanceInfo;)V
 HSPLio/embrace/android/embracesdk/payload/PerformanceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/payload/PowerModeIntervalJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/PushNotificationBreadcrumbJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
-HSPLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;-><init>(Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;J)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getErrors()J
@@ -1896,7 +1886,6 @@ HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getGaps()Ljav
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getLastPing()J
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getName()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->getOutliers()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshotJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshotJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/ResponsivenessSnapshot;)V
 HSPLio/embrace/android/embracesdk/payload/ResponsivenessSnapshotJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1944,7 +1933,6 @@ HSPLio/embrace/android/embracesdk/payload/Session;->getWebViewInfo()Ljava/util/L
 HSPLio/embrace/android/embracesdk/payload/Session;->isColdStart()Z
 HSPLio/embrace/android/embracesdk/payload/Session;->isEndedCleanly()Ljava/lang/Boolean;
 HSPLio/embrace/android/embracesdk/payload/Session;->isReceivedTermination()Ljava/lang/Boolean;
-HSPLio/embrace/android/embracesdk/payload/Session;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/SessionJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/SessionJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/Session;)V
 HSPLio/embrace/android/embracesdk/payload/SessionJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1958,7 +1946,6 @@ HSPLio/embrace/android/embracesdk/payload/SessionMessage;->getSession()Lio/embra
 HSPLio/embrace/android/embracesdk/payload/SessionMessage;->getSpans()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/payload/SessionMessage;->getUserInfo()Lio/embrace/android/embracesdk/payload/UserInfo;
 HSPLio/embrace/android/embracesdk/payload/SessionMessage;->getVersion()I
-HSPLio/embrace/android/embracesdk/payload/SessionMessage;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/SessionMessageJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/SessionMessageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/SessionMessage;)V
 HSPLio/embrace/android/embracesdk/payload/SessionMessageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -1980,7 +1967,6 @@ HSPLio/embrace/android/embracesdk/payload/UserInfo;->getEmail()Ljava/lang/String
 HSPLio/embrace/android/embracesdk/payload/UserInfo;->getPersonas()Ljava/util/Set;
 HSPLio/embrace/android/embracesdk/payload/UserInfo;->getUserId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/UserInfo;->getUsername()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/payload/UserInfo;->toString()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/payload/UserInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/payload/UserInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/UserInfo;)V
 HSPLio/embrace/android/embracesdk/payload/UserInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
@@ -2970,7 +2956,6 @@ PLio/embrace/android/embracesdk/payload/AppExitInfoData;->getStatus$embrace_andr
 PLio/embrace/android/embracesdk/payload/AppExitInfoData;->getTimestamp$embrace_android_sdk_release()Ljava/lang/Long;
 PLio/embrace/android/embracesdk/payload/AppExitInfoData;->getTrace$embrace_android_sdk_release()Ljava/lang/String;
 PLio/embrace/android/embracesdk/payload/AppExitInfoData;->getTraceStatus$embrace_android_sdk_release()Ljava/lang/String;
-PLio/embrace/android/embracesdk/payload/AppExitInfoData;->toString()Ljava/lang/String;
 PLio/embrace/android/embracesdk/payload/AppExitInfoDataJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/AppExitInfoData;)V
 PLio/embrace/android/embracesdk/payload/AppExitInfoDataJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 PLio/embrace/android/embracesdk/payload/DiskUsage;-><init>(Ljava/lang/Long;Ljava/lang/Long;)V
@@ -2978,12 +2963,11 @@ PLio/embrace/android/embracesdk/payload/DiskUsage;->copy$default(Lio/embrace/and
 PLio/embrace/android/embracesdk/payload/DiskUsage;->copy(Ljava/lang/Long;Ljava/lang/Long;)Lio/embrace/android/embracesdk/payload/DiskUsage;
 PLio/embrace/android/embracesdk/payload/DiskUsage;->getAppDiskUsage()Ljava/lang/Long;
 PLio/embrace/android/embracesdk/payload/DiskUsage;->getDeviceDiskFree()Ljava/lang/Long;
-PLio/embrace/android/embracesdk/payload/DiskUsage;->toString()Ljava/lang/String;
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DiskUsage;)V
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getEndMs()J
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getStartMs()J
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->toString()Ljava/lang/String;
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/ResponsivenessOutlier;)V
 PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 PLio/embrace/android/embracesdk/payload/ViewBreadcrumb;->setEnd(Ljava/lang/Long;)V

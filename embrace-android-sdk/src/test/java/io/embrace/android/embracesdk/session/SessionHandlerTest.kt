@@ -13,13 +13,15 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -74,10 +76,10 @@ internal class SessionHandlerTest {
     companion object {
         private val networkConnectivityService: NetworkConnectivityService =
             mockk(relaxUnitFun = true)
-        private val eventService: EventService = mockk(relaxed = true)
-        private val remoteLogger: EmbraceRemoteLogger = mockk(relaxed = true)
+        private val eventService: EventService = FakeEventService()
+        private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
-        private val exceptionService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
+        private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
         private val automaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
         private val sessionPeriodicCacheExecutorService: ScheduledExecutorService =
             mockk(relaxed = true)
@@ -164,8 +166,8 @@ internal class SessionHandlerTest {
             configService,
             metadataService,
             eventService,
-            remoteLogger,
-            exceptionService,
+            logMessageService,
+            internalErrorService,
             performanceInfoService,
             webViewService,
             NoOpThermalStatusService(),
@@ -185,7 +187,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             activityLifecycleTracker,
             ndkService,
-            exceptionService,
+            internalErrorService,
             memoryCleanerService,
             deliveryService,
             sessionMessageCollator,

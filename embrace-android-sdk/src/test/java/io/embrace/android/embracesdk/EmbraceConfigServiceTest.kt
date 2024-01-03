@@ -42,7 +42,7 @@ internal class EmbraceConfigServiceTest {
 
     companion object {
         private lateinit var localConfig: LocalConfig
-        private lateinit var mockConfig: RemoteConfig
+        private lateinit var remoteConfig: RemoteConfig
         private lateinit var mockApiService: ApiService
         private lateinit var processStateService: ProcessStateService
         private lateinit var mockCacheService: CacheService
@@ -59,7 +59,7 @@ internal class EmbraceConfigServiceTest {
         fun setupBeforeAll() {
             mockkStatic(RemoteConfig::class)
             localConfig = createLocalConfig()
-            mockConfig = RemoteConfig()
+            remoteConfig = RemoteConfig()
             mockApiService = mockk()
             processStateService = FakeProcessStateService()
             mockCacheService = mockk(relaxed = true)
@@ -91,7 +91,7 @@ internal class EmbraceConfigServiceTest {
     @Before
     fun setup() {
         fakeClock.setCurrentTime(1000000000000)
-        every { mockApiService.getConfig() } returns mockConfig
+        every { mockApiService.getConfig() } returns remoteConfig
         fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         every {
             mockCacheService.loadObject("config.json", RemoteConfig::class.java)

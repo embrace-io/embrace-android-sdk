@@ -44,8 +44,8 @@ internal class NativeModuleImpl(
             coreModule.logger,
             embraceNdkServiceRepository,
             NdkDelegateImpl(),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_CRASH_CLEANER),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_STARTUP),
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
             essentialServiceModule.deviceArchitecture,
             coreModule.jsonSerializer
         )
@@ -56,7 +56,7 @@ internal class NativeModuleImpl(
             EmbraceNativeThreadSamplerService(
                 essentialServiceModule.configService,
                 lazy { ndkService.getSymbolsForCurrentArch() },
-                executorService = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION),
+                executorService = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
                 deviceArchitecture = essentialServiceModule.deviceArchitecture
             )
         } else {

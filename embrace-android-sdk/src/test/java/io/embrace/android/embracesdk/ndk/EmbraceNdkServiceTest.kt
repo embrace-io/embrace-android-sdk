@@ -13,6 +13,8 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -27,8 +29,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -81,10 +81,15 @@ internal class EmbraceNdkServiceTest {
             mockkStatic(Embrace::class)
             context = mockContext()
             storageManager = FakeStorageManager()
-            metadataService = mockk(relaxed = true)
-            configService = mockk(relaxed = true)
-            activityService = FakeProcessStateService()
+            metadataService = FakeAndroidMetadataService()
             localConfig = LocalConfig("", false, SdkLocalConfig())
+            configService =
+                FakeConfigService(
+                    autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(localCfg = {
+                        localConfig
+                    })
+                )
+            activityService = FakeProcessStateService()
             deliveryService = FakeDeliveryService()
             userService = FakeUserService()
             sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
@@ -94,9 +99,6 @@ internal class EmbraceNdkServiceTest {
             delegate = mockk(relaxed = true)
             repository = mockk(relaxUnitFun = true)
             resources = mockResources()
-
-            val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
-            every { metadataService.getAppInfo() } returns appInfo
         }
 
         @AfterClass
@@ -250,13 +252,6 @@ internal class EmbraceNdkServiceTest {
         every { Uuid.getEmbUuid() } returns "uuid"
         enableNdk(true)
         every { sharedObjectLoader.loadEmbraceNative() } returns true
-
-        val appInfo = AppInfo(appFramework = Embrace.AppFramework.NATIVE.value)
-        every { metadataService.getAppInfo() } returns appInfo
-        every { metadataService.getLightweightAppInfo() } returns appInfo
-        val deviceInfo = DeviceInfo(jailbroken = false)
-        every { metadataService.getDeviceInfo() } returns deviceInfo
-        every { metadataService.getLightweightDeviceInfo() } returns deviceInfo
 
         val metaData = serializer.toJson(
             NativeCrashMetadata(
@@ -552,8 +547,6 @@ internal class EmbraceNdkServiceTest {
     private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")
 
     private fun enableNdk(enabled: Boolean) {
-        every { configService.autoDataCaptureBehavior } returns fakeAutoDataCaptureBehavior(localCfg = {
-            LocalConfig("", enabled, SdkLocalConfig())
-        })
+        localConfig = LocalConfig("", enabled, SdkLocalConfig())
     }
 }

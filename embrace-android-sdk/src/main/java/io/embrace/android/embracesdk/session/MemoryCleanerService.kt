@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 
 internal interface MemoryCleanerService {
 
@@ -15,6 +15,6 @@ internal interface MemoryCleanerService {
      * Flush collections from each service which has collections in memory.
      */
     fun cleanServicesCollections(
-        exceptionService: EmbraceInternalErrorService
+        internalErrorService: InternalErrorService
     )
 }

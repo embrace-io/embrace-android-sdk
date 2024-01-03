@@ -8,11 +8,11 @@ import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -23,8 +23,8 @@ internal class SessionMessageCollator(
     private val configService: ConfigService,
     private val metadataService: MetadataService,
     private val eventService: EventService,
-    private val remoteLogger: EmbraceRemoteLogger,
-    private val exceptionService: EmbraceInternalErrorService,
+    private val logMessageService: LogMessageService,
+    private val internalErrorService: InternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val thermalStatusService: ThermalStatusService,
@@ -96,17 +96,17 @@ internal class SessionMessageCollator(
             appState = Session.APPLICATION_STATE_FOREGROUND,
             messageType = MESSAGE_TYPE_END,
             eventIds = captureDataSafely { eventService.findEventIdsForSession(startTime, endTime) },
-            infoLogIds = captureDataSafely { remoteLogger.findInfoLogIds(startTime, endTime) },
-            warningLogIds = captureDataSafely { remoteLogger.findWarningLogIds(startTime, endTime) },
-            errorLogIds = captureDataSafely { remoteLogger.findErrorLogIds(startTime, endTime) },
-            networkLogIds = captureDataSafely { remoteLogger.findNetworkLogIds(startTime, endTime) },
-            infoLogsAttemptedToSend = captureDataSafely(remoteLogger::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(remoteLogger::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(remoteLogger::getErrorLogsAttemptedToSend),
+            infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
+            warningLogIds = captureDataSafely { logMessageService.findWarningLogIds(startTime, endTime) },
+            errorLogIds = captureDataSafely { logMessageService.findErrorLogIds(startTime, endTime) },
+            networkLogIds = captureDataSafely { logMessageService.findNetworkLogIds(startTime, endTime) },
+            infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
+            warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
+            errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
             lastHeartbeatTime = clock.now(),
             properties = captureDataSafely(sessionProperties::get),
             endType = endType,
-            unhandledExceptions = captureDataSafely(remoteLogger::getUnhandledExceptionsSent),
+            unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
             webViewInfo = captureDataSafely(webViewService::getCapturedData),
             crashReportId = crashReportId,
             terminationTime = terminationTime,
@@ -132,7 +132,7 @@ internal class SessionMessageCollator(
         val breadcrumbs = captureDataSafely { breadcrumbService.getBreadcrumbs(startTime, endTime) }
 
         val endSessionWithAllErrors =
-            endSession.copy(exceptionError = exceptionService.currentExceptionError)
+            endSession.copy(exceptionError = internalErrorService.currentExceptionError)
 
         return SessionMessage(
             session = endSessionWithAllErrors,

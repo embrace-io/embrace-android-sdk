@@ -13,8 +13,6 @@ import io.embrace.android.embracesdk.payload.BackgroundActivity
 import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.utils.submitSafe
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -123,12 +121,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     private fun saveNow() {
-        cacheExecutorService.submitSafe(
-            Callable<Any?> {
-                cacheBackgroundActivity()
-                null
-            }
-        )
+        cacheExecutorService.submit(::cacheBackgroundActivity)
         willBeSaved = false
     }
 

@@ -22,11 +22,10 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
-internal class EmbraceApplicationExitInfoService constructor(
+internal class EmbraceApplicationExitInfoService(
     private val executorService: ExecutorService,
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
@@ -55,21 +54,16 @@ internal class EmbraceApplicationExitInfoService constructor(
     }
 
     private fun startService() {
-        backgroundExecution = try {
-            executorService.submit {
-                try {
-                    processApplicationExitInfo()
-                } catch (exc: Throwable) {
-                    logWarningWithException(
-                        "AEI - Failed to process AEIs due to unexpected error",
-                        exc,
-                        true
-                    )
-                }
+        backgroundExecution = executorService.submit {
+            try {
+                processApplicationExitInfo()
+            } catch (exc: Throwable) {
+                logWarningWithException(
+                    "AEI - Failed to process AEIs due to unexpected error",
+                    exc,
+                    true
+                )
             }
-        } catch (exc: RejectedExecutionException) {
-            logWarningWithException("AEI - Failed to schedule AEI processing", exc, true)
-            null
         }
     }
 

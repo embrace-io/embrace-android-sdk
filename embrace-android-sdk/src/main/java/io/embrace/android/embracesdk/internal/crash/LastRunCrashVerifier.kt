@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.crash
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * Verifies if the last run crashed.
@@ -19,7 +20,7 @@ internal class LastRunCrashVerifier(private val crashFileMarker: CrashFileMarker
     fun didLastRunCrash(): Boolean {
         return didLastRunCrash ?: didLastRunCrashFuture?.let { future ->
             try {
-                future.get()
+                future.get(2, TimeUnit.SECONDS)
             } catch (e: Throwable) {
                 InternalStaticEmbraceLogger.logError("[Embrace] didLastRunCrash: error while getting the result", e)
                 null

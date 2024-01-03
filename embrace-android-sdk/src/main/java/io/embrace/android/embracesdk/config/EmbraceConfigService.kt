@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
 import kotlin.math.min
 
 /**
@@ -167,16 +166,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
     private fun performInitialConfigLoad() {
         logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
-        try {
-            executorService.submit(
-                Callable<Any?> {
-                    loadConfigFromCache()
-                    null
-                }
-            )
-        } catch (ex: RejectedExecutionException) {
-            logger.logDebug("Failed to schedule initial config load from cache.", ex)
-        }
+        executorService.submit(::loadConfigFromCache)
     }
 
     /**

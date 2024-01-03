@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -114,22 +113,17 @@ internal class EmbracePendingApiCallsSender(
      * [MAX_EXPONENTIAL_RETRY_PERIOD] is reached, after which case it stops trying until the next cold start.
      */
     private fun scheduleApiCallsDelivery(delayInSeconds: Long = 0L) {
-        try {
-            synchronized(this) {
-                if (shouldScheduleDelivery()) {
-                    lastDeliveryTask = scheduledExecutorService.schedule(
-                        { executeDelivery(delayInSeconds) },
-                        delayInSeconds,
-                        TimeUnit.SECONDS
-                    )
-                    logger.logInfo(
-                        "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
-                    )
-                }
+        synchronized(this) {
+            if (shouldScheduleDelivery()) {
+                lastDeliveryTask = scheduledExecutorService.schedule(
+                    { executeDelivery(delayInSeconds) },
+                    delayInSeconds,
+                    TimeUnit.SECONDS
+                )
+                logger.logInfo(
+                    "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
+                )
             }
-        } catch (e: RejectedExecutionException) {
-            // This happens if the executor has shutdown previous to the schedule call
-            logger.logError("Cannot schedule delivery of pending api calls.", e)
         }
     }
 

@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.io.Closeable
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -361,18 +360,13 @@ internal class SessionHandler(
             return
         }
 
-        try {
-            closerFuture?.cancel(true)
-            closerFuture = this.automaticSessionStopper.schedule(
-                automaticSessionStopperCallback,
-                maxSessionSeconds.toLong(),
-                TimeUnit.SECONDS
-            )
-            logger.logDebug("Automatic session stopper successfully scheduled.")
-        } catch (e: RejectedExecutionException) {
-            // This happens if the executor has shutdown previous to the schedule call
-            logger.logError("Cannot schedule Automatic session stopper.", e)
-        }
+        closerFuture?.cancel(true)
+        closerFuture = this.automaticSessionStopper.schedule(
+            automaticSessionStopperCallback,
+            maxSessionSeconds.toLong(),
+            TimeUnit.SECONDS
+        )
+        logger.logDebug("Automatic session stopper successfully scheduled.")
     }
 
     /**
@@ -409,17 +403,12 @@ internal class SessionHandler(
      * It starts a background job that will schedule a callback to do periodic caching.
      */
     private fun startPeriodicCaching(cacheCallback: Runnable) {
-        try {
-            scheduledFuture = this.sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
-                cacheCallback,
-                0,
-                SESSION_CACHING_INTERVAL.toLong(),
-                TimeUnit.SECONDS
-            )
-            logger.logDebug("Periodic session cache successfully scheduled.")
-        } catch (e: RejectedExecutionException) {
-            // This happens if the executor has shutdown previous to the schedule call
-            logger.logError("Cannot schedule Periodic session cache.", e)
-        }
+        scheduledFuture = this.sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
+            cacheCallback,
+            0,
+            SESSION_CACHING_INTERVAL.toLong(),
+            TimeUnit.SECONDS
+        )
+        logger.logDebug("Periodic session cache successfully scheduled.")
     }
 }

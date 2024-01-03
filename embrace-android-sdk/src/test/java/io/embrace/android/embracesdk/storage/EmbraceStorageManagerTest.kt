@@ -4,8 +4,9 @@ import android.content.Context
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.*
-
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File

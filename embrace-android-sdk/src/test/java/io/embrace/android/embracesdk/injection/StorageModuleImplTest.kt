@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.storage.EmbraceStorageManager
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
-import io.mockk.verify
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

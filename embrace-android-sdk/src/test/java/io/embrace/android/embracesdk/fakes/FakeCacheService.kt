@@ -26,7 +26,7 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String>? {
+    override fun listFilenamesByPrefix(prefix: String): List<String> {
         TODO("Not yet implemented")
     }
 

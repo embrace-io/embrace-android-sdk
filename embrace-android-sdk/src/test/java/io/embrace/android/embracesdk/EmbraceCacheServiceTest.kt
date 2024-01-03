@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.fakes.FakeStorageManager
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -21,33 +22,33 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.file.Files
 
 internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
-    private lateinit var dir: File
+    private lateinit var storageManager: FakeStorageManager
 
     private val serializer = EmbraceSerializer()
 
     @Before
     fun setUp() {
-        dir = Files.createTempDirectory("tmpDirPrefix").toFile()
+        storageManager = FakeStorageManager()
         service = EmbraceCacheService(
-            lazy { dir },
+            storageManager,
             serializer,
             InternalEmbraceLogger()
         )
 
         // always assert that nothing is in the dir
-        assertTrue(checkNotNull(dir.listFiles()).isEmpty())
+        assertTrue(checkNotNull(storageManager.cacheDirectory.value.listFiles()).isEmpty())
+        assertTrue(checkNotNull(storageManager.filesDirectory.value.listFiles()).isEmpty())
     }
 
     @Test
     fun `test cacheBytes and loadBytes`() {
         val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-        val children = checkNotNull(dir.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -63,7 +64,7 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test cacheBytes with non-writable file does not throw exception`() {
-        val cacheFile = File(dir, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
+        val cacheFile = File(storageManager.filesDirectory.value, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
         cacheFile.writeText("locked file")
         cacheFile.setReadOnly()
 
@@ -80,7 +81,7 @@ internal class EmbraceCacheServiceTest {
     fun `test cacheObject and loadObject`() {
         val myObject = fakeSession()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
-        val children = checkNotNull(dir.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -91,7 +92,7 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `test cachePayload and loadPayload`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
-        val children = checkNotNull(dir.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -104,7 +105,7 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `cachePayload action throws exception`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { error("Whoops") }
-        val children = checkNotNull(dir.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         assertTrue(children.isEmpty())
     }
 
@@ -127,7 +128,7 @@ internal class EmbraceCacheServiceTest {
         val myObject1 = fakeSession()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
 
-        val children = checkNotNull(dir.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         val file = children.single()
         file.writeText("malformed content")
 

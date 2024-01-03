@@ -101,7 +101,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun getAllCachedSessionIds(): List<String> {
         val allSessions = cacheService.listFilenamesByPrefix(SESSION_FILE_PREFIX)
-        allSessions?.forEach { filename ->
+        allSessions.forEach { filename ->
             if (filename == OLD_VERSION_FILE_NAME) {
                 // If a cached session from a previous version of the SDK is found,
                 // load and save it again using the new naming schema

@@ -4,24 +4,25 @@ import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.storage.StorageManager
 import java.io.File
 import java.io.FileNotFoundException
 
 /**
  * Handles the reading and writing of objects from the app's cache.
+ * Previous versions of the SDK used the cache directory for cached files.
+ * Since v6.3.0, the files directory is used instead.
  */
 internal class EmbraceCacheService(
-    fileProvider: Lazy<File>,
+    private val storageManager: StorageManager,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : CacheService {
 
-    private val storageDir: File by fileProvider
-
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
         if (bytes != null) {
-            val file = File(storageDir, EMBRACE_PREFIX + name)
+            val file = getFileFromFilesDir(name)
             try {
                 file.writeBytes(bytes)
                 logger.logDeveloper(TAG, "Bytes cached")
@@ -35,7 +36,7 @@ internal class EmbraceCacheService(
 
     override fun loadBytes(name: String): ByteArray? {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesOrCacheDir(name)
         try {
             return file.readBytes()
         } catch (ex: FileNotFoundException) {
@@ -48,7 +49,7 @@ internal class EmbraceCacheService(
 
     override fun cachePayload(name: String, action: SerializationAction) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesDir(name)
         try {
             file.outputStream().buffered().use(action)
             logger.logDeveloper(TAG, "Bytes cached")
@@ -61,7 +62,7 @@ internal class EmbraceCacheService(
     override fun loadPayload(name: String): SerializationAction {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
         return { stream ->
-            val file = File(storageDir, EMBRACE_PREFIX + name)
+            val file = getFileFromFilesOrCacheDir(name)
             try {
                 file.inputStream().buffered().use { input ->
                     input.copyTo(stream)
@@ -87,7 +88,7 @@ internal class EmbraceCacheService(
      */
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
         logger.logDeveloper(TAG, "Attempting to cache object: $name")
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesDir(name)
         try {
             serializer.toJson(objectToCache, clazz, file.outputStream())
         } catch (ex: Exception) {
@@ -96,7 +97,7 @@ internal class EmbraceCacheService(
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesOrCacheDir(name)
         try {
             return serializer.fromJson(file.inputStream(), clazz)
         } catch (ex: FileNotFoundException) {
@@ -109,7 +110,7 @@ internal class EmbraceCacheService(
 
     override fun deleteFile(name: String): Boolean {
         logger.logDeveloper("EmbraceCacheService", "Attempting to delete file from cache: $name")
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesOrCacheDir(name)
         try {
             return file.delete()
         } catch (ex: Exception) {
@@ -118,16 +119,16 @@ internal class EmbraceCacheService(
         return false
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String>? {
-        return storageDir.listFiles { file ->
-            file.name.startsWith(EMBRACE_PREFIX + prefix)
-        }?.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
+    override fun listFilenamesByPrefix(prefix: String): List<String> {
+        return storageManager.listFiles { _, name ->
+            name.startsWith(EMBRACE_PREFIX + prefix)
+        }.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         try {
             logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-            val file = File(storageDir, EMBRACE_PREFIX + name)
+            val file = getFileFromFilesDir(name)
             serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
             logger.logDeveloper(TAG, "Bytes cached")
         } catch (ex: Throwable) {
@@ -137,7 +138,7 @@ internal class EmbraceCacheService(
 
     @Suppress("UNCHECKED_CAST")
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
-        val file = File(storageDir, EMBRACE_PREFIX + name)
+        val file = getFileFromFilesOrCacheDir(name)
         try {
             val results = serializer.fromJson(file.inputStream(), ArrayList::class.java)
             return results as List<PendingApiCall>? ?: return emptyList()
@@ -147,6 +148,24 @@ internal class EmbraceCacheService(
             logger.logDebug("Failed to read cache object " + file.path, ex)
         }
         return null
+    }
+
+    /**
+     * Gets a file from the files directory.
+     * Generally used to write files, so we store them in the files directory.
+     * The files directory is the default directory.
+     */
+    private fun getFileFromFilesDir(name: String): File {
+        return storageManager.getFile(EMBRACE_PREFIX + name, false)
+    }
+
+    /**
+     * Gets a file from the files directory or the cache directory if it doesn't exist.
+     * Generally used to read files; we check for existing files
+     * in the cache directory for backwards compatibility.
+     */
+    private fun getFileFromFilesOrCacheDir(name: String): File {
+        return storageManager.getFile(EMBRACE_PREFIX + name, true)
     }
 
     companion object {

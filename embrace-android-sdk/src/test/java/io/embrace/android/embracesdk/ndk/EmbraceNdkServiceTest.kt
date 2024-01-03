@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeStorageManager
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
@@ -48,7 +49,6 @@ import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
-import java.nio.file.Files
 import java.util.concurrent.ExecutorService
 
 internal class EmbraceNdkServiceTest {
@@ -56,6 +56,7 @@ internal class EmbraceNdkServiceTest {
     companion object {
         private lateinit var embraceNdkService: EmbraceNdkService
         private lateinit var context: Context
+        private lateinit var storageManager: FakeStorageManager
         private lateinit var metadataService: MetadataService
         private lateinit var configService: ConfigService
         private lateinit var activityService: FakeProcessStateService
@@ -79,6 +80,7 @@ internal class EmbraceNdkServiceTest {
             mockkStatic(Uuid::class)
             mockkStatic(Embrace::class)
             context = mockContext()
+            storageManager = FakeStorageManager()
             metadataService = mockk(relaxed = true)
             configService = mockk(relaxed = true)
             activityService = FakeProcessStateService()
@@ -112,16 +114,20 @@ internal class EmbraceNdkServiceTest {
             objectMocks = false
         )
 
-        val file = File("$storageDir/ndk")
-        if (file.exists()) {
-            file.delete()
+        val cacheDir = File("${storageManager.cacheDirectory}/ndk")
+        if (cacheDir.exists()) {
+            cacheDir.delete()
+        }
+        val filesDir = File("${storageManager.filesDirectory}/ndk")
+        if (filesDir.exists()) {
+            filesDir.delete()
         }
     }
 
     private fun initializeService() {
         embraceNdkService = EmbraceNdkService(
             context,
-            lazy { storageDir },
+            storageManager,
             metadataService,
             activityService,
             configService,
@@ -209,9 +215,9 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
 
-        val reportBasePath = storageDir.absolutePath + "/ndk"
+        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
         val markerFilePath =
-            storageDir.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.value.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
         verify(exactly = 1) {
             delegate._installSignalHandlers(
                 reportBasePath,
@@ -264,9 +270,9 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
 
-        val reportBasePath = storageDir.absolutePath + "/ndk"
+        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
         val markerFilePath =
-            storageDir.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.value.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
             metadataService.getLightweightAppInfo()
@@ -306,8 +312,8 @@ internal class EmbraceNdkServiceTest {
     fun `test initialization with ndk disabled doesn't run _installSignalHandlers and _updateMetaData`() {
         enableNdk(false)
         initializeService()
-        val reportBasePath = storageDir.absolutePath + "/ndk"
-        val markerFilePath = storageDir.absolutePath + "/crash_file_marker"
+        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
+        val markerFilePath = storageManager.filesDirectory.value.absolutePath + "/crash_file_marker"
 
         verify(exactly = 0) {
             delegate._installSignalHandlers(
@@ -550,6 +556,4 @@ internal class EmbraceNdkServiceTest {
             LocalConfig("", enabled, SdkLocalConfig())
         })
     }
-
-    private val storageDir: File by lazy { Files.createTempDirectory("test").toFile() }
 }

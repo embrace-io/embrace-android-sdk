@@ -55,6 +55,8 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
 import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.injection.SessionModuleImpl;
+import io.embrace.android.embracesdk.injection.StorageModule;
+import io.embrace.android.embracesdk.injection.StorageModuleImpl;
 import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
@@ -103,9 +105,10 @@ import kotlin.LazyKt;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function11;
+import kotlin.jvm.functions.Function12;
 import kotlin.jvm.functions.Function2;
 import kotlin.jvm.functions.Function3;
+import kotlin.jvm.functions.Function4;
 import kotlin.jvm.functions.Function5;
 
 /**
@@ -153,15 +156,19 @@ final class EmbraceImpl {
     private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
 
     @NonNull
-    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
-        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
+    private final Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier;
+
+    @NonNull
+    private final Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule,
+        StorageModule, BuildInfo, String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture,
+        EssentialServiceModule> essentialServiceModuleSupplier;
 
     @NonNull
     private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
         DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
 
     @NonNull
-    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
+    private final Function4<CoreModule, StorageModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
         deliveryModuleSupplier;
 
     /**
@@ -284,12 +291,13 @@ final class EmbraceImpl {
                 @NonNull Function0<WorkerThreadModule> workerThreadModuleSupplier,
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
-                @NonNull Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo,
-                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
+                @NonNull Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier,
+                @NonNull Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, StorageModule, BuildInfo,
+                                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
-                @NonNull Function3<CoreModule, EssentialServiceModule, WorkerThreadModule,
+                @NonNull Function4<CoreModule, StorageModule, EssentialServiceModule, WorkerThreadModule,
                     DeliveryModule> deliveryModuleSupplier) {
         initModule = initModuleSupplier.invoke();
         sdkClock = initModule.getClock();
@@ -297,6 +305,7 @@ final class EmbraceImpl {
         this.workerThreadModuleSupplier = workerThreadModuleSupplier;
         this.systemServiceModuleSupplier = systemServiceModuleSupplier;
         this.androidServicesModuleSupplier = androidServiceModuleSupplier;
+        this.storageModuleSupplier = storageModuleSupplier;
         this.essentialServiceModuleSupplier = essentialServiceModuleSupplier;
         this.dataCaptureServiceModuleSupplier = dataCaptureServiceModuleSupplier;
         this.deliveryModuleSupplier = deliveryModuleSupplier;
@@ -310,6 +319,7 @@ final class EmbraceImpl {
             WorkerThreadModuleImpl::new,
             SystemServiceModuleImpl::new,
             AndroidServicesModuleImpl::new,
+            StorageModuleImpl::new,
             EssentialServiceModuleImpl::new,
             DataCaptureServiceModuleImpl::new,
             DeliveryModuleImpl::new
@@ -381,6 +391,12 @@ final class EmbraceImpl {
         preferencesService = androidServicesModule.getPreferencesService();
         serviceRegistry.registerService(preferencesService);
 
+        final StorageModule storageModule = storageModuleSupplier.invoke(
+            nonNullWorkerThreadModule,
+            initModule,
+            coreModule
+        );
+
         // bootstrap initialization. ConfigService not created yet...
         final EssentialServiceModule essentialServiceModule = essentialServiceModuleSupplier.invoke(
             initModule,
@@ -388,6 +404,7 @@ final class EmbraceImpl {
             nonNullWorkerThreadModule,
             systemServiceModule,
             androidServicesModule,
+            storageModule,
             BuildInfo.fromResources(coreModule.getResources(), coreModule.getContext().getPackageName()),
             customAppId,
             enableIntegrationTesting,
@@ -479,6 +496,7 @@ final class EmbraceImpl {
 
         final DeliveryModule deliveryModule = deliveryModuleSupplier.invoke(
             coreModule,
+            storageModule,
             essentialServiceModule,
             nonNullWorkerThreadModule
         );
@@ -524,6 +542,7 @@ final class EmbraceImpl {
 
         NativeModule nativeModule = new NativeModuleImpl(
             coreModule,
+            storageModule,
             essentialServiceModule,
             deliveryModule,
             sessionProperties,
@@ -603,6 +622,7 @@ final class EmbraceImpl {
 
         CrashModule crashModule = new CrashModuleImpl(
             initModule,
+            storageModule,
             essentialServiceModule,
             deliveryModule,
             nativeModule,

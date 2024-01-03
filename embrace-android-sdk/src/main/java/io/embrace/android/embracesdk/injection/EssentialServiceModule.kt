@@ -14,15 +14,10 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
-import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
@@ -46,7 +41,6 @@ import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateServic
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import java.io.File
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in
@@ -62,17 +56,13 @@ internal interface EssentialServiceModule {
     val gatingService: GatingService
     val userService: UserService
     val urlBuilder: ApiUrlBuilder
-    val cache: ApiResponseCache
     val apiClient: ApiClient
     val apiService: ApiService
     val sharedObjectLoader: SharedObjectLoader
     val cpuInfoDelegate: CpuInfoDelegate
     val deviceArchitecture: DeviceArchitecture
     val networkConnectivityService: NetworkConnectivityService
-    val cacheService: CacheService
-    val deliveryCacheManager: DeliveryCacheManager
     val pendingApiCallsSender: PendingApiCallsSender
-    val storageDirectory: Lazy<File>
 }
 
 internal class EssentialServiceModuleImpl(
@@ -81,12 +71,13 @@ internal class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
+    storageModule: StorageModule,
     buildInfo: BuildInfo,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
     private val configStopAction: () -> Unit,
     private val configServiceProvider: () -> ConfigService? = { null },
-    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
+    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl(),
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
@@ -136,9 +127,6 @@ internal class EssentialServiceModuleImpl(
 
     private val pendingApiCallsExecutor =
         workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-
-    private val deliveryCacheExecutorService =
-        workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -229,13 +217,6 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    override val cache by singleton {
-        ApiResponseCache(
-            coreModule.jsonSerializer,
-            { File(storageDirectory.value, "emb_config_cache") }
-        )
-    }
-
     override val gatingService: GatingService by singleton {
         EmbraceGatingService(configService)
     }
@@ -263,25 +244,11 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    override val cacheService: CacheService by singleton {
-        EmbraceCacheService(storageDirectory, coreModule.jsonSerializer, coreModule.logger)
-    }
-
-    override val deliveryCacheManager: DeliveryCacheManager by singleton {
-        EmbraceDeliveryCacheManager(
-            cacheService,
-            deliveryCacheExecutorService,
-            coreModule.logger,
-            initModule.clock,
-            coreModule.jsonSerializer
-        )
-    }
-
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         EmbracePendingApiCallsSender(
             networkConnectivityService,
             pendingApiCallsExecutor,
-            deliveryCacheManager,
+            storageModule.deliveryCacheManager,
             initModule.clock
         )
     }
@@ -290,10 +257,12 @@ internal class EssentialServiceModuleImpl(
         EmbraceApiService(
             apiClient = apiClient,
             serializer = coreModule.jsonSerializer,
-            cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
+            cachedConfigProvider = { url: String, request: ApiRequest ->
+                storageModule.cache.retrieveCachedConfig(url, request)
+            },
             logger = coreModule.logger,
             executorService = networkRequestExecutor,
-            cacheManager = deliveryCacheManager,
+            cacheManager = storageModule.deliveryCacheManager,
             pendingApiCallsSender = pendingApiCallsSender,
             lazyDeviceId = lazyDeviceId,
             appId = appId,
@@ -306,10 +275,6 @@ internal class EssentialServiceModuleImpl(
         ApiClientImpl(
             coreModule.logger
         )
-    }
-
-    override val storageDirectory: Lazy<File> = lazy {
-        coreModule.context.cacheDir
     }
 }
 

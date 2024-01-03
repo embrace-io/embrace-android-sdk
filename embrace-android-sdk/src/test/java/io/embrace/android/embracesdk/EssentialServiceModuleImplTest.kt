@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
@@ -18,7 +19,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -38,6 +38,7 @@ internal class EssentialServiceModuleImplTest {
             workerThreadModule = WorkerThreadModuleImpl(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
+            storageModule = FakeStorageModule(),
             buildInfo = BuildInfo("", "", ""),
             customAppId = "abcde",
             enableIntegrationTesting = false,
@@ -50,13 +51,11 @@ internal class EssentialServiceModuleImplTest {
         assertTrue(module.processStateService is EmbraceProcessStateService)
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.urlBuilder)
-        assertNotNull(module.cache)
         assertNotNull(module.apiClient)
         assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)
         assertTrue(module.configService is EmbraceConfigService)
         assertTrue(module.gatingService is EmbraceGatingService)
-        assertEquals(module.storageDirectory.value, coreModule.context.cacheDir)
     }
 
     @Test
@@ -68,6 +67,7 @@ internal class EssentialServiceModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
+            storageModule = FakeStorageModule(),
             buildInfo = BuildInfo("", "", ""),
             customAppId = null,
             enableIntegrationTesting = false,

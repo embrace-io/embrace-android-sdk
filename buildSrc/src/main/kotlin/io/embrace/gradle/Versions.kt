@@ -24,7 +24,7 @@ object Versions {
     val dokka = "1.7.10"
 
     @JvmField
-    val detekt = "1.22.0"
+    val detekt = "1.21.0"
 
     @JvmField
     val binaryCompatValidator = "0.12.1"

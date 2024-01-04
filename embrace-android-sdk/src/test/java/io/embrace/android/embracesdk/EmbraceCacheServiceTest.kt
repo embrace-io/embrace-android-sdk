@@ -178,6 +178,18 @@ internal class EmbraceCacheServiceTest {
         val loadObject = service.loadObject("test", SessionMessage::class.java)
         assertEquals(original, loadObject)
     }
+
+    @Test
+    fun `test deleteFile from files dir`() {
+        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
+        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
+
+        var children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        assertEquals(1, children.size)
+        service.deleteFile(CUSTOM_OBJECT_1_FILE_NAME)
+        children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        assertEquals(0, children.size)
+    }
 }
 
 internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"

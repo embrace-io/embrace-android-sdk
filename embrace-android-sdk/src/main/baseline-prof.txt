@@ -2127,7 +2127,6 @@ HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;-><
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->addListener(Lio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleListener;)V
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->getActivityName(Landroid/app/Activity;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityCreated(Landroid/app/Activity;Landroid/os/Bundle;)V
-HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityPaused(Landroid/app/Activity;)V
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityResumed(Landroid/app/Activity;)V
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityStarted(Landroid/app/Activity;)V
 HSPLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->updateOrientationWithActivity(Landroid/app/Activity;)V
@@ -2977,4 +2976,5 @@ PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->setApplication
 PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->setArrayPreference(Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/util/Set;)V
 PLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleListener$DefaultImpls;->onViewClose(Lio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleListener;Landroid/app/Activity;)V
 PLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityDestroyed(Landroid/app/Activity;)V
+PLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityPaused(Landroid/app/Activity;)V
 PLio/embrace/android/embracesdk/session/lifecycle/ActivityLifecycleTracker;->onActivityStopped(Landroid/app/Activity;)V

@@ -133,7 +133,7 @@ internal class IntegrationTestRule(
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: InitModule = FakeInitModule(clock = fakeClock),
         val fakeCoreModule: FakeCoreModule = FakeCoreModule(),
-        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(),
+        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
         val fakeConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             sdkModeBehavior = fakeSdkModeBehavior(

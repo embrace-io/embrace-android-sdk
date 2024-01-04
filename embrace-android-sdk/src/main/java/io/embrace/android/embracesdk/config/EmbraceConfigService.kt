@@ -165,7 +165,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
     private fun performInitialConfigLoad() {
         logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
-        backgroundWorker.submit(::loadConfigFromCache)
+        backgroundWorker.submit(runnable = ::loadConfigFromCache)
     }
 
     /**

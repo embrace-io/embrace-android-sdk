@@ -104,7 +104,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service.onBackground(clock.now())
 
         val payload = checkNotNull(service.backgroundActivity)
-        assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, payload.startType)
+        assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
         assertEquals(payload.sessionId, metadataService.activeSessionId)
     }
@@ -122,7 +122,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
         val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
-        assertEquals(5, payload.backgroundActivity.number)
+        assertEquals(5, payload.session.number)
     }
 
     @Test
@@ -358,7 +358,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             ndkService,
             clock,
             collator,
-            blockableExecutorService
+            BackgroundWorker(blockableExecutorService)
         )
     }
 }

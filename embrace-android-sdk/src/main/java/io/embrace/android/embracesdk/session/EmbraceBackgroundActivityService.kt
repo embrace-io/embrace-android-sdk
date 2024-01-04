@@ -119,7 +119,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     private fun saveNow() {
-        backgroundWorker.submit(::cacheBackgroundActivity)
+        backgroundWorker.submit(runnable = ::cacheBackgroundActivity)
         willBeSaved = false
     }
 

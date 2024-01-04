@@ -97,6 +97,7 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
+import io.embrace.android.embracesdk.worker.TaskPriority;
 import io.embrace.android.embracesdk.worker.WorkerName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl;
@@ -153,7 +154,7 @@ final class EmbraceImpl {
     private final Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServicesModuleSupplier;
 
     @NonNull
-    private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
+    private final Function1<InitModule, WorkerThreadModule> workerThreadModuleSupplier;
 
     @NonNull
     private final Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier;
@@ -285,7 +286,7 @@ final class EmbraceImpl {
 
     EmbraceImpl(@NonNull Function0<InitModule> initModuleSupplier,
                 @NonNull Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier,
-                @NonNull Function0<WorkerThreadModule> workerThreadModuleSupplier,
+                @NonNull Function1<InitModule, WorkerThreadModule> workerThreadModuleSupplier,
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
                 @NonNull Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier,
@@ -371,10 +372,10 @@ final class EmbraceImpl {
         application = coreModule.getApplication();
         appFramework = coreModule.getAppFramework();
 
-        final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke();
+        final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke(initModule);
         workerThreadModule = nonNullWorkerThreadModule;
 
-        nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(() -> {
+        nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.NORMAL, () -> {
             final SpansService spansService = initModule.getSpansService();
             if (spansService instanceof Initializable) {
                 ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));

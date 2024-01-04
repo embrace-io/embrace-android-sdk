@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.Closeable
 import java.util.concurrent.Callable
 
@@ -209,7 +210,7 @@ internal class EmbraceDeliveryCacheManager(
             }
             loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
         }
-        val cached = backgroundWorker.submit(callable).get()
+        val cached = backgroundWorker.submit(TaskPriority.NORMAL, callable).get()
         return if (cached != null) {
             cached
         } else {

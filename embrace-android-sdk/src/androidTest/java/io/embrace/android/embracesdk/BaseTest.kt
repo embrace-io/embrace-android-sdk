@@ -47,7 +47,7 @@ internal open class BaseTest {
     protected val serializer = EmbraceSerializer()
     private val testServer: TestServer = TestServer()
     private var fileObserver: EmbraceFileObserver? = null
-    private val storageDir by lazy { mContext.cacheDir }
+    private val storageDir by lazy { File(mContext.filesDir, "embrace") }
 
     private val remoteConfig = RemoteConfig(
         webViewVitals = WebViewVitals(100f, 100)

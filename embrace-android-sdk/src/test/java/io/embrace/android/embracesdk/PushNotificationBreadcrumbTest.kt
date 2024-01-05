@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class PushNotificationBreadcrumbTest {
@@ -20,16 +19,12 @@ internal class PushNotificationBreadcrumbTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("push_notification_breadcrumb_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("push_notification_breadcrumb_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("push_notification_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, PushNotificationBreadcrumb::class.java)
+        val obj = deserializeJsonFromResource<PushNotificationBreadcrumb>("push_notification_breadcrumb_expected.json")
         assertEquals("title", obj.title)
         assertEquals("body", obj.body)
         assertEquals("from", obj.from)
@@ -39,9 +34,8 @@ internal class PushNotificationBreadcrumbTest {
         assertEquals(1600000000, obj.getStartTime())
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", PushNotificationBreadcrumb::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<PushNotificationBreadcrumb>()
     }
 }

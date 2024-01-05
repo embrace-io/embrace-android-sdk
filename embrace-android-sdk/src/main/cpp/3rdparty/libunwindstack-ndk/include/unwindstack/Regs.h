@@ -58,6 +58,7 @@ class Regs {
   virtual void* RawData() = 0;
   virtual uint64_t pc() = 0;
   virtual uint64_t sp() = 0;
+  virtual uint64_t lr() = 0; // embrace added
 
   virtual void set_pc(uint64_t pc) = 0;
   virtual void set_sp(uint64_t sp) = 0;

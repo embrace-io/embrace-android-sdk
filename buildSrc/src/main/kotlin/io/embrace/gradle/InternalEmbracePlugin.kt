@@ -22,9 +22,7 @@ class InternalEmbracePlugin : Plugin<Project> {
         configureBuildPlugins(project)
 
         // TODO: (future) - these scripts should be integrated into this class.
-        if (project.name != "test-server") { // don't want to release our test code...
-            project.apply(from = project.file("../scripts/release.gradle"))
-        }
+        project.apply(from = project.file("../scripts/release.gradle"))
 
         project.pluginManager.withPlugin("com.android.library") {
             val android = project.extensions.getByType(LibraryExtension::class.java)
@@ -120,7 +118,7 @@ class InternalEmbracePlugin : Plugin<Project> {
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
                 aarMetadata {
-                    minCompileSdk = 16
+                    minCompileSdk = Versions.minSdk
                 }
             }
 
@@ -153,7 +151,7 @@ class InternalEmbracePlugin : Plugin<Project> {
             testOptions {
                 unitTests {
                     all { test ->
-                        test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2) + 1
+                        test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
                     }
                 }
             }

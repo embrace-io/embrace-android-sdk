@@ -8,7 +8,7 @@ internal interface Initializable {
     /**
      * Initialize the service so the SDK can start logging spans. Spans will not be logged by this service until this call completes.
      */
-    fun initializeService(sdkInitStartTimeNanos: Long, sdkInitEndTimeNanos: Long)
+    fun initializeService(sdkInitStartTimeNanos: Long)
 
     /**
      * Returns true if this service is initialized already

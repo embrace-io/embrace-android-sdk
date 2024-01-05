@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class ComposeLocalConfig(
-    @SerializedName("capture_compose_onclick")
+    @Json(name = "capture_compose_onclick")
     val captureComposeOnClick: Boolean? = null
 )

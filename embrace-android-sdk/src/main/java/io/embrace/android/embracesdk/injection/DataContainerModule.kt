@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.capture.aei.NoOpApplicationExitInfoService
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -47,7 +47,9 @@ internal class DataContainerModuleImpl(
                 essentialServiceModule.configService,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
-                deliveryModule.deliveryService
+                deliveryModule.deliveryService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.userService
             )
         } else {
             NoOpApplicationExitInfoService()
@@ -57,15 +59,15 @@ internal class DataContainerModuleImpl(
     override val performanceInfoService: PerformanceInfoService by singleton {
         EmbracePerformanceInfoService(
             anrModule.anrService,
-            dataCaptureServiceModule.networkConnectivityService,
+            essentialServiceModule.networkConnectivityService,
             customerLogModule.networkLoggingService,
             dataCaptureServiceModule.powerSaveModeService,
             dataCaptureServiceModule.memoryService,
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
             applicationExitInfoService,
-            dataCaptureServiceModule.strictModeService,
-            nativeModule.nativeThreadSamplerService
+            nativeModule.nativeThreadSamplerService,
+            anrModule.responsivenessMonitorService
         )
     }
 

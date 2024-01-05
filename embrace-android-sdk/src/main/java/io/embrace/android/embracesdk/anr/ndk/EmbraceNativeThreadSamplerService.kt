@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.anr.ndk
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -40,22 +39,16 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         fun finishSampling(): List<NativeThreadAnrSample>?
     }
 
-    @VisibleForTesting
     internal var ignored = true
 
-    @VisibleForTesting
     internal var sampling = false
 
-    @VisibleForTesting
     internal var count = -1
 
-    @VisibleForTesting
     internal var factor = -1
 
-    @VisibleForTesting
     internal var intervals: MutableList<NativeThreadAnrInterval> = mutableListOf()
 
-    @VisibleForTesting
     internal val currentInterval: NativeThreadAnrInterval?
         get() = intervals.lastOrNull()
 
@@ -239,7 +232,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
      * Determines whether or not we should sample the target thread based on the thread stacktrace
      * and the ANR config.
      */
-    @VisibleForTesting
+
     internal fun containsAllowedStackframes(
         anrBehavior: AnrBehavior,
         stacktrace: Array<StackTraceElement>

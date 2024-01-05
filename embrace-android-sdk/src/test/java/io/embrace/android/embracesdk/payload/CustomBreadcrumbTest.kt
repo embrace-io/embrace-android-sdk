@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class CustomBreadcrumbTest {
@@ -15,23 +16,18 @@ internal class CustomBreadcrumbTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("custom_breadcrumb_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("custom_breadcrumb_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("custom_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, CustomBreadcrumb::class.java)
+        val obj = deserializeJsonFromResource<CustomBreadcrumb>("custom_breadcrumb_expected.json")
         assertEquals("test", obj.message)
         assertEquals(1600000000, obj.getStartTime())
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", CustomBreadcrumb::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<CustomBreadcrumb>()
     }
 }

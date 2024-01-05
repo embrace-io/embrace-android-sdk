@@ -1,18 +1,20 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class WebViewInfo(
-    @SerializedName("t")
-    val tag: String,
+    @Json(name = "t")
+    val tag: String? = null,
 
-    @SerializedName("vt")
+    @Json(name = "vt")
     val webVitals: MutableList<WebVital> = mutableListOf(),
 
-    @SerializedName("u")
+    @Json(name = "u")
     val url: String,
 
-    @SerializedName("ts")
+    @Json(name = "ts")
     val startTime: Long,
 
     @Transient

@@ -6,12 +6,9 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.WebVitalType
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.utils.at
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -36,14 +33,11 @@ internal class EmbraceWebViewServiceTest {
         ResourceReader.readResourceAsText("expected_core_vital_repeated_elements_script.json")
 
     private lateinit var configService: ConfigService
-    private lateinit var memoryCleanerService: MemoryCleanerService
     private lateinit var embraceWebViewService: EmbraceWebViewService
     private var cfg: RemoteConfig? = RemoteConfig()
 
     @Before
     fun setup() {
-        memoryCleanerService = mockk()
-        every { memoryCleanerService.addListener(any()) } returns Unit
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
         configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
         embraceWebViewService = EmbraceWebViewService(configService, EmbraceSerializer())
@@ -51,7 +45,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test messages complete group by url and timestamp`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
 
         assertEquals(1, embraceWebViewService.getCapturedData().size)
@@ -60,7 +53,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test two complete groups by url and timestamp`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
 
@@ -71,7 +63,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test two complete groups whit same url and timestamp keep correct CLS and LCP`() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
 
@@ -82,7 +73,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        20,
+                        20L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }
@@ -90,13 +81,13 @@ internal class EmbraceWebViewServiceTest {
                 WebVitalType.LCP -> {
                     assertEquals(2222, it.startTime) // bigger starttime from expectedCompleteData
                 }
+                else -> {}
             }
         }
     }
 
     @Test
     fun `test 3 groups 2 diff timestamps `() {
-
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
@@ -108,7 +99,6 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test repeated elements in one message`() {
-
         embraceWebViewService.collectWebData("webView1", repeatedElementsSameMessage)
 
         assertEquals(1, embraceWebViewService.getCapturedData().size)
@@ -118,7 +108,7 @@ internal class EmbraceWebViewServiceTest {
             when (it.type) {
                 WebVitalType.CLS -> {
                     assertEquals(
-                        30,
+                        30L,
                         it.duration
                     ) // bigger duration from expectedCompleteRepeatedData
                 }
@@ -126,6 +116,7 @@ internal class EmbraceWebViewServiceTest {
                 WebVitalType.LCP -> {
                     assertEquals(2222, it.startTime) // bigger starttime from expectedCompleteData
                 }
+                else -> {}
             }
         }
     }

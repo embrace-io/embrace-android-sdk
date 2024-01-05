@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.capture.webview
 
-import com.google.gson.reflect.TypeToken
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
@@ -17,11 +16,8 @@ internal class EmbraceWebViewService(
      * The information collected for each WebView
      */
     private val webViewInfoMap = hashMapOf<String, WebViewInfo>()
-    private val webVitalType = object : TypeToken<WebViewInfo>() {}.type
 
     override fun collectWebData(tag: String, message: String) {
-        InternalStaticEmbraceLogger.logger.logDeveloper("EmbraceWebViewService", "Collecting WebView log: $message")
-
         if (message.contains(MESSAGE_KEY_FOR_METRICS)) {
             collectWebVital(message, tag)
         } else {
@@ -51,9 +47,7 @@ internal class EmbraceWebViewService(
                 )
             }
 
-            webViewInfoMap[it.url + it.startTime] = processVitalList(it, webViewInfoMap[it.url + it.startTime]!!)
-
-            InternalStaticEmbraceLogger.logger.logDebug("Collected WebView core vital: $message")
+            webViewInfoMap[it.url + it.startTime] = processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
         }
     }
 
@@ -72,7 +66,7 @@ internal class EmbraceWebViewService(
                 } else {
                     when (it.type) {
                         WebVitalType.CLS -> {
-                            if (newVital.duration > it.duration) { // largest CLS metric
+                            if ((newVital.duration ?: 0) > (it.duration ?: 0)) { // largest CLS metric
                                 storedMessage.webVitalMap[it.type] = newVital
                             }
                         }
@@ -95,7 +89,7 @@ internal class EmbraceWebViewService(
     private fun parseWebVital(message: String): WebViewInfo? {
         try {
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
-                return serializer.fromJson(message, webVitalType)
+                return serializer.fromJson(message, WebViewInfo::class.java)
             } else {
                 InternalStaticEmbraceLogger.logger.logError("Web Vital info is too large to parse")
             }

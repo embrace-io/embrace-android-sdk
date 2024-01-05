@@ -62,6 +62,10 @@
 #define EMB_SESSION_ID_SIZE 256
 #endif
 
+#ifndef EMB_FRAME_STR_SIZE
+#define EMB_FRAME_STR_SIZE 512
+#endif
+
 #ifndef EMB_PATH_SIZE
 #define EMB_PATH_SIZE 512
 #endif
@@ -69,11 +73,25 @@
 typedef struct {
     char filename[256];
     char method[256];
+    char build_id[EMB_FRAME_STR_SIZE];
 
     uintptr_t frame_addr;
     uintptr_t offset_addr;
     uintptr_t module_addr;
     uintptr_t line_num;
+    uint64_t rel_pc;
+    uint64_t pc;
+    uint64_t sp;
+    uint64_t lr; // only populated for the first frame.
+    uint64_t function_offset;
+    char function_name[EMB_FRAME_STR_SIZE];
+
+    bool elf_file_not_readable;
+    uint64_t start;
+    uint64_t end;
+    uint64_t offset;
+    uint16_t flags;
+    char full_name[EMB_FRAME_STR_SIZE];
 } emb_sframe;
 
 typedef struct {

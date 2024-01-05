@@ -2,11 +2,13 @@ package io.embrace.android.embracesdk.registry
 
 import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -24,7 +26,8 @@ internal class ServiceRegistryTest {
 
         val expected = listOf(service)
         assertEquals(expected, registry.closeables)
-        assertEquals(expected, registry.activityListeners)
+        assertEquals(expected, registry.processStateListeners)
+        assertEquals(expected, registry.activityLifecycleListeners)
         assertEquals(expected, registry.memoryCleanerListeners)
         assertEquals(expected, registry.configListeners)
     }
@@ -36,9 +39,13 @@ internal class ServiceRegistryTest {
         registry.registerService(service)
         val expected = listOf(service)
 
-        val activityService = FakeActivityService()
+        val activityService = FakeProcessStateService()
         registry.registerActivityListeners(activityService)
         assertEquals(expected, activityService.listeners)
+
+        val activityLifecycleTracker = FakeActivityTracker()
+        registry.registerActivityLifecycleListeners(activityLifecycleTracker)
+        assertEquals(expected, activityLifecycleTracker.listeners)
 
         val memoryCleanerService = FakeMemoryCleanerService()
         registry.registerMemoryCleanerListeners(memoryCleanerService)
@@ -64,7 +71,8 @@ internal class ServiceRegistryTest {
         Closeable,
         ConfigListener,
         MemoryCleanerListener,
-        ActivityListener {
+        ProcessStateListener,
+        ActivityLifecycleListener {
 
         var closed = false
 

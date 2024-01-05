@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
@@ -59,16 +59,12 @@ internal class SessionTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("session_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("session_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("session_expected.json")
-        val obj = Gson().fromJson(json, Session::class.java)
+        val obj = deserializeJsonFromResource<Session>("session_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -107,9 +103,8 @@ internal class SessionTest {
         }
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", Session::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<Session>()
     }
 }

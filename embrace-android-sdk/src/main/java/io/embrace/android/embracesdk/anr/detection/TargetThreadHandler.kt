@@ -4,9 +4,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.MessageQueue
-import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
 import java.util.concurrent.ExecutorService
@@ -49,7 +48,6 @@ internal class TargetThreadHandler(
         }
     }
 
-    @VisibleForTesting
     internal fun onIdleThread(): Boolean {
         onMainThreadUnblocked()
         return true

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,8 +16,7 @@ internal class BaseUrlLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("base_url_config.json")
-        val obj = Gson().fromJson(json, BaseUrlLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<BaseUrlLocalConfig>("base_url_config.json")
         assertEquals("https://config.example.com", obj.config)
         assertEquals("https://data.example.com", obj.data)
         assertEquals("https://data-dev.example.com", obj.dataDev)
@@ -26,7 +25,7 @@ internal class BaseUrlLocalConfigTest {
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", BaseUrlLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<BaseUrlLocalConfig>()
         verifyDefaults(obj)
     }
 

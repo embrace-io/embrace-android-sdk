@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.comms.delivery.SessionMessageState
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
@@ -18,53 +18,53 @@ internal class FakeDeliveryService : DeliveryService {
     var lastSentCrash: EventMessage? = null
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
+    val sentMoments: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
-    var lastSentBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSentBackgroundActivities: MutableList<BackgroundActivityMessage> = mutableListOf()
     var saveBackgroundActivityInvokedCount: Int = 0
-    var lastSavedBackgroundActivity: BackgroundActivityMessage? = null
+    var lastSavedBackgroundActivities: MutableList<BackgroundActivityMessage> = mutableListOf()
     var lastEventSentAsync: EventMessage? = null
     var eventSentAsyncInvokedCount: Int = 0
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
     var lastSavedSession: SessionMessage? = null
-    val lastSentSessions: MutableList<Pair<SessionMessage, SessionMessageState>> = mutableListOf()
-    var appExitInfoRequests: MutableList<List<AppExitInfoData>> = mutableListOf()
+    var lastSnapshotType: SessionSnapshotType? = null
+    val lastSentSessions: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
+    var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
-    override fun saveSession(sessionMessage: SessionMessage) {
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+        if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
+            lastSentSessions.add(sessionMessage to snapshotType)
+        }
         lastSavedSession = sessionMessage
-    }
-
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
-        lastSentSessions.add(Pair(sessionMessage, state))
+        lastSnapshotType = snapshotType
     }
 
     override fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?) {
         lastSentCachedSession = currentSession
     }
 
-    override fun saveCrash(crash: EventMessage) {
-        lastSavedCrash = crash
-    }
-
-    override fun sendEventAsync(eventMessage: EventMessage) {
+    override fun sendMoment(eventMessage: EventMessage) {
         eventSentAsyncInvokedCount++
         lastEventSentAsync = eventMessage
+        sentMoments.add(eventMessage)
     }
 
     override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
         saveBackgroundActivityInvokedCount++
-        lastSavedBackgroundActivity = backgroundActivityMessage
+        lastSavedBackgroundActivities.add(backgroundActivityMessage)
     }
 
     override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
-        lastSentBackgroundActivity = backgroundActivityMessage
+        lastSentBackgroundActivities.add(backgroundActivityMessage)
     }
 
     override fun sendBackgroundActivities() {
+        lastSentBackgroundActivities.addAll(lastSavedBackgroundActivities)
         sendBackgroundActivitiesInvokedCount++
     }
 
-    override fun sendLogs(eventMessage: EventMessage) {
+    override fun sendLog(eventMessage: EventMessage) {
         lastSentLogs.add(eventMessage)
     }
 
@@ -72,19 +72,12 @@ internal class FakeDeliveryService : DeliveryService {
         lastSentNetworkCall = networkEvent
     }
 
-    override fun sendEvent(eventMessage: EventMessage) {
-        lastSentEvent = eventMessage
-    }
-
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        lastSentEvent = eventMessage
-    }
-
-    override fun sendCrash(crash: EventMessage) {
+    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
+        lastSavedCrash = crash
         lastSentCrash = crash
     }
 
-    override fun sendAEIBlob(appExitInfoData: List<AppExitInfoData>) {
-        this.appExitInfoRequests.add(appExitInfoData)
+    override fun sendAEIBlob(blobMessage: BlobMessage) {
+        blobMessages.add(blobMessage)
     }
 }

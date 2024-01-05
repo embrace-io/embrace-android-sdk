@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.Embrace
 internal class ComposeInternalErrorLogger {
 
     fun logError(throwable: Throwable) {
-        Embrace.getInstance().logInternalError(
+        Embrace.getInstance().internalInterface.logInternalError(
             throwable
         )
     }

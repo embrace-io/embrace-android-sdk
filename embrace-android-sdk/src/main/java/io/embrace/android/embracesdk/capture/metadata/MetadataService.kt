@@ -110,11 +110,12 @@ internal interface MetadataService {
     val activeSessionId: String?
 
     /**
-     * Sets the currently active session ID;
+     * Sets the currently active session ID.
      *
      * @param sessionId the session ID that is currently active
+     * @param isSession true if it's a session, false if it's a background activity
      */
-    fun setActiveSessionId(sessionId: String?)
+    fun setActiveSessionId(sessionId: String?, isSession: Boolean)
 
     /**
      * If the currently active session ID is @param sessionId, set it to null

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -17,8 +17,7 @@ internal class BackgroundActivityLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("background_activity_config.json")
-        val obj = Gson().fromJson(json, BackgroundActivityLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<BackgroundActivityLocalConfig>("background_activity_config.json")
         assertTrue(checkNotNull(obj.backgroundActivityCaptureEnabled))
         assertEquals(15, obj.manualBackgroundActivityLimit)
         assertEquals(10000L, obj.minBackgroundActivityDuration)
@@ -27,7 +26,7 @@ internal class BackgroundActivityLocalConfigTest {
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", BackgroundActivityLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<BackgroundActivityLocalConfig>()
         verifyDefaults(obj)
     }
 

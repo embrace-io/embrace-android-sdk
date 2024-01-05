@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.session.SessionService
 
 internal class FakeSessionService : SessionService {
 
+    var crashId: String? = null
+
     override fun startSession(
         coldStart: Boolean,
         startType: Session.SessionLifeEventType,
@@ -13,23 +15,18 @@ internal class FakeSessionService : SessionService {
         TODO("Not yet implemented")
     }
 
-    override fun triggerStatelessSessionEnd(endType: Session.SessionLifeEventType) {
+    override fun triggerStatelessSessionEnd(
+        endType: Session.SessionLifeEventType,
+        clearUserInfo: Boolean
+    ) {
         TODO("Not yet implemented")
     }
 
     override fun handleCrash(crashId: String) {
-        TODO("Not yet implemented")
+        this.crashId = crashId
     }
 
-    override fun addProperty(key: String, value: String, permanent: Boolean): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun removeProperty(key: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun getProperties(): Map<String, String> {
+    override fun endSessionManually(clearUserInfo: Boolean) {
         TODO("Not yet implemented")
     }
 

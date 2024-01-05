@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents a value over a particular interval. This is used for:
@@ -8,7 +9,8 @@ import com.google.gson.annotations.SerializedName
  *  * Periods during which the device was in power save mode
  *
  */
+@JsonClass(generateAdapter = true)
 internal data class PowerModeInterval @JvmOverloads constructor(
-    @SerializedName("st") val startTime: Long,
-    @SerializedName("en") val endTime: Long? = null
+    @Json(name = "st") val startTime: Long,
+    @Json(name = "en") val endTime: Long? = null
 )

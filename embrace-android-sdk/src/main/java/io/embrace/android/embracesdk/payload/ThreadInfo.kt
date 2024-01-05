@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.payload
 
-import androidx.annotation.VisibleForTesting
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents thread information at a given point in time.
  */
-internal data class ThreadInfo @VisibleForTesting internal constructor(
+@JsonClass(generateAdapter = true)
+internal data class ThreadInfo internal constructor(
 
     /**
      * The thread ID
@@ -21,19 +22,19 @@ internal data class ThreadInfo @VisibleForTesting internal constructor(
     /**
      * The name of the thread.
      */
-    @SerializedName("n")
+    @Json(name = "n")
     val name: String?,
 
     /**
      * The priority of the thread
      */
-    @SerializedName("p")
+    @Json(name = "p")
     val priority: Int,
 
     /**
      * String representation of each line of the stack trace.
      */
-    @SerializedName("tt")
+    @Json(name = "tt")
     val lines: List<String>?
 ) {
 

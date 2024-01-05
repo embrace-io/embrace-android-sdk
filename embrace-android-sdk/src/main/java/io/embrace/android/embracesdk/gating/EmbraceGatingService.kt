@@ -47,7 +47,8 @@ internal class EmbraceGatingService(
                 configService.sessionBehavior.shouldSendFullForErrorLog()
             ) {
                 logDeveloper(
-                    "EmbraceGatingService", "Error logs detected - Sending full session payload"
+                    "EmbraceGatingService",
+                    "Error logs detected - Sending full session payload"
                 )
                 return sessionMessage
             }
@@ -55,7 +56,8 @@ internal class EmbraceGatingService(
             // check if the session has a crash report id. If so, send the full session payload.
             if (sessionMessage.session.crashReportId != null) {
                 logDeveloper(
-                    "EmbraceGatingService", "Crash detected - Sending full session payload"
+                    "EmbraceGatingService",
+                    "Crash detected - Sending full session payload"
                 )
                 return sessionMessage
             }
@@ -74,7 +76,8 @@ internal class EmbraceGatingService(
 
             if (configService.sessionBehavior.shouldSendFullMessage(eventMessage)) {
                 logDeveloper(
-                    "EmbraceGatingService", "Crash or error detected - Sending full session payload"
+                    "EmbraceGatingService",
+                    "Crash or error detected - Sending full session payload"
                 )
                 return eventMessage
             }

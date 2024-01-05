@@ -1,45 +1,47 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 import java.util.Arrays
 
 /**
  * Breadcrumb that represents the dispatched actions from your state managment.
  */
+@JsonClass(generateAdapter = true)
 internal data class RnActionBreadcrumb(
 
     /**
      * The action name
      */
-    @SerializedName("n") val name: String,
+    @Json(name = "n") val name: String,
 
     /**
      * The timestamp at which the action started.
      */
-    @SerializedName("st") private val startTime: Long,
+    @Json(name = "st") internal val startTime: Long,
 
     /**
      * The timestamp at which the action ended.
      */
-    @SerializedName("en") val endTime: Long,
+    @Json(name = "en") val endTime: Long,
 
     /**
      * This object is for extra properties / data that was not cover
      * with the already defined properties
      */
-    @SerializedName("p")
+    @Json(name = "p")
     val properties: Map<String?, Any?>?,
 
     /**
      * The timestamp at which the action ended.
      */
-    @SerializedName("pz") var bytesSent: Int,
+    @Json(name = "pz") val bytesSent: Int,
 
     /**
      * The output message SUCCESS | FAIL | INCOMPLETE
      */
-    @SerializedName("o") val output: String
+    @Json(name = "o") val output: String
 ) : Breadcrumb {
 
     internal enum class RnOutputType {

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,14 +16,13 @@ internal class ViewLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("view_config.json")
-        val obj = Gson().fromJson(json, ViewLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<ViewLocalConfig>("view_config.json")
         assertFalse(checkNotNull(obj.enableAutomaticActivityCapture))
     }
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", ViewLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<ViewLocalConfig>()
         assertNull(obj.enableAutomaticActivityCapture)
     }
 }

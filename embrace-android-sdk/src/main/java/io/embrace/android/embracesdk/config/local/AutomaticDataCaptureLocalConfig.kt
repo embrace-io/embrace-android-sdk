@@ -1,17 +1,19 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class AutomaticDataCaptureLocalConfig(
-    @SerializedName("memory_info")
+    @Json(name = "memory_info")
     val memoryServiceEnabled: Boolean? = null,
 
-    @SerializedName("power_save_mode_info")
+    @Json(name = "power_save_mode_info")
     val powerSaveModeServiceEnabled: Boolean? = null,
 
-    @SerializedName("network_connectivity_info")
+    @Json(name = "network_connectivity_info")
     val networkConnectivityServiceEnabled: Boolean? = null,
 
-    @SerializedName("anr_info")
+    @Json(name = "anr_info")
     val anrServiceEnabled: Boolean? = null
 )

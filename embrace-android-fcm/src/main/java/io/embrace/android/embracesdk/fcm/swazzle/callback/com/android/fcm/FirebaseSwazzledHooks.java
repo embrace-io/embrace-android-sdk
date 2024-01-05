@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.messaging.RemoteMessage;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.InternalApi;
+import io.embrace.android.embracesdk.annotation.InternalApi;
 
 @InternalApi
 public final class FirebaseSwazzledHooks {

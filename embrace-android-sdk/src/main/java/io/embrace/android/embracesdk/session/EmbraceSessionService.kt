@@ -1,168 +1,72 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class EmbraceSessionService(
-    private val activityService: ActivityService,
-    private val ndkService: NdkService,
-    private val sessionProperties: EmbraceSessionProperties,
-    private val logger: InternalEmbraceLogger,
+    private val processStateService: ProcessStateService,
+    ndkService: NdkService,
     private val sessionHandler: SessionHandler,
-    private val deliveryService: DeliveryService,
-    private val isNdkEnabled: Boolean,
+    deliveryService: DeliveryService,
+    isNdkEnabled: Boolean,
+    private val configService: ConfigService,
     private val clock: Clock,
-    private val spansService: SpansService
-) : SessionService, ActivityListener {
-
-    companion object {
-        private const val TAG = "EmbraceSessionService"
-
-        /**
-         * Signals to the API that the application was in the foreground.
-         */
-        const val APPLICATION_STATE_FOREGROUND = "foreground"
-
-        /**
-         * The minimum threshold for how long a session must last. Package-private for test accessibility
-         */
-        const val minSessionTime = 5000L
-
-        /**
-         * Session caching interval in seconds.
-         */
-        const val SESSION_CACHING_INTERVAL = 2
-    }
-
-    /**
-     * Synchronization lock.
-     */
-    private val lock = Any()
-
-    /**
-     * SDK startup time. Only set for cold start sessions.
-     */
-    private var sdkStartupDuration: Long = 0
-
-    /**
-     * The currently active session.
-     */
-    @Volatile
-    private var activeSession: Session? = null
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+) : SessionService {
 
     init {
-        if (!this.activityService.isInBackground) {
+        if (!this.processStateService.isInBackground) {
             // If the app goes to foreground before the SDK finishes its startup,
             // the session service will not be registered to the activity listener and will not
             // start the cold session.
             // If so, force a cold session start.
-            logger.logDeveloper(TAG, "Forcing cold start")
-            startStateSession(true, clock.now())
+            logger.logDebug("Forcing start of new session as app is in foreground.")
+            startSession(true, Session.SessionLifeEventType.STATE, clock.now())
         }
 
         // Send any sessions that were cached and not yet sent.
-        deliveryService.sendCachedSessions(isNdkEnabled, ndkService, activeSession?.sessionId)
+        deliveryService.sendCachedSessions(isNdkEnabled, ndkService, sessionHandler.getSessionId())
     }
 
-    /**
-     * record the time taken to initialize the SDK
-     *
-     * @param sdkStartupDuration the time taken to initialize the SDK in milliseconds
-     */
-    fun setSdkStartupDuration(sdkStartupDuration: Long) {
-        logger.logDeveloper(TAG, "Setting startup duration: $sdkStartupDuration")
-        this.sdkStartupDuration = sdkStartupDuration
-    }
-
-    override fun startSession(coldStart: Boolean, startType: Session.SessionLifeEventType, startTime: Long) {
+    override fun startSession(
+        coldStart: Boolean,
+        startType: Session.SessionLifeEventType,
+        startTime: Long
+    ) {
         val automaticSessionCloserCallback = Runnable {
             try {
-                synchronized(lock) {
-                    logger.logInfo("Automatic session closing triggered.")
-                    triggerStatelessSessionEnd(Session.SessionLifeEventType.TIMED)
-                }
+                logger.logInfo("Automatic session closing triggered.")
+                triggerStatelessSessionEnd(Session.SessionLifeEventType.TIMED)
             } catch (ex: Exception) {
                 logger.logError("Error while trying to close the session automatically", ex)
             }
         }
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             coldStart,
             startType,
             startTime,
-            sessionProperties,
-            automaticSessionCloserCallback,
-            this::onPeriodicCacheActiveSession
+            automaticSessionCloserCallback
         )
-
-        if (sessionMessage != null) {
-            logger.logDeveloper(TAG, "Session Message is created")
-            activeSession = sessionMessage.session
-            logger.logDeveloper(TAG, "Active session: " + activeSession?.sessionId)
-        } else {
-            logger.logDeveloper(TAG, "Session Message is NULL")
-        }
     }
 
     override fun handleCrash(crashId: String) {
-        logger.logDeveloper(TAG, "Attempt to handle crash id: $crashId")
-
-        activeSession?.also {
-            synchronized(lock) {
-                sessionHandler.onCrash(
-                    it,
-                    crashId,
-                    sessionProperties,
-                    sdkStartupDuration,
-                    spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH)
-                )
-            }
-        } ?: logger.logDeveloper(TAG, "Active session is NULL")
-    }
-
-    /**
-     * Caches the session, with performance information generated up to the current point.
-     */
-    @VisibleForTesting
-    fun onPeriodicCacheActiveSession() {
-        try {
-            synchronized(lock) {
-                val activeSessionInfo = sessionHandler.getActiveSessionEndMessage(
-                    activeSession,
-                    sessionProperties,
-                    sdkStartupDuration,
-                    spansService.completedSpans()
-                )
-                activeSessionInfo?.let {
-                    deliveryService.saveSession(it)
-                }
-            }
-        } catch (ex: Exception) {
-            logger.logDebug("Error while caching active session", ex)
-        }
+        sessionHandler.onCrash(crashId)
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-        logger.logDeveloper(TAG, "OnForeground. Starting session.")
-        startStateSession(coldStart, timestamp)
-    }
-
-    private fun startStateSession(coldStart: Boolean, endTime: Long) {
-        logger.logDeveloper(TAG, "Start state session. Is cold start: $coldStart")
-        synchronized(lock) {
-            startSession(coldStart, Session.SessionLifeEventType.STATE, endTime)
-        }
+        startSession(coldStart, Session.SessionLifeEventType.STATE, timestamp)
     }
 
     override fun onBackground(timestamp: Long) {
-        logger.logDeveloper(TAG, "OnBackground. Ending session.")
-        endSession(Session.SessionLifeEventType.STATE, timestamp)
+        sessionHandler.onSessionEnded(Session.SessionLifeEventType.STATE, timestamp, false)
     }
 
     /**
@@ -170,7 +74,10 @@ internal class EmbraceSessionService(
      *
      * @param endType the origin of the event that ends the session.
      */
-    override fun triggerStatelessSessionEnd(endType: Session.SessionLifeEventType) {
+    override fun triggerStatelessSessionEnd(
+        endType: Session.SessionLifeEventType,
+        clearUserInfo: Boolean
+    ) {
         if (Session.SessionLifeEventType.STATE == endType) {
             logger.logWarning(
                 "triggerStatelessSessionEnd is not allowed to be called for SessionLifeEventType=$endType"
@@ -179,72 +86,31 @@ internal class EmbraceSessionService(
         }
 
         // Ends active session.
-        endSession(endType, clock.now())
+        sessionHandler.onSessionEnded(endType, clock.now(), clearUserInfo) ?: return
 
         // Starts a new session.
-        if (!activityService.isInBackground) {
-            logger.logDeveloper(TAG, "Activity is not in background, starting session.")
+        if (!processStateService.isInBackground) {
+            logger.logDebug("Forcing start of new session as app is in foreground.")
             startSession(false, endType, clock.now())
-        } else {
-            logger.logDeveloper(TAG, "Activity in background, not starting session.")
         }
-        logger.logInfo("Session successfully closed.")
     }
 
-    /**
-     * This will trigger all necessary events to end the current session and send it to the server.
-     *
-     * @param endType the origin of the event that ends the session.
-     */
-    @Synchronized
-    private fun endSession(endType: Session.SessionLifeEventType, endTime: Long) {
-        logger.logDebug("Will try to end session.")
-        sessionHandler.onSessionEnded(
-            endType,
-            activeSession,
-            sessionProperties,
-            sdkStartupDuration,
-            endTime,
-            spansService.flushSpans()
-        )
+    override fun endSessionManually(clearUserInfo: Boolean) {
+        val sessionBehavior: SessionBehavior = configService.sessionBehavior
+        if (sessionBehavior.getMaxSessionSecondsAllowed() != null) {
+            logger.logWarning("Can't close the session, automatic session close enabled.")
+            return
+        }
 
-        // clear active session
-        activeSession = null
-        logger.logDeveloper(TAG, "Active session cleared")
+        if (sessionBehavior.isAsyncEndEnabled()) {
+            logger.logWarning("Can't close the session, session ending in background thread enabled.")
+            return
+        }
+        triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL, clearUserInfo)
     }
 
     override fun close() {
         logger.logInfo("Shutting down EmbraceSessionService")
         sessionHandler.close()
     }
-
-    fun getActiveSession(): Session? {
-        return activeSession
-    }
-
-    override fun addProperty(key: String, value: String, permanent: Boolean): Boolean {
-        logger.logDeveloper(TAG, "Add Property: $key - $value")
-        val added = sessionProperties.add(key, value, permanent)
-        if (added) {
-            logger.logDeveloper(TAG, "Session properties updated")
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
-        } else {
-            logger.logDeveloper(TAG, "Cannot add property: $key")
-        }
-        return added
-    }
-
-    override fun removeProperty(key: String): Boolean {
-        logger.logDeveloper(TAG, "Remove Property: $key")
-        val removed = sessionProperties.remove(key)
-        if (removed) {
-            logger.logDeveloper(TAG, "Session properties updated")
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
-        } else {
-            logger.logDeveloper(TAG, "Cannot remove property: $key")
-        }
-        return removed
-    }
-
-    override fun getProperties(): Map<String, String> = sessionProperties.get()
 }

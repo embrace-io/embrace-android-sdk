@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -50,6 +51,20 @@ internal class EmbraceAnrServiceTimingTest {
             targetThreadHandler.onIdleThread()
             anrExecutorService.runCurrentlyBlocked()
             assertFalse(state.anrInProgress)
+        }
+    }
+
+    @Test
+    fun `only one recurring heartbeat task is created after foregrounding`() {
+        with(rule) {
+            anrService.finishInitialization(fakeConfigService)
+            anrExecutorService.runCurrentlyBlocked()
+            anrExecutorService.runCurrentlyBlocked()
+            assertEquals(1, anrExecutorService.scheduledTasksCount())
+            anrService.onForeground(true, clock.now(), clock.now() + 1)
+            anrExecutorService.runCurrentlyBlocked()
+            anrExecutorService.runCurrentlyBlocked()
+            assertEquals(1, anrExecutorService.scheduledTasksCount())
         }
     }
 }

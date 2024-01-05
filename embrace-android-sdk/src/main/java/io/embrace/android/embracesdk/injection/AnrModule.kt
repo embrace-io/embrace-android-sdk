@@ -4,7 +4,6 @@ import android.os.Looper
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.anr.NoOpAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
@@ -16,6 +15,9 @@ import io.embrace.android.embracesdk.anr.sigquit.GetThreadsInCurrentProcess
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrHandlerNativeDelegate
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
+import io.embrace.android.embracesdk.capture.monitor.EmbraceResponsivenessMonitorService
+import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
+import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import java.util.concurrent.Executors
@@ -26,12 +28,12 @@ import java.util.concurrent.atomic.AtomicReference
 internal interface AnrModule {
     val googleAnrTimestampRepository: GoogleAnrTimestampRepository
     val anrService: AnrService
+    val responsivenessMonitorService: ResponsivenessMonitorService
 }
 
 internal class AnrModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule
 ) : AnrModule {
 
@@ -53,12 +55,21 @@ internal class AnrModuleImpl(
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrExecutorService = anrExecutorService,
                 state = state,
-                anrProcessErrorSampler = anrProcessErrorSampler,
                 clock = initModule.clock,
                 anrMonitorThread = anrMonitorThread
             )
         } else {
             NoOpAnrService()
+        }
+    }
+
+    override val responsivenessMonitorService: ResponsivenessMonitorService by singleton {
+        if (configService.autoDataCaptureBehavior.isAnrServiceEnabled() && !ApkToolsConfig.IS_ANR_MONITORING_DISABLED) {
+            EmbraceResponsivenessMonitorService(
+                livenessCheckScheduler = livenessCheckScheduler
+            )
+        } else {
+            NoOpResponsivenessMonitorService()
         }
     }
 
@@ -95,16 +106,6 @@ internal class AnrModuleImpl(
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
             anrMonitorThread = anrMonitorThread
-        )
-    }
-
-    private val anrProcessErrorSampler by singleton {
-        AnrProcessErrorSampler(
-            activityManager = systemServiceModule.activityManager,
-            configService = configService,
-            anrExecutor = anrExecutorService,
-            clock = initModule.clock,
-            logger = coreModule.logger
         )
     }
 

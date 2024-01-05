@@ -3,8 +3,9 @@ package io.embrace.android.embracesdk
 import android.app.ActivityManager
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
 import io.embrace.android.embracesdk.session.MemoryCleanerService
-import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -21,8 +22,8 @@ internal class EmbraceMemoryServiceTest {
 
     @Before
     fun setUp() {
-        activityManager = mockk(relaxUnitFun = true)
-        memoryCleanerService = mockk(relaxUnitFun = true)
+        activityManager = mockActivityManager()
+        memoryCleanerService = FakeMemoryCleanerService()
         fakeClock.setCurrentTime(100L)
         embraceMemoryService = EmbraceMemoryService(fakeClock)
     }

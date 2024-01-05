@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -13,10 +13,10 @@ internal class ConfigRoundTripTest {
      */
     @Test
     fun testConfigRoundTrip() {
-        val gson = Gson()
+        val serializer = EmbraceSerializer()
         val cfg = RemoteConfig()
-        val json = gson.toJson(cfg)
-        val observed = gson.fromJson(json, RemoteConfig::class.java)
+        val json = serializer.toJson(cfg)
+        val observed = serializer.fromJson(json, RemoteConfig::class.java)
         assertNotNull(observed)
     }
 }

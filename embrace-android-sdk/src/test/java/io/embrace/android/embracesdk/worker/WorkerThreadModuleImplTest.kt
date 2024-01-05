@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.worker
 
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.fail
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ThreadPoolExecutor
 
 internal class WorkerThreadModuleImplTest {
 
@@ -13,20 +13,28 @@ internal class WorkerThreadModuleImplTest {
         val module = WorkerThreadModuleImpl()
         assertNotNull(module)
 
-        assertNotNull(module.backgroundExecutor(ExecutorName.SESSION))
-        val backgroundExecutor = module.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR)
+        val backgroundExecutor = module.backgroundExecutor(ExecutorName.PERIODIC_CACHE)
         assertNotNull(backgroundExecutor)
-        assertNotNull(module.scheduledExecutor(ExecutorName.SESSION_CACHE_EXECUTOR))
+        val scheduledExecutor = module.scheduledExecutor(ExecutorName.PERIODIC_CACHE)
+        assertNotNull(scheduledExecutor)
 
         // test caching
-        assertSame(backgroundExecutor, module.backgroundExecutor(ExecutorName.SESSION_CACHE_EXECUTOR))
+        assertSame(backgroundExecutor, module.backgroundExecutor(ExecutorName.PERIODIC_CACHE))
+        assertSame(backgroundExecutor, scheduledExecutor)
 
         // test shutting down module
         module.close()
-        try {
-            module.backgroundExecutor(ExecutorName.SESSION).submit {}
-            fail("Should have thrown RejectedExecutionException")
-        } catch (ignored: RejectedExecutionException) {
-        }
+    }
+
+    @Test
+    fun `network request executor uses custom queue`() {
+        val module = WorkerThreadModuleImpl()
+        assertTrue(module.backgroundExecutor(ExecutorName.NETWORK_REQUEST) is ThreadPoolExecutor)
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun `network request scheduled executor fails`() {
+        val module = WorkerThreadModuleImpl()
+        assertTrue(module.scheduledExecutor(ExecutorName.NETWORK_REQUEST) is ThreadPoolExecutor)
     }
 }

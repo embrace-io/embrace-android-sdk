@@ -1,20 +1,22 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents the base URLs element specified in the Embrace config file.
  */
+@JsonClass(generateAdapter = true)
 internal class BaseUrlLocalConfig(
-    @SerializedName("config")
+    @Json(name = "config")
     val config: String? = null,
 
-    @SerializedName("data")
+    @Json(name = "data")
     val data: String? = null,
 
-    @SerializedName("data_dev")
+    @Json(name = "data_dev")
     val dataDev: String? = null,
 
-    @SerializedName("images")
+    @Json(name = "images")
     val images: String? = null
 )

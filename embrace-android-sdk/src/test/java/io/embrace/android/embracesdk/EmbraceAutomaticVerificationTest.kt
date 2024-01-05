@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.fakes.FakeActivityTracker
+import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
@@ -23,7 +24,7 @@ internal class EmbraceAutomaticVerificationTest {
 
     companion object {
         private lateinit var embraceSamples: EmbraceAutomaticVerification
-        private val activity: Activity = mockk(relaxed = true)
+        private val activity: Activity = mockActivity()
         private val scheduledExecutorService: ScheduledExecutorService = mockk(relaxed = true)
 
         @BeforeClass
@@ -70,7 +71,7 @@ internal class EmbraceAutomaticVerificationTest {
     fun `test startVerification that captures IOException`() {
         with(embraceSamples) {
             automaticVerificationChecker = mockk(relaxed = true)
-            activityService = FakeActivityService(foregroundActivity = activity)
+            activityLifecycleTracker = FakeActivityTracker(foregroundActivity = activity)
             verificationActions = mockk(relaxed = true)
             every { automaticVerificationChecker.createFile(activity) } throws IOException("ERROR")
 
@@ -84,7 +85,7 @@ internal class EmbraceAutomaticVerificationTest {
     fun `test startVerification does not run verification steps if marker file exists`() {
         with(embraceSamples) {
             automaticVerificationChecker = mockk(relaxed = true)
-            activityService = FakeActivityService(foregroundActivity = activity)
+            activityLifecycleTracker = FakeActivityTracker(foregroundActivity = activity)
             verificationActions = mockk(relaxed = true)
             every { automaticVerificationChecker.createFile(activity) } returns false
 
@@ -100,7 +101,7 @@ internal class EmbraceAutomaticVerificationTest {
     fun `test startVerification runs verification steps if marker file does not exist`() {
         with(embraceSamples) {
             automaticVerificationChecker = mockk(relaxed = true)
-            activityService = FakeActivityService(foregroundActivity = activity)
+            activityLifecycleTracker = FakeActivityTracker(foregroundActivity = activity)
             verificationActions = mockk(relaxed = true)
             every { automaticVerificationChecker.createFile(any() as Activity) } returns true
             every { verificationActions.runActions() } just runs

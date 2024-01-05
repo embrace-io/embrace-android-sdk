@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.anr.ndk
 
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -24,7 +23,6 @@ internal class NativeThreadSamplerInstaller(
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
 
-    @VisibleForTesting
     internal var currentThread: Thread? = null
 
     private fun prepareTargetHandler() {

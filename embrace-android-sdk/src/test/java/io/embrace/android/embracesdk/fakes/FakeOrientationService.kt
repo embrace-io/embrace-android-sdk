@@ -5,6 +5,9 @@ import io.embrace.android.embracesdk.payload.Orientation
 
 internal class FakeOrientationService : FakeDataCaptureService<Orientation>(), OrientationService {
 
+    val changes = mutableListOf<Int>()
+
     override fun onOrientationChanged(orientation: Int?) {
+        changes.add(orientation ?: -1)
     }
 }

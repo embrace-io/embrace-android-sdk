@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import android.app.Activity
-import com.google.gson.Gson
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.File
 import java.io.FileNotFoundException
@@ -10,7 +10,7 @@ internal class AutomaticVerificationChecker {
     private val fileName = "emb_marker_file.txt"
     private val verificationResult = VerificationResult()
     private lateinit var file: File
-    private var gson = Gson()
+    private val serializer = EmbraceSerializer()
 
     /**
      * Returns true if the file was created, false if it already existed
@@ -56,7 +56,7 @@ internal class AutomaticVerificationChecker {
                 return if (fileContent.isEmpty()) {
                     true
                 } else {
-                    gson.fromJson(fileContent, VerificationResult::class.java).exceptions.isEmpty()
+                    serializer.fromJson(fileContent, VerificationResult::class.java).exceptions.isEmpty()
                 }
             }
         } catch (e: FileNotFoundException) {
@@ -67,7 +67,7 @@ internal class AutomaticVerificationChecker {
 
     fun addException(e: Throwable) {
         verificationResult.exceptions.add(e)
-        file.writeText(gson.toJson(verificationResult).toString())
+        file.writeText(serializer.toJson(verificationResult).toString())
     }
 
     fun getExceptions(): List<Throwable> {
@@ -75,7 +75,7 @@ internal class AutomaticVerificationChecker {
         return if (fileContent.isBlank()) {
             emptyList()
         } else {
-            gson.fromJson(fileContent, VerificationResult::class.java).exceptions
+            serializer.fromJson(fileContent, VerificationResult::class.java).exceptions
         }
     }
 }

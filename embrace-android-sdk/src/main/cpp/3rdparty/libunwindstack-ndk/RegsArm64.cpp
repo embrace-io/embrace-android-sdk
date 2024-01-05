@@ -47,6 +47,10 @@ uint64_t RegsArm64::sp() {
   return regs_[ARM64_REG_SP];
 }
 
+uint64_t RegsArm64::lr() {
+  return regs_[ARM64_REG_LR];
+}
+
 static uint64_t strip_pac(uint64_t pc, uint64_t mask) {
   // If the target is aarch64 then the return address may have been
   // signed using the Armv8.3-A Pointer Authentication extension. The

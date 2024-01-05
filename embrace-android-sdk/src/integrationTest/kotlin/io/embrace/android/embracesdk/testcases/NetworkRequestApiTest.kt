@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -268,7 +268,7 @@ internal class NetworkRequestApiTest {
                 embrace.recordNetworkRequest(request)
             }
 
-            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
             val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
@@ -317,7 +317,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkCall(): NetworkCallV2 {
-        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[1].first
+        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
 
         // Look for a specific error where the fetch from the cache returns a stale value
         session.session.exceptionError?.exceptionErrors?.forEach { errorInfo ->
@@ -343,8 +343,8 @@ internal class NetworkRequestApiTest {
     companion object {
         private const val URL = "https://embrace.io"
         private const val DISABLED_URL = "https://dontlogmebro.pizza/yum"
-        private const val START_TIME = 1692201601L
-        private const val END_TIME = 1692202600L
+        private const val START_TIME = 1692201601000L
+        private const val END_TIME = 1692201603000L
         private const val BYTES_SENT = 100L
         private const val BYTES_RECEIVED = 500L
         private const val TRACE_ID = "rAnDoM-traceId"

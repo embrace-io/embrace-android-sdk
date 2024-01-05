@@ -21,7 +21,6 @@ internal class BreadcrumbsSanitizer(
             "sanitize: " + (breadcrumbs != null).toString()
         )
         return breadcrumbs?.let {
-
             val customBreadcrumbs = if (shouldAddCustomBreadcrumbs()) {
                 InternalStaticEmbraceLogger.logger.logDeveloper(
                     "BreadcrumbsSanitizer",

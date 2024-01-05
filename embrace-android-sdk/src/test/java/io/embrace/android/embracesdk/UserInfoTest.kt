@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert.assertEquals
@@ -19,16 +18,12 @@ internal class UserInfoTest {
 
     @Test
     fun testSerialization() {
-        val data = ResourceReader.readResourceAsText("user_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("user_info_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("user_info_expected.json")
-        val obj = Gson().fromJson(json, UserInfo::class.java)
+        val obj = deserializeJsonFromResource<UserInfo>("user_info_expected.json")
         assertEquals("123", obj.userId)
         assertEquals("fake@example.com", obj.email)
         assertEquals("joebloggs", obj.username)
@@ -37,8 +32,8 @@ internal class UserInfoTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", UserInfo::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<UserInfo>()
+        assertNotNull(obj)
     }
 
     /**
@@ -68,22 +63,6 @@ internal class UserInfoTest {
         assertEquals("fake@example.com", info.email)
         assertEquals("Mr F. Ake", info.username)
         assertEquals(setOf("first_day"), info.personas)
-    }
-
-    /**
-     * Construct UserInfo object with nulls then set values
-     */
-    @Test
-    fun testNullsInCtor() {
-        val info = UserInfo(null, null, null, null)
-        info.userId = "5"
-        info.username = "root"
-        info.email = "faker22@example.com"
-        info.personas = setOf("payer")
-        assertEquals("5", info.userId)
-        assertEquals("faker22@example.com", info.email)
-        assertEquals("root", info.username)
-        assertEquals(setOf("payer"), info.personas)
     }
 
     /**

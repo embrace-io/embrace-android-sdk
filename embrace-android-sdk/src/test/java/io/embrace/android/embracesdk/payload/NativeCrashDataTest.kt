@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -33,16 +35,12 @@ internal class NativeCrashDataTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("native_crash_data_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("native_crash_data_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("native_crash_data_expected.json")
-        val obj = Gson().fromJson(json, NativeCrashData::class.java)
+        val obj = deserializeJsonFromResource<NativeCrashData>("native_crash_data_expected.json")
         assertEquals("report_id", obj.nativeCrashId)
         assertEquals("sid", obj.sessionId)
         assertEquals(1610000000000, obj.timestamp)
@@ -55,9 +53,8 @@ internal class NativeCrashDataTest {
         assertEquals("map", obj.map)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", NativeCrashData::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<NativeCrashData>()
     }
 }

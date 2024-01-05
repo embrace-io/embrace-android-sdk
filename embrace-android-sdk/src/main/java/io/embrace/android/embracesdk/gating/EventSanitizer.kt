@@ -13,8 +13,8 @@ internal class EventSanitizer(
 
     override fun sanitize(): Event {
         InternalStaticEmbraceLogger.logger.logDeveloper("EventSanitizer", "sanitize")
-        var customPropertiesMap = event.customPropertiesMap
-        var sessionPropertiesMap = event.sessionPropertiesMap
+        var customPropertiesMap = event.customProperties
+        var sessionPropertiesMap = event.sessionProperties
 
         InternalStaticEmbraceLogger.logger.logDeveloper(
             "EventSanitizer",

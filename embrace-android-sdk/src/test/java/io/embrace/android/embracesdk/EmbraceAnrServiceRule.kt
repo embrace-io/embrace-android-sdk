@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
@@ -12,8 +11,8 @@ import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.mockk.every
 import io.mockk.mockk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
@@ -31,7 +30,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
 ) : ExternalResource() {
     val logger = InternalEmbraceLogger()
     val mockSigquitDetectionService: SigquitDetectionService = mockk(relaxed = true)
-    val mockAnrProcessErrorSampler: AnrProcessErrorSampler = mockk(relaxed = true)
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var anrService: EmbraceAnrService
@@ -45,15 +43,14 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
 
     override fun before() {
         clock.setCurrentTime(0)
-        val mockLooper: Looper = mockk(relaxed = true)
-        every { mockLooper.thread } returns Thread.currentThread()
+        val looper: Looper = mockLooper()
         cfg = AnrRemoteConfig()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         targetThreadHandler = TargetThreadHandler(
-            looper = mockLooper,
+            looper = looper,
             anrExecutorService = anrExecutorService,
             anrMonitorThread = anrMonitorThread,
             configService = fakeConfigService,
@@ -78,13 +75,12 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         )
         anrService = EmbraceAnrService(
             configService = fakeConfigService,
-            looper = mockLooper,
+            looper = looper,
             logger = logger,
             sigquitDetectionService = mockSigquitDetectionService,
             livenessCheckScheduler = livenessCheckScheduler,
             anrExecutorService = anrExecutorService,
             state = state,
-            anrProcessErrorSampler = mockAnrProcessErrorSampler,
             clock = clock,
             anrMonitorThread = anrMonitorThread
         )

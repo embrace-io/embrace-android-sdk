@@ -97,7 +97,7 @@ internal class FakeAndroidMetadataService(sessionId: String? = null) : MetadataS
     override val activeSessionId: String?
         get() = appSessionId
 
-    override fun setActiveSessionId(sessionId: String?) {
+    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
         appSessionId = sessionId
     }
 

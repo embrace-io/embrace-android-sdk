@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
@@ -19,7 +20,11 @@ internal class EmbraceTracerTest {
 
     @Before
     fun setup() {
-        spansService = SpansServiceImpl(100L, 200L, FakeOpenTelemetryClock(embraceClock = clock))
+        spansService = SpansServiceImpl(
+            sdkInitStartTimeNanos = 100L,
+            clock = FakeOpenTelemetryClock(embraceClock = clock),
+            telemetryService = FakeTelemetryService()
+        )
         embraceTracer = EmbraceTracer(spansService)
         spansService.flushSpans()
     }

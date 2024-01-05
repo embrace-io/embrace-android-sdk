@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.network.logging
 
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 
 /**
@@ -14,7 +14,7 @@ internal interface NetworkLoggingService {
      *
      * @return the network calls for the given session
      */
-    fun getNetworkCallsForSession(): NetworkSessionV2
+    fun getNetworkCallsSnapshot(): NetworkSessionV2
 
     /**
      * Logs a HTTP network call.

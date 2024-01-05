@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.DomainLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -41,7 +41,7 @@ internal class NetworkBehaviorTest {
                 )
             ),
             disabledUrlPatterns = listOf("google.com"),
-            defaultCaptureLimit = 220,
+            defaultCaptureLimit = 720,
         ),
         capturePublicKey = "test"
     )
@@ -71,7 +71,7 @@ internal class NetworkBehaviorTest {
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertTrue(isNativeNetworkingMonitoringEnabled())
             assertEquals(1000, getNetworkCaptureLimit())
-            assertEquals(emptyMap<String, Int>(), getNetworkCallLimitsPerDomain())
+            assertEquals(emptyMap<String, Int>(), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
             assertNull(getCapturePublicKey())
@@ -85,8 +85,8 @@ internal class NetworkBehaviorTest {
             assertEquals("x-custom-trace", getTraceIdHeader())
             assertTrue(isRequestContentLengthCaptureEnabled())
             assertFalse(isNativeNetworkingMonitoringEnabled())
-            assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomain())
-            assertEquals(220, getNetworkCaptureLimit())
+            assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomainSuffix())
+            assertEquals(720, getNetworkCaptureLimit())
             assertFalse(isUrlEnabled("google.com"))
             assertTrue(isCaptureBodyEncryptionEnabled())
             assertEquals("test", getCapturePublicKey())
@@ -94,10 +94,29 @@ internal class NetworkBehaviorTest {
     }
 
     @Test
+    fun testRemoteOnly() {
+        with(fakeNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
+            assertEquals(409, getNetworkCaptureLimit())
+            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
+            assertTrue(isUrlEnabled("google.com"))
+            assertFalse(isUrlEnabled("example.com"))
+            assertEquals(
+                NetworkCaptureRuleRemoteConfig(
+                    "test",
+                    5000,
+                    "GET",
+                    "google.com",
+                ),
+                getNetworkCaptureRules().single()
+            )
+        }
+    }
+
+    @Test
     fun testRemoteAndLocal() {
         with(fakeNetworkBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertEquals(409, getNetworkCaptureLimit())
-            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomain())
+            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
             assertEquals(
@@ -127,7 +146,7 @@ internal class NetworkBehaviorTest {
     @Test
     fun testGetCapturePublicKey() {
         val json = ResourceReader.readResourceAsText("public_key_config.json")
-        val localConfig = LocalConfig.buildConfig("aaa", false, json, EmbraceSerializer())
+        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer())
         val behavior = fakeNetworkBehavior(localCfg = localConfig::sdkConfig)
         assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
     }

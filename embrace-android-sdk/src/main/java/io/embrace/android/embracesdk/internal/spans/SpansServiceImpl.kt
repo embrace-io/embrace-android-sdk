@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.InternalApi
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -23,38 +22,30 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Implementation of the core logic for [SpansService]
  */
-@InternalApi
 internal class SpansServiceImpl(
     sdkInitStartTimeNanos: Long,
-    sdkInitEndTimeNanos: Long,
-    private val clock: Clock
+    private val clock: Clock,
+    private val telemetryService: TelemetryService
 ) : SpansService {
     private val sdkTracerProvider: SdkTracerProvider
         by lazy {
-            Systrace.start("spans-service-init")
-            Systrace.trace("init-sdk-tracer-provider") {
-                SdkTracerProvider
-                    .builder()
-                    .addSpanProcessor(EmbraceSpanProcessor(EmbraceSpanExporter(this)))
-                    .setClock(clock)
-                    .build()
-            }
+            SdkTracerProvider
+                .builder()
+                .addSpanProcessor(EmbraceSpanProcessor(EmbraceSpanExporter(this)))
+                .setClock(clock)
+                .build()
         }
 
     private val openTelemetry: OpenTelemetry
         by lazy {
-            Systrace.trace("init-otel-sdk") {
-                OpenTelemetrySdk.builder()
-                    .setTracerProvider(sdkTracerProvider)
-                    .build()
-            }
+            OpenTelemetrySdk.builder()
+                .setTracerProvider(sdkTracerProvider)
+                .build()
         }
 
     private val tracer: Tracer
         by lazy {
-            Systrace.trace("init-tracer") {
-                openTelemetry.getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME)
-            }
+            openTelemetry.getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME)
         }
 
     /**
@@ -75,24 +66,6 @@ internal class SpansServiceImpl(
      */
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
 
-    init {
-        Systrace.trace("log-sdk-init") {
-            val events = EmbraceSpanEvent.create(
-                name = "start-time",
-                timestampNanos = sdkInitStartTimeNanos,
-                attributes = null
-            )?.let { listOf(it) } ?: emptyList()
-
-            recordCompletedSpan(
-                name = "sdk-init",
-                startTimeNanos = sdkInitStartTimeNanos,
-                endTimeNanos = sdkInitEndTimeNanos,
-                events = events
-            )
-        }
-        Systrace.end()
-    }
-
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && validateAndUpdateContext(parent, internal)) {
             EmbraceSpanImpl(
@@ -112,12 +85,7 @@ internal class SpansServiceImpl(
         code: () -> T
     ): T {
         return if (EmbraceSpanImpl.inputsValid(name) && validateAndUpdateContext(parent, internal)) {
-            Systrace.start("log-span-$name")
-            try {
-                createRootSpanBuilder(name = name, type = type, internal = internal).updateParent(parent).record(code)
-            } finally {
-                Systrace.end()
-            }
+            createRootSpanBuilder(name = name, type = type, internal = internal).updateParent(parent).record(code)
         } else {
             code()
         }
@@ -139,26 +107,24 @@ internal class SpansServiceImpl(
         }
 
         return if (EmbraceSpanImpl.inputsValid(name, events, attributes) && validateAndUpdateContext(parent, internal)) {
-            Systrace.trace("log-completed-span-$name") {
-                val span = createRootSpanBuilder(name = name, type = type, internal = internal)
-                    .updateParent(parent)
-                    .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
-                    .startSpan()
-                    .setAllAttributes(Attributes.builder().fromMap(attributes).build())
+            val span = createRootSpanBuilder(name = name, type = type, internal = internal)
+                .updateParent(parent)
+                .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
+                .startSpan()
+                .setAllAttributes(Attributes.builder().fromMap(attributes).build())
 
-                events.forEach { event ->
-                    if (EmbraceSpanEvent.inputsValid(event.name, event.attributes)) {
-                        span.addEvent(
-                            event.name,
-                            Attributes.builder().fromMap(event.attributes).build(),
-                            event.timestampNanos,
-                            TimeUnit.NANOSECONDS
-                        )
-                    }
+            events.forEach { event ->
+                if (EmbraceSpanEvent.inputsValid(event.name, event.attributes)) {
+                    span.addEvent(
+                        event.name,
+                        Attributes.builder().fromMap(event.attributes).build(),
+                        event.timestampNanos,
+                        TimeUnit.NANOSECONDS
+                    )
                 }
-
-                span.endSpan(errorCode, endTimeNanos)
             }
+
+            span.endSpan(errorCode, endTimeNanos)
             true
         } else {
             false
@@ -185,9 +151,15 @@ internal class SpansServiceImpl(
 
     override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
         synchronized(completedSpans) {
+            // Right now, session spans don't survive native crashes and sudden process terminations,
+            // so telemetry will not be recorded in those cases, for now.
+            val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
+
+            currentSessionSpan.get().setAllAttributes(Attributes.builder().fromMap(telemetryAttributes).build())
+
             if (appTerminationCause == null) {
                 currentSessionSpan.get().endSpan()
-                currentSessionSpan.set(startSessionSpan(TimeUnit.MILLISECONDS.toNanos(clock.now())))
+                currentSessionSpan.set(startSessionSpan(clock.now()))
             } else {
                 currentSessionSpan.get()?.let {
                     it.setAttribute(appTerminationCause.keyName(), appTerminationCause.name)

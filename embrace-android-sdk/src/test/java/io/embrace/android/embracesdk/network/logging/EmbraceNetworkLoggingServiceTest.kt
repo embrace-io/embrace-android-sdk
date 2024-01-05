@@ -2,79 +2,46 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.DomainLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
+import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.utils.at
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import io.mockk.verify
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import java.util.UUID
 
 internal class EmbraceNetworkLoggingServiceTest {
-    private lateinit var service: EmbraceNetworkLoggingService
-
-    companion object {
-        private lateinit var configService: ConfigService
-        private lateinit var localConfig: LocalConfig
-        private lateinit var memoryCleanerService: MemoryCleanerService
-        private lateinit var metadataService: FakeAndroidMetadataService
-        private lateinit var logger: InternalEmbraceLogger
-        private lateinit var networkCaptureService: EmbraceNetworkCaptureService
-        private lateinit var cfg: SdkLocalConfig
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            configService = mockk(relaxed = true) {
-                every { networkBehavior } returns fakeNetworkBehavior(
-                    localCfg = { cfg }
-                )
-            }
-            localConfig = mockk(relaxed = true)
-            memoryCleanerService = mockk(relaxed = true)
-            logger = InternalEmbraceLogger()
-            metadataService = FakeAndroidMetadataService()
-            networkCaptureService = mockk(relaxed = true)
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun tearDown() {
-            unmockkAll()
-        }
-    }
+    private lateinit var networkLoggingService: EmbraceNetworkLoggingService
+    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var configService: ConfigService
+    private lateinit var sdkLocalConfig: SdkLocalConfig
+    private lateinit var remoteConfig: RemoteConfig
+    private lateinit var networkCaptureService: FakeNetworkCaptureService
 
     @Before
     fun setUp() {
-        cfg = SdkLocalConfig(networking = NetworkLocalConfig())
-
-        clearAllMocks(
-            answers = false,
-            objectMocks = false,
-            constructorMocks = false,
-            staticMocks = false
+        networkCaptureService = FakeNetworkCaptureService()
+        logger = InternalEmbraceLogger()
+        configService = FakeConfigService(
+            networkBehavior = fakeNetworkBehavior(
+                localCfg = { sdkLocalConfig },
+                remoteCfg = { remoteConfig }
+            )
         )
 
-        service =
-            EmbraceNetworkLoggingService(
-                configService,
-                logger,
-                networkCaptureService
-            )
+        sdkLocalConfig = SdkLocalConfig()
+        remoteConfig = RemoteConfig()
+        createNetworkLoggingService()
     }
 
     @Test
@@ -84,7 +51,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkCall("www.example3.com", 300, 400)
         logNetworkCall("www.example4.com", 400, 500)
 
-        val result = service.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(4, result.requests.size)
 
         val sortedRequests = result.requests.sortedBy { it.startTime }
@@ -95,55 +62,273 @@ internal class EmbraceNetworkLoggingServiceTest {
     }
 
     @Test
-    fun `test getNetworkCallsForSession over limit`() {
-        every { configService.networkBehavior.getNetworkCaptureLimit() }.returns(
-            2
-        )
-
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
+    fun `test implicit default network call limits`() {
+        repeat(1005) {
+            logNetworkCall("www.overLimit1.com")
+        }
         logNetworkCall("www.overLimit2.com")
-        logNetworkCall("www.overLimit2.com")
-        logNetworkCall("www.overLimit3.com")
 
-        val result = service.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
-        // overLimit1 has 4 calls. The limit is 2.
-        val expectedOverLimit = DomainCount(4, 2)
-        assertEquals(1, result.requestCounts.size)
-
-        assertEquals(expectedOverLimit, result.requestCounts["overLimit1.com"])
+        assertEquals(1001, result.requests.size)
+        assertEquals(DomainCount(1005, 1000), result.requestCounts["overLimit1.com"])
         assertNull(result.requestCounts["overLimit2.com"])
-        assertNull(result.requestCounts["overLimit3.com"])
     }
 
     @Test
-    fun `test getNetworkCallsForSession merged limits`() {
-        cfg = SdkLocalConfig(
+    fun `test domain specific local limits`() {
+        sdkLocalConfig = SdkLocalConfig(
             networking = NetworkLocalConfig(
                 domains = listOf(DomainLocalConfig("overLimit1.com", 2))
             )
         )
 
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
-        logNetworkCall("www.overLimit1.com")
+        createNetworkLoggingService()
+
+        repeat(3) {
+            logNetworkCall("www.overLimit1.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(2, result.requests.size)
+        assertEquals(DomainCount(3, 2), result.requestCounts["overLimit1.com"])
+    }
+
+    @Test
+    fun `test default local limits`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                defaultCaptureLimit = 2
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(4) {
+            logNetworkCall("www.overLimit1.com")
+        }
+
         logNetworkCall("www.overLimit2.com")
-        logNetworkCall("www.overLimit2.com")
-        logNetworkCall("www.overLimit3.com")
 
-        val result = service.getNetworkCallsForSession()
-
-        // overLimit1 has 4 calls. The local limit is 2.
-        val expectedOverLimit = DomainCount(4, 2)
-        assertEquals(1, result.requestCounts.size)
-
-        assertEquals(expectedOverLimit, result.requestCounts["overLimit1.com"])
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(3, result.requests.size)
+        assertEquals(DomainCount(4, 2), result.requestCounts["overLimit1.com"])
         assertNull(result.requestCounts["overLimit2.com"])
+    }
+
+    @Test
+    fun `test local limits with default and domain specific limits`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                defaultCaptureLimit = 2,
+                domains = listOf(DomainLocalConfig("overLimit1.com", 3))
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(4) {
+            logNetworkCall("www.overLimit1.com")
+        }
+
+        repeat(3) {
+            logNetworkCall("www.overLimit2.com")
+        }
+
+        repeat(2) {
+            logNetworkCall("www.overLimit3.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(7, result.requests.size)
+        assertEquals(DomainCount(4, 3), result.requestCounts["overLimit1.com"])
+        assertEquals(DomainCount(3, 2), result.requestCounts["overLimit2.com"])
         assertNull(result.requestCounts["overLimit3.com"])
+    }
+
+    @Test
+    fun `test explicit remote limits as a ceiling for local limit`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                domains = listOf(DomainLocalConfig("limited.org", 30)),
+                defaultCaptureLimit = 20
+            )
+        )
+
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                domainLimits = mapOf("limited.org" to 10),
+                defaultCaptureLimit = 5
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(30) {
+            logNetworkCall("www.limited.org")
+            logNetworkCall("www.verylimited.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(15, result.requests.size)
+        assertEquals(DomainCount(30, 10), result.requestCounts["limited.org"])
+        assertEquals(DomainCount(30, 5), result.requestCounts["verylimited.com"])
+    }
+
+    @Test
+    fun `test explicit remote default limit as a ceiling for local limit`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                domains = listOf(DomainLocalConfig("limited.org", 30)),
+                defaultCaptureLimit = 20
+            )
+        )
+
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                defaultCaptureLimit = 5
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(30) {
+            logNetworkCall("www.limited.org")
+            logNetworkCall("www.verylimited.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(10, result.requests.size)
+        assertEquals(DomainCount(30, 5), result.requestCounts["limited.org"])
+        assertEquals(DomainCount(30, 5), result.requestCounts["verylimited.com"])
+    }
+
+    @Test
+    fun `test remote domain limit as a ceiling for local limit`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                domains = listOf(DomainLocalConfig("limited.org", 25)),
+                defaultCaptureLimit = 15
+            )
+        )
+
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                domainLimits = mapOf("limited.org" to 10)
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(30) {
+            logNetworkCall("www.limited.org")
+            logNetworkCall("www.defaultlimit.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(25, result.requests.size)
+        assertEquals(DomainCount(30, 10), result.requestCounts["limited.org"])
+        assertEquals(DomainCount(30, 15), result.requestCounts["defaultlimit.com"])
+    }
+
+    @Test
+    fun `test implicit remote limit as a ceiling for local limit`() {
+        sdkLocalConfig = SdkLocalConfig(
+            networking = NetworkLocalConfig(
+                domains = listOf(DomainLocalConfig("limited.org", 2000)),
+                defaultCaptureLimit = 1500
+            )
+        )
+
+        remoteConfig = RemoteConfig()
+
+        repeat(2001) {
+            logNetworkCall("www.limited.org")
+            logNetworkCall("www.verylimited.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(2000, result.requests.size)
+        assertEquals(DomainCount(2001, 1000), result.requestCounts["limited.org"])
+        assertEquals(DomainCount(2001, 1000), result.requestCounts["verylimited.com"])
+    }
+
+    @Test
+    fun `limit applies to all domains with a given suffix`() {
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                domainLimits = mapOf("limited.org" to 15),
+                defaultCaptureLimit = 10
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(8) {
+            logNetworkCall("www.limited.org")
+            logNetworkCall("admin.limited.org")
+            logNetworkCall("verylimited.org")
+            logNetworkCall("woopwoop.com")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(23, result.requests.size)
+        assertEquals(1, result.requestCounts.size)
+        assertEquals(DomainCount(24, 15), result.requestCounts["limited.org"])
+    }
+
+    @Test
+    fun `fetching session doesn't reset limit`() {
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                defaultCaptureLimit = 5
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(6) {
+            logNetworkCall("www.limited.org")
+        }
+
+        networkLoggingService.getNetworkCallsSnapshot()
+
+        repeat(6) {
+            logNetworkCall("www.limited.org")
+        }
+
+        val result = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(5, result.requests.size)
+        assertEquals(DomainCount(12, 5), result.requestCounts["limited.org"])
+    }
+
+    @Test
+    fun `clearing service resets the limit`() {
+        remoteConfig = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                defaultCaptureLimit = 5
+            )
+        )
+
+        createNetworkLoggingService()
+
+        repeat(10) {
+            logNetworkCall("www.limited.org")
+        }
+
+        val firstSession = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(5, firstSession.requests.size)
+        assertEquals(DomainCount(10, 5), firstSession.requestCounts["limited.org"])
+
+        networkLoggingService.cleanCollections()
+
+        repeat(6) {
+            logNetworkCall("www.limited.org")
+        }
+
+        val secondSession = networkLoggingService.getNetworkCallsSnapshot()
+        assertEquals(5, secondSession.requests.size)
+        assertEquals(DomainCount(6, 5), secondSession.requestCounts["limited.org"])
     }
 
     @Test
@@ -153,7 +338,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         val startTime = 10000L
         val endTime = 20000L
 
-        service.logNetworkError(
+        networkLoggingService.logNetworkError(
             randomId(),
             url,
             httpMethod,
@@ -166,16 +351,17 @@ internal class EmbraceNetworkLoggingServiceTest {
             null
         )
 
-        val result = service.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
         assertEquals(url, result.requests.at(0)?.url)
     }
 
     @Test
     fun `test logNetworkCall sends the network body if necessary`() {
-        service.logNetworkCall(
+        val url = "www.example.com"
+        networkLoggingService.logNetworkCall(
             randomId(),
-            "www.example.com",
+            url,
             "GET",
             200,
             10000L,
@@ -184,24 +370,21 @@ internal class EmbraceNetworkLoggingServiceTest {
             1000L,
             null,
             null,
-            mockk(relaxed = true)
-        )
-
-        verify(exactly = 1) {
-            networkCaptureService.logNetworkCapturedData(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
+            NetworkCaptureData(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
             )
-        }
+        )
+        assertEquals(url, networkCaptureService.urls.single())
     }
 
     @Test
     fun `test logNetworkCall doesn't send the network body if null`() {
-        service.logNetworkCall(
+        networkLoggingService.logNetworkCall(
             randomId(),
             "www.example.com",
             "GET",
@@ -214,17 +397,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             null,
             null
         )
-
-        verify(exactly = 0) {
-            networkCaptureService.logNetworkCapturedData(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        }
+        assertTrue(networkCaptureService.urls.isEmpty())
     }
 
     @Test
@@ -234,9 +407,9 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkCall("www.example.com")
         logNetworkCall("www.example.com")
 
-        service.cleanCollections()
+        networkLoggingService.cleanCollections()
 
-        val result = service.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
 
         assertEquals(0, result.requests.size)
         assertEquals(0, result.requestCounts.size)
@@ -254,7 +427,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkError(url = "https://embrace.io", startTime = startTime)
         }
 
-        assertEquals(4, service.getNetworkCallsForSession().requests.size)
+        assertEquals(4, networkLoggingService.getNetworkCallsSnapshot().requests.size)
     }
 
     @Test
@@ -268,7 +441,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkError(url = "https://embrace.io", startTime = 50, callId = callId)
         logNetworkCall(url = expectedUrl, startTime = expectedStartTime, endTime = expectedEndTime, callId = callId)
 
-        val result = service.getNetworkCallsForSession()
+        val result = networkLoggingService.getNetworkCallsSnapshot()
         assertEquals(1, result.requests.size)
         with(result.requests[0]) {
             assertEquals(1, result.requests.size)
@@ -278,8 +451,17 @@ internal class EmbraceNetworkLoggingServiceTest {
         }
     }
 
+    private fun createNetworkLoggingService() {
+        networkLoggingService =
+            EmbraceNetworkLoggingService(
+                configService,
+                logger,
+                networkCaptureService
+            )
+    }
+
     private fun logNetworkCall(url: String, startTime: Long = 100, endTime: Long = 200, callId: String = randomId()) {
-        service.logNetworkCall(
+        networkLoggingService.logNetworkCall(
             callId,
             url,
             "GET",
@@ -295,7 +477,7 @@ internal class EmbraceNetworkLoggingServiceTest {
     }
 
     private fun logNetworkError(url: String, startTime: Long = 100, callId: String = randomId()) {
-        service.logNetworkError(
+        networkLoggingService.logNetworkError(
             callId,
             url,
             "GET",

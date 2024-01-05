@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.payload.DiskUsage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -15,23 +14,19 @@ internal class DiskUsageTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("disk_usage_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("disk_usage_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("disk_usage_expected.json")
-        val obj = Gson().fromJson(json, DiskUsage::class.java)
+        val obj = deserializeJsonFromResource<DiskUsage>("disk_usage_expected.json")
         assertEquals(150982302L, obj.appDiskUsage)
         assertEquals(150923L, obj.deviceDiskFree)
     }
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", DiskUsage::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<DiskUsage>()
+        assertNotNull(obj)
     }
 }

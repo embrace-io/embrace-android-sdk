@@ -7,21 +7,24 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import java.io.FileInputStream
@@ -37,7 +40,7 @@ internal class EmbraceMetadataReactNativeTest {
     private lateinit var configService: ConfigService
     private var appFramework: Embrace.AppFramework = Embrace.AppFramework.REACT_NATIVE
     private lateinit var preferencesService: PreferencesService
-    private lateinit var activityService: ActivityService
+    private lateinit var processStateService: ProcessStateService
     private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
     private lateinit var mockSharedObjectLoader: SharedObjectLoader
     private val deviceArchitecture = FakeDeviceArchitecture()
@@ -52,7 +55,7 @@ internal class EmbraceMetadataReactNativeTest {
         buildInfo = BuildInfo("device-id", null, null)
         configService = FakeConfigService()
         preferencesService = FakePreferenceService()
-        activityService = FakeActivityService()
+        processStateService = FakeProcessStateService()
         preferencesService.javaScriptBundleURL = null
         preferencesService.javaScriptPatchNumber = "patch-number"
         preferencesService.reactNativeVersionNumber = "rn-version-number"
@@ -66,14 +69,16 @@ internal class EmbraceMetadataReactNativeTest {
         configService,
         appFramework,
         preferencesService,
-        activityService,
+        processStateService,
         MoreExecutors.newDirectExecutorService(),
-        mockk(),
-        mockk(),
-        mockk(),
+        mockStorageStatsManager(),
+        mockWindowManager(),
+        mockActivityManager(),
         fakeClock,
         cpuInfoDelegate,
-        deviceArchitecture
+        deviceArchitecture,
+        lazy { "" },
+        lazy { "" }
     )
 
     @Test
@@ -114,7 +119,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 
@@ -129,7 +134,7 @@ internal class EmbraceMetadataReactNativeTest {
         // get the react native Bundle ID once to call the lazy property
         metadataService.getReactNativeBundleId()
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 

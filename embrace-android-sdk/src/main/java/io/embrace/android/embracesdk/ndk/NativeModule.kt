@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -30,8 +30,9 @@ internal class NativeModuleImpl(
     override val ndkService: NdkService by singleton {
         EmbraceNdkService(
             coreModule.context,
+            essentialServiceModule.storageDirectory,
             essentialServiceModule.metadataService,
-            essentialServiceModule.activityService,
+            essentialServiceModule.processStateService,
             essentialServiceModule.configService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
@@ -41,9 +42,10 @@ internal class NativeModuleImpl(
             coreModule.logger,
             embraceNdkServiceRepository,
             NdkDelegateImpl(),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_CRASH_CLEANER),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_STARTUP),
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
             essentialServiceModule.deviceArchitecture,
+            coreModule.jsonSerializer
         )
     }
 
@@ -52,7 +54,7 @@ internal class NativeModuleImpl(
             EmbraceNativeThreadSamplerService(
                 essentialServiceModule.configService,
                 lazy { ndkService.getSymbolsForCurrentArch() },
-                executorService = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION),
+                executorService = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
                 deviceArchitecture = essentialServiceModule.deviceArchitecture
             )
         } else {
@@ -73,7 +75,7 @@ internal class NativeModuleImpl(
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(
-            coreModule.context,
+            essentialServiceModule.storageDirectory,
             coreModule.logger
         )
     }

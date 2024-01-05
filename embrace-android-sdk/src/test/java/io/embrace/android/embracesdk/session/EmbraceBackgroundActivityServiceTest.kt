@@ -2,33 +2,32 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
+import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
-import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BackgroundActivity
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.spyk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -40,73 +39,52 @@ internal class EmbraceBackgroundActivityServiceTest {
 
     private lateinit var service: EmbraceBackgroundActivityService
     private lateinit var clock: FakeClock
-    private lateinit var performanceInfoService: PerformanceInfoService
+    private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
     private lateinit var breadcrumbService: FakeBreadcrumbService
-    private lateinit var activityService: FakeActivityService
+    private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
-    private lateinit var remoteLogger: EmbraceRemoteLogger
+    private lateinit var logMessageService: LogMessageService
     private lateinit var userService: UserService
-    private lateinit var exceptionService: EmbraceInternalErrorService
+    private lateinit var internalErrorService: InternalErrorService
     private lateinit var deliveryService: FakeDeliveryService
-    private lateinit var ndkService: NdkService
+    private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
     private lateinit var localConfig: LocalConfig
     private lateinit var spansService: EmbraceSpansService
+    private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockableExecutorService: BlockableExecutorService
-    private lateinit var spansRemoteConfig: SpansRemoteConfig
 
     @Before
     fun init() {
         clock = FakeClock(10000L)
-        performanceInfoService = mockk()
+        performanceInfoService = FakePerformanceInfoService()
         metadataService = FakeAndroidMetadataService()
         breadcrumbService = FakeBreadcrumbService()
-        activityService = FakeActivityService(isInBackground = true)
-        eventService = mockk()
-        remoteLogger = mockk()
-        exceptionService = mockk()
+        activityService = FakeProcessStateService(isInBackground = true)
+        eventService = FakeEventService()
+        logMessageService = FakeLogMessageService()
+        internalErrorService = FakeInternalErrorService()
         deliveryService = FakeDeliveryService()
-        ndkService = mockk(relaxed = true)
-        userService = EmbraceUserService(
-            FakePreferenceService(backgroundActivityEnabled = true),
-            mockk()
+        ndkService = FakeNdkService()
+        preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
+        userService = FakeUserService()
+        spansService = EmbraceSpansService(
+            clock = OpenTelemetryClock(embraceClock = clock),
+            telemetryService = FakeTelemetryService()
         )
-        spansService = EmbraceSpansService(clock = OpenTelemetryClock(embraceClock = clock))
-        spansRemoteConfig = SpansRemoteConfig(pctEnabled = 100f)
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true,
-            spansBehavior = fakeSpansBehavior { spansRemoteConfig }
+            backgroundActivityCaptureEnabled = true
         )
-        configService.addListener(spansService)
         configService.updateListeners()
-        localConfig = spyk(
-            LocalConfig.buildConfig(
-                "GrCPU",
-                false,
-                "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",
-                EmbraceSerializer()
-            )
+        localConfig = LocalConfigParser.buildConfig(
+            "GrCPU",
+            false,
+            "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",
+            EmbraceSerializer()
         )
-        blockableExecutorService = BlockableExecutorService()
 
-        every { eventService.findEventIdsForSession(any(), any()) } returns listOf()
-        every { remoteLogger.findInfoLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.findWarningLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.findErrorLogIds(any(), any()) } returns listOf()
-        every { remoteLogger.getInfoLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getWarnLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getErrorLogsAttemptedToSend() } returns 0
-        every { remoteLogger.getUnhandledExceptionsSent() } returns 0
-        every { exceptionService.currentExceptionError } returns mockk()
-        every {
-            performanceInfoService.getSessionPerformanceInfo(
-                any(),
-                any(),
-                any(),
-                null
-            )
-        } returns mockk()
+        blockableExecutorService = BlockableExecutorService()
     }
 
     @Test
@@ -121,13 +99,10 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         service.onBackground(clock.now())
 
-        assertNotNull(service.backgroundActivity)
-        assertEquals(
-            BackgroundActivity.LifeEventType.BKGND_STATE,
-            service.backgroundActivity?.startType
-        )
-
-        assertEquals(service.backgroundActivity?.sessionId, metadataService.activeSessionId)
+        val payload = checkNotNull(service.backgroundActivity)
+        assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, payload.startType)
+        assertEquals(5, payload.number)
+        assertEquals(payload.sessionId, metadataService.activeSessionId)
     }
 
     @Test
@@ -142,6 +117,8 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
+        val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
+        assertEquals(5, payload.backgroundActivity.number)
     }
 
     @Test
@@ -154,7 +131,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     @Test
     fun `activity is cached on start capture`() {
         this.service = createService()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
 
     @Test
@@ -162,7 +139,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         val startTime = clock.now()
 
         this.service = createService()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 1000)
@@ -179,11 +156,11 @@ internal class EmbraceBackgroundActivityServiceTest {
         activityService.isInBackground = false
         this.service = createService()
 
-        assertNull(deliveryService.lastSavedBackgroundActivity)
+        assertNull(deliveryService.lastSavedBackgroundActivities.singleOrNull())
 
         service.onBackground(clock.now())
 
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
 
     @Test
@@ -229,33 +206,34 @@ internal class EmbraceBackgroundActivityServiceTest {
             )
         )
         this.service = createService()
-
-        verify {
-            ndkService.updateSessionId(checkNotNull(service.backgroundActivity).sessionId)
-        }
+        val id = checkNotNull(service.backgroundActivity).sessionId
+        assertEquals(id, ndkService.sessionId)
     }
 
     @Test
     fun `NDK session id is not updated when NDK is not enabled`() {
         this.service = createService()
-
-        verify(exactly = 0) {
-            ndkService.updateSessionId(any())
-        }
+        assertNull(ndkService.sessionId)
     }
 
     @Test
     fun `saving will persist the current completed spans but will not flush`() {
+        val startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.now())
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(startTimeNanos)
+        clock.tick(1)
+        spansService.recordCompletedSpan(
+            name = "test-span",
+            startTimeNanos = startTimeNanos,
+            endTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.now())
+        )
         assertEquals(1, spansService.completedSpans()?.size)
         // move time ahead so the save will actually persist the new background activity message
         clock.tick(6000)
         service.save()
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
-        assertEquals(1, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
         assertEquals(1, spansService.completedSpans()?.size)
     }
 
@@ -265,57 +243,79 @@ internal class EmbraceBackgroundActivityServiceTest {
         blockableExecutorService.blockingMode = true
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(now)
         service.handleCrash("crashId")
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
-        // there should be 2 completed spans: session span and the sdk init span
+        // there should be 1 completed span: the session span
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
-        assertEquals(2, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
-        service.onForeground(false, now, clock.now())
-        assertNotNull(deliveryService.lastSavedBackgroundActivity)
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        service.onForeground(false, TimeUnit.MILLISECONDS.toNanos(clock.now()), clock.now())
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
 
-        // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSavedBackgroundActivity?.spans?.size)
+        // there should be 1 completed span: the session span
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
-        spansService.initializeService(now, now + 10L)
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         service.sendBackgroundActivity()
-        assertNotNull(deliveryService.lastSentBackgroundActivity)
+        assertNotNull(deliveryService.lastSentBackgroundActivities.single())
 
-        // there should be 2 completed spans: session span and the sdk init span
-        assertEquals(2, deliveryService.lastSentBackgroundActivity?.spans?.size)
+        // there should be 1 completed span: the session span
+        assertEquals(1, deliveryService.lastSentBackgroundActivities.single().spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
+    @Test
+    fun `foregrounding background activity flushes breadcrumbs`() {
+        service = createService()
+        clock.tick(1000L)
+        service.onForeground(false, 0, clock.now())
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
+        assertEquals(1, breadcrumbService.flushCount)
+    }
+
+    @Test
+    fun `saving background activity in the background will not flush breadcrumbs`() {
+        service = createService()
+        clock.tick(1000L)
+        service.save()
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
+        assertEquals(0, breadcrumbService.flushCount)
+    }
+
     private fun createService(): EmbraceBackgroundActivityService {
-        return EmbraceBackgroundActivityService(
-            performanceInfoService,
-            metadataService,
-            breadcrumbService,
-            activityService,
-            eventService,
-            remoteLogger,
+        val collator = BackgroundActivityCollator(
             userService,
-            exceptionService,
+            preferencesService,
+            eventService,
+            logMessageService,
+            internalErrorService,
+            breadcrumbService,
+            metadataService,
+            performanceInfoService,
+            spansService,
+            clock,
+        )
+        return EmbraceBackgroundActivityService(
+            metadataService,
+            activityService,
             deliveryService,
             configService,
             ndkService,
             clock,
-            spansService,
+            collator,
             lazy { blockableExecutorService }
         )
     }

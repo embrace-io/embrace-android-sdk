@@ -1,29 +1,31 @@
 package io.embrace.android.embracesdk.spans
 
-import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.BetaApi
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.annotation.BetaApi
 
 /**
  * Represents an Event in an [EmbraceSpan]
  */
 @BetaApi
+@JsonClass(generateAdapter = true)
 public data class EmbraceSpanEvent internal constructor(
     /**
      * The name of the event
      */
-    @SerializedName("name")
+    @Json(name = "name")
     val name: String,
 
     /**
      * The timestamp of the event in nanoseconds
      */
-    @SerializedName("time_unix_nano")
+    @Json(name = "time_unix_nano")
     val timestampNanos: Long,
 
     /**
      * The attributes of this event
      */
-    @SerializedName("attributes")
+    @Json(name = "attributes")
     val attributes: Map<String, String>
 ) {
     public companion object {

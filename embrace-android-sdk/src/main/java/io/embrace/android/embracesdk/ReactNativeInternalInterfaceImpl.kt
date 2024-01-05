@@ -27,10 +27,6 @@ internal class ReactNativeInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             val exception = JsException(name, message, type, stacktrace)
-            logger.logDeveloper(
-                "Embrace",
-                "Log Unhandled JS exception: $name -- stacktrace: $stacktrace"
-            )
             crashService.logUnhandledJsException(exception)
         } else {
             logger.logSDKNotInitialized("log JS exception")
@@ -44,10 +40,6 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?
     ) {
         if (embrace.isStarted) {
-            logger.logDeveloper(
-                "Embrace",
-                "Log Handled JS exception: $name -- stacktrace: $stacktrace"
-            )
             embrace.logMessage(
                 EmbraceEvent.Type.ERROR_LOG,
                 message,

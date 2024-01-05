@@ -3,9 +3,8 @@ package io.embrace.android.embracesdk.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData;
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 
 /**
  * This class is used to create manually-recorded network requests.

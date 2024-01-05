@@ -15,16 +15,14 @@ jobs:
     uses: ./.github/workflows/functional-tests.yml
     secrets:
       token: ${{ secrets.CD_GITHUB_TOKEN }}
-#  swazzlertests:
-#    uses: embrace-io/swazzler-test/.github/workflows/callable_swazzler_test.yml@master
-#    secrets:
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}
-  # baseline-profile:
-  #  name: Update Baseline Profile file
-  #todo
+  baseline-profile:
+    name: Update Baseline Profile
+    uses: ./.github/workflows/generate_baseline_profile.yml
+    secrets:
+      token: ${{ secrets.CD_GITHUB_TOKEN }}
   sdk:
     name: Publish SDK to Maven Internal
-    needs: [functional] # swazzlertests, baseline-profile
+    needs: [functional, baseline-profile]
     runs-on: ubuntu-latest
     strategy:
       matrix:

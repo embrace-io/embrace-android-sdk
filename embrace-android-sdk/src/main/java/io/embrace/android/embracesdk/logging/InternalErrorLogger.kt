@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.logging
 
 internal class InternalErrorLogger(
-    private val embraceInternalErrorService: EmbraceInternalErrorService,
+    private val internalErrorService: InternalErrorService,
     private val logger: InternalEmbraceLogger.LoggerAction,
     private val logStrictMode: Boolean = false
 ) : InternalEmbraceLogger.LoggerAction {
@@ -25,7 +25,7 @@ internal class InternalErrorLogger(
 
         if (finalThrowable != null) {
             try {
-                embraceInternalErrorService.handleInternalError(finalThrowable)
+                internalErrorService.handleInternalError(finalThrowable)
             } catch (exc: Exception) {
                 logger.log(exc.localizedMessage ?: "", InternalStaticEmbraceLogger.Severity.ERROR, null, false)
             }

@@ -3,20 +3,21 @@ package io.embrace.android.embracesdk.event
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.stream
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -46,7 +47,7 @@ internal class EmbraceEventService(
     workerThreadModule: WorkerThreadModule,
     private val clock: Clock,
     private val spansService: SpansService
-) : EventService, ActivityListener, MemoryCleanerListener {
+) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
     private val executorService: ExecutorService
 
     /**
@@ -76,7 +77,7 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
         )
         executorService =
             workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
@@ -179,7 +180,8 @@ internal class EmbraceEventService(
         } catch (ex: Exception) {
             logger.logError(
                 "Cannot start event with name: $name, identifier: $identifier due to an exception",
-                ex, false
+                ex,
+                false
             )
         }
     }
@@ -234,7 +236,9 @@ internal class EmbraceEventService(
                 sessionProperties
             )
             if (isStartupEvent(name)) {
-                logStartupSpan()
+                if (!late) {
+                    logStartupSpan()
+                }
                 logDeveloper("EmbraceEventService", "Ending Startup Ending")
                 startupEventInfo = eventHandler.buildStartupEventInfo(
                     originEventDescription.event,
@@ -257,7 +261,7 @@ internal class EmbraceEventService(
     override fun getActiveEventIds(): List<String> {
         val ids: MutableList<String> = ArrayList()
         stream<EventDescription>(activeEvents.values) { (_, event): EventDescription ->
-            event.eventId?.let(ids::add)
+            ids.add(event.eventId)
         }
         return ids
     }

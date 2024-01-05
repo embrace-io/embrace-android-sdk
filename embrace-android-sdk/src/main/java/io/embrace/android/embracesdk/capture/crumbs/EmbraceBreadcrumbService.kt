@@ -3,11 +3,10 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.text.TextUtils
 import android.util.Pair
-import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
@@ -19,8 +18,8 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
-import io.embrace.android.embracesdk.session.ActivityListener
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.utils.filter
 import java.util.Collections
 import java.util.Deque
@@ -42,7 +41,7 @@ internal class EmbraceBreadcrumbService(
     clock: Clock,
     configService: ConfigService,
     logger: InternalEmbraceLogger
-) : BreadcrumbService, ActivityListener, MemoryCleanerListener {
+) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     /**
      * Clock used by the service
@@ -60,7 +59,6 @@ internal class EmbraceBreadcrumbService(
     private val viewBreadcrumbs = LinkedBlockingDeque<ViewBreadcrumb?>()
     private val tapBreadcrumbs = LinkedBlockingDeque<TapBreadcrumb?>()
 
-    @VisibleForTesting
     val customBreadcrumbs = LinkedBlockingDeque<CustomBreadcrumb?>()
     private val rnActionBreadcrumbs = LinkedBlockingDeque<RnActionBreadcrumb?>()
     val webViewBreadcrumbs = LinkedBlockingDeque<WebViewBreadcrumb?>()
@@ -162,19 +160,19 @@ internal class EmbraceBreadcrumbService(
         timestamp: Long,
         type: TapBreadcrumbType
     ) {
-        var point = point
         if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
             return
         }
         logger.logDeveloper("EmbraceBreadcrumbsService", "log tap")
         try {
-            if (!configService.breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
-                point = Pair(0.0f, 0.0f)
+            val finalPoint = if (!configService.breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
+                Pair(0.0f, 0.0f)
             } else {
                 logger.logDeveloper("EmbraceBreadcrumbsService", "Cannot capture tap coordinates")
+                point
             }
             val limit = configService.breadcrumbBehavior.getTapBreadcrumbLimit()
-            tryAddBreadcrumb(tapBreadcrumbs, TapBreadcrumb(point, element, timestamp, type), limit)
+            tryAddBreadcrumb(tapBreadcrumbs, TapBreadcrumb(finalPoint, element, timestamp, type), limit)
         } catch (ex: Exception) {
             logger.logError("Failed to log tap breadcrumb for element $element", ex)
         }
@@ -222,7 +220,8 @@ internal class EmbraceBreadcrumbService(
             val limit = configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
             tryAddBreadcrumb(
                 rnActionBreadcrumbs,
-                RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output), limit
+                RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output),
+                limit
             )
         } catch (ex: Exception) {
             logger.logDebug("Failed to log RN Action breadcrumb with name $name", ex)
@@ -494,10 +493,7 @@ internal class EmbraceBreadcrumbService(
     private fun addToViewLogsQueue(screen: String?, timestamp: Long, force: Boolean) {
         try {
             val lastViewBreadcrumb = viewBreadcrumbs.peek()
-            var lastScreen = if (lastViewBreadcrumb != null) lastViewBreadcrumb.screen else ""
-            if (lastScreen == null) {
-                lastScreen = ""
-            }
+            val lastScreen = lastViewBreadcrumb?.screen ?: ""
             if (force || lastViewBreadcrumb == null || !lastScreen.equals(
                     screen.toString(),
                     ignoreCase = true
@@ -534,7 +530,10 @@ internal class EmbraceBreadcrumbService(
         endTime: Long
     ): List<T> {
         logger.logDeveloper("EmbraceBreadcrumbsService", "Filtering breadcrumbs for time window")
-        return filter(breadcrumbs) { crumb: T -> crumb!!.getStartTime() >= startTime && (endTime <= 0L || crumb.getStartTime() <= endTime) }
+        return filter(breadcrumbs) { crumb: T ->
+            checkNotNull(crumb)
+            crumb.getStartTime() >= startTime && (endTime <= 0L || crumb.getStartTime() <= endTime)
+        }
     }
 
     private fun <T> tryAddBreadcrumb(

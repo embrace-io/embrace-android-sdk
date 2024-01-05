@@ -1,33 +1,35 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiClient
 
+@JsonClass(generateAdapter = true)
 internal data class EventMessage(
-    @SerializedName("et")
+    @Json(name = "et")
     val event: Event,
 
-    @SerializedName("cr")
+    @Json(name = "cr")
     val crash: Crash? = null,
 
-    @SerializedName("d")
+    @Json(name = "d")
     val deviceInfo: DeviceInfo? = null,
 
-    @SerializedName("a")
+    @Json(name = "a")
     val appInfo: AppInfo? = null,
 
-    @SerializedName("u")
+    @Json(name = "u")
     val userInfo: UserInfo? = null,
 
-    @SerializedName("p")
+    @Json(name = "p")
     val performanceInfo: PerformanceInfo? = null,
 
-    @SerializedName("sk")
+    @Json(name = "sk")
     val stacktraces: Stacktraces? = null,
 
-    @SerializedName("v")
+    @Json(name = "v")
     val version: Int = ApiClient.MESSAGE_VERSION,
 
-    @SerializedName("crn")
+    @Json(name = "crn")
     val nativeCrash: NativeCrash? = null
 )

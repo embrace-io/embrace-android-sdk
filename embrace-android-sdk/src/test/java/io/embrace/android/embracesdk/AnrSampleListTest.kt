@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
+import io.embrace.android.embracesdk.payload.extensions.size
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

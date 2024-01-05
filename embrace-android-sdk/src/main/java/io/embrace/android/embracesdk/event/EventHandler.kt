@@ -4,16 +4,16 @@ import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.StartupEventInfo
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -64,7 +64,7 @@ internal class EventHandler(
 
         if (shouldSendMoment(eventName)) {
             val eventMessage = buildStartEventMessage(event)
-            deliveryService.sendEventAsync(eventMessage)
+            deliveryService.sendMoment(eventMessage)
         } else {
             logger.logDebug("$eventName start moment not sent based on gating config.")
         }
@@ -101,7 +101,7 @@ internal class EventHandler(
         val endEventMessage = buildEndEventMessage(endEvent, startTime, endTime)
 
         if (shouldSendMoment(event.name)) {
-            deliveryService.sendEventAsync(endEventMessage)
+            deliveryService.sendMoment(endEventMessage)
         } else {
             logger.logDebug("${event.name} end moment not sent based on gating config.")
         }
@@ -194,8 +194,8 @@ internal class EventHandler(
             appState = metadataService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
-            sessionProperties = sessionProperties.get(),
-            customProperties = eventProperties
+            sessionProperties = sessionProperties.get().toMap(),
+            customProperties = eventProperties?.toMap()
         )
     }
 
@@ -215,8 +215,8 @@ internal class EventHandler(
             duration = duration,
             appState = metadataService.getAppState(),
             type = if (late) EmbraceEvent.Type.LATE else EmbraceEvent.Type.END,
-            customProperties = eventProperties,
-            sessionProperties = sessionProperties.get()
+            customProperties = eventProperties?.toMap(),
+            sessionProperties = sessionProperties.get().toMap()
         )
     }
 

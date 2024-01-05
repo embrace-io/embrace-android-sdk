@@ -1,14 +1,19 @@
 package io.embrace.android.embracesdk
 
 import android.util.Pair
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 internal class EmbraceInternalInterfaceImpl(
-    private val embraceImpl: EmbraceImpl
+    private val embraceImpl: EmbraceImpl,
+    private val initModule: InitModule,
+    private val configService: ConfigService
 ) : EmbraceInternalInterface {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
@@ -170,7 +175,21 @@ internal class EmbraceInternalInterfaceImpl(
         embraceImpl.setProcessStartedByNotification()
     }
 
-    override fun isNetworkSpanForwardingEnabled(): Boolean {
-        return embraceImpl.configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() ?: false
+    override fun isNetworkSpanForwardingEnabled(): Boolean = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
+
+    override fun getSdkCurrentTime(): Long = initModule.clock.now()
+
+    override fun isInternalNetworkCaptureDisabled(): Boolean = ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED
+
+    override fun isAnrCaptureEnabled(): Boolean = configService.anrBehavior.isAnrCaptureEnabled()
+
+    override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNdkEnabled()
+
+    override fun logInternalError(message: String?, details: String?) {
+        embraceImpl.logInternalError(message, details)
+    }
+
+    override fun logInternalError(error: Throwable) {
+        embraceImpl.logInternalError(error)
     }
 }

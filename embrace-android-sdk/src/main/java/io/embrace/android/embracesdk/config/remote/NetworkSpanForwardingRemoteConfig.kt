@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.config.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class NetworkSpanForwardingRemoteConfig(
-    @SerializedName("pct_enabled")
+    @Json(name = "pct_enabled")
     val pctEnabled: Float? = null
 )

@@ -54,6 +54,7 @@ internal class SessionBehavior(
     /**
      * Whether sessions are allowed to be persisted async or not.
      */
+    @Deprecated("This flag is obsolete and is no longer respected.")
     fun isAsyncEndEnabled(): Boolean =
         remote?.sessionConfig?.endAsync ?: local?.asyncEnd ?: ASYNC_END_DEFAULT
 

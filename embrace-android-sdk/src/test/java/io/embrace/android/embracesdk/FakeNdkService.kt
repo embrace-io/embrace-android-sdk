@@ -4,20 +4,25 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.NativeCrashData
 
 internal class FakeNdkService : NdkService {
+    var checkForNativeCrashCount: Int = 0
+    val propUpdates = mutableListOf<Map<String, String>>()
+
+    var sessionId: String? = null
+    var lastUnityCrashId: String? = null
+
     override fun updateSessionId(newSessionId: String) {
-        TODO("Not yet implemented")
+        sessionId = newSessionId
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
-        TODO("Not yet implemented")
+        propUpdates.add(properties)
     }
 
     override fun onUserInfoUpdate() {
-        TODO("Not yet implemented")
     }
 
     override fun getUnityCrashId(): String? {
-        TODO("Not yet implemented")
+        return lastUnityCrashId
     }
 
     override fun testCrash(isCpp: Boolean) {
@@ -25,7 +30,8 @@ internal class FakeNdkService : NdkService {
     }
 
     override fun checkForNativeCrash(): NativeCrashData? {
-        TODO("Not yet implemented")
+        checkForNativeCrashCount++
+        return null
     }
 
     override fun getSymbolsForCurrentArch(): Map<String, String>? {

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.worker.ExecutorName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.reflect.KFunction1
+import kotlin.reflect.KFunction2
 
 /**
  * Version of [WorkerThreadModule] used for tests that uses and exposes [BlockableExecutorService] and [BlockingScheduledExecutorService]
@@ -16,7 +17,7 @@ import kotlin.reflect.KFunction1
  */
 internal class FakeWorkerThreadModule(
     executorProvider: KFunction1<Boolean, BlockableExecutorService> = ::BlockableExecutorService,
-    scheduledExecutorProvider: KFunction1<FakeClock, BlockingScheduledExecutorService> = ::BlockingScheduledExecutorService,
+    scheduledExecutorProvider: KFunction2<FakeClock, Boolean, BlockingScheduledExecutorService> = ::BlockingScheduledExecutorService,
     private val clock: FakeClock = FakeClock(),
     private val blockingMode: Boolean = false
 ) : WorkerThreadModule {
@@ -27,7 +28,7 @@ internal class FakeWorkerThreadModule(
 
     private val scheduledExecutorServices =
         ExecutorName.values().associateWith {
-            scheduledExecutorProvider(clock)
+            scheduledExecutorProvider(clock, blockingMode)
         }
 
     override fun backgroundExecutor(executorName: ExecutorName): BlockableExecutorService {

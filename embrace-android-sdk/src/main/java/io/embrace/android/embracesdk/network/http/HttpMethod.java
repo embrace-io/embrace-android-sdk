@@ -2,14 +2,11 @@ package io.embrace.android.embracesdk.network.http;
 
 import java.util.Locale;
 
-import io.embrace.android.embracesdk.InternalApi;
-
 /**
  * Enumeration of supported HTTP request methods.
  * <p>
  * This class is part of the Embrace Public API.
  */
-@InternalApi
 public enum HttpMethod {
     GET,
     HEAD,

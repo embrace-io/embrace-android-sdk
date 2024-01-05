@@ -3,4 +3,7 @@
 
     <uses-sdk tools:overrideLibrary="io.embrace.android.embracesdk.testserver"/>
 
+    <application>
+        <activity android:name="io.embrace.android.embracesdk.EmbraceContext$ActivityAccess" />
+    </application>
 </manifest>

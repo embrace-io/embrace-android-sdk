@@ -40,8 +40,8 @@ publishing {
                 url = "https://github.com/embrace-io/embrace-android-sdk"
                 licenses {
                     license {
-                        name = "Embrace license"
-                        url = "https://embrace.io/docs/embrace-software-notice/"
+                        name = "Embrace License"
+                        url = "https://embrace.io/docs/terms-of-service/"
                     }
                 }
                 developers {

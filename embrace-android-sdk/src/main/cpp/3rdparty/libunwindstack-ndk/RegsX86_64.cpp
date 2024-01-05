@@ -43,6 +43,10 @@ uint64_t RegsX86_64::sp() {
   return regs_[X86_64_REG_SP];
 }
 
+uint64_t RegsX86_64::lr() {
+  return 0;
+}
+
 void RegsX86_64::set_pc(uint64_t pc) {
   regs_[X86_64_REG_PC] = pc;
 }

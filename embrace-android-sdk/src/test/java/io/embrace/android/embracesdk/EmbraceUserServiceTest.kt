@@ -110,11 +110,11 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            assertTrue(info.personas!!.contains("payer"))
+            assertTrue(checkNotNull(info.personas).contains("payer"))
             clearUserAsPayer()
-            assertFalse(info.personas!!.contains("payer"))
+            assertFalse(checkNotNull(info.personas).contains("payer"))
             setUserAsPayer()
-            assertTrue(info.personas!!.contains("payer"))
+            assertTrue(checkNotNull(info.personas).contains("payer"))
         }
     }
 
@@ -137,7 +137,8 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
         val persona = "!@£$$%*("
         service.addUserPersona(persona)
-        assertFalse(service.info.personas!!.contains(persona))
+        val personas = checkNotNull(service.info.personas)
+        assertFalse(personas.contains(persona))
     }
 
     @Test

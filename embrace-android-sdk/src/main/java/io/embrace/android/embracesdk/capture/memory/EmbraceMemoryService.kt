@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.capture.memory
 
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.MemoryWarning
 import java.util.NavigableMap

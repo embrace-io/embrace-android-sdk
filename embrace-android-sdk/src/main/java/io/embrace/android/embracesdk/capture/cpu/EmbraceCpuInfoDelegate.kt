@@ -16,7 +16,9 @@ internal class EmbraceCpuInfoDelegate(
                 logger.logError("Could not get the CPU name. Exception: $exception", exception)
                 null
             }
-        } else null
+        } else {
+            null
+        }
     }
 
     override fun getElg(): String? {
@@ -27,7 +29,9 @@ internal class EmbraceCpuInfoDelegate(
                 logger.logError("Could not get the EGL name. Exception: $exception", exception)
                 null
             }
-        } else null
+        } else {
+            null
+        }
     }
 
     private external fun getNativeCpuName(): String

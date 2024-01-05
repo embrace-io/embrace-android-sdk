@@ -17,12 +17,18 @@ internal class PerformanceInfoSanitizer(
             networkInterfaceIntervals = networkInterfaceIntervals(info),
             memoryWarnings = memoryWarnings(info),
             diskUsage = diskUsage(info),
-            networkRequests = networkRequests(info)
+            networkRequests = networkRequests(info),
+            responsivenessMonitorSnapshots = threadMonitorSnapshots(info)
         )
     }
 
     private fun anrIntervals(performanceInfo: PerformanceInfo) = when {
         shouldSendANRs() -> performanceInfo.anrIntervals
+        else -> null
+    }
+
+    private fun threadMonitorSnapshots(performanceInfo: PerformanceInfo) = when {
+        shouldSendANRs() -> performanceInfo.responsivenessMonitorSnapshots
         else -> null
     }
 

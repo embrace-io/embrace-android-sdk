@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.mockk.every
 import io.mockk.mockk
@@ -22,16 +22,12 @@ internal class ExceptionInfoTest {
 
     @Test
     fun testExceptionInfoSerialization() {
-        val data = ResourceReader.readResourceAsText("exception_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("exception_info_expected.json", info)
     }
 
     @Test
     fun testExceptionInfoDeserialization() {
-        val json = ResourceReader.readResourceAsText("exception_info_expected.json")
-        val obj = Gson().fromJson(json, ExceptionInfo::class.java)
+        val obj = deserializeJsonFromResource<ExceptionInfo>("exception_info_expected.json")
         assertEquals("java.lang.IllegalStateException", obj.name)
         assertEquals("Whoops!", obj.message)
         assertEquals("java.base/java.lang.Thread.getStackTrace(Thread.java:1602)", obj.lines[0])
@@ -41,11 +37,9 @@ internal class ExceptionInfoTest {
         )
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testExceptionInfoEmptyObject() {
-        val info = Gson().fromJson("{}", ExceptionInfo::class.java)
-        assertNotNull(info)
-        info.name
+        deserializeEmptyJsonString<ExceptionInfo>()
     }
 
     @Test

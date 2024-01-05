@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -59,11 +58,6 @@ internal interface ConfigService : Closeable {
      * How network call capture should behave.
      */
     val networkBehavior: NetworkBehavior
-
-    /**
-     * How spans should behave
-     */
-    val spansBehavior: SpansBehavior
 
     /**
      * How the startup moment should behave

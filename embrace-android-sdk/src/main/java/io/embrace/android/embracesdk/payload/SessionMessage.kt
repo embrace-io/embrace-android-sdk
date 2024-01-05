@@ -4,6 +4,8 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.payload.otel.Envelope
+import io.embrace.android.embracesdk.payload.otel.SessionData
 
 /**
  * The session message, containing the session itself, as well as performance information about the
@@ -53,4 +55,12 @@ internal data class SessionMessage @JvmOverloads internal constructor(
 
     @Json(name = "v")
     val version: Int = ApiClient.MESSAGE_VERSION
-)
+) {
+    fun asEnvelope(): Envelope {
+        return Envelope("session", SessionData(spans))
+    }
+
+    fun asOtelStandard(): String {
+
+    }
+}

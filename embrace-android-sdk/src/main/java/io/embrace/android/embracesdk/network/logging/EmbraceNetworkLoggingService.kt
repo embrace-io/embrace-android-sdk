@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
@@ -52,7 +53,7 @@ internal class EmbraceNetworkLoggingService(
 
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
-    override fun getNetworkCallsSnapshot(): NetworkSessionV2 {
+    override fun getNetworkCallsSnapshot(): List<EmbraceSpan> {
         var storedCallsSize: Int? = null
         var cachedCallsSize: Int? = null
 

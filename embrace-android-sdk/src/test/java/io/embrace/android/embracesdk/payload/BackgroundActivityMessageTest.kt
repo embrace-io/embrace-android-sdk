@@ -4,6 +4,7 @@ import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -12,7 +13,7 @@ import org.junit.Test
 
 internal class BackgroundActivityMessageTest {
 
-    private val backgroundActivity = BackgroundActivity("fake-activity", 0, "")
+    private val backgroundActivity = fakeBackgroundActivity()
     private val userInfo = UserInfo("fake-user-id")
     private val appInfo = AppInfo("fake-app-id")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
@@ -22,7 +23,7 @@ internal class BackgroundActivityMessageTest {
     private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
     private val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 
-    private val info = BackgroundActivityMessage(
+    private val info = SessionMessage(
         backgroundActivity,
         userInfo,
         appInfo,
@@ -39,10 +40,10 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testDeserialization() {
-        val obj = deserializeJsonFromResource<BackgroundActivityMessage>("bg_activity_message_expected.json")
+        val obj = deserializeJsonFromResource<SessionMessage>("bg_activity_message_expected.json")
         assertNotNull(obj)
 
-        assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)
+        assertEquals(backgroundActivity.startTime, obj.session.startTime)
         assertEquals(userInfo, obj.userInfo)
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
@@ -53,6 +54,6 @@ internal class BackgroundActivityMessageTest {
 
     @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        deserializeEmptyJsonString<BackgroundActivityMessage>()
+        deserializeEmptyJsonString<SessionMessage>()
     }
 }

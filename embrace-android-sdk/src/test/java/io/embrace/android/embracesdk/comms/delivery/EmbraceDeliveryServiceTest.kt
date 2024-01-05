@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.fakeBackgroundActivity
+import io.embrace.android.embracesdk.fakeBackgroundActivityMessage
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -148,7 +148,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSaveBackgroundActivity() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.saveBackgroundActivity(obj)
         assertEquals(obj, deliveryCacheManager.saveBgActivityRequests.last())
     }
@@ -173,7 +173,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendBackgroundActivity() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.sendBackgroundActivity(obj)
 
         // cache the object first in case process terminates
@@ -184,7 +184,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendBackgroundActivities() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.saveBackgroundActivity(obj)
         deliveryService.sendBackgroundActivities()
         assertEquals(1, apiService.sessionRequests.size)

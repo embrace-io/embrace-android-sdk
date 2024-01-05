@@ -91,10 +91,10 @@ internal data class Session @JvmOverloads internal constructor(
     val crashReportId: String? = null,
 
     @Json(name = "em")
-    val endType: SessionLifeEventType? = null,
+    val endType: LifeEventType? = null,
 
     @Json(name = "sm")
-    val startType: SessionLifeEventType? = null,
+    val startType: LifeEventType? = null,
 
     @Json(name = "oc")
     val orientations: List<Orientation>? = null,
@@ -133,7 +133,10 @@ internal data class Session @JvmOverloads internal constructor(
     /**
      * Enum to discriminate the different ways a session can start / end
      */
-    enum class SessionLifeEventType {
+    enum class LifeEventType {
+
+        /* Session values */
+
         @Json(name = "s")
         STATE,
 
@@ -141,7 +144,21 @@ internal data class Session @JvmOverloads internal constructor(
         MANUAL,
 
         @Json(name = "t")
-        TIMED
+        TIMED,
+
+        /* Background activity values */
+
+        @Json(name = "bs")
+        BKGND_STATE,
+
+        @Json(name = "bm")
+        BKGND_MANUAL,
+
+        @Json(name = "bt")
+        BKGND_TIME,
+
+        @Json(name = "be")
+        BKGND_SIZE
     }
 
     companion object {

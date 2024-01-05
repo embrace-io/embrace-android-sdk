@@ -9,9 +9,8 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivity
-import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.submitSafe
 import java.util.concurrent.Callable
@@ -41,7 +40,7 @@ internal class EmbraceBackgroundActivityService(
      * The active background activity session.
      */
     @Volatile
-    var backgroundActivity: BackgroundActivity? = null
+    var backgroundActivity: Session? = null
     private val manualBkgSessionsSent = AtomicInteger(0)
 
     var lastSendAttempt: Long
@@ -53,7 +52,7 @@ internal class EmbraceBackgroundActivityService(
         configService.addListener(this)
         if (processStateService.isInBackground) {
             // start background activity capture from a cold start
-            startBackgroundActivityCapture(clock.now(), true, LifeEventType.BKGND_STATE)
+            startBackgroundActivityCapture(clock.now(), true, Session.LifeEventType.BKGND_STATE)
         }
     }
 
@@ -63,9 +62,9 @@ internal class EmbraceBackgroundActivityService(
         }
         val now = clock.now()
         val backgroundActivityMessage =
-            stopBackgroundActivityCapture(now, LifeEventType.BKGND_MANUAL, null)
+            stopBackgroundActivityCapture(now, Session.LifeEventType.BKGND_MANUAL, null)
         // start a new background activity session
-        startBackgroundActivityCapture(clock.now(), false, LifeEventType.BKGND_MANUAL)
+        startBackgroundActivityCapture(clock.now(), false, Session.LifeEventType.BKGND_MANUAL)
         if (backgroundActivityMessage != null) {
             deliveryService.sendBackgroundActivity(backgroundActivityMessage)
         }
@@ -75,18 +74,18 @@ internal class EmbraceBackgroundActivityService(
         if (isEnabled && backgroundActivity != null) {
             val now = clock.now()
             val backgroundActivityMessage =
-                stopBackgroundActivityCapture(now, LifeEventType.BKGND_STATE, crashId)
+                stopBackgroundActivityCapture(now, Session.LifeEventType.BKGND_STATE, crashId)
             if (backgroundActivityMessage != null) {
                 deliveryService.saveBackgroundActivity(backgroundActivityMessage)
             }
-            startBackgroundActivityCapture(clock.now(), false, LifeEventType.BKGND_STATE)
+            startBackgroundActivityCapture(clock.now(), false, Session.LifeEventType.BKGND_STATE)
         }
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
         if (isEnabled) {
             val backgroundActivityMessage =
-                stopBackgroundActivityCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
+                stopBackgroundActivityCapture(timestamp - 1, Session.LifeEventType.BKGND_STATE, null)
             if (backgroundActivityMessage != null) {
                 deliveryService.saveBackgroundActivity(backgroundActivityMessage)
             }
@@ -96,7 +95,7 @@ internal class EmbraceBackgroundActivityService(
 
     override fun onBackground(timestamp: Long) {
         if (isEnabled) {
-            startBackgroundActivityCapture(timestamp + 1, false, LifeEventType.BKGND_STATE)
+            startBackgroundActivityCapture(timestamp + 1, false, Session.LifeEventType.BKGND_STATE)
         }
     }
 
@@ -155,7 +154,7 @@ internal class EmbraceBackgroundActivityService(
     private fun startBackgroundActivityCapture(
         startTime: Long,
         coldStart: Boolean,
-        startType: LifeEventType
+        startType: Session.LifeEventType
     ) {
         val activity = backgroundActivityCollator.createStartMessage(
             startTime,
@@ -180,9 +179,9 @@ internal class EmbraceBackgroundActivityService(
     @Synchronized
     private fun stopBackgroundActivityCapture(
         endTime: Long,
-        endType: LifeEventType,
+        endType: Session.LifeEventType,
         crashId: String?
-    ): BackgroundActivityMessage? {
+    ): SessionMessage? {
         val activity = backgroundActivity
         if (activity == null) {
             InternalStaticEmbraceLogger.logError("No background activity to report")

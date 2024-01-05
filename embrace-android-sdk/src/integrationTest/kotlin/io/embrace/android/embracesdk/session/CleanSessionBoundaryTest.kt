@@ -2,18 +2,8 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessionMessages
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.verifySessionHappened
-import io.embrace.android.embracesdk.verifySessionMessage
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import org.junit.Assert.assertEquals
@@ -36,8 +36,8 @@ internal class SessionTest {
         warnLogsAttemptedToSend = 2,
         errorLogsAttemptedToSend = 3,
         crashReportId = "fake-crash-id",
-        endType = SessionLifeEventType.STATE,
-        startType = SessionLifeEventType.STATE,
+        endType = LifeEventType.STATE,
+        startType = LifeEventType.STATE,
         startupDuration = 1223,
         startupThreshold = 5000,
         sdkStartupDuration = 109,
@@ -88,8 +88,8 @@ internal class SessionTest {
             assertEquals(2, warnLogsAttemptedToSend)
             assertEquals(3, errorLogsAttemptedToSend)
             assertEquals("fake-crash-id", crashReportId)
-            assertEquals(SessionLifeEventType.STATE, endType)
-            assertEquals(SessionLifeEventType.STATE, startType)
+            assertEquals(LifeEventType.STATE, endType)
+            assertEquals(LifeEventType.STATE, startType)
             assertEquals(1223L, startupDuration)
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)

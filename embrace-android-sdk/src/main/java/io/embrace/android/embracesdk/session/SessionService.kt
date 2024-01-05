@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.io.Closeable
 
@@ -12,7 +12,7 @@ internal interface SessionService : ProcessStateListener, Closeable {
      * @param coldStart whether this is a cold start of the application
      * @param startType the origin of the event that starts the session.
      */
-    fun startSession(coldStart: Boolean, startType: SessionLifeEventType, startTime: Long)
+    fun startSession(coldStart: Boolean, startType: LifeEventType, startTime: Long)
 
     fun endSessionManually(clearUserInfo: Boolean)
 
@@ -22,7 +22,7 @@ internal interface SessionService : ProcessStateListener, Closeable {
      *
      * @param endType the origin of the event that ends the session.
      */
-    fun triggerStatelessSessionEnd(endType: SessionLifeEventType, clearUserInfo: Boolean = false)
+    fun triggerStatelessSessionEnd(endType: LifeEventType, clearUserInfo: Boolean = false)
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.

@@ -44,21 +44,21 @@ internal class BackgroundActivityTest {
             executor.runCurrentlyBlocked()
 
             // filter out dupes from overwritten saves
-            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.backgroundActivity.sessionId }
+            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.session.sessionId }
             assertEquals(2, bgActivities.size)
 
             // verify first bg activity
             val first = bgActivities[0]
             verifyBgActivityMessage(first)
-            assertEquals(1, first.backgroundActivity.number)
+            assertEquals(1, first.session.number)
 
             // verify second bg activity
             val second = bgActivities[1]
             verifyBgActivityMessage(second)
-            assertEquals(2, second.backgroundActivity.number)
+            assertEquals(2, second.session.number)
 
             // ID should be different for each
-            assertNotEquals(first.backgroundActivity.sessionId, second.backgroundActivity.sessionId)
+            assertNotEquals(first.session.sessionId, second.session.sessionId)
         }
     }
 }

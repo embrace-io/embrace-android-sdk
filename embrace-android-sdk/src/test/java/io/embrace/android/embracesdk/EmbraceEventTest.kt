@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.payload.Event
 import org.junit.Assert.assertEquals
@@ -38,16 +37,12 @@ internal class EmbraceEventTest {
 
     @Test
     fun testSerialization() {
-        val data = ResourceReader.readResourceAsText("event_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(eventComplete)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("event_expected.json", eventComplete)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("event_expected.json")
-        val obj = Gson().fromJson(json, Event::class.java)
+        val obj = deserializeJsonFromResource<Event>("event_expected.json")
         assertEquals("eventId", obj.eventId)
         assertEquals("sessionId", obj.sessionId)
         assertEquals("messageId", obj.messageId)
@@ -57,7 +52,7 @@ internal class EmbraceEventTest {
         assertEquals(LogExceptionType.NONE.value, obj.logExceptionType)
         assertEquals(false, obj.screenshotTaken)
         assertEquals("active", obj.appState)
-        assertEquals(mapOf("Float" to 1.0, "String" to "TestString"), obj.customPropertiesMap)
-        assertEquals(mapOf<String, Any>(), obj.sessionPropertiesMap)
+        assertEquals(mapOf("Float" to 1.0, "String" to "TestString"), obj.customProperties)
+        assertEquals(mapOf<String, Any>(), obj.sessionProperties)
     }
 }

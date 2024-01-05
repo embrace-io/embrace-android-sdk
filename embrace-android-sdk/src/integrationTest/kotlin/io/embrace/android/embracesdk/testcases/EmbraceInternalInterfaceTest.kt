@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
@@ -7,12 +9,14 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.getSentLogMessages
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +36,11 @@ internal class EmbraceInternalInterfaceTest {
             IntegrationTestRule.newHarness(startImmediately = false)
         }
     )
+
+    @Before
+    fun setup() {
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
+    }
 
     @Test
     fun `no NPEs when SDK not started`() {
@@ -92,6 +101,8 @@ internal class EmbraceInternalInterfaceTest {
             assertFalse(shouldCaptureNetworkBody("", ""))
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
+            getSdkCurrentTime()
+            assertFalse(isInternalNetworkCaptureDisabled())
         }
     }
 
@@ -191,7 +202,7 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            val requests = checkNotNull(session?.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -212,7 +223,7 @@ internal class EmbraceInternalInterfaceTest {
                 embrace.internalInterface.logComposeTap(android.util.Pair.create(expectedX, expectedY), expectedElementName)
             }
 
-            val tapBreadcrumb = checkNotNull(session.breadcrumbs?.tapBreadcrumbs?.last())
+            val tapBreadcrumb = checkNotNull(session?.breadcrumbs?.tapBreadcrumbs?.last())
             assertEquals("10,99", tapBreadcrumb.location)
             assertEquals(expectedElementName, tapBreadcrumb.tappedElementName)
         }
@@ -241,9 +252,29 @@ internal class EmbraceInternalInterfaceTest {
         }
     }
 
+    @Test
+    fun `test sdk time`() {
+        with(testRule) {
+            embrace.start(harness.fakeCoreModule.context)
+            assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
+            harness.fakeClock.tick()
+            assertEquals(harness.fakeClock.now(), embrace.internalInterface.getSdkCurrentTime())
+        }
+    }
+
+    @Test
+    fun `test isInternalNetworkCaptureDisabled`() {
+        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
+        with(testRule) {
+            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+            embrace.start(harness.fakeCoreModule.context)
+            assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+        }
+    }
+
     companion object {
         private const val URL = "https://embrace.io"
-        private const val START_TIME = 1692201601L
-        private const val END_TIME = 1692202600L
+        private const val START_TIME = 1692201601000L
+        private const val END_TIME = 1692201603000L
     }
 }

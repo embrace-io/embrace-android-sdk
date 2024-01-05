@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.prefs
 
 import android.content.SharedPreferences
-import com.google.gson.reflect.TypeToken
-import io.embrace.android.embracesdk.clock.Clock
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
@@ -16,7 +15,7 @@ internal class EmbracePreferencesService(
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: EmbraceSerializer
-) : PreferencesService, ActivityListener {
+) : PreferencesService, ActivityLifecycleListener {
 
     private val preferences: Future<SharedPreferences>
     private val registrationExecutorService: ExecutorService
@@ -141,7 +140,7 @@ internal class EmbracePreferencesService(
         val editor = edit()
         val mapString = when (value) {
             null -> null
-            else -> serializer.toJson(value)
+            else -> serializer.toJson(value, Map::class.java)
         }
         editor.putString(key, mapString)
         editor.apply()
@@ -151,8 +150,7 @@ internal class EmbracePreferencesService(
         key: String
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
-        val type = object : TypeToken<HashMap<String?, String?>?>() {}.type
-        return serializer.fromJson<HashMap<String, String>>(mapString, type)
+        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
     }
 
     override var appVersion: String?
@@ -226,9 +224,19 @@ internal class EmbracePreferencesService(
         get() = prefs.getBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, false)
         set(value) = prefs.setBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, value)
 
-    override var sessionNumber: Int
-        get() = prefs.getIntegerPreference(LAST_SESSION_NUMBER_KEY) ?: 0
-        set(value) = prefs.setIntegerPreference(LAST_SESSION_NUMBER_KEY, value)
+    override fun incrementAndGetSessionNumber(): Int {
+        return incrementAndGetOrdinal(LAST_SESSION_NUMBER_KEY)
+    }
+
+    override fun incrementAndGetBackgroundActivityNumber(): Int {
+        return incrementAndGetOrdinal(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
+    }
+
+    private fun incrementAndGetOrdinal(key: String): Int {
+        val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
+        prefs.setIntegerPreference(key, ordinal)
+        return ordinal
+    }
 
     override var javaScriptBundleURL: String?
         get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY)
@@ -337,6 +345,7 @@ internal class EmbracePreferencesService(
         private const val CUSTOM_PERSONAS_KEY = "io.embrace.custompersonas"
         private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
+        private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
         private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"

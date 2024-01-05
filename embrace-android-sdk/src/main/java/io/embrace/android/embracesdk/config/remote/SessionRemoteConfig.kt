@@ -1,17 +1,20 @@
 package io.embrace.android.embracesdk.config.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * It serves as a session controller components. It determines if session may be ended in
  * the background. It also determines which components will be sent as part of the
  * session payload. This feature may be enabled/disabled.
  */
+@JsonClass(generateAdapter = true)
 internal data class SessionRemoteConfig(
-    @SerializedName("enable")
+    @Json(name = "enable")
     val isEnabled: Boolean? = null,
 
-    @SerializedName("async_end")
+    @Json(name = "async_end")
+    @Deprecated("This flag is obsolete and is no longer respected.")
     val endAsync: Boolean? = null,
 
     /**
@@ -19,13 +22,13 @@ internal data class SessionRemoteConfig(
      * included in the session payload. If components list exists, the services should restrict
      * the data that is provided to the session.
      */
-    @SerializedName("components")
+    @Json(name = "components")
     val sessionComponents: Set<String>? = null,
 
     /**
      * A list of session components allowed to send a full session payload (only if "components"
      * exists)
      */
-    @SerializedName("send_full_for")
+    @Json(name = "send_full_for")
     val fullSessionEvents: Set<String>? = null
 )

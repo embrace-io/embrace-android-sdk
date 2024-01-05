@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.ndk
 
-import android.content.Context
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import java.io.File
@@ -16,9 +15,11 @@ private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
  * Encapsulates the logic of managing Files to get, sort and or delete them
  */
 internal class EmbraceNdkServiceRepository(
-    private val context: Context,
+    fileProvider: Lazy<File>,
     private val logger: InternalEmbraceLogger
 ) {
+
+    private val storageDir by fileProvider
 
     fun sortNativeCrashes(byOldest: Boolean): List<File> {
         val nativeCrashFiles: Array<File>? = getNativeCrashFiles()
@@ -33,9 +34,13 @@ internal class EmbraceNdkServiceRepository(
                 }
 
                 val comparator: Comparator<File> = if (byOldest) {
-                    Comparator { first: File, next: File -> sorted[first]?.compareTo(sorted[next]!!)!! }
+                    Comparator { first: File, next: File ->
+                        checkNotNull(sorted[first]?.compareTo(checkNotNull(sorted[next])))
+                    }
                 } else {
-                    Comparator { first: File, next: File -> sorted[next]?.compareTo(sorted[first]!!)!! }
+                    Comparator { first: File, next: File ->
+                        checkNotNull(sorted[next]?.compareTo(checkNotNull(sorted[first])))
+                    }
                 }
                 return nativeCrashList.sortedWith(comparator)
             } catch (ex: Exception) {
@@ -58,7 +63,7 @@ internal class EmbraceNdkServiceRepository(
 
     private fun getNativeFiles(filter: FilenameFilter): Array<File>? {
         var matchingFiles: Array<File>? = null
-        val files: Array<File> = context.cacheDir.listFiles() ?: return null
+        val files: Array<File> = storageDir.listFiles() ?: return null
         for (cached in files) {
             if (cached.isDirectory && cached.name == NATIVE_CRASH_FILE_FOLDER) {
                 matchingFiles = cached.listFiles(filter)

@@ -1,21 +1,23 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents each domain element specified in the Embrace config file.
  */
+@JsonClass(generateAdapter = true)
 internal class DomainLocalConfig(
 
     /**
      * Url for the domain.
      */
-    @SerializedName("domain_name")
+    @Json(name = "domain_name")
     val domain: String? = null,
 
     /**
      * Limit for the number of requests to be tracked.
      */
-    @SerializedName("domain_limit")
+    @Json(name = "domain_limit")
     val limit: Int? = null
 )

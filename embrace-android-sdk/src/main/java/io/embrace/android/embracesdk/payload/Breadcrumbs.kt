@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Contains lists of [ViewBreadcrumb], [TapBreadcrumb], [CustomBreadcrumb],
@@ -11,47 +12,48 @@ import com.google.gson.annotations.SerializedName
  * screens or taps on particular UI elements. A developer can create a [CustomBreadcrumb] if
  * they would like to label some particular event or interaction within their app on the timeline.
  */
+@JsonClass(generateAdapter = true)
 internal data class Breadcrumbs(
 
     /**
      * List of breadcrumbs which relate to views.
      */
-    @SerializedName("vb")
+    @Json(name = "vb")
     val viewBreadcrumbs: List<ViewBreadcrumb>? = null,
 
     /**
      * List of breadcrumbs which relate to screen taps.
      */
-    @SerializedName("tb")
+    @Json(name = "tb")
     val tapBreadcrumbs: List<TapBreadcrumb>? = null,
 
     /**
      * List of custom breadcrumbs defined by the developer.
      */
-    @SerializedName("cb")
+    @Json(name = "cb")
     val customBreadcrumbs: List<CustomBreadcrumb>? = null,
 
     /**
      * List of webview breadcrumbs.
      */
-    @SerializedName("wv")
+    @Json(name = "wv")
     val webViewBreadcrumbs: List<WebViewBreadcrumb>? = null,
 
     /**
      * List of fragment (custom view) breadcrumbs.
      */
-    @SerializedName("cv")
+    @Json(name = "cv")
     val fragmentBreadcrumbs: List<FragmentBreadcrumb>? = null,
 
     /**
      * List of RN Action breadcrumbs.
      */
-    @SerializedName("rna")
+    @Json(name = "rna")
     val rnActionBreadcrumbs: List<RnActionBreadcrumb>? = null,
 
     /**
      * List of captured push notifications
      */
-    @SerializedName("pn")
+    @Json(name = "pn")
     val pushNotifications: List<PushNotificationBreadcrumb>? = null,
 )

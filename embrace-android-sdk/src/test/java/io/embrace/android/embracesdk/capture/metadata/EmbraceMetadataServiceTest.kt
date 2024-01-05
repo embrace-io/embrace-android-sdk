@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.metadata
 
+import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageInfo
@@ -9,17 +10,23 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -38,11 +45,16 @@ import java.io.File
 internal class EmbraceMetadataServiceTest {
 
     companion object {
-        private val context: Context = mockk(relaxed = true)
+        private val context: Context = mockContext()
+        private val packageInfo = PackageInfo()
+        private val serializer = EmbraceSerializer()
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
-        private val cpuInfoDelegate: EmbraceCpuInfoDelegate = mockk(relaxed = true)
+        private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
         private val fakeArchitecture = FakeDeviceArchitecture()
+        private val storageStatsManager = mockk<StorageStatsManager>()
+        private val windowManager = mockk<WindowManager>()
+        private val activityManager = mockk<ActivityManager>()
 
         @BeforeClass
         @JvmStatic
@@ -62,8 +74,8 @@ internal class EmbraceMetadataServiceTest {
             unmockkAll()
         }
 
+        @Suppress("DEPRECATION")
         private fun initContext() {
-            val packageInfo = PackageInfo()
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
@@ -86,7 +98,7 @@ internal class EmbraceMetadataServiceTest {
     }
 
     private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free")
-    private val activityService = FakeActivityService()
+    private val activityService = FakeProcessStateService()
     private val configService: ConfigService =
         FakeConfigService(
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
@@ -111,8 +123,9 @@ internal class EmbraceMetadataServiceTest {
         )
     }
 
-    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE) =
-        EmbraceMetadataService.ofContext(
+    @Suppress("DEPRECATION")
+    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE): EmbraceMetadataService {
+        return EmbraceMetadataService.ofContext(
             context,
             buildInfo,
             configService,
@@ -120,14 +133,18 @@ internal class EmbraceMetadataServiceTest {
             preferencesService,
             activityService,
             MoreExecutors.newDirectExecutorService(),
-            mockk(),
-            mockk(),
-            mockk(),
+            storageStatsManager,
+            windowManager,
+            activityManager,
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         ).apply { precomputeValues() }
+    }
 
+    @Suppress("DEPRECATION")
     private fun getReactNativeMetadataService() =
         EmbraceMetadataService.ofContext(
             context,
@@ -137,12 +154,14 @@ internal class EmbraceMetadataServiceTest {
             preferencesService,
             activityService,
             MoreExecutors.newDirectExecutorService(),
-            mockk(),
-            mockk(),
-            mockk(),
+            storageStatsManager,
+            windowManager,
+            activityManager,
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         )
 
     @Test
@@ -182,10 +201,10 @@ internal class EmbraceMetadataServiceTest {
 
         val expectedInfo = ResourceReader.readResourceAsText("metadata_appinfo_expected.json")
             .replace("{versionName}", BuildConfig.VERSION_NAME)
-            .replace("{versionCode}", BuildConfig.VERSION_CODE.toString())
+            .replace("{versionCode}", BuildConfig.VERSION_CODE)
             .filter { !it.isWhitespace() }
 
-        val appInfo = getMetadataService().getAppInfo().toJson()
+        val appInfo = serializer.toJson(getMetadataService().getAppInfo())
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
@@ -209,7 +228,7 @@ internal class EmbraceMetadataServiceTest {
 
         metadataService.setReactNativeBundleId(context, "1234")
 
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
@@ -236,9 +255,8 @@ internal class EmbraceMetadataServiceTest {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
         every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
         every { MetadataUtils.getLocale() }.returns("en-US")
-        every { MetadataUtils.getSystemUptime() }.returns(123L)
 
-        val deviceInfo = getMetadataService().getDeviceInfo().toJson()
+        val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
         verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
         verify(exactly = 1) { MetadataUtils.getModel() }
@@ -248,7 +266,6 @@ internal class EmbraceMetadataServiceTest {
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
-        verify(exactly = 1) { MetadataUtils.getSystemUptime() }
         verify(exactly = 1) { MetadataUtils.getNumberOfCores() }
 
         assertTrue(deviceInfo.contains("\"jb\":true"))
@@ -256,12 +273,12 @@ internal class EmbraceMetadataServiceTest {
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `test device info without running async operations`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
         every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
         every { MetadataUtils.getLocale() }.returns("en-US")
-        every { MetadataUtils.getSystemUptime() }.returns(123L)
 
         val metadataService = EmbraceMetadataService.ofContext(
             context,
@@ -270,16 +287,18 @@ internal class EmbraceMetadataServiceTest {
             Embrace.AppFramework.NATIVE,
             preferencesService,
             activityService,
-            mockk(relaxed = true), // No background worker to run async calculations
-            mockk(),
-            mockk(),
-            mockk(),
+            BlockingScheduledExecutorService(),
+            mockStorageStatsManager(),
+            mockWindowManager(),
+            mockActivityManager(),
             fakeClock,
             cpuInfoDelegate,
-            fakeArchitecture
+            fakeArchitecture,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() }
         )
 
-        val deviceInfo = metadataService.getDeviceInfo().toJson()
+        val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
         verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
         verify(exactly = 1) { MetadataUtils.getModel() }
@@ -289,10 +308,6 @@ internal class EmbraceMetadataServiceTest {
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
         verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
-        verify(exactly = 1) { MetadataUtils.getSystemUptime() }
-
-        assertTrue(deviceInfo.contains("\"jb\":null"))
-        assertTrue(deviceInfo.contains("\"sr\":null"))
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
@@ -306,7 +321,7 @@ internal class EmbraceMetadataServiceTest {
         activityService.isInBackground = false
         assertEquals("active", metadataService.getAppState())
 
-        metadataService.setActiveSessionId("123")
+        metadataService.setActiveSessionId("123", true)
         assertEquals("123", metadataService.activeSessionId)
 
         assertEquals("appId", metadataService.getAppId())
@@ -353,12 +368,10 @@ internal class EmbraceMetadataServiceTest {
     fun `test async additional device info`() {
         every { preferencesService.cpuName } returns null
         every { preferencesService.egl } returns null
-        every { cpuInfoDelegate.getCpuName() } returns "cpu"
-        every { cpuInfoDelegate.getElg() } returns "egl"
 
         val metadataService = getMetadataService()
 
-        assertEquals("cpu", metadataService.getCpuName())
-        assertEquals("egl", metadataService.getEgl())
+        assertEquals("fake_cpu", metadataService.getCpuName())
+        assertEquals("fake_elg", metadataService.getEgl())
     }
 }

@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -32,16 +34,12 @@ internal class BackgroundActivityMessageTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("bg_activity_message_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("bg_activity_message_expected.json")
-        val obj = Gson().fromJson(json, BackgroundActivityMessage::class.java)
+        val obj = deserializeJsonFromResource<BackgroundActivityMessage>("bg_activity_message_expected.json")
         assertNotNull(obj)
 
         assertEquals(backgroundActivity.startTime, obj.backgroundActivity.startTime)
@@ -53,9 +51,8 @@ internal class BackgroundActivityMessageTest {
         assertEquals(spans, obj.spans)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", BackgroundActivityMessage::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<BackgroundActivityMessage>()
     }
 }

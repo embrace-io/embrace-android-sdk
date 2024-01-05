@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -15,10 +15,10 @@ internal class SessionLocalConfigTest {
         verifyDefaults(cfg)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("session_config.json")
-        val obj = Gson().fromJson(json, SessionLocalConfig::class.java)
+        val obj = deserializeJsonFromResource<SessionLocalConfig>("session_config.json")
         assertEquals(120, obj.maxSessionSeconds)
         assertTrue(checkNotNull(obj.asyncEnd))
         assertTrue(checkNotNull(obj.sessionEnableErrorLogStrictMode))
@@ -28,10 +28,11 @@ internal class SessionLocalConfigTest {
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", SessionLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<SessionLocalConfig>()
         verifyDefaults(obj)
     }
 
+    @Suppress("DEPRECATION")
     private fun verifyDefaults(cfg: SessionLocalConfig) {
         assertNull(cfg.maxSessionSeconds)
         assertNull(cfg.asyncEnd)

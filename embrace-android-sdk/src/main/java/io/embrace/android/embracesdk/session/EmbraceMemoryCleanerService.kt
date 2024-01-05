@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.utils.stream
@@ -12,11 +11,11 @@ internal class EmbraceMemoryCleanerService : MemoryCleanerService {
     /**
      * List of listeners that subscribe to clean services collections.
      */
-    @VisibleForTesting
+
     val listeners = CopyOnWriteArrayList<MemoryCleanerListener>()
 
     override fun cleanServicesCollections(
-        exceptionService: EmbraceInternalErrorService
+        internalErrorService: InternalErrorService
     ) {
         logDeveloper("EmbraceMemoryCleanerService", "Clean services collections")
 
@@ -27,7 +26,7 @@ internal class EmbraceMemoryCleanerService : MemoryCleanerService {
                 logDebug("Failed to clean collections on service listener", ex)
             }
         }
-        exceptionService.resetExceptionErrorObject()
+        internalErrorService.resetExceptionErrorObject()
     }
 
     override fun addListener(listener: MemoryCleanerListener) {

@@ -6,12 +6,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
 import android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
-import io.embrace.android.embracesdk.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.PowerModeInterval
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.util.concurrent.ExecutorService
 
 internal class EmbracePowerSaveModeService(
@@ -19,7 +19,11 @@ internal class EmbracePowerSaveModeService(
     private val executorService: ExecutorService,
     private val clock: Clock,
     private val powerManager: PowerManager?
-) : BroadcastReceiver(), PowerSaveModeService, ActivityListener {
+) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
+
+    private companion object {
+        private const val MAX_CAPTURED_POWER_MODE_INTERVALS = 100
+    }
 
     private val tag = "EmbracePowerSaveModeService"
 
@@ -47,7 +51,7 @@ internal class EmbracePowerSaveModeService(
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
         if (powerManager?.isPowerSaveMode == true) {
-            powerSaveModeIntervals.add(PowerChange(timestamp, Kind.START))
+            addPowerChange(PowerChange(timestamp, Kind.START))
         }
     }
 
@@ -56,7 +60,7 @@ internal class EmbracePowerSaveModeService(
         try {
             when (intent.action) {
                 ACTION_POWER_SAVE_MODE_CHANGED ->
-                    powerSaveModeIntervals.add(
+                    addPowerChange(
                         PowerChange(
                             clock.now(),
                             if (powerManager?.isPowerSaveMode == true) Kind.START else Kind.END
@@ -65,6 +69,12 @@ internal class EmbracePowerSaveModeService(
             }
         } catch (ex: Exception) {
             InternalStaticEmbraceLogger.logError("Failed to handle " + intent.action, ex)
+        }
+    }
+
+    private fun addPowerChange(powerChange: PowerChange) {
+        if (powerSaveModeIntervals.size < MAX_CAPTURED_POWER_MODE_INTERVALS) {
+            powerSaveModeIntervals.add(powerChange)
         }
     }
 

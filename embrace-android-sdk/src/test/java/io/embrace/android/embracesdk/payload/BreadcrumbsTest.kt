@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
-import org.junit.Assert.assertEquals
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -47,16 +47,12 @@ internal class BreadcrumbsTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("breadcrumbs_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("breadcrumbs_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("breadcrumbs_expected.json")
-        val obj = Gson().fromJson(json, Breadcrumbs::class.java)
+        val obj = deserializeJsonFromResource<Breadcrumbs>("breadcrumbs_expected.json")
         assertNotNull(obj)
         assertNotNull(obj.viewBreadcrumbs?.single())
         assertNotNull(obj.customBreadcrumbs?.single())
@@ -69,7 +65,7 @@ internal class BreadcrumbsTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", Breadcrumbs::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<Breadcrumbs>()
+        assertNotNull(obj)
     }
 }

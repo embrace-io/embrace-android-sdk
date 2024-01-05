@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk;
 
 import static io.embrace.android.embracesdk.event.EmbraceEventService.STARTUP_EVENT_NAME;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.util.Pair;
@@ -16,24 +17,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.anr.AnrService;
 import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerServiceKt;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService;
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService;
+import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService;
 import io.embrace.android.embracesdk.capture.memory.MemoryService;
 import io.embrace.android.embracesdk.capture.metadata.MetadataService;
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService;
 import io.embrace.android.embracesdk.capture.user.UserService;
 import io.embrace.android.embracesdk.capture.webview.WebViewService;
-import io.embrace.android.embracesdk.clock.Clock;
 import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
-import io.embrace.android.embracesdk.config.behavior.SessionBehavior;
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger;
 import io.embrace.android.embracesdk.event.EventService;
+import io.embrace.android.embracesdk.event.LogMessageService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl;
 import io.embrace.android.embracesdk.injection.AnrModuleImpl;
@@ -66,33 +65,35 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
+import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService;
+import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
+import io.embrace.android.embracesdk.internal.spans.Initializable;
+import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
+import io.embrace.android.embracesdk.logging.InternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
-import io.embrace.android.embracesdk.network.http.HttpUrlConnectionTracker;
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService;
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
-import io.embrace.android.embracesdk.payload.Session;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.ActivityService;
 import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.EmbraceActivityService;
-import io.embrace.android.embracesdk.session.EmbraceSessionProperties;
-import io.embrace.android.embracesdk.session.EmbraceSessionService;
 import io.embrace.android.embracesdk.session.SessionService;
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
+import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.ExecutorName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
@@ -114,6 +115,7 @@ import kotlin.jvm.functions.Function5;
  * Any non-public APIs or functionality related to the Embrace.java client should ideally be put
  * here instead.
  */
+@SuppressLint("EmbracePublicApiPackageRule")
 final class EmbraceImpl {
 
     private static final String ERROR_USER_UPDATES_DISABLED = "User updates are disabled, ignoring user persona update.";
@@ -130,16 +132,43 @@ final class EmbraceImpl {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @NonNull
+    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
+
+    @NonNull
+    private final Clock sdkClock;
+
+    @NonNull
     private final InitModule initModule;
 
     @NonNull
-    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
+    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
+
+    @NonNull
+    private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
+
+    @NonNull
+    private final Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServicesModuleSupplier;
+
+    @NonNull
+    private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
+
+    @NonNull
+    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
+        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
+
+    @NonNull
+    private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
+        DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
+
+    @NonNull
+    private final Function3<CoreModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
+        deliveryModuleSupplier;
 
     /**
      * Custom app ID that overrides the one specified at build time
      */
     @Nullable
-    volatile String customAppId;
+    private volatile String customAppId;
 
     /**
      * The application being instrumented by the SDK.
@@ -161,13 +190,19 @@ final class EmbraceImpl {
     private volatile SessionService sessionService;
 
     @Nullable
+    private volatile SessionPropertiesService sessionPropertiesService;
+
+    @Nullable
     private volatile BackgroundActivityService backgroundActivityService;
 
     @Nullable
     private volatile MetadataService metadataService;
 
     @Nullable
-    private volatile ActivityService activityService;
+    private volatile ProcessStateService processStateService;
+
+    @Nullable
+    private volatile ActivityTracker activityTracker;
 
     @Nullable
     private volatile NetworkLoggingService networkLoggingService;
@@ -175,11 +210,8 @@ final class EmbraceImpl {
     @Nullable
     private volatile AnrService anrService;
 
-    /**
-     * TODO: rename to match convention
-     */
     @Nullable
-    private volatile EmbraceRemoteLogger remoteLogger;
+    private volatile LogMessageService logMessageService;
 
     @Nullable
     private volatile ConfigService configService;
@@ -194,7 +226,7 @@ final class EmbraceImpl {
     private volatile UserService userService;
 
     @Nullable
-    private volatile EmbraceInternalErrorService exceptionsService;
+    private volatile InternalErrorService internalErrorService;
 
     @Nullable
     private volatile NdkService ndkService;
@@ -204,6 +236,9 @@ final class EmbraceImpl {
 
     @Nullable
     private volatile WebViewService webViewService;
+
+    @Nullable
+    private volatile TelemetryService telemetryService;
 
     @Nullable
     private NativeThreadSamplerService nativeThreadSampler;
@@ -235,36 +270,11 @@ final class EmbraceImpl {
     @Nullable
     private LastRunCrashVerifier crashVerifier;
 
-    @NonNull
-    private final Clock sdkClock;
-
-    @NonNull
-    private final Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier;
-
-    @NonNull
-    private final Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier;
-
-    @NonNull
-    private final Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServicesModuleSupplier;
-
-    @NonNull
-    private final Function0<WorkerThreadModule> workerThreadModuleSupplier;
-
-    @NonNull
-    private final Function11<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, BuildInfo, String,
-        Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule> essentialServiceModuleSupplier;
-
-    @NonNull
-    private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
-        DataCaptureServiceModule> dataCaptureServiceModuleSupplier;
-
-    @NonNull
-    private final Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule, DeliveryModule>
-        deliveryModuleSupplier;
-
-    //variable pointing to the composeActivityListener instance obtained using reflection
+    /**
+     * Variable pointing to the composeActivityListener instance obtained using reflection
+     */
     @Nullable
-    Object composeActivityListenerInstance;
+    private Object composeActivityListenerInstance;
 
     EmbraceImpl(@NonNull Function0<InitModule> initModuleSupplier,
                 @NonNull Function2<Context, Embrace.AppFramework, CoreModule> coreModuleSupplier,
@@ -276,7 +286,7 @@ final class EmbraceImpl {
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
-                @NonNull Function5<InitModule, CoreModule, EssentialServiceModule, DataCaptureServiceModule, WorkerThreadModule,
+                @NonNull Function3<CoreModule, EssentialServiceModule, WorkerThreadModule,
                     DeliveryModule> deliveryModuleSupplier) {
         initModule = initModuleSupplier.invoke();
         sdkClock = initModule.getClock();
@@ -307,7 +317,7 @@ final class EmbraceImpl {
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
      * <p>
-     * See <a href="https://docs.embrace.io/docs/android-integration-guide">Embrace Docs</a> for
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
      * integration instructions. For compatibility with other networking SDKs such as Akamai,
      * the Embrace SDK must be initialized after any other SDK.
      *
@@ -317,9 +327,9 @@ final class EmbraceImpl {
      *                                 of the dashboard. If false, they will appear in 'recent
      *                                 sessions'.
      */
-    public void start(@NonNull Context context,
-                      boolean enableIntegrationTesting,
-                      @NonNull Embrace.AppFramework appFramework) {
+    void start(@NonNull Context context,
+               boolean enableIntegrationTesting,
+               @NonNull Embrace.AppFramework appFramework) {
         try {
             startImpl(context, enableIntegrationTesting, appFramework);
         } catch (Exception ex) {
@@ -354,6 +364,14 @@ final class EmbraceImpl {
         final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke();
         workerThreadModule = nonNullWorkerThreadModule;
 
+        nonNullWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).submit(() -> {
+            final SpansService spansService = initModule.getSpansService();
+            if (spansService instanceof Initializable) {
+                ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
+            }
+            return null;
+        });
+
         final SystemServiceModule systemServiceModule = systemServiceModuleSupplier.invoke(coreModule);
         final AndroidServicesModule androidServicesModule =
             androidServicesModuleSupplier.invoke(initModule, coreModule, workerThreadModule);
@@ -377,18 +395,21 @@ final class EmbraceImpl {
             () -> null,
             new DeviceArchitectureImpl());
 
-        final ActivityService nonNullActivityService = essentialServiceModule.getActivityService();
-        activityService = nonNullActivityService;
+        final ProcessStateService nonNullProcessStateService = essentialServiceModule.getProcessStateService();
+        processStateService = nonNullProcessStateService;
         final MetadataService nonNullMetadataService = essentialServiceModule.getMetadataService();
         metadataService = nonNullMetadataService;
         final ConfigService nonNullConfigService = essentialServiceModule.getConfigService();
         configService = nonNullConfigService;
 
         // example usage.
+        ActivityTracker nonNullLifecycleTracker = essentialServiceModule.getActivityLifecycleTracker();
+        this.activityTracker = nonNullLifecycleTracker;
         serviceRegistry.registerServices(
-            activityService,
+            processStateService,
             metadataService,
-            configService
+            configService,
+            nonNullLifecycleTracker
         );
 
         // only call after ConfigService has initialized.
@@ -404,11 +425,11 @@ final class EmbraceImpl {
 
         webViewService = dataCaptureServiceModule.getWebviewService();
         MemoryService memoryService = dataCaptureServiceModule.getMemoryService();
-        ((EmbraceActivityService) essentialServiceModule.getActivityService())
-            .setMemoryService(dataCaptureServiceModule.getMemoryService());
+        ComponentCallbackService componentCallbackService = dataCaptureServiceModule.getComponentCallbackService();
         serviceRegistry.registerServices(
             webViewService,
-            memoryService
+            memoryService,
+            componentCallbackService
         );
 
         /*
@@ -423,12 +444,11 @@ final class EmbraceImpl {
         AnrModuleImpl anrModule = new AnrModuleImpl(
             initModule,
             coreModule,
-            systemServiceModule,
             essentialServiceModule
         );
         AnrService nonNullAnrService = anrModule.getAnrService();
         anrService = nonNullAnrService;
-        serviceRegistry.registerService(anrService);
+        serviceRegistry.registerServices(anrService, anrModule.getResponsivenessMonitorService());
 
         // set callbacks and pass in non-placeholder config.
         nonNullAnrService.finishInitialization(
@@ -444,18 +464,19 @@ final class EmbraceImpl {
             essentialServiceModule
         );
 
-        final EmbraceInternalErrorService nonNullExceptionsService = sdkObservabilityModule.getExceptionService();
-        exceptionsService = nonNullExceptionsService;
-        serviceRegistry.registerService(exceptionsService);
+        final InternalErrorService nonNullInternalErrorService = sdkObservabilityModule.getInternalErrorService();
+        internalErrorService = nonNullInternalErrorService;
+        serviceRegistry.registerService(internalErrorService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
 
-        serviceRegistry.registerService(dataCaptureServiceModule.getNetworkConnectivityService());
+        telemetryService = initModule.getTelemetryService();
+        serviceRegistry.registerService(telemetryService);
+
+        serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
 
         final DeliveryModule deliveryModule = deliveryModuleSupplier.invoke(
-            initModule,
             coreModule,
             essentialServiceModule,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
 
@@ -463,8 +484,8 @@ final class EmbraceImpl {
 
         final EmbraceSessionProperties sessionProperties = new EmbraceSessionProperties(
             androidServicesModule.getPreferencesService(),
-            coreModule.getLogger(),
-            essentialServiceModule.getConfigService());
+            essentialServiceModule.getConfigService(), coreModule.getLogger()
+        );
 
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
             internalEmbraceLogger.logInfo("the SDK is disabled");
@@ -472,7 +493,7 @@ final class EmbraceImpl {
             return;
         }
 
-        nonNullExceptionsService.setConfigService(configService);
+        nonNullInternalErrorService.setConfigService(configService);
         breadcrumbService = dataCaptureServiceModule.getBreadcrumbService();
         pushNotificationService = dataCaptureServiceModule.getPushNotificationService();
         serviceRegistry.registerServices(breadcrumbService, pushNotificationService);
@@ -487,14 +508,13 @@ final class EmbraceImpl {
             essentialServiceModule,
             deliveryModule,
             sessionProperties,
-            dataCaptureServiceModule,
             nonNullWorkerThreadModule
         );
-        remoteLogger = customerLogModule.getRemoteLogger();
+        logMessageService = customerLogModule.getLogMessageService();
         networkCaptureService = customerLogModule.getNetworkCaptureService();
         networkLoggingService = customerLogModule.getNetworkLoggingService();
         serviceRegistry.registerServices(
-            remoteLogger,
+            logMessageService,
             networkCaptureService,
             networkLoggingService
         );
@@ -549,7 +569,7 @@ final class EmbraceImpl {
                 sampleCurrentThreadDuringAnrs();
             }
         } else {
-            internalEmbraceLogger.logDeveloper("Embrace", "Failed to load SO file embrace-native");
+            internalEmbraceLogger.logWarning("Failed to load SO file embrace-native");
         }
 
         SessionModule sessionModule = new SessionModuleImpl(
@@ -567,8 +587,8 @@ final class EmbraceImpl {
             nonNullWorkerThreadModule
         );
 
-        final SessionService nonNullSessionService = sessionModule.getSessionService();
-        sessionService = nonNullSessionService;
+        sessionService = sessionModule.getSessionService();
+        sessionPropertiesService = sessionModule.getSessionPropertiesService();
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
@@ -585,8 +605,7 @@ final class EmbraceImpl {
             nativeModule,
             sessionModule,
             anrModule,
-            dataContainerModule,
-            coreModule
+            dataContainerModule
         );
 
         loadCrashVerifier(crashModule, nonNullWorkerThreadModule);
@@ -594,24 +613,15 @@ final class EmbraceImpl {
         Thread.setDefaultUncaughtExceptionHandler(crashModule.getAutomaticVerificationExceptionHandler());
         serviceRegistry.registerService(crashModule.getCrashService());
 
-        StrictModeService strictModeService = dataCaptureServiceModule.getStrictModeService();
-        serviceRegistry.registerService(strictModeService);
-        strictModeService.start();
-
         serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
 
-        ActivityLifecycleBreadcrumbService collector = dataCaptureServiceModule.getActivityLifecycleBreadcrumbService();
-        if (collector instanceof Application.ActivityLifecycleCallbacks) {
-            coreModule.getApplication().registerActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks) collector);
-            serviceRegistry.registerService(collector);
-        }
-
-        if (configService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
+        if (nonNullConfigService.getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule);
         }
 
         // initialize internal interfaces
         InternalInterfaceModuleImpl internalInterfaceModule = new InternalInterfaceModuleImpl(
+            initModule,
             coreModule,
             androidServicesModule,
             essentialServiceModule,
@@ -630,39 +640,45 @@ final class EmbraceImpl {
 
         NetworkBehavior networkBehavior = nonNullConfigService.getNetworkBehavior();
         if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
-            // Intercept Android network calls
-            internalEmbraceLogger.logDeveloper("Embrace", "Native Networking Monitoring enabled");
             HttpUrlConnectionTracker.registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled());
         }
 
         final long endTime = sdkClock.now();
         started.set(true);
 
-        nonNullWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).submit(() -> {
-            ((EmbraceSpansService) initModule.getSpansService()).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime),
-                TimeUnit.MILLISECONDS.toNanos(endTime));
-            return null;
-        });
-
-        long startupDuration = endTime - startTime;
-        ((EmbraceSessionService) nonNullSessionService).setSdkStartupDuration(startupDuration);
-        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + startupDuration + " millis");
+        sessionModule.getSessionHandler().setSdkStartupInfo(startTime, endTime);
+        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + (endTime - startTime) + " millis");
 
         // Sets up the registered services. This method is called after the SDK has been started and
         // no more services can be added to the registry. It sets listeners for any services that were
         // registered.
         serviceRegistry.closeRegistration();
-        serviceRegistry.registerActivityListeners(nonNullActivityService);
+        serviceRegistry.registerActivityListeners(nonNullProcessStateService);
         serviceRegistry.registerConfigListeners(nonNullConfigService);
         serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.getMemoryCleanerService());
+        serviceRegistry.registerActivityLifecycleListeners(nonNullLifecycleTracker);
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
-        if (!nonNullActivityService.isInBackground()) {
+        if (!nonNullProcessStateService.isInBackground()) {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             nonNullEventService.sendStartupMoment();
         }
+    }
+
+    /**
+     * Loads the crash verifier to get the end state of the app crashed in the last run.
+     * This method is called when the app starts.
+     *
+     * @param crashModule        an instance of {@link CrashModule}
+     * @param workerThreadModule an instance of {@link WorkerThreadModule}
+     */
+    private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
+        crashVerifier = crashModule.getLastRunCrashVerifier();
+        crashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        );
     }
 
     /**
@@ -679,7 +695,6 @@ final class EmbraceImpl {
             internalEmbraceLogger.logError("registerComposeActivityListener error", e);
         }
     }
-
 
     /**
      * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
@@ -699,7 +714,7 @@ final class EmbraceImpl {
      *
      * @return true if the SDK is started, false otherwise
      */
-    public boolean isStarted() {
+    boolean isStarted() {
         return started.get();
     }
 
@@ -710,7 +725,7 @@ final class EmbraceImpl {
      * @param appId custom app ID
      * @return true if the app ID could be set, false otherwise.
      */
-    public boolean setAppId(@NonNull String appId) {
+    boolean setAppId(@NonNull String appId) {
         if (isStarted()) {
             internalEmbraceLogger.logError("You must set the custom app ID before the SDK is started.");
             return false;
@@ -719,19 +734,14 @@ final class EmbraceImpl {
             internalEmbraceLogger.logError("App ID cannot be null or empty.");
             return false;
         }
-        if (!isValidAppId(appId)) {
+        if (!appIdPattern.matcher(appId).find()) {
             internalEmbraceLogger.logError("Invalid app ID. Must be a 5-character string with " +
                 "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".");
             return false;
         }
 
         customAppId = appId;
-        internalEmbraceLogger.logDeveloper("Embrace", "App Id set");
         return true;
-    }
-
-    static boolean isValidAppId(String appId) {
-        return appIdPattern.matcher(appId).find();
     }
 
     /**
@@ -750,6 +760,7 @@ final class EmbraceImpl {
                 serviceRegistry.close();
                 internalEmbraceLogger.logDeveloper("Embrace", "Services closed");
                 workerThreadModule.close();
+                processStateService.close();
             } catch (Exception ex) {
                 internalEmbraceLogger.logError("Error while shutting down Embrace SDK", ex);
             }
@@ -762,8 +773,8 @@ final class EmbraceImpl {
      *
      * @param userId the unique identifier for the user
      */
-    public void setUserIdentifier(@Nullable String userId) {
-        if (isStarted()) {
+    void setUserIdentifier(@Nullable String userId) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_identifier")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
                 return;
@@ -771,29 +782,19 @@ final class EmbraceImpl {
             userService.setUserIdentifier(userId);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-            if (userId != null) {
-                internalEmbraceLogger.logDebug("Set user ID to " + userId);
-            } else {
-                internalEmbraceLogger.logDebug("Cleared user ID by setting to null");
-            }
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("set user identifier");
         }
     }
 
     /**
      * Clears the currently set user ID. For example, if the user logs out.
      */
-    public void clearUserIdentifier() {
-        if (isStarted()) {
+    void clearUserIdentifier() {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_identifier")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
                 return;
             }
             userService.clearUserIdentifier();
-            internalEmbraceLogger.logDebug("Cleared user ID");
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user identifier");
         }
     }
 
@@ -802,8 +803,8 @@ final class EmbraceImpl {
      *
      * @param email the email address of the current user
      */
-    public void setUserEmail(@Nullable String email) {
-        if (isStarted()) {
+    void setUserEmail(@Nullable String email) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_email")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
                 return;
@@ -811,21 +812,14 @@ final class EmbraceImpl {
             userService.setUserEmail(email);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-            if (email != null) {
-                internalEmbraceLogger.logDebug("Set email to " + email);
-            } else {
-                internalEmbraceLogger.logDebug("Cleared email by setting to null");
-            }
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user email");
         }
     }
 
     /**
      * Clears the currently set user's email address.
      */
-    public void clearUserEmail() {
-        if (isStarted()) {
+    void clearUserEmail() {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_email")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
                 return;
@@ -833,17 +827,14 @@ final class EmbraceImpl {
             userService.clearUserEmail();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-            internalEmbraceLogger.logDebug("Cleared email");
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user email");
         }
     }
 
     /**
      * Sets this user as a paying user. This adds a persona to the user's identity.
      */
-    public void setUserAsPayer() {
-        if (isStarted()) {
+    void setUserAsPayer() {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_as_payer")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
                 return;
@@ -851,8 +842,6 @@ final class EmbraceImpl {
             userService.setUserAsPayer();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("set user as payer");
         }
     }
 
@@ -860,8 +849,8 @@ final class EmbraceImpl {
      * Clears this user as a paying user. This would typically be called if a user is no longer
      * paying for the service and has reverted back to a basic user.
      */
-    public void clearUserAsPayer() {
-        if (isStarted()) {
+    void clearUserAsPayer() {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_as_payer")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
                 return;
@@ -869,8 +858,6 @@ final class EmbraceImpl {
             userService.clearUserAsPayer();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user as payer");
         }
     }
 
@@ -879,8 +866,8 @@ final class EmbraceImpl {
      *
      * @param persona the persona to set
      */
-    public void addUserPersona(@NonNull String persona) {
-        if (isStarted()) {
+    void addUserPersona(@NonNull String persona) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_user_persona")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -888,8 +875,6 @@ final class EmbraceImpl {
             userService.addUserPersona(persona);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("set user persona");
         }
     }
 
@@ -898,8 +883,8 @@ final class EmbraceImpl {
      *
      * @param persona the persona to clear
      */
-    public void clearUserPersona(@NonNull String persona) {
-        if (isStarted()) {
+    void clearUserPersona(@NonNull String persona) {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_persona")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -907,16 +892,14 @@ final class EmbraceImpl {
             userService.clearUserPersona(persona);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user persona");
         }
     }
 
     /**
      * Clears all custom user personas from the user.
      */
-    public void clearAllUserPersonas() {
-        if (isStarted()) {
+    void clearAllUserPersonas() {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_user_personas")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -924,31 +907,26 @@ final class EmbraceImpl {
             userService.clearAllUserPersonas();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear user personas");
         }
     }
 
     /**
      * Adds a property to the current session.
      */
-    public boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
-        if (isStarted()) {
-            return sessionService.addProperty(key, value, permanent);
+    boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
+        if (checkSdkStartedAndLogPublicApiUsage("add_session_property")) {
+            return sessionPropertiesService.addProperty(key, value, permanent);
         }
-        internalEmbraceLogger.logSDKNotInitialized("cannot add session property");
         return false;
     }
 
     /**
      * Removes a property from the current session.
      */
-    public boolean removeSessionProperty(@NonNull String key) {
-        if (isStarted()) {
-            return sessionService.removeProperty(key);
+    boolean removeSessionProperty(@NonNull String key) {
+        if (checkSdkStartedAndLogPublicApiUsage("remove_session_property")) {
+            return sessionPropertiesService.removeProperty(key);
         }
-
-        internalEmbraceLogger.logSDKNotInitialized("remove session property");
         return false;
     }
 
@@ -956,12 +934,10 @@ final class EmbraceImpl {
      * Retrieves a map of the current session properties.
      */
     @Nullable
-    public Map<String, String> getSessionProperties() {
-        if (isStarted()) {
-            return sessionService.getProperties();
+    Map<String, String> getSessionProperties() {
+        if (checkSdkStartedAndLogPublicApiUsage("get_session_properties")) {
+            return sessionPropertiesService.getProperties();
         }
-
-        internalEmbraceLogger.logSDKNotInitialized("gets session properties");
         return null;
     }
 
@@ -970,8 +946,8 @@ final class EmbraceImpl {
      *
      * @param username the username to set
      */
-    public void setUsername(@Nullable String username) {
-        if (isStarted()) {
+    void setUsername(@Nullable String username) {
+        if (checkSdkStartedAndLogPublicApiUsage("set_username")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
                 return;
@@ -979,21 +955,14 @@ final class EmbraceImpl {
             userService.setUsername(username);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-            if (username != null) {
-                internalEmbraceLogger.logDebug("Set username to " + username);
-            } else {
-                internalEmbraceLogger.logDebug("Cleared username by setting to null");
-            }
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("set username");
         }
     }
 
     /**
      * Clears the username of the currently logged in user, for example if the user has logged out.
      */
-    public void clearUsername() {
-        if (isStarted()) {
+    void clearUsername() {
+        if (checkSdkStartedAndLogPublicApiUsage("clear_username")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
                 return;
@@ -1001,9 +970,6 @@ final class EmbraceImpl {
             userService.clearUsername();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
-            internalEmbraceLogger.logDebug("Cleared username");
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("clear username");
         }
     }
 
@@ -1017,14 +983,12 @@ final class EmbraceImpl {
      * @param identifier an identifier distinguishing between multiple moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    public void startMoment(@NonNull String name,
-                            @Nullable String identifier,
-                            @Nullable Map<String, Object> properties) {
-        if (isStarted()) {
+    void startMoment(@NonNull String name,
+                     @Nullable String identifier,
+                     @Nullable Map<String, Object> properties) {
+        if (checkSdkStartedAndLogPublicApiUsage("start_moment")) {
             eventService.startEvent(name, identifier, normalizeProperties(properties));
             onActivityReported();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("startMoment");
         }
     }
 
@@ -1037,12 +1001,10 @@ final class EmbraceImpl {
      * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
-        if (isStarted()) {
+    void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_moment")) {
             eventService.endEvent(name, identifier, normalizeProperties(properties));
             onActivityReported();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("endMoment");
         }
     }
 
@@ -1051,7 +1013,7 @@ final class EmbraceImpl {
      *
      * @param properties properties to include as part of the startup moment
      */
-    public void endAppStartup(@Nullable Map<String, Object> properties) {
+    void endAppStartup(@Nullable Map<String, Object> properties) {
         endMoment(STARTUP_EVENT_NAME, null, properties);
     }
 
@@ -1061,45 +1023,42 @@ final class EmbraceImpl {
      * @return the Trace ID header.
      */
     @NonNull
-    public String getTraceIdHeader() {
-        if (isStarted() && configService != null) {
+    String getTraceIdHeader() {
+        if (checkSdkStartedAndLogPublicApiUsage("get_trace_id_header") && configService != null) {
             return configService.getNetworkBehavior().getTraceIdHeader();
         }
         return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE;
     }
 
     @NonNull
-    public String generateW3cTraceparent() {
+    String generateW3cTraceparent() {
         return TraceparentGenerator.generateW3CTraceparent();
     }
 
-    public void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        if (isStarted() && embraceInternalInterface != null) {
+    void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
+        if (checkSdkStartedAndLogPublicApiUsage("record_network_request") && embraceInternalInterface != null) {
             embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
         }
     }
 
-    public void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
-        if (request == null) {
-            internalEmbraceLogger.logDeveloper("Embrace", "Request is null");
-            return;
+    void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
+        if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
+            logNetworkRequestImpl(
+                callId,
+                request.getNetworkCaptureData(),
+                request.getUrl(),
+                request.getHttpMethod(),
+                request.getStartTime(),
+                request.getResponseCode(),
+                request.getEndTime(),
+                request.getErrorType(),
+                request.getErrorMessage(),
+                request.getTraceId(),
+                request.getW3cTraceparent(),
+                request.getBytesOut(),
+                request.getBytesIn()
+            );
         }
-
-        logNetworkRequestImpl(
-            callId,
-            request.getNetworkCaptureData(),
-            request.getUrl(),
-            request.getHttpMethod(),
-            request.getStartTime(),
-            request.getResponseCode(),
-            request.getEndTime(),
-            request.getErrorType(),
-            request.getErrorMessage(),
-            request.getTraceId(),
-            request.getW3cTraceparent(),
-            request.getBytesOut(),
-            request.getBytesIn()
-        );
     }
 
     private void logNetworkRequestImpl(@NonNull String callId,
@@ -1115,11 +1074,6 @@ final class EmbraceImpl {
                                        @Nullable String w3cTraceparent,
                                        Long bytesOut,
                                        Long bytesIn) {
-        if (!isStarted()) {
-            internalEmbraceLogger.logSDKNotInitialized("log network request");
-            return;
-        }
-
         if (configService.getNetworkBehavior().isUrlEnabled(url)) {
             if (errorType != null &&
                 errorMessage != null &&
@@ -1154,9 +1108,9 @@ final class EmbraceImpl {
         }
     }
 
-    public void logMessage(@NonNull String message,
-                           @NonNull Severity severity,
-                           @Nullable Map<String, Object> properties) {
+    void logMessage(@NonNull String message,
+                    @NonNull Severity severity,
+                    @Nullable Map<String, Object> properties) {
         logMessage(
             EmbraceEvent.Type.Companion.fromSeverity(severity),
             message,
@@ -1169,10 +1123,10 @@ final class EmbraceImpl {
         );
     }
 
-    public void logException(@NonNull Throwable throwable,
-                             @NonNull Severity severity,
-                             @Nullable Map<String, Object> properties,
-                             @Nullable String message) {
+    void logException(@NonNull Throwable throwable,
+                      @NonNull Severity severity,
+                      @Nullable Map<String, Object> properties,
+                      @Nullable String message) {
         String exceptionMessage = throwable.getMessage() != null ? throwable.getMessage() : "";
         logMessage(
             EmbraceEvent.Type.Companion.fromSeverity(severity),
@@ -1187,10 +1141,10 @@ final class EmbraceImpl {
             exceptionMessage);
     }
 
-    public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
-                                    @NonNull Severity severity,
-                                    @Nullable Map<String, Object> properties,
-                                    @Nullable String message) {
+    void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
+                             @NonNull Severity severity,
+                             @Nullable Map<String, Object> properties,
+                             @Nullable String message) {
         logMessage(
             EmbraceEvent.Type.Companion.fromSeverity(severity),
             message != null ? message : "",
@@ -1236,10 +1190,9 @@ final class EmbraceImpl {
         @Nullable String library,
         @Nullable String exceptionName,
         @Nullable String exceptionMessage) {
-        internalEmbraceLogger.logDeveloper("Embrace", "Attempting to log message");
-        if (isStarted()) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_message")) {
             try {
-                remoteLogger.log(
+                logMessageService.log(
                     message,
                     type,
                     logExceptionType,
@@ -1255,8 +1208,6 @@ final class EmbraceImpl {
             } catch (Exception ex) {
                 internalEmbraceLogger.logDebug("Failed to log message using Embrace SDK.", ex);
             }
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("log message");
         }
     }
 
@@ -1267,34 +1218,18 @@ final class EmbraceImpl {
      *
      * @param message the name of the breadcrumb to log
      */
-    public void addBreadcrumb(@NonNull String message) {
-        internalEmbraceLogger.logDeveloper("Embrace", "Attempting to add breadcrumb");
-        if (isStarted()) {
+    void addBreadcrumb(@NonNull String message) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_breadcrumb")) {
             breadcrumbService.logCustom(message, sdkClock.now());
             onActivityReported();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("log breadcrumb");
-        }
-    }
-
-    /**
-     * Logs a React Native Redux Action.
-     */
-    public void logRnAction(@NonNull String name, long startTime, long endTime,
-                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (isStarted()) {
-            breadcrumbService.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        } else {
-            internalEmbraceLogger.logWarning("Embrace SDK is not initialized yet, cannot log breadcrumb.");
         }
     }
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
-    @InternalApi
-    public void logInternalError(@Nullable String message, @Nullable String details) {
-        if (isStarted()) {
+    void logInternalError(@Nullable String message, @Nullable String details) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
             if (message == null) {
                 return;
             }
@@ -1305,43 +1240,16 @@ final class EmbraceImpl {
             } else {
                 messageWithDetails = message;
             }
-            exceptionsService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("logInternalError");
+            internalErrorService.handleInternalError(new InternalErrorLogger.InternalError(messageWithDetails));
         }
     }
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
-    @InternalApi
-    public void logInternalError(@NonNull Throwable error) {
-        if (isStarted()) {
-            exceptionsService.handleInternalError(error);
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("logInternalError");
-        }
-    }
-
-    /**
-     * Logs a Dart error to the Embrace SDK - this is not intended for public use.
-     */
-    @InternalApi
-    public void logDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library,
-        @NonNull LogExceptionType logExceptionType
-    ) {
-        if (flutterInternalInterface != null) {
-            if (logExceptionType == LogExceptionType.HANDLED) {
-                flutterInternalInterface.logHandledDartException(stack, name, message, context, library);
-            } else if (logExceptionType == LogExceptionType.UNHANDLED) {
-                flutterInternalInterface.logUnhandledDartException(stack, name, message, context, library);
-            }
-            onActivityReported();
+    void logInternalError(@NonNull Throwable error) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
+            internalErrorService.handleInternalError(error);
         }
     }
 
@@ -1350,28 +1258,9 @@ final class EmbraceImpl {
      * <p>
      * Cleans all the user info on the device.
      */
-    public synchronized void endSession(boolean clearUserInfo) {
-        if (isStarted()) {
-            SessionBehavior sessionBehavior = configService.getSessionBehavior();
-            if (sessionBehavior.getMaxSessionSecondsAllowed() != null) {
-                internalEmbraceLogger.logWarning("Can't close the session, automatic session close enabled.");
-                return;
-            }
-
-            if (sessionBehavior.isAsyncEndEnabled()) {
-                internalEmbraceLogger.logWarning("Can't close the session, session ending in background thread enabled.");
-                return;
-            }
-
-            if (clearUserInfo) {
-                userService.clearAllUserInfo();
-                // Update user info in NDK service
-                ndkService.onUserInfoUpdate();
-            }
-
-            sessionService.triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL);
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("end session");
+    void endSession(boolean clearUserInfo) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_session")) {
+            sessionService.endSessionManually(clearUserInfo);
         }
     }
 
@@ -1381,8 +1270,12 @@ final class EmbraceImpl {
      * @return the device identifier created by Embrace
      */
     @NonNull
-    public String getDeviceId() {
-        return preferencesService.getDeviceIdentifier();
+    String getDeviceId() {
+        if (checkSdkStartedAndLogPublicApiUsage("get_device_id")) {
+            return preferencesService.getDeviceIdentifier();
+        } else {
+            return "";
+        }
     }
 
     /**
@@ -1392,13 +1285,10 @@ final class EmbraceImpl {
      *
      * @param name the name of the fragment to log
      */
-    public boolean startView(@NonNull String name) {
-        if (isStarted()) {
-            internalEmbraceLogger.logDeveloper("Embrace", "Starting fragment: " + name);
+    boolean startView(@NonNull String name) {
+        if (checkSdkStartedAndLogPublicApiUsage("start_view")) {
             return breadcrumbService.startView(name);
         }
-
-        internalEmbraceLogger.logDeveloper("Embrace", "Cannot start fragment, SDK is not started");
         return false;
     }
 
@@ -1409,32 +1299,11 @@ final class EmbraceImpl {
      *
      * @param name the name of the fragment to log
      */
-    public boolean endView(@NonNull String name) {
-        if (isStarted()) {
-            internalEmbraceLogger.logDeveloper("Embrace", "Ending fragment: " + name);
+    boolean endView(@NonNull String name) {
+        if (checkSdkStartedAndLogPublicApiUsage("end_view")) {
             return breadcrumbService.endView(name);
         }
-
-        internalEmbraceLogger.logDeveloper("Embrace", "Cannot end fragment, SDK is not started");
         return false;
-    }
-
-    @InternalApi
-    public void sampleCurrentThreadDuringAnrs() {
-        try {
-            AnrService service = anrService;
-            if (service != null && nativeThreadSamplerInstaller != null) {
-                nativeThreadSamplerInstaller.monitorCurrentThread(
-                    nativeThreadSampler,
-                    configService,
-                    service
-                );
-            } else {
-                internalEmbraceLogger.logDeveloper("Embrace", "nativeThreadSamplerInstaller not started, cannot sample current thread");
-            }
-        } catch (Exception exc) {
-            internalEmbraceLogger.logError("Failed to sample current thread during ANRs", exc);
-        }
     }
 
     /**
@@ -1446,189 +1315,9 @@ final class EmbraceImpl {
      * @param screen the name of the view to log
      */
     void logView(String screen) {
-        if (isStarted()) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_view")) {
             breadcrumbService.logView(screen, sdkClock.now());
             onActivityReported();
-        }
-
-        internalEmbraceLogger.logDeveloper("Embrace", "SDK not started, cannot log view");
-    }
-
-    /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    public void logRnView(@NonNull String screen) {
-        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
-            InternalStaticEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
-            return;
-        }
-
-        logView(screen);
-    }
-
-    /**
-     * Logs that a particular WebView URL was loaded.
-     *
-     * @param url the url to log
-     */
-    void logWebView(String url) {
-        if (isStarted()) {
-            breadcrumbService.logWebView(url, sdkClock.now());
-            onActivityReported();
-        }
-
-        internalEmbraceLogger.logDeveloper("Embrace", "SDK not started, cannot log view");
-    }
-
-    /**
-     * Logs a tap on a screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     * @param type        the type of tap that occurred
-     */
-    void logTap(Pair<Float, Float> point, String elementName, TapBreadcrumb.TapBreadcrumbType type) {
-        if (isStarted()) {
-            breadcrumbService.logTap(point, elementName, sdkClock.now(), type);
-            onActivityReported();
-        } else {
-            internalEmbraceLogger.logDeveloper("Embrace", "SDK not started, cannot log tap");
-        }
-    }
-
-    @Nullable
-    @InternalApi
-    public ConfigService getConfigService() {
-        if (isStarted()) {
-            return configService;
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("get local config");
-        }
-        return null;
-    }
-
-    @Nullable
-    EventService getEventService() {
-        return eventService;
-    }
-
-    @Nullable
-    ActivityService getActivityService() {
-        return activityService;
-    }
-
-    @Nullable
-    EmbraceRemoteLogger getRemoteLogger() {
-        return remoteLogger;
-    }
-
-    @Nullable
-    EmbraceInternalErrorService getExceptionsService() {
-        return exceptionsService;
-    }
-
-    @Nullable
-    MetadataService getMetadataService() {
-        return metadataService;
-    }
-
-    @Nullable
-    SessionService getSessionService() {
-        return sessionService;
-    }
-
-    @Nullable
-    Application getApplication() {
-        return application;
-    }
-
-    @Nullable
-    private Map<String, Object> normalizeProperties(@Nullable Map<String, Object> properties) {
-        Map<String, Object> normalizedProperties = new HashMap<>();
-        if (properties != null) {
-            try {
-                internalEmbraceLogger.logDeveloper("Embrace", "normalizing properties");
-                normalizedProperties = PropertyUtils.sanitizeProperties(properties);
-            } catch (Exception e) {
-                internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
-            }
-            return normalizedProperties;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
-     * communication with other Android SDK modules.
-     */
-    @NonNull
-    EmbraceInternalInterface getEmbraceInternalInterface() {
-        if (isStarted() && embraceInternalInterface != null) {
-            return embraceInternalInterface;
-        } else {
-            return EmbraceInternalInterfaceKt.getDefaultImpl();
-        }
-
-    }
-
-    /**
-     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native.
-     */
-    @Nullable
-    ReactNativeInternalInterface getReactNativeInternalInterface() {
-        return reactNativeInternalInterface;
-    }
-
-    /**
-     * Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity.
-     */
-    @Nullable
-    UnityInternalInterface getUnityInternalInterface() {
-        return unityInternalInterface;
-    }
-
-    /**
-     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter.
-     */
-    @Nullable
-    FlutterInternalInterface getFlutterInternalInterface() {
-        return flutterInternalInterface;
-    }
-
-    public void installUnityThreadSampler() {
-        if (isStarted()) {
-            sampleCurrentThreadDuringAnrs();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("installUnityThreadSampler");
-        }
-    }
-
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     */
-    @InternalApi
-    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
-        }
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     */
-    @InternalApi
-    public void setDartVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setDartVersion(version);
         }
     }
 
@@ -1651,39 +1340,48 @@ final class EmbraceImpl {
         Integer messageDeliveredPriority,
         PushNotificationBreadcrumb.NotificationType type) {
 
-        pushNotificationService.logPushNotification(
-            title,
-            body,
-            topic,
-            id,
-            notificationPriority,
-            messageDeliveredPriority,
-            type
-        );
-        onActivityReported();
-    }
-
-    private void onActivityReported() {
-        if (backgroundActivityService != null) {
-            backgroundActivityService.save();
+        if (checkSdkStartedAndLogPublicApiUsage("log_push_notification")) {
+            pushNotificationService.logPushNotification(
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                messageDeliveredPriority,
+                type
+            );
+            onActivityReported();
         }
     }
 
-    public boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
-        if (isStarted() && networkCaptureService != null) {
-            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("Embrace SDK is not initialized yet, cannot check for capture rules.");
-            return false;
+    /**
+     * Logs that a particular WebView URL was loaded.
+     *
+     * @param url the url to log
+     */
+    void logWebView(String url) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_web_view")) {
+            breadcrumbService.logWebView(url, sdkClock.now());
+            onActivityReported();
         }
     }
 
-    public void setProcessStartedByNotification() {
-        eventService.setProcessStartedByNotification();
+    /**
+     * Logs a tap on a screen element.
+     *
+     * @param point       the coordinates of the screen tap
+     * @param elementName the name of the element which was tapped
+     * @param type        the type of tap that occurred
+     */
+    void logTap(Pair<Float, Float> point, String elementName, TapBreadcrumb.TapBreadcrumbType type) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_tap")) {
+            breadcrumbService.logTap(point, elementName, sdkClock.now(), type);
+            onActivityReported();
+        }
     }
 
-    public void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
-        if (configService.getWebViewVitalsBehavior().isWebViewVitalsEnabled()) {
+    void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
+        if (isStarted() && configService.getWebViewVitalsBehavior().isWebViewVitalsEnabled()) {
             webViewService.collectWebData(tag, message);
         }
     }
@@ -1695,17 +1393,15 @@ final class EmbraceImpl {
      * @return The ID for the current Session, if available.
      */
     @Nullable
-    public String getCurrentSessionId() {
+    String getCurrentSessionId() {
         MetadataService localMetaDataService = metadataService;
-        if (isStarted() && localMetaDataService != null) {
+        if (checkSdkStartedAndLogPublicApiUsage("get_current_session_id") && localMetaDataService != null) {
             String sessionId = localMetaDataService.getActiveSessionId();
             if (sessionId != null) {
                 return sessionId;
             } else {
                 internalEmbraceLogger.logInfo("Session ID is null");
             }
-        } else {
-            internalEmbraceLogger.logSDKNotInitialized("getCurrentSessionId");
         }
         return null;
     }
@@ -1716,7 +1412,7 @@ final class EmbraceImpl {
      * @return LastRunEndState enum value representing the end state of the last run.
      */
     @NonNull
-    public Embrace.LastRunEndState getLastRunEndState() {
+    Embrace.LastRunEndState getLastRunEndState() {
         if (isStarted() && crashVerifier != null) {
             if (crashVerifier.didLastRunCrash()) {
                 return Embrace.LastRunEndState.CRASH;
@@ -1728,17 +1424,208 @@ final class EmbraceImpl {
         }
     }
 
+    @Nullable
+    @InternalApi
+    ConfigService getConfigService() {
+        return configService;
+    }
+
+    @Nullable
+    ProcessStateService getActivityService() {
+        return processStateService;
+    }
+
+    @Nullable
+    ActivityTracker getActivityLifecycleTracker() {
+        return activityTracker;
+    }
+
+    @Nullable
+    InternalErrorService getInternalErrorService() {
+        return internalErrorService;
+    }
+
+    @Nullable
+    MetadataService getMetadataService() {
+        return metadataService;
+    }
+
+    @Nullable
+    Application getApplication() {
+        return application;
+    }
+
     /**
-     * Loads the crash verifier to get the end state of the app crashed in the last run.
-     * This method is called when the app starts.
-     *
-     * @param crashModule        an instance of {@link CrashModule}
-     * @param workerThreadModule an instance of {@link WorkerThreadModule}
+     * Gets the {@link EmbraceInternalInterface} that should be used as the sole source of
+     * communication with other Android SDK modules.
      */
-    private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
-        crashVerifier = crashModule.getLastRunCrashVerifier();
-        crashVerifier.readAndCleanMarkerAsync(
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-        );
+    @NonNull
+    EmbraceInternalInterface getEmbraceInternalInterface() {
+        if (isStarted() && embraceInternalInterface != null) {
+            return embraceInternalInterface;
+        } else {
+            return EmbraceInternalInterfaceKt.getDefaultImpl();
+        }
+    }
+
+    boolean shouldCaptureNetworkCall(@NonNull String url, @NonNull String method) {
+        if (isStarted() && networkCaptureService != null) {
+            return !networkCaptureService.getNetworkCaptureRules(url, method).isEmpty();
+        }
+        return false;
+    }
+
+    void setProcessStartedByNotification() {
+        if (isStarted()) {
+            eventService.setProcessStartedByNotification();
+        }
+    }
+
+    /**
+     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for React Native.
+     */
+    @Nullable
+    ReactNativeInternalInterface getReactNativeInternalInterface() {
+        return reactNativeInternalInterface;
+    }
+
+    /**
+     * Logs a React Native Redux Action.
+     */
+    void logRnAction(@NonNull String name, long startTime, long endTime,
+                     @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
+        if (checkSdkStartedAndLogPublicApiUsage("log_react_native_action")) {
+            breadcrumbService.logRnAction(name, startTime, endTime, properties, bytesSent, output);
+        }
+    }
+
+    /**
+     * Logs the fact that a particular view was entered.
+     * <p>
+     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
+     * logged.
+     *
+     * @param screen the name of the view to log
+     */
+    void logRnView(@NonNull String screen) {
+        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
+            internalEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
+            return;
+        }
+
+        logView(screen);
+    }
+
+    /**
+     * Gets the {@link UnityInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for Unity.
+     */
+    @Nullable
+    UnityInternalInterface getUnityInternalInterface() {
+        return unityInternalInterface;
+    }
+
+    void installUnityThreadSampler() {
+        if (checkSdkStartedAndLogPublicApiUsage("install_unity_thread_sampler")) {
+            sampleCurrentThreadDuringAnrs();
+        }
+    }
+
+    /**
+     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
+     * communication with the Android SDK for Flutter.
+     */
+    @Nullable
+    FlutterInternalInterface getFlutterInternalInterface() {
+        return flutterInternalInterface;
+    }
+
+    /**
+     * Logs a Dart error to the Embrace SDK - this is not intended for public use.
+     */
+    void logDartException(
+        @Nullable String stack,
+        @Nullable String name,
+        @Nullable String message,
+        @Nullable String context,
+        @Nullable String library,
+        @NonNull LogExceptionType logExceptionType
+    ) {
+        if (flutterInternalInterface != null) {
+            if (logExceptionType == LogExceptionType.HANDLED) {
+                flutterInternalInterface.logHandledDartException(stack, name, message, context, library);
+            } else if (logExceptionType == LogExceptionType.UNHANDLED) {
+                flutterInternalInterface.logUnhandledDartException(stack, name, message, context, library);
+            }
+            onActivityReported();
+        }
+    }
+
+    /**
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
+     */
+    void setEmbraceFlutterSdkVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
+        }
+    }
+
+    /**
+     * Sets the Dart version - this is not intended for public use.
+     */
+    void setDartVersion(@Nullable String version) {
+        if (flutterInternalInterface != null) {
+            flutterInternalInterface.setDartVersion(version);
+        }
+    }
+
+    private void onActivityReported() {
+        if (backgroundActivityService != null) {
+            backgroundActivityService.save();
+        }
+    }
+
+    private void sampleCurrentThreadDuringAnrs() {
+        try {
+            AnrService service = anrService;
+            if (service != null && nativeThreadSamplerInstaller != null) {
+                nativeThreadSamplerInstaller.monitorCurrentThread(
+                    nativeThreadSampler,
+                    configService,
+                    service
+                );
+            } else {
+                internalEmbraceLogger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread");
+            }
+        } catch (Exception exc) {
+            internalEmbraceLogger.logError("Failed to sample current thread during ANRs", exc);
+        }
+    }
+
+    @Nullable
+    private Map<String, Object> normalizeProperties(@Nullable Map<String, Object> properties) {
+        Map<String, Object> normalizedProperties = new HashMap<>();
+        if (properties != null) {
+            try {
+                normalizedProperties = PropertyUtils.sanitizeProperties(properties);
+            } catch (Exception e) {
+                internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
+            }
+            return normalizedProperties;
+        } else {
+            return null;
+        }
+    }
+
+    private boolean checkSdkStartedAndLogPublicApiUsage(@NonNull String action) {
+        boolean isStarted = isStarted();
+        if (!isStarted) {
+            internalEmbraceLogger.logSDKNotInitialized(action);
+        }
+        if (telemetryService != null) {
+            telemetryService.onPublicApiCalled(action);
+        }
+        return isStarted;
     }
 }

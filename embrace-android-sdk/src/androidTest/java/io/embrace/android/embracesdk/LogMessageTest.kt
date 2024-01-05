@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.stream.JsonReader
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import java.io.File
+import java.io.IOException
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import java.io.File
-import java.io.IOException
 
 @Suppress("DEPRECATION")
 internal class LogMessageTest : BaseTest() {
@@ -64,19 +63,12 @@ internal class LogMessageTest : BaseTest() {
             assertTrue(file.exists() && !file.isDirectory)
             readFile(file, "/v1/log/logging")
             val serializer = EmbraceSerializer()
-            file.bufferedReader().use { bufferedReader ->
-                JsonReader(bufferedReader).use { jsonreader ->
-                    jsonreader.isLenient = true
-                    val obj = serializer.loadObject(jsonreader, DeliveryFailedApiCalls::class.java)
-                    if (obj != null) {
-                        val failedCallFileName = obj.element().cachedPayload
-                        assert(failedCallFileName.isNotBlank())
-                        readFileContent("Test log info fail", failedCallFileName)
-                    } else {
-                        fail("Null object")
-                    }
-                }
-            }
+            val obj = serializer.fromJson(file.inputStream(), PendingApiCalls::class.java)
+            val pendingApiCall = obj.pollNextPendingApiCall()
+            checkNotNull(pendingApiCall)
+            val pendingApiCallFileName = pendingApiCall.cachedPayloadFilename
+            assert(pendingApiCallFileName.isNotBlank())
+            readFileContent("Test log info fail", pendingApiCallFileName)
         } catch (e: IOException) {
             fail("IOException error: ${e.message}")
         }

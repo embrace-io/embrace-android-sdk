@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.EventData
@@ -9,32 +10,33 @@ import io.opentelemetry.sdk.trace.data.SpanData
 /**
  * Serializable representation of [EmbraceSpanData]
  */
+@JsonClass(generateAdapter = true)
 internal data class EmbraceSpanData(
-    @SerializedName("trace_id")
+    @Json(name = "trace_id")
     val traceId: String,
 
-    @SerializedName("span_id")
+    @Json(name = "span_id")
     val spanId: String,
 
-    @SerializedName("parent_span_id")
+    @Json(name = "parent_span_id")
     val parentSpanId: String?,
 
-    @SerializedName("name")
+    @Json(name = "name")
     val name: String,
 
-    @SerializedName("start_time_unix_nano")
+    @Json(name = "start_time_unix_nano")
     val startTimeNanos: Long,
 
-    @SerializedName("end_time_unix_nano")
+    @Json(name = "end_time_unix_nano")
     val endTimeNanos: Long,
 
-    @SerializedName("status")
+    @Json(name = "status")
     val status: StatusCode = StatusCode.UNSET,
 
-    @SerializedName("events")
+    @Json(name = "events")
     val events: List<EmbraceSpanEvent> = emptyList(),
 
-    @SerializedName("attributes")
+    @Json(name = "attributes")
     val attributes: Map<String, String> = emptyMap()
 ) {
     internal constructor(spanData: SpanData) : this(

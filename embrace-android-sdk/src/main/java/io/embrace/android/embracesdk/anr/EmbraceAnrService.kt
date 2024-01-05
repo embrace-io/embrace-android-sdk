@@ -2,19 +2,17 @@ package io.embrace.android.embracesdk.anr
 
 import android.os.Looper
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.session.ActivityListener
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ScheduledExecutorService
@@ -36,10 +34,9 @@ internal class EmbraceAnrService(
     livenessCheckScheduler: LivenessCheckScheduler,
     anrExecutorService: ScheduledExecutorService,
     state: ThreadMonitoringState,
-    private val anrProcessErrorSampler: AnrProcessErrorSampler,
     @field:VisibleForTesting val clock: Clock,
     private val anrMonitorThread: AtomicReference<Thread>
-) : AnrService, MemoryCleanerListener, ActivityListener, BlockedThreadListener {
+) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val state: ThreadMonitoringState
     private val targetThread: Thread
@@ -49,7 +46,6 @@ internal class EmbraceAnrService(
     private val sigquitDetectionService: SigquitDetectionService
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
-    @VisibleForTesting
     val listeners = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
@@ -64,9 +60,6 @@ internal class EmbraceAnrService(
         // add listeners
         listeners.add(stacktraceSampler)
         listeners.add(UnbalancedCallDetector(logger))
-        listeners.add(
-            anrProcessErrorSampler
-        )
         livenessCheckScheduler.listener = this
     }
 
@@ -112,12 +105,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    override fun getAnrProcessErrors(
-        startTime: Long
-    ): List<AnrProcessErrorStateInfo> {
-        return anrProcessErrorSampler.getAnrProcessErrors(startTime)
-    }
-
     override fun forceAnrTrackingStopOnCrash() {
         anrExecutorService.submit {
             targetThreadHeartbeatScheduler.stopMonitoringThread()
@@ -151,7 +138,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    @VisibleForTesting
     internal fun processAnrTick(timestamp: Long) {
         // Check if ANR capture is enabled
         if (!configService.anrBehavior.isAnrCaptureEnabled()) {

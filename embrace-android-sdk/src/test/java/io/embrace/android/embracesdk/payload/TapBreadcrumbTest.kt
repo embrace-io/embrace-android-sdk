@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.payload
 
 import android.util.Pair
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class TapBreadcrumbTest {
@@ -18,25 +19,20 @@ internal class TapBreadcrumbTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("tap_breadcrumb_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("tap_breadcrumb_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("tap_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, TapBreadcrumb::class.java)
+        val obj = deserializeJsonFromResource<TapBreadcrumb>("tap_breadcrumb_expected.json")
         assertEquals("0,0", obj.location)
         assertEquals("tappedElementName", obj.tappedElementName)
         assertEquals(1600000000, obj.getStartTime())
         assertEquals(TapBreadcrumb.TapBreadcrumbType.TAP, obj.type)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", TapBreadcrumb::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<TapBreadcrumb>()
     }
 }

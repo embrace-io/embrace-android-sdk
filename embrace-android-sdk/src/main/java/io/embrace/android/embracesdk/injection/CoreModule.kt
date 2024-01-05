@@ -6,7 +6,7 @@ import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry

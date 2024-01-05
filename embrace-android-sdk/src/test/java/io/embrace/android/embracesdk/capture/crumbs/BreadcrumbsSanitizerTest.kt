@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.payload.Breadcrumbs
-import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class BreadcrumbsSanitizerTest {
@@ -30,11 +31,11 @@ internal class BreadcrumbsSanitizerTest {
 
         val result = BreadcrumbsSanitizer(breadcrumbs, components).sanitize()
 
-        Assert.assertNotNull(result?.tapBreadcrumbs)
-        Assert.assertNotNull(result?.viewBreadcrumbs)
-        Assert.assertNotNull(result?.customBreadcrumbs)
-        Assert.assertNotNull(result?.webViewBreadcrumbs)
-        Assert.assertNotNull(result?.customBreadcrumbs)
+        assertNotNull(result?.tapBreadcrumbs)
+        assertNotNull(result?.viewBreadcrumbs)
+        assertNotNull(result?.customBreadcrumbs)
+        assertNotNull(result?.webViewBreadcrumbs)
+        assertNotNull(result?.customBreadcrumbs)
     }
 
     @Test
@@ -44,10 +45,10 @@ internal class BreadcrumbsSanitizerTest {
 
         val result = BreadcrumbsSanitizer(breadcrumbs, components).sanitize()
 
-        Assert.assertNull(result?.tapBreadcrumbs)
-        Assert.assertNull(result?.viewBreadcrumbs)
-        Assert.assertNull(result?.customBreadcrumbs)
-        Assert.assertNull(result?.webViewBreadcrumbs)
-        Assert.assertNull(result?.customBreadcrumbs)
+        assertNull(result?.tapBreadcrumbs)
+        assertNull(result?.viewBreadcrumbs)
+        assertNull(result?.customBreadcrumbs)
+        assertNull(result?.webViewBreadcrumbs)
+        assertNull(result?.customBreadcrumbs)
     }
 }

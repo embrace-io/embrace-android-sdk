@@ -30,4 +30,27 @@ internal interface UnityInternalInterface : EmbraceInternalInterface {
         message: String,
         stacktrace: String?
     )
+
+    fun recordIncompleteNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        errorType: String?,
+        errorMessage: String?,
+        traceId: String?
+    )
+
+    fun recordCompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        bytesSent: Long,
+        bytesReceived: Long,
+        statusCode: Int,
+        traceId: String?
+    )
+
+    fun installUnityThreadSampler()
 }

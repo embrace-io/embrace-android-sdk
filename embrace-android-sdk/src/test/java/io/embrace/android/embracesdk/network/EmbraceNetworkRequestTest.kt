@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.network
 
 import io.embrace.android.embracesdk.internal.TraceparentGenerator
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

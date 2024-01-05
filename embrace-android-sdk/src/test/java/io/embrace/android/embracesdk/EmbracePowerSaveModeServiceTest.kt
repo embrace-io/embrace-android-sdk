@@ -6,14 +6,12 @@ import android.os.PowerManager
 import android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.ActivityService
-import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockIntent
+import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
@@ -31,14 +29,11 @@ internal class EmbracePowerSaveModeServiceTest {
     private lateinit var service: EmbracePowerSaveModeService
 
     companion object {
-        private lateinit var mockContext: Context
-        private lateinit var mockIntent: Intent
-        private lateinit var mockCleanerService: MemoryCleanerService
+        private lateinit var context: Context
+        private lateinit var intent: Intent
         private lateinit var executor: ExecutorService
         private lateinit var fakeClock: FakeClock
         private lateinit var powerManager: PowerManager
-        private lateinit var activityService: ActivityService
-        private lateinit var activityListener: ActivityListener
 
         /**
          * Setup before all tests get executed. Create mocks here.
@@ -46,14 +41,11 @@ internal class EmbracePowerSaveModeServiceTest {
         @BeforeClass
         @JvmStatic
         fun setupBeforeAll() {
-            mockContext = mockk(relaxUnitFun = true)
-            mockIntent = mockk()
-            mockCleanerService = mockk(relaxUnitFun = true)
+            context = mockContext()
+            intent = mockIntent()
             executor = MoreExecutors.newDirectExecutorService()
             fakeClock = FakeClock()
-            powerManager = mockk()
-            activityService = FakeActivityService()
-            activityListener = mockk()
+            powerManager = mockPowerManager()
         }
 
         /**
@@ -63,7 +55,6 @@ internal class EmbracePowerSaveModeServiceTest {
         @JvmStatic
         fun tearDownAfterAll() {
             unmockkAll()
-            executor.shutdown()
         }
     }
 
@@ -73,7 +64,7 @@ internal class EmbracePowerSaveModeServiceTest {
     @Before
     fun setup() {
         service = EmbracePowerSaveModeService(
-            mockContext,
+            context,
             executor,
             fakeClock,
             powerManager
@@ -90,15 +81,15 @@ internal class EmbracePowerSaveModeServiceTest {
 
     @Test
     fun `test onReceive adds a low battery interval correctly`() {
-        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
-        every { mockIntent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { intent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
 
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, intent)
         every { powerManager.isPowerSaveMode } returns false
 
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, intent)
         val intervals = service.getCapturedData()
 
         assertEquals(1, intervals.size)
@@ -108,11 +99,11 @@ internal class EmbracePowerSaveModeServiceTest {
 
     @Test
     fun `test onReceive start interval no end`() {
-        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
-        every { mockIntent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { intent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, intent)
 
         val intervals = service.getCapturedData()
         assertEquals(1, intervals.size)
@@ -122,7 +113,7 @@ internal class EmbracePowerSaveModeServiceTest {
 
     @Test
     fun `test start session on power save mode no end`() {
-        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
@@ -136,15 +127,15 @@ internal class EmbracePowerSaveModeServiceTest {
 
     @Test
     fun `test start session on power save mode end saving mode in session`() {
-        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
         service.onForeground(true, startTime, startTime)
 
-        every { mockIntent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
+        every { intent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
         every { powerManager.isPowerSaveMode } returns false
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, intent)
 
         val intervals = service.getCapturedData()
         assertEquals(1, intervals.size)
@@ -154,22 +145,22 @@ internal class EmbracePowerSaveModeServiceTest {
 
     @Test
     fun `test onReceive throws an exception`() {
-        every { mockIntent.action } throws Exception()
+        every { intent.action } throws Exception()
         fakeClock.setCurrentTime(111111L)
-        assertThrows(Exception::class.java) { service.onReceive(mockContext, mockIntent) }
+        assertThrows(Exception::class.java) { service.onReceive(context, intent) }
     }
 
     @Test
     @Throws(InterruptedException::class)
     fun `test receiver can be registered and unregistered`() {
-        verify { mockContext.registerReceiver(service, any()) }
+        verify { context.registerReceiver(service, any()) }
         service.close()
-        verify { mockContext.unregisterReceiver(service) }
+        verify { context.unregisterReceiver(service) }
     }
 
     @Test
     fun testCleanCollections() {
-        every { mockContext.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
@@ -178,5 +169,17 @@ internal class EmbracePowerSaveModeServiceTest {
         assertEquals(1, service.getCapturedData().size)
         service.cleanCollections()
         assertEquals(0, service.getCapturedData().size)
+    }
+
+    @Test
+    fun `test limit exceeded`() {
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { intent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
+        every { powerManager.isPowerSaveMode } returns false
+
+        repeat(150) {
+            service.onReceive(context, intent)
+        }
+        assertEquals(100, service.getCapturedData().size)
     }
 }

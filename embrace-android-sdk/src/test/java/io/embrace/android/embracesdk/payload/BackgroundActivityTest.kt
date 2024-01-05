@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -36,16 +38,12 @@ internal class BackgroundActivityTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("bg_activity_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("bg_activity_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("bg_activity_expected.json")
-        val obj = Gson().fromJson(json, BackgroundActivity::class.java)
+        val obj = deserializeJsonFromResource<BackgroundActivity>("bg_activity_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -73,9 +71,8 @@ internal class BackgroundActivityTest {
         }
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", BackgroundActivity::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<BackgroundActivity>()
     }
 }

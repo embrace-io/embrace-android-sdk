@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.InternalApi
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -14,7 +14,13 @@ import io.opentelemetry.sdk.trace.data.SpanData
 internal class FeatureDisabledSpansService : SpansService {
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? = null
 
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean, code: () -> T) = code()
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: EmbraceAttributes.Type,
+        internal: Boolean,
+        code: () -> T
+    ) = code()
 
     override fun recordCompletedSpan(
         name: String,

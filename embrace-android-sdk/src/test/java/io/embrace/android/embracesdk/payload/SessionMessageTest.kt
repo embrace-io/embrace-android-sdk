@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
@@ -44,16 +46,12 @@ internal class SessionMessageTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("session_message_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("session_message_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("session_message_expected.json")
-        val obj = Gson().fromJson(json, SessionMessage::class.java)
+        val obj = deserializeJsonFromResource<SessionMessage>("session_message_expected.json")
         assertNotNull(obj)
         assertEquals(session, obj.session)
         assertEquals(userInfo, obj.userInfo)
@@ -64,9 +62,8 @@ internal class SessionMessageTest {
         assertEquals(spans, obj.spans)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", SessionMessage::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<SessionMessage>()
     }
 }

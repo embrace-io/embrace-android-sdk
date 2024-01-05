@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.config
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
@@ -17,14 +15,14 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
@@ -37,7 +35,7 @@ import kotlin.math.min
  */
 internal class EmbraceConfigService @JvmOverloads constructor(
     private val localConfig: LocalConfig,
-    private val apiServiceProvider: () -> ApiService,
+    private val apiService: ApiService,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger,
@@ -45,7 +43,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     isDebug: Boolean,
     private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
-) : ConfigService, ActivityListener {
+) : ConfigService, ProcessStateListener {
 
     /**
      * The listeners subscribed to configuration changes.
@@ -53,11 +51,9 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val listeners: MutableSet<ConfigListener> = CopyOnWriteArraySet()
     private val lock = Any()
 
-    @VisibleForTesting
     @Volatile
     private var configProp = RemoteConfig()
 
-    @VisibleForTesting
     @Volatile
     var lastUpdated: Long = 0
 
@@ -123,12 +119,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             localSupplier = localConfig.sdkConfig::startupMoment
         )
 
-    override val spansBehavior: SpansBehavior =
-        SpansBehavior(
-            thresholdCheck = thresholdCheck,
-            remoteSupplier = { getConfig().spansConfig }
-        )
-
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehavior(
         thresholdCheck = thresholdCheck,
         remoteSupplier = remoteSupplier
@@ -192,12 +182,11 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     /**
      * Load Config from cache if present.
      */
-    @VisibleForTesting
+
     fun loadConfigFromCache() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to load config from cache")
-        val apiService = apiServiceProvider.invoke()
         val cachedConfig = apiService.getCachedConfig()
-        val obj = cachedConfig.config
+        val obj = cachedConfig.remoteConfig
 
         if (obj != null) {
             val oldConfig = configProp
@@ -237,7 +226,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
                 if (configRequiresRefresh()) {
                     try {
                         lastRefreshConfigAttempt = clock.now()
-                        val apiService = apiServiceProvider.invoke()
                         val newConfig = apiService.getConfig()
                         if (newConfig != null) {
                             updateConfig(previousConfig, newConfig)

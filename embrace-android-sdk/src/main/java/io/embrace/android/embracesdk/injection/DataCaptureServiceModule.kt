@@ -1,23 +1,16 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Build
-import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
+import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.EmbraceStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.NoOpStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
@@ -52,11 +45,6 @@ internal interface DataCaptureServiceModule {
     val powerSaveModeService: PowerSaveModeService
 
     /**
-     * Captures intervals where the network was/wasn't connected
-     */
-    val networkConnectivityService: NetworkConnectivityService
-
-    /**
      * Captures information from webviews
      */
     val webviewService: WebViewService
@@ -67,19 +55,14 @@ internal interface DataCaptureServiceModule {
     val pushNotificationService: PushNotificationCaptureService
 
     /**
-     * Captures strict mode violations
-     */
-    val strictModeService: StrictModeService
-
-    /**
      * Captures thermal state events
      */
     val thermalStatusService: ThermalStatusService
 
     /**
-     * Captures breadcrumbs of the activity lifecycle
+     * Registers for the component callback to capture memory events
      */
-    val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?
+    val componentCallbackService: ComponentCallbackService
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -92,7 +75,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 ) : DataCaptureServiceModule {
 
     private val backgroundExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
     private val configService = essentialServiceModule.configService
 
     override val memoryService: MemoryService by singleton {
@@ -101,6 +84,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         } else {
             NoOpMemoryService()
         }
+    }
+
+    override val componentCallbackService: ComponentCallbackService by singleton {
+        ComponentCallbackService(coreModule.application, memoryService)
     }
 
     override val powerSaveModeService: PowerSaveModeService by singleton {
@@ -119,20 +106,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         }
     }
 
-    override val networkConnectivityService: NetworkConnectivityService by singleton {
-        if (configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()) {
-            EmbraceNetworkConnectivityService(
-                coreModule.context,
-                initModule.clock,
-                backgroundExecutorService,
-                coreModule.logger,
-                systemServiceModule.connectivityManager
-            )
-        } else {
-            NoOpNetworkConnectivityService()
-        }
-    }
-
     override val webviewService: WebViewService by singleton {
         EmbraceWebViewService(configService, coreModule.jsonSerializer)
     }
@@ -147,16 +120,9 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
         PushNotificationCaptureService(
-            breadcrumbService, coreModule.logger
+            breadcrumbService,
+            coreModule.logger
         )
-    }
-
-    override val strictModeService: StrictModeService by singleton {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.P) && configService.anrBehavior.isStrictModeListenerEnabled()) {
-            EmbraceStrictModeService(configService, scheduledExecutor, initModule.clock)
-        } else {
-            NoOpStrictModeService()
-        }
     }
 
     override val thermalStatusService: ThermalStatusService by singleton {
@@ -169,14 +135,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             )
         } else {
             NoOpThermalStatusService()
-        }
-    }
-
-    override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            EmbraceActivityLifecycleBreadcrumbService(configService, initModule.clock)
-        } else {
-            null
         }
     }
 }

@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.comms.api
 
 import android.net.http.HttpResponseCache
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.io.InputStreamReader
 import java.net.CacheResponse
 import java.net.URI
 
@@ -24,7 +22,7 @@ import java.net.URI
  */
 internal class ApiResponseCache @JvmOverloads constructor(
     private val serializer: EmbraceSerializer,
-    cacheDirProvider: () -> File,
+    storageDirProvider: () -> File,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : Closeable {
 
@@ -35,7 +33,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
 
     @Volatile
     private var cache: HttpResponseCache? = null
-    private val cacheDir: File by lazy { cacheDirProvider() }
+    private val storageDir: File by lazy { storageDirProvider() }
     private val lock = Object()
 
     private fun initializeIfNeeded() {
@@ -43,7 +41,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
             synchronized(lock) {
                 if (cache == null) {
                     cache = try {
-                        HttpResponseCache.install(cacheDir, MAX_CACHE_SIZE_BYTES)
+                        HttpResponseCache.install(storageDir, MAX_CACHE_SIZE_BYTES)
                     } catch (exc: IOException) {
                         logger.logWarning("Failed to initialize HTTP cache.", exc)
                         null
@@ -60,9 +58,7 @@ internal class ApiResponseCache @JvmOverloads constructor(
     fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
         val cachedResponse = retrieveCacheResponse(url, request)
         val obj = cachedResponse?.runCatching {
-            JsonReader(InputStreamReader(body).buffered()).use {
-                serializer.loadObject(it, RemoteConfig::class.java)
-            }
+            serializer.fromJson(body, RemoteConfig::class.java)
         }?.getOrNull()
         val eTag = cachedResponse?.let { retrieveETag(cachedResponse) }
         return CachedConfig(obj, eTag)

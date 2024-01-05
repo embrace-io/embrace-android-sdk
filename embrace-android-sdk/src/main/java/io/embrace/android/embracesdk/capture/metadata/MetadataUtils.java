@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
 import android.os.StatFs;
-import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -23,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.regex.Pattern;
 
 import io.embrace.android.embracesdk.injection.CoreModuleKt;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
@@ -102,15 +100,6 @@ final class MetadataUtils {
      */
     static int getOperatingSystemVersionCode() {
         return Build.VERSION.SDK_INT;
-    }
-
-    /**
-     * Gets the system uptime in milliseconds.
-     *
-     * @return the system uptime in milliseconds
-     */
-    static Long getSystemUptime() {
-        return SystemClock.uptimeMillis();
     }
 
     /**
@@ -227,14 +216,16 @@ final class MetadataUtils {
      * @return true if the device is detected to be an emulator, false otherwise
      */
     static boolean isEmulator() {
-        boolean isEmulator = Build.FINGERPRINT.startsWith("generic")
-            || Build.FINGERPRINT.startsWith("unknown")
-            || Build.MODEL.contains("google_sdk")
-            || Build.MODEL.contains("Emulator")
-            || Build.MODEL.contains("Android SDK built for x86")
-            || Build.MANUFACTURER.contains("Genymotion")
-            || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-            || "google_sdk".equals(Build.PRODUCT);
+        boolean isEmulator = Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.FINGERPRINT.contains("emulator") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("sdk_gphone64") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
+            "google_sdk".equals(Build.PRODUCT);
 
         InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Device is an Emulator = " + isEmulator);
         return isEmulator;

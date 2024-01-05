@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.prefs
 
 import android.content.Context
@@ -7,7 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -188,13 +190,24 @@ internal class EmbracePreferencesServiceTest {
 
     @Test
     fun `test session number is saved`() {
-        assertEquals(0, service.sessionNumber)
+        assertEquals(1, service.incrementAndGetSessionNumber())
+        assertEquals(2, service.incrementAndGetSessionNumber())
+        assertEquals(3, service.incrementAndGetSessionNumber())
+        assertEquals(4, service.incrementAndGetSessionNumber())
 
-        service.sessionNumber = 1234
-        assertEquals(1234, service.sessionNumber)
+        // bg activity uses independent key
+        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
+    }
 
-        service.sessionNumber = -1
-        assertEquals(0, service.sessionNumber)
+    @Test
+    fun `test bg activity number is saved`() {
+        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(2, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(3, service.incrementAndGetBackgroundActivityNumber())
+        assertEquals(4, service.incrementAndGetBackgroundActivityNumber())
+
+        // session uses independent key
+        assertEquals(1, service.incrementAndGetSessionNumber())
     }
 
     @Test
@@ -264,7 +277,7 @@ internal class EmbracePreferencesServiceTest {
     fun `test is jail broken is saved`() {
         assertNull(service.jailbroken)
         service.jailbroken = true
-        assertTrue(service.jailbroken!!)
+        assertTrue(checkNotNull(service.jailbroken))
     }
 
     @Test

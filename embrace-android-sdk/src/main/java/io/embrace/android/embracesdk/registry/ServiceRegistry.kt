@@ -4,10 +4,12 @@ import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.ActivityService
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,7 +29,8 @@ internal class ServiceRegistry(
     val closeables by lazy { registry.filterIsInstance<Closeable>() }
     val configListeners by lazy { registry.filterIsInstance<ConfigListener>() }
     val memoryCleanerListeners by lazy { registry.filterIsInstance<MemoryCleanerListener>() }
-    val activityListeners by lazy { registry.filterIsInstance<ActivityListener>() }
+    val processStateListeners by lazy { registry.filterIsInstance<ProcessStateListener>() }
+    val activityLifecycleListeners by lazy { registry.filterIsInstance<ActivityLifecycleListener>() }
 
     fun registerServices(vararg services: Any?) {
         services.forEach(::registerService)
@@ -47,9 +50,14 @@ internal class ServiceRegistry(
         initialized.set(true)
     }
 
-    fun registerActivityListeners(activityService: ActivityService) = activityListeners.forEachSafe(
+    fun registerActivityListeners(processStateService: ProcessStateService) = processStateListeners.forEachSafe(
         "Failed to register activity listener",
-        activityService::addListener
+        processStateService::addListener
+    )
+
+    fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker) = activityLifecycleListeners.forEachSafe(
+        "Failed to register activity lifecycle listener",
+        activityLifecycleTracker::addListener
     )
 
     fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService) =

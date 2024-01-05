@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
+import io.embrace.android.embracesdk.payload.extensions.size
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -171,7 +172,7 @@ internal class AnrStacktraceSamplerTest {
         val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
 
         // simulate 110 ANRs with intervals
-        repeat(anrRepeatCount) { index ->
+        repeat(anrRepeatCount) {
             sampler.onThreadBlocked(thread, clock.now())
             sampler.onThreadBlockedInterval(thread, clock.now())
             clock.tick(intervalMs)

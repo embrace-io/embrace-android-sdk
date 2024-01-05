@@ -1,26 +1,35 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.api.ApiService
+import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.SessionSnapshotType
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
-    private val networkManager: DeliveryNetworkManager,
+    private val apiService: ApiService,
+    private val gatingService: GatingService,
     private val cachedSessionsExecutorService: ExecutorService,
     private val sendSessionsExecutorService: ExecutorService,
+    private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
-) : DeliveryService, DeliveryServiceNetwork by networkManager {
+) : DeliveryService {
 
     companion object {
         private const val TAG = "EmbraceDeliveryService"
-
         private const val SEND_SESSION_TIMEOUT = 1L
+        private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
     private val backgroundActivities by lazy { mutableSetOf<String>() }
@@ -29,55 +38,31 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun saveSession(sessionMessage: SessionMessage) {
-        cacheManager.saveSession(sessionMessage)
-    }
+    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
+        cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
+        if (snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
+            return
+        }
 
-    /**
-     * Caches and sends over the network a session message
-     *
-     * @param sessionMessage    The session message to send
-     * @param state             Whether this message is for the session start or end
-     */
-    override fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState) {
-        logger.logDeveloper(TAG, "Sending session message")
-
-        sendSessionsExecutorService.submit {
-            logger.logDeveloper(TAG, "Sending session message - background job started")
-            val sessionBytes = cacheManager.saveSession(sessionMessage)
-
-            sessionBytes?.also { session ->
-                logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                try {
-                    var onFinish: (() -> Unit)? = null
-                    if (state == SessionMessageState.END || state == SessionMessageState.END_WITH_CRASH) {
-                        onFinish = { cacheManager.deleteSession(sessionMessage.session.sessionId) }
-                    }
-
-                    if (state == SessionMessageState.END_WITH_CRASH) {
-                        // perform session request synchronously
-                        networkManager.sendSession(
-                            session,
-                            onFinish
-                        )[SEND_SESSION_TIMEOUT, TimeUnit.SECONDS]
-                        logger.logDeveloper(TAG, "Session message sent.")
-                    } else {
-                        // perform session request asynchronously
-                        networkManager.sendSession(session, onFinish)
-                        logger.logDeveloper(TAG, "Session message queued to be sent.")
-                    }
-                    logger.logDeveloper(
-                        TAG,
-                        "Current session has been successfully removed from cache."
-                    )
-                } catch (ex: Exception) {
-                    logger.logInfo(
-                        "Failed to send session end message. Embrace will store the " +
-                            "session message and attempt to deliver it at a future date."
-                    )
-                }
+        try {
+            val sessionId = sessionMessage.session.sessionId
+            val action = cacheManager.loadSessionAsAction(sessionId) ?: { stream ->
+                // fallback if initial caching failed for whatever reason, so we don't drop
+                // the data
+                serializer.toJson(sessionMessage, SessionMessage::class.java, stream)
             }
+            val future = apiService.sendSession(action) {
+                cacheManager.deleteSession(sessionId)
+            }
+            if (snapshotType == SessionSnapshotType.JVM_CRASH) {
+                future?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
+            }
+        } catch (ex: Exception) {
+            logger.logInfo(
+                "Failed to send session end message. Embrace will store the " +
+                    "session message and attempt to deliver it at a future date."
+            )
         }
     }
 
@@ -101,54 +86,68 @@ internal class EmbraceDeliveryService(
 
         sendSessionsExecutorService.submit {
             logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val baBytes = cacheManager.saveBackgroundActivity(backgroundActivityMessage)
-
-            baBytes?.also { backgroundActivity ->
-                logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                try {
-                    val onFinish: (() -> Unit) =
-                        { cacheManager.deleteSession(backgroundActivityMessage.backgroundActivity.sessionId) }
-                    networkManager.sendSession(backgroundActivity, onFinish)
-                    logger.logDeveloper(TAG, "Session message queued to be sent.")
-                } catch (ex: Exception) {
-                    logger.logInfo(
-                        "Failed to send background activity message. Embrace will " +
-                            "attempt to deliver it at a future date."
-                    )
-                }
-            }
+            val id = backgroundActivityMessage.backgroundActivity.sessionId
+            val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return@submit
+            sendBackgroundActivityImpl(id, action)
         }
     }
 
     /**
      * Sends cached background activities messages
-     *
      */
     override fun sendBackgroundActivities() {
         logger.logDeveloper(TAG, "Sending background activity message")
 
         sendSessionsExecutorService.submit {
             backgroundActivities.forEach { backgroundActivityId ->
-                logger.logDeveloper(TAG, "Sending background activity message - background job started")
-                val baBytes = cacheManager.loadBackgroundActivity(backgroundActivityId)
-
-                baBytes?.also { backgroundActivity ->
-                    logger.logDeveloper(TAG, "Serialized session message ready to be sent")
-
-                    try {
-                        val onFinish: () -> Unit = { cacheManager.deleteSession(backgroundActivityId) }
-                        networkManager.sendSession(backgroundActivity, onFinish)
-                        logger.logDeveloper(TAG, "Session message queued to be sent.")
-                    } catch (ex: Exception) {
-                        logger.logInfo(
-                            "Failed to send background activity message. Embrace will " +
-                                "attempt to deliver it at a future date."
-                        )
-                    }
-                }
+                logger.logDeveloper(
+                    TAG,
+                    "Sending background activity message - background job started"
+                )
+                val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
+                sendBackgroundActivityImpl(backgroundActivityId, action)
             }
         }
+    }
+
+    private fun sendBackgroundActivityImpl(
+        backgroundActivityId: String,
+        action: SerializationAction
+    ) {
+        try {
+            apiService.sendSession(action) {
+                cacheManager.deleteSession(backgroundActivityId)
+            }
+            logger.logDeveloper(TAG, "Session message queued to be sent.")
+        } catch (ex: Exception) {
+            logger.logInfo(
+                "Failed to send background activity message. Embrace will " +
+                    "attempt to deliver it at a future date."
+            )
+        }
+    }
+
+    override fun sendLog(eventMessage: EventMessage) {
+        apiService.sendLog(eventMessage)
+    }
+
+    override fun sendNetworkCall(networkEvent: NetworkEvent) {
+        apiService.sendNetworkCall(networkEvent)
+    }
+
+    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
+        runCatching {
+            cacheManager.saveCrash(crash)
+            val future = apiService.sendCrash(crash)
+
+            if (processTerminating) {
+                future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
+            }
+        }
+    }
+
+    override fun sendAEIBlob(blobMessage: BlobMessage) {
+        apiService.sendAEIBlob(blobMessage)
     }
 
     override fun sendCachedSessions(
@@ -164,17 +163,10 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    /**
-     * Persist crash to disk so it can be sent on the next SDK start.
-     */
-    override fun saveCrash(crash: EventMessage) {
-        cacheManager.saveCrash(crash)
-    }
-
     private fun sendCachedCrash() {
         val crash = cacheManager.loadCrash()
         crash?.let {
-            networkManager.sendCrash(it)
+            apiService.sendCrash(it)
         }
     }
 
@@ -203,7 +195,7 @@ internal class EmbraceDeliveryService(
                 val newSessionMessage =
                     attachCrashToSession(nativeCrashData, sessionMessage)
                 // Replace the cached file for the corresponding session
-                cacheManager.saveSession(newSessionMessage)
+                cacheManager.saveSession(newSessionMessage, SessionSnapshotType.NORMAL_END)
             } ?: run {
             logger.logError(
                 "Could not find session with id ${nativeCrashData.sessionId} to " +
@@ -229,23 +221,22 @@ internal class EmbraceDeliveryService(
         ids.forEach { id ->
             if (id != currentSession) {
                 try {
-                    val payload = cacheManager.loadSessionBytes(id)
-                    if (payload != null) {
-                        // The network requests will be executed sequentially in a single-threaded executor by the network manager
-                        networkManager.sendSession(payload) { cacheManager.deleteSession(id) }
+                    val action = cacheManager.loadSessionAsAction(id)
+                    if (action != null) {
+                        apiService.sendSession(action) { cacheManager.deleteSession(id) }
                     } else {
                         logger.logError("Session $id not found")
                     }
-                } catch (ex: Exception) {
-                    logger.logError("Could not send cached session $id")
+                } catch (ex: Throwable) {
+                    logger.logError("Could not send cached session", ex, true)
                 }
             }
         }
     }
 
-    override fun sendEventAsync(eventMessage: EventMessage) {
+    override fun sendMoment(eventMessage: EventMessage) {
         sendSessionsExecutorService.submit {
-            networkManager.sendEvent(eventMessage)
+            apiService.sendEvent(eventMessage)
         }
     }
 }

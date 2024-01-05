@@ -1,22 +1,24 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Describes a particular Java exception. Where an exception has a cause, there will be an
  * [ExceptionInfo] for each nested cause.
  */
+@JsonClass(generateAdapter = true)
 internal class ExceptionInfo internal constructor(
 
     /**
      * The name of the class throwing the exception.
      */
-    @SerializedName("n") val name: String,
+    @Json(name = "n") val name: String,
 
     /**
      * The exception message.
      */
-    @SerializedName("m") val message: String?,
+    @Json(name = "m") val message: String?,
 
     lines: List<String>
 ) {
@@ -24,13 +26,13 @@ internal class ExceptionInfo internal constructor(
     /**
      * String representation of each line of the stack trace.
      */
-    @SerializedName("tt")
+    @Json(name = "tt")
     val lines: List<String> = lines.take(STACK_FRAME_LIMIT)
 
     /**
      * The original length of the stack trace. This will be null if it has not been truncated.
      */
-    @SerializedName("length")
+    @Json(name = "length")
     val originalLength: Int? = lines.size.takeIf { it > STACK_FRAME_LIMIT }
 
     companion object {

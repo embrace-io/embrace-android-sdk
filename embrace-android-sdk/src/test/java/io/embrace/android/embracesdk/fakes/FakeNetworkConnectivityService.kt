@@ -5,27 +5,42 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.payload.Interval
 
-internal class FakeNetworkConnectivityService : FakeDataCaptureService<Interval>(), NetworkConnectivityService {
+internal class FakeNetworkConnectivityService(
+    initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
+    override var ipAddress: String = defaultIpAddress
+) : FakeDataCaptureService<Interval>(), NetworkConnectivityService {
+
+    private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
+    var networkStatus: NetworkStatus = initialNetworkStatus
+        set(value) {
+            field = value
+            notifyListeners()
+        }
 
     override fun networkStatusOnSessionStarted(startTime: Long) {
-        TODO("Not yet implemented")
+        notifyListeners()
     }
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
-        TODO("Not yet implemented")
+        networkConnectivityListeners.add(listener)
     }
 
     override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {
-        TODO("Not yet implemented")
+        networkConnectivityListeners.remove(listener)
     }
 
-    override fun getCurrentNetworkStatus(): NetworkStatus {
-        TODO("Not yet implemented")
-    }
-
-    override val ipAddress: String
-        get() = TODO("Not yet implemented")
+    override fun getCurrentNetworkStatus(): NetworkStatus = networkStatus
 
     override fun close() {
+    }
+
+    private fun notifyListeners() {
+        networkConnectivityListeners.forEach {
+            it.onNetworkConnectivityStatusChanged(networkStatus)
+        }
+    }
+
+    companion object {
+        private const val defaultIpAddress = "220.1.1.1"
     }
 }

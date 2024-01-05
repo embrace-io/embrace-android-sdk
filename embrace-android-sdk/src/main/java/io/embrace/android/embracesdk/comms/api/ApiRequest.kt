@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.comms.api
 
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.io.IOException
 
+@JsonClass(generateAdapter = true)
 internal data class ApiRequest(
     val contentType: String = "application/json",
 
@@ -62,4 +64,10 @@ internal data class ApiRequest(
             throw IllegalStateException(ex.localizedMessage ?: "", ex)
         }
     }
+
+    /**
+     * Returns true if the request is a session request. This heuristic should not be widely used
+     * - it is only used to prioritise session requests over other requests.
+     */
+    fun isSessionRequest(): Boolean = url.toString().endsWith("sessions")
 }

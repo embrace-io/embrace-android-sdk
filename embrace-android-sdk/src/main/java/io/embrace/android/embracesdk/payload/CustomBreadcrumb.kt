@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 
 /**
@@ -8,13 +9,14 @@ import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
  * The max number of characters for this breadcrumb message is
  * [CustomBreadcrumb.BREADCRUMB_MESSAGE_MAX_LENGTH]
  */
+@JsonClass(generateAdapter = true)
 internal class CustomBreadcrumb(
     message: String?,
 
     /**
      * The timestamp at which the event occurred.
      */
-    @SerializedName("ts") private val timestamp: Long
+    @Json(name = "ts") internal val timestamp: Long
 ) : Breadcrumb {
 
     /**
@@ -22,7 +24,7 @@ internal class CustomBreadcrumb(
      * If the message exceeds the [CustomBreadcrumb.BREADCRUMB_MESSAGE_MAX_LENGTH] characters
      * it will be ellipsized.
      */
-    @SerializedName("m")
+    @Json(name = "m")
     val message: String?
 
     init {

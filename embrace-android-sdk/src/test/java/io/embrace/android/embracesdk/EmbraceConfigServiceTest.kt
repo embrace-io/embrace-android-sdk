@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -42,9 +42,9 @@ internal class EmbraceConfigServiceTest {
 
     companion object {
         private lateinit var localConfig: LocalConfig
-        private lateinit var mockConfig: RemoteConfig
+        private lateinit var remoteConfig: RemoteConfig
         private lateinit var mockApiService: ApiService
-        private lateinit var activityService: ActivityService
+        private lateinit var processStateService: ProcessStateService
         private lateinit var mockCacheService: CacheService
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var fakeClock: FakeClock
@@ -59,9 +59,9 @@ internal class EmbraceConfigServiceTest {
         fun setupBeforeAll() {
             mockkStatic(RemoteConfig::class)
             localConfig = createLocalConfig()
-            mockConfig = RemoteConfig()
+            remoteConfig = RemoteConfig()
             mockApiService = mockk()
-            activityService = FakeActivityService()
+            processStateService = FakeProcessStateService()
             mockCacheService = mockk(relaxed = true)
             fakeClock = FakeClock()
             logger = InternalEmbraceLogger()
@@ -91,7 +91,7 @@ internal class EmbraceConfigServiceTest {
     @Before
     fun setup() {
         fakeClock.setCurrentTime(1000000000000)
-        every { mockApiService.getConfig() } returns mockConfig
+        every { mockApiService.getConfig() } returns remoteConfig
         fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         every {
             mockCacheService.loadObject("config.json", RemoteConfig::class.java)
@@ -305,7 +305,7 @@ internal class EmbraceConfigServiceTest {
     private fun createService(executorService: ExecutorService): EmbraceConfigService =
         EmbraceConfigService(
             localConfig,
-            { mockApiService },
+            mockApiService,
             fakePreferenceService,
             fakeClock,
             logger,

@@ -2,14 +2,9 @@ package io.embrace.android.embracesdk.network.logging
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.security.KeyFactory
@@ -20,28 +15,6 @@ internal class NetworkCaptureEncryptionManagerTest {
 
     private lateinit var networkCaptureEncryptionManager: NetworkCaptureEncryptionManager
 
-    companion object {
-        private lateinit var mockLocalConfig: LocalConfig
-
-        /**
-         * Setup before all tests get executed. Create mocks here.
-         */
-        @BeforeClass
-        @JvmStatic
-        fun setupBeforeAll() {
-            mockLocalConfig = mockk()
-        }
-
-        /**
-         * Setup after all tests get executed. Un-mock all here.
-         */
-        @AfterClass
-        @JvmStatic
-        fun tearDownAfterAll() {
-            unmockkAll()
-        }
-    }
-
     @Before
     fun setup() {
         networkCaptureEncryptionManager =
@@ -51,9 +24,9 @@ internal class NetworkCaptureEncryptionManagerTest {
     @Test
     fun `test encrypt and decrypt correctly`() {
         val textToEncrypt = "text to encrypt"
-        val encryptedText = networkCaptureEncryptionManager.encrypt(textToEncrypt, sPublicKey)
+        val encryptedText = checkNotNull(networkCaptureEncryptionManager.encrypt(textToEncrypt, sPublicKey))
 
-        assertEquals(textToEncrypt, decrypt(encryptedText!!))
+        assertEquals(textToEncrypt, decrypt(encryptedText))
     }
 
     @Test
@@ -66,9 +39,9 @@ internal class NetworkCaptureEncryptionManagerTest {
 
     @Test
     fun `test encrypt and decrypt long payload correctly`() {
-        val encryptedText = networkCaptureEncryptionManager.encrypt(encryptedPayload, sPublicKey)
+        val encryptedText = checkNotNull(networkCaptureEncryptionManager.encrypt(encryptedPayload, sPublicKey))
 
-        assertNotNull(decrypt(encryptedText!!))
+        assertNotNull(decrypt(encryptedText))
     }
 
     private fun decrypt(data: String): String? {

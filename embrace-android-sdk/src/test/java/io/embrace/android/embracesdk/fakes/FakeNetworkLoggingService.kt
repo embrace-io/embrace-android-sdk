@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 
@@ -8,7 +8,7 @@ internal class FakeNetworkLoggingService : NetworkLoggingService {
 
     var data: NetworkSessionV2 = NetworkSessionV2(emptyList(), emptyMap())
 
-    override fun getNetworkCallsForSession(): NetworkSessionV2 =
+    override fun getNetworkCallsSnapshot(): NetworkSessionV2 =
         data
 
     override fun logNetworkCall(

@@ -1,131 +1,129 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.InternalApi
-import io.embrace.android.embracesdk.session.EmbraceSessionService
-import io.embrace.android.embracesdk.session.MESSAGE_TYPE_START
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents a particular user's session within the app.
  */
-@InternalApi
+@JsonClass(generateAdapter = true)
 internal data class Session @JvmOverloads internal constructor(
 
     /**
      * A unique ID which identifies the session.
      */
-    @SerializedName("id")
+    @Json(name = "id")
     val sessionId: String,
 
     /**
      * The time that the session started.
      */
-    @SerializedName("st")
+    @Json(name = "st")
     val startTime: Long,
 
     /**
      * The ordinal of the session, starting from 1.
      */
-    @SerializedName("sn")
+    @Json(name = "sn")
     val number: Int,
 
     /**
      * Type of the session message (start or end)
      */
-    @SerializedName("ty")
+    @Json(name = "ty")
     val messageType: String,
 
     /**
      * Application state for this session (foreground or background)
      */
-    @SerializedName("as")
+    @Json(name = "as")
     val appState: String,
 
-    @SerializedName("cs")
+    @Json(name = "cs")
     val isColdStart: Boolean,
 
     /**
      * The time that the session ended.
      */
-    @SerializedName("et")
+    @Json(name = "et")
     val endTime: Long? = null,
 
-    @SerializedName("ht")
+    @Json(name = "ht")
     val lastHeartbeatTime: Long? = null,
 
-    @SerializedName("tt")
+    @Json(name = "tt")
     val terminationTime: Long? = null,
 
-    @SerializedName("ce")
+    @Json(name = "ce")
     val isEndedCleanly: Boolean? = null,
 
-    @SerializedName("tr")
+    @Json(name = "tr")
     val isReceivedTermination: Boolean? = null,
 
-    @SerializedName("ss")
+    @Json(name = "ss")
     val eventIds: List<String>? = null,
 
-    @SerializedName("il")
+    @Json(name = "il")
     val infoLogIds: List<String>? = null,
 
-    @SerializedName("wl")
+    @Json(name = "wl")
     val warningLogIds: List<String>? = null,
 
-    @SerializedName("el")
+    @Json(name = "el")
     val errorLogIds: List<String>? = null,
 
-    @SerializedName("nc")
+    @Json(name = "nc")
     val networkLogIds: List<String>? = null,
 
-    @SerializedName("lic")
+    @Json(name = "lic")
     val infoLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("lwc")
+    @Json(name = "lwc")
     val warnLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("lec")
+    @Json(name = "lec")
     val errorLogsAttemptedToSend: Int? = null,
 
-    @SerializedName("e")
+    @Json(name = "e")
     val exceptionError: ExceptionError? = null,
 
-    @SerializedName("ri")
+    @Json(name = "ri")
     val crashReportId: String? = null,
 
-    @SerializedName("em")
+    @Json(name = "em")
     val endType: SessionLifeEventType? = null,
 
-    @SerializedName("sm")
+    @Json(name = "sm")
     val startType: SessionLifeEventType? = null,
 
-    @SerializedName("oc")
+    @Json(name = "oc")
     val orientations: List<Orientation>? = null,
 
-    @SerializedName("sp")
+    @Json(name = "sp")
     val properties: Map<String, String>? = null,
 
-    @SerializedName("sd")
+    @Json(name = "sd")
     val startupDuration: Long? = null,
 
-    @SerializedName("sdt")
+    @Json(name = "sdt")
     val startupThreshold: Long? = null,
 
-    @SerializedName("si")
+    @Json(name = "si")
     val sdkStartupDuration: Long? = null,
 
-    @SerializedName("ue")
+    @Json(name = "ue")
     val unhandledExceptions: Int? = null,
 
     /**
      * Beta feature data that was captured during this session
      */
-    @SerializedName("bf")
+    @Json(name = "bf")
     val betaFeatures: BetaFeatures? = null,
 
-    @SerializedName("sb")
+    @Json(name = "sb")
     val symbols: Map<String, String>? = null,
 
-    @SerializedName("wvi_beta")
+    @Json(name = "wvi_beta")
     val webViewInfo: List<WebViewInfo>? = null,
 
     @Transient
@@ -136,33 +134,21 @@ internal data class Session @JvmOverloads internal constructor(
      * Enum to discriminate the different ways a session can start / end
      */
     enum class SessionLifeEventType {
-        @SerializedName("s")
-        STATE, @SerializedName("m")
-        MANUAL, @SerializedName("t")
+        @Json(name = "s")
+        STATE,
+
+        @Json(name = "m")
+        MANUAL,
+
+        @Json(name = "t")
         TIMED
     }
 
     companion object {
 
-        @JvmStatic
-        fun buildStartSession(
-            id: String,
-            coldStart: Boolean,
-            startType: SessionLifeEventType,
-            startTime: Long,
-            sessionNumber: Int,
-            userInfo: UserInfo?,
-            sessionProperties: Map<String, String>
-        ): Session = Session(
-            sessionId = id,
-            startTime = startTime,
-            number = sessionNumber,
-            appState = EmbraceSessionService.APPLICATION_STATE_FOREGROUND,
-            isColdStart = coldStart,
-            startType = startType,
-            properties = sessionProperties,
-            messageType = MESSAGE_TYPE_START,
-            user = userInfo
-        )
+        /**
+         * Signals to the API that the application was in the foreground.
+         */
+        internal const val APPLICATION_STATE_FOREGROUND = "foreground"
     }
 }

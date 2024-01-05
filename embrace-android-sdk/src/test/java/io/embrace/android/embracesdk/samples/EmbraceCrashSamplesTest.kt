@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.Embrace
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Assert.assertThrows
-import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -30,11 +28,6 @@ internal class EmbraceCrashSamplesTest {
         }
     }
 
-    @Before
-    fun setup() {
-        every { Embrace.getInstance().configService } returns mockk(relaxed = true)
-    }
-
     @Test
     fun `test isSdkStarted with isStarted false throws EmbraceNotInitializedException`() {
         every { Embrace.getInstance().isStarted } returns false
@@ -43,7 +36,7 @@ internal class EmbraceCrashSamplesTest {
 
     @Test
     fun `test checkAnrDetectionEnabled throws EmbraceAnrDisabledException if isAnrCaptureEnabled is false`() {
-        every { Embrace.getInstance().configService?.anrBehavior?.isAnrCaptureEnabled() } returns false
+        every { Embrace.getInstance().internalInterface.isAnrCaptureEnabled() } returns false
         assertThrows(EmbraceSampleCodeException::class.java) { crashSampleTest.checkAnrDetectionEnabled() }
     }
 
@@ -56,6 +49,7 @@ internal class EmbraceCrashSamplesTest {
     @Test
     fun `test checkNdkDetectionEnabled with isNdkEnabled false throws EmbraceNdkDisabledException`() {
         every { Embrace.getInstance().isStarted } returns true
+        every { Embrace.getInstance().internalInterface.isNdkEnabled() } returns false
         assertThrows(EmbraceSampleCodeException::class.java) { crashSampleTest.checkNdkDetectionEnabled() }
     }
 

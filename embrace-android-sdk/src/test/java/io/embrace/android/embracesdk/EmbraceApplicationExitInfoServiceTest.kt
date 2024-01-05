@@ -6,8 +6,10 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.aei.EmbraceApplicationExitInfoService
 import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.mockk.every
 import io.mockk.mockk
@@ -46,6 +48,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
     private val deliveryService = FakeDeliveryService()
     private val preferenceService = FakePreferenceService()
+    private val metadataService = FakeAndroidMetadataService()
+    private val userService = FakeUserService()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
@@ -78,7 +82,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
             configService,
             mockActivityManager,
             preferenceService,
-            deliveryService
+            deliveryService,
+            metadataService,
+            userService
         )
     }
 
@@ -278,7 +284,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then no null traces should be sent
-        assertTrue(deliveryService.appExitInfoRequests.isEmpty())
+        assertTrue(deliveryService.blobMessages.isEmpty())
     }
 
     @Test
@@ -382,7 +388,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then a null trace should be sent
-        assertTrue(deliveryService.appExitInfoRequests.isEmpty())
+        assertTrue(deliveryService.blobMessages.isEmpty())
     }
 
     @Test
@@ -399,9 +405,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        val payloads = checkNotNull(deliveryService.appExitInfoRequests)
+        val payloads = checkNotNull(deliveryService.blobMessages)
         assertEquals(32, payloads.size)
     }
 
-    private fun getLastAeiRequest() = deliveryService.appExitInfoRequests.single().single()
+    private fun getLastAeiRequest() = deliveryService.blobMessages.single().applicationExits.single()
 }

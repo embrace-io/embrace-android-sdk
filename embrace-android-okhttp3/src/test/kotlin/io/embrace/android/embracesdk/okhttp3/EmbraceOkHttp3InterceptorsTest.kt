@@ -2,15 +2,18 @@ package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.UNKNOWN_EXCEPTION
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.UNKNOWN_MESSAGE
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.CONTENT_ENCODING_HEADER_NAME
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.CONTENT_LENGTH_HEADER_NAME
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.CONTENT_TYPE_EVENT_STREAM
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.CONTENT_TYPE_HEADER_NAME
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.ENCODING_GZIP
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.UNKNOWN_EXCEPTION
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.UNKNOWN_MESSAGE
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.causeMessage
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor.Companion.causeName
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_ENCODING_HEADER_NAME
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_LENGTH_HEADER_NAME
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_TYPE_EVENT_STREAM
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.CONTENT_TYPE_HEADER_NAME
+import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor.Companion.ENCODING_GZIP
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
@@ -28,7 +31,6 @@ import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -36,6 +38,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
 internal class EmbraceOkHttp3InterceptorsTest {
@@ -56,6 +59,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
         private const val TRACEPARENT_HEADER = "traceparent"
         private const val CUSTOM_TRACEPARENT = "00-b583a45b2c7c813e0ebc6aa0835b9d98-b5475c618bb98e67-01"
         private const val GENERATED_TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
+        private const val FAKE_SDK_TIME = 1692201601000L
+        private const val CLOCK_DRIFT = 5000L
+        private const val FAKE_SYSTEM_TIME = FAKE_SDK_TIME + CLOCK_DRIFT
     }
 
     private lateinit var server: MockWebServer
@@ -69,11 +75,13 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
+    private lateinit var mockSystemClock: Clock
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request = { request -> request }
     private var preNetworkInterceptorAfterResponseSupplier: (Response) -> Response = { response -> response }
     private var postNetworkInterceptorBeforeRequestSupplier: (Request) -> Request = { request -> request }
     private var postNetworkInterceptorAfterResponseSupplier: (Response) -> Response = { response -> response }
     private var isSDKStarted = true
+    private var isNetworkCaptureDisabled = false
     private var isNetworkSpanForwardingEnabled = false
 
     @Before
@@ -84,12 +92,16 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        every { mockInternalInterface.isInternalNetworkCaptureDisabled() } answers { isNetworkCaptureDisabled }
+        every { mockInternalInterface.getSdkCurrentTime() } answers { FAKE_SDK_TIME }
         applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> preNetworkInterceptorAfterResponseSupplier.invoke(response) }
         )
-        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace)
+        mockSystemClock = mockk(relaxed = true)
+        every { mockSystemClock.now() } answers { FAKE_SYSTEM_TIME }
+        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockSystemClock)
         postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> postNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> postNetworkInterceptorAfterResponseSupplier.invoke(response) }
@@ -113,6 +125,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
+        isSDKStarted = true
+        isNetworkCaptureDisabled = false
+        isNetworkSpanForwardingEnabled = false
     }
 
     @After
@@ -171,6 +186,16 @@ internal class EmbraceOkHttp3InterceptorsTest {
     }
 
     @Test
+    fun `completed requests are not recorded if network capture has been disabled internally`() {
+        isNetworkCaptureDisabled = true
+        server.enqueue(createBaseMockResponse())
+        runGetRequest()
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        verify(exactly = 0) { mockEmbrace.recordNetworkRequest(any()) }
+    }
+
+    @Test
     fun `incomplete requests are not recorded if the SDK has not started`() {
         isSDKStarted = false
         preNetworkInterceptorBeforeRequestSupplier = { throw SocketException() }
@@ -187,7 +212,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         server.enqueue(createBaseMockResponse())
         runGetRequest()
         verify(exactly = 0) { mockInternalInterface.isNetworkSpanForwardingEnabled() }
-        verify(exactly = 0) { mockEmbrace.internalInterface.shouldCaptureNetworkBody(any(), any()) }
+        verify(exactly = 0) { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) }
     }
 
     @Test
@@ -399,6 +424,88 @@ internal class EmbraceOkHttp3InterceptorsTest {
         assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
     }
 
+    @Test
+    fun `test throwableName`() {
+        assertEquals("name should be empty string if the Throwable is null", causeName(null), "")
+        assertEquals(
+            "name should be empty string if the Throwable's cause is null",
+            causeName(RuntimeException("message", null)),
+            ""
+        )
+        assertEquals(
+            "name is unexpected",
+            causeName(
+                RuntimeException("message", IllegalArgumentException())
+            ),
+            IllegalArgumentException::class.qualifiedName
+        )
+    }
+
+    @Test
+    fun `test throwableMessage`() {
+        assertEquals(
+            "message should be empty string if Throwable is null",
+            causeMessage(null),
+            ""
+        )
+        assertEquals(
+            "message should be empty string if the Throwable's cause is null",
+            causeMessage(RuntimeException("message", null)),
+            ""
+        )
+        assertEquals(
+            "message should be empty string if the Throwable's cause's message is null",
+            causeMessage(RuntimeException("message", IllegalArgumentException())),
+            ""
+        )
+        val message = "this is a message"
+        assertEquals(
+            "message is unexpected",
+            causeMessage(RuntimeException("message", IllegalArgumentException(message))),
+            message
+        )
+    }
+
+    @Test
+    fun `check consistent offsets produce expected start and end times`() {
+        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
+        clockDrifts.forEach { clockDrift ->
+            runAndValidateTimestamps(
+                clockDrift = clockDrift,
+                extraDrift = 0L
+            )
+        }
+    }
+
+    @Test
+    fun `check tick overs round to the lowest absolute value for the offset`() {
+        val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
+        val extraDrifts = listOf(-1L, 1L)
+        clockDrifts.forEach { clockDrift ->
+            extraDrifts.forEach { extraDrift ->
+                runAndValidateTimestamps(
+                    clockDrift = clockDrift,
+                    extraDrift = extraDrift,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `check big differences in offset samples will result in no offset being used`() {
+        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
+        val extraDrifts = listOf(-200L, -2L, 2L, 200L)
+        clockDrifts.forEach { clockDrift ->
+            extraDrifts.forEach { extraDrift ->
+                runAndValidateTimestamps(
+                    clockDrift = clockDrift,
+                    extraDrift = extraDrift,
+                    expectedOffset = 0L
+                )
+            }
+        }
+    }
+
     private fun createBaseMockResponse(httpStatus: Int = 200) =
         MockResponse()
             .setResponseCode(httpStatus)
@@ -422,35 +529,75 @@ internal class EmbraceOkHttp3InterceptorsTest {
         expectedPath: String = defaultPath,
         expectedHttpStatus: Int = 200
     ) {
+        val realSystemClockStartTime = System.currentTimeMillis()
         runPostRequest()
+        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = expectedPath,
             httpStatus = expectedHttpStatus,
             responseBodySize = expectedResponseBodySize,
             httpMethod = "POST",
             requestSize = requestBodySize,
-            responseBody = responseBody
+            responseBody = responseBody,
+            realSystemClockStartTime = realSystemClockStartTime,
+            realSystemClockEndTime = realSystemClockEndTime
         )
     }
 
     private fun runAndValidateGetRequest(
         expectedResponseBodySize: Int
     ) {
+        val realSystemClockStartTime = System.currentTimeMillis()
         runGetRequest()
+        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = defaultPath,
             httpStatus = 200,
             httpMethod = "GET",
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
-            responseBody = null
+            responseBody = null,
+            realSystemClockStartTime = realSystemClockStartTime,
+            realSystemClockEndTime = realSystemClockEndTime
         )
     }
 
-    private fun runPostRequest() = assertNotNull(okHttpClient.newCall(postRequestBuilder.build()).execute())
+    private fun runAndValidateTimestamps(
+        clockDrift: Long,
+        extraDrift: Long = 0L,
+        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L
+    ) {
+        val realDrift = AtomicLong(clockDrift)
+        every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+        server.enqueue(createBaseMockResponse().setBody(responseBody))
+        val response = runGetRequest()
+        val realSystemClockStartTime = response.sentRequestAtMillis
+        val realSystemClockEndTime = response.receivedResponseAtMillis
+        with(capturedEmbraceNetworkRequest) {
+            assertEquals(
+                "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}:\n" +
+                    "Unadjusted time: $realSystemClockStartTime with expected offset $expectedOffset\n" +
+                    "Expected time: ${realSystemClockStartTime - expectedOffset}\n" +
+                    "Captured time: ${captured.startTime}",
+                realSystemClockStartTime - expectedOffset,
+                captured.startTime
+            )
+            assertEquals(
+                "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}\n" +
+                    "Unadjusted time: $realSystemClockEndTime with expected offset $expectedOffset\n" +
+                    "Expected time: ${realSystemClockEndTime - expectedOffset}\n" +
+                    "Captured time: ${captured.endTime}",
+                realSystemClockEndTime - expectedOffset,
+                captured.endTime
+            )
+        }
+    }
 
-    private fun runGetRequest() = assertNotNull(okHttpClient.newCall(getRequestBuilder.build()).execute())
+    private fun runPostRequest(): Response = checkNotNull(okHttpClient.newCall(postRequestBuilder.build()).execute())
 
+    private fun runGetRequest(): Response = checkNotNull(okHttpClient.newCall(getRequestBuilder.build()).execute())
+
+    @Suppress("LongParameterList")
     private fun validateWholeRequest(
         path: String,
         httpMethod: String,
@@ -461,16 +608,17 @@ internal class EmbraceOkHttp3InterceptorsTest {
         errorMessage: String? = null,
         traceId: String? = null,
         w3cTraceparent: String? = null,
-        responseBody: String?
+        responseBody: String?,
+        realSystemClockStartTime: Long,
+        realSystemClockEndTime: Long
     ) {
         with(capturedEmbraceNetworkRequest) {
             assertTrue(captured.url.endsWith("$path?$defaultQueryString"))
             assertEquals(httpMethod, captured.httpMethod)
-
-            // assert expected start/end times when we fix the issue of not using a custom clock instance.
-            assertTrue(captured.startTime > 0)
-            assertTrue(captured.endTime > 0)
-
+            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= captured.startTime)
+            assertTrue(realSystemClockStartTime > captured.startTime)
+            assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= captured.endTime)
+            assertTrue(realSystemClockEndTime > captured.endTime)
             assertEquals(httpStatus, captured.responseCode)
             assertEquals(requestSize.toLong(), captured.bytesOut)
             assertEquals(responseBodySize.toLong(), captured.bytesIn)

@@ -4,20 +4,18 @@ import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.view.WindowManager
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
-import io.embrace.android.embracesdk.clock.Clock
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
@@ -26,8 +24,8 @@ import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.ActivityListener
-import io.embrace.android.embracesdk.session.ActivityService
+import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.utils.eagerLazyLoad
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
@@ -52,8 +50,8 @@ internal class EmbraceMetadataService private constructor(
     private val applicationInfo: ApplicationInfo,
     private val deviceId: Lazy<String>,
     private val packageName: String,
-    private val appVersionName: String,
-    private val appVersionCode: String,
+    private val lazyAppVersionName: Lazy<String>,
+    private val lazyAppVersionCode: Lazy<String>,
     private val appFramework: AppFramework,
     /**
      * This field is defined during instantiation as by the end of the startup
@@ -61,7 +59,7 @@ internal class EmbraceMetadataService private constructor(
     private val appUpdated: Lazy<Boolean>,
     private val osUpdated: Lazy<Boolean>,
     private val preferencesService: PreferencesService,
-    private val activityService: ActivityService,
+    private val processStateService: ProcessStateService,
     reactNativeBundleId: Lazy<String?>,
     javaScriptPatchNumber: String?,
     reactNativeVersion: String?,
@@ -73,7 +71,7 @@ internal class EmbraceMetadataService private constructor(
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture
-) : MetadataService, ActivityListener {
+) : MetadataService, ActivityLifecycleListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
     private val javaScriptPatchNumber: String?
@@ -228,7 +226,6 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataRetrieveExecutorService.submit(
             Callable<Any?> {
@@ -236,7 +233,9 @@ internal class EmbraceMetadataService private constructor(
                 val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
                 if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                     val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
-                        storageStatsManager, packageManager, packageName
+                        storageStatsManager,
+                        packageManager,
+                        packageName
                     )
                     if (deviceDiskAppUsage != null) {
                         logDeveloper("EmbraceMetadataService", "Disk usage is present")
@@ -252,14 +251,13 @@ internal class EmbraceMetadataService private constructor(
         )
     }
 
-    @VisibleForTesting
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value
 
     override fun getDeviceId(): String = deviceId.value
 
-    override fun getAppVersionCode(): String = appVersionCode
+    override fun getAppVersionCode(): String = lazyAppVersionCode.value
 
-    override fun getAppVersionName(): String = appVersionName
+    override fun getAppVersionName(): String = lazyAppVersionName.value
 
     override fun getDeviceInfo(): DeviceInfo = getDeviceInfo(true)
 
@@ -280,7 +278,6 @@ internal class EmbraceMetadataService private constructor(
             MetadataUtils.getOperatingSystemVersionCode(),
             getScreenResolution(),
             MetadataUtils.getTimezoneId(),
-            MetadataUtils.getSystemUptime(),
             MetadataUtils.getNumberOfCores(),
             if (populateAllFields) getCpuName() else null,
             if (populateAllFields) getEgl() else null
@@ -320,7 +317,7 @@ internal class EmbraceMetadataService private constructor(
             hostedSdkVersion = getEmbraceFlutterSdkVersion()
         }
         return AppInfo(
-            appVersionName,
+            lazyAppVersionName.value,
             appFramework.value,
             buildInfo.buildId,
             buildInfo.buildType,
@@ -334,7 +331,7 @@ internal class EmbraceMetadataService private constructor(
                 populateAllFields -> appUpdated.value
                 else -> false
             },
-            appVersionCode,
+            lazyAppVersionCode.value,
             when {
                 populateAllFields -> osUpdated.value
                 else -> false
@@ -375,16 +372,19 @@ internal class EmbraceMetadataService private constructor(
     override val activeSessionId: String?
         get() = sessionId
 
-    override fun setActiveSessionId(sessionId: String?) {
+    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
         logDeveloper("EmbraceMetadataService", "Active session Id: $sessionId")
         this.sessionId = sessionId
-        setSessionIdToProcessStateSummary(this.sessionId)
+
+        if (isSession) {
+            setSessionIdToProcessStateSummary(this.sessionId)
+        }
     }
 
     override fun removeActiveSessionId(sessionId: String?) {
         if (this.sessionId != null && this.sessionId == sessionId) {
             logDeveloper("EmbraceMetadataService", "Nulling active session Id")
-            setActiveSessionId(null)
+            setActiveSessionId(null, false)
         }
     }
 
@@ -407,7 +407,7 @@ internal class EmbraceMetadataService private constructor(
     }
 
     override fun getAppState(): String {
-        return if (activityService.isInBackground) {
+        return if (processStateService.isInBackground) {
             logDeveloper("EmbraceMetadataService", "App state: BACKGROUND")
             "background"
         } else {
@@ -501,11 +501,6 @@ internal class EmbraceMetadataService private constructor(
     companion object {
 
         /**
-         * Default string value for app info missing strings
-         */
-        private const val UNKNOWN_VALUE = "UNKNOWN"
-
-        /**
          * Creates an instance of the [EmbraceMetadataService] from the device's [Context]
          * for creating Android system services.
          *
@@ -523,42 +518,22 @@ internal class EmbraceMetadataService private constructor(
             configService: ConfigService,
             appFramework: AppFramework,
             preferencesService: PreferencesService,
-            activityService: ActivityService,
+            processStateService: ProcessStateService,
             metadataRetrieveExecutorService: ExecutorService,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
             activityManager: ActivityManager?,
             clock: Clock,
             embraceCpuInfoDelegate: CpuInfoDelegate,
-            deviceArchitecture: DeviceArchitecture
+            deviceArchitecture: DeviceArchitecture,
+            lazyAppVersionName: Lazy<String>,
+            lazyAppVersionCode: Lazy<String>
         ): EmbraceMetadataService {
-            val packageInfo: PackageInfo
-            var appVersionName: String
-            var appVersionCode: String
-            val packageManager = context.packageManager
-            try {
-                packageInfo = packageManager.getPackageInfo(context.packageName, 0)
-                // some customers have trailing white-space for the app version. remove this.
-                appVersionName = packageInfo.versionName.toString().trim { it <= ' ' }
-                appVersionCode = packageInfo.versionCode.toString()
-                logDeveloper(
-                    "EmbraceMetadataService",
-                    "App version name: $appVersionName - App version code: $appVersionCode"
-                )
-            } catch (e: Exception) {
-                logDeveloper(
-                    "EmbraceMetadataService",
-                    "Cannot set appVersionName and appVersionCode, setting UNKNOWN_VALUE", e
-                )
-                appVersionName = UNKNOWN_VALUE
-                appVersionCode = UNKNOWN_VALUE
-            }
-            val finalAppVersionName = appVersionName
             val isAppUpdated = lazy {
                 val lastKnownAppVersion = preferencesService.appVersion
                 val appUpdated = (
                     lastKnownAppVersion != null &&
-                        !lastKnownAppVersion.equals(finalAppVersionName, ignoreCase = true)
+                        !lastKnownAppVersion.equals(lazyAppVersionName.value, ignoreCase = true)
                     )
                 logDeveloper("EmbraceMetadataService", "App updated: $appUpdated")
                 appUpdated
@@ -642,7 +617,7 @@ internal class EmbraceMetadataService private constructor(
             }
             return EmbraceMetadataService(
                 windowManager,
-                packageManager,
+                context.packageManager,
                 storageStatsManager,
                 activityManager,
                 buildInfo,
@@ -650,13 +625,13 @@ internal class EmbraceMetadataService private constructor(
                 context.applicationInfo,
                 deviceIdentifier,
                 context.packageName,
-                appVersionName,
-                appVersionCode,
+                lazyAppVersionName,
+                lazyAppVersionCode,
                 appFramework,
                 isAppUpdated,
                 isOsUpdated,
                 preferencesService,
-                activityService,
+                processStateService,
                 reactNativeBundleId,
                 javaScriptPatchNumber,
                 reactNativeVersion,
@@ -715,7 +690,6 @@ internal class EmbraceMetadataService private constructor(
             if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
                 bundleStream = getBundleAsset(context, bundleUrl)
-                logDeveloper("EmbraceMetadataService", "Loaded bundle file asset: $bundleStream")
             } else {
                 // looks for the bundle file from the custom path
                 bundleStream = getCustomBundleStream(bundleUrl)
@@ -750,6 +724,8 @@ internal class EmbraceMetadataService private constructor(
             // if the hashing of the JS bundle URL fails, returns the default bundle ID
             return defaultBundleId
         }
+
+        fun isEmulator(): Boolean = MetadataUtils.isEmulator()
 
         private fun hashBundleToMd5(bundle: ByteArray): String {
             val hashBundle: String

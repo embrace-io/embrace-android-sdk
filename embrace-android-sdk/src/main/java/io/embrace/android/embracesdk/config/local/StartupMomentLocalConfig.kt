@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Represents the startup moment configuration element specified in the Embrace config file.
  */
+@JsonClass(generateAdapter = true)
 internal class StartupMomentLocalConfig(
 
-    @SerializedName("automatically_end")
+    @Json(name = "automatically_end")
     val automaticallyEnd: Boolean? = null
 )

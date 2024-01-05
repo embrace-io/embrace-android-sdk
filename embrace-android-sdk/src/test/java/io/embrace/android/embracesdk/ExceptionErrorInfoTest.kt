@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.payload.ExceptionErrorInfo
 import io.embrace.android.embracesdk.payload.ExceptionInfo
 import org.junit.Assert.assertEquals
@@ -20,23 +19,18 @@ internal class ExceptionErrorInfoTest {
     @Test
     fun testExceptionErrorInfoSerialization() {
         val exceptionErrorInfo = ExceptionErrorInfo(
-            0, "STATE",
+            0,
+            "STATE",
             listOf(
                 info,
             )
         )
-
-        val expectedInfo = ResourceReader.readResourceAsText("exception_error_info_expected.json")
-            .filter { !it.isWhitespace() }
-
-        val observed = Gson().toJson(exceptionErrorInfo)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("exception_error_info_expected.json", exceptionErrorInfo)
     }
 
     @Test
     fun testExceptionErrorInfoDeserialization() {
-        val json = ResourceReader.readResourceAsText("exception_error_info_expected.json")
-        val obj = Gson().fromJson(json, ExceptionErrorInfo::class.java)
+        val obj = deserializeJsonFromResource<ExceptionErrorInfo>("exception_error_info_expected.json")
         assertEquals(0L, obj.timestamp)
         assertEquals("STATE", obj.state)
         val exceptionInfo = obj.exceptions?.get(0)

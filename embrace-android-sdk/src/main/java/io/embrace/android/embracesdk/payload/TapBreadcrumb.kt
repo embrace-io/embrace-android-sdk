@@ -1,40 +1,42 @@
 package io.embrace.android.embracesdk.payload
 
 import android.util.Pair
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 
 /**
  * Breadcrumbs that represent tap events.
  */
+@JsonClass(generateAdapter = true)
 internal class TapBreadcrumb(
-    point: Pair<Float?, Float?>?,
+    point: Pair<Float?, Float?>? = null,
 
     /**
      * Name of the tapped element.
      */
-    @SerializedName("tt")
+    @Json(name = "tt")
     val tappedElementName: String?,
 
     /**
      * The timestamp at which the event occurred.
      */
-    @SerializedName("ts")
-    private val timestamp: Long,
+    @Json(name = "ts")
+    internal val timestamp: Long,
 
     /**
      * Type of TapBreadcrumb that categorizes the kind interaction, based on
      * [TapBreadcrumbType] types.
      */
-    @SerializedName("t")
+    @Json(name = "t")
     val type: TapBreadcrumbType?
 ) : Breadcrumb {
 
     /**
      * Screen position (coordinates) of the tapped element.
      */
-    @SerializedName("tl")
+    @Json(name = "tl")
     var location: String? = null
 
     init {
@@ -50,8 +52,10 @@ internal class TapBreadcrumb(
     override fun getStartTime(): Long = timestamp
 
     internal enum class TapBreadcrumbType {
-        @SerializedName("s")
-        TAP, @SerializedName("l")
+        @Json(name = "s")
+        TAP,
+
+        @Json(name = "l")
         LONG_PRESS
     }
 }

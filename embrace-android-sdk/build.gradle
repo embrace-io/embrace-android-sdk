@@ -3,6 +3,7 @@ import io.embrace.gradle.Versions
 plugins {
     id "internal-embrace-plugin"
     id("org.jetbrains.kotlinx.kover") version "0.7.1"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 description = "Embrace Android SDK: Core"
@@ -79,14 +80,12 @@ koverReport {
 }
 
 dependencies {
-    androidTestImplementation project(":test-server")
-    androidTestImplementation "androidx.test.ext:junit:1.1.3"
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
-    androidTestImplementation project(path: ":embrace-android-sdk")
-
     implementation "androidx.lifecycle:lifecycle-common-java8:2.5.0"
     implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
-    implementation "com.google.code.gson:gson:2.9.0"
+
+    // json
+    implementation("com.squareup.moshi:moshi:${Versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}")
 
     implementation "io.opentelemetry:opentelemetry-api:${Versions.openTelemetry}"
     implementation "io.opentelemetry:opentelemetry-sdk:${Versions.openTelemetry}"
@@ -101,9 +100,24 @@ dependencies {
     testImplementation "androidx.test.ext:junit:1.1.3"
     testImplementation "org.robolectric:robolectric:4.10.3"
     testImplementation project(path: ":embrace-android-sdk")
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.3"
+    testImplementation("com.google.protobuf:protobuf-java:3.24.0")
+    testImplementation("com.google.protobuf:protobuf-java-util:3.24.0")
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.7.10")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:${Versions.dokka}")
+    dokkaHtmlPlugin("org.jetbrains.dokka:android-documentation-plugin:${Versions.dokka}")
+
+    // For the functional tests
+    androidTestImplementation "androidx.test:core:1.4.0"
+    androidTestImplementation "androidx.test:runner:1.4.0"
+    androidTestImplementation "androidx.test:rules:1.4.0"
+    androidTestImplementation "androidx.test.ext:junit:1.1.3"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.4.0"
+    androidTestImplementation "androidx.appcompat:appcompat:1.1.0"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.3"
+    androidTestImplementation "androidx.test.ext:junit:1.1.3"
+    androidTestImplementation "com.google.code.gson:gson:2.9.0"
+    androidTestImplementation project(path: ":embrace-android-sdk")
 }
 
 dokkaHtml {
@@ -115,31 +129,10 @@ dokkaHtml {
                 reportUndocumented.set(true) // Emit warnings about not documented members
                 includeNonPublic.set(false)
 
-                // Match all packages and suppress them
-                perPackageOption {
-                    matchingRegex.set(".*.networking.*?")
-                    suppress.set(true)
-                }
-
-                perPackageOption {
-                    matchingRegex.set(".*.network.*?")
-                    suppress.set(true)
-                }
-
-                perPackageOption {
-                    matchingRegex.set(".*.utils.*?")
-                    suppress.set(true)
-                }
-
+                // Suppress files in the internal package
                 perPackageOption {
                     matchingRegex.set(".*.internal.*?")
                     suppress.set(true)
-                }
-
-                // unsuppress only the ones that we care about
-                perPackageOption {
-                    matchingRegex.set("embrace-android-sdk")
-                    suppress.set(false)
                 }
             }
         }
@@ -147,6 +140,7 @@ dokkaHtml {
             noAndroidSdkLink.set(false)
         }
     }
+    suppressObviousFunctions.set(true)
 }
 
 task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }

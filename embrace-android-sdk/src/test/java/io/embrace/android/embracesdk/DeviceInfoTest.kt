@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -18,22 +17,17 @@ internal class DeviceInfoTest {
         29,
         "1080x720",
         "GMT+1",
-        150923,
         8
     )
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("device_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("device_info_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("device_info_expected.json")
-        val obj = Gson().fromJson(json, DeviceInfo::class.java)
+        val obj = deserializeJsonFromResource<DeviceInfo>("device_info_expected.json")
         assertEquals("samsung", obj.manufacturer)
         assertEquals("S20", obj.model)
         assertEquals("armeabi", obj.architecture)
@@ -50,7 +44,7 @@ internal class DeviceInfoTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", DeviceInfo::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<DeviceInfo>()
+        assertNotNull(obj)
     }
 }

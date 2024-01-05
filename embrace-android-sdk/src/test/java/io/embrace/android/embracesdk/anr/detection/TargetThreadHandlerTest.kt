@@ -8,6 +8,9 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.system.mockLooper
+import io.embrace.android.embracesdk.fakes.system.mockMessage
+import io.embrace.android.embracesdk.fakes.system.mockMessageQueue
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -30,7 +33,7 @@ internal class TargetThreadHandlerTest {
 
     @Before
     fun setUp() {
-        runnable = mockk()
+        runnable = Runnable {}
         configService = FakeConfigService()
         anrMonitorThread = AtomicReference()
         executorService = BlockableExecutorService(blockingMode = true)
@@ -42,7 +45,7 @@ internal class TargetThreadHandlerTest {
 
     private fun createHandler(messageQueue: MessageQueue?): TargetThreadHandler {
         return TargetThreadHandler(
-            mockk(),
+            mockLooper(),
             executorService,
             anrMonitorThread = anrMonitorThread,
             configService,
@@ -58,7 +61,7 @@ internal class TargetThreadHandlerTest {
         state.lastTargetThreadResponseMs = 0L
 
         // process a message
-        handler.handleMessage(mockk())
+        handler.handleMessage(mockMessage())
         verify(exactly = 0) { handler.action.invoke(any()) }
     }
 
@@ -91,7 +94,7 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testCorrectMsgNonNullQueue() {
-        handler = createHandler(mockk())
+        handler = createHandler(mockMessageQueue())
         handler.installed = true
         assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
@@ -110,13 +113,13 @@ internal class TargetThreadHandlerTest {
         state.lastTargetThreadResponseMs = 0L
 
         // RejectedExecutionException ignored as ScheduledExecutorService will be shutting down.
-        handler.handleMessage(mockk())
+        handler.handleMessage(mockMessage())
         assertEquals(0L, state.lastTargetThreadResponseMs)
     }
 
     @Test
     fun testStartIdleHandlerEnabled() {
-        val messageQueue = mockk<MessageQueue>(relaxUnitFun = true)
+        val messageQueue = mockMessageQueue()
         configService = FakeConfigService(
             anrBehavior = fakeAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 100f)
@@ -129,7 +132,7 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testStartIdleHandlerDisabled() {
-        val messageQueue = mockk<MessageQueue>(relaxUnitFun = true)
+        val messageQueue = mockMessageQueue()
         configService = FakeConfigService(
             anrBehavior = fakeAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 0f)

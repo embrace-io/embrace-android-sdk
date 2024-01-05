@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -18,9 +18,7 @@ internal class NetworkLocalConfigTest {
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("local_network_config.json")
-        val obj = Gson().fromJson(json, NetworkLocalConfig::class.java)
-
+        val obj = deserializeJsonFromResource<NetworkLocalConfig>("local_network_config.json")
         assertEquals(200, obj.defaultCaptureLimit)
         assertEquals(DomainLocalConfig("google.com", 80).domain, obj.domains?.single()?.domain)
         assertEquals("x-my-header-id", obj.traceIdHeader)
@@ -31,7 +29,7 @@ internal class NetworkLocalConfigTest {
 
     @Test
     fun testEmptyObject() {
-        val obj = Gson().fromJson("{}", NetworkLocalConfig::class.java)
+        val obj = deserializeEmptyJsonString<NetworkLocalConfig>()
         verifyDefaults(obj)
     }
 

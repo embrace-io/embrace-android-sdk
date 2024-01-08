@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;

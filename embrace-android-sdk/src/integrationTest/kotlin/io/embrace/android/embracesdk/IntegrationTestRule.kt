@@ -24,6 +24,8 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.injection.StorageModule
+import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -99,9 +101,10 @@ internal class IntegrationTestRule(
                 { workerThreadModule },
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
-                { _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                { _, _, _ -> storageModule },
+                { _, _, _, _, _, _, _,_, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
-                { _, _, _ -> fakeDeliveryModule }
+                { _, _, _, _ -> fakeDeliveryModule }
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
@@ -152,6 +155,11 @@ internal class IntegrationTestRule(
             coreModule = fakeCoreModule,
             workerThreadModule = workerThreadModule,
         ),
+        val storageModule: StorageModule = StorageModuleImpl(
+            initModule = initModule,
+            workerThreadModule = workerThreadModule,
+            coreModule = fakeCoreModule,
+        ),
         val essentialServiceModule: EssentialServiceModule =
             EssentialServiceModuleImpl(
                 initModule = initModule,
@@ -159,6 +167,7 @@ internal class IntegrationTestRule(
                 workerThreadModule = workerThreadModule,
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
+                storageModule = storageModule,
                 buildInfo = BuildInfo.fromResources(fakeCoreModule.resources, fakeCoreModule.context.packageName),
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,

@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.BackgroundWorker
-import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify
@@ -263,7 +262,7 @@ internal class EmbraceApiServiceTest {
         initApiService()
         val payload = "{}".toByteArray(Charsets.UTF_8)
         apiService.sendSession({ it.write(payload) }) {}
-        verify(exactly = 1) { testScheduledExecutor.submit(any<NetworkRequestRunnable>()) }
+        verify(exactly = 1) { testScheduledExecutor.submit(any<Runnable>()) }
     }
 
     @Test

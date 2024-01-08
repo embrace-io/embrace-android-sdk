@@ -5,13 +5,11 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.RejectedExecutionHandler
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
@@ -47,17 +45,7 @@ internal class WorkerThreadModuleImpl(
             val threadFactory = createThreadFactory(workerName.threadName)
 
             when (workerName) {
-                WorkerName.NETWORK_REQUEST -> {
-                    ThreadPoolExecutor(
-                        1,
-                        1,
-                        60L,
-                        TimeUnit.SECONDS,
-                        createNetworkRequestQueue(),
-                        threadFactory,
-                        this
-                    )
-                }
+                WorkerName.NETWORK_REQUEST -> PriorityThreadPoolExecutor(threadFactory, this)
                 else -> ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
         }
@@ -82,16 +70,4 @@ internal class WorkerThreadModuleImpl(
                 this.name = "emb-$name"
             }
         }
-
-    private fun createNetworkRequestQueue(): PriorityBlockingQueue<Runnable> {
-        return PriorityBlockingQueue(
-            100,
-            compareBy { runnable: Runnable ->
-                when (runnable) {
-                    is NetworkRequestRunnable -> -1
-                    else -> 0
-                }
-            }
-        )
-    }
 }

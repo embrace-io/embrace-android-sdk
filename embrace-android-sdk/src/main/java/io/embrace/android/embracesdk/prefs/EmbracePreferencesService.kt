@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +29,7 @@ internal class EmbracePreferencesService(
         // block if necessary with Future.get(). Eagerly offloading buys us more time
         // for SharedPreferences to load the File and reduces the likelihood of blocking
         // when invoked by client code.
-        preferences = backgroundWorker.submit(lazyPrefs::value)
+        preferences = backgroundWorker.submit(TaskPriority.NORMAL, lazyPrefs::value)
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 

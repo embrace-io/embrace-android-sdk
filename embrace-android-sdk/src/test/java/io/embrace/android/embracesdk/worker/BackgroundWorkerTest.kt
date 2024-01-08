@@ -14,7 +14,7 @@ internal class BackgroundWorkerTest {
         val runnable = Runnable {
             ran = true
         }
-        BackgroundWorker(impl).submit(runnable)
+        BackgroundWorker(impl).submit(TaskPriority.NORMAL, runnable)
         impl.runNext()
         assertTrue(ran)
     }
@@ -26,7 +26,7 @@ internal class BackgroundWorkerTest {
         val callable = Callable {
             ran = true
         }
-        BackgroundWorker(impl).submit(callable)
+        BackgroundWorker(impl).submit(TaskPriority.NORMAL, callable)
         impl.runNext()
         assertTrue(ran)
     }

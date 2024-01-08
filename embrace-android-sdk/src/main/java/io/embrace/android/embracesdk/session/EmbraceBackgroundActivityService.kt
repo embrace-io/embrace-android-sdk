@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceBackgroundActivityService(
@@ -118,7 +119,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     private fun saveNow() {
-        backgroundWorker.submit(::cacheBackgroundActivity)
+        backgroundWorker.submit(TaskPriority.NORMAL, ::cacheBackgroundActivity)
         willBeSaved = false
     }
 

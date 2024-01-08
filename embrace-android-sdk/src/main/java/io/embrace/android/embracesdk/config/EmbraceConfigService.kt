@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.min
 
@@ -165,7 +166,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
     private fun performInitialConfigLoad() {
         logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
-        backgroundWorker.submit(::loadConfigFromCache)
+        backgroundWorker.submit(TaskPriority.NORMAL, ::loadConfigFromCache)
     }
 
     /**

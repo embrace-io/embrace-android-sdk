@@ -60,7 +60,6 @@ internal class EmbraceDeliveryServiceTest {
             apiService,
             gatingService,
             executor,
-            executor,
             EmbraceSerializer(),
             logger
         )

@@ -16,7 +16,6 @@ internal class DeliveryModuleImpl(
 ) : DeliveryModule {
 
     private val cachedSessionsExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.CACHED_SESSIONS)
-    private val sendSessionsExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.SEND_SESSIONS)
 
     override val deliveryService: DeliveryService by singleton {
         EmbraceDeliveryService(
@@ -24,7 +23,6 @@ internal class DeliveryModuleImpl(
             essentialServiceModule.apiService,
             essentialServiceModule.gatingService,
             cachedSessionsExecutorService,
-            sendSessionsExecutorService,
             coreModule.jsonSerializer,
             coreModule.logger
         )

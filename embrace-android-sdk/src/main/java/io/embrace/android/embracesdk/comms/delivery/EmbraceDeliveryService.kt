@@ -20,7 +20,6 @@ internal class EmbraceDeliveryService(
     private val apiService: ApiService,
     private val gatingService: GatingService,
     private val cachedSessionsExecutorService: ExecutorService,
-    private val sendSessionsExecutorService: ExecutorService,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : DeliveryService {
@@ -82,13 +81,9 @@ internal class EmbraceDeliveryService(
      */
     override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage) {
         logger.logDeveloper(TAG, "Sending background activity message")
-
-        sendSessionsExecutorService.submit {
-            logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val id = backgroundActivityMessage.session.sessionId
-            val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return@submit
-            sendBackgroundActivityImpl(id, action)
-        }
+        val id = backgroundActivityMessage.session.sessionId
+        val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return
+        sendBackgroundActivityImpl(id, action)
     }
 
     /**
@@ -97,15 +92,13 @@ internal class EmbraceDeliveryService(
     override fun sendBackgroundActivities() {
         logger.logDeveloper(TAG, "Sending background activity message")
 
-        sendSessionsExecutorService.submit {
-            backgroundActivities.forEach { backgroundActivityId ->
-                logger.logDeveloper(
-                    TAG,
-                    "Sending background activity message - background job started"
-                )
-                val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
-                sendBackgroundActivityImpl(backgroundActivityId, action)
-            }
+        backgroundActivities.forEach { backgroundActivityId ->
+            logger.logDeveloper(
+                TAG,
+                "Sending background activity message - background job started"
+            )
+            val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
+            sendBackgroundActivityImpl(backgroundActivityId, action)
         }
     }
 
@@ -234,8 +227,6 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendMoment(eventMessage: EventMessage) {
-        sendSessionsExecutorService.submit {
-            apiService.sendEvent(eventMessage)
-        }
+        apiService.sendEvent(eventMessage)
     }
 }

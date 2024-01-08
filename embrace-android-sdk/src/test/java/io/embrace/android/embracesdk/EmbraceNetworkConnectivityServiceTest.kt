@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -21,7 +22,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutorService
 
 @Suppress("DEPRECATION")
 internal class EmbraceNetworkConnectivityServiceTest {
@@ -32,7 +32,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         private lateinit var context: Context
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var mockConnectivityManager: ConnectivityManager
-        private lateinit var executor: ExecutorService
+        private lateinit var worker: BackgroundWorker
         private lateinit var fakeClock: FakeClock
 
         /**
@@ -45,7 +45,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             logger = InternalEmbraceLogger()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()
-            executor = MoreExecutors.newDirectExecutorService()
+            worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         }
 
         /**
@@ -55,7 +55,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @JvmStatic
         fun tearDownAfterAll() {
             unmockkAll()
-            executor.shutdown()
         }
     }
 
@@ -69,7 +68,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         service = EmbraceNetworkConnectivityService(
             context,
             fakeClock,
-            executor,
+            worker,
             logger,
             mockConnectivityManager,
             true

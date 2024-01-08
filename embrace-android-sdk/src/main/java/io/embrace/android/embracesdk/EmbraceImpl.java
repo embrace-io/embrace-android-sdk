@@ -97,7 +97,7 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
-import io.embrace.android.embracesdk.worker.ExecutorName;
+import io.embrace.android.embracesdk.worker.WorkerName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl;
 import kotlin.Lazy;
@@ -374,7 +374,7 @@ final class EmbraceImpl {
         final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke();
         workerThreadModule = nonNullWorkerThreadModule;
 
-        nonNullWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION).submit(() -> {
+        nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(() -> {
             final SpansService spansService = initModule.getSpansService();
             if (spansService instanceof Initializable) {
                 ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
@@ -697,7 +697,7 @@ final class EmbraceImpl {
     private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
         crashVerifier = crashModule.getLastRunCrashVerifier();
         crashVerifier.readAndCleanMarkerAsync(
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
         );
     }
 

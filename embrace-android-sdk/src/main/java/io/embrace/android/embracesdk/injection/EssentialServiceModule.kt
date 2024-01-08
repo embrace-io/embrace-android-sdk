@@ -39,7 +39,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -119,14 +119,14 @@ internal class EssentialServiceModuleImpl(
     private val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck(androidServicesModule.preferencesService::deviceIdentifier)
 
-    private val backgroundExecutorService =
-        workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+    private val backgroundWorker =
+        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
 
-    private val networkRequestExecutor =
-        workerThreadModule.backgroundExecutor(ExecutorName.NETWORK_REQUEST)
+    private val networkRequestWorker =
+        workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST)
 
-    private val pendingApiCallsExecutor =
-        workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+    private val pendingApiCallsWorker =
+        workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -153,7 +153,7 @@ internal class EssentialServiceModuleImpl(
                 androidServicesModule.preferencesService,
                 initModule.clock,
                 coreModule.logger,
-                backgroundExecutorService,
+                backgroundWorker,
                 coreModule.isDebug,
                 configStopAction,
                 thresholdCheck
@@ -176,7 +176,7 @@ internal class EssentialServiceModuleImpl(
             coreModule.appFramework,
             androidServicesModule.preferencesService,
             processStateService,
-            backgroundExecutorService,
+            backgroundWorker,
             systemServiceModule.storageManager,
             systemServiceModule.windowManager,
             systemServiceModule.activityManager,
@@ -237,7 +237,7 @@ internal class EssentialServiceModuleImpl(
         EmbraceNetworkConnectivityService(
             coreModule.context,
             initModule.clock,
-            backgroundExecutorService,
+            backgroundWorker,
             coreModule.logger,
             systemServiceModule.connectivityManager,
             autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
@@ -247,7 +247,7 @@ internal class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         EmbracePendingApiCallsSender(
             networkConnectivityService,
-            pendingApiCallsExecutor,
+            pendingApiCallsWorker,
             storageModule.deliveryCacheManager,
             initModule.clock
         )
@@ -261,7 +261,7 @@ internal class EssentialServiceModuleImpl(
                 storageModule.cache.retrieveCachedConfig(url, request)
             },
             logger = coreModule.logger,
-            executorService = networkRequestExecutor,
+            backgroundWorker = networkRequestWorker,
             cacheManager = storageModule.deliveryCacheManager,
             pendingApiCallsSender = pendingApiCallsSender,
             lazyDeviceId = lazyDeviceId,

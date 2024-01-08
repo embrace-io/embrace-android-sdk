@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -25,7 +26,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 internal class EmbracePendingApiCallsSenderTest {
@@ -37,7 +37,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var networkConnectivityService: NetworkConnectivityService
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var mockCacheManager: DeliveryCacheManager
-        private lateinit var testScheduledExecutor: ScheduledExecutorService
+        private lateinit var worker: ScheduledWorker
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
         private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
@@ -61,7 +61,7 @@ internal class EmbracePendingApiCallsSenderTest {
     @Before
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
-        testScheduledExecutor = blockingScheduledExecutorService
+        worker = ScheduledWorker(blockingScheduledExecutorService)
         pendingApiCalls = PendingApiCalls()
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
@@ -297,7 +297,7 @@ internal class EmbracePendingApiCallsSenderTest {
         clearMocks(mockRetryMethod, answers = false)
         pendingApiCalls = PendingApiCalls()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
-        testScheduledExecutor = blockingScheduledExecutorService
+        worker = ScheduledWorker(blockingScheduledExecutorService)
     }
 
     private fun initPendingApiCallsSender(
@@ -311,7 +311,7 @@ internal class EmbracePendingApiCallsSenderTest {
         every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
 
         pendingApiCallsSender = EmbracePendingApiCallsSender(
-            scheduledExecutorService = testScheduledExecutor,
+            scheduledWorker = worker,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
             clock = FakeClock()

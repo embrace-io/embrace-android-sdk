@@ -11,7 +11,7 @@ import org.junit.Test
 
 internal class BackgroundActivityTest {
 
-    private val info = BackgroundActivity(
+    private val info = Session(
         sessionId = "fake-session-id",
         startTime = 123456789L,
         appState = "foreground",
@@ -29,8 +29,8 @@ internal class BackgroundActivityTest {
         errorLogsAttemptedToSend = 3,
         exceptionError = ExceptionError(false),
         crashReportId = "fake-crash-id",
-        endType = BackgroundActivity.LifeEventType.BKGND_STATE,
-        startType = BackgroundActivity.LifeEventType.BKGND_STATE,
+        endType = Session.LifeEventType.BKGND_STATE,
+        startType = Session.LifeEventType.BKGND_STATE,
         properties = mapOf("fake-key" to "fake-value"),
         unhandledExceptions = 1,
         user = UserInfo("fake-user-id", "fake-user-name")
@@ -43,7 +43,7 @@ internal class BackgroundActivityTest {
 
     @Test
     fun testDeserialization() {
-        val obj = deserializeJsonFromResource<BackgroundActivity>("bg_activity_expected.json")
+        val obj = deserializeJsonFromResource<Session>("bg_activity_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -63,8 +63,8 @@ internal class BackgroundActivityTest {
             assertEquals(2, warnLogsAttemptedToSend)
             assertEquals(3, errorLogsAttemptedToSend)
             assertEquals("fake-crash-id", crashReportId)
-            assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, endType)
-            assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, startType)
+            assertEquals(Session.LifeEventType.BKGND_STATE, endType)
+            assertEquals(Session.LifeEventType.BKGND_STATE, startType)
             assertEquals(1, unhandledExceptions)
             assertEquals(ExceptionError(false), exceptionError)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
@@ -73,6 +73,6 @@ internal class BackgroundActivityTest {
 
     @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        deserializeEmptyJsonString<BackgroundActivity>()
+        deserializeEmptyJsonString<Session>()
     }
 }

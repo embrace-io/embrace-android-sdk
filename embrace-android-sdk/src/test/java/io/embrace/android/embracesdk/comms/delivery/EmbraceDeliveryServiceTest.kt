@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.fakeBackgroundActivity
+import io.embrace.android.embracesdk.fakeBackgroundActivityMessage
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -16,12 +16,12 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.ExecutorService
 
 internal class EmbraceDeliveryServiceTest {
 
@@ -30,7 +30,7 @@ internal class EmbraceDeliveryServiceTest {
     private val anotherMessage =
         fakeSessionMessage().copy(session = session.copy(sessionId = "session2"))
 
-    private lateinit var executor: ExecutorService
+    private lateinit var worker: BackgroundWorker
     private lateinit var deliveryCacheManager: FakeDeliveryCacheManager
     private lateinit var apiService: FakeApiService
     private lateinit var ndkService: FakeNdkService
@@ -40,7 +40,7 @@ internal class EmbraceDeliveryServiceTest {
 
     @Before
     fun setUp() {
-        executor = MoreExecutors.newDirectExecutorService()
+        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         deliveryCacheManager = FakeDeliveryCacheManager()
         apiService = FakeApiService()
         ndkService = FakeNdkService()
@@ -50,7 +50,6 @@ internal class EmbraceDeliveryServiceTest {
 
     @After
     fun after() {
-        executor.shutdown()
         gatingService.sessionMessagesFiltered.clear()
     }
 
@@ -59,8 +58,7 @@ internal class EmbraceDeliveryServiceTest {
             deliveryCacheManager,
             apiService,
             gatingService,
-            executor,
-            executor,
+            worker,
             EmbraceSerializer(),
             logger
         )
@@ -148,7 +146,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSaveBackgroundActivity() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.saveBackgroundActivity(obj)
         assertEquals(obj, deliveryCacheManager.saveBgActivityRequests.last())
     }
@@ -173,7 +171,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendBackgroundActivity() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.sendBackgroundActivity(obj)
 
         // cache the object first in case process terminates
@@ -184,7 +182,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendBackgroundActivities() {
         initializeDeliveryService()
-        val obj = fakeBackgroundActivity()
+        val obj = fakeBackgroundActivityMessage()
         deliveryService.saveBackgroundActivity(obj)
         deliveryService.sendBackgroundActivities()
         assertEquals(1, apiService.sessionRequests.size)

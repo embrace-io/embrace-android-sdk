@@ -5,13 +5,12 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifyBgActivityMessage
-import io.embrace.android.embracesdk.verifySessionHappened
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,13 +23,7 @@ internal class BackgroundActivityTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        IntegrationTestRule.Harness(
-            fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock, ExecutorName.SEND_SESSIONS)
-        )
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `bg activity messages are recorded`() {
@@ -39,26 +32,22 @@ internal class BackgroundActivityTest {
             harness.fakeClock.tick(30000)
             harness.recordSession()
 
-            val executor =
-                harness.workerThreadModule.scheduledExecutor(ExecutorName.SEND_SESSIONS) as BlockingScheduledExecutorService
-            executor.runCurrentlyBlocked()
-
             // filter out dupes from overwritten saves
-            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.backgroundActivity.sessionId }
+            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.session.sessionId }
             assertEquals(2, bgActivities.size)
 
             // verify first bg activity
             val first = bgActivities[0]
             verifyBgActivityMessage(first)
-            assertEquals(1, first.backgroundActivity.number)
+            assertEquals(1, first.session.number)
 
             // verify second bg activity
             val second = bgActivities[1]
             verifyBgActivityMessage(second)
-            assertEquals(2, second.backgroundActivity.number)
+            assertEquals(2, second.session.number)
 
             // ID should be different for each
-            assertNotEquals(first.backgroundActivity.sessionId, second.backgroundActivity.sessionId)
+            assertNotEquals(first.session.sessionId, second.session.sessionId)
         }
     }
 }

@@ -6,22 +6,20 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val gatingService: GatingService,
-    private val cachedSessionsExecutorService: ExecutorService,
-    private val sendSessionsExecutorService: ExecutorService,
+    private val cachedSessionsBackgroundWorker: BackgroundWorker,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : DeliveryService {
@@ -71,8 +69,8 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to cache
      */
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
-        backgroundActivities.add(backgroundActivityMessage.backgroundActivity.sessionId)
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage) {
+        backgroundActivities.add(backgroundActivityMessage.session.sessionId)
         cacheManager.saveBackgroundActivity(backgroundActivityMessage)
     }
 
@@ -81,15 +79,11 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to send
      */
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage) {
         logger.logDeveloper(TAG, "Sending background activity message")
-
-        sendSessionsExecutorService.submit {
-            logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val id = backgroundActivityMessage.backgroundActivity.sessionId
-            val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return@submit
-            sendBackgroundActivityImpl(id, action)
-        }
+        val id = backgroundActivityMessage.session.sessionId
+        val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return
+        sendBackgroundActivityImpl(id, action)
     }
 
     /**
@@ -98,15 +92,13 @@ internal class EmbraceDeliveryService(
     override fun sendBackgroundActivities() {
         logger.logDeveloper(TAG, "Sending background activity message")
 
-        sendSessionsExecutorService.submit {
-            backgroundActivities.forEach { backgroundActivityId ->
-                logger.logDeveloper(
-                    TAG,
-                    "Sending background activity message - background job started"
-                )
-                val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
-                sendBackgroundActivityImpl(backgroundActivityId, action)
-            }
+        backgroundActivities.forEach { backgroundActivityId ->
+            logger.logDeveloper(
+                TAG,
+                "Sending background activity message - background job started"
+            )
+            val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
+            sendBackgroundActivityImpl(backgroundActivityId, action)
         }
     }
 
@@ -171,13 +163,13 @@ internal class EmbraceDeliveryService(
     }
 
     private fun sendCachedSessionsWithoutNdk(currentSession: String?) {
-        cachedSessionsExecutorService.submit {
+        cachedSessionsBackgroundWorker.submit {
             sendCachedSessions(cacheManager.getAllCachedSessionIds(), currentSession)
         }
     }
 
     private fun sendCachedSessionsWithNdk(ndkService: NdkService, currentSession: String?) {
-        cachedSessionsExecutorService.submit {
+        cachedSessionsBackgroundWorker.submit {
             val allSessions = cacheManager.getAllCachedSessionIds()
             logger.logDeveloper(TAG, "NDK enabled, checking for native crashes")
             val nativeCrashData = ndkService.checkForNativeCrash()
@@ -235,8 +227,6 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendMoment(eventMessage: EventMessage) {
-        sendSessionsExecutorService.submit {
-            apiService.sendEvent(eventMessage)
-        }
+        apiService.sendEvent(eventMessage)
     }
 }

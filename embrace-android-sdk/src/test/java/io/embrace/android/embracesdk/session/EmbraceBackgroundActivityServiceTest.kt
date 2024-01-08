@@ -27,7 +27,8 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.payload.BackgroundActivity
+import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -100,7 +101,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service.onBackground(clock.now())
 
         val payload = checkNotNull(service.backgroundActivity)
-        assertEquals(BackgroundActivity.LifeEventType.BKGND_STATE, payload.startType)
+        assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
         assertEquals(payload.sessionId, metadataService.activeSessionId)
     }
@@ -118,7 +119,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
         val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
-        assertEquals(5, payload.backgroundActivity.number)
+        assertEquals(5, payload.session.number)
     }
 
     @Test
@@ -316,7 +317,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             ndkService,
             clock,
             collator,
-            lazy { blockableExecutorService }
+            BackgroundWorker(blockableExecutorService)
         )
     }
 }

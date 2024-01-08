@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
@@ -24,7 +23,7 @@ internal class FakeApiService : ApiService {
     val crashRequests = mutableListOf<EventMessage>()
     val blobRequests = mutableListOf<BlobMessage>()
     val sessionRequests = mutableListOf<SessionMessage>()
-    val bgActivityRequests = mutableListOf<BackgroundActivityMessage>()
+    val bgActivityRequests = mutableListOf<SessionMessage>()
 
     override fun getConfig(): RemoteConfig? {
         TODO("Not yet implemented")

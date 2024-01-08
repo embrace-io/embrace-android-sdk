@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.mockk.clearAllMocks
 import io.mockk.unmockkAll
 import org.junit.AfterClass
@@ -122,7 +122,7 @@ internal class EmbraceEventServiceTest {
             deliveryService = deliveryService,
             logger = logger,
             clock = fakeClock,
-            scheduledExecutor = fakeWorkerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+            scheduledWorker = fakeWorkerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
         )
         eventService = EmbraceEventService(
             1,
@@ -424,7 +424,7 @@ internal class EmbraceEventServiceTest {
         spansService.flushSpans()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
-        val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
         val completedSpans = checkNotNull(spansService.completedSpans())
         assertEquals(1, completedSpans.size)
@@ -445,7 +445,7 @@ internal class EmbraceEventServiceTest {
         spansService.flushSpans()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
-        val executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
         val completedSpans = checkNotNull(spansService.completedSpans())
         assertEquals(0, completedSpans.size)
@@ -473,7 +473,7 @@ internal class EmbraceEventServiceTest {
         eventService.sendStartupMoment()
         assertNull(eventService.getStartupMomentInfo())
         fakeClock.tick(10000L)
-        fakeWorkerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
+        fakeWorkerThreadModule.scheduledExecutor(WorkerName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
         assertNotNull(eventService.getStartupMomentInfo())
         val completedSpans = checkNotNull(spansService.completedSpans())
         assertEquals(0, completedSpans.size)

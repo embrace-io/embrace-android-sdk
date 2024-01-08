@@ -26,7 +26,8 @@ import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.utils.eagerLazyLoad
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.eagerLazyLoad
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -34,7 +35,6 @@ import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 /**
  * Provides information about the state of the device, retrieved from Android system services,
@@ -67,7 +67,7 @@ internal class EmbraceMetadataService private constructor(
     buildGuid: String?,
     unitySdkVersion: String?,
     rnSdkVersion: String?,
-    private val metadataRetrieveExecutorService: ExecutorService,
+    private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture
@@ -152,7 +152,7 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Additional device info already exists")
             return
         }
-        metadataRetrieveExecutorService.submit {
+        metadataBackgroundWorker.submit {
             logDeveloper("EmbraceMetadataService", "Async retrieve cpuName & egl")
             val storedCpuName = preferencesService.cpuName
             val storedEgl = preferencesService.egl
@@ -179,7 +179,7 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Screen resolution already exists")
             return
         }
-        metadataRetrieveExecutorService.submit {
+        metadataBackgroundWorker.submit {
             logDeveloper("EmbraceMetadataService", "Async retrieve screen resolution")
             val storedScreenResolution = preferencesService.screenResolution
             // get from shared preferences
@@ -207,48 +207,42 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Jailbroken already exists")
             return
         }
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
-                val storedIsJailbroken = preferencesService.jailbroken
-                // load value from shared preferences
-                if (storedIsJailbroken != null) {
-                    logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
-                    isJailbroken = storedIsJailbroken
-                } else {
-                    isJailbroken = MetadataUtils.isJailbroken()
-                    preferencesService.jailbroken = isJailbroken
-                    logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
-                }
-                logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
-                null
+        metadataBackgroundWorker.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
+            val storedIsJailbroken = preferencesService.jailbroken
+            // load value from shared preferences
+            if (storedIsJailbroken != null) {
+                logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
+                isJailbroken = storedIsJailbroken
+            } else {
+                isJailbroken = MetadataUtils.isJailbroken()
+                preferencesService.jailbroken = isJailbroken
+                logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
             }
-        )
+            logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
+        }
     }
 
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
-                val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
-                if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
-                    val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
-                        storageStatsManager,
-                        packageManager,
-                        packageName
-                    )
-                    if (deviceDiskAppUsage != null) {
-                        logDeveloper("EmbraceMetadataService", "Disk usage is present")
-                        diskUsage = DiskUsage(deviceDiskAppUsage, free)
-                    }
+        metadataBackgroundWorker.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
+            val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
+            if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+                val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
+                    storageStatsManager,
+                    packageManager,
+                    packageName
+                )
+                if (deviceDiskAppUsage != null) {
+                    logDeveloper("EmbraceMetadataService", "Disk usage is present")
+                    diskUsage = DiskUsage(deviceDiskAppUsage, free)
                 }
-                if (diskUsage == null) {
-                    diskUsage = DiskUsage(null, free)
-                }
-                logDeveloper("EmbraceMetadataService", "Device disk free: $free")
-                null
             }
-        )
+            if (diskUsage == null) {
+                diskUsage = DiskUsage(null, free)
+            }
+            logDeveloper("EmbraceMetadataService", "Device disk free: $free")
+        }
     }
 
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value
@@ -447,7 +441,7 @@ internal class EmbraceMetadataService private constructor(
         preferencesService.javaScriptBundleURL = jsBundleIdUrl
 
         // get the hashed bundle ID file from the bundle ID URL
-        reactNativeBundleId = metadataRetrieveExecutorService.eagerLazyLoad(
+        reactNativeBundleId = metadataBackgroundWorker.eagerLazyLoad(
             Callable {
                 computeReactNativeBundleId(
                     context,
@@ -519,7 +513,7 @@ internal class EmbraceMetadataService private constructor(
             appFramework: AppFramework,
             preferencesService: PreferencesService,
             processStateService: ProcessStateService,
-            metadataRetrieveExecutorService: ExecutorService,
+            metadataBackgroundWorker: BackgroundWorker,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
             activityManager: ActivityManager?,
@@ -557,7 +551,7 @@ internal class EmbraceMetadataService private constructor(
             val reactNativeBundleId: Lazy<String?>
             if (appFramework == AppFramework.REACT_NATIVE) {
                 reactNativeBundleId =
-                    metadataRetrieveExecutorService.eagerLazyLoad(
+                    metadataBackgroundWorker.eagerLazyLoad(
                         Callable {
                             val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
                             if (lastKnownJsBundleUrl != null) {
@@ -639,7 +633,7 @@ internal class EmbraceMetadataService private constructor(
                 buildGuid,
                 unitySdkVersion,
                 rnSdkVersion,
-                metadataRetrieveExecutorService,
+                metadataBackgroundWorker,
                 clock,
                 embraceCpuInfoDelegate,
                 deviceArchitecture

@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.storage.StorageManager
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -38,8 +39,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.LinkedList
 import java.util.Locale
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 internal class EmbraceNdkService(
     private val context: Context,
@@ -55,8 +54,8 @@ internal class EmbraceNdkService(
     private val logger: InternalEmbraceLogger,
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
-    private val cleanCacheExecutorService: ExecutorService,
-    private val ndkStartupExecutorService: ExecutorService,
+    private val cleanCacheWorker: BackgroundWorker,
+    private val ndkStartupWorker: BackgroundWorker,
     /**
      * The device architecture.
      */
@@ -455,41 +454,40 @@ internal class EmbraceNdkService(
     }
 
     private fun cleanOldCrashFiles() {
-        cleanCacheExecutorService.submit(
-            Callable<Any?> {
-                logger.logDeveloper("EmbraceNDKService", "Processing clean of old crash files.")
-                val sortedFiles = repository.sortNativeCrashes(true)
-                val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
-                if (deleteCount > 0) {
-                    val files = LinkedList(sortedFiles)
-                    try {
-                        for (i in 0 until deleteCount) {
-                            val removed = files[i]
-                            if (files[i].delete()) {
-                                logger.logDebug("Native crash file " + removed.name + " removed from cache")
-                            }
+        cleanCacheWorker.submit {
+            logger.logDeveloper("EmbraceNDKService", "Processing clean of old crash files.")
+            val sortedFiles = repository.sortNativeCrashes(true)
+            val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
+            if (deleteCount > 0) {
+                val files = LinkedList(sortedFiles)
+                try {
+                    for (i in 0 until deleteCount) {
+                        val removed = files[i]
+                        if (files[i].delete()) {
+                            logger.logDebug("Native crash file " + removed.name + " removed from cache")
                         }
-                    } catch (ex: Exception) {
-                        logger.logError("Failed to delete native crash from cache.", ex)
                     }
+                } catch (ex: Exception) {
+                    logger.logError("Failed to delete native crash from cache.", ex)
                 }
+            }
 
-                // delete error files that don't have matching crash files
-                val errorFiles = getNativeErrorFiles()
-                for (errorFile in errorFiles) {
-                    if (hasNativeCrashFile(errorFile)) {
-                        logger.logDeveloper(
-                            "EmbraceNDKService",
-                            "Skipping error file as it has a matching crash file " + errorFile.absolutePath
-                        )
-                        continue
-                    }
-                    errorFile.delete()
+            // delete error files that don't have matching crash files
+            val errorFiles = getNativeErrorFiles()
+            for (errorFile in errorFiles) {
+                if (hasNativeCrashFile(errorFile)) {
                     logger.logDeveloper(
                         "EmbraceNDKService",
-                        "Deleting error file as it has no matching crash file " + errorFile.absolutePath
+                        "Skipping error file as it has a matching crash file " + errorFile.absolutePath
                     )
+                    continue
                 }
+                errorFile.delete()
+                logger.logDeveloper(
+                    "EmbraceNDKService",
+                    "Deleting error file as it has no matching crash file " + errorFile.absolutePath
+                )
+            }
 
                 // delete map files that don't have matching crash files
                 val mapFiles = getNativeMapFiles()
@@ -505,11 +503,9 @@ internal class EmbraceNdkService(
                     logger.logDeveloper(
                         "EmbraceNDKService",
                         "Deleting map file as it has no matching crash file " + mapFile.absolutePath
-                    )
-                }
-                null
+                )
             }
-        )
+        }
     }
 
     private fun hasNativeCrashFile(file: File): Boolean {
@@ -585,19 +581,16 @@ internal class EmbraceNdkService(
      * Compute NDK metadata on a background thread.
      */
     private fun updateDeviceMetaData() {
-        ndkStartupExecutorService.submit(
-            Callable<Any?> {
-                logger.logDeveloper("EmbraceNDKService", "Processing NDK metadata update on bg thread.")
-                var newDeviceMetaData = getMetaData(true)
-                logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")
-                if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
-                    logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
-                    newDeviceMetaData = getMetaData(false)
-                }
-                delegate._updateMetaData(newDeviceMetaData)
-                null
+        ndkStartupWorker.submit {
+            logger.logDeveloper("EmbraceNDKService", "Processing NDK metadata update on bg thread.")
+            var newDeviceMetaData = getMetaData(true)
+            logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")
+            if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
+                logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
+                newDeviceMetaData = getMetaData(false)
             }
-        )
+            delegate._updateMetaData(newDeviceMetaData)
+        }
     }
 
     private fun getMetaData(includeSessionProperties: Boolean): String {

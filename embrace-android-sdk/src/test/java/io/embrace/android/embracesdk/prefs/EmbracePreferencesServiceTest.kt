@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,7 +27,7 @@ internal class EmbracePreferencesServiceTest {
     private lateinit var service: EmbracePreferencesService
     private lateinit var fakeClock: FakeClock
 
-    private val executorService = BlockableExecutorService()
+    private val executorService = BackgroundWorker(BlockableExecutorService())
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before

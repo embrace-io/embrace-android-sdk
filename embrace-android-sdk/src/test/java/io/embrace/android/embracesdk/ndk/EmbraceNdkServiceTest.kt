@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -141,8 +142,8 @@ internal class EmbraceNdkServiceTest {
             logger,
             repository,
             delegate,
-            MoreExecutors.newDirectExecutorService(),
-            MoreExecutors.newDirectExecutorService(),
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             deviceArchitecture,
             EmbraceSerializer()
         )

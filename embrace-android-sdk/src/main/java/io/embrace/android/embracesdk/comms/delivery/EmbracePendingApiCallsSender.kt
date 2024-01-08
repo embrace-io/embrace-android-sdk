@@ -8,15 +8,14 @@ import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 internal class EmbracePendingApiCallsSender(
     networkConnectivityService: NetworkConnectivityService,
-    private val scheduledExecutorService: ScheduledExecutorService,
+    private val scheduledWorker: ScheduledWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
 ) : PendingApiCallsSender, NetworkConnectivityListener {
@@ -32,7 +31,7 @@ internal class EmbracePendingApiCallsSender(
         logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
-        scheduledExecutorService.submit(this::scheduleApiCallsDelivery)
+        scheduledWorker.submit(this::scheduleApiCallsDelivery)
     }
 
     override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
@@ -60,7 +59,7 @@ internal class EmbracePendingApiCallsSender(
                 with(response.endpoint) {
                     updateRateLimitStatus()
                     scheduleRetry(
-                        scheduledExecutorService,
+                        scheduledWorker,
                         response.retryAfter,
                         this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
                     )
@@ -114,22 +113,17 @@ internal class EmbracePendingApiCallsSender(
      * [MAX_EXPONENTIAL_RETRY_PERIOD] is reached, after which case it stops trying until the next cold start.
      */
     private fun scheduleApiCallsDelivery(delayInSeconds: Long = 0L) {
-        try {
-            synchronized(this) {
-                if (shouldScheduleDelivery()) {
-                    lastDeliveryTask = scheduledExecutorService.schedule(
-                        { executeDelivery(delayInSeconds) },
-                        delayInSeconds,
-                        TimeUnit.SECONDS
-                    )
-                    logger.logInfo(
-                        "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
-                    )
-                }
+        synchronized(this) {
+            if (shouldScheduleDelivery()) {
+                lastDeliveryTask = scheduledWorker.schedule<Unit>(
+                    { executeDelivery(delayInSeconds) },
+                    delayInSeconds,
+                    TimeUnit.SECONDS
+                )
+                logger.logInfo(
+                    "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
+                )
             }
-        } catch (e: RejectedExecutionException) {
-            // This happens if the executor has shutdown previous to the schedule call
-            logger.logError("Cannot schedule delivery of pending api calls.", e)
         }
     }
 
@@ -159,7 +153,7 @@ internal class EmbracePendingApiCallsSender(
                                 with(response.endpoint) {
                                     updateRateLimitStatus()
                                     scheduleRetry(
-                                        scheduledExecutorService,
+                                        scheduledWorker,
                                         response.retryAfter,
                                         this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
                                     )
@@ -188,7 +182,7 @@ internal class EmbracePendingApiCallsSender(
             }
 
             if (pendingApiCalls.hasPendingApiCallsToSend()) {
-                scheduledExecutorService.submit {
+                scheduledWorker.submit {
                     scheduleNextApiCallsDelivery(
                         applyExponentialBackoff,
                         delayInSeconds

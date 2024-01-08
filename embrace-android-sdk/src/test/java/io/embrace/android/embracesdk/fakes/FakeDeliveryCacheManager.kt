@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
@@ -12,7 +11,7 @@ import io.embrace.android.embracesdk.session.SessionSnapshotType
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 
     val saveSessionRequests = mutableListOf<Pair<SessionMessage, SessionSnapshotType>>()
-    val saveBgActivityRequests = mutableListOf<BackgroundActivityMessage>()
+    val saveBgActivityRequests = mutableListOf<SessionMessage>()
     val saveCrashRequests = mutableListOf<EventMessage>()
 
     private val cachedSessions = mutableListOf<SessionMessage>()
@@ -41,19 +40,19 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         return cachedSessions.map { it.session.sessionId }
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): SerializationAction? {
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage): SerializationAction? {
         saveBgActivityRequests.add(backgroundActivityMessage)
         return {
-            serializer.toJson(backgroundActivityMessage, BackgroundActivityMessage::class.java, it)
+            serializer.toJson(backgroundActivityMessage, SessionMessage::class.java, it)
         }
     }
 
     override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
         val message = saveBgActivityRequests.singleOrNull {
-            it.backgroundActivity.sessionId == backgroundActivityId
+            it.session.sessionId == backgroundActivityId
         } ?: return null
         return {
-            serializer.toJson(message, BackgroundActivityMessage::class.java, it)
+            serializer.toJson(message, SessionMessage::class.java, it)
         }
     }
 

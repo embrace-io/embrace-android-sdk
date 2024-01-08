@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -44,12 +45,12 @@ internal class EmbraceSessionPropertiesTest {
 
     @Before
     fun setUp() {
-        val executorService = Executors.newSingleThreadExecutor()
+        val worker = BackgroundWorker(Executors.newSingleThreadExecutor())
         context = ApplicationProvider.getApplicationContext()
         logger = InternalEmbraceLogger()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }
         preferencesService =
-            EmbracePreferencesService(executorService, prefs, fakeClock, EmbraceSerializer())
+            EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())
 
         config = RemoteConfig()
         configService = FakeConfigService(

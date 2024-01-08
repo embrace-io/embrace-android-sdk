@@ -40,7 +40,7 @@ internal class SessionMessageCollator(
         endedCleanly: Boolean,
         forceQuit: Boolean,
         crashId: String?,
-        endType: Session.SessionLifeEventType,
+        endType: Session.LifeEventType,
         sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,
         endTime: Long,
@@ -154,7 +154,7 @@ internal class SessionMessageCollator(
     internal fun buildInitialSession(
         id: String,
         coldStart: Boolean,
-        startType: Session.SessionLifeEventType,
+        startType: Session.LifeEventType,
         startTime: Long,
         sessionNumber: Int,
         userInfo: UserInfo?,

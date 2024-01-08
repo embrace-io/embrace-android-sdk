@@ -32,7 +32,7 @@ internal class NativeModuleImpl(
     override val ndkService: NdkService by singleton {
         EmbraceNdkService(
             coreModule.context,
-            storageModule.storageManager,
+            storageModule.storageService,
             essentialServiceModule.metadataService,
             essentialServiceModule.processStateService,
             essentialServiceModule.configService,
@@ -77,7 +77,7 @@ internal class NativeModuleImpl(
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(
-            storageModule.storageManager,
+            storageModule.storageService,
             coreModule.logger
         )
     }

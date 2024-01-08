@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.injection.CoreModule
 import java.io.File
 import java.io.FilenameFilter
 
-internal class EmbraceStorageManager(
+internal class EmbraceStorageService(
     private val coreModule: CoreModule
-) : StorageManager {
+) : StorageService {
 
     override val cacheDirectory: Lazy<File> = lazy {
         coreModule.context.cacheDir

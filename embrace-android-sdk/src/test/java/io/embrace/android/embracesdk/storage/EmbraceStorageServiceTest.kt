@@ -12,9 +12,9 @@ import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 
-internal class EmbraceStorageManagerTest {
+internal class EmbraceStorageServiceTest {
 
-    private lateinit var storageManager: EmbraceStorageManager
+    private lateinit var storageManager: EmbraceStorageService
     private lateinit var cacheDir: File
     private lateinit var filesDir: File
     private lateinit var filesDirPath: String
@@ -27,7 +27,7 @@ internal class EmbraceStorageManagerTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageManager(
+        storageManager = EmbraceStorageService(
             coreModule = FakeCoreModule(context = ctx),
         )
     }

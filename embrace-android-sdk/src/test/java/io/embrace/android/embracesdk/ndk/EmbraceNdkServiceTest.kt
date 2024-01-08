@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.fakes.FakeStorageManager
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
@@ -57,7 +57,7 @@ internal class EmbraceNdkServiceTest {
     companion object {
         private lateinit var embraceNdkService: EmbraceNdkService
         private lateinit var context: Context
-        private lateinit var storageManager: FakeStorageManager
+        private lateinit var storageManager: FakeStorageService
         private lateinit var metadataService: MetadataService
         private lateinit var configService: ConfigService
         private lateinit var activityService: FakeProcessStateService
@@ -81,7 +81,7 @@ internal class EmbraceNdkServiceTest {
             mockkStatic(Uuid::class)
             mockkStatic(Embrace::class)
             context = mockContext()
-            storageManager = FakeStorageManager()
+            storageManager = FakeStorageService()
             metadataService = FakeAndroidMetadataService()
             localConfig = LocalConfig("", false, SdkLocalConfig())
             configService =

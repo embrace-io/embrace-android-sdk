@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.storage.StorageManager
+import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -14,7 +14,7 @@ import java.io.FileNotFoundException
  * Since v6.3.0, the files directory is used instead.
  */
 internal class EmbraceCacheService(
-    private val storageManager: StorageManager,
+    private val storageService: StorageService,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : CacheService {
@@ -120,7 +120,7 @@ internal class EmbraceCacheService(
     }
 
     override fun listFilenamesByPrefix(prefix: String): List<String> {
-        return storageManager.listFiles { _, name ->
+        return storageService.listFiles { _, name ->
             name.startsWith(EMBRACE_PREFIX + prefix)
         }.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
     }
@@ -156,7 +156,7 @@ internal class EmbraceCacheService(
      * The files directory is the default directory.
      */
     private fun getFileFromFilesDir(name: String): File {
-        return storageManager.getFile(EMBRACE_PREFIX + name, false)
+        return storageService.getFile(EMBRACE_PREFIX + name, false)
     }
 
     /**
@@ -165,7 +165,7 @@ internal class EmbraceCacheService(
      * in the cache directory for backwards compatibility.
      */
     private fun getFileFromFilesOrCacheDir(name: String): File {
-        return storageManager.getFile(EMBRACE_PREFIX + name, true)
+        return storageService.getFile(EMBRACE_PREFIX + name, true)
     }
 
     companion object {

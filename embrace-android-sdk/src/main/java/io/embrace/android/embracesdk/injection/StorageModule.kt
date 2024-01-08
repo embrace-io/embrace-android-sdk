@@ -5,14 +5,17 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.storage.EmbraceStorageManager
-import io.embrace.android.embracesdk.storage.StorageManager
+import io.embrace.android.embracesdk.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.io.File
 
+/**
+ * Contains dependencies that are used to store data in the device's storage.
+ */
 internal interface StorageModule {
-    val storageManager: StorageManager
+    val storageService: StorageService
     val cache: ApiResponseCache
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
@@ -27,19 +30,19 @@ internal class StorageModuleImpl(
     private val deliveryCacheWorker =
         workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
 
-    override val storageManager: StorageManager by singleton {
-        EmbraceStorageManager(coreModule)
+    override val storageService: StorageService by singleton {
+        EmbraceStorageService(coreModule)
     }
 
     override val cache by singleton {
         ApiResponseCache(
             coreModule.jsonSerializer,
-            { File(storageManager.cacheDirectory.value, "emb_config_cache") }
+            { File(storageService.cacheDirectory.value, "emb_config_cache") }
         )
     }
 
     override val cacheService: CacheService by singleton {
-        EmbraceCacheService(storageManager, coreModule.jsonSerializer, coreModule.logger)
+        EmbraceCacheService(storageService, coreModule.jsonSerializer, coreModule.logger)
     }
 
     override val deliveryCacheManager: DeliveryCacheManager by singleton {

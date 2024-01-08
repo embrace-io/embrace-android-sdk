@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.fakes.FakeStorageManager
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -26,13 +26,13 @@ import java.io.File
 internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
-    private lateinit var storageManager: FakeStorageManager
+    private lateinit var storageManager: FakeStorageService
 
     private val serializer = EmbraceSerializer()
 
     @Before
     fun setUp() {
-        storageManager = FakeStorageManager()
+        storageManager = FakeStorageService()
         service = EmbraceCacheService(
             storageManager,
             serializer,

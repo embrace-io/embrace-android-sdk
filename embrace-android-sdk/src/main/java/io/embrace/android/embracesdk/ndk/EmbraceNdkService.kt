@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.payload.NativeSymbols
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.storage.StorageManager
+import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.BufferedReader
 import java.io.File
@@ -42,7 +42,7 @@ import java.util.Locale
 
 internal class EmbraceNdkService(
     private val context: Context,
-    private val storageManager: StorageManager,
+    private val storageService: StorageService,
     private val metadataService: MetadataService,
     processStateService: ProcessStateService,
     private val configService: ConfigService,
@@ -203,7 +203,7 @@ internal class EmbraceNdkService(
     }
 
     private fun createCrashReportDirectory() {
-        val directoryFile = storageManager.getFile(NATIVE_CRASH_FILE_FOLDER, false)
+        val directoryFile = storageService.getFile(NATIVE_CRASH_FILE_FOLDER, false)
         if (directoryFile.exists()) {
             return
         }
@@ -214,9 +214,9 @@ internal class EmbraceNdkService(
 
     private fun installSignals() {
         val reportBasePath =
-            storageManager.getFile(NATIVE_CRASH_FILE_FOLDER, false).absolutePath
+            storageService.getFile(NATIVE_CRASH_FILE_FOLDER, false).absolutePath
         val markerFilePath =
-            storageManager.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME, false).absolutePath
+            storageService.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME, false).absolutePath
 
         logger.logDeveloper("EmbraceNDKService", "Creating report path at $reportBasePath")
 
@@ -407,7 +407,7 @@ internal class EmbraceNdkService(
     }
 
     private fun getNativeFiles(filter: FilenameFilter): Array<File> {
-        val ndkDirs: List<File> = storageManager.listFiles { file, name ->
+        val ndkDirs: List<File> = storageService.listFiles { file, name ->
             file.isDirectory && name == NATIVE_CRASH_FILE_FOLDER
         }
 

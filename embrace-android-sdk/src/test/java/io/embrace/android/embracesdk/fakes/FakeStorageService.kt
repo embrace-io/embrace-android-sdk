@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.storage.StorageManager
+import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 import java.nio.file.Files
 
-internal class FakeStorageManager : StorageManager {
+internal class FakeStorageService : StorageService {
 
     override val cacheDirectory = lazy {
         Files.createTempDirectory("cache_temp").toFile()

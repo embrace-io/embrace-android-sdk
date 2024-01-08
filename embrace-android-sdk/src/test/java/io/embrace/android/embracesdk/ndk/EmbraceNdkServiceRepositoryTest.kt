@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.ndk
 
-import io.embrace.android.embracesdk.fakes.FakeStorageManager
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.mockk.every
@@ -20,14 +20,14 @@ internal class EmbraceNdkServiceRepositoryTest {
 
     companion object {
         private lateinit var repository: EmbraceNdkServiceRepository
-        private lateinit var storageManager: FakeStorageManager
+        private lateinit var storageManager: FakeStorageService
         private lateinit var logger: InternalEmbraceLogger
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
             mockkStatic(InternalEmbraceLogger::class)
-            storageManager = FakeStorageManager()
+            storageManager = FakeStorageService()
             logger = mockk(relaxed = true)
             repository = EmbraceNdkServiceRepository(storageManager, logger)
         }

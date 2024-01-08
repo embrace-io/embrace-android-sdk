@@ -17,5 +17,9 @@ Some general advice
 Before your code can be accepted into the project you must also sign the
 [Individual Contributor License Agreement (CLA)][1].
 
+## Reporting issues
+
+If you have anyu trouble to start contriguting, lease [contact us directly](mailto:support@embrace.io) or reach out in our [Community Slack](https://embraceio-community.slack.com/)
+Finally, feel free to open a [new issue](https://github.com/embrace-io/embrace-android-sdk/issues/new).
 
  [1]: https://embrace.io/

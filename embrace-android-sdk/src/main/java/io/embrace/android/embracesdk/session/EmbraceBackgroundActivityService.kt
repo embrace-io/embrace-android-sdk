@@ -27,11 +27,9 @@ internal class EmbraceBackgroundActivityService(
      */
     private val clock: Clock,
     private val backgroundActivityCollator: BackgroundActivityCollator,
-    private val executorServiceSupplier: Lazy<ExecutorService>
+    private val executorService: ExecutorService
 ) : BackgroundActivityService, ConfigListener {
 
-    @get:Synchronized
-    private val cacheExecutorService: ExecutorService by lazy { executorServiceSupplier.value }
     private var lastSaved: Long = 0
     private var willBeSaved = false
 
@@ -121,7 +119,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     private fun saveNow() {
-        cacheExecutorService.submit(::cacheBackgroundActivity)
+        executorService.submit(::cacheBackgroundActivity)
         willBeSaved = false
     }
 

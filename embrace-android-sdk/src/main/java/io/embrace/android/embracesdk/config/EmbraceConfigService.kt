@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
-import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.ExecutorService
 import kotlin.math.min
@@ -208,36 +207,33 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private fun refreshConfig() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to refresh config")
         val previousConfig = configProp
-        executorService.submit(
-            Callable<Any> {
-                logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
+        executorService.submit {
+            logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
 
-                // Ensure that another thread didn't refresh it already in the meantime
-                if (configRequiresRefresh()) {
-                    try {
-                        lastRefreshConfigAttempt = clock.now()
-                        val newConfig = apiService.getConfig()
-                        if (newConfig != null) {
-                            updateConfig(previousConfig, newConfig)
-                            lastUpdated = clock.now()
-                        }
-                        configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
-                        logger.logDeveloper("EmbraceConfigService", "Config updated")
-                    } catch (ex: Exception) {
-                        configRetrySafeWindow =
-                            min(
-                                MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
-                                configRetrySafeWindow * 2
-                            )
-                        logger.logWarning(
-                            "Failed to load SDK config from the server. " +
-                                "Trying again in " + configRetrySafeWindow + " seconds."
-                        )
+            // Ensure that another thread didn't refresh it already in the meantime
+            if (configRequiresRefresh()) {
+                try {
+                    lastRefreshConfigAttempt = clock.now()
+                    val newConfig = apiService.getConfig()
+                    if (newConfig != null) {
+                        updateConfig(previousConfig, newConfig)
+                        lastUpdated = clock.now()
                     }
+                    configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
+                    logger.logDeveloper("EmbraceConfigService", "Config updated")
+                } catch (ex: Exception) {
+                    configRetrySafeWindow =
+                        min(
+                            MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
+                            configRetrySafeWindow * 2
+                        )
+                    logger.logWarning(
+                        "Failed to load SDK config from the server. " +
+                            "Trying again in " + configRetrySafeWindow + " seconds."
+                    )
                 }
-                configProp
             }
-        )
+        }
     }
 
     private fun updateConfig(previousConfig: RemoteConfig, newConfig: RemoteConfig) {

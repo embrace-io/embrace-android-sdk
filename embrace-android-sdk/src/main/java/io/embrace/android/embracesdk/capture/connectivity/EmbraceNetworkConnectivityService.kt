@@ -14,7 +14,6 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.NavigableMap
 import java.util.TreeMap
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
@@ -132,20 +131,17 @@ internal class EmbraceNetworkConnectivityService(
         lastNetworkStatus == null || lastNetworkStatus != newNetworkStatus
 
     private fun registerConnectivityActionReceiver() {
-        registrationExecutorService.submit(
-            Callable<Any?> {
-                try {
-                    context.registerReceiver(this, intentFilter)
-                } catch (ex: Exception) {
-                    logger.logDebug(
-                        "Failed to register EmbraceNetworkConnectivityService " +
-                            "broadcast receiver. Connectivity status will be unavailable.",
-                        ex
-                    )
-                }
-                null
+        registrationExecutorService.submit {
+            try {
+                context.registerReceiver(this, intentFilter)
+            } catch (ex: Exception) {
+                logger.logDebug(
+                    "Failed to register EmbraceNetworkConnectivityService " +
+                        "broadcast receiver. Connectivity status will be unavailable.",
+                    ex
+                )
             }
-        )
+        }
     }
 
     override fun close() {

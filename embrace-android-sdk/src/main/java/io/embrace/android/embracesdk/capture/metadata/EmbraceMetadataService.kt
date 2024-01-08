@@ -207,48 +207,42 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Jailbroken already exists")
             return
         }
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
-                val storedIsJailbroken = preferencesService.jailbroken
-                // load value from shared preferences
-                if (storedIsJailbroken != null) {
-                    logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
-                    isJailbroken = storedIsJailbroken
-                } else {
-                    isJailbroken = MetadataUtils.isJailbroken()
-                    preferencesService.jailbroken = isJailbroken
-                    logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
-                }
-                logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
-                null
+        metadataRetrieveExecutorService.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
+            val storedIsJailbroken = preferencesService.jailbroken
+            // load value from shared preferences
+            if (storedIsJailbroken != null) {
+                logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
+                isJailbroken = storedIsJailbroken
+            } else {
+                isJailbroken = MetadataUtils.isJailbroken()
+                preferencesService.jailbroken = isJailbroken
+                logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
             }
-        )
+            logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
+        }
     }
 
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
-                val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
-                if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
-                    val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
-                        storageStatsManager,
-                        packageManager,
-                        packageName
-                    )
-                    if (deviceDiskAppUsage != null) {
-                        logDeveloper("EmbraceMetadataService", "Disk usage is present")
-                        diskUsage = DiskUsage(deviceDiskAppUsage, free)
-                    }
+        metadataRetrieveExecutorService.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
+            val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
+            if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+                val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
+                    storageStatsManager,
+                    packageManager,
+                    packageName
+                )
+                if (deviceDiskAppUsage != null) {
+                    logDeveloper("EmbraceMetadataService", "Disk usage is present")
+                    diskUsage = DiskUsage(deviceDiskAppUsage, free)
                 }
-                if (diskUsage == null) {
-                    diskUsage = DiskUsage(null, free)
-                }
-                logDeveloper("EmbraceMetadataService", "Device disk free: $free")
-                null
             }
-        )
+            if (diskUsage == null) {
+                diskUsage = DiskUsage(null, free)
+            }
+            logDeveloper("EmbraceMetadataService", "Device disk free: $free")
+        }
     }
 
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value

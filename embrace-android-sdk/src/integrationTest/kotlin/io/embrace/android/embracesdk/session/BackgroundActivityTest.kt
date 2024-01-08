@@ -5,13 +5,12 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifyBgActivityMessage
-import io.embrace.android.embracesdk.verifySessionHappened
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

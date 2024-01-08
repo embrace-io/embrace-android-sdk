@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.verify
@@ -97,7 +98,7 @@ internal class EventHandlerTest {
             deliveryService,
             logger,
             clock,
-            scheduledExecutorService
+            ScheduledWorker(scheduledExecutorService)
         )
     }
 
@@ -131,12 +132,11 @@ internal class EventHandlerTest {
     }
 
     @Test
-    fun `if worker is shut down, then event should not be allowed to start`() {
+    fun `if worker is shut down, then event should be allowed to start`() {
         val event = "event"
         scheduledExecutorService.shutdown()
         val allowed = eventHandler.isAllowedToStart(event)
-
-        assertFalse(allowed)
+        assertTrue(allowed)
     }
 
     @Test

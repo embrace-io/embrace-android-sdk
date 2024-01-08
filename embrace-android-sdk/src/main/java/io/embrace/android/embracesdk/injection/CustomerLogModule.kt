@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingServic
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -58,7 +58,7 @@ internal class CustomerLogModuleImpl(
             initModule.clock,
             essentialServiceModule.gatingService,
             essentialServiceModule.networkConnectivityService,
-            workerThreadModule.backgroundExecutor(ExecutorName.REMOTE_LOGGING)
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
         )
     }
 }

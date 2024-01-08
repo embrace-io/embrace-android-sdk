@@ -18,8 +18,9 @@ import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.utils.VersionChecker
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.Executor
 
 /**
  * This modules provides services that capture data from within an application. It could be argued
@@ -74,8 +75,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     versionChecker: VersionChecker = BuildVersionChecker
 ) : DataCaptureServiceModule {
 
-    private val backgroundExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+    private val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     private val configService = essentialServiceModule.configService
 
     override val memoryService: MemoryService by singleton {
@@ -97,7 +97,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         ) {
             EmbracePowerSaveModeService(
                 coreModule.context,
-                backgroundExecutorService,
+                backgroundWorker,
                 initModule.clock,
                 systemServiceModule.powerManager
             )
@@ -127,8 +127,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val thermalStatusService: ThermalStatusService by singleton {
         if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+            // Android API only accepts an executor. We don't want to directly expose those
+            // to everything in the codebase so we decorate the BackgroundWorker here as an
+            // alternative
+            val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+            val executor = Executor(backgroundWorker::submit)
+
             EmbraceThermalStatusService(
-                scheduledExecutor,
+                executor,
                 initModule.clock,
                 coreModule.logger,
                 systemServiceModule.powerManager

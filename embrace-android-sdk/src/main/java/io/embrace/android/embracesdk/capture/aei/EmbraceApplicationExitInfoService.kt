@@ -19,14 +19,14 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
 internal class EmbraceApplicationExitInfoService(
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
@@ -54,7 +54,7 @@ internal class EmbraceApplicationExitInfoService(
     }
 
     private fun startService() {
-        backgroundExecution = executorService.submit {
+        backgroundExecution = backgroundWorker.submit {
             try {
                 processApplicationExitInfo()
             } catch (exc: Throwable) {

@@ -24,10 +24,10 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Stacktraces
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.sql.Timestamp
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -41,7 +41,7 @@ internal class EmbraceLogMessageService(
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger,
     private val clock: Clock,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val gatingService: GatingService,
     private val networkConnectivityService: NetworkConnectivityService
 ) : LogMessageService {
@@ -70,7 +70,7 @@ internal class EmbraceLogMessageService(
         clock: Clock,
         sessionGatingService: GatingService,
         networkConnectivityService: NetworkConnectivityService,
-        executorService: ExecutorService
+        backgroundWorker: BackgroundWorker
     ) : this(
         metadataService,
         deliveryService,
@@ -79,7 +79,7 @@ internal class EmbraceLogMessageService(
         sessionProperties,
         logger,
         clock,
-        executorService,
+        backgroundWorker,
         sessionGatingService,
         networkConnectivityService
     )
@@ -92,7 +92,7 @@ internal class EmbraceLogMessageService(
         }
         try {
             logDeveloper("EmbraceRemoteLogger", "Attempting to log network data")
-            executorService.submit {
+            backgroundWorker.submit {
                 synchronized(lock) {
                     val id = getEmbUuid()
                     networkLogIds[networkEventTimestamp] = id
@@ -168,7 +168,7 @@ internal class EmbraceLogMessageService(
         // at the time of the log call
         val logUserInfo = userService.getUserInfo()
         logDeveloper("EmbraceRemoteLogger", "Added user info to log")
-        executorService.submit {
+        backgroundWorker.submit {
             synchronized(lock) {
                 if (!configService.dataCaptureEventBehavior.isLogMessageEnabled(message)) {
                     logger.logWarning("Log message disabled. Ignoring log with message $message")

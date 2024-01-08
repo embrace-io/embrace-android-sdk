@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
@@ -38,7 +38,7 @@ internal enum class Endpoint(val path: String) {
      * or the exponential backoff delay calculated from the number of retries.
      */
     fun scheduleRetry(
-        scheduledExecutorService: ScheduledExecutorService,
+        scheduledWorker: ScheduledWorker,
         retryAfter: Long?,
         retryMethod: () -> Unit
     ) {
@@ -46,7 +46,7 @@ internal enum class Endpoint(val path: String) {
             retryMethod()
         }
         val delay = calculateDelay(retryAfter)
-        scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
+        scheduledWorker.schedule<Unit>(retryTask, delay, TimeUnit.SECONDS)
     }
 
     /**

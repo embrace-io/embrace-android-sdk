@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface DeliveryModule {
@@ -15,14 +15,14 @@ internal class DeliveryModuleImpl(
     workerThreadModule: WorkerThreadModule
 ) : DeliveryModule {
 
-    private val cachedSessionsExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.CACHED_SESSIONS)
+    private val cachedSessionsWorker = workerThreadModule.backgroundWorker(WorkerName.CACHED_SESSIONS)
 
     override val deliveryService: DeliveryService by singleton {
         EmbraceDeliveryService(
             essentialServiceModule.deliveryCacheManager,
             essentialServiceModule.apiService,
             essentialServiceModule.gatingService,
-            cachedSessionsExecutorService,
+            cachedSessionsWorker,
             coreModule.jsonSerializer,
             coreModule.logger
         )

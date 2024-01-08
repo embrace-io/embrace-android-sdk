@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.crash
 
 import io.embrace.android.embracesdk.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -17,14 +17,14 @@ internal class LastRunCrashVerifierTest {
     private lateinit var lastRunCrashVerifier: LastRunCrashVerifier
     private lateinit var mockCrashFileMarker: CrashFileMarker
     private lateinit var fakeWorkerThreadModule: FakeWorkerThreadModule
-    private lateinit var executor: BlockableExecutorService
+    private lateinit var worker: BackgroundWorker
 
     @Before
     fun setUp() {
         mockCrashFileMarker = mockk()
         lastRunCrashVerifier = LastRunCrashVerifier(mockCrashFileMarker)
         fakeWorkerThreadModule = FakeWorkerThreadModule()
-        executor = fakeWorkerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        worker = fakeWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     }
 
     @After
@@ -49,14 +49,14 @@ internal class LastRunCrashVerifierTest {
     @Test
     fun `test calling readAndCleanMarkerAsync and then didLastRunCrash() returns true if marker file exists`() {
         every { mockCrashFileMarker.getAndCleanMarker() } returns true
-        lastRunCrashVerifier.readAndCleanMarkerAsync(executor)
+        lastRunCrashVerifier.readAndCleanMarkerAsync(worker)
         assertTrue(lastRunCrashVerifier.didLastRunCrash())
     }
 
     @Test
     fun `test calling readAndCleanMarkerAsync and then didLastRunCrash() returns false if marker file doesn't exist`() {
         every { mockCrashFileMarker.getAndCleanMarker() } returns false
-        lastRunCrashVerifier.readAndCleanMarkerAsync(executor)
+        lastRunCrashVerifier.readAndCleanMarkerAsync(worker)
         assertFalse(lastRunCrashVerifier.didLastRunCrash())
     }
 }

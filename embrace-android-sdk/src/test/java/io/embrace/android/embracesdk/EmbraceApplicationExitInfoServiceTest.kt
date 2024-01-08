@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -37,7 +38,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
     private lateinit var applicationExitInfoService: EmbraceApplicationExitInfoService
 
-    private val executorService = MoreExecutors.newDirectExecutorService()
+    private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
 
     private var appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f)
     private val configService = FakeConfigService(
@@ -78,7 +79,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
     private fun startApplicationExitInfoService() {
         applicationExitInfoService = EmbraceApplicationExitInfoService(
-            executorService,
+            worker,
             configService,
             mockActivityManager,
             preferenceService,

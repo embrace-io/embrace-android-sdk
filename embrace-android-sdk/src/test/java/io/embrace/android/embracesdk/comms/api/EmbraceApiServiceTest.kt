@@ -20,7 +20,9 @@ import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
@@ -426,7 +428,7 @@ internal class EmbraceApiServiceTest {
         with(endpoint) {
             updateRateLimitStatus()
             scheduleRetry(
-                scheduledExecutorService = testScheduledExecutor,
+                scheduledWorker = ScheduledWorker(testScheduledExecutor),
                 retryAfter = 3,
                 retryMethod = callback
             )
@@ -504,7 +506,7 @@ internal class EmbraceApiServiceTest {
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = InternalEmbraceLogger(),
-            executorService = testScheduledExecutor,
+            backgroundWorker = BackgroundWorker(testScheduledExecutor),
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,

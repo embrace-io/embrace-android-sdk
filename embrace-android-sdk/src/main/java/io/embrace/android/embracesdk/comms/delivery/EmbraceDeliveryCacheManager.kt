@@ -8,12 +8,13 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.Callable
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
     private val clock: Clock,
     private val serializer: EmbraceSerializer
@@ -87,7 +88,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
-            executorService.submit {
+            backgroundWorker.submit {
                 try {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
@@ -109,7 +110,7 @@ internal class EmbraceDeliveryCacheManager(
                 previousSdkSession?.also {
                     // When saved, the new session filename is also added to cachedSessions
                     saveSession(it, SessionSnapshotType.NORMAL_END)
-                    executorService.submit {
+                    backgroundWorker.submit {
                         cacheService.deleteFile(filename)
                     }
                 }
@@ -165,7 +166,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun savePayload(action: SerializationAction): String {
         val name = "payload_" + Uuid.getEmbUuid()
-        executorService.submit {
+        backgroundWorker.submit {
             cacheService.cachePayload(name, action)
         }
         return name
@@ -180,7 +181,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     override fun deletePayload(name: String) {
-        executorService.submit {
+        backgroundWorker.submit {
             cacheService.deleteFile(name)
         }
     }
@@ -190,7 +191,7 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
         logger.logDeveloper(TAG, "Saving pending api calls")
-        executorService.submit {
+        backgroundWorker.submit {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
         }
     }
@@ -202,12 +203,13 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun loadPendingApiCalls(): PendingApiCalls {
         logger.logDeveloper(TAG, "Loading pending api calls")
-        val cached = executorService.submit<PendingApiCalls> {
+        val callable = Callable<PendingApiCalls?> {
             val loadApiCallsResult = runCatching {
                 cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
             }
             loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
-        }.get()
+        }
+        val cached = backgroundWorker.submit(callable).get()
         return if (cached != null) {
             cached
         } else {
@@ -241,7 +243,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        return executorService.submit<SessionMessage?> {
+        return backgroundWorker.submit<SessionMessage?> {
             try {
                 val sessionMessage = cacheService.loadObject(
                     cachedSession.filename,
@@ -273,7 +275,7 @@ internal class EmbraceDeliveryCacheManager(
         if (writeSync) {
             saveBytesImpl(sessionId, saveAction)
         } else {
-            executorService.submit {
+            backgroundWorker.submit {
                 saveBytesImpl(sessionId, saveAction)
             }
         }

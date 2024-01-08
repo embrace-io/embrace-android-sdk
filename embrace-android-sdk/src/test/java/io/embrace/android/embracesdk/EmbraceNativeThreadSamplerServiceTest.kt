@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.payload.mapThreadState
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -56,7 +57,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
                 random,
                 logger,
                 delegate,
-                executorService,
+                ScheduledWorker(executorService),
                 FakeDeviceArchitecture()
             )
         every { random.nextInt(any()) } returns 0

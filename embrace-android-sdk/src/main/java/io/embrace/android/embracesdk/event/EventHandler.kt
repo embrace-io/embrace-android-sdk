@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 
 /**
@@ -33,7 +33,7 @@ internal class EventHandler(
     private val deliveryService: DeliveryService,
     private val logger: InternalEmbraceLogger,
     private val clock: Clock,
-    private val scheduledExecutor: ScheduledExecutorService
+    private val scheduledWorker: ScheduledWorker
 ) {
     /**
      * Responsible for handling the start of an event.
@@ -56,7 +56,7 @@ internal class EventHandler(
             eventProperties
         )
 
-        val timer = scheduledExecutor.schedule(
+        val timer = scheduledWorker.schedule<Unit>(
             timeoutCallback,
             threshold - calculateOffset(startTime, threshold),
             TimeUnit.MILLISECONDS
@@ -121,9 +121,6 @@ internal class EventHandler(
             false
         } else if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.EVENT)) {
             logger.logWarning("Event message disabled. Ignoring all Events.")
-            false
-        } else if (scheduledExecutor.isShutdown()) {
-            logger.logError("Cannot start event as service is shut down")
             false
         } else {
             true

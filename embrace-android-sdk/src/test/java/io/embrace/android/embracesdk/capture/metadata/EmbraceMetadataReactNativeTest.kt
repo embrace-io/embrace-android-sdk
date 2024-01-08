@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -70,7 +71,7 @@ internal class EmbraceMetadataReactNativeTest {
         appFramework,
         preferencesService,
         processStateService,
-        MoreExecutors.newDirectExecutorService(),
+        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         mockStorageStatsManager(),
         mockWindowManager(),
         mockActivityManager(),

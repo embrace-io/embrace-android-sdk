@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -316,7 +317,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             ndkService,
             clock,
             collator,
-            blockableExecutorService
+            BackgroundWorker(blockableExecutorService)
         )
     }
 }

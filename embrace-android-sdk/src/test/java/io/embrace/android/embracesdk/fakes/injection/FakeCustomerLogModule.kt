@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.injection.CustomerLogModule
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class FakeCustomerLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
@@ -28,7 +29,7 @@ internal class FakeCustomerLogModule(
         fakeEmbraceSessionProperties(),
         InternalEmbraceLogger(),
         FakeClock(),
-        MoreExecutors.newDirectExecutorService(),
+        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         FakeGatingService(),
         NoOpNetworkConnectivityService()
     )

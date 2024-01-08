@@ -19,28 +19,35 @@ internal class WorkerThreadModuleImpl(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
-    private val executors: MutableMap<ExecutorName, ExecutorService> = ConcurrentHashMap()
+    private val executors: MutableMap<WorkerName, ExecutorService> = ConcurrentHashMap()
+    private val backgroundWorkers: MutableMap<WorkerName, BackgroundWorker> = ConcurrentHashMap()
+    private val scheduledWorkers: MutableMap<WorkerName, ScheduledWorker> = ConcurrentHashMap()
 
-    override fun backgroundExecutor(executorName: ExecutorName): ExecutorService =
-        fetchExecutor(executorName)
+    override fun backgroundWorker(workerName: WorkerName): BackgroundWorker {
+        return backgroundWorkers.getOrPut(workerName) {
+            BackgroundWorker(fetchExecutor(workerName))
+        }
+    }
 
-    override fun scheduledExecutor(executorName: ExecutorName): ScheduledExecutorService {
-        if (executorName == ExecutorName.NETWORK_REQUEST) {
+    override fun scheduledWorker(workerName: WorkerName): ScheduledWorker {
+        if (workerName == WorkerName.NETWORK_REQUEST) {
             error("Network request executor is not a scheduled executor")
         }
-        return fetchExecutor(executorName) as ScheduledExecutorService
+        return scheduledWorkers.getOrPut(workerName) {
+            ScheduledWorker(fetchExecutor(workerName) as ScheduledExecutorService)
+        }
     }
 
     override fun close() {
         executors.values.forEach(ExecutorService::shutdown)
     }
 
-    private fun fetchExecutor(executorName: ExecutorName): ExecutorService {
-        return executors.getOrPut(executorName) {
-            val threadFactory = createThreadFactory(executorName.threadName)
+    private fun fetchExecutor(workerName: WorkerName): ExecutorService {
+        return executors.getOrPut(workerName) {
+            val threadFactory = createThreadFactory(workerName.threadName)
 
-            when (executorName) {
-                ExecutorName.NETWORK_REQUEST -> {
+            when (workerName) {
+                WorkerName.NETWORK_REQUEST -> {
                     ThreadPoolExecutor(
                         1,
                         1,

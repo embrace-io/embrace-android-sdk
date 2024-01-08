@@ -24,8 +24,8 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.ExecutorService
 import kotlin.math.min
 
 /**
@@ -37,7 +37,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
     private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
@@ -165,7 +165,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
     private fun performInitialConfigLoad() {
         logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
-        executorService.submit(::loadConfigFromCache)
+        backgroundWorker.submit(::loadConfigFromCache)
     }
 
     /**
@@ -207,7 +207,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private fun refreshConfig() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to refresh config")
         val previousConfig = configProp
-        executorService.submit {
+        backgroundWorker.submit {
             logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
 
             // Ensure that another thread didn't refresh it already in the meantime

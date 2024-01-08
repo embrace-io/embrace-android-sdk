@@ -3,21 +3,12 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.local.SessionLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.getLastSavedSessionMessage
 import io.embrace.android.embracesdk.getLastSentSessionMessage
-import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.verifySessionHappened
-import io.embrace.android.embracesdk.verifySessionMessage
-import io.embrace.android.embracesdk.worker.ExecutorName.*
+import io.embrace.android.embracesdk.worker.WorkerName.*
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -42,8 +33,7 @@ internal class PeriodicSessionCacheTest {
     @Test
     fun `session is periodically cached`() {
         with(testRule) {
-            val executor =
-                harness.workerThreadModule.scheduledExecutor(PERIODIC_CACHE) as BlockingScheduledExecutorService
+            val executor = (harness.workerThreadModule as FakeWorkerThreadModule).executor
 
             harness.recordSession {
                 executor.runCurrentlyBlocked()

@@ -6,23 +6,21 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 internal class EmbracePreferencesService(
-    registrationExecutorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: EmbraceSerializer
 ) : PreferencesService, ActivityLifecycleListener {
 
     private val preferences: Future<SharedPreferences>
-    private val registrationExecutorService: ExecutorService
     private val lazyPrefs: Lazy<SharedPreferences>
 
     init {
-        this.registrationExecutorService = registrationExecutorService
         this.lazyPrefs = lazyPrefs
 
         // We get SharedPreferences on a background thread because it loads data from disk
@@ -30,14 +28,14 @@ internal class EmbracePreferencesService(
         // block if necessary with Future.get(). Eagerly offloading buys us more time
         // for SharedPreferences to load the File and reduces the likelihood of blocking
         // when invoked by client code.
-        preferences = registrationExecutorService.submit(lazyPrefs::value)
+        preferences = backgroundWorker.submit(lazyPrefs::value)
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 
     override fun applicationStartupComplete() = alterStartupStatus(SDK_STARTUP_COMPLETED)
 
     private fun alterStartupStatus(status: String) {
-        registrationExecutorService.submit {
+        backgroundWorker.submit {
             logDeveloper("EmbracePreferencesService", "Startup key: $status")
             prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
         }

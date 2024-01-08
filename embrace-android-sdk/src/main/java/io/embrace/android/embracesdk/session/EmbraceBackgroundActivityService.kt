@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceBackgroundActivityService(
@@ -26,7 +26,7 @@ internal class EmbraceBackgroundActivityService(
      */
     private val clock: Clock,
     private val backgroundActivityCollator: BackgroundActivityCollator,
-    private val executorService: ExecutorService
+    private val backgroundWorker: BackgroundWorker
 ) : BackgroundActivityService, ConfigListener {
 
     private var lastSaved: Long = 0
@@ -118,7 +118,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     private fun saveNow() {
-        executorService.submit(::cacheBackgroundActivity)
+        backgroundWorker.submit(::cacheBackgroundActivity)
         willBeSaved = false
     }
 

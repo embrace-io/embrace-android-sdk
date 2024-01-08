@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -43,7 +43,7 @@ internal class DataContainerModuleImpl(
     override val applicationExitInfoService: ApplicationExitInfoService by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             EmbraceApplicationExitInfoService(
-                workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 essentialServiceModule.configService,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,

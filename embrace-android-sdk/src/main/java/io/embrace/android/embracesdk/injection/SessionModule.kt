@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
@@ -73,8 +73,8 @@ internal class SessionModuleImpl(
             sessionProperties,
             initModule.clock,
             initModule.spansService,
-            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
-            workerThreadModule.scheduledExecutor(ExecutorName.PERIODIC_CACHE)
+            workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
         )
     }
 
@@ -108,7 +108,7 @@ internal class SessionModuleImpl(
                 nativeModule.ndkService,
                 initModule.clock,
                 backgroundActivityCollator,
-                workerThreadModule.backgroundExecutor(ExecutorName.PERIODIC_CACHE)
+                workerThreadModule.backgroundWorker(WorkerName.PERIODIC_CACHE)
             )
         } else {
             null

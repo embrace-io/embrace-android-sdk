@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockIntent
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.unmockkAll
@@ -22,7 +23,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutorService
 
 internal class EmbracePowerSaveModeServiceTest {
 
@@ -31,7 +31,7 @@ internal class EmbracePowerSaveModeServiceTest {
     companion object {
         private lateinit var context: Context
         private lateinit var intent: Intent
-        private lateinit var executor: ExecutorService
+        private lateinit var worker: BackgroundWorker
         private lateinit var fakeClock: FakeClock
         private lateinit var powerManager: PowerManager
 
@@ -43,7 +43,7 @@ internal class EmbracePowerSaveModeServiceTest {
         fun setupBeforeAll() {
             context = mockContext()
             intent = mockIntent()
-            executor = MoreExecutors.newDirectExecutorService()
+            worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
             fakeClock = FakeClock()
             powerManager = mockPowerManager()
         }
@@ -65,7 +65,7 @@ internal class EmbracePowerSaveModeServiceTest {
     fun setup() {
         service = EmbracePowerSaveModeService(
             context,
-            executor,
+            worker,
             fakeClock,
             powerManager
         )

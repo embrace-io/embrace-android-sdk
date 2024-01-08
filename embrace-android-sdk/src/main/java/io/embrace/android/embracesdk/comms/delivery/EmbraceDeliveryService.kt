@@ -12,14 +12,14 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val gatingService: GatingService,
-    private val cachedSessionsExecutorService: ExecutorService,
+    private val cachedSessionsBackgroundWorker: BackgroundWorker,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : DeliveryService {
@@ -163,13 +163,13 @@ internal class EmbraceDeliveryService(
     }
 
     private fun sendCachedSessionsWithoutNdk(currentSession: String?) {
-        cachedSessionsExecutorService.submit {
+        cachedSessionsBackgroundWorker.submit {
             sendCachedSessions(cacheManager.getAllCachedSessionIds(), currentSession)
         }
     }
 
     private fun sendCachedSessionsWithNdk(ndkService: NdkService, currentSession: String?) {
-        cachedSessionsExecutorService.submit {
+        cachedSessionsBackgroundWorker.submit {
             val allSessions = cacheManager.getAllCachedSessionIds()
             logger.logDeveloper(TAG, "NDK enabled, checking for native crashes")
             val nativeCrashData = ndkService.checkForNativeCrash()

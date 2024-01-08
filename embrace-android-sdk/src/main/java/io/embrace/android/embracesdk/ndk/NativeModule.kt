@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface NativeModule {
@@ -42,8 +42,8 @@ internal class NativeModuleImpl(
             coreModule.logger,
             embraceNdkServiceRepository,
             NdkDelegateImpl(),
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             essentialServiceModule.deviceArchitecture,
             coreModule.jsonSerializer
         )
@@ -54,7 +54,7 @@ internal class NativeModuleImpl(
             EmbraceNativeThreadSamplerService(
                 essentialServiceModule.configService,
                 lazy { ndkService.getSymbolsForCurrentArch() },
-                executorService = workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+                scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                 deviceArchitecture = essentialServiceModule.deviceArchitecture
             )
         } else {

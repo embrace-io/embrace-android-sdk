@@ -47,6 +47,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -80,8 +81,8 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
-        private val automaticSessionStopper: ScheduledExecutorService = mockk(relaxed = true)
-        private val sessionPeriodicCacheExecutorService: ScheduledExecutorService =
+        private val automaticSessionStopper: ScheduledWorker = mockk(relaxed = true)
+        private val sessionPeriodicCacheExecutorService: ScheduledWorker =
             mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
         private const val now = 123L
@@ -195,7 +196,7 @@ internal class SessionHandlerTest {
             clock,
             spansService,
             automaticSessionStopper = automaticSessionStopper,
-            sessionPeriodicCacheExecutorService = sessionPeriodicCacheExecutorService
+            sessionPeriodicCacheScheduledWorker = sessionPeriodicCacheExecutorService
         )
     }
 
@@ -227,7 +228,7 @@ internal class SessionHandlerTest {
         assertEquals(sessionUuid, metadataService.activeSessionId)
         // verify automatic session stopper has been scheduled
         verify {
-            automaticSessionStopper.schedule(
+            automaticSessionStopper.schedule<Unit>(
                 automaticSessionStopperRunnable,
                 maxSessionSeconds.toLong(),
                 TimeUnit.SECONDS

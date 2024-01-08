@@ -14,7 +14,7 @@ internal interface StorageService {
     val filesDirectory: Lazy<File>
 
     /**
-     * Returns a file instance with the specified [name] from [filesDirectory] or [cacheDirectory]
+     * Returns a [File] with the specified [name] from [filesDirectory] or [cacheDirectory]
      * if [fallback] is true and the file doesn't exist in the [filesDirectory].
      */
     fun getFile(name: String, fallback: Boolean): File

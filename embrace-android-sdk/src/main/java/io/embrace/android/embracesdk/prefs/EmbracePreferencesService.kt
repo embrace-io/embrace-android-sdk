@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 internal class EmbracePreferencesService(
     registrationExecutorService: ExecutorService,
@@ -49,7 +50,7 @@ internal class EmbracePreferencesService(
     // fallback from this very unlikely case by just loading on the main thread
     private val prefs: SharedPreferences
         get() = try {
-            preferences.get()
+            preferences.get(2, TimeUnit.SECONDS)
         } catch (exc: Throwable) {
             // fallback from this very unlikely case by just loading on the main thread
             lazyPrefs.value

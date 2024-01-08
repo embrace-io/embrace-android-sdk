@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -44,18 +42,11 @@ internal enum class Endpoint(val path: String) {
         retryAfter: Long?,
         retryMethod: () -> Unit
     ) {
-        try {
-            val retryTask = Runnable {
-                retryMethod()
-            }
-            val delay = calculateDelay(retryAfter)
-            scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
-        } catch (e: RejectedExecutionException) {
-            InternalStaticEmbraceLogger.logger.logError(
-                "Cannot schedule clear rate limit failed calls.",
-                e
-            )
+        val retryTask = Runnable {
+            retryMethod()
         }
+        val delay = calculateDelay(retryAfter)
+        scheduledExecutorService.schedule(retryTask, delay, TimeUnit.SECONDS)
     }
 
     /**

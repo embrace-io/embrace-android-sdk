@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.worker
 
+import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -36,5 +38,20 @@ internal class WorkerThreadModuleImplTest {
     fun `network request scheduled executor fails`() {
         val module = WorkerThreadModuleImpl()
         assertTrue(module.scheduledExecutor(ExecutorName.NETWORK_REQUEST) is ThreadPoolExecutor)
+    }
+
+    @Test
+    fun `rejected execution policy`() {
+        val action = FakeLoggerAction()
+        val logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
+        val module = WorkerThreadModuleImpl(logger)
+
+        val executor = module.backgroundExecutor(ExecutorName.PERIODIC_CACHE)
+        executor.shutdown()
+
+        val future = executor.submit {}
+        val msg = action.msgQueue.single().msg
+        assertTrue(msg.startsWith("Rejected execution of"))
+        assertNotNull(future)
     }
 }

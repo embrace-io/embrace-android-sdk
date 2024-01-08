@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.MessageType
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -137,7 +138,7 @@ internal class SessionHandler(
 
             handleAutomaticSessionStopper(automaticSessionCloserCallback)
             addFirstViewBreadcrumbForSession(startTime)
-            startPeriodicCaching { onPeriodicCacheActiveSession() }
+            startPeriodicCaching { Systrace.trace("cache-session") { onPeriodicCacheActiveSession() } }
             if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
                 ndkService.updateSessionId(session.sessionId)
             }

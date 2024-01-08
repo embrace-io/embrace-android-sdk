@@ -4,7 +4,7 @@ import java.io.File
 import java.io.FilenameFilter
 
 /**
- * Provides File instances for the cache and files directories.
+ * Provides File instances for files in the cache and files directories.
  * Previous versions of the SDK used to store files in the cache directory, but now we use the
  * files directory for everything except the config cache.
  */

@@ -252,7 +252,7 @@ internal class SessionHandlerTest {
             assertTrue(isColdStart)
             assertEquals(sessionStartType, startType)
             assertEquals(emptyMapSessionProperties, properties)
-            assertEquals("st", messageType)
+            assertEquals("en", messageType)
             assertEquals("foreground", appState)
             assertEquals(userInfo, user)
         }

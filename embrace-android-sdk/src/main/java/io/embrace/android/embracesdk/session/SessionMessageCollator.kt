@@ -94,7 +94,7 @@ internal class SessionMessageCollator(
         val endSession = originSession.copy(
             isEndedCleanly = endedCleanly,
             appState = Session.APPLICATION_STATE_FOREGROUND,
-            messageType = MESSAGE_TYPE_END,
+            messageType = Session.MESSAGE_TYPE_END,
             eventIds = captureDataSafely { eventService.findEventIdsForSession(startTime, endTime) },
             infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
             warningLogIds = captureDataSafely { logMessageService.findWarningLogIds(startTime, endTime) },
@@ -167,17 +167,7 @@ internal class SessionMessageCollator(
         isColdStart = coldStart,
         startType = startType,
         properties = sessionProperties,
-        messageType = MESSAGE_TYPE_START,
+        messageType = Session.MESSAGE_TYPE_END,
         user = userInfo
     )
 }
-
-/**
- * Signals to the API the start of a session.
- */
-internal const val MESSAGE_TYPE_START = "st"
-
-/**
- * Signals to the API the end of a session.
- */
-internal const val MESSAGE_TYPE_END = "en"

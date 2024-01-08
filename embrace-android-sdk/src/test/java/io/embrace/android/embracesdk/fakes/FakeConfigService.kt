@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
  */
 internal class FakeConfigService(
     var sdkDisabled: Boolean = false,
-    private var backgroundActivityCaptureEnabled: Boolean = false,
+    var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),

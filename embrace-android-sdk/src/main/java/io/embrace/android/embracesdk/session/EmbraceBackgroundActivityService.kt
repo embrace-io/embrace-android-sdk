@@ -97,9 +97,9 @@ internal class EmbraceBackgroundActivityService(
 
     override fun onConfigChange(configService: ConfigService) {
         if (isEnabled && !configService.isBackgroundActivityCaptureEnabled()) {
-            disableService()
+            isEnabled = false
         } else if (!isEnabled && configService.isBackgroundActivityCaptureEnabled()) {
-            enableService()
+            isEnabled = true
         }
     }
 
@@ -125,14 +125,6 @@ internal class EmbraceBackgroundActivityService(
     private fun saveLater() {
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed(Runnable { saveNow() }, MIN_INTERVAL_BETWEEN_SAVES)
-    }
-
-    private fun disableService() {
-        isEnabled = false
-    }
-
-    private fun enableService() {
-        isEnabled = true
     }
 
     /**
@@ -243,15 +235,6 @@ internal class EmbraceBackgroundActivityService(
     }
 
     companion object {
-        /**
-         * Signals to the API that this is a background session.
-         */
-        internal const val APPLICATION_STATE_BACKGROUND = "background"
-
-        /**
-         * Signals to the API the end of a session.
-         */
-        internal const val MESSAGE_TYPE_END = "en"
 
         /**
          * Minimum time between writes of the background activity to disk

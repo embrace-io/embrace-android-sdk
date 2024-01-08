@@ -36,9 +36,9 @@ internal class BackgroundActivityCollator(
     ): Session {
         return Session(
             sessionId = Uuid.getEmbUuid(),
-            messageType = EmbraceBackgroundActivityService.MESSAGE_TYPE_END,
+            messageType = Session.MESSAGE_TYPE_END,
             startTime = startTime,
-            appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
+            appState = Session.APPLICATION_STATE_BACKGROUND,
             isColdStart = coldStart,
             startType = startType,
             user = captureDataSafely(userService::loadUserInfoFromDisk),
@@ -55,8 +55,8 @@ internal class BackgroundActivityCollator(
     ): Session {
         val startTime = activity.startTime ?: 0
         return activity.copy(
-            appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
-            messageType = EmbraceBackgroundActivityService.MESSAGE_TYPE_END,
+            appState = Session.APPLICATION_STATE_BACKGROUND,
+            messageType = Session.MESSAGE_TYPE_END,
             endTime = endTime,
             eventIds = captureDataSafely {
                 eventService.findEventIdsForSession(

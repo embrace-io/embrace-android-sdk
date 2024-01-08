@@ -167,5 +167,15 @@ internal data class Session @JvmOverloads internal constructor(
          * Signals to the API that the application was in the foreground.
          */
         internal const val APPLICATION_STATE_FOREGROUND = "foreground"
+
+        /**
+         * Signals to the API that this is a background session.
+         */
+        internal const val APPLICATION_STATE_BACKGROUND = "background"
+
+        /**
+         * Signals to the API the end of a session.
+         */
+        internal const val MESSAGE_TYPE_END = "en"
     }
 }

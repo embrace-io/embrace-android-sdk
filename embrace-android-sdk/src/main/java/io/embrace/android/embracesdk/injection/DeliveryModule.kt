@@ -15,14 +15,12 @@ internal class DeliveryModuleImpl(
     workerThreadModule: WorkerThreadModule
 ) : DeliveryModule {
 
-    private val cachedSessionsWorker = workerThreadModule.backgroundWorker(WorkerName.CACHED_SESSIONS)
-
     override val deliveryService: DeliveryService by singleton {
         EmbraceDeliveryService(
             essentialServiceModule.deliveryCacheManager,
             essentialServiceModule.apiService,
             essentialServiceModule.gatingService,
-            cachedSessionsWorker,
+            workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.jsonSerializer,
             coreModule.logger
         )

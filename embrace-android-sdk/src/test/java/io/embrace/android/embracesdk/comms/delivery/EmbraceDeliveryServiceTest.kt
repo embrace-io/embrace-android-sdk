@@ -16,12 +16,12 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.ExecutorService
 
 internal class EmbraceDeliveryServiceTest {
 
@@ -30,7 +30,7 @@ internal class EmbraceDeliveryServiceTest {
     private val anotherMessage =
         fakeSessionMessage().copy(session = session.copy(sessionId = "session2"))
 
-    private lateinit var executor: ExecutorService
+    private lateinit var worker: BackgroundWorker
     private lateinit var deliveryCacheManager: FakeDeliveryCacheManager
     private lateinit var apiService: FakeApiService
     private lateinit var ndkService: FakeNdkService
@@ -40,7 +40,7 @@ internal class EmbraceDeliveryServiceTest {
 
     @Before
     fun setUp() {
-        executor = MoreExecutors.newDirectExecutorService()
+        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         deliveryCacheManager = FakeDeliveryCacheManager()
         apiService = FakeApiService()
         ndkService = FakeNdkService()
@@ -50,7 +50,6 @@ internal class EmbraceDeliveryServiceTest {
 
     @After
     fun after() {
-        executor.shutdown()
         gatingService.sessionMessagesFiltered.clear()
     }
 
@@ -59,7 +58,7 @@ internal class EmbraceDeliveryServiceTest {
             deliveryCacheManager,
             apiService,
             gatingService,
-            executor,
+            worker,
             EmbraceSerializer(),
             logger
         )

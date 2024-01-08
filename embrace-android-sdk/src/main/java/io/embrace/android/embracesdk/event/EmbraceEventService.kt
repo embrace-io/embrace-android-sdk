@@ -19,13 +19,13 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.stream
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
@@ -48,7 +48,7 @@ internal class EmbraceEventService(
     private val clock: Clock,
     private val spansService: SpansService
 ) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
-    private val executorService: ExecutorService
+    private val backgroundWorker: BackgroundWorker
 
     /**
      * Timeseries of event IDs, keyed on the start time of the event.
@@ -77,10 +77,10 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+            workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
         )
-        executorService =
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        backgroundWorker =
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
@@ -288,7 +288,7 @@ internal class EmbraceEventService(
 
     private fun logStartupSpan() {
         val startupEndTimeMillis = clock.now()
-        executorService.submit {
+        backgroundWorker.submit {
             spansService.recordCompletedSpan(
                 name = STARTUP_SPAN_NAME,
                 startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startupStartTime),

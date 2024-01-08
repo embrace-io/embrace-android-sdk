@@ -12,11 +12,11 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Compani
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.PowerModeInterval
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class EmbracePowerSaveModeService(
     private val context: Context,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val powerManager: PowerManager?
 ) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
@@ -36,7 +36,7 @@ internal class EmbracePowerSaveModeService(
     }
 
     private fun registerPowerSaveModeReceiver() {
-        executorService.submit {
+        backgroundWorker.submit {
             try {
                 context.registerReceiver(this, powerSaveIntentFilter)
                 logDeveloper(tag, "registered power save mode changed")

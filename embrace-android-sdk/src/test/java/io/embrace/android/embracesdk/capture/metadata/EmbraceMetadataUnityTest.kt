@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -106,7 +107,7 @@ internal class EmbraceMetadataUnityTest {
         Embrace.AppFramework.UNITY,
         preferencesService,
         processStateService,
-        MoreExecutors.newDirectExecutorService(),
+        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         mockStorageStatsManager(),
         mockWindowManager(),
         mockActivityManager(),

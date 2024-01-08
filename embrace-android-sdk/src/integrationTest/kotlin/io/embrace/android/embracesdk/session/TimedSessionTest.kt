@@ -11,12 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
-import io.embrace.android.embracesdk.worker.ExecutorName
-import io.embrace.android.embracesdk.worker.ExecutorName.*
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.WorkerName.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -42,8 +37,8 @@ internal class TimedSessionTest {
     @Test
     fun `timed session automatically ends session`() {
         with(testRule) {
-            val executor =
-                harness.workerThreadModule.scheduledExecutor(BACKGROUND_REGISTRATION) as BlockingScheduledExecutorService
+            val executor = (harness.workerThreadModule as FakeWorkerThreadModule).executor
+
             harness.fakeConfigService.sessionBehavior = fakeSessionBehavior(
                 localCfg = { SessionLocalConfig(90) }) {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
@@ -67,8 +62,7 @@ internal class TimedSessionTest {
     @Test
     fun `timed session has no effect when config disabled`() {
         with(testRule) {
-            val executor =
-                harness.workerThreadModule.scheduledExecutor(BACKGROUND_REGISTRATION) as BlockingScheduledExecutorService
+            val executor = (harness.workerThreadModule as FakeWorkerThreadModule).executor
             harness.fakeConfigService.sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }

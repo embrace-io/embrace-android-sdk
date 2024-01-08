@@ -5,21 +5,21 @@ import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.ScheduledExecutorService
 
 internal class PendingApiCallsTest {
 
-    private lateinit var testScheduledExecutor: ScheduledExecutorService
+    private lateinit var worker: ScheduledWorker
     private lateinit var pendingApiCalls: PendingApiCalls
 
     @Before
     fun setUp() {
-        testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
+        worker = ScheduledWorker(BlockingScheduledExecutorService(blockingMode = false))
         pendingApiCalls = PendingApiCalls()
     }
 
@@ -163,7 +163,7 @@ internal class PendingApiCallsTest {
         with(endpoint) {
             updateRateLimitStatus()
             scheduleRetry(
-                scheduledExecutorService = testScheduledExecutor,
+                scheduledWorker = worker,
                 1000
             ) {}
         }

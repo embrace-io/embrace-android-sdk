@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
 internal class EmbraceApiService(
@@ -22,7 +22,7 @@ internal class EmbraceApiService(
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
@@ -154,7 +154,7 @@ internal class EmbraceApiService(
     }
 
     override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
-        return postOnExecutor(action, mapper.sessionRequest(), onFinish)
+        return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(
@@ -168,19 +168,19 @@ internal class EmbraceApiService(
         val action: SerializationAction = { stream ->
             serializer.toJson(payload, T::class.java, stream)
         }
-        return postOnExecutor(action, request, onComplete)
+        return postOnWorker(action, request, onComplete)
     }
 
     /**
-     * Submits a [NetworkRequestRunnable] to the [executorService].
+     * Submits a [NetworkRequestRunnable] to the [backgroundWorker].
      * This way, we prioritize the sending of sessions over other network requests.
      */
-    private fun postOnExecutor(
+    private fun postOnWorker(
         action: SerializationAction,
         request: ApiRequest,
         onComplete: (() -> Any)?,
     ): Future<*> {
-        return executorService.submit(
+        return backgroundWorker.submit(
             NetworkRequestRunnable(request) {
                 try {
                     handleApiRequest(request, action)

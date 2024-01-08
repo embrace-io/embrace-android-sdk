@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.spyk
@@ -36,7 +37,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
-    private val executor = MoreExecutors.newDirectExecutorService()
+    private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var cacheService: TestCacheService
     private lateinit var fakeClock: FakeClock
@@ -67,7 +68,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private fun initializeSessionCacheManager() {
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            executor,
+            worker,
             logger,
             fakeClock,
             serializer

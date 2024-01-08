@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.payload.NativeSymbols
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -37,7 +38,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.LinkedList
 import java.util.Locale
-import java.util.concurrent.ExecutorService
 
 internal class EmbraceNdkService(
     private val context: Context,
@@ -53,8 +53,8 @@ internal class EmbraceNdkService(
     private val logger: InternalEmbraceLogger,
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
-    private val cleanCacheExecutorService: ExecutorService,
-    private val ndkStartupExecutorService: ExecutorService,
+    private val cleanCacheWorker: BackgroundWorker,
+    private val ndkStartupWorker: BackgroundWorker,
     /**
      * The device architecture.
      */
@@ -452,7 +452,7 @@ internal class EmbraceNdkService(
     }
 
     private fun cleanOldCrashFiles() {
-        cleanCacheExecutorService.submit {
+        cleanCacheWorker.submit {
             logger.logDeveloper("EmbraceNDKService", "Processing clean of old crash files.")
             val sortedFiles = repository.sortNativeCrashes(true)
             val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
@@ -583,7 +583,7 @@ internal class EmbraceNdkService(
      * Compute NDK metadata on a background thread.
      */
     private fun updateDeviceMetaData() {
-        ndkStartupExecutorService.submit {
+        ndkStartupWorker.submit {
             logger.logDeveloper("EmbraceNDKService", "Processing NDK metadata update on bg thread.")
             var newDeviceMetaData = getMetaData(true)
             logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")

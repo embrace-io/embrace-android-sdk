@@ -22,8 +22,8 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.io.Closeable
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -44,8 +44,8 @@ internal class SessionHandler(
     private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
     private val spansService: SpansService,
-    private val automaticSessionStopper: ScheduledExecutorService,
-    private val sessionPeriodicCacheExecutorService: ScheduledExecutorService
+    private val automaticSessionStopper: ScheduledWorker,
+    private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
 ) : Closeable {
 
     companion object {
@@ -361,7 +361,7 @@ internal class SessionHandler(
         }
 
         closerFuture?.cancel(true)
-        closerFuture = this.automaticSessionStopper.schedule(
+        closerFuture = this.automaticSessionStopper.schedule<Unit>(
             automaticSessionStopperCallback,
             maxSessionSeconds.toLong(),
             TimeUnit.SECONDS
@@ -403,7 +403,7 @@ internal class SessionHandler(
      * It starts a background job that will schedule a callback to do periodic caching.
      */
     private fun startPeriodicCaching(cacheCallback: Runnable) {
-        scheduledFuture = this.sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
+        scheduledFuture = this.sessionPeriodicCacheScheduledWorker.scheduleWithFixedDelay(
             cacheCallback,
             0,
             SESSION_CACHING_INTERVAL.toLong(),

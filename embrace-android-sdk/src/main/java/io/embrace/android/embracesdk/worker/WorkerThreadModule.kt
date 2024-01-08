@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.worker
 
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.ScheduledExecutorService
 
 /**
  * A set of shared executors to be used throughout the SDK
@@ -10,14 +8,14 @@ import java.util.concurrent.ScheduledExecutorService
 internal interface WorkerThreadModule : Closeable {
 
     /**
-     * Return the [ExecutorService] given the [executorName]
+     * Return a [BackgroundWorker] matching the [workerName]
      */
-    fun backgroundExecutor(executorName: ExecutorName): ExecutorService
+    fun backgroundWorker(workerName: WorkerName): BackgroundWorker
 
     /**
-     * Return the [ScheduledExecutorService] given the [executorName]
+     * Return the [ScheduledWorker] given the [workerName]
      */
-    fun scheduledExecutor(executorName: ExecutorName): ScheduledExecutorService
+    fun scheduledWorker(workerName: WorkerName): ScheduledWorker
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the
@@ -27,9 +25,9 @@ internal interface WorkerThreadModule : Closeable {
 }
 
 /**
- * The key used to reference a specific shared [ExecutorService] or the [ScheduledExecutorService] that uses it
+ * The key used to reference a specific shared [BackgroundWorker] or the [ScheduledWorker] that uses it
  */
-internal enum class ExecutorName(internal val threadName: String) {
+internal enum class WorkerName(internal val threadName: String) {
 
     /**
      * Used primarily to perform short-lived tasks that need to execute only once, or

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.storage.EmbraceStorageManager
 import io.embrace.android.embracesdk.storage.StorageManager
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.io.File
 
@@ -24,8 +24,8 @@ internal class StorageModuleImpl(
     coreModule: CoreModule,
 ) : StorageModule {
 
-    private val deliveryCacheExecutorService =
-        workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
+    private val deliveryCacheWorker =
+        workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
 
     override val storageManager: StorageManager by singleton {
         EmbraceStorageManager(coreModule)
@@ -45,7 +45,7 @@ internal class StorageModuleImpl(
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            deliveryCacheExecutorService,
+            deliveryCacheWorker,
             coreModule.logger,
             initModule.clock,
             coreModule.jsonSerializer

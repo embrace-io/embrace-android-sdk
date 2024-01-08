@@ -489,20 +489,20 @@ internal class EmbraceNdkService(
                 )
             }
 
-                // delete map files that don't have matching crash files
-                val mapFiles = getNativeMapFiles()
-                for (mapFile in mapFiles) {
-                    if (hasNativeCrashFile(mapFile)) {
-                        logger.logDeveloper(
-                            "EmbraceNDKService",
-                            "Skipping map file as it has a matching crash file " + mapFile.absolutePath
-                        )
-                        continue
-                    }
-                    mapFile.delete()
+            // delete map files that don't have matching crash files
+            val mapFiles = getNativeMapFiles()
+            for (mapFile in mapFiles) {
+                if (hasNativeCrashFile(mapFile)) {
                     logger.logDeveloper(
                         "EmbraceNDKService",
-                        "Deleting map file as it has no matching crash file " + mapFile.absolutePath
+                        "Skipping map file as it has a matching crash file " + mapFile.absolutePath
+                    )
+                    continue
+                }
+                mapFile.delete()
+                logger.logDeveloper(
+                    "EmbraceNDKService",
+                    "Deleting map file as it has no matching crash file " + mapFile.absolutePath
                 )
             }
         }

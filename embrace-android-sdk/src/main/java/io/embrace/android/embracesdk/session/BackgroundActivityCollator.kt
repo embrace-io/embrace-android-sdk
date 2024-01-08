@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.payload.BackgroundActivity
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class BackgroundActivityCollator(
@@ -32,10 +32,11 @@ internal class BackgroundActivityCollator(
     fun createStartMessage(
         startTime: Long,
         coldStart: Boolean,
-        startType: BackgroundActivity.LifeEventType
-    ): BackgroundActivity {
-        return BackgroundActivity(
+        startType: Session.LifeEventType
+    ): Session {
+        return Session(
             sessionId = Uuid.getEmbUuid(),
+            messageType = EmbraceBackgroundActivityService.MESSAGE_TYPE_END,
             startTime = startTime,
             appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
             isColdStart = coldStart,
@@ -47,11 +48,11 @@ internal class BackgroundActivityCollator(
     }
 
     fun createStopMessage(
-        activity: BackgroundActivity,
+        activity: Session,
         endTime: Long,
-        endType: BackgroundActivity.LifeEventType?,
+        endType: Session.LifeEventType?,
         crashId: String?
-    ): BackgroundActivity {
+    ): Session {
         val startTime = activity.startTime ?: 0
         return activity.copy(
             appState = EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND,
@@ -90,9 +91,9 @@ internal class BackgroundActivityCollator(
      * @return a background activity message for backend
      */
     fun buildBgActivityMessage(
-        backgroundActivity: BackgroundActivity?,
+        backgroundActivity: Session?,
         isBackgroundActivityEnd: Boolean
-    ): BackgroundActivityMessage? {
+    ): SessionMessage? {
         if (backgroundActivity != null) {
             val startTime = backgroundActivity.startTime ?: 0L
             val endTime = backgroundActivity.endTime ?: clock.now()
@@ -116,8 +117,8 @@ internal class BackgroundActivityCollator(
                 }
             }
 
-            return BackgroundActivityMessage(
-                backgroundActivity = backgroundActivity,
+            return SessionMessage(
+                session = backgroundActivity,
                 userInfo = backgroundActivity.user,
                 appInfo = captureDataSafely(metadataService::getAppInfo),
                 deviceInfo = captureDataSafely(metadataService::getDeviceInfo),

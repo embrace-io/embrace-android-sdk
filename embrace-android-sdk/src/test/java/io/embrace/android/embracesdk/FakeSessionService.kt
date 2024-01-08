@@ -9,14 +9,14 @@ internal class FakeSessionService : SessionService {
 
     override fun startSession(
         coldStart: Boolean,
-        startType: Session.SessionLifeEventType,
+        startType: Session.LifeEventType,
         startTime: Long
     ) {
         TODO("Not yet implemented")
     }
 
     override fun triggerStatelessSessionEnd(
-        endType: Session.SessionLifeEventType,
+        endType: Session.LifeEventType,
         clearUserInfo: Boolean
     ) {
         TODO("Not yet implemented")

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import android.app.Activity
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
@@ -49,7 +48,7 @@ internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionM
 /**
  * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
  */
-internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<BackgroundActivityMessage> {
+internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
     return fakeDeliveryModule.deliveryService.lastSentBackgroundActivities
 }
 
@@ -139,17 +138,17 @@ internal fun verifySessionMessage(sessionMessage: SessionMessage) {
     }
 }
 
-internal fun verifyBgActivityHappened(message: BackgroundActivityMessage) {
+internal fun verifyBgActivityHappened(message: SessionMessage) {
     verifyBgActivityMessage(message)
-    assertEquals("en", message.backgroundActivity.messageType)
+    assertEquals("en", message.session.messageType)
 }
 
-internal fun verifyBgActivityMessage(message: BackgroundActivityMessage) {
-    assertNotNull(message.backgroundActivity)
+internal fun verifyBgActivityMessage(message: SessionMessage) {
+    assertNotNull(message.session)
     assertNotNull(message.appInfo)
     assertNotNull(message.deviceInfo)
 
-    if (message.backgroundActivity.messageType == "en") {
+    if (message.session.messageType == "en") {
         assertNotNull(message.userInfo)
         assertNotNull(message.breadcrumbs)
         assertNotNull(message.performanceInfo)

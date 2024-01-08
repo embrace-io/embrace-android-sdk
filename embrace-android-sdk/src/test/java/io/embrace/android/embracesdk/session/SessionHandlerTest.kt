@@ -211,7 +211,7 @@ internal class SessionHandlerTest {
         userService.obj = userInfo
         activeSession = fakeSession()
 
-        val sessionStartType = Session.SessionLifeEventType.STATE
+        val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
         val sessionMessage = sessionHandler.onSessionStarted(
@@ -271,7 +271,7 @@ internal class SessionHandlerTest {
 
         val sessionMessage = sessionHandler.onSessionStarted(
             true,
-            /* any event type */ Session.SessionLifeEventType.STATE,
+            /* any event type */ Session.LifeEventType.STATE,
             now,
             automaticSessionStopperRunnable
         )
@@ -290,7 +290,7 @@ internal class SessionHandlerTest {
         // return absent session number
         sessionNumber = 0
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 5, asyncEnd = false)
-        val sessionStartType = Session.SessionLifeEventType.STATE
+        val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
         val sessionMessage = sessionHandler.onSessionStarted(
@@ -308,7 +308,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onSession started with no maximum session seconds should not start session automatic stopper`() {
-        val sessionStartType = Session.SessionLifeEventType.STATE
+        val sessionStartType = Session.LifeEventType.STATE
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = null)
 
         val sessionMessage = sessionHandler.onSessionStarted(
@@ -331,7 +331,7 @@ internal class SessionHandlerTest {
         val mockActivity: Activity = mockActivity()
         // let's return a foreground activity
         activityLifecycleTracker.foregroundActivity = mockActivity
-        val sessionStartType = Session.SessionLifeEventType.STATE
+        val sessionStartType = Session.LifeEventType.STATE
 
         val sessionMessage = sessionHandler.onSessionStarted(
             true,
@@ -350,7 +350,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
         sessionHandler.onSessionEnded(
-            Session.SessionLifeEventType.MANUAL,
+            Session.LifeEventType.MANUAL,
             1000,
             false
         )
@@ -365,7 +365,7 @@ internal class SessionHandlerTest {
     @Test
     fun `onSession not allowed to end because session control is disabled for TIMED event type`() {
         sessionHandler.onSessionEnded(
-            Session.SessionLifeEventType.TIMED,
+            Session.LifeEventType.TIMED,
             1000,
             false
         )
@@ -385,7 +385,7 @@ internal class SessionHandlerTest {
         activeSession = activeSession.copy(startTime = startTime)
 
         sessionHandler.onSessionEnded(
-            Session.SessionLifeEventType.MANUAL,
+            Session.LifeEventType.MANUAL,
             1000,
             false
         )
@@ -406,7 +406,7 @@ internal class SessionHandlerTest {
         sessionHandler.scheduledFuture = mockk(relaxed = true)
 
         sessionHandler.onSessionEnded(
-            /* any type */ Session.SessionLifeEventType.STATE,
+            /* any type */ Session.LifeEventType.STATE,
             1000,
             false
         )
@@ -453,7 +453,7 @@ internal class SessionHandlerTest {
             assertNull(exceptionError)
             assertEquals(now, lastHeartbeatTime)
             assertEquals(sessionProperties.get(), properties)
-            assertEquals(Session.SessionLifeEventType.STATE, endType)
+            assertEquals(Session.LifeEventType.STATE, endType)
             assertEquals(0, unhandledExceptions)
             assertEquals(crashId, crashReportId)
             assertEquals(now, endTime)
@@ -494,7 +494,7 @@ internal class SessionHandlerTest {
         }
         clock.tick(30000)
         sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.STATE,
+            endType = Session.LifeEventType.STATE,
             endTime = 10L,
             false
         )
@@ -506,7 +506,7 @@ internal class SessionHandlerTest {
         startFakeSession()
         clock.tick(30000)
         sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.STATE,
+            endType = Session.LifeEventType.STATE,
             endTime = 10L,
             true
         )
@@ -522,13 +522,13 @@ internal class SessionHandlerTest {
         )
         sessionHandler.onSessionStarted(
             coldStart = true,
-            startType = Session.SessionLifeEventType.MANUAL,
+            startType = Session.LifeEventType.MANUAL,
             startTime = clock.now(),
             automaticSessionCloserCallback = automaticSessionStopperRunnable
         )
         clock.tick(30000)
         sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.MANUAL,
+            endType = Session.LifeEventType.MANUAL,
             endTime = clock.now(),
             true
         )
@@ -579,7 +579,7 @@ internal class SessionHandlerTest {
 
         clock.tick(15000L)
         sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.STATE,
+            endType = Session.LifeEventType.STATE,
             endTime = clock.now(),
             false
         )
@@ -605,7 +605,7 @@ internal class SessionHandlerTest {
         startFakeSession()
         clock.tick(10000)
         sessionHandler.onSessionEnded(
-            endType = Session.SessionLifeEventType.STATE,
+            endType = Session.LifeEventType.STATE,
             endTime = clock.now(),
             false
         )
@@ -657,7 +657,7 @@ internal class SessionHandlerTest {
     private fun startFakeSession() {
         sessionHandler.onSessionStarted(
             coldStart = true,
-            startType = Session.SessionLifeEventType.STATE,
+            startType = Session.LifeEventType.STATE,
             startTime = clock.now(),
             automaticSessionCloserCallback = automaticSessionStopperRunnable
         )

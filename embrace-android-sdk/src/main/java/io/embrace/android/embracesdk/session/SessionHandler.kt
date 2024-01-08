@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
@@ -99,7 +99,7 @@ internal class SessionHandler(
      */
     fun onSessionStarted(
         coldStart: Boolean,
-        startType: SessionLifeEventType,
+        startType: LifeEventType,
         startTime: Long,
         automaticSessionCloserCallback: Runnable
     ): SessionMessage? {
@@ -150,7 +150,7 @@ internal class SessionHandler(
      * It performs all corresponding operations in order to end a session.
      */
     fun onSessionEnded(
-        endType: SessionLifeEventType,
+        endType: LifeEventType,
         endTime: Long,
         clearUserInfo: Boolean
     ): SessionMessage? {
@@ -174,7 +174,7 @@ internal class SessionHandler(
             logger.logDebug("Session properties successfully temporary cleared.")
             deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
 
-            if (endType == SessionLifeEventType.MANUAL && clearUserInfo) {
+            if (endType == LifeEventType.MANUAL && clearUserInfo) {
                 userService.clearAllUserInfo()
                 // Update user info in NDK service
                 ndkService.onUserInfoUpdate()
@@ -200,7 +200,7 @@ internal class SessionHandler(
                 session,
                 sessionProperties,
                 spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH),
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 clock.now(),
                 crashId,
             )
@@ -237,7 +237,7 @@ internal class SessionHandler(
                 session,
                 sessionProperties,
                 completedSpans,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 clock.now()
             )
             msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
@@ -275,15 +275,15 @@ internal class SessionHandler(
     /**
      * It determines if we are allowed to build an end session message.
      */
-    private fun isAllowedToEnd(endType: SessionLifeEventType, activeSession: Session): Boolean {
+    private fun isAllowedToEnd(endType: LifeEventType, activeSession: Session): Boolean {
         return when (endType) {
-            SessionLifeEventType.STATE -> {
+            LifeEventType.STATE -> {
                 // state sessions are always allowed to be ended
                 logger.logDebug("Session is STATE, it is always allowed to end.")
                 true
             }
 
-            SessionLifeEventType.MANUAL, SessionLifeEventType.TIMED -> {
+            LifeEventType.MANUAL, LifeEventType.TIMED -> {
                 logger.logDebug("Session is either MANUAL or TIMED.")
                 if (!configService.sessionBehavior.isSessionControlEnabled()) {
                     logger.logWarning(
@@ -291,7 +291,7 @@ internal class SessionHandler(
                             "Session is not allowed to end."
                     )
                     false
-                } else if (endType == SessionLifeEventType.MANUAL &&
+                } else if (endType == LifeEventType.MANUAL &&
                     ((clock.now() - activeSession.startTime) < minSessionTime)
                 ) {
                     // If less than 5 seconds, then the session cannot be finished manually.
@@ -301,7 +301,7 @@ internal class SessionHandler(
                     logger.logDebug("Session allowed to end.")
                     true
                 }
-            }
+            } else -> false // background activity
         }
     }
 
@@ -314,7 +314,7 @@ internal class SessionHandler(
         activeSession: Session,
         sessionProperties: EmbraceSessionProperties,
         completedSpans: List<EmbraceSpanData>?,
-        lifeEventType: SessionLifeEventType,
+        lifeEventType: LifeEventType,
         endTime: Long,
         crashId: String? = null,
     ): SessionMessage? {

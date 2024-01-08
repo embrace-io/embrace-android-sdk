@@ -28,7 +28,7 @@ internal class EmbraceSessionService(
             // start the cold session.
             // If so, force a cold session start.
             logger.logDebug("Forcing start of new session as app is in foreground.")
-            startSession(true, Session.SessionLifeEventType.STATE, clock.now())
+            startSession(true, Session.LifeEventType.STATE, clock.now())
         }
 
         // Send any sessions that were cached and not yet sent.
@@ -37,13 +37,13 @@ internal class EmbraceSessionService(
 
     override fun startSession(
         coldStart: Boolean,
-        startType: Session.SessionLifeEventType,
+        startType: Session.LifeEventType,
         startTime: Long
     ) {
         val automaticSessionCloserCallback = Runnable {
             try {
                 logger.logInfo("Automatic session closing triggered.")
-                triggerStatelessSessionEnd(Session.SessionLifeEventType.TIMED)
+                triggerStatelessSessionEnd(Session.LifeEventType.TIMED)
             } catch (ex: Exception) {
                 logger.logError("Error while trying to close the session automatically", ex)
             }
@@ -62,11 +62,11 @@ internal class EmbraceSessionService(
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-        startSession(coldStart, Session.SessionLifeEventType.STATE, timestamp)
+        startSession(coldStart, Session.LifeEventType.STATE, timestamp)
     }
 
     override fun onBackground(timestamp: Long) {
-        sessionHandler.onSessionEnded(Session.SessionLifeEventType.STATE, timestamp, false)
+        sessionHandler.onSessionEnded(Session.LifeEventType.STATE, timestamp, false)
     }
 
     /**
@@ -75,10 +75,10 @@ internal class EmbraceSessionService(
      * @param endType the origin of the event that ends the session.
      */
     override fun triggerStatelessSessionEnd(
-        endType: Session.SessionLifeEventType,
+        endType: Session.LifeEventType,
         clearUserInfo: Boolean
     ) {
-        if (Session.SessionLifeEventType.STATE == endType) {
+        if (Session.LifeEventType.STATE == endType) {
             logger.logWarning(
                 "triggerStatelessSessionEnd is not allowed to be called for SessionLifeEventType=$endType"
             )
@@ -106,7 +106,7 @@ internal class EmbraceSessionService(
             logger.logWarning("Can't close the session, session ending in background thread enabled.")
             return
         }
-        triggerStatelessSessionEnd(Session.SessionLifeEventType.MANUAL, clearUserInfo)
+        triggerStatelessSessionEnd(Session.LifeEventType.MANUAL, clearUserInfo)
     }
 
     override fun close() {

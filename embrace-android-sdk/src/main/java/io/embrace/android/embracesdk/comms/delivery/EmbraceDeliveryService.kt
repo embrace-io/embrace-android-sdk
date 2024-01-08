@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
@@ -71,8 +70,8 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to cache
      */
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
-        backgroundActivities.add(backgroundActivityMessage.backgroundActivity.sessionId)
+    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage) {
+        backgroundActivities.add(backgroundActivityMessage.session.sessionId)
         cacheManager.saveBackgroundActivity(backgroundActivityMessage)
     }
 
@@ -81,12 +80,12 @@ internal class EmbraceDeliveryService(
      *
      * @param backgroundActivityMessage    The background activity message to send
      */
-    override fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage) {
+    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage) {
         logger.logDeveloper(TAG, "Sending background activity message")
 
         sendSessionsExecutorService.submit {
             logger.logDeveloper(TAG, "Sending background activity message - background job started")
-            val id = backgroundActivityMessage.backgroundActivity.sessionId
+            val id = backgroundActivityMessage.session.sessionId
             val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return@submit
             sendBackgroundActivityImpl(id, action)
         }

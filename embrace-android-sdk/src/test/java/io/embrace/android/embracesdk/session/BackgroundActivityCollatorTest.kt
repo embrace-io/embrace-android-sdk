@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.internal.spans.SpansService
-import io.embrace.android.embracesdk.payload.BackgroundActivity
-import io.embrace.android.embracesdk.payload.BackgroundActivity.LifeEventType
+import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -63,7 +63,7 @@ internal class BackgroundActivityCollatorTest {
 
         // create envelope
         with(checkNotNull(collator.buildBgActivityMessage(msg, true))) {
-            assertSame(msg, backgroundActivity)
+            assertSame(msg, session)
             assertNotNull(userInfo)
             assertNotNull(appInfo)
             assertNotNull(deviceInfo)
@@ -72,7 +72,7 @@ internal class BackgroundActivityCollatorTest {
         }
     }
 
-    private fun BackgroundActivity.verifyStartFieldsPopulated() {
+    private fun Session.verifyStartFieldsPopulated() {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
         assertEquals(EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND, appState)

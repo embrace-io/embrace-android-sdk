@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
@@ -81,7 +81,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 /* automatically detecting a cold start */ true,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 any(),
                 any()
             )
@@ -97,12 +97,12 @@ internal class EmbraceSessionServiceTest {
         every {
             mockSessionHandler.onSessionStarted(
                 true,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 any(),
                 any()
             )
         } returns sessionMessage
-        service.startSession(true, SessionLifeEventType.STATE, clock.now())
+        service.startSession(true, LifeEventType.STATE, clock.now())
 
         service.handleCrash(crashId)
 
@@ -122,7 +122,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 456,
                 any()
             )
@@ -141,7 +141,7 @@ internal class EmbraceSessionServiceTest {
         verify {
             mockSessionHandler.onSessionStarted(
                 coldStart,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 456,
                 any()
             )
@@ -159,7 +159,7 @@ internal class EmbraceSessionServiceTest {
         // verify session is ended
         verify(exactly = 1) {
             mockSessionHandler.onSessionEnded(
-                SessionLifeEventType.MANUAL,
+                LifeEventType.MANUAL,
                 0,
                 true
             )
@@ -167,7 +167,7 @@ internal class EmbraceSessionServiceTest {
         verify(exactly = 1) {
             mockSessionHandler.onSessionStarted(
                 false,
-                SessionLifeEventType.MANUAL,
+                LifeEventType.MANUAL,
                 0,
                 any()
             )
@@ -179,7 +179,7 @@ internal class EmbraceSessionServiceTest {
         initializeSessionService(isActivityInBackground = false)
         // let's start session first so we have an active session
         startDefaultSession()
-        val endType = SessionLifeEventType.MANUAL
+        val endType = LifeEventType.MANUAL
 
         service.triggerStatelessSessionEnd(endType)
 
@@ -199,7 +199,7 @@ internal class EmbraceSessionServiceTest {
     @Test
     fun `trigger stateless end session for a STATE session end type should not do anything`() {
         initializeSessionService()
-        service.triggerStatelessSessionEnd(SessionLifeEventType.STATE)
+        service.triggerStatelessSessionEnd(LifeEventType.STATE)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
     }
 
@@ -238,11 +238,11 @@ internal class EmbraceSessionServiceTest {
         every {
             mockSessionHandler.onSessionStarted(
                 true,
-                SessionLifeEventType.STATE,
+                LifeEventType.STATE,
                 any(),
                 any()
             )
         } returns sessionMessage
-        service.startSession(true, SessionLifeEventType.STATE, clock.now())
+        service.startSession(true, LifeEventType.STATE, clock.now())
     }
 }

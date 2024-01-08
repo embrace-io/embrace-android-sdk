@@ -37,6 +37,22 @@ internal class ScheduledWorkerTest {
         }
     }
 
+    @Suppress("DEPRECATION")
+    @Test
+    fun testScheduleAtFixedRate() {
+        val impl = BlockingScheduledExecutorService()
+        var count = 0
+        val runnable = Runnable {
+            count++
+        }
+        ScheduledWorker(impl).scheduleAtFixedRate(runnable, 2, 2, TimeUnit.SECONDS)
+
+        repeat(3) {
+            impl.moveForwardAndRunBlocked(2000)
+            assertEquals(it + 1, count)
+        }
+    }
+
     @Test
     fun testSubmitRunnable() {
         val impl = BlockingScheduledExecutorService()

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
@@ -49,9 +50,10 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         fakeConfigService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
+        val worker = ScheduledWorker(anrExecutorService)
         targetThreadHandler = TargetThreadHandler(
             looper = looper,
-            anrExecutorService = anrExecutorService,
+            anrMonitorWorker = worker,
             anrMonitorThread = anrMonitorThread,
             configService = fakeConfigService,
             clock = clock
@@ -65,7 +67,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         )
         livenessCheckScheduler = LivenessCheckScheduler(
             configService = fakeConfigService,
-            anrExecutor = anrExecutorService,
+            anrMonitorWorker = worker,
             clock = clock,
             state = state,
             targetThreadHandler = targetThreadHandler,
@@ -79,7 +81,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             logger = logger,
             sigquitDetectionService = mockSigquitDetectionService,
             livenessCheckScheduler = livenessCheckScheduler,
-            anrExecutorService = anrExecutorService,
+            anrMonitorWorker = worker,
             state = state,
             clock = clock,
             anrMonitorThread = anrMonitorThread

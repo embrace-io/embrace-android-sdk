@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.worker
 
+import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -43,4 +44,19 @@ internal class ScheduledWorker(
      * Submits a task for execution and returns a [Future].
      */
     fun submit(runnable: Runnable): Future<*> = impl.submit(runnable)
+
+    /**
+     * Submits a task for execution and returns a [Future].
+     */
+    fun <T> submit(callable: Callable<T>): Future<T> = impl.submit(callable)
+
+    @Deprecated(
+        "Use scheduleWithFixedDelay instead.",
+    )
+    fun scheduleAtFixedRate(
+        runnable: Runnable,
+        initialDelay: Long,
+        intervalMs: Long,
+        unit: TimeUnit
+    ): ScheduledFuture<*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)
 }

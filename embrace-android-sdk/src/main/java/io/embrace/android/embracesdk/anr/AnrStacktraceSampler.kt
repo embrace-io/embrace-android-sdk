@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.payload.extensions.deepCopy
 import io.embrace.android.embracesdk.payload.extensions.duration
 import io.embrace.android.embracesdk.payload.extensions.hasSamples
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -24,7 +24,7 @@ internal class AnrStacktraceSampler(
     private val clock: Clock,
     targetThread: Thread,
     private val anrMonitorThread: AtomicReference<Thread>,
-    private val anrExecutorService: ExecutorService
+    private val anrMonitorWorker: ScheduledWorker
 ) : BlockedThreadListener, MemoryCleanerListener {
 
     internal val anrIntervals = CopyOnWriteArrayList<AnrInterval>()
@@ -97,7 +97,7 @@ internal class AnrStacktraceSampler(
         findIntervalsWithSamples().minByOrNull(AnrInterval::duration)
 
     override fun cleanCollections() {
-        anrExecutorService.submit {
+        anrMonitorWorker.submit {
             enforceThread(anrMonitorThread)
             anrIntervals.clear()
         }

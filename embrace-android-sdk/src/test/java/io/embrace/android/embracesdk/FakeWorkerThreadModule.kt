@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KFunction1
 import kotlin.reflect.KFunction2
 
@@ -48,6 +49,8 @@ internal class FakeWorkerThreadModule(
     fun scheduledExecutor(workerName: WorkerName): BlockingScheduledExecutorService {
         return checkNotNull(scheduledExecutorServices[workerName])
     }
+
+    override val anrMonitorThread: AtomicReference<Thread> = AtomicReference(Thread.currentThread())
 
     override fun close() {
         executorServices.values.forEach { it.shutdown() }

@@ -210,12 +210,11 @@ internal class SessionHandlerTest {
         val maxSessionSeconds = 60
         sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 60, asyncEnd = false)
         userService.obj = userInfo
-        activeSession = fakeSession()
 
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             true,
             sessionStartType,
             now,
@@ -246,20 +245,16 @@ internal class SessionHandlerTest {
         // verify session id gets updated if ndk enabled
         assertEquals(sessionUuid, ndkService.sessionId)
         // verify session is correctly built
-        with(checkNotNull(sessionMessage?.session)) {
+
+        with(checkNotNull(sessionHandler.activeSession)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
             assertTrue(isColdStart)
             assertEquals(sessionStartType, startType)
             assertEquals(emptyMapSessionProperties, properties)
-            assertEquals("st", messageType)
+            assertEquals("en", messageType)
             assertEquals("foreground", appState)
             assertEquals(userInfo, user)
-        }
-        // verify session message is successfully built
-        with(checkNotNull(sessionMessage)) {
-            assertEquals(metadataService.getDeviceInfo(), deviceInfo)
-            assertEquals(metadataService.getAppInfo(), appInfo)
         }
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }
@@ -270,14 +265,14 @@ internal class SessionHandlerTest {
             disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
         )
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             true,
             /* any event type */ Session.LifeEventType.STATE,
             now,
             automaticSessionStopperRunnable
         )
 
-        assertNull(sessionMessage)
+        assertNull(sessionHandler.activeSession)
         verify { networkConnectivityService wasNot Called }
         assertNull(metadataService.activeSessionId)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
@@ -294,7 +289,7 @@ internal class SessionHandlerTest {
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             true,
             sessionStartType,
             now,
@@ -302,8 +297,7 @@ internal class SessionHandlerTest {
         )
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
-        checkNotNull(sessionMessage)
-        assertNotNull(sessionMessage.session)
+        checkNotNull(sessionHandler.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -321,8 +315,7 @@ internal class SessionHandlerTest {
 
         // verify automatic session stopper has not been scheduled
         verify { automaticSessionStopper wasNot Called }
-        checkNotNull(sessionMessage)
-        assertNotNull(sessionMessage.session)
+        checkNotNull(sessionHandler.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }
 
@@ -343,8 +336,7 @@ internal class SessionHandlerTest {
 
         // verify we are forcing log view with foreground activity class name
         assertEquals(mockActivity.localClassName, breadcrumbService.logViewCalls.single())
-        checkNotNull(sessionMessage)
-        assertNotNull(sessionMessage.session)
+        checkNotNull(sessionHandler.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }
 

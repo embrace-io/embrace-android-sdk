@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -294,6 +295,40 @@ internal class EmbraceBackgroundActivityServiceTest {
         service.save()
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         assertEquals(0, breadcrumbService.flushCount)
+    }
+
+    @Test
+    fun `disable service via config change`() {
+        service = createService()
+        disableService()
+        clock.tick(20000L)
+        service.save()
+        assertTrue(deliveryService.lastSavedBackgroundActivities.isEmpty())
+        assertTrue(deliveryService.lastSentBackgroundActivities.isEmpty())
+    }
+
+    @Test
+    fun `enable service via config change`() {
+        service = createService()
+        disableService()
+        enableService()
+        clock.tick(20000L)
+        service.save()
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
+    }
+
+    private fun disableService() {
+        configService.backgroundActivityCaptureEnabled = false
+        deliveryService.lastSavedBackgroundActivities.clear()
+        deliveryService.lastSentBackgroundActivities.clear()
+        service.onConfigChange(configService)
+    }
+
+    private fun enableService() {
+        configService.backgroundActivityCaptureEnabled = true
+        deliveryService.lastSavedBackgroundActivities.clear()
+        deliveryService.lastSentBackgroundActivities.clear()
+        service.onConfigChange(configService)
     }
 
     private fun createService(): EmbraceBackgroundActivityService {

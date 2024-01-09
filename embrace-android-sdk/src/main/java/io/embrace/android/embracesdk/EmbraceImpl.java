@@ -461,7 +461,8 @@ final class EmbraceImpl {
         AnrModuleImpl anrModule = new AnrModuleImpl(
             initModule,
             coreModule,
-            essentialServiceModule
+            essentialServiceModule,
+            workerThreadModule
         );
         AnrService nonNullAnrService = anrModule.getAnrService();
         anrService = nonNullAnrService;

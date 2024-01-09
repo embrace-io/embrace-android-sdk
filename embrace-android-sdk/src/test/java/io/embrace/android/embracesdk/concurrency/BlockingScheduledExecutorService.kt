@@ -90,12 +90,15 @@ internal class BlockingScheduledExecutorService(
 
     fun scheduledTasksCount(): Int = scheduledTasks.size
 
+    var submitCount = 0
+
     override fun execute(command: Runnable?) {
         requireNotNull(command)
         delegateExecutorService.execute(command)
     }
 
     override fun submit(task: Runnable?): Future<*> {
+        submitCount++
         requireNotNull(task)
         return delegateExecutorService.submit(task)
     }

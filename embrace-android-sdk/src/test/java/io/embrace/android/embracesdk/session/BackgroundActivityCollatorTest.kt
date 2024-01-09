@@ -75,7 +75,7 @@ internal class BackgroundActivityCollatorTest {
     private fun Session.verifyStartFieldsPopulated() {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
-        assertEquals(EmbraceBackgroundActivityService.APPLICATION_STATE_BACKGROUND, appState)
+        assertEquals(Session.APPLICATION_STATE_BACKGROUND, appState)
         assertFalse(checkNotNull(isColdStart))
         assertEquals(LifeEventType.BKGND_STATE, startType)
         assertNotNull(user)

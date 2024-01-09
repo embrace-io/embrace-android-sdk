@@ -34,6 +34,34 @@ internal class SessionMessageCollator(
     private val clock: Clock
 ) {
 
+    /**
+     * Builds a new session object. This should not be sent to the backend but is used
+     * to populate essential session information (such as ID), etc
+     */
+    internal fun buildInitialSession(
+        id: String,
+        coldStart: Boolean,
+        startType: Session.LifeEventType,
+        startTime: Long,
+        sessionNumber: Int,
+        userInfo: UserInfo?,
+        sessionProperties: Map<String, String>
+    ): Session = Session(
+        sessionId = id,
+        startTime = startTime,
+        number = sessionNumber,
+        appState = Session.APPLICATION_STATE_FOREGROUND,
+        isColdStart = coldStart,
+        startType = startType,
+        properties = sessionProperties,
+        messageType = Session.MESSAGE_TYPE_END,
+        user = userInfo
+    )
+
+    /**
+     * Builds a fully populated session message. This can be sent to the backend (or stored
+     * on disk).
+     */
     @Suppress("ComplexMethod")
     internal fun buildEndSessionMessage(
         originSession: Session,
@@ -144,30 +172,4 @@ internal class SessionMessageCollator(
             spans = spans
         )
     }
-
-    internal fun buildInitialSessionMessage(session: Session) = SessionMessage(
-        session = session,
-        appInfo = captureDataSafely(metadataService::getAppInfo),
-        deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
-    )
-
-    internal fun buildInitialSession(
-        id: String,
-        coldStart: Boolean,
-        startType: Session.LifeEventType,
-        startTime: Long,
-        sessionNumber: Int,
-        userInfo: UserInfo?,
-        sessionProperties: Map<String, String>
-    ): Session = Session(
-        sessionId = id,
-        startTime = startTime,
-        number = sessionNumber,
-        appState = Session.APPLICATION_STATE_FOREGROUND,
-        isColdStart = coldStart,
-        startType = startType,
-        properties = sessionProperties,
-        messageType = Session.MESSAGE_TYPE_END,
-        user = userInfo
-    )
 }

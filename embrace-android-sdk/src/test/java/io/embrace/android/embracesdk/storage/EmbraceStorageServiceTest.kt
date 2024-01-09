@@ -85,7 +85,7 @@ internal class EmbraceStorageServiceTest {
     }
 
     @Test
-    fun listFiles() {
+    fun `test listFiles when files and cache dirs contains files`() {
         val fileToAddInCache = File(storageManager.cacheDirectory.value, "test_cache.txt")
         val addedFileInCache = Files.createFile(fileToAddInCache.toPath()).toFile()
         val fileToAddInFiles = File(storageManager.filesDirectory.value, "test_files.txt")
@@ -94,5 +94,19 @@ internal class EmbraceStorageServiceTest {
         assertEquals(2, files.size)
         assertTrue(files.contains(addedFileInCache))
         assertTrue(files.contains(addedFileInFiles))
+    }
+
+    @Test
+    fun `test listFiles when files and cache dirs are invalid dirs`() {
+        cacheDir = Files.createTempFile("invalid_dir_1", null).toFile()
+        filesDir = Files.createTempFile("invalid_dir_2", null).toFile()
+        val ctx = mockk<Context>()
+        every { ctx.cacheDir } returns cacheDir
+        every { ctx.filesDir } returns filesDir
+        storageManager = EmbraceStorageService(
+            coreModule = FakeCoreModule(context = ctx),
+        )
+        val files = storageManager.listFiles { _, _ -> true }
+        assertEquals(0, files.size)
     }
 }

@@ -6,15 +6,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -40,7 +37,6 @@ internal class EmbraceSessionServiceTest {
 
         private val processStateService = FakeProcessStateService()
         private val ndkService: NdkService = FakeNdkService()
-        private val sessionMessage: SessionMessage = fakeSessionMessage()
         private val mockSessionHandler: SessionHandler = mockk(relaxed = true)
         private val clock = FakeClock()
 
@@ -94,14 +90,6 @@ internal class EmbraceSessionServiceTest {
         val crashId = "crash-id"
 
         // let's start session first so we have an active session
-        every {
-            mockSessionHandler.onSessionStarted(
-                true,
-                LifeEventType.STATE,
-                any(),
-                any()
-            )
-        } returns sessionMessage
         service.startSession(true, LifeEventType.STATE, clock.now())
 
         service.handleCrash(crashId)
@@ -235,14 +223,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     private fun startDefaultSession() {
-        every {
-            mockSessionHandler.onSessionStarted(
-                true,
-                LifeEventType.STATE,
-                any(),
-                any()
-            )
-        } returns sessionMessage
         service.startSession(true, LifeEventType.STATE, clock.now())
     }
 }

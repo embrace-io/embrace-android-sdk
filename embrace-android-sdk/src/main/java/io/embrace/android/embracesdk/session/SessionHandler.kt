@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session
 
+import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -65,7 +66,8 @@ internal class SessionHandler(
      * The currently active session.
      */
     @Volatile
-    private var activeSession: Session? = null
+    @VisibleForTesting
+    internal var activeSession: Session? = null
 
     internal fun getSessionId(): String? = activeSession?.sessionId
 
@@ -102,7 +104,7 @@ internal class SessionHandler(
         startType: LifeEventType,
         startTime: Long,
         automaticSessionCloserCallback: Runnable
-    ): SessionMessage? {
+    ) {
         synchronized(lock) {
             logger.logDebug(
                 "SessionHandler: running onSessionStarted. coldStart=$coldStart," +
@@ -111,7 +113,7 @@ internal class SessionHandler(
 
             if (!isAllowedToStart()) {
                 logger.logDebug("Session not allowed to start.")
-                return null
+                return
             }
 
             val session = sessionMessageCollator.buildInitialSession(
@@ -128,9 +130,6 @@ internal class SessionHandler(
 
             // Record the connection type at the start of the session.
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
-
-            val sessionMessage = sessionMessageCollator.buildInitialSessionMessage(session)
-
             metadataService.setActiveSessionId(session.sessionId, true)
 
             logger.logDebug("Start session sent to delivery service.")
@@ -141,8 +140,6 @@ internal class SessionHandler(
             if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
                 ndkService.updateSessionId(session.sessionId)
             }
-
-            return sessionMessage
         }
     }
 

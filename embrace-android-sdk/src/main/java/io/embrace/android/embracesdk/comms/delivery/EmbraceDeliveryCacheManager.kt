@@ -110,9 +110,7 @@ internal class EmbraceDeliveryCacheManager(
                 previousSdkSession?.also {
                     // When saved, the new session filename is also added to cachedSessions
                     saveSession(it, SessionSnapshotType.NORMAL_END)
-                    backgroundWorker.submit {
-                        cacheService.deleteFile(filename)
-                    }
+                    cacheService.deleteFile(filename)
                 }
             }
             val values = filename.split('.')

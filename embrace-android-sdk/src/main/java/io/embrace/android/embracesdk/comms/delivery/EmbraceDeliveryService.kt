@@ -19,7 +19,7 @@ internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val gatingService: GatingService,
-    private val cachedSessionsBackgroundWorker: BackgroundWorker,
+    private val backgroundWorker: BackgroundWorker,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
 ) : DeliveryService {
@@ -163,13 +163,13 @@ internal class EmbraceDeliveryService(
     }
 
     private fun sendCachedSessionsWithoutNdk(currentSession: String?) {
-        cachedSessionsBackgroundWorker.submit {
+        backgroundWorker.submit {
             sendCachedSessions(cacheManager.getAllCachedSessionIds(), currentSession)
         }
     }
 
     private fun sendCachedSessionsWithNdk(ndkService: NdkService, currentSession: String?) {
-        cachedSessionsBackgroundWorker.submit {
+        backgroundWorker.submit {
             val allSessions = cacheManager.getAllCachedSessionIds()
             logger.logDeveloper(TAG, "NDK enabled, checking for native crashes")
             val nativeCrashData = ndkService.checkForNativeCrash()

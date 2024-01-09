@@ -42,12 +42,6 @@ internal enum class WorkerName(internal val threadName: String) {
     BACKGROUND_REGISTRATION("background-reg"),
 
     /**
-     * Reads any sessions that are cached on disk & loads then sends them to the server.
-     * Runnables are only added to this during SDK initialization.
-     */
-    CACHED_SESSIONS("cached-sessions"),
-
-    /**
      * Saves/loads request information from files cached on disk.
      */
     DELIVERY_CACHE("delivery-cache"),

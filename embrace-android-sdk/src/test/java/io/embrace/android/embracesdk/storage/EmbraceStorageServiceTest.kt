@@ -49,6 +49,17 @@ internal class EmbraceStorageServiceTest {
     }
 
     @Test
+    fun `test filesDirectory returns cache dir if embrace folder can't be created`() {
+        filesDir.setWritable(false)
+
+        val filesDirectory = storageManager.filesDirectory
+
+        assertNotNull(filesDirectory.value)
+        assertTrue(filesDirectory.value.isDirectory)
+        assertEquals(cacheDir.absolutePath, filesDirectory.value.absolutePath)
+    }
+
+    @Test
     fun `test getFile with fallback false returns File instance from files dir`() {
         val file = storageManager.getFile("test.txt", false)
         assertNotNull(file)

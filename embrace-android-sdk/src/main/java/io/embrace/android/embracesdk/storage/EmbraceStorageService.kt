@@ -13,7 +13,7 @@ internal class EmbraceStorageService(
     }
 
     override val filesDirectory: Lazy<File> = lazy {
-        getOrCreateEmbraceFilesDir() ?: coreModule.context.cacheDir
+        getOrCreateEmbraceFilesDir() ?: cacheDirectory.value
     }
 
     /**
@@ -41,10 +41,8 @@ internal class EmbraceStorageService(
     private fun getOrCreateEmbraceFilesDir(): File? {
         val filesDir = File(coreModule.context.filesDir, EMBRACE_DIRECTORY)
         return try {
-            if (!filesDir.exists()) {
-                filesDir.mkdirs()
-            }
-            filesDir
+            filesDir.mkdirs()
+            filesDir.takeIf { it.exists() }
         } catch (e: SecurityException) {
             null
         }

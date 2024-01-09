@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
@@ -20,7 +19,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit
 internal class SessionHandler(
     private val logger: InternalEmbraceLogger,
     private val configService: ConfigService,
-    private val preferencesService: PreferencesService,
     private val userService: UserService,
     private val networkConnectivityService: NetworkConnectivityService,
     private val metadataService: MetadataService,
@@ -41,7 +39,7 @@ internal class SessionHandler(
     private val internalErrorService: InternalErrorService,
     private val memoryCleanerService: MemoryCleanerService,
     private val deliveryService: DeliveryService,
-    private val sessionMessageCollator: SessionMessageCollator,
+    private val payloadMessageCollator: PayloadMessageCollator,
     private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
     private val spansService: SpansService,
@@ -116,13 +114,11 @@ internal class SessionHandler(
                 return
             }
 
-            val session = sessionMessageCollator.buildInitialSession(
-                Uuid.getEmbUuid(),
+            val session = payloadMessageCollator.buildInitialSession(
+                PayloadType.SESSION,
                 coldStart,
                 startType,
                 startTime,
-                preferencesService.incrementAndGetSessionNumber(),
-                userService.loadUserInfoFromDisk(),
                 sessionProperties.get()
             )
             activeSession = session
@@ -329,7 +325,7 @@ internal class SessionHandler(
             return null
         }
 
-        return sessionMessageCollator.buildEndSessionMessage(
+        return payloadMessageCollator.buildEndSessionMessage(
             originSession = activeSession,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,

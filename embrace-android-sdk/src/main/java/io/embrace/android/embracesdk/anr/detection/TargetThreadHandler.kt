@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
 
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class TargetThreadHandler(
     looper: Looper,
-    private val anrExecutorService: ExecutorService,
+    private val anrMonitorWorker: ScheduledWorker,
     private val anrMonitorThread: AtomicReference<Thread>,
     private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
@@ -70,7 +71,7 @@ internal class TargetThreadHandler(
 
     private fun onMainThreadUnblocked() {
         val timestamp = clock.now()
-        anrExecutorService.submit {
+        anrMonitorWorker.submit {
             enforceThread(anrMonitorThread)
             action.invoke(timestamp)
         }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -66,7 +67,7 @@ internal class LivenessCheckSchedulerTest {
 
         scheduler = LivenessCheckScheduler(
             configService,
-            anrExecutorService,
+            ScheduledWorker(anrExecutorService),
             fakeClock,
             state,
             fakeTargetThreadHandler,

@@ -20,10 +20,8 @@ import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorSe
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.atomic.AtomicReference
+import io.embrace.android.embracesdk.worker.WorkerName
+import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface AnrModule {
     val googleAnrTimestampRepository: GoogleAnrTimestampRepository
@@ -34,9 +32,11 @@ internal interface AnrModule {
 internal class AnrModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    essentialServiceModule: EssentialServiceModule
+    essentialServiceModule: EssentialServiceModule,
+    workerModule: WorkerThreadModule,
 ) : AnrModule {
 
+    private val anrMonitorWorker = workerModule.scheduledWorker(WorkerName.ANR_MONITOR)
     private val configService = essentialServiceModule.configService
 
     override val googleAnrTimestampRepository: GoogleAnrTimestampRepository by singleton {
@@ -53,10 +53,10 @@ internal class AnrModuleImpl(
                 logger = coreModule.logger,
                 sigquitDetectionService = sigquitDetectionService,
                 livenessCheckScheduler = livenessCheckScheduler,
-                anrExecutorService = anrExecutorService,
+                anrMonitorWorker = anrMonitorWorker,
                 state = state,
                 clock = initModule.clock,
-                anrMonitorThread = anrMonitorThread
+                anrMonitorThread = workerModule.anrMonitorThread
             )
         } else {
             NoOpAnrService()
@@ -80,8 +80,8 @@ internal class AnrModuleImpl(
     private val targetThreadHandler by singleton {
         TargetThreadHandler(
             looper = looper,
-            anrExecutorService = anrExecutorService,
-            anrMonitorThread = anrMonitorThread,
+            anrMonitorWorker = anrMonitorWorker,
+            anrMonitorThread = workerModule.anrMonitorThread,
             configService = configService,
             clock = initModule.clock
         )
@@ -93,19 +93,19 @@ internal class AnrModuleImpl(
             clock = initModule.clock,
             state = state,
             targetThread = looper.thread,
-            anrMonitorThread = anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread
         )
     }
 
     private val livenessCheckScheduler by singleton {
         LivenessCheckScheduler(
             configService = configService,
-            anrExecutor = anrExecutorService,
+            anrMonitorWorker = anrMonitorWorker,
             clock = initModule.clock,
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorThread = anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread
         )
     }
 
@@ -125,20 +125,4 @@ internal class AnrModuleImpl(
             logger = coreModule.logger
         )
     }
-
-    private val anrMonitorThreadFactory = ThreadFactory { runnable: Runnable ->
-        Executors.defaultThreadFactory().newThread(runnable).apply {
-            anrMonitorThread.set(this)
-            name = "emb-anr-monitor"
-        }
-    }
-
-    private val anrExecutorService: ScheduledExecutorService by lazy {
-        // must only have one thread in executor pool - synchronization model relies on this fact.
-        Executors.newSingleThreadScheduledExecutor(
-            anrMonitorThreadFactory
-        )
-    }
-
-    private val anrMonitorThread = AtomicReference<Thread>()
 }

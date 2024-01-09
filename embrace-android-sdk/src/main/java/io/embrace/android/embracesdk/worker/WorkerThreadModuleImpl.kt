@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
@@ -22,6 +23,7 @@ internal class WorkerThreadModuleImpl(
     private val executors: MutableMap<WorkerName, ExecutorService> = ConcurrentHashMap()
     private val backgroundWorkers: MutableMap<WorkerName, BackgroundWorker> = ConcurrentHashMap()
     private val scheduledWorkers: MutableMap<WorkerName, ScheduledWorker> = ConcurrentHashMap()
+    override val anrMonitorThread = AtomicReference<Thread>()
 
     override fun backgroundWorker(workerName: WorkerName): BackgroundWorker {
         return backgroundWorkers.getOrPut(workerName) {
@@ -44,7 +46,7 @@ internal class WorkerThreadModuleImpl(
 
     private fun fetchExecutor(workerName: WorkerName): ExecutorService {
         return executors.getOrPut(workerName) {
-            val threadFactory = createThreadFactory(workerName.threadName)
+            val threadFactory = createThreadFactory(workerName)
 
             when (workerName) {
                 WorkerName.NETWORK_REQUEST -> {
@@ -76,12 +78,16 @@ internal class WorkerThreadModuleImpl(
         logger.logWarning("Rejected execution of $runnable on $executor. Ignoring - the process is likely terminating.")
     }
 
-    private fun createThreadFactory(name: String): ThreadFactory =
-        ThreadFactory { runnable: Runnable ->
+    private fun createThreadFactory(name: WorkerName): ThreadFactory {
+        return ThreadFactory { runnable: Runnable ->
             Executors.defaultThreadFactory().newThread(runnable).apply {
-                this.name = "emb-$name"
+                if (name == WorkerName.ANR_MONITOR) {
+                    anrMonitorThread.set(this)
+                }
+                this.name = "emb-${name.threadName}"
             }
         }
+    }
 
     private fun createNetworkRequestQueue(): PriorityBlockingQueue<Runnable> {
         return PriorityBlockingQueue(

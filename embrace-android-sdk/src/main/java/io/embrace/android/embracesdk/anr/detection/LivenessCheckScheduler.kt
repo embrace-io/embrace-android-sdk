@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class LivenessCheckScheduler internal constructor(
     configService: ConfigService,
-    private val anrExecutor: ScheduledExecutorService,
+    private val anrMonitorWorker: ScheduledWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
@@ -87,6 +87,7 @@ internal class LivenessCheckScheduler internal constructor(
     fun responsivenessMonitorSnapshots(): List<ResponsivenessSnapshot> =
         listOf(heartbeatSendMonitor.snapshot(), blockedThreadDetector.responsivenessMonitorSnapshot())
 
+    @Suppress("DEPRECATION")
     private fun scheduleRegularHeartbeats() {
         enforceThread(anrMonitorThread)
 
@@ -94,7 +95,7 @@ internal class LivenessCheckScheduler internal constructor(
         val runnable = Runnable(::checkHeartbeat)
         try {
             logger.logInfo("Starting ANR heartbeats with interval: ${intervalMs}ms")
-            monitorFuture = anrExecutor.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+            monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
             // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
             val message = "ANR capture initialization failed"
@@ -134,7 +135,7 @@ internal class LivenessCheckScheduler internal constructor(
 
             if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
                 logger.logInfo("Different interval detected, scheduling a heartbeat restart")
-                anrExecutor.submit {
+                anrMonitorWorker.submit {
                     if (stopHeartbeatTask()) {
                         scheduleRegularHeartbeats()
                     }

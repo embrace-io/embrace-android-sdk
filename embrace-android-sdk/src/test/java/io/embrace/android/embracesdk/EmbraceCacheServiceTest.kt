@@ -190,6 +190,26 @@ internal class EmbraceCacheServiceTest {
         children = checkNotNull(storageManager.filesDirectory.value.listFiles())
         assertEquals(0, children.size)
     }
+
+    @Test
+    fun `test listFilenamesByPrefix`() {
+        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
+        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
+        service.cacheBytes(CUSTOM_OBJECT_2_FILE_NAME, myBytes)
+        service.cacheBytes(CUSTOM_OBJECT_3_FILE_NAME, myBytes)
+
+        var filenames = service.listFilenamesByPrefix("custom_object_")
+        assertEquals(3, filenames.size)
+        assertTrue(filenames.contains("custom_object_1.json"))
+        assertTrue(filenames.contains("custom_object_2.json"))
+        assertTrue(filenames.contains("custom_object_3.json"))
+
+        filenames = service.listFilenamesByPrefix("custom_object_1")
+        assertEquals(1, filenames.size)
+        assertTrue(filenames.contains("custom_object_1.json"))
+    }
 }
 
 internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"
+internal const val CUSTOM_OBJECT_2_FILE_NAME = "custom_object_2.json"
+internal const val CUSTOM_OBJECT_3_FILE_NAME = "custom_object_3.json"

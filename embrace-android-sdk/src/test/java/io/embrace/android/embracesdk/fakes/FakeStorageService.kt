@@ -7,10 +7,10 @@ import java.nio.file.Files
 
 internal class FakeStorageService : StorageService {
 
-    override val cacheDirectory: File by lazy {
+    val cacheDirectory: File by lazy {
         Files.createTempDirectory("cache_temp").toFile()
     }
-    override val filesDirectory: File by lazy {
+    val filesDirectory: File by lazy {
         Files.createTempDirectory("files_temp").toFile()
     }
 

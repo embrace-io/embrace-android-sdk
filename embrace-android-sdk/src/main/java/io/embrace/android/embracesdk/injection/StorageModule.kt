@@ -27,7 +27,7 @@ internal class StorageModuleImpl(
     coreModule: CoreModule,
 ) : StorageModule {
 
-    override val storageService: StorageService by singleton {
+    override val storageService: EmbraceStorageService by singleton {
         EmbraceStorageService(coreModule)
     }
 

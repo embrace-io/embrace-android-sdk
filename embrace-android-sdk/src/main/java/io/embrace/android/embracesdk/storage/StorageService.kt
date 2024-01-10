@@ -10,18 +10,15 @@ import java.io.FilenameFilter
  */
 internal interface StorageService {
 
-    val cacheDirectory: File
-    val filesDirectory: File
-
     /**
-     * Returns a [File] with the specified [name] from [filesDirectory] or [cacheDirectory]
-     * if [fallback] is true and the file doesn't exist in the [filesDirectory].
+     * Returns a [File] with the specified [name] from files or cache directory.
+     * If [fallback] is true and the file doesn't exist in the files directory it will return a
+     * [File] instance from the cache directory.
      */
     fun getFile(name: String, fallback: Boolean): File
 
     /**
-     * Returns a list of files from the [filesDirectory] and [cacheDirectory] that match the
-     * specified [filter].
+     * Returns a list of files from the files and cache directories that match the [filter].
      */
     fun listFiles(filter: FilenameFilter): List<File>
 }

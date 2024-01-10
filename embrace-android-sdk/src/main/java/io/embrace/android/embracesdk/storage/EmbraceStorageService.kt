@@ -8,11 +8,11 @@ internal class EmbraceStorageService(
     private val coreModule: CoreModule
 ) : StorageService {
 
-    override val cacheDirectory: File by lazy {
+    val cacheDirectory: File by lazy {
         coreModule.context.cacheDir
     }
 
-    override val filesDirectory: File by lazy {
+    val filesDirectory: File by lazy {
         getOrCreateEmbraceFilesDir() ?: cacheDirectory
     }
 

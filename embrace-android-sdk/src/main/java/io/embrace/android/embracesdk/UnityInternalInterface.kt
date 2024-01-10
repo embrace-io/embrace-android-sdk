@@ -1,37 +1,30 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 /**
- * Provides an internal interface to Embrace that is intended for use by Unity as its
+ * Provides an internal interface to Embrace that is intended for use by the Embrace Unity SDK as its
  * sole source of communication with the Android SDK.
  */
-internal interface UnityInternalInterface : EmbraceInternalInterface {
+@InternalApi
+public interface UnityInternalInterface : EmbraceInternalInterface {
 
-    /**
-     * See [Embrace.setUnityMetaData]
-     */
-    fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?)
+    public fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?)
 
-    /**
-     * See [Embrace.logUnhandledUnityException]
-     */
-    fun logUnhandledUnityException(
+    public fun logUnhandledUnityException(
         name: String,
         message: String,
         stacktrace: String?
     )
 
-    /**
-     * See [Embrace.logHandledUnityException]
-     */
-    fun logHandledUnityException(
+    public fun logHandledUnityException(
         name: String,
         message: String,
         stacktrace: String?
     )
 
-    fun recordIncompleteNetworkRequest(
+    public fun recordIncompleteNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -41,7 +34,7 @@ internal interface UnityInternalInterface : EmbraceInternalInterface {
         traceId: String?
     )
 
-    fun recordCompletedNetworkRequest(
+    public fun recordCompletedNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -52,5 +45,5 @@ internal interface UnityInternalInterface : EmbraceInternalInterface {
         traceId: String?
     )
 
-    fun installUnityThreadSampler()
+    public fun installUnityThreadSampler()
 }

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
@@ -569,6 +568,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Get internal interface for the intra-Embrace, not-publicly-supported API
+     *
      * @hide
      */
     @NonNull
@@ -579,7 +579,8 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native.
+     * communication with the Android SDK for React Native. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
@@ -590,6 +591,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Logs a React Native Redux Action - this is not intended for public use.
+     *
      * @hide
      */
     @InternalApi
@@ -605,9 +607,9 @@ public final class Embrace implements EmbraceAndroidApi {
      * <p>
      * If the previously logged view has the same name, a duplicate view breadcrumb will not be
      * logged.
-     * @hide
      *
      * @param screen the name of the view to log
+     * @hide
      */
     @InternalApi
     public void logRnView(@NonNull String screen) {
@@ -616,7 +618,8 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity.
+     * communication with the Android SDK for Unity. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
@@ -627,61 +630,14 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter.
+     * communication with the Android SDK for Flutter. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
     @InternalApi
     public FlutterInternalInterface getFlutterInternalInterface() {
         return impl.getFlutterInternalInterface();
-    }
-
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        impl.setEmbraceFlutterSdkVersion(version);
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void setDartVersion(@Nullable String version) {
-        impl.setDartVersion(version);
-    }
-
-    /**
-     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logHandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.HANDLED);
-    }
-
-    /**
-     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logUnhandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED);
     }
 
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {

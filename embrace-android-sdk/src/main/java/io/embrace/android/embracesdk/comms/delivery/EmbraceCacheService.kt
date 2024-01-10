@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -139,7 +140,8 @@ internal class EmbraceCacheService(
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         val file = getFileFromFilesOrCacheDir(name)
         try {
-            return serializer.fromJsonToList(file.inputStream(), PendingApiCall::class.java)
+            val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
+            return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>? ?: emptyList()
         } catch (ex: FileNotFoundException) {
             logger.logDebug("Cache file cannot be found " + file.path)
         } catch (ex: Exception) {

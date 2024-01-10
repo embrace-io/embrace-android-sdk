@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.serialization
 
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -32,8 +33,9 @@ internal class EmbraceSerializerTest {
         val session1 = fakeSession(sessionId = "session1")
         val session2 = fakeSession(sessionId = "session2")
         val listOfObjects = listOf(session1, session2)
-        val stream = serializer.toJsonFromList(listOfObjects, Session::class.java).byteInputStream()
-        val result = serializer.fromJsonToList(stream, Session::class.java)
+        val type = Types.newParameterizedType(List::class.java, Session::class.java)
+        val stream = serializer.toJson(listOfObjects, type).byteInputStream()
+        val result = serializer.fromJson(stream, type) as List<Session>
         assertEquals(2, result.size)
         assertEquals(session1, result[0])
         assertEquals(session2, result[1])

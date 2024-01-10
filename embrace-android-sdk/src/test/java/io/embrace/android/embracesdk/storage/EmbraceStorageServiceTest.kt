@@ -36,16 +36,16 @@ internal class EmbraceStorageServiceTest {
     fun `test cacheDirectory returns cache dir`() {
         val cacheDirectory = storageManager.cacheDirectory
         assertNotNull(cacheDirectory)
-        assertTrue(cacheDirectory.value.isDirectory)
-        assertEquals(cacheDir.absolutePath, cacheDirectory.value.absolutePath)
+        assertTrue(cacheDirectory.isDirectory)
+        assertEquals(cacheDir.absolutePath, cacheDirectory.absolutePath)
     }
 
     @Test
     fun `test filesDirectory returns files dir`() {
         val filesDirectory = storageManager.filesDirectory
         assertNotNull(filesDirectory)
-        assertTrue(filesDirectory.value.isDirectory)
-        assertEquals(filesDirPath, filesDirectory.value.absolutePath)
+        assertTrue(filesDirectory.isDirectory)
+        assertEquals(filesDirPath, filesDirectory.absolutePath)
     }
 
     @Test
@@ -54,9 +54,9 @@ internal class EmbraceStorageServiceTest {
 
         val filesDirectory = storageManager.filesDirectory
 
-        assertNotNull(filesDirectory.value)
-        assertTrue(filesDirectory.value.isDirectory)
-        assertEquals(cacheDir.absolutePath, filesDirectory.value.absolutePath)
+        assertNotNull(filesDirectory)
+        assertTrue(filesDirectory.isDirectory)
+        assertEquals(cacheDir.absolutePath, filesDirectory.absolutePath)
     }
 
     @Test
@@ -68,7 +68,7 @@ internal class EmbraceStorageServiceTest {
 
     @Test
     fun `test getFile with fallback true returns File instance from files dir if exists`() {
-        val fileToAdd = File(storageManager.filesDirectory.value, "test.txt")
+        val fileToAdd = File(storageManager.filesDirectory, "test.txt")
         val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
         val resultFile = storageManager.getFile("test.txt", false)
         assertNotNull(resultFile)
@@ -77,7 +77,7 @@ internal class EmbraceStorageServiceTest {
 
     @Test
     fun `test getFile with fallback true returns File instance from cache dir if doesn't exist in files`() {
-        val fileToAdd = File(storageManager.cacheDirectory.value, "test.txt")
+        val fileToAdd = File(storageManager.cacheDirectory, "test.txt")
         val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
         val resultFile = storageManager.getFile("test.txt", true)
         assertNotNull(resultFile)
@@ -86,9 +86,9 @@ internal class EmbraceStorageServiceTest {
 
     @Test
     fun `test listFiles when files and cache dirs contains files`() {
-        val fileToAddInCache = File(storageManager.cacheDirectory.value, "test_cache.txt")
+        val fileToAddInCache = File(storageManager.cacheDirectory, "test_cache.txt")
         val addedFileInCache = Files.createFile(fileToAddInCache.toPath()).toFile()
-        val fileToAddInFiles = File(storageManager.filesDirectory.value, "test_files.txt")
+        val fileToAddInFiles = File(storageManager.filesDirectory, "test_files.txt")
         val addedFileInFiles = Files.createFile(fileToAddInFiles.toPath()).toFile()
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(2, files.size)

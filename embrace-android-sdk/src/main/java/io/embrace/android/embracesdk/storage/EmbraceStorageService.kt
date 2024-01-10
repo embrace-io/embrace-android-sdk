@@ -8,12 +8,12 @@ internal class EmbraceStorageService(
     private val coreModule: CoreModule
 ) : StorageService {
 
-    override val cacheDirectory: Lazy<File> = lazy {
+    override val cacheDirectory: File by lazy {
         coreModule.context.cacheDir
     }
 
-    override val filesDirectory: Lazy<File> = lazy {
-        getOrCreateEmbraceFilesDir() ?: cacheDirectory.value
+    override val filesDirectory: File by lazy {
+        getOrCreateEmbraceFilesDir() ?: cacheDirectory
     }
 
     /**
@@ -22,16 +22,16 @@ internal class EmbraceStorageService(
      * instance from [cacheDirectory].
      */
     override fun getFile(name: String, fallback: Boolean): File {
-        var file = File(filesDirectory.value, name)
+        var file = File(filesDirectory, name)
         if (!file.exists() && fallback) {
-            file = File(cacheDirectory.value, name)
+            file = File(cacheDirectory, name)
         }
         return file
     }
 
     override fun listFiles(filter: FilenameFilter): List<File> {
-        val filesDir = filesDirectory.value.listFiles(filter) ?: emptyArray()
-        val cacheDir = cacheDirectory.value.listFiles(filter) ?: emptyArray()
+        val filesDir = filesDirectory.listFiles(filter) ?: emptyArray()
+        val cacheDir = cacheDirectory.listFiles(filter) ?: emptyArray()
         return filesDir.toList() + cacheDir.toList()
     }
 

@@ -27,9 +27,6 @@ internal class StorageModuleImpl(
     coreModule: CoreModule,
 ) : StorageModule {
 
-    private val deliveryCacheWorker =
-        workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
-
     override val storageService: StorageService by singleton {
         EmbraceStorageService(coreModule)
     }
@@ -37,7 +34,7 @@ internal class StorageModuleImpl(
     override val cache by singleton {
         ApiResponseCache(
             coreModule.jsonSerializer,
-            { File(storageService.cacheDirectory.value, "emb_config_cache") }
+            { File(storageService.cacheDirectory, "emb_config_cache") }
         )
     }
 
@@ -48,7 +45,7 @@ internal class StorageModuleImpl(
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            deliveryCacheWorker,
+            workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.logger,
             initModule.clock,
             coreModule.jsonSerializer

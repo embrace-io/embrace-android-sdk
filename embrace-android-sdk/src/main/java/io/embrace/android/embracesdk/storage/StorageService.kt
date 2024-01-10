@@ -10,8 +10,8 @@ import java.io.FilenameFilter
  */
 internal interface StorageService {
 
-    val cacheDirectory: Lazy<File>
-    val filesDirectory: Lazy<File>
+    val cacheDirectory: File
+    val filesDirectory: File
 
     /**
      * Returns a [File] with the specified [name] from [filesDirectory] or [cacheDirectory]

@@ -218,9 +218,9 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
 
-        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
+        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =
-            storageManager.filesDirectory.value.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
         verify(exactly = 1) {
             delegate._installSignalHandlers(
                 reportBasePath,
@@ -266,9 +266,9 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         assertTrue(activityService.listeners.contains(embraceNdkService))
 
-        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
+        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =
-            storageManager.filesDirectory.value.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
             metadataService.getLightweightAppInfo()
@@ -308,8 +308,8 @@ internal class EmbraceNdkServiceTest {
     fun `test initialization with ndk disabled doesn't run _installSignalHandlers and _updateMetaData`() {
         enableNdk(false)
         initializeService()
-        val reportBasePath = storageManager.filesDirectory.value.absolutePath + "/ndk"
-        val markerFilePath = storageManager.filesDirectory.value.absolutePath + "/crash_file_marker"
+        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
+        val markerFilePath = storageManager.filesDirectory.absolutePath + "/crash_file_marker"
 
         verify(exactly = 0) {
             delegate._installSignalHandlers(

@@ -40,15 +40,15 @@ internal class EmbraceCacheServiceTest {
         )
 
         // always assert that nothing is in the dir
-        assertTrue(checkNotNull(storageManager.cacheDirectory.value.listFiles()).isEmpty())
-        assertTrue(checkNotNull(storageManager.filesDirectory.value.listFiles()).isEmpty())
+        assertTrue(checkNotNull(storageManager.cacheDirectory.listFiles()).isEmpty())
+        assertTrue(checkNotNull(storageManager.filesDirectory.listFiles()).isEmpty())
     }
 
     @Test
     fun `test cacheBytes and loadBytes`() {
         val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -64,7 +64,7 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test cacheBytes with non-writable file does not throw exception`() {
-        val cacheFile = File(storageManager.filesDirectory.value, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
+        val cacheFile = File(storageManager.filesDirectory, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
         cacheFile.writeText("locked file")
         cacheFile.setReadOnly()
 
@@ -81,7 +81,7 @@ internal class EmbraceCacheServiceTest {
     fun `test cacheObject and loadObject`() {
         val myObject = fakeSession()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, Session::class.java)
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -92,7 +92,7 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `test cachePayload and loadPayload`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -105,7 +105,7 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `cachePayload action throws exception`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { error("Whoops") }
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         assertTrue(children.isEmpty())
     }
 
@@ -128,7 +128,7 @@ internal class EmbraceCacheServiceTest {
         val myObject1 = fakeSession()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
 
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         file.writeText("malformed content")
 
@@ -184,10 +184,10 @@ internal class EmbraceCacheServiceTest {
         val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
 
-        var children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        var children = checkNotNull(storageManager.filesDirectory.listFiles())
         assertEquals(1, children.size)
         service.deleteFile(CUSTOM_OBJECT_1_FILE_NAME)
-        children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        children = checkNotNull(storageManager.filesDirectory.listFiles())
         assertEquals(0, children.size)
     }
 
@@ -228,7 +228,7 @@ internal class EmbraceCacheServiceTest {
             )
         )
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, List::class.java)
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 
@@ -243,7 +243,7 @@ internal class EmbraceCacheServiceTest {
     fun `test loadOldPendingApiCalls with no elements`() {
         val myObject = emptyList<PendingApiCall> ()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, List::class.java)
-        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
 

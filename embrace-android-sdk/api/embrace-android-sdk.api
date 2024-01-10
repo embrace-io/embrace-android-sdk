@@ -132,6 +132,17 @@ public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
 }
 
+public abstract interface class io/embrace/android/embracesdk/ReactNativeInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
+	public abstract fun logRnView (Ljava/lang/String;)V
+	public abstract fun logUnhandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;)V
+	public abstract fun setJavaScriptPatchNumber (Ljava/lang/String;)V
+	public abstract fun setReactNativeSdkVersion (Ljava/lang/String;)V
+	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V
+}
+
 public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
 	public static final field INFO Lio/embrace/android/embracesdk/Severity;

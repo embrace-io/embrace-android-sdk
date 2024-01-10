@@ -208,6 +208,49 @@ internal class EmbraceCacheServiceTest {
         assertEquals(1, filenames.size)
         assertTrue(filenames.contains("custom_object_1.json"))
     }
+
+    @Test
+    fun `test loadOldPendingApiCalls with existing elements`() {
+        val myObject = listOf(
+            PendingApiCall(
+                ApiRequest(
+                    httpMethod = HttpMethod.POST,
+                    url = EmbraceUrl.create("http://fake.url/sessions")
+                ),
+                "payload_id_1"
+            ),
+            PendingApiCall(
+                ApiRequest(
+                    httpMethod = HttpMethod.POST,
+                    url = EmbraceUrl.create("http://fake.url/sessions")
+                ),
+                "payload_id_2"
+            )
+        )
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, List::class.java)
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val loadedObject = service.loadOldPendingApiCalls(CUSTOM_OBJECT_1_FILE_NAME)
+        assertEquals(myObject, checkNotNull(loadedObject))
+        assertEquals(2, loadedObject.size)
+        assertEquals(myObject[0], loadedObject[0])
+        assertEquals(myObject[1], loadedObject[1])
+    }
+
+    @Test
+    fun `test loadOldPendingApiCalls with no elements`() {
+        val myObject = emptyList<PendingApiCall> ()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, List::class.java)
+        val children = checkNotNull(storageManager.filesDirectory.value.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val loadedObject = service.loadOldPendingApiCalls(CUSTOM_OBJECT_1_FILE_NAME)
+        assertEquals(myObject, checkNotNull(loadedObject))
+        assertEquals(0, loadedObject.size)
+    }
 }
 
 internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"

@@ -136,12 +136,10 @@ internal class EmbraceCacheService(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         val file = getFileFromFilesOrCacheDir(name)
         try {
-            val results = serializer.fromJson(file.inputStream(), ArrayList::class.java)
-            return results as List<PendingApiCall>? ?: return emptyList()
+            return serializer.fromJsonToList(file.inputStream(), PendingApiCall::class.java)
         } catch (ex: FileNotFoundException) {
             logger.logDebug("Cache file cannot be found " + file.path)
         } catch (ex: Exception) {

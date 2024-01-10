@@ -197,7 +197,7 @@ internal class EmbraceDeliveryCacheManager(
     /**
      * Loads the [PendingApiCalls] map from a file named [PENDING_API_CALLS_FILE_NAME].
      * If loadObject returns null, it tries to load the old version of the file which was storing
-     * [PendingApiCallsQueue] instead of [PendingApiCalls].
+     * a list of [PendingApiCall] instead of [PendingApiCalls].
      */
     override fun loadPendingApiCalls(): PendingApiCalls {
         logger.logDeveloper(TAG, "Loading pending api calls")
@@ -218,7 +218,7 @@ internal class EmbraceDeliveryCacheManager(
 
     /**
      * Loads the old version of the [PENDING_API_CALLS_FILE_NAME] file where
-     * it was storing [PendingApiCallsQueue] instead of [PendingApiCalls]
+     * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]
      */
     private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
         logger.logDeveloper(TAG, "Loading old version of pending api calls")

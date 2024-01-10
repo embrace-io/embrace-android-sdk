@@ -4,8 +4,10 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
 
-internal fun fakeSession(): Session = Session(
-    sessionId = "fakeSessionId",
+internal fun fakeSession(
+    sessionId: String = "fakeSessionId",
+): Session = Session(
+    sessionId = sessionId,
     startTime = 160000000000L,
     number = 1,
     appState = APPLICATION_STATE_FOREGROUND,

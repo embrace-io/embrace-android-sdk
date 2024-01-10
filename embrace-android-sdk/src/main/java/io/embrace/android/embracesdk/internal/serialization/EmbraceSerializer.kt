@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapter
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import okio.buffer
 import okio.sink
@@ -44,6 +44,13 @@ internal class EmbraceSerializer {
         }
     }
 
+    fun <T> toJsonFromList(src: List<T>, clazz: Class<T>): String {
+        val adapter = impl.adapter<List<T>>(
+            Types.newParameterizedType(List::class.java, clazz)
+        )
+        return adapter.toJson(src) ?: error("Failed converting list of objects to JSON.")
+    }
+
     fun <T> fromJson(json: String, clz: Class<T>): T {
         val adapter = impl.adapter(clz)
         return adapter.fromJson(json) ?: error("JSON conversion failed.")
@@ -57,6 +64,15 @@ internal class EmbraceSerializer {
     fun <T> fromJson(inputStream: InputStream, clz: Class<T>): T {
         return inputStream.source().buffer().use {
             val adapter = impl.adapter(clz)
+            adapter.fromJson(it) ?: error("JSON conversion failed.")
+        }
+    }
+
+    fun <T> fromJsonToList(inputStream: InputStream, clz: Class<T>): List<T> {
+        return inputStream.source().buffer().use {
+            val adapter = impl.adapter<List<T>>(
+                Types.newParameterizedType(List::class.java, clz)
+            )
             adapter.fromJson(it) ?: error("JSON conversion failed.")
         }
     }

@@ -63,7 +63,6 @@
     "lic": 0,
     "ht": "__EMBRACE_TEST_IGNORE__",
     "sn": "__EMBRACE_TEST_IGNORE__",
-
     "sp": {},
     "si": "__EMBRACE_TEST_IGNORE__",
     "id": "__EMBRACE_TEST_IGNORE__",
@@ -103,7 +102,9 @@
     "id": "some id",
     "em": "user@email.com",
     "un": "John Doe",
-    "per": ["first_day"]
+    "per": [
+      "first_day"
+    ]
   },
   "spans": [
     {
@@ -146,10 +147,10 @@
         "emb.okhttp3_on_classpath": "4.9.3",
         "emb.kotlin_on_classpath": "1.4.32",
         "emb.is_emulator": "__EMBRACE_TEST_IGNORE__",
-        "emb.usage.log_breadcrumb": "1",
+        "emb.usage.add_breadcrumb": "1",
+        "emb.usage.add_user_persona": "1",
         "emb.usage.set_user_email": "1",
         "emb.usage.set_user_identifier": "1",
-        "emb.usage.set_user_persona": "1",
         "emb.usage.set_username": "1"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",

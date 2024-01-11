@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.payload.NativeSymbols
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.BufferedReader
@@ -203,7 +204,7 @@ internal class EmbraceNdkService(
     }
 
     private fun createCrashReportDirectory() {
-        val directoryFile = storageService.getFile(NATIVE_CRASH_FILE_FOLDER, false)
+        val directoryFile = storageService.getNativeCrashDir()
         if (directoryFile.exists()) {
             return
         }
@@ -213,8 +214,7 @@ internal class EmbraceNdkService(
     }
 
     private fun installSignals() {
-        val reportBasePath =
-            storageService.getFile(NATIVE_CRASH_FILE_FOLDER, false).absolutePath
+        val reportBasePath = storageService.getNativeCrashDir().absolutePath
         val markerFilePath =
             storageService.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME, false).absolutePath
 
@@ -637,7 +637,6 @@ internal class EmbraceNdkService(
         private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
         private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
         private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
-        private const val NATIVE_CRASH_FILE_FOLDER = "ndk"
         private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000

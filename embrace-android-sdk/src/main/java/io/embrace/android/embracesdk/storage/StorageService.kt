@@ -23,6 +23,11 @@ internal interface StorageService {
     fun getConfigCacheDir(): File
 
     /**
+     * Returns a [File] instance referencing the directory where the native crash files are stored.
+     */
+    fun getNativeCrashDir(): File
+
+    /**
      * Returns a list of files from the files and cache directories that match the [filter].
      */
     fun listFiles(filter: FilenameFilter): List<File>

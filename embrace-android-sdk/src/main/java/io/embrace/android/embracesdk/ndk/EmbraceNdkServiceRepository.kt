@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.ndk
 
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 
 private const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
 private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-private const val NATIVE_CRASH_FILE_FOLDER = "ndk"
 private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
 private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
 

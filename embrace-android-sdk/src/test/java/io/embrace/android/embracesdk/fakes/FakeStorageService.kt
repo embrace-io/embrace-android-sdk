@@ -20,6 +20,9 @@ internal class FakeStorageService : StorageService {
     override fun getConfigCacheDir() =
         File(cacheDirectory, "emb_config_cache")
 
+    override fun getNativeCrashDir() =
+        File(filesDirectory, "ndk")
+
     override fun listFiles(filter: FilenameFilter): List<File> {
         val filesDir = filesDirectory.listFiles(filter) ?: emptyArray()
         val cacheDir = cacheDirectory.listFiles(filter) ?: emptyArray()

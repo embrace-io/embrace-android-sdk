@@ -33,6 +33,10 @@ internal class EmbraceStorageService(
         return File(cacheDirectory, EMBRACE_CONFIG_CACHE_DIRECTORY)
     }
 
+    override fun getNativeCrashDir(): File {
+        return File(filesDirectory, NATIVE_CRASH_FILE_FOLDER)
+    }
+
     override fun listFiles(filter: FilenameFilter): List<File> {
         val filesDir = filesDirectory.listFiles(filter) ?: emptyArray()
         val cacheDir = cacheDirectory.listFiles(filter) ?: emptyArray()
@@ -62,3 +66,8 @@ private const val EMBRACE_DIRECTORY = "embrace"
  * Directory name for the config files that are stored in the cache directory.
  */
 private const val EMBRACE_CONFIG_CACHE_DIRECTORY = "emb_config_cache"
+
+/**
+ * Directory name for the native crash files that are stored in the files directory.
+ */
+internal const val NATIVE_CRASH_FILE_FOLDER = "ndk"

@@ -88,4 +88,11 @@ internal class EmbraceStorageServiceTest {
         assertNotNull(storageDirForConfigCache)
         assertEquals(cacheDir.absolutePath + "/emb_config_cache", storageDirForConfigCache.absolutePath)
     }
+
+    @Test
+    fun `test getNativeCrashDir returns files dir`() {
+        val storageDirForNativeCrash = storageManager.getNativeCrashDir()
+        assertNotNull(storageDirForNativeCrash)
+        assertEquals("$embraceFilesDir/ndk", storageDirForNativeCrash.absolutePath)
+    }
 }

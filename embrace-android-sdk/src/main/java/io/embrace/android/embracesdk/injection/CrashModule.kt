@@ -29,10 +29,7 @@ internal class CrashModuleImpl(
 
     private val crashMarker: CrashFileMarker by singleton {
         val markerFile = lazy {
-            storageModule.storageService.getFile(
-                CrashFileMarker.CRASH_MARKER_FILE_NAME,
-                false
-            )
+            storageModule.storageService.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME)
         }
         CrashFileMarker(markerFile)
     }

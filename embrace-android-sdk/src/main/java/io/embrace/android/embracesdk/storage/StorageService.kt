@@ -12,10 +12,10 @@ internal interface StorageService {
 
     /**
      * Returns a [File] with the specified [name] from files or cache directory.
-     * If [fallback] is true and the file doesn't exist in the files directory it will return a
-     * [File] instance from the cache directory.
+     * If the file doesn't exist in any of the directories it will return a File instance from
+     * the files directory.
      */
-    fun getFile(name: String, fallback: Boolean): File
+    fun getFile(name: String): File
 
     /**
      * Returns a [File] instance referencing the directory where the config cache is stored.

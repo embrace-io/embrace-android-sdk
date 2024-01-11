@@ -16,17 +16,16 @@ internal class EmbraceStorageService(
         getOrCreateEmbraceFilesDir() ?: cacheDirectory
     }
 
-    /**
-     * Returns a file instance with the specified [name] from [filesDirectory].
-     * If fallback is true and the file doesn't exist in the [filesDirectory] it will return a File
-     * instance from [cacheDirectory].
-     */
-    override fun getFile(name: String, fallback: Boolean): File {
-        var file = File(filesDirectory, name)
-        if (!file.exists() && fallback) {
-            file = File(cacheDirectory, name)
+    override fun getFile(name: String): File {
+        val fileInFilesDir = File(filesDirectory, name)
+
+        if (!fileInFilesDir.exists()) {
+            val fileInCacheDir = File(cacheDirectory, name)
+            if (fileInCacheDir.exists()) {
+                return fileInCacheDir
+            }
         }
-        return file
+        return fileInFilesDir
     }
 
     override fun getConfigCacheDir(): File {

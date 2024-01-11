@@ -215,8 +215,7 @@ internal class EmbraceNdkService(
 
     private fun installSignals() {
         val reportBasePath = storageService.getNativeCrashDir().absolutePath
-        val markerFilePath =
-            storageService.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME, false).absolutePath
+        val markerFilePath = storageService.getFile(CrashFileMarker.CRASH_MARKER_FILE_NAME).absolutePath
 
         logger.logDeveloper("EmbraceNDKService", "Creating report path at $reportBasePath")
 

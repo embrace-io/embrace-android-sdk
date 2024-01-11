@@ -35,7 +35,7 @@ internal class EmbraceStorageServiceTest {
 
     @Test
     fun `test getFile with fallback false returns File instance from files dir`() {
-        val file = storageManager.getFile("test.txt", false)
+        val file = storageManager.getFile("test.txt")
         assertNotNull(file)
         assertEquals("$embraceFilesDir/test.txt", file.absolutePath)
     }
@@ -44,7 +44,7 @@ internal class EmbraceStorageServiceTest {
     fun `test getFile with fallback true returns File instance from files dir if exists`() {
         val fileToAdd = File(embraceFilesDir, "test.txt")
         val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
-        val resultFile = storageManager.getFile("test.txt", false)
+        val resultFile = storageManager.getFile("test.txt")
         assertNotNull(resultFile)
         assertEquals(addedFile, resultFile)
     }
@@ -53,7 +53,7 @@ internal class EmbraceStorageServiceTest {
     fun `test getFile with fallback true returns File instance from cache dir if doesn't exist in files`() {
         val fileToAdd = File(cacheDir, "test.txt")
         val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
-        val resultFile = storageManager.getFile("test.txt", true)
+        val resultFile = storageManager.getFile("test.txt")
         assertNotNull(resultFile)
         assertEquals(addedFile, resultFile)
     }

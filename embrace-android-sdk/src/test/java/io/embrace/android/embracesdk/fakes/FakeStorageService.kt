@@ -14,7 +14,10 @@ internal class FakeStorageService : StorageService {
         Files.createTempDirectory("files_temp").toFile()
     }
 
-    override fun getFile(name: String) =
+    override fun getFileForRead(name: String) =
+        File(filesDirectory, name)
+
+    override fun getFileForWrite(name: String) =
         File(filesDirectory, name)
 
     override fun getConfigCacheDir() =

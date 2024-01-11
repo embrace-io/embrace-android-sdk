@@ -10,8 +10,6 @@ import java.io.FileNotFoundException
 
 /**
  * Handles the reading and writing of objects from the app's cache.
- * Previous versions of the SDK used the cache directory for cached files.
- * Since v6.3.0, the files directory is used instead.
  */
 internal class EmbraceCacheService(
     private val storageService: StorageService,
@@ -22,7 +20,7 @@ internal class EmbraceCacheService(
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
         if (bytes != null) {
-            val file = storageService.getFile(EMBRACE_PREFIX + name)
+            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
             try {
                 file.writeBytes(bytes)
                 logger.logDeveloper(TAG, "Bytes cached")
@@ -36,7 +34,7 @@ internal class EmbraceCacheService(
 
     override fun loadBytes(name: String): ByteArray? {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
         try {
             return file.readBytes()
         } catch (ex: FileNotFoundException) {
@@ -49,7 +47,7 @@ internal class EmbraceCacheService(
 
     override fun cachePayload(name: String, action: SerializationAction) {
         logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
         try {
             file.outputStream().buffered().use(action)
             logger.logDeveloper(TAG, "Bytes cached")
@@ -62,7 +60,7 @@ internal class EmbraceCacheService(
     override fun loadPayload(name: String): SerializationAction {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
         return { stream ->
-            val file = storageService.getFile(EMBRACE_PREFIX + name)
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
                 file.inputStream().buffered().use { input ->
                     input.copyTo(stream)
@@ -88,7 +86,7 @@ internal class EmbraceCacheService(
      */
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
         logger.logDeveloper(TAG, "Attempting to cache object: $name")
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
         try {
             serializer.toJson(objectToCache, clazz, file.outputStream())
         } catch (ex: Exception) {
@@ -97,7 +95,7 @@ internal class EmbraceCacheService(
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
         try {
             return serializer.fromJson(file.inputStream(), clazz)
         } catch (ex: FileNotFoundException) {
@@ -110,7 +108,7 @@ internal class EmbraceCacheService(
 
     override fun deleteFile(name: String): Boolean {
         logger.logDeveloper("EmbraceCacheService", "Attempting to delete file from cache: $name")
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
         try {
             return file.delete()
         } catch (ex: Exception) {
@@ -128,7 +126,7 @@ internal class EmbraceCacheService(
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         try {
             logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-            val file = storageService.getFile(EMBRACE_PREFIX + name)
+            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
             serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
             logger.logDeveloper(TAG, "Bytes cached")
         } catch (ex: Throwable) {
@@ -137,7 +135,7 @@ internal class EmbraceCacheService(
     }
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
-        val file = storageService.getFile(EMBRACE_PREFIX + name)
+        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
         try {
             val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
             return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>? ?: emptyList()

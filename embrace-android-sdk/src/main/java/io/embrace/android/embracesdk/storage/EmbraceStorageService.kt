@@ -4,6 +4,12 @@ import android.content.Context
 import java.io.File
 import java.io.FilenameFilter
 
+/**
+ * Provides File instances for files and directories used to store data.
+ * Previous versions of the SDK used the cache directory for cached files.
+ * Since v6.3.0, the files directory is used instead and the cache directory is only used for
+ * cached config files.
+ */
 internal class EmbraceStorageService(
     private val context: Context
 ) : StorageService {
@@ -16,7 +22,7 @@ internal class EmbraceStorageService(
         getOrCreateEmbraceFilesDir() ?: cacheDirectory
     }
 
-    override fun getFile(name: String): File {
+    override fun getFileForRead(name: String): File {
         val fileInFilesDir = File(filesDirectory, name)
 
         if (!fileInFilesDir.exists()) {
@@ -26,6 +32,10 @@ internal class EmbraceStorageService(
             }
         }
         return fileInFilesDir
+    }
+
+    override fun getFileForWrite(name: String): File {
+        return File(filesDirectory, name)
     }
 
     override fun getConfigCacheDir(): File {

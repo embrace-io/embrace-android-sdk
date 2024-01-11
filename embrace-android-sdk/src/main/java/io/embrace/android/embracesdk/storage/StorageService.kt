@@ -4,9 +4,7 @@ import java.io.File
 import java.io.FilenameFilter
 
 /**
- * Provides File instances for files in the cache and files directories.
- * Previous versions of the SDK used to store files in the cache directory, but now we use the
- * files directory for everything except the config cache.
+ * Provides File instances for files and directories used to store data.
  */
 internal interface StorageService {
 
@@ -15,7 +13,12 @@ internal interface StorageService {
      * If the file doesn't exist in any of the directories it will return a File instance from
      * the files directory.
      */
-    fun getFile(name: String): File
+    fun getFileForRead(name: String): File
+
+    /**
+     * Returns a [File] with the specified [name] from the files directory.
+     */
+    fun getFileForWrite(name: String): File
 
     /**
      * Returns a [File] instance referencing the directory where the config cache is stored.

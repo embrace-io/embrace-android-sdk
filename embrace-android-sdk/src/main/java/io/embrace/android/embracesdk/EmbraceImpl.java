@@ -868,7 +868,7 @@ final class EmbraceImpl {
      * @param persona the persona to set
      */
     void addUserPersona(@NonNull String persona) {
-        if (checkSdkStartedAndLogPublicApiUsage("set_user_persona")) {
+        if (checkSdkStartedAndLogPublicApiUsage("add_user_persona")) {
             if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
                 internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
                 return;
@@ -1025,7 +1025,7 @@ final class EmbraceImpl {
      */
     @NonNull
     String getTraceIdHeader() {
-        if (checkSdkStartedAndLogPublicApiUsage("get_trace_id_header") && configService != null) {
+        if (configService != null && checkSdkStarted("get_trace_id_header", false)) {
             return configService.getNetworkBehavior().getTraceIdHeader();
         }
         return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE;
@@ -1037,7 +1037,7 @@ final class EmbraceImpl {
     }
 
     void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        if (checkSdkStartedAndLogPublicApiUsage("record_network_request") && embraceInternalInterface != null) {
+        if (embraceInternalInterface != null && checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
             embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
         }
     }
@@ -1220,7 +1220,7 @@ final class EmbraceImpl {
      * @param message the name of the breadcrumb to log
      */
     void addBreadcrumb(@NonNull String message) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_breadcrumb")) {
+        if (checkSdkStartedAndLogPublicApiUsage("add_breadcrumb")) {
             breadcrumbService.logCustom(message, sdkClock.now());
             onActivityReported();
         }
@@ -1396,7 +1396,7 @@ final class EmbraceImpl {
     @Nullable
     String getCurrentSessionId() {
         MetadataService localMetaDataService = metadataService;
-        if (checkSdkStartedAndLogPublicApiUsage("get_current_session_id") && localMetaDataService != null) {
+        if (localMetaDataService != null && checkSdkStarted("get_current_session_id", false)) {
             String sessionId = localMetaDataService.getActiveSessionId();
             if (sessionId != null) {
                 return sessionId;
@@ -1580,12 +1580,22 @@ final class EmbraceImpl {
         }
     }
 
+    /**
+     * Checks if the SDK is started and logs the public API usage.
+     * <p>
+     * Every public API usage should go through this method, except the ones that are called too often and may cause a performance hit.
+     * For instance, get_current_session_id and get_trace_id_header go directly through checkSdkStarted.
+     */
     private boolean checkSdkStartedAndLogPublicApiUsage(@NonNull String action) {
+        return checkSdkStarted(action, true);
+    }
+
+    private boolean checkSdkStarted(@NonNull String action, boolean logPublicApiUsage) {
         boolean isStarted = isStarted();
         if (!isStarted) {
             internalEmbraceLogger.logSDKNotInitialized(action);
         }
-        if (telemetryService != null) {
+        if (telemetryService != null && logPublicApiUsage) {
             telemetryService.onPublicApiCalled(action);
         }
         return isStarted;

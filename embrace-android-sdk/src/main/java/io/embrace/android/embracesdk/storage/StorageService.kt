@@ -18,6 +18,11 @@ internal interface StorageService {
     fun getFile(name: String, fallback: Boolean): File
 
     /**
+     * Returns a [File] instance referencing the directory where the config cache is stored.
+     */
+    fun getConfigCacheDir(): File
+
+    /**
      * Returns a list of files from the files and cache directories that match the [filter].
      */
     fun listFiles(filter: FilenameFilter): List<File>

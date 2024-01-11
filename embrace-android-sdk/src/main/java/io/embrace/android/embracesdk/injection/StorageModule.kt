@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import java.io.File
 
 /**
  * Contains dependencies that are used to store data in the device's storage.
@@ -27,14 +26,14 @@ internal class StorageModuleImpl(
     coreModule: CoreModule,
 ) : StorageModule {
 
-    override val storageService: EmbraceStorageService by singleton {
-        EmbraceStorageService(coreModule)
+    override val storageService: StorageService by singleton {
+        EmbraceStorageService(coreModule.context)
     }
 
     override val cache by singleton {
         ApiResponseCache(
             coreModule.jsonSerializer,
-            { File(storageService.cacheDirectory, "emb_config_cache") }
+            storageService,
         )
     }
 

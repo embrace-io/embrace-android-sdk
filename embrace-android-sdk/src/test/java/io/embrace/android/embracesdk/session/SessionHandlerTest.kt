@@ -163,7 +163,8 @@ internal class SessionHandlerTest {
         gatingService = FakeGatingService(configService = configService)
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
-        val sessionMessageCollator = SessionMessageCollator(
+        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
+        val payloadMessageCollator = PayloadMessageCollator(
             configService,
             metadataService,
             eventService,
@@ -175,13 +176,14 @@ internal class SessionHandlerTest {
             null,
             breadcrumbService,
             userService,
+            preferencesService,
+            spansService,
             clock
         )
         spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
         sessionHandler = SessionHandler(
             logger,
             configService,
-            preferencesService,
             userService,
             networkConnectivityService,
             metadataService,
@@ -191,7 +193,7 @@ internal class SessionHandlerTest {
             internalErrorService,
             memoryCleanerService,
             deliveryService,
-            sessionMessageCollator,
+            payloadMessageCollator,
             sessionProperties,
             clock,
             spansService,

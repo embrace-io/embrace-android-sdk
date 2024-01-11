@@ -1,27 +1,29 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 /**
  * Provides an internal interface to Embrace that is intended for use by Flutter as its
  * sole source of communication with the Android SDK.
  */
-internal interface FlutterInternalInterface : EmbraceInternalInterface {
+@InternalApi
+public interface FlutterInternalInterface : EmbraceInternalInterface {
 
     /**
-     * See [Embrace.setEmbraceFlutterSdkVersion]
+     * Sets the Embrace Flutter SDK version - this is not intended for public use.
      */
-    fun setEmbraceFlutterSdkVersion(version: String?)
+    public fun setEmbraceFlutterSdkVersion(version: String?)
 
     /**
-     * See [Embrace.setDartVersion]
+     * Sets the Dart version - this is not intended for public use.
      */
-    fun setDartVersion(version: String?)
+    public fun setDartVersion(version: String?)
 
     /**
-     * See [Embrace.logHandledDartException]
+     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
      */
-    fun logHandledDartException(
+    public fun logHandledDartException(
         stack: String?,
         name: String?,
         message: String?,
@@ -30,9 +32,9 @@ internal interface FlutterInternalInterface : EmbraceInternalInterface {
     )
 
     /**
-     * See [Embrace.logUnhandledDartException]
+     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
      */
-    fun logUnhandledDartException(
+    public fun logUnhandledDartException(
         stack: String?,
         name: String?,
         message: String?,

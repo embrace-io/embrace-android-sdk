@@ -1562,45 +1562,6 @@ final class EmbraceImpl {
         return flutterInternalInterface;
     }
 
-    /**
-     * Logs a Dart error to the Embrace SDK - this is not intended for public use.
-     */
-    void logDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library,
-        @NonNull LogExceptionType logExceptionType
-    ) {
-        if (flutterInternalInterface != null) {
-            if (logExceptionType == LogExceptionType.HANDLED) {
-                flutterInternalInterface.logHandledDartException(stack, name, message, context, library);
-            } else if (logExceptionType == LogExceptionType.UNHANDLED) {
-                flutterInternalInterface.logUnhandledDartException(stack, name, message, context, library);
-            }
-            onActivityReported();
-        }
-    }
-
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     */
-    void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setEmbraceFlutterSdkVersion(version);
-        }
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     */
-    void setDartVersion(@Nullable String version) {
-        if (flutterInternalInterface != null) {
-            flutterInternalInterface.setDartVersion(version);
-        }
-    }
-
     private void onActivityReported() {
         if (backgroundActivityService != null) {
             backgroundActivityService.save();

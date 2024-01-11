@@ -50,14 +50,12 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
-	public fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logInfo (Ljava/lang/String;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
 	public fun logRnView (Ljava/lang/String;)V
-	public fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logWarning (Ljava/lang/String;)V
 	public fun recordCompletedSpan (Ljava/lang/String;JJ)Z
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
@@ -70,8 +68,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
 	public fun setAppId (Ljava/lang/String;)Z
-	public fun setDartVersion (Ljava/lang/String;)V
-	public fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
 	public fun setUserAsPayer ()V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
@@ -113,6 +109,13 @@ public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final fun triggerAnr ()V
 	public static final fun triggerLongAnr ()V
 	public static final fun verifyIntegration ()V
+}
+
+public abstract interface class io/embrace/android/embracesdk/FlutterInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setDartVersion (Ljava/lang/String;)V
+	public abstract fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
 }
 
 public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {

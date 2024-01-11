@@ -101,7 +101,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun getAllCachedSessionIds(): List<String> {
         val allSessions = cacheService.listFilenamesByPrefix(SESSION_FILE_PREFIX)
-        allSessions?.forEach { filename ->
+        allSessions.forEach { filename ->
             if (filename == OLD_VERSION_FILE_NAME) {
                 // If a cached session from a previous version of the SDK is found,
                 // load and save it again using the new naming schema
@@ -197,7 +197,7 @@ internal class EmbraceDeliveryCacheManager(
     /**
      * Loads the [PendingApiCalls] map from a file named [PENDING_API_CALLS_FILE_NAME].
      * If loadObject returns null, it tries to load the old version of the file which was storing
-     * [PendingApiCallsQueue] instead of [PendingApiCalls].
+     * a list of [PendingApiCall] instead of [PendingApiCalls].
      */
     override fun loadPendingApiCalls(): PendingApiCalls {
         logger.logDeveloper(TAG, "Loading pending api calls")
@@ -218,7 +218,7 @@ internal class EmbraceDeliveryCacheManager(
 
     /**
      * Loads the old version of the [PENDING_API_CALLS_FILE_NAME] file where
-     * it was storing [PendingApiCallsQueue] instead of [PendingApiCalls]
+     * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]
      */
     private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
         logger.logDeveloper(TAG, "Loading old version of pending api calls")

@@ -29,6 +29,8 @@ import io.embrace.android.embracesdk.payload.NativeSymbols
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
+import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.BufferedReader
 import java.io.File
@@ -41,7 +43,7 @@ import java.util.Locale
 
 internal class EmbraceNdkService(
     private val context: Context,
-    private val storageDir: Lazy<File>,
+    private val storageService: StorageService,
     private val metadataService: MetadataService,
     processStateService: ProcessStateService,
     private val configService: ConfigService,
@@ -202,8 +204,7 @@ internal class EmbraceNdkService(
     }
 
     private fun createCrashReportDirectory() {
-        val directory = storageDir.value.toString() + "/" + NATIVE_CRASH_FILE_FOLDER
-        val directoryFile = File(directory)
+        val directoryFile = storageService.getNativeCrashDir()
         if (directoryFile.exists()) {
             return
         }
@@ -213,9 +214,11 @@ internal class EmbraceNdkService(
     }
 
     private fun installSignals() {
-        val reportBasePath = storageDir.value.absolutePath + "/" + NATIVE_CRASH_FILE_FOLDER
-        val markerFilePath =
-            storageDir.value.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+        val reportBasePath = storageService.getNativeCrashDir().absolutePath
+        val markerFilePath = storageService.getFileForWrite(
+            CrashFileMarker.CRASH_MARKER_FILE_NAME
+        ).absolutePath
+
         logger.logDeveloper("EmbraceNDKService", "Creating report path at $reportBasePath")
 
         // Assign the native crash id to the unity crash id. Then when a unity crash occurs, the
@@ -404,19 +407,19 @@ internal class EmbraceNdkService(
         return null
     }
 
-    private fun getNativeFiles(filter: FilenameFilter): Array<File>? {
-        var matchingFiles: Array<File>? = null
-        val files = storageDir.value.listFiles() ?: return null
-        for (cached in files) {
-            if (cached.isDirectory && cached.name == NATIVE_CRASH_FILE_FOLDER) {
-                matchingFiles = cached.listFiles(filter)
-                break
-            }
+    private fun getNativeFiles(filter: FilenameFilter): Array<File> {
+        val ndkDirs: List<File> = storageService.listFiles { file, name ->
+            file.isDirectory && name == NATIVE_CRASH_FILE_FOLDER
         }
+
+        val matchingFiles = ndkDirs.flatMap { dir ->
+            dir.listFiles(filter)?.toList() ?: emptyList()
+        }.toTypedArray()
+
         return matchingFiles
     }
 
-    private fun getNativeErrorFiles(): Array<File>? {
+    private fun getNativeErrorFiles(): Array<File> {
         val nativeCrashFilter = FilenameFilter { _: File?, name: String ->
             name.startsWith(
                 NATIVE_CRASH_FILE_PREFIX
@@ -425,7 +428,7 @@ internal class EmbraceNdkService(
         return getNativeFiles(nativeCrashFilter)
     }
 
-    private fun getNativeMapFiles(): Array<File>? {
+    private fun getNativeMapFiles(): Array<File> {
         val nativeCrashFilter = FilenameFilter { _: File?, name: String ->
             name.startsWith(
                 NATIVE_CRASH_FILE_PREFIX
@@ -472,40 +475,36 @@ internal class EmbraceNdkService(
 
             // delete error files that don't have matching crash files
             val errorFiles = getNativeErrorFiles()
-            if (errorFiles != null) {
-                for (errorFile in errorFiles) {
-                    if (hasNativeCrashFile(errorFile)) {
-                        logger.logDeveloper(
-                            "EmbraceNDKService",
-                            "Skipping error file as it has a matching crash file " + errorFile.absolutePath
-                        )
-                        continue
-                    }
-                    errorFile.delete()
+            for (errorFile in errorFiles) {
+                if (hasNativeCrashFile(errorFile)) {
                     logger.logDeveloper(
                         "EmbraceNDKService",
-                        "Deleting error file as it has no matching crash file " + errorFile.absolutePath
+                        "Skipping error file as it has a matching crash file " + errorFile.absolutePath
                     )
+                    continue
                 }
+                errorFile.delete()
+                logger.logDeveloper(
+                    "EmbraceNDKService",
+                    "Deleting error file as it has no matching crash file " + errorFile.absolutePath
+                )
             }
 
             // delete map files that don't have matching crash files
             val mapFiles = getNativeMapFiles()
-            if (mapFiles != null) {
-                for (mapFile in mapFiles) {
-                    if (hasNativeCrashFile(mapFile)) {
-                        logger.logDeveloper(
-                            "EmbraceNDKService",
-                            "Skipping map file as it has a matching crash file " + mapFile.absolutePath
-                        )
-                        continue
-                    }
-                    mapFile.delete()
+            for (mapFile in mapFiles) {
+                if (hasNativeCrashFile(mapFile)) {
                     logger.logDeveloper(
                         "EmbraceNDKService",
-                        "Deleting map file as it has no matching crash file " + mapFile.absolutePath
+                        "Skipping map file as it has a matching crash file " + mapFile.absolutePath
                     )
+                    continue
                 }
+                mapFile.delete()
+                logger.logDeveloper(
+                    "EmbraceNDKService",
+                    "Deleting map file as it has no matching crash file " + mapFile.absolutePath
+                )
             }
         }
     }
@@ -639,7 +638,6 @@ internal class EmbraceNdkService(
         private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
         private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
         private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
-        private const val NATIVE_CRASH_FILE_FOLDER = "ndk"
         private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000

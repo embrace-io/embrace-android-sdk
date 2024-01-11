@@ -11,13 +11,14 @@ internal interface DeliveryModule {
 
 internal class DeliveryModuleImpl(
     coreModule: CoreModule,
+    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule
 ) : DeliveryModule {
 
     override val deliveryService: DeliveryService by singleton {
         EmbraceDeliveryService(
-            essentialServiceModule.deliveryCacheManager,
+            storageModule.deliveryCacheManager,
             essentialServiceModule.apiService,
             essentialServiceModule.gatingService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),

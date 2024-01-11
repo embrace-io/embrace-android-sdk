@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.storage.StorageService
 import java.io.Closeable
-import java.io.File
 import java.io.IOException
 import java.net.CacheResponse
 import java.net.URI
@@ -22,7 +22,7 @@ import java.net.URI
  */
 internal class ApiResponseCache @JvmOverloads constructor(
     private val serializer: EmbraceSerializer,
-    storageDirProvider: () -> File,
+    private val storageService: StorageService,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : Closeable {
 
@@ -33,7 +33,6 @@ internal class ApiResponseCache @JvmOverloads constructor(
 
     @Volatile
     private var cache: HttpResponseCache? = null
-    private val storageDir: File by lazy { storageDirProvider() }
     private val lock = Object()
 
     private fun initializeIfNeeded() {
@@ -41,7 +40,10 @@ internal class ApiResponseCache @JvmOverloads constructor(
             synchronized(lock) {
                 if (cache == null) {
                     cache = try {
-                        HttpResponseCache.install(storageDir, MAX_CACHE_SIZE_BYTES)
+                        HttpResponseCache.install(
+                            storageService.getConfigCacheDir(),
+                            MAX_CACHE_SIZE_BYTES
+                        )
                     } catch (exc: IOException) {
                         logger.logWarning("Failed to initialize HTTP cache.", exc)
                         null

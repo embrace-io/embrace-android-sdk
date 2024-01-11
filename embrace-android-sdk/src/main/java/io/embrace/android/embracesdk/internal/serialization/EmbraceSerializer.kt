@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapter
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import okio.buffer
 import okio.sink
@@ -57,6 +56,13 @@ internal class EmbraceSerializer {
     fun <T> fromJson(inputStream: InputStream, clz: Class<T>): T {
         return inputStream.source().buffer().use {
             val adapter = impl.adapter(clz)
+            adapter.fromJson(it) ?: error("JSON conversion failed.")
+        }
+    }
+
+    fun <T> fromJson(inputStream: InputStream, type: Type): T {
+        return inputStream.source().buffer().use {
+            val adapter = impl.adapter<T>(type)
             adapter.fromJson(it) ?: error("JSON conversion failed.")
         }
     }

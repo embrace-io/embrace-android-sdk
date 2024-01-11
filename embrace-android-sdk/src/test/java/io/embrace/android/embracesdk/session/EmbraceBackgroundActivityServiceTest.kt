@@ -21,7 +21,9 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -332,17 +334,21 @@ internal class EmbraceBackgroundActivityServiceTest {
     }
 
     private fun createService(): EmbraceBackgroundActivityService {
-        val collator = BackgroundActivityCollator(
-            userService,
-            preferencesService,
+        val collator = PayloadMessageCollator(
+            configService,
+            metadataService,
             eventService,
             logMessageService,
             internalErrorService,
-            breadcrumbService,
-            metadataService,
             performanceInfoService,
+            FakeWebViewService(),
+            FakeThermalStatusService(),
+            null,
+            breadcrumbService,
+            userService,
+            preferencesService,
             spansService,
-            clock,
+            clock
         )
         return EmbraceBackgroundActivityService(
             metadataService,

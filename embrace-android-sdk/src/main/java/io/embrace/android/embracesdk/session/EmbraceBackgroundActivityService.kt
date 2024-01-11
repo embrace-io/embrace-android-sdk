@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,7 +26,7 @@ internal class EmbraceBackgroundActivityService(
      * Embrace service dependencies of the background activity session service.
      */
     private val clock: Clock,
-    private val backgroundActivityCollator: BackgroundActivityCollator,
+    private val payloadMessageCollator: PayloadMessageCollator,
     private val backgroundWorker: BackgroundWorker
 ) : BackgroundActivityService, ConfigListener {
 
@@ -139,10 +140,12 @@ internal class EmbraceBackgroundActivityService(
         coldStart: Boolean,
         startType: Session.LifeEventType
     ) {
-        val activity = backgroundActivityCollator.createStartMessage(
-            startTime,
+        val activity = payloadMessageCollator.buildInitialSession(
+            PayloadType.BACKGROUND_ACTIVITY,
             coldStart,
-            startType
+            startType,
+            startTime,
+            null
         )
         backgroundActivity = activity
         metadataService.setActiveSessionId(activity.sessionId, false)
@@ -170,14 +173,14 @@ internal class EmbraceBackgroundActivityService(
             InternalStaticEmbraceLogger.logError("No background activity to report")
             return null
         }
-        val sendBackgroundActivity = backgroundActivityCollator.createStopMessage(
+        val sendBackgroundActivity = payloadMessageCollator.createBackgroundActivityEndMessage(
             activity,
             endTime,
             endType,
             crashId
         )
         backgroundActivity = null
-        return backgroundActivityCollator.buildBgActivityMessage(sendBackgroundActivity, true)
+        return payloadMessageCollator.buildBgActivityMessage(sendBackgroundActivity, true)
     }
 
     /**
@@ -216,13 +219,13 @@ internal class EmbraceBackgroundActivityService(
             if (activity != null) {
                 lastSaved = clock.now()
                 val endTime = activity.endTime ?: clock.now()
-                val cachedActivity = backgroundActivityCollator.createStopMessage(
+                val cachedActivity = payloadMessageCollator.createBackgroundActivityEndMessage(
                     activity,
                     endTime,
                     null,
                     null
                 )
-                val message = backgroundActivityCollator.buildBgActivityMessage(cachedActivity, false)
+                val message = payloadMessageCollator.buildBgActivityMessage(cachedActivity, false)
                 if (message == null) {
                     InternalStaticEmbraceLogger.logDebug("Failed to cache background activity message.")
                     return

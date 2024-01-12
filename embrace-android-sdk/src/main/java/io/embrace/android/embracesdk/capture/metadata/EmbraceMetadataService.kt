@@ -144,10 +144,6 @@ internal class EmbraceMetadataService private constructor(
     }
 
     private fun asyncRetrieveAdditionalDeviceInfo() {
-        if (!configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            logDeveloper("EmbraceMetadataService", "NDK not enabled")
-            return
-        }
         if (!cpuName.isNullOrEmpty() && !egl.isNullOrEmpty()) {
             logDeveloper("EmbraceMetadataService", "Additional device info already exists")
             return

@@ -19,7 +19,7 @@ A clear and concise description of what the bug is.
 
 ### Environment
 * Android version:
-* Bugsnag version:
+* Embrace SDK version:
 * Emulator or physical device:
 
 <!--

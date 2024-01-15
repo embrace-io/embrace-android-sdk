@@ -3,6 +3,7 @@ HSPLio/embrace/android/embracesdk/Embrace$AppFramework;-><init>(Ljava/lang/Strin
 HSPLio/embrace/android/embracesdk/Embrace$AppFramework;->getValue()I
 HSPLio/embrace/android/embracesdk/Embrace;-><clinit>()V
 HSPLio/embrace/android/embracesdk/Embrace;-><init>()V
+HSPLio/embrace/android/embracesdk/Embrace;->generateW3cTraceparent()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/Embrace;->getInstance()Lio/embrace/android/embracesdk/Embrace;
 HSPLio/embrace/android/embracesdk/Embrace;->getInternalInterface()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 HSPLio/embrace/android/embracesdk/Embrace;->getTraceIdHeader()Ljava/lang/String;
@@ -43,7 +44,9 @@ HSPLio/embrace/android/embracesdk/EmbraceImpl$$ExternalSyntheticLambda9;->invoke
 HSPLio/embrace/android/embracesdk/EmbraceImpl;-><clinit>()V
 HSPLio/embrace/android/embracesdk/EmbraceImpl;-><init>()V
 HSPLio/embrace/android/embracesdk/EmbraceImpl;-><init>(Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function12;Lkotlin/jvm/functions/Function5;Lkotlin/jvm/functions/Function4;)V
+HSPLio/embrace/android/embracesdk/EmbraceImpl;->checkSdkStarted(Ljava/lang/String;Z)Z
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->checkSdkStartedAndLogPublicApiUsage(Ljava/lang/String;)Z
+HSPLio/embrace/android/embracesdk/EmbraceImpl;->generateW3cTraceparent()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->getEmbraceInternalInterface()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->getTraceIdHeader()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->isStarted()Z
@@ -902,6 +905,7 @@ HSPLio/embrace/android/embracesdk/config/remote/LogRemoteConfigJsonAdapter;-><in
 HSPLio/embrace/android/embracesdk/config/remote/NetworkCaptureRuleRemoteConfigJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/config/remote/NetworkRemoteConfigJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfig;-><init>(Ljava/lang/Float;)V
+HSPLio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfig;->getPctEnabled()Ljava/lang/Float;
 HSPLio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfigJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HSPLio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfigJsonAdapter;->fromJson(Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfig;
 HSPLio/embrace/android/embracesdk/config/remote/NetworkSpanForwardingRemoteConfigJsonAdapter;->fromJson(Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
@@ -1413,6 +1417,16 @@ HSPLio/embrace/android/embracesdk/internal/StartupEventInfo;-><init>(Ljava/lang/
 HSPLio/embrace/android/embracesdk/internal/StartupEventInfo;->getDuration()Ljava/lang/Long;
 HSPLio/embrace/android/embracesdk/internal/StartupEventInfo;->getThreshold()Ljava/lang/Long;
 HSPLio/embrace/android/embracesdk/internal/ThreadEnforcementCheckKt;->enforceThread(Ljava/util/concurrent/atomic/AtomicReference;)V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator$Companion;-><init>()V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator$Companion;->generateW3CTraceparent()Ljava/lang/String;
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;-><clinit>()V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;-><init>(Lkotlin/random/Random;)V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;-><init>(Lkotlin/random/Random;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;->access$getINSTANCE$cp()Lio/embrace/android/embracesdk/internal/TraceparentGenerator;
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;->generate()Ljava/lang/String;
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;->generateW3CTraceparent()Ljava/lang/String;
+HSPLio/embrace/android/embracesdk/internal/TraceparentGenerator;->validRandomLong()J
 HSPLio/embrace/android/embracesdk/internal/clock/NormalizedIntervalClock;-><init>(Lio/embrace/android/embracesdk/internal/clock/SystemClock;)V
 HSPLio/embrace/android/embracesdk/internal/clock/NormalizedIntervalClock;->now()J
 HSPLio/embrace/android/embracesdk/internal/clock/SystemClock;-><init>()V
@@ -2649,6 +2663,8 @@ Lio/embrace/android/embracesdk/internal/PatternCache;
 Lio/embrace/android/embracesdk/internal/SharedObjectLoader;
 Lio/embrace/android/embracesdk/internal/StartupEventInfo;
 Lio/embrace/android/embracesdk/internal/ThreadEnforcementCheckKt;
+Lio/embrace/android/embracesdk/internal/TraceparentGenerator$Companion;
+Lio/embrace/android/embracesdk/internal/TraceparentGenerator;
 Lio/embrace/android/embracesdk/internal/clock/Clock;
 Lio/embrace/android/embracesdk/internal/clock/NormalizedIntervalClock;
 Lio/embrace/android/embracesdk/internal/clock/SystemClock;
@@ -2973,6 +2989,11 @@ PLio/embrace/android/embracesdk/payload/DiskUsage;->getAppDiskUsage()Ljava/lang/
 PLio/embrace/android/embracesdk/payload/DiskUsage;->getDeviceDiskFree()Ljava/lang/Long;
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DiskUsage;)V
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getEndMs()J
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getStartMs()J
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/ResponsivenessOutlier;)V
+PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 PLio/embrace/android/embracesdk/payload/ViewBreadcrumb;->setEnd(Ljava/lang/Long;)V
 PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->getApplicationExitInfoHistory()Ljava/util/Set;
 PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->onViewClose(Landroid/app/Activity;)V

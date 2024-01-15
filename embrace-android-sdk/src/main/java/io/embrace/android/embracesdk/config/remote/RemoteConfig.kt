@@ -80,6 +80,9 @@ internal data class RemoteConfig(
     @Json(name = "anr")
     val anrConfig: AnrRemoteConfig? = null,
 
+    @Json(name = "data")
+    val dataConfig: DataRemoteConfig? = null,
+
     @Json(name = "killswitch")
     val killSwitchConfig: KillSwitchRemoteConfig? = null,
 

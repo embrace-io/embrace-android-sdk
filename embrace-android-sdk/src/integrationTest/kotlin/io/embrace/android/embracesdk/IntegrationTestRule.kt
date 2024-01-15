@@ -4,11 +4,13 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
@@ -144,7 +146,13 @@ internal class IntegrationTestRule(
             ),
             networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
                 NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
-            }
+            },
+            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+                remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG.copy(
+                    // disable thermal status capture as it interfes with unit tests
+                    dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
+                ) }
+            )
         ),
         val systemServiceModule: SystemServiceModule =
             SystemServiceModuleImpl(

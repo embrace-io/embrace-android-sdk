@@ -79,7 +79,7 @@ internal class DataCaptureServiceModuleImplTest {
 
         assertTrue(module.memoryService is NoOpMemoryService)
         assertTrue(module.powerSaveModeService is NoOpPowerSaveModeService)
-        assertTrue(module.thermalStatusService is NoOpThermalStatusService)
+        assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

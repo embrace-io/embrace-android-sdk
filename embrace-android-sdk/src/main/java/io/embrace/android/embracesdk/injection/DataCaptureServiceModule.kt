@@ -126,7 +126,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val thermalStatusService: ThermalStatusService by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+        if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             // Android API only accepts an executor. We don't want to directly expose those
             // to everything in the codebase so we decorate the BackgroundWorker here as an
             // alternative

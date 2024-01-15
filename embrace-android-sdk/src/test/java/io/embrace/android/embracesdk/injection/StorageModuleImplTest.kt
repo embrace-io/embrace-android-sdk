@@ -13,9 +13,10 @@ internal class StorageModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val initModule = InitModuleImpl()
         val module = StorageModuleImpl(
-            workerThreadModule = WorkerThreadModuleImpl(),
-            initModule = InitModuleImpl(),
+            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            initModule = initModule,
             coreModule = FakeCoreModule(),
         )
 

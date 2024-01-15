@@ -37,10 +37,11 @@ internal class EssentialServiceModuleImplTest {
         every { Looper.getMainLooper() } returns mockk(relaxed = true)
 
         val coreModule = FakeCoreModule()
+        val initModule = InitModuleImpl()
         val module = EssentialServiceModuleImpl(
-            initModule = InitModuleImpl(),
+            initModule = initModule,
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(),
+            workerThreadModule = WorkerThreadModuleImpl(initModule),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),

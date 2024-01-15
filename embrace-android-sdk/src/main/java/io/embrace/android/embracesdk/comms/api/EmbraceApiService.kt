@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.BackgroundWorker
-import io.embrace.android.embracesdk.worker.NetworkRequestRunnable
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.Future
 
 internal class EmbraceApiService(
@@ -180,15 +180,17 @@ internal class EmbraceApiService(
         request: ApiRequest,
         onComplete: (() -> Any)?,
     ): Future<*> {
-        return backgroundWorker.submit(
-            NetworkRequestRunnable(request) {
-                try {
-                    handleApiRequest(request, action)
-                } finally {
-                    onComplete?.invoke()
-                }
+        val priority = when (request.isSessionRequest()) {
+            true -> TaskPriority.CRITICAL
+            else -> TaskPriority.NORMAL
+        }
+        return backgroundWorker.submit(priority) {
+            try {
+                handleApiRequest(request, action)
+            } finally {
+                onComplete?.invoke()
             }
-        )
+        }
     }
 
     /**

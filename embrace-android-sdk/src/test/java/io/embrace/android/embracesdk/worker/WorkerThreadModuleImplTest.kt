@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -9,9 +10,11 @@ import org.junit.Test
 
 internal class WorkerThreadModuleImplTest {
 
+    private val initModule = InitModuleImpl()
+
     @Test
     fun testModule() {
-        val module = WorkerThreadModuleImpl()
+        val module = WorkerThreadModuleImpl(initModule)
         assertNotNull(module)
 
         val backgroundExecutor = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
@@ -29,13 +32,13 @@ internal class WorkerThreadModuleImplTest {
 
     @Test
     fun `network request executor uses custom queue`() {
-        val module = WorkerThreadModuleImpl()
+        val module = WorkerThreadModuleImpl(initModule)
         assertNotNull(module.backgroundWorker(WorkerName.NETWORK_REQUEST))
     }
 
     @Test(expected = IllegalStateException::class)
     fun `network request scheduled executor fails`() {
-        val module = WorkerThreadModuleImpl()
+        val module = WorkerThreadModuleImpl(initModule)
         module.scheduledWorker(WorkerName.NETWORK_REQUEST)
     }
 
@@ -43,7 +46,7 @@ internal class WorkerThreadModuleImplTest {
     fun `rejected execution policy`() {
         val action = FakeLoggerAction()
         val logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
-        val module = WorkerThreadModuleImpl(logger)
+        val module = WorkerThreadModuleImpl(initModule, logger)
 
         val worker = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
         module.close()

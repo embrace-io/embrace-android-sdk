@@ -207,7 +207,7 @@ internal class EmbraceDeliveryCacheManager(
             }
             loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
         }
-        val cached = backgroundWorker.submit(callable).get()
+        val cached = backgroundWorker.submit(callable = callable).get()
         return if (cached != null) {
             cached
         } else {

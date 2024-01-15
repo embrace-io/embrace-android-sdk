@@ -17,10 +17,20 @@ internal class BackgroundWorker(
     /**
      * Submits a task for execution and returns a [Future].
      */
-    fun submit(runnable: Runnable): Future<*> = impl.submit(runnable)
+    fun submit(
+        priority: TaskPriority = TaskPriority.NORMAL,
+        runnable: Runnable
+    ): Future<*> {
+        return impl.submit(PriorityRunnable(priority, runnable))
+    }
 
     /**
      * Submits a task for execution and returns a [Future].
      */
-    fun <T> submit(callable: Callable<T>): Future<T> = impl.submit(callable)
+    fun <T> submit(
+        priority: TaskPriority = TaskPriority.NORMAL,
+        callable: Callable<T>
+    ): Future<T> {
+        return impl.submit(PriorityCallable(priority, callable))
+    }
 }

@@ -28,7 +28,7 @@ internal class EmbracePreferencesService(
         // block if necessary with Future.get(). Eagerly offloading buys us more time
         // for SharedPreferences to load the File and reduces the likelihood of blocking
         // when invoked by client code.
-        preferences = backgroundWorker.submit(lazyPrefs::value)
+        preferences = backgroundWorker.submit(callable = lazyPrefs::value)
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 

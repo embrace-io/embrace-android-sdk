@@ -11,7 +11,7 @@ import java.util.concurrent.Callable
  */
 @InternalApi
 internal fun <T> BackgroundWorker.eagerLazyLoad(task: Callable<T>): Lazy<T> {
-    val future = submit(task)
+    val future = submit(callable = task)
     return lazy {
         try {
             return@lazy future.get()

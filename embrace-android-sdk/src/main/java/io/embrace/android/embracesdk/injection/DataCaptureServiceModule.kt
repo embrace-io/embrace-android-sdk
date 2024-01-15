@@ -131,7 +131,9 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             // to everything in the codebase so we decorate the BackgroundWorker here as an
             // alternative
             val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-            val executor = Executor(backgroundWorker::submit)
+            val executor = Executor {
+                backgroundWorker.submit(runnable = it)
+            }
 
             EmbraceThermalStatusService(
                 executor,

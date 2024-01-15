@@ -142,6 +142,15 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
 
+public abstract interface class io/embrace/android/embracesdk/UnityInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun installUnityThreadSampler ()V
+	public abstract fun logHandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setUnityMetaData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
 }
 

@@ -16,5 +16,8 @@ internal data class Crash(
     val jsExceptions: List<String>? = null,
 
     @Json(name = "th")
-    val threads: List<ThreadInfo>? = null
+    val threads: List<ThreadInfo>? = null,
+
+    @Json(name = "crash_number")
+    val crashNumber: Int? = null
 )

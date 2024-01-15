@@ -24,7 +24,8 @@ internal class CrashModuleImpl(
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    dataContainerModule: DataContainerModule
+    dataContainerModule: DataContainerModule,
+    androidServicesModule: AndroidServicesModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
@@ -51,6 +52,7 @@ internal class CrashModuleImpl(
             nativeModule.ndkService,
             essentialServiceModule.gatingService,
             sessionModule.backgroundActivityService,
+            androidServicesModule.preferencesService,
             crashMarker,
             initModule.clock
         )

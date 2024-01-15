@@ -626,7 +626,8 @@ final class EmbraceImpl {
             nativeModule,
             sessionModule,
             anrModule,
-            dataContainerModule
+            dataContainerModule,
+            androidServicesModule
         );
 
         loadCrashVerifier(crashModule, nonNullWorkerThreadModule);

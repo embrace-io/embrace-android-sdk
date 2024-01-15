@@ -107,7 +107,7 @@ internal class SessionModuleImpl(
                 nativeModule.ndkService,
                 initModule.clock,
                 payloadMessageCollator,
-                workerThreadModule.backgroundWorker(WorkerName.PERIODIC_CACHE)
+                workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
             )
         } else {
             null

@@ -2,10 +2,8 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class EmbraceSessionService(
@@ -14,8 +12,7 @@ internal class EmbraceSessionService(
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
-    private val clock: Clock,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val clock: Clock
 ) : SessionService {
 
     init {
@@ -24,24 +21,11 @@ internal class EmbraceSessionService(
             // the session service will not be registered to the activity listener and will not
             // start the cold session.
             // If so, force a cold session start.
-            logger.logDebug("Forcing start of new session as app is in foreground.")
-            startSession(true, Session.LifeEventType.STATE, clock.now())
+            sessionHandler.onSessionStarted(true, LifeEventType.STATE, clock.now())
         }
 
         // Send any sessions that were cached and not yet sent.
         deliveryService.sendCachedSessions(isNdkEnabled, ndkService, sessionHandler.getSessionId())
-    }
-
-    override fun startSession(
-        coldStart: Boolean,
-        startType: Session.LifeEventType,
-        startTime: Long
-    ) {
-        sessionHandler.onSessionStarted(
-            coldStart,
-            startType,
-            startTime
-        )
     }
 
     override fun handleCrash(crashId: String) {
@@ -49,45 +33,20 @@ internal class EmbraceSessionService(
     }
 
     override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-        startSession(coldStart, Session.LifeEventType.STATE, timestamp)
+        sessionHandler.onSessionStarted(coldStart, LifeEventType.STATE, timestamp)
     }
 
     override fun onBackground(timestamp: Long) {
-        sessionHandler.onSessionEnded(Session.LifeEventType.STATE, timestamp, false)
-    }
-
-    /**
-     * It will try to end session. Note that it will either be for MANUAL or TIMED types.
-     *
-     * @param endType the origin of the event that ends the session.
-     */
-    override fun triggerStatelessSessionEnd(
-        endType: Session.LifeEventType,
-        clearUserInfo: Boolean
-    ) {
-        if (Session.LifeEventType.STATE == endType) {
-            logger.logWarning(
-                "triggerStatelessSessionEnd is not allowed to be called for SessionLifeEventType=$endType"
-            )
-            return
-        }
-
-        // Ends active session.
-        sessionHandler.onSessionEnded(endType, clock.now(), clearUserInfo) ?: return
-
-        // Starts a new session.
-        if (!processStateService.isInBackground) {
-            logger.logDebug("Forcing start of new session as app is in foreground.")
-            startSession(false, endType, clock.now())
-        }
+        sessionHandler.onSessionEnded(LifeEventType.STATE, timestamp, false)
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {
-        triggerStatelessSessionEnd(Session.LifeEventType.MANUAL, clearUserInfo)
-    }
+        // Ends active session.
+        sessionHandler.onSessionEnded(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
 
-    override fun close() {
-        logger.logInfo("Shutting down EmbraceSessionService")
-        sessionHandler.close()
+        // Starts a new session.
+        if (!processStateService.isInBackground) {
+            sessionHandler.onSessionStarted(false, LifeEventType.MANUAL, clock.now())
+        }
     }
 }

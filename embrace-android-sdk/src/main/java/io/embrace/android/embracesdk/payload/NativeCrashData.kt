@@ -17,5 +17,5 @@ internal class NativeCrashData(
     @Json(name = "map") var map: String?
 ) {
 
-    fun getCrash() = NativeCrash(nativeCrashId, crash, symbols, errors, unwindError, map)
+    fun getCrash(crashNumber: Int) = NativeCrash(nativeCrashId, crash, symbols, errors, unwindError, map, crashNumber)
 }

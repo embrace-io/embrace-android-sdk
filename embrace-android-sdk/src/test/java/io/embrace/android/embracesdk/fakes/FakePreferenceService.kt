@@ -60,5 +60,9 @@ internal class FakePreferenceService(
         return 1
     }
 
+    override fun incrementAndGetNativeCrashNumber(): Int {
+        return 1
+    }
+
     override fun isUsersFirstDay(): Boolean = firstDay
 }

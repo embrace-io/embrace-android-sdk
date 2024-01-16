@@ -290,7 +290,7 @@ final class EmbraceImpl {
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
                 @NonNull Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier,
                 @NonNull Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, StorageModule, BuildInfo,
-                                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
+                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
                     essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
@@ -543,6 +543,7 @@ final class EmbraceImpl {
             storageModule,
             essentialServiceModule,
             deliveryModule,
+            androidServicesModule,
             sessionProperties,
             nonNullWorkerThreadModule
         );

@@ -64,6 +64,7 @@ internal class EmbraceNdkServiceTest {
         private lateinit var localConfig: LocalConfig
         private lateinit var deliveryService: FakeDeliveryService
         private lateinit var userService: UserService
+        private lateinit var preferencesService: FakePreferenceService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var appFramework: Embrace.AppFramework
         private lateinit var sharedObjectLoader: SharedObjectLoader
@@ -93,7 +94,8 @@ internal class EmbraceNdkServiceTest {
             activityService = FakeProcessStateService()
             deliveryService = FakeDeliveryService()
             userService = FakeUserService()
-            sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
+            preferencesService = FakePreferenceService()
+            sessionProperties = EmbraceSessionProperties(preferencesService, configService)
             appFramework = Embrace.AppFramework.NATIVE
             sharedObjectLoader = mockk()
             logger = InternalEmbraceLogger()
@@ -136,6 +138,7 @@ internal class EmbraceNdkServiceTest {
             configService,
             deliveryService,
             userService,
+            preferencesService,
             sessionProperties,
             appFramework,
             sharedObjectLoader,

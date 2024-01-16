@@ -10,5 +10,6 @@ internal class NativeCrash(
     @Json(name = "sb") val symbols: Map<String?, String?>?,
     @Json(name = "er") val errors: List<NativeCrashDataError?>?,
     @Json(name = "ue") val unwindError: Int?,
-    @Json(name = "ma") val map: String?
+    @Json(name = "ma") val map: String?,
+    @Json(name = "crash_number") val crashNumber: Int? = null
 )

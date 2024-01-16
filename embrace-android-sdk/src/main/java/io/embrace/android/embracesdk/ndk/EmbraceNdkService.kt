@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.payload.NativeSymbols
+import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -49,6 +50,7 @@ internal class EmbraceNdkService(
     private val configService: ConfigService,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
+    private val preferencesService: PreferencesService,
     private val sessionProperties: EmbraceSessionProperties,
     appFramework: AppFramework,
     private val sharedObjectLoader: SharedObjectLoader,
@@ -543,6 +545,7 @@ internal class EmbraceNdkService(
             null,
             null
         )
+        val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val nativeCrashMessageEvent = EventMessage(
             nativeCrashEvent,
             null,
@@ -552,7 +555,7 @@ internal class EmbraceNdkService(
             null,
             null,
             ApiClient.MESSAGE_VERSION,
-            nativeCrash.getCrash()
+            nativeCrash.getCrash(nativeCrashNumber)
         )
         try {
             logger.logDeveloper(

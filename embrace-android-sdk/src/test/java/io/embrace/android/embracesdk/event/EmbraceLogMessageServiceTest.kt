@@ -402,7 +402,6 @@ internal class EmbraceLogMessageServiceTest {
         RemoteConfig(
             sessionConfig = SessionRemoteConfig(
                 isEnabled = true,
-                endAsync = false,
                 sessionComponents = components,
                 fullSessionEvents = fullSessionEvents
             )

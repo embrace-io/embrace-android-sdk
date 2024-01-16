@@ -144,15 +144,9 @@ internal class LocalConfigTest {
         assertFalse(localConfig.ndkEnabled)
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun testSessionOnlyConfig() {
-        var localConfig =
-            LocalConfigParser.buildConfig("GrCPU", false, "{\"session\": {\"async_end\": true}}", serializer)
-        assertTrue(checkNotNull(localConfig.sdkConfig.sessionConfig?.asyncEnd))
-
-        // error_log_strict_mode is true
-        localConfig = LocalConfigParser.buildConfig(
+        var localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
             "{\"session\": {\"error_log_strict_mode\": true}}",

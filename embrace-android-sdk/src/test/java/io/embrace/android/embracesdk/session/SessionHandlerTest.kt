@@ -206,7 +206,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onSession started successfully`() {
-        sessionLocalConfig = SessionLocalConfig(asyncEnd = false)
+        sessionLocalConfig = SessionLocalConfig()
         userService.obj = userInfo
 
         val sessionStartType = Session.LifeEventType.STATE
@@ -272,7 +272,7 @@ internal class SessionHandlerTest {
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
         sessionNumber = 0
-        sessionLocalConfig = SessionLocalConfig(asyncEnd = false)
+        sessionLocalConfig = SessionLocalConfig()
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 

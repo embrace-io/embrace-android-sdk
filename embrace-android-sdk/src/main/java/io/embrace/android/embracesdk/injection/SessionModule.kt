@@ -72,7 +72,6 @@ internal class SessionModuleImpl(
             sessionProperties,
             initModule.clock,
             initModule.spansService,
-            workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
         )
     }

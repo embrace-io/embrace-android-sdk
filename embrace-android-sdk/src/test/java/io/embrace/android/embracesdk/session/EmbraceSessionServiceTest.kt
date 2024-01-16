@@ -78,7 +78,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 /* automatically detecting a cold start */ true,
                 LifeEventType.STATE,
-                any(),
                 any()
             )
         }
@@ -111,8 +110,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 coldStart,
                 LifeEventType.STATE,
-                456,
-                any()
+                456
             )
         }
     }
@@ -130,8 +128,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 coldStart,
                 LifeEventType.STATE,
-                456,
-                any()
+                456
             )
         }
     }
@@ -156,8 +153,7 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 false,
                 LifeEventType.MANUAL,
-                0,
-                any()
+                0
             )
         }
     }
@@ -178,7 +174,6 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler.onSessionStarted(
                 false,
                 endType,
-                any(),
                 any()
             )
         }

@@ -143,9 +143,6 @@ internal data class Session @JvmOverloads internal constructor(
         @Json(name = "m")
         MANUAL,
 
-        @Json(name = "t")
-        TIMED,
-
         /* Background activity values */
 
         @Json(name = "bs")

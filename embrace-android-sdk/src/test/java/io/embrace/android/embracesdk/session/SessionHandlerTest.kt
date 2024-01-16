@@ -81,7 +81,6 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
-        private val automaticSessionStopper: ScheduledWorker = mockk(relaxed = true)
         private val sessionPeriodicCacheExecutorService: ScheduledWorker =
             mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
@@ -89,7 +88,6 @@ internal class SessionHandlerTest {
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
-        private val automaticSessionStopperRunnable = Runnable {}
 
         @BeforeClass
         @JvmStatic
@@ -197,7 +195,6 @@ internal class SessionHandlerTest {
             sessionProperties,
             clock,
             spansService,
-            automaticSessionStopper = automaticSessionStopper,
             sessionPeriodicCacheScheduledWorker = sessionPeriodicCacheExecutorService
         )
     }
@@ -209,8 +206,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onSession started successfully`() {
-        val maxSessionSeconds = 60
-        sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 60, asyncEnd = false)
+        sessionLocalConfig = SessionLocalConfig(asyncEnd = false)
         userService.obj = userInfo
 
         val sessionStartType = Session.LifeEventType.STATE
@@ -219,22 +215,13 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionStarted(
             true,
             sessionStartType,
-            now,
-            automaticSessionStopperRunnable
+            now
         )
 
         // verify record connection type
         verify { networkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify active session is set
         assertEquals(sessionUuid, metadataService.activeSessionId)
-        // verify automatic session stopper has been scheduled
-        verify {
-            automaticSessionStopper.schedule<Unit>(
-                automaticSessionStopperRunnable,
-                maxSessionSeconds.toLong(),
-                TimeUnit.SECONDS
-            )
-        }
         // verify periodic caching worker has been scheduled
         verify {
             sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
@@ -270,15 +257,13 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionStarted(
             true,
             /* any event type */ Session.LifeEventType.STATE,
-            now,
-            automaticSessionStopperRunnable
+            now
         )
 
         assertNull(sessionHandler.activeSession)
         verify { networkConnectivityService wasNot Called }
         assertNull(metadataService.activeSessionId)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
-        verify { automaticSessionStopper wasNot Called }
         verify { sessionPeriodicCacheExecutorService wasNot Called }
         assertNull(ndkService.sessionId)
     }
@@ -287,36 +272,17 @@ internal class SessionHandlerTest {
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
         sessionNumber = 0
-        sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = 5, asyncEnd = false)
+        sessionLocalConfig = SessionLocalConfig(asyncEnd = false)
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
         sessionHandler.onSessionStarted(
             true,
             sessionStartType,
-            now,
-            automaticSessionStopperRunnable
+            now
         )
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
-        checkNotNull(sessionHandler.activeSession)
-        // no need to verify anything else because it's already verified in another test case
-    }
-
-    @Test
-    fun `onSession started with no maximum session seconds should not start session automatic stopper`() {
-        val sessionStartType = Session.LifeEventType.STATE
-        sessionLocalConfig = SessionLocalConfig(maxSessionSeconds = null)
-
-        val sessionMessage = sessionHandler.onSessionStarted(
-            true,
-            sessionStartType,
-            now,
-            automaticSessionStopperRunnable
-        )
-
-        // verify automatic session stopper has not been scheduled
-        verify { automaticSessionStopper wasNot Called }
         checkNotNull(sessionHandler.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }
@@ -332,8 +298,7 @@ internal class SessionHandlerTest {
         val sessionMessage = sessionHandler.onSessionStarted(
             true,
             sessionStartType,
-            now,
-            automaticSessionStopperRunnable
+            now
         )
 
         // verify we are forcing log view with foreground activity class name
@@ -351,22 +316,6 @@ internal class SessionHandlerTest {
         )
 
         verify { sessionPeriodicCacheExecutorService wasNot Called }
-        verify { automaticSessionStopper wasNot Called }
-        assertEquals(0, memoryCleanerService.callCount)
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
-    fun `onSession not allowed to end because session control is disabled for TIMED event type`() {
-        sessionHandler.onSessionEnded(
-            Session.LifeEventType.TIMED,
-            1000,
-            false
-        )
-
-        verify { sessionPeriodicCacheExecutorService wasNot Called }
-        verify { automaticSessionStopper wasNot Called }
         assertEquals(0, memoryCleanerService.callCount)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
@@ -386,7 +335,6 @@ internal class SessionHandlerTest {
         )
 
         verify { sessionPeriodicCacheExecutorService wasNot Called }
-        verify { automaticSessionStopper wasNot Called }
         assertEquals(0, memoryCleanerService.callCount)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
@@ -518,8 +466,7 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionStarted(
             coldStart = true,
             startType = Session.LifeEventType.MANUAL,
-            startTime = clock.now(),
-            automaticSessionCloserCallback = automaticSessionStopperRunnable
+            startTime = clock.now()
         )
         clock.tick(30000)
         sessionHandler.onSessionEnded(
@@ -653,8 +600,7 @@ internal class SessionHandlerTest {
         sessionHandler.onSessionStarted(
             coldStart = true,
             startType = Session.LifeEventType.STATE,
-            startTime = clock.now(),
-            automaticSessionCloserCallback = automaticSessionStopperRunnable
+            startTime = clock.now()
         )
     }
 

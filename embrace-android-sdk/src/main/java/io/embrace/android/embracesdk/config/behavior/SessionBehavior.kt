@@ -23,11 +23,6 @@ internal class SessionBehavior(
     companion object {
 
         /**
-         * Default minimum allowed end session time.
-         */
-        const val MINIMUM_SESSION_SECONDS_DEFAULT = 60
-
-        /**
          * Do not use async mode for session end messages by default.
          */
         const val ASYNC_END_DEFAULT = false
@@ -38,17 +33,6 @@ internal class SessionBehavior(
         const val ERROR_LOG_STRICT_MODE_DEFAULT = false
 
         const val SESSION_PROPERTY_LIMIT = 10
-    }
-
-    /**
-     * The maximum number of seconds a session is allowed to last for (in kiosk mode)
-     */
-    fun getMaxSessionSecondsAllowed(): Int? {
-        val seconds = local?.maxSessionSeconds
-        if (seconds != null && seconds >= MINIMUM_SESSION_SECONDS_DEFAULT) {
-            return seconds
-        }
-        return null
     }
 
     /**

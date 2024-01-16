@@ -43,7 +43,6 @@ internal class SessionHandler(
     private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
     private val spansService: SpansService,
-    private val automaticSessionStopper: ScheduledWorker,
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
 ) : Closeable {
 
@@ -70,7 +69,6 @@ internal class SessionHandler(
     internal fun getSessionId(): String? = activeSession?.sessionId
 
     var scheduledFuture: ScheduledFuture<*>? = null
-    var closerFuture: ScheduledFuture<*>? = null
 
     /**
      * Guards session state changes.
@@ -101,7 +99,6 @@ internal class SessionHandler(
         coldStart: Boolean,
         startType: LifeEventType,
         startTime: Long,
-        automaticSessionCloserCallback: Runnable
     ) {
         synchronized(lock) {
             logger.logDebug(
@@ -130,7 +127,6 @@ internal class SessionHandler(
 
             logger.logDebug("Start session sent to delivery service.")
 
-            handleAutomaticSessionStopper(automaticSessionCloserCallback)
             addFirstViewBreadcrumbForSession(startTime)
             startPeriodicCaching { onPeriodicCacheActiveSession() }
             if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
@@ -248,24 +244,6 @@ internal class SessionHandler(
     }
 
     /**
-     * If maximum timeout session is set through config, then this method starts automatic session
-     * stopper job, so session timeouts at given time.
-     */
-    private fun handleAutomaticSessionStopper(automaticSessionCloserCallback: Runnable) {
-        // If getMaxSessionSeconds is not null, schedule the session stopper.
-        val maxSessionSecondsAllowed = configService.sessionBehavior.getMaxSessionSecondsAllowed()
-        if (maxSessionSecondsAllowed != null) {
-            logger.logDebug("Will start automatic session stopper.")
-            startAutomaticSessionStopper(
-                automaticSessionCloserCallback,
-                maxSessionSecondsAllowed
-            )
-        } else {
-            logger.logDebug("Maximum session timeout not set on config. Will not start automatic session stopper.")
-        }
-    }
-
-    /**
      * It determines if we are allowed to build an end session message.
      */
     private fun isAllowedToEnd(endType: LifeEventType, activeSession: Session): Boolean {
@@ -276,17 +254,14 @@ internal class SessionHandler(
                 true
             }
 
-            LifeEventType.MANUAL, LifeEventType.TIMED -> {
-                logger.logDebug("Session is either MANUAL or TIMED.")
+            LifeEventType.MANUAL -> {
                 if (!configService.sessionBehavior.isSessionControlEnabled()) {
                     logger.logWarning(
                         "Session control disabled from remote configuration. " +
                             "Session is not allowed to end."
                     )
                     false
-                } else if (endType == LifeEventType.MANUAL &&
-                    ((clock.now() - activeSession.startTime) < minSessionTime)
-                ) {
+                } else if ((clock.now() - activeSession.startTime) < minSessionTime) {
                     // If less than 5 seconds, then the session cannot be finished manually.
                     logger.logError("The session has to be of at least 5 seconds to be ended manually.")
                     false
@@ -336,30 +311,6 @@ internal class SessionHandler(
             endTime = endTime,
             spans = completedSpans
         )
-    }
-
-    /**
-     * It starts a background job that will schedule a callback to automatically end the session.
-     */
-    private fun startAutomaticSessionStopper(
-        automaticSessionStopperCallback: Runnable,
-        maxSessionSeconds: Int
-    ) {
-        if (configService.sessionBehavior.isAsyncEndEnabled()) {
-            logger.logWarning(
-                "Can't close the session. Automatic session closing disabled " +
-                    "since async session send is enabled."
-            )
-            return
-        }
-
-        closerFuture?.cancel(true)
-        closerFuture = this.automaticSessionStopper.schedule<Unit>(
-            automaticSessionStopperCallback,
-            maxSessionSeconds.toLong(),
-            TimeUnit.SECONDS
-        )
-        logger.logDebug("Automatic session stopper successfully scheduled.")
     }
 
     /**

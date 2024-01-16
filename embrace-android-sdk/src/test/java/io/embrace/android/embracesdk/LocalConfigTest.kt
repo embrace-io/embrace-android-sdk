@@ -148,43 +148,6 @@ internal class LocalConfigTest {
     @Test
     fun testSessionOnlyConfig() {
         var localConfig =
-            LocalConfigParser.buildConfig(
-                "GrCPU",
-                false,
-                "{\"session\": {\"max_session_seconds\": 60}}",
-                serializer
-            )
-        assertEquals(
-            localConfig.sdkConfig.sessionConfig?.maxSessionSeconds,
-            60
-        )
-
-        // ignore max_session_seconds when it is too small
-        localConfig =
-            LocalConfigParser.buildConfig(
-                "GrCPU",
-                false,
-                "{\"session\": {\"max_session_seconds\": 59}}",
-                serializer
-            )
-        assertEquals(
-            59,
-            localConfig.sdkConfig.sessionConfig?.maxSessionSeconds,
-        )
-
-        // max_session_seconds can be null
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
-            "{\"session\": {\"max_session_seconds\": null}}",
-            serializer
-        )
-        assertNull(
-            localConfig.sdkConfig.sessionConfig?.maxSessionSeconds,
-        )
-
-        // ignore max_session_seconds when it is too small
-        localConfig =
             LocalConfigParser.buildConfig("GrCPU", false, "{\"session\": {\"async_end\": true}}", serializer)
         assertTrue(checkNotNull(localConfig.sdkConfig.sessionConfig?.asyncEnd))
 

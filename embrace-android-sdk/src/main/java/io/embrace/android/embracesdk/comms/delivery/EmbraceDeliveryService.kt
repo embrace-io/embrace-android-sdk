@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
@@ -148,11 +149,11 @@ internal class EmbraceDeliveryService(
         currentSession: String?
     ) {
         sendCachedCrash()
-        if (isNdkEnabled) {
-            sendCachedSessionsWithNdk(ndkService, currentSession)
-        } else {
-            sendCachedSessionsWithoutNdk(currentSession)
+        val service = when {
+            isNdkEnabled -> ndkService
+            else -> null
         }
+        sendCachedSessions(service, currentSession)
     }
 
     private fun sendCachedCrash() {
@@ -162,19 +163,15 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    private fun sendCachedSessionsWithoutNdk(currentSession: String?) {
-        backgroundWorker.submit {
-            sendCachedSessions(cacheManager.getAllCachedSessionIds(), currentSession)
-        }
-    }
-
-    private fun sendCachedSessionsWithNdk(ndkService: NdkService, currentSession: String?) {
-        backgroundWorker.submit {
+    private fun sendCachedSessions(ndkService: NdkService?, currentSession: String?) {
+        backgroundWorker.submit(TaskPriority.HIGH) {
             val allSessions = cacheManager.getAllCachedSessionIds()
-            logger.logDeveloper(TAG, "NDK enabled, checking for native crashes")
-            val nativeCrashData = ndkService.checkForNativeCrash()
-            if (nativeCrashData != null) {
-                addCrashDataToCachedSession(nativeCrashData)
+
+            ndkService?.let { service ->
+                val nativeCrashData = service.checkForNativeCrash()
+                if (nativeCrashData != null) {
+                    addCrashDataToCachedSession(nativeCrashData)
+                }
             }
             sendCachedSessions(allSessions, currentSession)
         }

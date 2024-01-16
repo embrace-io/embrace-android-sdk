@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -30,7 +30,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -57,7 +57,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var localConfig: LocalConfig
     private lateinit var spansService: EmbraceSpansService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var blockableExecutorService: BlockableExecutorService
+    private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
     @Before
     fun init() {
@@ -88,7 +88,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             EmbraceSerializer()
         )
 
-        blockableExecutorService = BlockableExecutorService()
+        blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 
     @Test
@@ -244,7 +244,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     @Test
     fun `crash will save and flush the current completed spans`() {
         // Prevent background thread from overwriting deliveryService.lastSavedBackgroundActivity
-        blockableExecutorService.blockingMode = true
+        blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now)
@@ -358,7 +358,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             ndkService,
             clock,
             collator,
-            BackgroundWorker(blockableExecutorService)
+            ScheduledWorker(blockingExecutorService)
         )
     }
 }

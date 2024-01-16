@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.Closeable
 import java.util.concurrent.Callable
 
@@ -61,7 +62,8 @@ internal class EmbraceDeliveryCacheManager(
             }
             val sessionId = sessionMessage.session.sessionId
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
-            saveBytes(sessionId, writeSync) { filename: String ->
+            val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
+            saveBytes(sessionId, writeSync, snapshot) { filename: String ->
                 cacheService.writeSession(filename, sessionMessage)
             }
         } catch (exc: Throwable) {
@@ -241,7 +243,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        return backgroundWorker.submit<SessionMessage?> {
+        return backgroundWorker.submit<SessionMessage?>(TaskPriority.HIGH) {
             try {
                 val sessionMessage = cacheService.loadObject(
                     cachedSession.filename,
@@ -268,12 +270,19 @@ internal class EmbraceDeliveryCacheManager(
     private fun saveBytes(
         sessionId: String,
         writeSync: Boolean = false,
+        snapshot: Boolean = false,
         saveAction: (filename: String) -> Unit
     ) {
         if (writeSync) {
             saveBytesImpl(sessionId, saveAction)
         } else {
-            backgroundWorker.submit {
+            // snapshots are low priority compared to state ends + loading/unloading other payload
+            // types. State ends are critical as they contain the final information.
+            val priority = when {
+                snapshot -> TaskPriority.LOW
+                else -> TaskPriority.CRITICAL
+            }
+            backgroundWorker.submit(priority) {
                 saveBytesImpl(sessionId, saveAction)
             }
         }

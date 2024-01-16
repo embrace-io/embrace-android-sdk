@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -12,7 +13,8 @@ internal class EmbraceSessionService(
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
-    private val clock: Clock
+    private val clock: Clock,
+    private val configService: ConfigService
 ) : SessionService {
 
     init {
@@ -41,6 +43,10 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {
+        if (configService.sessionBehavior.isSessionControlEnabled()) {
+            return
+        }
+
         // Ends active session.
         sessionHandler.onSessionEnded(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
 

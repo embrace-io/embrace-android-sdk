@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.utils.filter
 import java.util.Collections
 import java.util.Deque
@@ -40,7 +42,8 @@ import java.util.concurrent.LinkedBlockingDeque
 internal class EmbraceBreadcrumbService(
     clock: Clock,
     configService: ConfigService,
-    logger: InternalEmbraceLogger
+    private val activityTracker: ActivityTracker,
+    logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     /**
@@ -547,6 +550,21 @@ internal class EmbraceBreadcrumbService(
         }
         breadcrumbs.push(breadcrumb)
         logger.logDeveloper("EmbraceBreadcrumbsService", "added breadcrumb")
+    }
+
+    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
+        val screen: String? = getLastViewBreadcrumbScreenName()
+        if (screen != null) {
+            replaceFirstSessionView(screen, startTime)
+        } else {
+            val foregroundActivity = activityTracker.foregroundActivity
+            if (foregroundActivity != null) {
+                forceLogView(
+                    foregroundActivity.localClassName,
+                    startTime
+                )
+            }
+        }
     }
 
     companion object {

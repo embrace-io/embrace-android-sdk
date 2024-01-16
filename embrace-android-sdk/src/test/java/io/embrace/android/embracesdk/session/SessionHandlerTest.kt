@@ -186,7 +186,6 @@ internal class SessionHandlerTest {
             networkConnectivityService,
             metadataService,
             breadcrumbService,
-            activityLifecycleTracker,
             ndkService,
             internalErrorService,
             memoryCleanerService,
@@ -295,14 +294,14 @@ internal class SessionHandlerTest {
         activityLifecycleTracker.foregroundActivity = mockActivity
         val sessionStartType = Session.LifeEventType.STATE
 
-        val sessionMessage = sessionHandler.onSessionStarted(
+        sessionHandler.onSessionStarted(
             true,
             sessionStartType,
             now
         )
 
         // verify we are forcing log view with foreground activity class name
-        assertEquals(mockActivity.localClassName, breadcrumbService.logViewCalls.single())
+        assertEquals(now, breadcrumbService.firstViewBreadcrumbCalls.single())
         checkNotNull(sessionHandler.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }

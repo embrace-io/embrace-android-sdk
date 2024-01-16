@@ -56,6 +56,10 @@ internal class SessionModuleImpl(
     }
 
     override val sessionHandler: SessionHandler by singleton {
+        val ndkService = when {
+            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
+            else -> null
+        }
         SessionHandler(
             coreModule.logger,
             essentialServiceModule.configService,
@@ -63,8 +67,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.metadataService,
             dataCaptureServiceModule.breadcrumbService,
-            essentialServiceModule.activityLifecycleTracker,
-            nativeModule.ndkService,
+            ndkService,
             sdkObservabilityModule.internalErrorService,
             essentialServiceModule.memoryCleanerService,
             deliveryModule.deliveryService,
@@ -90,7 +93,8 @@ internal class SessionModuleImpl(
             sessionHandler,
             deliveryModule.deliveryService,
             essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled(),
-            initModule.clock
+            initModule.clock,
+            essentialServiceModule.configService
         )
     }
 

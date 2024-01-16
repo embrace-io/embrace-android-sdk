@@ -44,7 +44,7 @@ internal class ManualSessionTest {
     }
 
     @Test
-    fun `calling endSession when session control enabled ends sessions`() {
+    fun `calling endSession when session control enabled does not end sessions`() {
         with(testRule) {
             harness.fakeConfigService.sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
@@ -54,10 +54,8 @@ internal class ManualSessionTest {
                 embrace.endSession()
             }
             val messages = harness.getSentSessionMessages()
-            assertEquals(2, messages.size)
+            assertEquals(1, messages.size)
             verifySessionHappened(messages[0])
-            verifySessionHappened(messages[1])
-            assertNotEquals(messages[0].session.sessionId, messages[1].session.sessionId)
         }
     }
 

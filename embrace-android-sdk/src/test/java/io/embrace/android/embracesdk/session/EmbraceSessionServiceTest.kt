@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -195,7 +196,8 @@ internal class EmbraceSessionServiceTest {
             mockSessionHandler,
             deliveryService,
             ndkEnabled,
-            clock
+            clock,
+            FakeConfigService()
         )
     }
 

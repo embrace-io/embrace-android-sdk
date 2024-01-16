@@ -2989,11 +2989,6 @@ PLio/embrace/android/embracesdk/payload/DiskUsage;->getAppDiskUsage()Ljava/lang/
 PLio/embrace/android/embracesdk/payload/DiskUsage;->getDeviceDiskFree()Ljava/lang/Long;
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DiskUsage;)V
 PLio/embrace/android/embracesdk/payload/DiskUsageJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;-><init>(JJ)V
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getEndMs()J
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlier;->getStartMs()J
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/ResponsivenessOutlier;)V
-PLio/embrace/android/embracesdk/payload/ResponsivenessOutlierJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 PLio/embrace/android/embracesdk/payload/ViewBreadcrumb;->setEnd(Ljava/lang/Long;)V
 PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->getApplicationExitInfoHistory()Ljava/util/Set;
 PLio/embrace/android/embracesdk/prefs/EmbracePreferencesService;->onViewClose(Landroid/app/Activity;)V

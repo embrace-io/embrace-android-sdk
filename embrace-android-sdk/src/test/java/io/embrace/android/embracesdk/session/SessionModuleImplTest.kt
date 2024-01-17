@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.injection.SessionModuleImpl
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SessionModuleImplTest {
@@ -48,7 +47,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionService)
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
-        assertNull(module.backgroundActivityService)
+        assertNotNull(module.backgroundActivityService)
         assertNotNull(module.sessionOrchestrator)
     }
 

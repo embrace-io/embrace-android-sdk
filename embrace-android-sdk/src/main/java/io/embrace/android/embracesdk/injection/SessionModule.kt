@@ -101,19 +101,15 @@ internal class SessionModuleImpl(
     }
 
     override val backgroundActivityService: BackgroundActivityService? by singleton {
-        if (essentialServiceModule.configService.isBackgroundActivityCaptureEnabled()) {
-            EmbraceBackgroundActivityService(
-                essentialServiceModule.metadataService,
-                deliveryModule.deliveryService,
-                essentialServiceModule.configService,
-                nativeModule.ndkService,
-                initModule.clock,
-                payloadMessageCollator,
-                workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
-            )
-        } else {
-            null
-        }
+        EmbraceBackgroundActivityService(
+            essentialServiceModule.metadataService,
+            deliveryModule.deliveryService,
+            essentialServiceModule.configService,
+            nativeModule.ndkService,
+            initModule.clock,
+            payloadMessageCollator,
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+        )
     }
 
     override val sessionOrchestrator: SessionOrchestrator by singleton {
@@ -121,7 +117,8 @@ internal class SessionModuleImpl(
             essentialServiceModule.processStateService,
             sessionService,
             backgroundActivityService,
-            initModule.clock
+            initModule.clock,
+            essentialServiceModule.configService
         )
     }
 }

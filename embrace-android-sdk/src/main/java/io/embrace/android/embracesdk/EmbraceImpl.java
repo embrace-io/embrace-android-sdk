@@ -619,12 +619,6 @@ final class EmbraceImpl {
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
-        if (backgroundActivityService != null) {
-            internalEmbraceLogger.logInfo("Background activity capture enabled");
-        } else {
-            internalEmbraceLogger.logInfo("Background activity capture disabled");
-        }
-
         CrashModule crashModule = new CrashModuleImpl(
             initModule,
             storageModule,

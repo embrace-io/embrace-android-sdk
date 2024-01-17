@@ -1,10 +1,14 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeSessionService
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -19,6 +23,7 @@ internal class SessionOrchestratorTest {
     private lateinit var backgroundActivityService: FakeBackgroundActivityService
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
+    private lateinit var configService: FakeConfigService
 
     @Before
     fun setUp() {
@@ -26,11 +31,13 @@ internal class SessionOrchestratorTest {
         sessionService = FakeSessionService()
         backgroundActivityService = FakeBackgroundActivityService()
         clock = FakeClock()
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
             backgroundActivityService,
-            clock
+            clock,
+            configService
         )
     }
 
@@ -77,6 +84,26 @@ internal class SessionOrchestratorTest {
         assertEquals(0, sessionService.manualEndCount)
     }
 
+    @Test
+    fun `test background activity capture disabled`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
+        createOrchestratorInBackground()
+        orchestrator.onBackground(TIMESTAMP)
+        assertTrue(backgroundActivityService.startTimestamps.isEmpty())
+    }
+
+    @Test
+    fun `test session capture disabled`() {
+        configService = FakeConfigService(
+            sessionBehavior = fakeSessionBehavior {
+                RemoteConfig(disabledMessageTypes = setOf("session"))
+            }
+        )
+        createOrchestratorInBackground()
+        orchestrator.onForeground(true, 0, TIMESTAMP)
+        assertTrue(backgroundActivityService.startTimestamps.isEmpty())
+    }
+
     private fun createOrchestratorInBackground() {
         processStateService.listeners.clear()
         processStateService.isInBackground = true
@@ -86,7 +113,8 @@ internal class SessionOrchestratorTest {
             processStateService,
             sessionService,
             backgroundActivityService,
-            clock
+            clock,
+            configService
         )
     }
 }

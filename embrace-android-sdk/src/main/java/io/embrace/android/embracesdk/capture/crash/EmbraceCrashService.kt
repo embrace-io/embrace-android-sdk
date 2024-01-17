@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.extensions.CrashFactory
+import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -38,6 +39,7 @@ internal class EmbraceCrashService(
     private val ndkService: NdkService,
     private val gatingService: GatingService,
     private val backgroundActivityService: BackgroundActivityService?,
+    private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
     private val clock: Clock
 ) : CrashService {
@@ -76,14 +78,15 @@ internal class EmbraceCrashService(
             // is enabled for an Unity build. When a native crash occurs and the NDK sends an
             // uncaught exception the SDK assign the unity crash id as the java crash id.
             val unityCrashId = ndkService.getUnityCrashId()
+            val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crash = if (unityCrashId != null) {
                 logDeveloper(
                     "EmbraceCrashService",
                     "unityCrashId is $unityCrashId"
                 )
-                CrashFactory.ofThrowable(exception, jsException, unityCrashId)
+                CrashFactory.ofThrowable(exception, jsException, crashNumber, unityCrashId)
             } else {
-                CrashFactory.ofThrowable(exception, jsException)
+                CrashFactory.ofThrowable(exception, jsException, crashNumber)
             }
             logDeveloper("EmbraceCrashService", "crashId = " + crash.crashId)
 

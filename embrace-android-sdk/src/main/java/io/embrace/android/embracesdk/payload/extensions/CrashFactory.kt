@@ -25,13 +25,15 @@ internal object CrashFactory {
     fun ofThrowable(
         throwable: Throwable?,
         jsException: JsException?,
+        crashNumber: Int,
         crashId: String = Uuid.getEmbUuid()
     ): Crash {
         return Crash(
             crashId,
             exceptionInfo(throwable),
             jsExceptions(jsException),
-            threadsInfo()
+            threadsInfo(),
+            crashNumber
         )
     }
 

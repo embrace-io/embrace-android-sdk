@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
@@ -25,6 +26,7 @@ internal class NativeModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
+    androidServicesModule: AndroidServicesModule,
     sessionProperties: EmbraceSessionProperties,
     workerThreadModule: WorkerThreadModule
 ) : NativeModule {
@@ -38,6 +40,7 @@ internal class NativeModuleImpl(
             essentialServiceModule.configService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
+            androidServicesModule.preferencesService,
             sessionProperties,
             coreModule.appFramework,
             essentialServiceModule.sharedObjectLoader,

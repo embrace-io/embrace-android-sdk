@@ -98,6 +98,20 @@ internal interface PreferencesService {
     fun incrementAndGetBackgroundActivityNumber(): Int
 
     /**
+     * Increments and returns the crash number ordinal. This is an integer that
+     * increments on every crash. It allows us to check the % of crashes that
+     * didn't get delivered to the backend.
+     */
+    fun incrementAndGetCrashNumber(): Int
+
+    /**
+     * Increments and returns the native crash number ordinal. This is an integer that
+     * increments on every native crash. It allows us to check the % of native crashes that
+     * didn't get delivered to the backend.
+     */
+    fun incrementAndGetNativeCrashNumber(): Int
+
+    /**
      * Last javaScript bundle string url.
      */
     var javaScriptBundleURL: String?

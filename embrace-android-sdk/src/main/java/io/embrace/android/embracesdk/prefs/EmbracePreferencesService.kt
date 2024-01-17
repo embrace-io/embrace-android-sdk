@@ -227,10 +227,23 @@ internal class EmbracePreferencesService(
         return incrementAndGetOrdinal(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
     }
 
+    override fun incrementAndGetCrashNumber(): Int {
+        return incrementAndGetOrdinal(LAST_CRASH_NUMBER_KEY)
+    }
+
+    override fun incrementAndGetNativeCrashNumber(): Int {
+        return incrementAndGetOrdinal(LAST_NATIVE_CRASH_NUMBER_KEY)
+    }
+
     private fun incrementAndGetOrdinal(key: String): Int {
-        val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
-        prefs.setIntegerPreference(key, ordinal)
-        return ordinal
+        return try {
+            val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
+            prefs.setIntegerPreference(key, ordinal)
+            ordinal
+        } catch (tr: Throwable) {
+            logDeveloper("EmbracePreferencesService", "Error incrementing $key", tr)
+            -1
+        }
     }
 
     override var javaScriptBundleURL: String?
@@ -341,6 +354,8 @@ internal class EmbracePreferencesService(
         private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
+        private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
+        private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
         private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"

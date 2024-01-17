@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -22,7 +23,8 @@ internal class CrashModuleImplTest {
             FakeNativeModule(),
             FakeSessionModule(),
             FakeAnrModule(),
-            FakeDataContainerModule()
+            FakeDataContainerModule(),
+            FakeAndroidServicesModule()
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashService)

@@ -56,5 +56,13 @@ internal class FakePreferenceService(
 
     override fun incrementAndGetBackgroundActivityNumber(): Int = bgActivityNumber()
 
+    override fun incrementAndGetCrashNumber(): Int {
+        return 1
+    }
+
+    override fun incrementAndGetNativeCrashNumber(): Int {
+        return 1
+    }
+
     override fun isUsersFirstDay(): Boolean = firstDay
 }

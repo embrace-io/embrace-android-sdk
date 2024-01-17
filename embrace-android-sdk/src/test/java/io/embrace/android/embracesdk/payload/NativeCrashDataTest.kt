@@ -47,7 +47,7 @@ internal class NativeCrashDataTest {
         assertEquals("app_state", obj.appState)
         assertNotNull(obj.metadata)
         assertEquals(2, obj.unwindError)
-        assertNotNull(obj.getCrash())
+        assertNotNull(obj.getCrash(1))
         assertEquals(mapOf("key" to "value"), obj.symbols)
         assertEquals(1, obj.errors?.size)
         assertEquals("map", obj.map)

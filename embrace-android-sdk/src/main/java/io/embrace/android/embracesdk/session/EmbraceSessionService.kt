@@ -40,20 +40,10 @@ internal class EmbraceSessionService(
         startType: Session.LifeEventType,
         startTime: Long
     ) {
-        val automaticSessionCloserCallback = Runnable {
-            try {
-                logger.logInfo("Automatic session closing triggered.")
-                triggerStatelessSessionEnd(Session.LifeEventType.TIMED)
-            } catch (ex: Exception) {
-                logger.logError("Error while trying to close the session automatically", ex)
-            }
-        }
-
         sessionHandler.onSessionStarted(
             coldStart,
             startType,
-            startTime,
-            automaticSessionCloserCallback
+            startTime
         )
     }
 
@@ -97,10 +87,6 @@ internal class EmbraceSessionService(
 
     override fun endSessionManually(clearUserInfo: Boolean) {
         val sessionBehavior: SessionBehavior = configService.sessionBehavior
-        if (sessionBehavior.getMaxSessionSecondsAllowed() != null) {
-            logger.logWarning("Can't close the session, automatic session close enabled.")
-            return
-        }
 
         if (sessionBehavior.isAsyncEndEnabled()) {
             logger.logWarning("Can't close the session, session ending in background thread enabled.")

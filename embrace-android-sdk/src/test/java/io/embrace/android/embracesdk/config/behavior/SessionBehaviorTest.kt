@@ -13,7 +13,6 @@ import org.junit.Test
 internal class SessionBehaviorTest {
 
     private val local = SessionLocalConfig(
-        maxSessionSeconds = 120,
         asyncEnd = true,
         sessionComponents = setOf("breadcrumbs"),
         fullSessionEvents = setOf("crash"),
@@ -34,7 +33,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeSessionBehavior()) {
-            assertNull(getMaxSessionSecondsAllowed())
             assertFalse(isAsyncEndEnabled())
             assertFalse(isSessionErrorLogStrictModeEnabled())
             assertEquals(emptySet<String>(), getFullSessionEvents())
@@ -49,7 +47,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testLocalOnly() {
         with(fakeSessionBehavior(localCfg = { local })) {
-            assertEquals(120, getMaxSessionSecondsAllowed())
             assertTrue(isAsyncEndEnabled())
             assertTrue(isSessionErrorLogStrictModeEnabled())
             assertEquals(setOf("breadcrumbs"), getSessionComponents())

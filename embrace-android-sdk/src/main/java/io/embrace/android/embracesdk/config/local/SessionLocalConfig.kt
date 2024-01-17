@@ -10,12 +10,6 @@ import com.squareup.moshi.JsonClass
 internal class SessionLocalConfig(
 
     /**
-     * Specify a maximum time before a session is allowed to exist before it is ended.
-     */
-    @Json(name = "max_session_seconds")
-    val maxSessionSeconds: Int? = null,
-
-    /**
      * End session messages are sent asynchronously.
      */
     @Json(name = "async_end")

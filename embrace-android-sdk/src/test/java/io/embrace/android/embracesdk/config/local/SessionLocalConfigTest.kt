@@ -19,7 +19,6 @@ internal class SessionLocalConfigTest {
     @Test
     fun testDeserialization() {
         val obj = deserializeJsonFromResource<SessionLocalConfig>("session_config.json")
-        assertEquals(120, obj.maxSessionSeconds)
         assertTrue(checkNotNull(obj.asyncEnd))
         assertTrue(checkNotNull(obj.sessionEnableErrorLogStrictMode))
         assertEquals(setOf("breadcrumbs"), obj.sessionComponents)
@@ -34,7 +33,6 @@ internal class SessionLocalConfigTest {
 
     @Suppress("DEPRECATION")
     private fun verifyDefaults(cfg: SessionLocalConfig) {
-        assertNull(cfg.maxSessionSeconds)
         assertNull(cfg.asyncEnd)
         assertNull(cfg.sessionEnableErrorLogStrictMode)
         assertNull(cfg.sessionComponents)

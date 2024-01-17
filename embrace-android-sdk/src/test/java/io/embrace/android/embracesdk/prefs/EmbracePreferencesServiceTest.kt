@@ -212,6 +212,33 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
+    fun `test crash number is saved`() {
+        assertEquals(1, service.incrementAndGetCrashNumber())
+        assertEquals(2, service.incrementAndGetCrashNumber())
+        assertEquals(3, service.incrementAndGetCrashNumber())
+        assertEquals(4, service.incrementAndGetCrashNumber())
+    }
+
+    @Test
+    fun `test native crash number is saved`() {
+        assertEquals(1, service.incrementAndGetNativeCrashNumber())
+        assertEquals(2, service.incrementAndGetNativeCrashNumber())
+        assertEquals(3, service.incrementAndGetNativeCrashNumber())
+        assertEquals(4, service.incrementAndGetNativeCrashNumber())
+    }
+
+    @Test
+    fun `test incrementAndGet returns -1 on an exception`() {
+        service = EmbracePreferencesService(
+            executorService,
+            lazy { FakeSharedPreferences(throwExceptionOnGet = true) },
+            fakeClock,
+            EmbraceSerializer()
+        )
+        assertEquals(-1, service.incrementAndGetSessionNumber())
+    }
+
+    @Test
     fun `test java script bundle url is saved`() {
         assertNull(service.javaScriptBundleURL)
 

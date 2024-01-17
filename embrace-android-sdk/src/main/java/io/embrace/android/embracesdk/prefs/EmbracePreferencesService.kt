@@ -236,9 +236,14 @@ internal class EmbracePreferencesService(
     }
 
     private fun incrementAndGetOrdinal(key: String): Int {
-        val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
-        prefs.setIntegerPreference(key, ordinal)
-        return ordinal
+        return try {
+            val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
+            prefs.setIntegerPreference(key, ordinal)
+            ordinal
+        } catch (tr: Throwable) {
+            logDeveloper("EmbracePreferencesService", "Error incrementing $key", tr)
+            -1
+        }
     }
 
     override var javaScriptBundleURL: String?

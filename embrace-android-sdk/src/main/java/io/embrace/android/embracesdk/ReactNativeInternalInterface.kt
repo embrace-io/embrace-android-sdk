@@ -31,6 +31,8 @@ internal interface ReactNativeInternalInterface : EmbraceInternalInterface {
      */
     fun setJavaScriptPatchNumber(number: String?)
 
+    fun setReactNativeSdkVersion(version: String?)
+
     /**
      * See [Embrace.setReactNativeVersionNumber]
      */

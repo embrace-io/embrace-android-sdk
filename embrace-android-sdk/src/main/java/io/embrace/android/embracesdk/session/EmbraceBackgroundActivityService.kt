@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -20,7 +19,6 @@ import kotlin.math.max
 
 internal class EmbraceBackgroundActivityService(
     private val metadataService: MetadataService,
-    processStateService: ProcessStateService,
     private val deliveryService: DeliveryService,
     private val configService: ConfigService,
     private val ndkService: NdkService,
@@ -42,17 +40,11 @@ internal class EmbraceBackgroundActivityService(
     var backgroundActivity: Session? = null
     private val manualBkgSessionsSent = AtomicInteger(0)
 
-    private var lastSendAttempt: Long
+    private var lastSendAttempt: Long = clock.now()
     private var isEnabled = true
 
     init {
-        processStateService.addListener(this)
-        lastSendAttempt = clock.now()
         configService.addListener(this)
-        if (processStateService.isInBackground) {
-            // start background activity capture from a cold start
-            startBackgroundActivityCapture(clock.now(), true, LifeEventType.BKGND_STATE)
-        }
     }
 
     override fun sendBackgroundActivity() {
@@ -69,7 +61,7 @@ internal class EmbraceBackgroundActivityService(
         }
     }
 
-    override fun handleCrash(crashId: String) {
+    override fun endBackgroundActivityWithCrash(crashId: String) {
         if (isEnabled && backgroundActivity != null) {
             val now = clock.now()
             val backgroundActivityMessage =
@@ -81,8 +73,10 @@ internal class EmbraceBackgroundActivityService(
         }
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun endBackgroundActivityWithState(timestamp: Long) {
         if (isEnabled) {
+            // kept for backwards compat. the backend expects the start time to be 1 ms greater
+            // than the adjacent session, and manually adjusts.
             val backgroundActivityMessage =
                 stopBackgroundActivityCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
             if (backgroundActivityMessage != null) {
@@ -92,9 +86,15 @@ internal class EmbraceBackgroundActivityService(
         }
     }
 
-    override fun onBackground(timestamp: Long) {
+    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
         if (isEnabled) {
-            startBackgroundActivityCapture(timestamp + 1, false, LifeEventType.BKGND_STATE)
+            // kept for backwards compat. the backend expects the start time to be 1 ms greater
+            // than the adjacent session, and manually adjusts.
+            val time = when {
+                coldStart -> timestamp
+                else -> timestamp + 1
+            }
+            startBackgroundActivityCapture(time, coldStart, LifeEventType.BKGND_STATE)
         }
     }
 

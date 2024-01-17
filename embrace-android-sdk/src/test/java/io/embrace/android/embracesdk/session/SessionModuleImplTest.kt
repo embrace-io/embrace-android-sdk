@@ -49,6 +49,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
         assertNull(module.backgroundActivityService)
+        assertNotNull(module.sessionOrchestrator)
     }
 
     @Test
@@ -72,6 +73,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.backgroundActivityService)
+        assertNotNull(module.sessionOrchestrator)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

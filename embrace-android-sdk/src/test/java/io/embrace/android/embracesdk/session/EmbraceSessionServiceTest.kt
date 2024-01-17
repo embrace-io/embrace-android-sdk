@@ -67,19 +67,9 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `initializing service should detect early sessions and start a STATE session`() {
+    fun `initializing service should detect early sessions`() {
         initializeSessionService(ndkEnabled = true, isActivityInBackground = false)
-
         assertNotNull(deliveryService.lastSentCachedSession)
-
-        // verify that a STATE session is started
-        verify {
-            mockSessionHandler.onSessionStarted(
-                /* automatically detecting a cold start */ true,
-                LifeEventType.STATE,
-                any()
-            )
-        }
     }
 
     @Test
@@ -88,9 +78,9 @@ internal class EmbraceSessionServiceTest {
         val crashId = "crash-id"
 
         // let's start session first so we have an active session
-        service.onForeground(true, 0, clock.now())
+        service.startSessionWithState(true, clock.now())
 
-        service.handleCrash(crashId)
+        service.endSessionWithCrash(crashId)
 
         verify { mockSessionHandler.onCrash(crashId) }
     }
@@ -99,9 +89,8 @@ internal class EmbraceSessionServiceTest {
     fun `on foreground starts state session successfully for cold start`() {
         initializeSessionService()
         val coldStart = true
-        val startTime = 123L
 
-        service.onForeground(coldStart, startTime, 456)
+        service.startSessionWithState(coldStart, 456)
         assertEquals("", deliveryService.lastSentCachedSession)
 
         // verify that a STATE session is started
@@ -118,9 +107,8 @@ internal class EmbraceSessionServiceTest {
     fun `on foreground starts state session successfully for non cold start`() {
         initializeSessionService()
         val coldStart = false
-        val startTime = 123L
 
-        service.onForeground(coldStart, startTime, 456)
+        service.startSessionWithState(coldStart, 456)
 
         // verify that a STATE session is started
         verify {
@@ -138,7 +126,7 @@ internal class EmbraceSessionServiceTest {
         // let's start session first so we have an active session
         startDefaultSession()
         clearMocks(mockSessionHandler)
-        service.endSessionManually(true)
+        service.endSessionWithManual(true)
 
         // verify session is ended
         verify(exactly = 1) {
@@ -164,7 +152,7 @@ internal class EmbraceSessionServiceTest {
         startDefaultSession()
         val endType = LifeEventType.MANUAL
 
-        service.endSessionManually(false)
+        service.endSessionWithManual(false)
 
         // verify session is ended
         verify { mockSessionHandler.onSessionEnded(endType, 0, false) }
@@ -191,7 +179,6 @@ internal class EmbraceSessionServiceTest {
         processStateService.isInBackground = isActivityInBackground
 
         service = EmbraceSessionService(
-            processStateService,
             ndkService,
             mockSessionHandler,
             deliveryService,
@@ -202,6 +189,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     private fun startDefaultSession() {
-        service.onForeground(true, 0, clock.now())
+        service.startSessionWithState(true, clock.now())
     }
 }

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -19,6 +21,7 @@ internal interface SessionModule {
     val backgroundActivityService: BackgroundActivityService?
     val payloadMessageCollator: PayloadMessageCollator
     val sessionPropertiesService: SessionPropertiesService
+    val sessionOrchestrator: SessionOrchestrator
 }
 
 internal class SessionModuleImpl(
@@ -88,7 +91,6 @@ internal class SessionModuleImpl(
 
     override val sessionService: SessionService by singleton {
         EmbraceSessionService(
-            essentialServiceModule.processStateService,
             nativeModule.ndkService,
             sessionHandler,
             deliveryModule.deliveryService,
@@ -102,7 +104,6 @@ internal class SessionModuleImpl(
         if (essentialServiceModule.configService.isBackgroundActivityCaptureEnabled()) {
             EmbraceBackgroundActivityService(
                 essentialServiceModule.metadataService,
-                essentialServiceModule.processStateService,
                 deliveryModule.deliveryService,
                 essentialServiceModule.configService,
                 nativeModule.ndkService,
@@ -113,5 +114,14 @@ internal class SessionModuleImpl(
         } else {
             null
         }
+    }
+
+    override val sessionOrchestrator: SessionOrchestrator by singleton {
+        SessionOrchestratorImpl(
+            essentialServiceModule.processStateService,
+            sessionService,
+            backgroundActivityService,
+            initModule.clock
+        )
     }
 }

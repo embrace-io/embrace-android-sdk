@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -92,21 +93,16 @@ internal class EmbraceBackgroundActivityServiceTest {
     }
 
     @Test
-    fun `test that the service listens to activity events`() {
-        this.service = createService()
-        assertEquals(service, activityService.listeners.single())
-    }
-
-    @Test
     fun `test background activity state when going to the background`() {
         this.service = createService()
 
-        service.onBackground(clock.now())
+        service.startBackgroundActivityWithState(false, clock.now())
 
         val payload = checkNotNull(service.backgroundActivity)
         assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
         assertEquals(payload.sessionId, metadataService.activeSessionId)
+        assertFalse(payload.isColdStart)
     }
 
     @Test
@@ -115,7 +111,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         val timestamp = 1669392000L
 
-        service.onForeground(true, 123, timestamp)
+        service.endBackgroundActivityWithState(timestamp)
 
         assertNull(service.backgroundActivity)
 
@@ -123,12 +119,13 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
         val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(5, payload.session.number)
+        assertTrue(payload.session.isColdStart)
     }
 
     @Test
     fun `background activity is not started whn the service initializes in the foreground`() {
         activityService.isInBackground = false
-        this.service = createService()
+        this.service = createService(false)
         assertNull(service.backgroundActivity)
     }
 
@@ -147,11 +144,11 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 1000)
-        service.onForeground(true, 500, startTime + 1000)
+        service.endBackgroundActivityWithState(startTime + 1000)
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 5000)
-        service.onBackground(startTime + 5000)
+        service.startBackgroundActivityWithState(false, startTime + 5000)
         assertEquals(3, deliveryService.saveBackgroundActivityInvokedCount)
     }
 
@@ -166,13 +163,13 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         clock.tick(1000)
         blockingExecutorService.runCurrentlyBlocked()
-        service.onForeground(true, 500, clock.now())
+        service.endBackgroundActivityWithState(clock.now())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         // tick 4999 milliseconds, the activity should not be cached yet
         clock.tick(4999)
         blockingExecutorService.runCurrentlyBlocked()
-        service.onBackground(clock.now())
+        service.startBackgroundActivityWithState(false, clock.now())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         // tick an extra millisecond, the delayed job should execute
@@ -184,11 +181,11 @@ internal class EmbraceBackgroundActivityServiceTest {
     @Test
     fun `activity is cached on start capture when the service started in foreground`() {
         activityService.isInBackground = false
-        this.service = createService()
+        this.service = createService(false)
 
         assertNull(deliveryService.lastSavedBackgroundActivities.singleOrNull())
 
-        service.onBackground(clock.now())
+        service.startBackgroundActivityWithState(false, clock.now())
 
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
@@ -199,11 +196,11 @@ internal class EmbraceBackgroundActivityServiceTest {
         val startTime = clock.now()
         clock.setCurrentTime(startTime)
 
-        this.service = createService()
+        this.service = createService(false)
         assertEquals(0, deliveryService.saveBackgroundActivityInvokedCount)
 
         // start capturing background activity 10 seconds later, activity is first cached
-        service.onBackground(startTime + 10 * 1000)
+        service.startBackgroundActivityWithState(false, startTime + 10 * 1000)
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // elapse another 10 seconds to get around the 5 seconds limitation
@@ -217,10 +214,10 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `save() does not persist to disk if the activity was cached within the last 5 seconds`() {
         activityService.isInBackground = false // start the service in foreground
 
-        this.service = createService()
+        this.service = createService(false)
         assertEquals(0, deliveryService.saveBackgroundActivityInvokedCount)
 
-        service.onBackground(clock.now())
+        service.startBackgroundActivityWithState(false, clock.now())
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // save() will not persist to disk since the last time was less than 5 seconds ago
@@ -274,7 +271,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now)
-        service.handleCrash("crashId")
+        service.endBackgroundActivityWithCrash("crashId")
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
         // there should be 1 completed span: the session span
@@ -287,7 +284,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        service.onForeground(false, TimeUnit.MILLISECONDS.toNanos(clock.now()), clock.now())
+        service.endBackgroundActivityWithState(clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
 
         // there should be 1 completed span: the session span
@@ -311,7 +308,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `foregrounding background activity flushes breadcrumbs`() {
         service = createService()
         clock.tick(1000L)
-        service.onForeground(false, 0, clock.now())
+        service.endBackgroundActivityWithState(clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(1, breadcrumbService.flushCount)
     }
@@ -359,7 +356,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service.onConfigChange(configService)
     }
 
-    private fun createService(): EmbraceBackgroundActivityService {
+    private fun createService(createInitialSession: Boolean = true): EmbraceBackgroundActivityService {
         val collator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -378,13 +375,16 @@ internal class EmbraceBackgroundActivityServiceTest {
         )
         return EmbraceBackgroundActivityService(
             metadataService,
-            activityService,
             deliveryService,
             configService,
             ndkService,
             clock,
             collator,
             ScheduledWorker(blockingExecutorService)
-        )
+        ).apply {
+            if (createInitialSession) {
+                startBackgroundActivityWithState(true, clock.now())
+            }
+        }
     }
 }

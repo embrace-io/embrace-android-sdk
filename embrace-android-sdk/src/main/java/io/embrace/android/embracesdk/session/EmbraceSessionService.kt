@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -16,7 +14,6 @@ internal class EmbraceSessionService(
     private val sessionHandler: SessionHandler,
     deliveryService: DeliveryService,
     isNdkEnabled: Boolean,
-    private val configService: ConfigService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionService {
@@ -86,12 +83,6 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionManually(clearUserInfo: Boolean) {
-        val sessionBehavior: SessionBehavior = configService.sessionBehavior
-
-        if (sessionBehavior.isAsyncEndEnabled()) {
-            logger.logWarning("Can't close the session, session ending in background thread enabled.")
-            return
-        }
         triggerStatelessSessionEnd(Session.LifeEventType.MANUAL, clearUserInfo)
     }
 

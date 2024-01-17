@@ -23,24 +23,12 @@ internal class SessionBehavior(
     companion object {
 
         /**
-         * Do not use async mode for session end messages by default.
-         */
-        const val ASYNC_END_DEFAULT = false
-
-        /**
          * By default, prevents to capture internal error logs as part of session payload
          */
         const val ERROR_LOG_STRICT_MODE_DEFAULT = false
 
         const val SESSION_PROPERTY_LIMIT = 10
     }
-
-    /**
-     * Whether sessions are allowed to be persisted async or not.
-     */
-    @Deprecated("This flag is obsolete and is no longer respected.")
-    fun isAsyncEndEnabled(): Boolean =
-        remote?.sessionConfig?.endAsync ?: local?.asyncEnd ?: ASYNC_END_DEFAULT
 
     /**
      * Whether the limit on the number of internal exceptions in the payload should be increased

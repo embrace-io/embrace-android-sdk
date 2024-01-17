@@ -13,10 +13,6 @@ internal data class SessionRemoteConfig(
     @Json(name = "enable")
     val isEnabled: Boolean? = null,
 
-    @Json(name = "async_end")
-    @Deprecated("This flag is obsolete and is no longer respected.")
-    val endAsync: Boolean? = null,
-
     /**
      * A list of session components (i.e. Breadcrumbs, Session properties, etc) that will be
      * included in the session payload. If components list exists, the services should restrict

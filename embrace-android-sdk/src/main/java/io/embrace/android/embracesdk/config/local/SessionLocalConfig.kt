@@ -10,13 +10,6 @@ import com.squareup.moshi.JsonClass
 internal class SessionLocalConfig(
 
     /**
-     * End session messages are sent asynchronously.
-     */
-    @Json(name = "async_end")
-    @Deprecated("This flag is obsolete and is no longer respected.")
-    val asyncEnd: Boolean? = null,
-
-    /**
      * A whitelist of session components (i.e. Breadcrumbs, Session properties, etc) that should be
      * included in the session payload. The presence of this property denotes that the gating
      * feature is enabled.

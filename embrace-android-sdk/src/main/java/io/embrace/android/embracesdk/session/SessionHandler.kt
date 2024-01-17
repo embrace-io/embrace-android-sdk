@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
-import java.io.Closeable
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -44,7 +43,7 @@ internal class SessionHandler(
     private val clock: Clock,
     private val spansService: SpansService,
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
-) : Closeable {
+) {
 
     companion object {
 
@@ -232,10 +231,6 @@ internal class SessionHandler(
             msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
             return msg
         }
-    }
-
-    override fun close() {
-        stopPeriodicSessionCaching()
     }
 
     private fun stopPeriodicSessionCaching() {

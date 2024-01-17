@@ -421,14 +421,6 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `verify close stops everything successfully`() {
-        startFakeSession()
-        sessionHandler.scheduledFuture = mockk(relaxed = true)
-        sessionHandler.close()
-        verify { sessionHandler.scheduledFuture?.cancel(false) }
-    }
-
-    @Test
     fun `endSession includes completed spans in message`() {
         startFakeSession()
         initializeServices()

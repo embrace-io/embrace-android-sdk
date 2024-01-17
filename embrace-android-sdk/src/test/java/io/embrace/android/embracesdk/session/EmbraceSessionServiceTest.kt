@@ -20,7 +20,6 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -88,7 +87,7 @@ internal class EmbraceSessionServiceTest {
         val crashId = "crash-id"
 
         // let's start session first so we have an active session
-        service.startSession(true, LifeEventType.STATE, clock.now())
+        service.onForeground(true, 0, clock.now())
 
         service.handleCrash(crashId)
 
@@ -164,7 +163,7 @@ internal class EmbraceSessionServiceTest {
         startDefaultSession()
         val endType = LifeEventType.MANUAL
 
-        service.triggerStatelessSessionEnd(endType)
+        service.endSessionManually(false)
 
         // verify session is ended
         verify { mockSessionHandler.onSessionEnded(endType, 0, false) }
@@ -176,21 +175,6 @@ internal class EmbraceSessionServiceTest {
                 any()
             )
         }
-    }
-
-    @Test
-    fun `trigger stateless end session for a STATE session end type should not do anything`() {
-        initializeSessionService()
-        service.triggerStatelessSessionEnd(LifeEventType.STATE)
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-    }
-
-    @Test
-    fun `close successfully`() {
-        initializeSessionService()
-        service.close()
-
-        verify { mockSessionHandler.close() }
     }
 
     @Test
@@ -216,6 +200,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     private fun startDefaultSession() {
-        service.startSession(true, LifeEventType.STATE, clock.now())
+        service.onForeground(true, 0, clock.now())
     }
 }

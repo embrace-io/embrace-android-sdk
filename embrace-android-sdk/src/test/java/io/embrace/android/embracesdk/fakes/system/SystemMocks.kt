@@ -22,7 +22,9 @@ internal fun mockLooper(): Looper = mockk(relaxed = true) {
 
 internal fun mockMessageQueue(): MessageQueue = mockk(relaxed = true)
 internal fun mockMessage(): Message = mockk(relaxed = true)
-internal fun mockActivity(): Activity = mockk(relaxed = true)
+internal fun mockActivity(): Activity = mockk(relaxed = true) {
+    every { localClassName } returns "MyMockActivity"
+}
 internal fun mockIntent(): Intent = mockk(relaxed = true)
 internal fun mockContext(): Context = mockk(relaxed = true)
 internal fun mockApplication(): Application = mockk(relaxed = true) {

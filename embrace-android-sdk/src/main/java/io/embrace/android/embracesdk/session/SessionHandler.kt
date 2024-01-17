@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -33,8 +32,7 @@ internal class SessionHandler(
     private val networkConnectivityService: NetworkConnectivityService,
     private val metadataService: MetadataService,
     private val breadcrumbService: BreadcrumbService,
-    private val activityLifecycleTracker: ActivityTracker,
-    private val ndkService: NdkService,
+    private val ndkService: NdkService?,
     private val internalErrorService: InternalErrorService,
     private val memoryCleanerService: MemoryCleanerService,
     private val deliveryService: DeliveryService,
@@ -126,11 +124,19 @@ internal class SessionHandler(
 
             logger.logDebug("Start session sent to delivery service.")
 
-            addFirstViewBreadcrumbForSession(startTime)
+            breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
             startPeriodicCaching { onPeriodicCacheActiveSession() }
-            if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-                ndkService.updateSessionId(session.sessionId)
-            }
+            ndkService?.updateSessionId(session.sessionId)
+        }
+    }
+
+    private fun isAllowedToStart(): Boolean {
+        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
+            logger.logWarning("Session messages disabled. Ignoring all sessions.")
+            false
+        } else {
+            logger.logDebug("Session is allowed to start.")
+            true
         }
     }
 
@@ -165,7 +171,7 @@ internal class SessionHandler(
             if (endType == LifeEventType.MANUAL && clearUserInfo) {
                 userService.clearAllUserInfo()
                 // Update user info in NDK service
-                ndkService.onUserInfoUpdate()
+                ndkService?.onUserInfoUpdate()
             }
 
             // clear active session
@@ -193,7 +199,12 @@ internal class SessionHandler(
                 crashId,
             )
             activeSession = null
-            fullEndSessionMessage?.let { deliveryService.sendSession(it, SessionSnapshotType.JVM_CRASH) }
+            fullEndSessionMessage?.let {
+                deliveryService.sendSession(
+                    it,
+                    SessionSnapshotType.JVM_CRASH
+                )
+            }
         }
     }
 
@@ -241,32 +252,12 @@ internal class SessionHandler(
     /**
      * It determines if we are allowed to build an end session message.
      */
-    private fun isAllowedToEnd(endType: LifeEventType, activeSession: Session): Boolean {
-        return when (endType) {
-            LifeEventType.STATE -> {
-                // state sessions are always allowed to be ended
-                logger.logDebug("Session is STATE, it is always allowed to end.")
-                true
-            }
-
-            LifeEventType.MANUAL -> {
-                if (!configService.sessionBehavior.isSessionControlEnabled()) {
-                    logger.logWarning(
-                        "Session control disabled from remote configuration. " +
-                            "Session is not allowed to end."
-                    )
-                    false
-                } else if ((clock.now() - activeSession.startTime) < minSessionTime) {
-                    // If less than 5 seconds, then the session cannot be finished manually.
-                    logger.logError("The session has to be of at least 5 seconds to be ended manually.")
-                    false
-                } else {
-                    logger.logDebug("Session allowed to end.")
-                    true
-                }
-            } else -> false // background activity
+    private fun isAllowedToEnd(endType: LifeEventType, activeSession: Session): Boolean =
+        when (endType) {
+            LifeEventType.STATE -> true
+            LifeEventType.MANUAL -> (clock.now() - activeSession.startTime) >= minSessionTime
+            else -> false // background activity
         }
-    }
 
     /**
      * Snapshots the active session. The behavior is controlled by the
@@ -306,36 +297,6 @@ internal class SessionHandler(
             endTime = endTime,
             spans = completedSpans
         )
-    }
-
-    /**
-     * This function add the current view breadcrumb if the app comes from background to foreground
-     * or replace the first session view breadcrumb possibly created before the session ir order to
-     * have it in the session scope time.
-     */
-    private fun addFirstViewBreadcrumbForSession(startTime: Long) {
-        val screen: String? = breadcrumbService.getLastViewBreadcrumbScreenName()
-        if (screen != null) {
-            breadcrumbService.replaceFirstSessionView(screen, startTime)
-        } else {
-            val foregroundActivity = activityLifecycleTracker.foregroundActivity
-            if (foregroundActivity != null) {
-                breadcrumbService.forceLogView(
-                    foregroundActivity.localClassName,
-                    startTime
-                )
-            }
-        }
-    }
-
-    private fun isAllowedToStart(): Boolean {
-        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
-            logger.logWarning("Session messages disabled. Ignoring all sessions.")
-            false
-        } else {
-            logger.logDebug("Session is allowed to start.")
-            true
-        }
     }
 
     /**

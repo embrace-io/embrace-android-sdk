@@ -122,4 +122,10 @@ internal class FakeBreadcrumbService : BreadcrumbService {
             )
         )
     }
+
+    val firstViewBreadcrumbCalls = mutableListOf<Long>()
+
+    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
+        firstViewBreadcrumbCalls.add(startTime)
+    }
 }

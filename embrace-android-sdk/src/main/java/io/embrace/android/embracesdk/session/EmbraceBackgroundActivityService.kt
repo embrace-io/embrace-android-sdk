@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import android.os.Handler
-import android.os.Looper
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigListener
@@ -14,7 +12,9 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.ScheduledWorker
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.max
 
 internal class EmbraceBackgroundActivityService(
     private val metadataService: MetadataService,
@@ -31,7 +31,6 @@ internal class EmbraceBackgroundActivityService(
 ) : BackgroundActivityService, ConfigListener {
 
     private var lastSaved: Long = 0
-    private var willBeSaved = false
 
     /**
      * The active background activity session.
@@ -40,7 +39,7 @@ internal class EmbraceBackgroundActivityService(
     var backgroundActivity: Session? = null
     private val manualBkgSessionsSent = AtomicInteger(0)
 
-    var lastSendAttempt: Long
+    private var lastSendAttempt: Long
     private var isEnabled = true
 
     init {
@@ -109,23 +108,10 @@ internal class EmbraceBackgroundActivityService(
      */
     override fun save() {
         if (isEnabled && backgroundActivity != null) {
-            if (clock.now() - lastSaved > MIN_INTERVAL_BETWEEN_SAVES) {
-                saveNow()
-            } else if (!willBeSaved) {
-                willBeSaved = true
-                saveLater()
-            }
+            val delta = clock.now() - lastSaved
+            val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
+            scheduledWorker.schedule<Unit>(::cacheBackgroundActivity, delay, TimeUnit.MILLISECONDS)
         }
-    }
-
-    private fun saveNow() {
-        scheduledWorker.submit(runnable = ::cacheBackgroundActivity)
-        willBeSaved = false
-    }
-
-    private fun saveLater() {
-        val handler = Handler(Looper.getMainLooper())
-        handler.postDelayed(Runnable { saveNow() }, MIN_INTERVAL_BETWEEN_SAVES)
     }
 
     /**
@@ -152,7 +138,7 @@ internal class EmbraceBackgroundActivityService(
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
             ndkService.updateSessionId(activity.sessionId)
         }
-        saveNow()
+        save()
     }
 
     /**

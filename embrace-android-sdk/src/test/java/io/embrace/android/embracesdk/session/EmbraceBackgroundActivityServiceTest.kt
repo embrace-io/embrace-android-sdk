@@ -150,8 +150,34 @@ internal class EmbraceBackgroundActivityServiceTest {
         service.onForeground(true, 500, startTime + 1000)
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
-        clock.setCurrentTime(startTime + 2000)
-        service.onBackground(startTime + 2000)
+        clock.setCurrentTime(startTime + 5000)
+        service.onBackground(startTime + 5000)
+        assertEquals(3, deliveryService.saveBackgroundActivityInvokedCount)
+    }
+
+    @Test
+    fun `activity is cached when delay completes`() {
+        blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
+
+        this.service = createService()
+        blockingExecutorService.runCurrentlyBlocked()
+        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
+        assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
+
+        clock.tick(1000)
+        blockingExecutorService.runCurrentlyBlocked()
+        service.onForeground(true, 500, clock.now())
+        assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
+
+        // tick 4999 milliseconds, the activity should not be cached yet
+        clock.tick(4999)
+        blockingExecutorService.runCurrentlyBlocked()
+        service.onBackground(clock.now())
+        assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
+
+        // tick an extra millisecond, the delayed job should execute
+        clock.tick(1)
+        blockingExecutorService.runCurrentlyBlocked()
         assertEquals(3, deliveryService.saveBackgroundActivityInvokedCount)
     }
 

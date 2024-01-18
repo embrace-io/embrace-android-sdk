@@ -39,7 +39,7 @@ internal class FakeDeliveryService : DeliveryService {
         lastSnapshotType = snapshotType
     }
 
-    override fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?) {
+    override fun sendCachedSessions(ndkService: NdkService?, currentSession: String?) {
         lastSentCachedSession = currentSession
     }
 

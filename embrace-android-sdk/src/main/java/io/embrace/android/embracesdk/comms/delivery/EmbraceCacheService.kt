@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.internal.compression.Compressor
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -14,6 +15,7 @@ import java.io.FileNotFoundException
 internal class EmbraceCacheService(
     private val storageService: StorageService,
     private val serializer: EmbraceSerializer,
+    private val compressor: Compressor,
     private val logger: InternalEmbraceLogger
 ) : CacheService {
 
@@ -57,13 +59,27 @@ internal class EmbraceCacheService(
         }
     }
 
+    /**
+     * Provides a function that writes the bytes from a cached file, if it exists, to an
+     * output stream and compresses it if it's not already compressed.
+     * We are storing compressed files from version 6.3.0 onwards. In order to avoid loosing
+     * payloads from previous versions, we need to check if the file is compressed or not.
+     */
     override fun loadPayload(name: String): SerializationAction {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
         return { stream ->
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
-                file.inputStream().buffered().use { input ->
-                    input.copyTo(stream)
+                if (compressor.isCompressed(file)) {
+                    file.inputStream().buffered().use { input ->
+                        input.copyTo(stream)
+                    }
+                } else {
+                    compressor.compress(stream) {
+                        file.inputStream().buffered().use { input ->
+                            input.copyTo(it)
+                        }
+                    }
                 }
             } catch (ex: FileNotFoundException) {
                 logger.logWarning("Cache file cannot be found " + file.path)

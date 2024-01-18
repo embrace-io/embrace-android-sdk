@@ -10,7 +10,6 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection.HTTP_ENTITY_TOO_LARGE
 import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.net.HttpURLConnection.HTTP_OK
-import java.util.zip.GZIPOutputStream
 
 /**
  * Client for calling the Embrace API. This service handles all calls to the Embrace API.
@@ -55,9 +54,7 @@ internal class ApiClientImpl(
             connection = request.toConnection()
             setTimeouts(connection)
 
-            connection.outputStream?.let { httpStream ->
-                GZIPOutputStream(httpStream).use(action)
-            }
+            connection.outputStream?.use(action)
             connection.connect()
             val response = executeHttpRequest(connection)
             response

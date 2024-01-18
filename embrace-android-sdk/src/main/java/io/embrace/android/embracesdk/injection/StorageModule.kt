@@ -38,7 +38,12 @@ internal class StorageModuleImpl(
     }
 
     override val cacheService: CacheService by singleton {
-        EmbraceCacheService(storageService, coreModule.jsonSerializer, coreModule.logger)
+        EmbraceCacheService(
+            storageService,
+            coreModule.jsonSerializer,
+            coreModule.compressor,
+            coreModule.logger
+        )
     }
 
     override val deliveryCacheManager: DeliveryCacheManager by singleton {

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.compression.GzipCompressor
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -28,6 +29,7 @@ import kotlin.IllegalStateException
 internal class ApiClientImplTest {
 
     private val serializer = EmbraceSerializer()
+    private val compressor = GzipCompressor(InternalEmbraceLogger())
     private lateinit var apiClient: ApiClientImpl
     private lateinit var server: MockWebServer
     private lateinit var baseUrl: String
@@ -223,7 +225,9 @@ internal class ApiClientImplTest {
                 httpMethod = HttpMethod.POST
             )
         ) {
-            it.write(payload)
+            compressor.compress(it) { stream ->
+                stream.write(payload)
+            }
         }
 
     private fun createThrowingRequest(): ApiRequest {

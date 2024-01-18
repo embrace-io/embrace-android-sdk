@@ -257,6 +257,7 @@ internal class EssentialServiceModuleImpl(
         EmbraceApiService(
             apiClient = apiClient,
             serializer = coreModule.jsonSerializer,
+            compressor = coreModule.compressor,
             cachedConfigProvider = { url: String, request: ApiRequest ->
                 storageModule.cache.retrieveCachedConfig(url, request)
             },

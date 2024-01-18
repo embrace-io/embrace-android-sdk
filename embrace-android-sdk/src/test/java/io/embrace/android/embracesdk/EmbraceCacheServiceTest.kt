@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.compression.GzipCompressor
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -22,6 +23,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 internal class EmbraceCacheServiceTest {
 
@@ -29,6 +32,7 @@ internal class EmbraceCacheServiceTest {
     private lateinit var storageManager: FakeStorageService
 
     private val serializer = EmbraceSerializer()
+    private val compressor = GzipCompressor(InternalEmbraceLogger())
 
     @Before
     fun setUp() {
@@ -36,6 +40,7 @@ internal class EmbraceCacheServiceTest {
         service = EmbraceCacheService(
             storageManager,
             serializer,
+            compressor,
             InternalEmbraceLogger()
         )
 
@@ -90,7 +95,7 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test cachePayload and loadPayload`() {
+    fun `test cachePayload stores uncompressed data and loadPayload returns compressed data`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
         val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
@@ -99,7 +104,28 @@ internal class EmbraceCacheServiceTest {
         val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
         val stream = ByteArrayOutputStream()
         action(stream)
-        assertEquals("test", String(stream.toByteArray()))
+        val compressed = stream.toByteArray()
+        val uncompressed = String(GZIPInputStream(compressed.inputStream()).readBytes())
+        assertEquals("test", uncompressed)
+    }
+
+    @Test
+    fun `test cachePayload stores compressed data and loadPayload returns compressed data`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) {
+            GZIPOutputStream(it.buffered()).use { gzipStream ->
+                gzipStream.write("test".toByteArray())
+            }
+        }
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = String(GZIPInputStream(compressed.inputStream()).readBytes())
+        assertEquals("test", uncompressed)
     }
 
     @Test

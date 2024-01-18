@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
+import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -15,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,6 +26,11 @@ import org.junit.Test
 internal class PayloadMessageCollatorTest {
 
     private lateinit var collator: PayloadMessageCollator
+
+    private enum class PayloadType {
+        BACKGROUND_ACTIVITY,
+        SESSION
+    }
 
     @Before
     fun setUp() {
@@ -43,18 +48,19 @@ internal class PayloadMessageCollatorTest {
             metadataService = FakeAndroidMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spansService = SpansService.Companion.featureDisabledSpansService,
-            clock = FakeClock()
+            clock = FakeClock(),
+            sessionPropertiesService = FakeSessionPropertiesService()
         )
     }
 
     @Test
     fun `create background activity initial message`() {
         val msg = collator.buildInitialSession(
-            PayloadType.BACKGROUND_ACTIVITY,
-            false,
-            LifeEventType.BKGND_STATE,
-            5,
-            null
+            InitialEnvelopeParams.BackgroundActivityParams(
+                false,
+                LifeEventType.BKGND_STATE,
+                5
+            )
         )
         msg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
     }
@@ -62,11 +68,11 @@ internal class PayloadMessageCollatorTest {
     @Test
     fun `create session initial message`() {
         val msg = collator.buildInitialSession(
-            PayloadType.SESSION,
-            false,
-            LifeEventType.STATE,
-            5,
-            null
+            InitialEnvelopeParams.SessionParams(
+                false,
+                LifeEventType.STATE,
+                5
+            )
         )
         msg.verifyInitialFieldsPopulated(PayloadType.SESSION)
     }
@@ -75,16 +81,21 @@ internal class PayloadMessageCollatorTest {
     fun `create background activity end message`() {
         // create start message
         val startMsg = collator.buildInitialSession(
-            PayloadType.BACKGROUND_ACTIVITY,
-            false,
-            LifeEventType.BKGND_STATE,
-            5,
-            null
+            InitialEnvelopeParams.BackgroundActivityParams(
+                false,
+                LifeEventType.BKGND_STATE,
+                5
+            )
         )
         startMsg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
 
         // create stop message
-        val msg = collator.createBackgroundActivityEndMessage(startMsg, 10, LifeEventType.BKGND_STATE, "crashId")
+        val msg = collator.createBackgroundActivityEndMessage(
+            startMsg,
+            10,
+            LifeEventType.BKGND_STATE,
+            "crashId"
+        )
         msg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
 
         with(msg) {
@@ -119,7 +130,12 @@ internal class PayloadMessageCollatorTest {
             PayloadType.BACKGROUND_ACTIVITY -> LifeEventType.BKGND_STATE
             PayloadType.SESSION -> LifeEventType.STATE
         }
+        val expectedSessionProps = when (payloadType) {
+            PayloadType.BACKGROUND_ACTIVITY -> null
+            PayloadType.SESSION -> emptyMap<String, String>()
+        }
         assertEquals(expectedState, appState)
         assertEquals(expectedStartType, startType)
+        assertEquals(expectedSessionProps, properties)
     }
 }

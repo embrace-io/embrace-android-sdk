@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class PayloadMessageCollator(
     private val configService: ConfigService,
@@ -36,34 +36,16 @@ internal class PayloadMessageCollator(
     private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val spansService: SpansService,
-    private val clock: Clock
+    private val clock: Clock,
+    private val sessionPropertiesService: SessionPropertiesService
 ) {
-
-    internal enum class PayloadType {
-        SESSION,
-        BACKGROUND_ACTIVITY
-    }
 
     /**
      * Builds a new session object. This should not be sent to the backend but is used
      * to populate essential session information (such as ID), etc
      */
-    internal fun buildInitialSession(
-        payloadType: PayloadType,
-        coldStart: Boolean,
-        startType: Session.LifeEventType,
-        startTime: Long,
-        sessionProperties: Map<String, String>?
-    ): Session {
-        val appState = when (payloadType) {
-            PayloadType.SESSION -> Session.APPLICATION_STATE_FOREGROUND
-            PayloadType.BACKGROUND_ACTIVITY -> Session.APPLICATION_STATE_BACKGROUND
-        }
-        val sessionNumber = when (payloadType) {
-            PayloadType.SESSION -> preferencesService.incrementAndGetSessionNumber()
-            PayloadType.BACKGROUND_ACTIVITY -> preferencesService.incrementAndGetBackgroundActivityNumber()
-        }
-        return Session(
+    internal fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
+        Session(
             sessionId = Uuid.getEmbUuid(),
             startTime = startTime,
             isColdStart = coldStart,
@@ -71,8 +53,8 @@ internal class PayloadMessageCollator(
             appState = appState,
             startType = startType,
             user = captureDataSafely(userService::loadUserInfoFromDisk),
-            number = sessionNumber,
-            properties = sessionProperties,
+            number = getSessionNumber(preferencesService),
+            properties = getProperties(sessionPropertiesService),
         )
     }
 
@@ -87,7 +69,6 @@ internal class PayloadMessageCollator(
         forceQuit: Boolean,
         crashId: String?,
         endType: Session.LifeEventType,
-        sessionProperties: EmbraceSessionProperties,
         sdkStartupDuration: Long,
         endTime: Long,
         spans: List<EmbraceSpanData>? = null
@@ -141,16 +122,36 @@ internal class PayloadMessageCollator(
             isEndedCleanly = endedCleanly,
             appState = Session.APPLICATION_STATE_FOREGROUND,
             messageType = Session.MESSAGE_TYPE_END,
-            eventIds = captureDataSafely { eventService.findEventIdsForSession(startTime, endTime) },
+            eventIds = captureDataSafely {
+                eventService.findEventIdsForSession(
+                    startTime,
+                    endTime
+                )
+            },
             infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
-            warningLogIds = captureDataSafely { logMessageService.findWarningLogIds(startTime, endTime) },
-            errorLogIds = captureDataSafely { logMessageService.findErrorLogIds(startTime, endTime) },
-            networkLogIds = captureDataSafely { logMessageService.findNetworkLogIds(startTime, endTime) },
+            warningLogIds = captureDataSafely {
+                logMessageService.findWarningLogIds(
+                    startTime,
+                    endTime
+                )
+            },
+            errorLogIds = captureDataSafely {
+                logMessageService.findErrorLogIds(
+                    startTime,
+                    endTime
+                )
+            },
+            networkLogIds = captureDataSafely {
+                logMessageService.findNetworkLogIds(
+                    startTime,
+                    endTime
+                )
+            },
             infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
             warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
             errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
             lastHeartbeatTime = clock.now(),
-            properties = captureDataSafely(sessionProperties::get),
+            properties = captureDataSafely(sessionPropertiesService::getProperties),
             endType = endType,
             unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
             webViewInfo = captureDataSafely(webViewService::getCapturedData),
@@ -218,7 +219,12 @@ internal class PayloadMessageCollator(
                     endTime
                 )
             },
-            errorLogIds = captureDataSafely { logMessageService.findErrorLogIds(startTime, endTime) },
+            errorLogIds = captureDataSafely {
+                logMessageService.findErrorLogIds(
+                    startTime,
+                    endTime
+                )
+            },
             infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
             warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
             errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
@@ -260,6 +266,7 @@ internal class PayloadMessageCollator(
                         }
                         spansService.flushSpans(appTerminationCause)
                     }
+
                     else -> spansService.completedSpans()
                 }
             }

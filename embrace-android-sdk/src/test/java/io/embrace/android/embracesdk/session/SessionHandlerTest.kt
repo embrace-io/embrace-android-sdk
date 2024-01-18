@@ -4,6 +4,7 @@ import android.app.Activity
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
+import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
@@ -174,7 +175,8 @@ internal class SessionHandlerTest {
             userService,
             preferencesService,
             spansService,
-            clock
+            clock,
+            FakeSessionPropertiesService()
         )
         spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
         sessionService = EmbraceSessionService(

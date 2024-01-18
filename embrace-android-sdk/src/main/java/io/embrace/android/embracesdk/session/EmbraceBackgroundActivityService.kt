@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.PayloadMessageCollator.PayloadType
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -112,11 +111,11 @@ internal class EmbraceBackgroundActivityService(
         startType: LifeEventType
     ) {
         val activity = payloadMessageCollator.buildInitialSession(
-            PayloadType.BACKGROUND_ACTIVITY,
-            coldStart,
-            startType,
-            startTime,
-            null
+            InitialEnvelopeParams.BackgroundActivityParams(
+                coldStart,
+                startType,
+                startTime
+            )
         )
         backgroundActivity = activity
         metadataService.setActiveSessionId(activity.sessionId, false)

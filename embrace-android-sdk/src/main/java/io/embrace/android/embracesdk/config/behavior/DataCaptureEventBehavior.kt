@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.PatternCache
-import java.util.Locale
 
 internal class DataCaptureEventBehavior(
     thresholdCheck: BehaviorThresholdCheck,
@@ -19,13 +17,6 @@ internal class DataCaptureEventBehavior(
     }
 
     private val patternCache = PatternCache()
-
-    fun isMessageTypeEnabled(type: MessageType): Boolean {
-        return when (val disabledTypes = remote?.disabledMessageTypes) {
-            null -> true
-            else -> !disabledTypes.contains(type.name.toLowerCase(Locale.getDefault()))
-        }
-    }
 
     fun isInternalExceptionCaptureEnabled(): Boolean =
         remote?.internalExceptionCaptureEnabled ?: DEFAULT_INTERNAL_EXCEPTION_CAPTURE

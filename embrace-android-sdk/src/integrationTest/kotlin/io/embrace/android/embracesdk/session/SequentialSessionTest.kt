@@ -25,18 +25,6 @@ internal class SequentialSessionTest {
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
-    fun `session message type disabled`() {
-        with(testRule) {
-            harness.fakeConfigService.dataCaptureEventBehavior = fakeDataCaptureEventBehavior {
-                RemoteConfig(disabledMessageTypes = setOf("session"))
-            }
-            harness.recordSession()
-            val messages = harness.getSentSessionMessages()
-            assertEquals(0, messages.size)
-        }
-    }
-
-    @Test
     fun `cold start and session number are recorded correctly`() {
         with(testRule) {
             val first = checkNotNull(harness.recordSession())

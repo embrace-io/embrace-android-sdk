@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -271,15 +270,6 @@ internal class EmbraceLogMessageServiceTest {
         deliveryService.lastSentLogs.single().let {
             assertEquals("Another", it.event.name)
         }
-    }
-
-    @Test
-    fun testMessageTypeEnabled() {
-        cfg = cfg.copy(disabledMessageTypes = setOf(MessageType.LOG.name.toLowerCase()))
-        logMessageService = getLogMessageService()
-
-        logMessageService.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
-        assertEquals(0, deliveryService.lastSentLogs.size)
     }
 
     @Test

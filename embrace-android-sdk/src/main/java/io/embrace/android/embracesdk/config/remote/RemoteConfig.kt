@@ -30,12 +30,6 @@ internal data class RemoteConfig(
     val eventLimits: Map<String, Long>? = null,
 
     /**
-     * The list of [io.embrace.android.embracesdk.MessageType] which are disabled.
-     */
-    @Json(name = "disabled_message_types")
-    val disabledMessageTypes: Set<String>? = null,
-
-    /**
      * List of regular expressions matching event names and log messages which should be disabled.
      */
     @Json(name = "disabled_event_and_log_patterns")

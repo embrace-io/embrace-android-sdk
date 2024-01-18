@@ -35,7 +35,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.fixtures.testSpan
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -67,7 +66,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -248,26 +246,6 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `onSession if it's not allowed to start should not do anything`() {
-        remoteConfig = RemoteConfig(
-            disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
-        )
-
-        sessionService.startSession(
-            true,
-            /* any event type */ Session.LifeEventType.STATE,
-            now
-        )
-
-        assertNull(sessionService.activeSession)
-        verify { networkConnectivityService wasNot Called }
-        assertNull(metadataService.activeSessionId)
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-        verify { sessionPeriodicCacheExecutorService wasNot Called }
-        assertNull(ndkService.sessionId)
-    }
-
-    @Test
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
         sessionNumber = 0
@@ -336,26 +314,6 @@ internal class SessionHandlerTest {
         verify { sessionPeriodicCacheExecutorService wasNot Called }
         assertEquals(0, memoryCleanerService.callCount)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
-    fun `if session messages are disabled don't end session but end periodic cache and session automatic stopper`() {
-        startFakeSession()
-        remoteConfig = RemoteConfig(
-            disabledMessageTypes = setOf(MessageType.SESSION.name.toLowerCase(Locale.getDefault()))
-        )
-        sessionService.scheduledFuture = mockk(relaxed = true)
-
-        sessionService.endSession(
-            /* any type */ Session.LifeEventType.STATE,
-            1000,
-            false
-        )
-
-        // verify automatic session stopper was called
-        verify { sessionService.scheduledFuture?.cancel(false) }
-        assertEquals(0, memoryCleanerService.callCount)
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
     }
 

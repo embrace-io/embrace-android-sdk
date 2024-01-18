@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -131,11 +130,6 @@ internal class EmbraceSessionService(
                     " startType=$startType, startTime=$startTime"
             )
 
-            if (!isAllowedToStart()) {
-                logger.logDebug("Session not allowed to start.")
-                return
-            }
-
             val session = payloadMessageCollator.buildInitialSession(
                 PayloadMessageCollator.PayloadType.SESSION,
                 coldStart,
@@ -158,16 +152,6 @@ internal class EmbraceSessionService(
             breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
             startPeriodicCaching { onPeriodicCacheActiveSession() }
             ndkService?.updateSessionId(session.sessionId)
-        }
-    }
-
-    private fun isAllowedToStart(): Boolean {
-        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
-            logger.logWarning("Session messages disabled. Ignoring all sessions.")
-            false
-        } else {
-            logger.logDebug("Session is allowed to start.")
-            true
         }
     }
 
@@ -305,11 +289,6 @@ internal class EmbraceSessionService(
     ): SessionMessage? {
         if (endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
-        }
-
-        if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.SESSION)) {
-            logger.logWarning("Session messages disabled. Ignoring all Sessions.")
-            return null
         }
 
         if (!isAllowedToEnd(lifeEventType, activeSession)) {

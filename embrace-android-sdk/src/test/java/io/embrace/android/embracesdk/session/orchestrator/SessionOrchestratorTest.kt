@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeSessionService
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -89,18 +87,6 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
         createOrchestratorInBackground()
         orchestrator.onBackground(TIMESTAMP)
-        assertTrue(backgroundActivityService.startTimestamps.isEmpty())
-    }
-
-    @Test
-    fun `test session capture disabled`() {
-        configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                RemoteConfig(disabledMessageTypes = setOf("session"))
-            }
-        )
-        createOrchestratorInBackground()
-        orchestrator.onForeground(true, 0, TIMESTAMP)
         assertTrue(backgroundActivityService.startTimestamps.isEmpty())
     }
 

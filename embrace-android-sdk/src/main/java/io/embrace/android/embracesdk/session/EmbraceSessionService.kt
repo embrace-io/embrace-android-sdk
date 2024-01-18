@@ -292,8 +292,8 @@ internal class EmbraceSessionService(
             return null
         }
 
-        return payloadMessageCollator.buildEndSessionMessage(
-            originSession = activeSession,
+        return payloadMessageCollator.buildFinalSessionMessage(
+            initial = activeSession,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,
             crashId = crashId,

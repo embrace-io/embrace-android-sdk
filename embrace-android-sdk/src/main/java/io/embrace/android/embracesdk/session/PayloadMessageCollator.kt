@@ -63,8 +63,8 @@ internal class PayloadMessageCollator(
      * on disk).
      */
     @Suppress("ComplexMethod")
-    internal fun buildEndSessionMessage(
-        originSession: Session,
+    internal fun buildFinalSessionMessage(
+        initial: Session,
         endedCleanly: Boolean,
         forceQuit: Boolean,
         crashId: String?,
@@ -73,7 +73,7 @@ internal class PayloadMessageCollator(
         endTime: Long,
         spans: List<EmbraceSpanData>? = null
     ): SessionMessage {
-        val startTime: Long = originSession.startTime
+        val startTime: Long = initial.startTime
 
         // if it's a crash session, then add the stacktrace to the session payload
         val crashReportId = when {
@@ -95,18 +95,18 @@ internal class PayloadMessageCollator(
             else -> endTime
         }
 
-        val sdkStartDuration = when (originSession.isColdStart) {
+        val sdkStartDuration = when (initial.isColdStart) {
             true -> sdkStartupDuration
             false -> null
         }
 
         val startupEventInfo = captureDataSafely(eventService::getStartupMomentInfo)
 
-        val startupDuration = when (originSession.isColdStart && startupEventInfo != null) {
+        val startupDuration = when (initial.isColdStart && startupEventInfo != null) {
             true -> startupEventInfo.duration
             false -> null
         }
-        val startupThreshold = when (originSession.isColdStart && startupEventInfo != null) {
+        val startupThreshold = when (initial.isColdStart && startupEventInfo != null) {
             true -> startupEventInfo.threshold
             false -> null
         }
@@ -118,7 +118,7 @@ internal class PayloadMessageCollator(
             )
         }
 
-        val endSession = originSession.copy(
+        val endSession = initial.copy(
             isEndedCleanly = endedCleanly,
             appState = Session.APPLICATION_STATE_FOREGROUND,
             messageType = Session.MESSAGE_TYPE_END,
@@ -170,8 +170,8 @@ internal class PayloadMessageCollator(
         val performanceInfo = performanceInfoService.getSessionPerformanceInfo(
             startTime,
             endTime,
-            originSession.isColdStart,
-            originSession.isReceivedTermination
+            initial.isColdStart,
+            initial.isReceivedTermination
         )
 
         val appInfo = captureDataSafely(metadataService::getAppInfo)
@@ -195,14 +195,14 @@ internal class PayloadMessageCollator(
     /**
      * Creates a background activity stop message.
      */
-    fun createBackgroundActivityEndMessage(
-        activity: Session,
+    private fun buildFinalBackgroundActivity(
+        initial: Session,
         endTime: Long,
         endType: Session.LifeEventType?,
         crashId: String?
     ): Session {
-        val startTime = activity.startTime ?: 0
-        return activity.copy(
+        val startTime = initial.startTime
+        return initial.copy(
             appState = Session.APPLICATION_STATE_BACKGROUND,
             messageType = Session.MESSAGE_TYPE_END,
             endTime = endTime,
@@ -239,55 +239,55 @@ internal class PayloadMessageCollator(
     /**
      * Create the background session message with the current state of the background activity.
      *
-     * @param backgroundActivity      the current state of a background activity
+     * @param initial      the current state of a background activity
      * @param isBackgroundActivityEnd true if the message is being built for the termination of the background activity
      * @return a background activity message for backend
      */
-    fun buildBgActivityMessage(
-        backgroundActivity: Session?,
+    fun buildFinalBackgroundActivityMessage(
+        initial: Session,
+        endTime: Long,
+        endType: Session.LifeEventType?,
+        crashId: String?,
         isBackgroundActivityEnd: Boolean
-    ): SessionMessage? {
-        if (backgroundActivity != null) {
-            val startTime = backgroundActivity.startTime ?: 0L
-            val endTime = backgroundActivity.endTime ?: clock.now()
-            val isCrash = backgroundActivity.crashReportId != null
-            val breadcrumbs = captureDataSafely {
-                when {
-                    isBackgroundActivityEnd -> breadcrumbService.flushBreadcrumbs()
-                    else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
-                }
+    ): SessionMessage {
+        val msg = buildFinalBackgroundActivity(initial, endTime, endType, crashId)
+        val startTime = msg.startTime
+        val isCrash = msg.crashReportId != null
+        val breadcrumbs = captureDataSafely {
+            when {
+                isBackgroundActivityEnd -> breadcrumbService.flushBreadcrumbs()
+                else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
             }
-            val spans: List<EmbraceSpanData>? = captureDataSafely {
-                when {
-                    isBackgroundActivityEnd -> {
-                        val appTerminationCause = when {
-                            isCrash -> EmbraceAttributes.AppTerminationCause.CRASH
-                            else -> null
-                        }
-                        spansService.flushSpans(appTerminationCause)
-                    }
-
-                    else -> spansService.completedSpans()
-                }
-            }
-
-            return SessionMessage(
-                session = backgroundActivity,
-                userInfo = backgroundActivity.user,
-                appInfo = captureDataSafely(metadataService::getAppInfo),
-                deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
-                performanceInfo = captureDataSafely {
-                    performanceInfoService.getSessionPerformanceInfo(
-                        startTime,
-                        endTime,
-                        java.lang.Boolean.TRUE == backgroundActivity.isColdStart,
-                        null
-                    )
-                },
-                breadcrumbs = breadcrumbs,
-                spans = spans
-            )
         }
-        return null
+        val spans: List<EmbraceSpanData>? = captureDataSafely {
+            when {
+                isBackgroundActivityEnd -> {
+                    val appTerminationCause = when {
+                        isCrash -> EmbraceAttributes.AppTerminationCause.CRASH
+                        else -> null
+                    }
+                    spansService.flushSpans(appTerminationCause)
+                }
+
+                else -> spansService.completedSpans()
+            }
+        }
+
+        return SessionMessage(
+            session = msg,
+            userInfo = msg.user,
+            appInfo = captureDataSafely(metadataService::getAppInfo),
+            deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
+            performanceInfo = captureDataSafely {
+                performanceInfoService.getSessionPerformanceInfo(
+                    startTime,
+                    endTime,
+                    java.lang.Boolean.TRUE == msg.isColdStart,
+                    null
+                )
+            },
+            breadcrumbs = breadcrumbs,
+            spans = spans
+        )
     }
 }

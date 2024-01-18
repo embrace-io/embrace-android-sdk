@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -89,24 +88,25 @@ internal class PayloadMessageCollatorTest {
         )
         startMsg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
 
-        // create stop message
-        val msg = collator.createBackgroundActivityEndMessage(
+        // create envelope
+        val payload = collator.buildFinalBackgroundActivityMessage(
             startMsg,
             10,
             LifeEventType.BKGND_STATE,
-            "crashId"
+            "crashId",
+            true
         )
-        msg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        val session = payload.session
 
-        with(msg) {
+        session.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+
+        with(session) {
             assertEquals(LifeEventType.BKGND_STATE, endType)
             assertEquals(10L, endTime)
             assertEquals("crashId", crashReportId)
         }
 
-        // create envelope
-        with(checkNotNull(collator.buildBgActivityMessage(msg, true))) {
-            assertSame(msg, session)
+        with(payload) {
             assertNotNull(userInfo)
             assertNotNull(appInfo)
             assertNotNull(deviceInfo)

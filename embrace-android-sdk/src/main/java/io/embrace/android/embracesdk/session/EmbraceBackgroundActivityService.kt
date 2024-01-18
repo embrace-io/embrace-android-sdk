@@ -135,19 +135,15 @@ internal class EmbraceBackgroundActivityService(
         endType: LifeEventType,
         crashId: String?
     ): SessionMessage? {
-        val activity = backgroundActivity
-        if (activity == null) {
-            logger.logError("No background activity to report")
-            return null
-        }
-        val message = payloadMessageCollator.createBackgroundActivityEndMessage(
+        val activity = backgroundActivity ?: return null
+        backgroundActivity = null
+        return payloadMessageCollator.buildFinalBackgroundActivityMessage(
             activity,
             endTime,
             endType,
-            crashId
+            crashId,
+            true
         )
-        backgroundActivity = null
-        return payloadMessageCollator.buildBgActivityMessage(message, true)
     }
 
     /**
@@ -186,17 +182,13 @@ internal class EmbraceBackgroundActivityService(
             if (activity != null) {
                 lastSaved = clock.now()
                 val endTime = activity.endTime ?: clock.now()
-                val cachedActivity = payloadMessageCollator.createBackgroundActivityEndMessage(
+                val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                     activity,
                     endTime,
                     null,
-                    null
+                    null,
+                    false
                 )
-                val message = payloadMessageCollator.buildBgActivityMessage(cachedActivity, false)
-                if (message == null) {
-                    logger.logDebug("Failed to cache background activity message.")
-                    return
-                }
                 deliveryService.saveBackgroundActivity(message)
             }
         } catch (ex: Exception) {

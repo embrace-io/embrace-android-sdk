@@ -93,6 +93,7 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService;
 import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator;
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.telemetry.TelemetryService;
@@ -196,6 +197,9 @@ final class EmbraceImpl {
 
     @Nullable
     private volatile SessionService sessionService;
+
+    @Nullable
+    private volatile SessionOrchestrator sessionOrchestrator;
 
     @Nullable
     private volatile SessionPropertiesService sessionPropertiesService;
@@ -610,6 +614,7 @@ final class EmbraceImpl {
         );
 
         sessionService = sessionModule.getSessionService();
+        sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
@@ -1284,7 +1289,7 @@ final class EmbraceImpl {
      */
     void endSession(boolean clearUserInfo) {
         if (checkSdkStartedAndLogPublicApiUsage("end_session")) {
-            sessionService.endSessionManually(clearUserInfo);
+            sessionOrchestrator.endSessionWithManual(clearUserInfo);
         }
     }
 

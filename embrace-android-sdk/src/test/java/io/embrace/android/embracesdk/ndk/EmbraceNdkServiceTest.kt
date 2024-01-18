@@ -386,7 +386,7 @@ internal class EmbraceNdkServiceTest {
         enableNdk(true)
         every { sharedObjectLoader.loadEmbraceNative() } returns true
         initializeService()
-        embraceNdkService.onForeground(true, 1, 10)
+        embraceNdkService.onForeground(true, 10)
         verify(exactly = 1) { delegate._updateAppState("active") }
     }
 
@@ -394,7 +394,7 @@ internal class EmbraceNdkServiceTest {
     fun `test onForeground doesn't run _updateAppState when _updateMetaData was not executed and isInstalled false`() {
         enableNdk(false)
         initializeService()
-        embraceNdkService.onForeground(true, 1, 100)
+        embraceNdkService.onForeground(true, 100)
         verify(exactly = 0) { delegate._updateAppState("active") }
     }
 

@@ -266,7 +266,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         listeners.add(configListener)
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
         if (Embrace.getInstance().isStarted && isSdkDisabled()) {

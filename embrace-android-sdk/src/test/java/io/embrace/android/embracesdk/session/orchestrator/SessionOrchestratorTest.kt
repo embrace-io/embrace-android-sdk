@@ -52,7 +52,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test on foreground call`() {
         createOrchestratorInBackground()
-        orchestrator.onForeground(true, 0, TIMESTAMP)
+        orchestrator.onForeground(true, TIMESTAMP)
         assertEquals(TIMESTAMP, sessionService.startTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.endTimestamps.single())
     }

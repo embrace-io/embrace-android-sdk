@@ -117,7 +117,7 @@ internal class EmbracePowerSaveModeServiceTest {
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
-        service.onForeground(true, startTime, startTime)
+        service.onForeground(true, startTime)
 
         val intervals = service.getCapturedData()
         assertEquals(1, intervals.size)
@@ -131,7 +131,7 @@ internal class EmbracePowerSaveModeServiceTest {
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
-        service.onForeground(true, startTime, startTime)
+        service.onForeground(true, startTime)
 
         every { intent.action } returns ACTION_POWER_SAVE_MODE_CHANGED
         every { powerManager.isPowerSaveMode } returns false
@@ -164,7 +164,7 @@ internal class EmbracePowerSaveModeServiceTest {
         every { powerManager.isPowerSaveMode } returns true
         fakeClock.setCurrentTime(111111L)
         val startTime = fakeClock.now()
-        service.onForeground(true, startTime, startTime)
+        service.onForeground(true, startTime)
 
         assertEquals(1, service.getCapturedData().size)
         service.cleanCollections()

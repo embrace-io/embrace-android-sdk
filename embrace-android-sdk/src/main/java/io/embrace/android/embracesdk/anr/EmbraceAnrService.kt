@@ -153,7 +153,7 @@ internal class EmbraceAnrService(
      * When app goes to foreground, we need to monitor the target thread again to
      * capture ANRs.
      */
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         this.anrMonitorWorker.submit {
             enforceThread(anrMonitorThread)
             state.resetState()

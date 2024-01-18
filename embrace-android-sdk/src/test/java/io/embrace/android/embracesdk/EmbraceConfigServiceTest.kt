@@ -240,7 +240,7 @@ internal class EmbraceConfigServiceTest {
         fakePreferenceService.sdkDisabled = false
         service.addListener(mockConfigListener)
 
-        service.onForeground(true, 1000L, 1100L)
+        service.onForeground(true, 1100L)
 
         verify(exactly = 1) { mockConfigListener.onConfigChange(service) }
     }
@@ -251,7 +251,7 @@ internal class EmbraceConfigServiceTest {
         every { Embrace.getImpl().isStarted } returns true
         fakePreferenceService.sdkDisabled = true
 
-        service.onForeground(true, 1000L, 1100L)
+        service.onForeground(true, 1100L)
 
         verify(exactly = 1) { Embrace.getImpl().stop() }
     }

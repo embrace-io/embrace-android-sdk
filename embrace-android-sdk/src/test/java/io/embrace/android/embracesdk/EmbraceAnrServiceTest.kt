@@ -83,7 +83,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             // cold starts should always be ignored
             state.lastTargetThreadResponseMs = 1
-            anrService.onForeground(true, 0L, 0L)
+            anrService.onForeground(true, 0L)
 
             // assert no ANR interval was added
             assertEquals(0, anrService.stacktraceSampler.anrIntervals.size)
@@ -219,10 +219,10 @@ internal class EmbraceAnrServiceTest {
         val anrEndTs = 15023000L
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrStartTs, anrInProgressTs)
+            anrService.onForeground(false, anrInProgressTs)
             anrService.onBackground(anrEndTs)
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs, anrEndTs)
+            anrService.onForeground(false, anrEndTs)
             // Since Looper is a mock, we execute this operation to
             // ensure onMainThreadUnblocked runs and lastTargetThreadResponseMs gets updated
             targetThreadHandler.onIdleThread()
@@ -239,10 +239,10 @@ internal class EmbraceAnrServiceTest {
 
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrStartTs, anrInProgressTs)
+            anrService.onForeground(false, anrInProgressTs)
             anrService.onBackground(anrEndTs)
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs, anrEndTs)
+            anrService.onForeground(false, anrEndTs)
             targetThreadHandler.onIdleThread()
             val intervals = anrService.getCapturedData()
             assertEquals(0, intervals.size)
@@ -421,7 +421,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             clock.setCurrentTime(14000000L)
             cfg = cfg.copy(pctBgEnabled = 100)
-            anrService.onForeground(true, clock.now(), clock.now())
+            anrService.onForeground(true, clock.now())
             anrExecutorService.submit {
                 assertTrue(state.started.get())
             }

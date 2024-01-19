@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -118,21 +117,6 @@ internal class EventHandler(
             false
         } else if (!configService.dataCaptureEventBehavior.isEventEnabled(eventName)) {
             logger.logWarning("Event disabled. Ignoring event with name $eventName")
-            false
-        } else if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.EVENT)) {
-            logger.logWarning("Event message disabled. Ignoring all Events.")
-            false
-        } else {
-            true
-        }
-    }
-
-    /**
-     * It determines the handler is allowed to end
-     */
-    fun isAllowedToEnd(): Boolean {
-        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.EVENT)) {
-            logger.logWarning("Event message disabled. Ignoring all Events.")
             false
         } else {
             true

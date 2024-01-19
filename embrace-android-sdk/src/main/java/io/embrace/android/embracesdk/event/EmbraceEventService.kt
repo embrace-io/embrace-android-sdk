@@ -210,10 +210,6 @@ internal class EmbraceEventService(
     ) {
         try {
             logDeveloper("EmbraceEventService", "Ending event: $name")
-            if (!eventHandler.isAllowedToEnd()) {
-                logDeveloper("EmbraceEventService", "Event handler not allowed to end")
-                return
-            }
             val eventKey = getInternalEventKey(name, identifier)
             val originEventDescription: EventDescription? = when {
                 late -> activeEvents[eventKey]

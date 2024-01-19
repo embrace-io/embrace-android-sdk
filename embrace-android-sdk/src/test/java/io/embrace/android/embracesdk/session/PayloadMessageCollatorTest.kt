@@ -92,11 +92,13 @@ internal class PayloadMessageCollatorTest {
 
         // create envelope
         val payload = collator.buildFinalBackgroundActivityMessage(
-            initial = startMsg,
-            endTime = 15000000000,
-            endType = LifeEventType.BKGND_STATE,
-            crashId = "crashId",
-            isBackgroundActivityEnd = true
+            FinalEnvelopeParams.BackgroundActivityParams(
+                startMsg,
+                15000000000,
+                LifeEventType.BKGND_STATE,
+                "crashId",
+                isCacheAttempt = false
+            )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
     }
@@ -115,14 +117,16 @@ internal class PayloadMessageCollatorTest {
 
         // create envelope
         val payload = collator.buildFinalSessionMessage(
-            initial = startMsg,
+            FinalEnvelopeParams.SessionParams(
+                startMsg,
+                15000000000,
+                LifeEventType.STATE,
+                "crashId",
+                true
+            ),
             endedCleanly = true,
             forceQuit = false,
-            crashId = "crashId",
-            endType = LifeEventType.STATE,
-            sdkStartupDuration = 10,
-            endTime = 15000000000,
-            spans = null
+            sdkStartupDuration = 10
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
     }

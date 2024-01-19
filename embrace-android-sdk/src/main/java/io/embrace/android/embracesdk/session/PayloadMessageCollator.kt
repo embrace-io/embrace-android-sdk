@@ -63,22 +63,13 @@ internal class PayloadMessageCollator(
      */
     @Suppress("ComplexMethod")
     internal fun buildFinalSessionMessage(
-        initial: Session,
+        params: FinalEnvelopeParams,
         endedCleanly: Boolean,
         forceQuit: Boolean,
-        crashId: String?,
-        endType: Session.LifeEventType,
-        sdkStartupDuration: Long,
-        endTime: Long,
-        spans: List<EmbraceSpanData>? = null
-    ): SessionMessage {
+        sdkStartupDuration: Long
+    ): SessionMessage = with(params) { // TODO: future incorporate these fields into params class
         val startTime: Long = initial.startTime
 
-        // if it's a crash session, then add the stacktrace to the session payload
-        val crashReportId = when {
-            !crashId.isNullOrEmpty() -> crashId
-            else -> null
-        }
         val terminationTime = when {
             forceQuit -> endTime
             else -> null
@@ -117,7 +108,7 @@ internal class PayloadMessageCollator(
             )
         }
 
-        val base = buildFinalBackgroundActivity(initial, endTime, endType, crashReportId)
+        val base = buildFinalBackgroundActivity(params)
 
         val endSession = base.copy(
             isEndedCleanly = endedCleanly,
@@ -138,38 +129,15 @@ internal class PayloadMessageCollator(
             betaFeatures = betaFeatures,
             symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
         )
-
-        val performanceInfo = performanceInfoService.getSessionPerformanceInfo(
-            startTime,
-            endTime,
-            initial.isColdStart,
-            initial.isReceivedTermination
-        )
-
-        val appInfo = captureDataSafely(metadataService::getAppInfo)
-        val deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
-        val breadcrumbs = captureDataSafely { breadcrumbService.getBreadcrumbs(startTime, endTime) }
-
-        return SessionMessage(
-            session = endSession,
-            userInfo = captureDataSafely(userService::getUserInfo),
-            appInfo = appInfo,
-            deviceInfo = deviceInfo,
-            performanceInfo = performanceInfo.copy(),
-            breadcrumbs = breadcrumbs,
-            spans = spans
-        )
+        return buildWrapperEnvelope(params, endSession, startTime, endTime)
     }
 
     /**
      * Creates a background activity stop message.
      */
     private fun buildFinalBackgroundActivity(
-        initial: Session,
-        endTime: Long,
-        endType: Session.LifeEventType?,
-        crashId: String?
-    ): Session {
+        params: FinalEnvelopeParams
+    ): Session = with(params) {
         val startTime = initial.startTime
         return initial.copy(
             endTime = endTime,
@@ -197,7 +165,7 @@ internal class PayloadMessageCollator(
             errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
             exceptionError = captureDataSafely(internalErrorService::currentExceptionError),
             lastHeartbeatTime = endTime,
-            endType = endType,
+            endType = lifeEventType,
             unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
@@ -205,43 +173,43 @@ internal class PayloadMessageCollator(
 
     /**
      * Create the background session message with the current state of the background activity.
-     *
-     * @param initial      the current state of a background activity
-     * @param isBackgroundActivityEnd true if the message is being built for the termination of the background activity
-     * @return a background activity message for backend
      */
     fun buildFinalBackgroundActivityMessage(
-        initial: Session,
-        endTime: Long,
-        endType: Session.LifeEventType?,
-        crashId: String?,
-        isBackgroundActivityEnd: Boolean
+        params: FinalEnvelopeParams.BackgroundActivityParams
     ): SessionMessage {
-        val msg = buildFinalBackgroundActivity(initial, endTime, endType, crashId)
+        val msg = buildFinalBackgroundActivity(params)
         val startTime = msg.startTime
-        val isCrash = msg.crashReportId != null
-        val breadcrumbs = captureDataSafely {
-            when {
-                isBackgroundActivityEnd -> breadcrumbService.flushBreadcrumbs()
-                else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
-            }
-        }
+        val endTime = params.endTime
+        return buildWrapperEnvelope(params, msg, startTime, endTime)
+    }
+
+    private fun buildWrapperEnvelope(
+        params: FinalEnvelopeParams,
+        finalPayload: Session,
+        startTime: Long,
+        endTime: Long
+    ): SessionMessage {
         val spans: List<EmbraceSpanData>? = captureDataSafely {
             when {
-                isBackgroundActivityEnd -> {
+                !params.isCacheAttempt -> {
                     val appTerminationCause = when {
-                        isCrash -> EmbraceAttributes.AppTerminationCause.CRASH
+                        finalPayload.crashReportId != null -> EmbraceAttributes.AppTerminationCause.CRASH
                         else -> null
                     }
                     spansService.flushSpans(appTerminationCause)
                 }
-
                 else -> spansService.completedSpans()
+            }
+        }
+        val breadcrumbs = captureDataSafely {
+            when {
+                !params.isCacheAttempt -> breadcrumbService.flushBreadcrumbs()
+                else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
             }
         }
 
         return SessionMessage(
-            session = msg,
+            session = finalPayload,
             userInfo = captureDataSafely(userService::getUserInfo),
             appInfo = captureDataSafely(metadataService::getAppInfo),
             deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
@@ -249,7 +217,7 @@ internal class PayloadMessageCollator(
                 performanceInfoService.getSessionPerformanceInfo(
                     startTime,
                     endTime,
-                    java.lang.Boolean.TRUE == msg.isColdStart,
+                    finalPayload.isColdStart,
                     null
                 )
             },

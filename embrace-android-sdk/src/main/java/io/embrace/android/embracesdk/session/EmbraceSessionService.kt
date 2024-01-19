@@ -131,11 +131,11 @@ internal class EmbraceSessionService(
             )
 
             val session = payloadMessageCollator.buildInitialSession(
-                PayloadMessageCollator.PayloadType.SESSION,
-                coldStart,
-                startType,
-                startTime,
-                sessionProperties.get()
+                InitialEnvelopeParams.SessionParams(
+                    coldStart,
+                    startType,
+                    startTime
+                )
             )
             activeSession = session
             InternalStaticEmbraceLogger.logDeveloper(
@@ -169,7 +169,6 @@ internal class EmbraceSessionService(
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.NORMAL_END,
                 session,
-                sessionProperties,
                 spansService.flushSpans(),
                 endType,
                 endTime
@@ -207,7 +206,6 @@ internal class EmbraceSessionService(
             val fullEndSessionMessage = createSessionSnapshot(
                 SessionSnapshotType.JVM_CRASH,
                 session,
-                sessionProperties,
                 spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH),
                 LifeEventType.STATE,
                 clock.now(),
@@ -249,7 +247,6 @@ internal class EmbraceSessionService(
             val msg = createSessionSnapshot(
                 SessionSnapshotType.PERIODIC_CACHE,
                 session,
-                sessionProperties,
                 completedSpans,
                 LifeEventType.STATE,
                 clock.now()
@@ -281,7 +278,6 @@ internal class EmbraceSessionService(
     private fun createSessionSnapshot(
         endType: SessionSnapshotType,
         activeSession: Session,
-        sessionProperties: EmbraceSessionProperties,
         completedSpans: List<EmbraceSpanData>?,
         lifeEventType: LifeEventType,
         endTime: Long,
@@ -302,7 +298,6 @@ internal class EmbraceSessionService(
             forceQuit = endType.forceQuit,
             crashId = crashId,
             endType = lifeEventType,
-            sessionProperties = sessionProperties,
             sdkStartupDuration = sdkStartupDuration ?: 0,
             endTime = endTime,
             spans = completedSpans

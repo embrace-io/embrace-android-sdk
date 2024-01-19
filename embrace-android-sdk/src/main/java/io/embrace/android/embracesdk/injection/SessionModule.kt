@@ -52,7 +52,8 @@ internal class SessionModuleImpl(
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
             initModule.spansService,
-            initModule.clock
+            initModule.clock,
+            sessionPropertiesService
         )
     }
 

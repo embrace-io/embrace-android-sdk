@@ -140,7 +140,7 @@ internal class EmbraceNdkService(
         }
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         synchronized(lock) {
             if (isInstalled) {
                 updateAppState(APPLICATION_STATE_ACTIVE)

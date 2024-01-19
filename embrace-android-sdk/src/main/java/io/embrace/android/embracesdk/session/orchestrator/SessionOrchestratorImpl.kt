@@ -43,7 +43,7 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         backgroundActivityService?.endBackgroundActivityWithState(timestamp)
         sessionService?.startSessionWithState(coldStart, timestamp)
     }

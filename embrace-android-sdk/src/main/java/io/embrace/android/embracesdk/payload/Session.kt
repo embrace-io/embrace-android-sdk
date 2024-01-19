@@ -124,10 +124,7 @@ internal data class Session @JvmOverloads internal constructor(
     val symbols: Map<String, String>? = null,
 
     @Json(name = "wvi_beta")
-    val webViewInfo: List<WebViewInfo>? = null,
-
-    @Transient
-    val user: UserInfo? = null
+    val webViewInfo: List<WebViewInfo>? = null
 ) {
 
     /**

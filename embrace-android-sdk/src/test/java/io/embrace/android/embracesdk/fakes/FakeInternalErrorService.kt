@@ -22,5 +22,5 @@ internal class FakeInternalErrorService : InternalErrorService {
         resetCallCount++
     }
 
-    override val currentExceptionError: ExceptionError? = null
+    override var currentExceptionError: ExceptionError? = null
 }

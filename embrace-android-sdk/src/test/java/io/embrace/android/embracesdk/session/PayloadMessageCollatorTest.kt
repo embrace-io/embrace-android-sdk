@@ -14,8 +14,10 @@ import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
+import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -42,7 +44,7 @@ internal class PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService(),
+            internalErrorService = FakeInternalErrorService().apply { currentExceptionError = ExceptionError() },
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeAndroidMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
@@ -90,36 +92,57 @@ internal class PayloadMessageCollatorTest {
 
         // create envelope
         val payload = collator.buildFinalBackgroundActivityMessage(
-            startMsg,
-            10,
-            LifeEventType.BKGND_STATE,
-            "crashId",
-            true
+            initial = startMsg,
+            endTime = 15000000000,
+            endType = LifeEventType.BKGND_STATE,
+            crashId = "crashId",
+            isBackgroundActivityEnd = true
         )
-        val session = payload.session
+        payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+    }
 
-        session.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+    @Test
+    fun `create session end message`() {
+        // create start message
+        val startMsg = collator.buildInitialSession(
+            InitialEnvelopeParams.SessionParams(
+                false,
+                LifeEventType.STATE,
+                5
+            )
+        )
+        startMsg.verifyInitialFieldsPopulated(PayloadType.SESSION)
 
-        with(session) {
-            assertEquals(LifeEventType.BKGND_STATE, endType)
-            assertEquals(10L, endTime)
-            assertEquals("crashId", crashReportId)
-        }
+        // create envelope
+        val payload = collator.buildFinalSessionMessage(
+            initial = startMsg,
+            endedCleanly = true,
+            forceQuit = false,
+            crashId = "crashId",
+            endType = LifeEventType.STATE,
+            sdkStartupDuration = 10,
+            endTime = 15000000000,
+            spans = null
+        )
+        payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
+    }
 
-        with(payload) {
-            assertNotNull(userInfo)
-            assertNotNull(appInfo)
-            assertNotNull(deviceInfo)
-            assertNotNull(performanceInfo)
-            assertNotNull(breadcrumbs)
-        }
+    private fun SessionMessage.verifyFinalFieldsPopulated(
+        payloadType: PayloadType
+    ) {
+        assertNotNull(userInfo)
+        assertNotNull(appInfo)
+        assertNotNull(deviceInfo)
+        assertNotNull(performanceInfo)
+        assertNotNull(breadcrumbs)
+        session.verifyInitialFieldsPopulated(payloadType)
+        session.verifyFinalFieldsPopulated(payloadType)
     }
 
     private fun Session.verifyInitialFieldsPopulated(payloadType: PayloadType) {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
         assertFalse(isColdStart)
-        assertNotNull(user)
         assertNotNull(number)
 
         val expectedState = when (payloadType) {
@@ -136,6 +159,27 @@ internal class PayloadMessageCollatorTest {
         }
         assertEquals(expectedState, appState)
         assertEquals(expectedStartType, startType)
+        assertEquals(Session.MESSAGE_TYPE_END, messageType)
         assertEquals(expectedSessionProps, properties)
+    }
+
+    private fun Session.verifyFinalFieldsPopulated(payloadType: PayloadType) {
+        val expectedEndType = when (payloadType) {
+            PayloadType.BACKGROUND_ACTIVITY -> LifeEventType.BKGND_STATE
+            PayloadType.SESSION -> LifeEventType.STATE
+        }
+        assertEquals(15000000000L, endTime)
+        assertEquals(expectedEndType, endType)
+        assertEquals(15000000000L, lastHeartbeatTime)
+        assertEquals("crashId", crashReportId)
+        assertNotNull(eventIds)
+        assertNotNull(infoLogIds)
+        assertNotNull(warningLogIds)
+        assertNotNull(errorLogIds)
+        assertNotNull(infoLogsAttemptedToSend)
+        assertNotNull(warnLogsAttemptedToSend)
+        assertNotNull(errorLogsAttemptedToSend)
+        assertNotNull(exceptionError)
+        assertNotNull(unhandledExceptions)
     }
 }

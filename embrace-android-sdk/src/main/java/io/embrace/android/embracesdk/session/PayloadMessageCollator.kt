@@ -52,7 +52,6 @@ internal class PayloadMessageCollator(
             messageType = Session.MESSAGE_TYPE_END,
             appState = appState,
             startType = startType,
-            user = captureDataSafely(userService::loadUserInfoFromDisk),
             number = getSessionNumber(preferencesService),
             properties = getProperties(sessionPropertiesService),
         )
@@ -118,51 +117,24 @@ internal class PayloadMessageCollator(
             )
         }
 
-        val endSession = initial.copy(
+        val base = buildFinalBackgroundActivity(initial, endTime, endType, crashReportId)
+
+        val endSession = base.copy(
             isEndedCleanly = endedCleanly,
-            appState = Session.APPLICATION_STATE_FOREGROUND,
-            messageType = Session.MESSAGE_TYPE_END,
-            eventIds = captureDataSafely {
-                eventService.findEventIdsForSession(
-                    startTime,
-                    endTime
-                )
-            },
-            infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
-            warningLogIds = captureDataSafely {
-                logMessageService.findWarningLogIds(
-                    startTime,
-                    endTime
-                )
-            },
-            errorLogIds = captureDataSafely {
-                logMessageService.findErrorLogIds(
-                    startTime,
-                    endTime
-                )
-            },
             networkLogIds = captureDataSafely {
                 logMessageService.findNetworkLogIds(
                     startTime,
                     endTime
                 )
             },
-            infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
-            lastHeartbeatTime = clock.now(),
             properties = captureDataSafely(sessionPropertiesService::getProperties),
-            endType = endType,
-            unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
             webViewInfo = captureDataSafely(webViewService::getCapturedData),
-            crashReportId = crashReportId,
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
             sdkStartupDuration = sdkStartDuration,
             startupDuration = startupDuration,
             startupThreshold = startupThreshold,
-            user = captureDataSafely(userService::getUserInfo),
             betaFeatures = betaFeatures,
             symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
         )
@@ -178,12 +150,9 @@ internal class PayloadMessageCollator(
         val deviceInfo = captureDataSafely(metadataService::getDeviceInfo)
         val breadcrumbs = captureDataSafely { breadcrumbService.getBreadcrumbs(startTime, endTime) }
 
-        val endSessionWithAllErrors =
-            endSession.copy(exceptionError = internalErrorService.currentExceptionError)
-
         return SessionMessage(
-            session = endSessionWithAllErrors,
-            userInfo = endSessionWithAllErrors.user,
+            session = endSession,
+            userInfo = captureDataSafely(userService::getUserInfo),
             appInfo = appInfo,
             deviceInfo = deviceInfo,
             performanceInfo = performanceInfo.copy(),
@@ -203,8 +172,6 @@ internal class PayloadMessageCollator(
     ): Session {
         val startTime = initial.startTime
         return initial.copy(
-            appState = Session.APPLICATION_STATE_BACKGROUND,
-            messageType = Session.MESSAGE_TYPE_END,
             endTime = endTime,
             eventIds = captureDataSafely {
                 eventService.findEventIdsForSession(
@@ -275,7 +242,7 @@ internal class PayloadMessageCollator(
 
         return SessionMessage(
             session = msg,
-            userInfo = msg.user,
+            userInfo = captureDataSafely(userService::getUserInfo),
             appInfo = captureDataSafely(metadataService::getAppInfo),
             deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely {

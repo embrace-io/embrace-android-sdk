@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
-    val sessionHandler: SessionHandler
     val sessionService: SessionService
     val backgroundActivityService: BackgroundActivityService?
     val payloadMessageCollator: PayloadMessageCollator
@@ -58,12 +56,19 @@ internal class SessionModuleImpl(
         )
     }
 
-    override val sessionHandler: SessionHandler by singleton {
+    override val sessionPropertiesService: SessionPropertiesService by singleton {
+        EmbraceSessionPropertiesService(
+            nativeModule.ndkService,
+            sessionProperties
+        )
+    }
+
+    override val sessionService: SessionService by singleton {
         val ndkService = when {
             essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
             else -> null
         }
-        SessionHandler(
+        EmbraceSessionService(
             coreModule.logger,
             essentialServiceModule.configService,
             essentialServiceModule.userService,
@@ -79,24 +84,6 @@ internal class SessionModuleImpl(
             initModule.clock,
             initModule.spansService,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
-        )
-    }
-
-    override val sessionPropertiesService: SessionPropertiesService by singleton {
-        EmbraceSessionPropertiesService(
-            nativeModule.ndkService,
-            sessionProperties
-        )
-    }
-
-    override val sessionService: SessionService by singleton {
-        EmbraceSessionService(
-            nativeModule.ndkService,
-            sessionHandler,
-            deliveryModule.deliveryService,
-            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled(),
-            initModule.clock,
-            essentialServiceModule.configService
         )
     }
 

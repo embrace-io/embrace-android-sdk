@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -29,7 +28,7 @@ internal class EmbraceBackgroundActivityService(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val scheduledWorker: ScheduledWorker,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
-) : BackgroundActivityService, ConfigListener {
+) : BackgroundActivityService {
 
     private var lastSaved: Long = 0
 
@@ -41,14 +40,9 @@ internal class EmbraceBackgroundActivityService(
     private val manualBkgSessionsSent = AtomicInteger(0)
 
     private var lastSendAttempt: Long = clock.now()
-    private var isEnabled = true
-
-    init {
-        configService.addListener(this)
-    }
 
     override fun sendBackgroundActivity() {
-        if (!isEnabled || !verifyManualSendThresholds()) {
+        if (!verifyManualSendThresholds()) {
             return
         }
         val now = clock.now()
@@ -62,7 +56,7 @@ internal class EmbraceBackgroundActivityService(
     }
 
     override fun endBackgroundActivityWithCrash(crashId: String) {
-        if (isEnabled && backgroundActivity != null) {
+        if (backgroundActivity != null) {
             val now = clock.now()
             val backgroundActivityMessage =
                 stopBackgroundActivityCapture(now, LifeEventType.BKGND_STATE, crashId)
@@ -74,43 +68,31 @@ internal class EmbraceBackgroundActivityService(
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {
-        if (isEnabled) {
-            // kept for backwards compat. the backend expects the start time to be 1 ms greater
-            // than the adjacent session, and manually adjusts.
-            val backgroundActivityMessage =
-                stopBackgroundActivityCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
-            if (backgroundActivityMessage != null) {
-                deliveryService.saveBackgroundActivity(backgroundActivityMessage)
-            }
-            deliveryService.sendBackgroundActivities()
+        // kept for backwards compat. the backend expects the start time to be 1 ms greater
+        // than the adjacent session, and manually adjusts.
+        val backgroundActivityMessage =
+            stopBackgroundActivityCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
+        if (backgroundActivityMessage != null) {
+            deliveryService.saveBackgroundActivity(backgroundActivityMessage)
         }
+        deliveryService.sendBackgroundActivities()
     }
 
     override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
-        if (isEnabled) {
-            // kept for backwards compat. the backend expects the start time to be 1 ms greater
-            // than the adjacent session, and manually adjusts.
-            val time = when {
-                coldStart -> timestamp
-                else -> timestamp + 1
-            }
-            startBackgroundActivityCapture(time, coldStart, LifeEventType.BKGND_STATE)
+        // kept for backwards compat. the backend expects the start time to be 1 ms greater
+        // than the adjacent session, and manually adjusts.
+        val time = when {
+            coldStart -> timestamp
+            else -> timestamp + 1
         }
-    }
-
-    override fun onConfigChange(configService: ConfigService) {
-        if (isEnabled && !configService.isBackgroundActivityCaptureEnabled()) {
-            isEnabled = false
-        } else if (!isEnabled && configService.isBackgroundActivityCaptureEnabled()) {
-            isEnabled = true
-        }
+        startBackgroundActivityCapture(time, coldStart, LifeEventType.BKGND_STATE)
     }
 
     /**
      * Save the background activity to disk
      */
     override fun save() {
-        if (isEnabled && backgroundActivity != null) {
+        if (backgroundActivity != null) {
             val delta = clock.now() - lastSaved
             val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
             scheduledWorker.schedule<Unit>(::cacheBackgroundActivity, delay, TimeUnit.MILLISECONDS)

@@ -323,37 +323,42 @@ internal class EmbraceBackgroundActivityServiceTest {
     }
 
     @Test
-    fun `disable service via config change`() {
-        service = createService()
-        disableService()
-        clock.tick(20000L)
-        service.save()
-        assertTrue(deliveryService.lastSavedBackgroundActivities.isEmpty())
-        assertTrue(deliveryService.lastSentBackgroundActivities.isEmpty())
+    fun `simulate background activity capture enabled after onBackground`() {
+        service = createService(createInitialSession = false)
+
+        // missing start call simulates service being enabled halfway through.
+        clock.tick(1000L)
+        service.endBackgroundActivityWithState(clock.now())
+
+        // nothing is delivered
+        assertEquals(0, deliveryService.lastSavedBackgroundActivities.size)
+        assertEquals(0, deliveryService.lastSentBackgroundActivities.size)
+
+        // next BA is recorded correctly
+        service.startBackgroundActivityWithState(false, clock.now())
+        clock.tick(1000L)
+        service.endBackgroundActivityWithState(clock.now())
+        assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
+        assertEquals(2, deliveryService.lastSentBackgroundActivities.size)
     }
 
     @Test
-    fun `enable service via config change`() {
-        service = createService()
-        disableService()
-        enableService()
-        clock.tick(20000L)
-        service.save()
-        assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
-    }
+    fun `background activity capture disabled after onBackground`() {
+        service = createService(createInitialSession = false)
 
-    private fun disableService() {
-        configService.backgroundActivityCaptureEnabled = false
-        deliveryService.lastSavedBackgroundActivities.clear()
-        deliveryService.lastSentBackgroundActivities.clear()
-        service.onConfigChange(configService)
-    }
+        service.startBackgroundActivityWithState(true, clock.now())
+        clock.tick(1000L)
 
-    private fun enableService() {
-        configService.backgroundActivityCaptureEnabled = true
-        deliveryService.lastSavedBackgroundActivities.clear()
-        deliveryService.lastSentBackgroundActivities.clear()
-        service.onConfigChange(configService)
+        // missing end call simulates service being enabled halfway through.
+        assertEquals(1, deliveryService.lastSavedBackgroundActivities.size)
+        assertEquals(0, deliveryService.lastSentBackgroundActivities.size)
+
+        // next BA is recorded correctly
+        service.startBackgroundActivityWithState(false, clock.now())
+        clock.tick(1000L)
+        service.endBackgroundActivityWithState(clock.now())
+        assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
+        assertEquals(2, deliveryService.lastSentBackgroundActivities.size)
     }
 
     private fun createService(createInitialSession: Boolean = true): EmbraceBackgroundActivityService {

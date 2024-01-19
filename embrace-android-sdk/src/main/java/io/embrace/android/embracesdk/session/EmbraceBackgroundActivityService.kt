@@ -40,43 +40,6 @@ internal class EmbraceBackgroundActivityService(
 
     private var lastSendAttempt: Long = clock.now()
 
-    override fun sendBackgroundActivity() {
-        if (!verifyManualSendThresholds()) {
-            return
-        }
-        val now = clock.now()
-        val backgroundActivityMessage =
-            stopBackgroundActivityCapture(now, LifeEventType.BKGND_MANUAL, null)
-        // start a new background activity session
-        startBackgroundActivityCapture(clock.now(), false, LifeEventType.BKGND_MANUAL)
-        if (backgroundActivityMessage != null) {
-            deliveryService.sendBackgroundActivity(backgroundActivityMessage)
-        }
-    }
-
-    override fun endBackgroundActivityWithCrash(crashId: String) {
-        if (backgroundActivity != null) {
-            val now = clock.now()
-            val backgroundActivityMessage =
-                stopBackgroundActivityCapture(now, LifeEventType.BKGND_STATE, crashId)
-            if (backgroundActivityMessage != null) {
-                deliveryService.saveBackgroundActivity(backgroundActivityMessage)
-            }
-            startBackgroundActivityCapture(clock.now(), false, LifeEventType.BKGND_STATE)
-        }
-    }
-
-    override fun endBackgroundActivityWithState(timestamp: Long) {
-        // kept for backwards compat. the backend expects the start time to be 1 ms greater
-        // than the adjacent session, and manually adjusts.
-        val backgroundActivityMessage =
-            stopBackgroundActivityCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
-        if (backgroundActivityMessage != null) {
-            deliveryService.saveBackgroundActivity(backgroundActivityMessage)
-        }
-        deliveryService.sendBackgroundActivities()
-    }
-
     override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
@@ -84,7 +47,41 @@ internal class EmbraceBackgroundActivityService(
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        startBackgroundActivityCapture(time, coldStart, LifeEventType.BKGND_STATE)
+        startCapture(time, coldStart, LifeEventType.BKGND_STATE)
+    }
+
+    override fun endBackgroundActivityWithState(timestamp: Long) {
+        // kept for backwards compat. the backend expects the start time to be 1 ms greater
+        // than the adjacent session, and manually adjusts.
+        val message = stopCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
+        if (message != null) {
+            deliveryService.saveBackgroundActivity(message)
+        }
+        deliveryService.sendBackgroundActivities()
+    }
+
+    override fun endBackgroundActivityWithCrash(crashId: String) {
+        if (backgroundActivity != null) {
+            val now = clock.now()
+            val message = stopCapture(now, LifeEventType.BKGND_STATE, crashId)
+            if (message != null) {
+                deliveryService.saveBackgroundActivity(message)
+            }
+            startCapture(clock.now(), false, LifeEventType.BKGND_STATE)
+        }
+    }
+
+    override fun sendBackgroundActivity() {
+        if (!verifyManualSendThresholds()) {
+            return
+        }
+        val now = clock.now()
+        val message = stopCapture(now, LifeEventType.BKGND_MANUAL, null)
+        // start a new background activity session
+        startCapture(clock.now(), false, LifeEventType.BKGND_MANUAL)
+        if (message != null) {
+            deliveryService.sendBackgroundActivity(message)
+        }
     }
 
     /**
@@ -105,7 +102,7 @@ internal class EmbraceBackgroundActivityService(
      * @param coldStart defines if the action comes from an application cold start or not
      * @param startType defines which is the lifecycle of the session
      */
-    private fun startBackgroundActivityCapture(
+    private fun startCapture(
         startTime: Long,
         coldStart: Boolean,
         startType: LifeEventType
@@ -133,7 +130,7 @@ internal class EmbraceBackgroundActivityService(
      * @param endType defines what kind of event ended the background activity capture
      */
     @Synchronized
-    private fun stopBackgroundActivityCapture(
+    private fun stopCapture(
         endTime: Long,
         endType: LifeEventType,
         crashId: String?
@@ -143,14 +140,14 @@ internal class EmbraceBackgroundActivityService(
             logger.logError("No background activity to report")
             return null
         }
-        val sendBackgroundActivity = payloadMessageCollator.createBackgroundActivityEndMessage(
+        val message = payloadMessageCollator.createBackgroundActivityEndMessage(
             activity,
             endTime,
             endType,
             crashId
         )
         backgroundActivity = null
-        return payloadMessageCollator.buildBgActivityMessage(sendBackgroundActivity, true)
+        return payloadMessageCollator.buildBgActivityMessage(message, true)
     }
 
     /**

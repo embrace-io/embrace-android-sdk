@@ -66,6 +66,7 @@ internal class PayloadMessageCollator(
     ): SessionMessage = with(params) {
         val base = buildFinalBackgroundActivity(params)
         val startupInfo = getStartupEventInfo(eventService)
+
         val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
             false -> null
             else -> BetaFeatures(
@@ -161,7 +162,6 @@ internal class PayloadMessageCollator(
                     }
                     spansService.flushSpans(appTerminationCause)
                 }
-
                 else -> spansService.completedSpans()
             }
         }

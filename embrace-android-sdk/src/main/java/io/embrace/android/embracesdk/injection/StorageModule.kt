@@ -27,7 +27,11 @@ internal class StorageModuleImpl(
 ) : StorageModule {
 
     override val storageService: StorageService by singleton {
-        EmbraceStorageService(coreModule.context)
+        EmbraceStorageService(
+            coreModule.context,
+            initModule.telemetryService,
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+        )
     }
 
     override val cache by singleton {

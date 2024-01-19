@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -18,11 +21,13 @@ internal class EmbraceStorageServiceTest {
     private lateinit var cacheDir: File
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
+    private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
         cacheDir = Files.createTempDirectory("cache_temp").toFile()
         filesDir = Files.createTempDirectory("files_temp").toFile()
+        blockingScheduledExecutorService = BlockingScheduledExecutorService()
         val embraceFilesPath = Files.createDirectory(
             Paths.get(filesDir.absolutePath, "embrace")
         ).toFile()
@@ -30,7 +35,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx)
+        storageManager = EmbraceStorageService(ctx, FakeTelemetryService(), ScheduledWorker(blockingScheduledExecutorService))
     }
 
     @Test
@@ -77,7 +82,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx)
+        storageManager = EmbraceStorageService(ctx, FakeTelemetryService(), ScheduledWorker(blockingScheduledExecutorService))
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
     }
@@ -94,5 +99,10 @@ internal class EmbraceStorageServiceTest {
         val storageDirForNativeCrash = storageManager.getNativeCrashDir()
         assertNotNull(storageDirForNativeCrash)
         assertEquals("$embraceFilesDir/ndk", storageDirForNativeCrash.absolutePath)
+    }
+
+    @Test
+    fun `test storageTelemetry is logged correctly`() {
+        // to be done
     }
 }

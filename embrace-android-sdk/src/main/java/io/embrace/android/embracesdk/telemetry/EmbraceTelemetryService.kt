@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.telemetry
 
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.spans.toEmbraceStorageAttributeName
 import io.embrace.android.embracesdk.internal.spans.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
 
@@ -13,6 +14,7 @@ internal class EmbraceTelemetryService(
 ) : TelemetryService {
 
     private val usageCountMap = ConcurrentHashMap<String, Int>()
+    private val fileToSizeMap = ConcurrentHashMap<String, Int>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -21,8 +23,13 @@ internal class EmbraceTelemetryService(
         }
     }
 
+    override fun logStorageTelemetry(fileToSizeMap: Map<String, Int>) {
+        this.fileToSizeMap.putAll(fileToSizeMap)
+    }
+
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
         return getAndClearUsageCountTelemetry()
+            .plus(getAndClearStorageTelemetry())
             .plus(appAttributes)
     }
 
@@ -34,6 +41,14 @@ internal class EmbraceTelemetryService(
             usageCountMap.clear()
             return usageCountTelemetryMap
         }
+    }
+
+    private fun getAndClearStorageTelemetry(): Map<String, String> {
+        val storageTelemetryMap = fileToSizeMap.entries.associate {
+            it.key.toEmbraceStorageAttributeName() to it.value.toString()
+        }
+        fileToSizeMap.clear()
+        return storageTelemetryMap
     }
 
     /**

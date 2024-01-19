@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.telemetry.TelemetryService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.io.File
 import java.io.FilenameFilter
+import java.util.concurrent.TimeUnit
 
 /**
  * Provides File instances for files and directories used to store data.
@@ -11,8 +14,14 @@ import java.io.FilenameFilter
  * cached config files.
  */
 internal class EmbraceStorageService(
-    private val context: Context
+    private val context: Context,
+    private val telemetryService: TelemetryService,
+    scheduledWorker: ScheduledWorker
 ) : StorageService {
+
+    init {
+        scheduledWorker.schedule<Unit>(::logStorageTelemetry, 30, TimeUnit.SECONDS)
+    }
 
     private val cacheDirectory: File by lazy {
         context.cacheDir
@@ -50,6 +59,13 @@ internal class EmbraceStorageService(
         val filesDir = filesDirectory.listFiles(filter) ?: emptyArray()
         val cacheDir = cacheDirectory.listFiles(filter) ?: emptyArray()
         return filesDir.toList() + cacheDir.toList()
+    }
+
+    private fun logStorageTelemetry() {
+        val storageTelemetryMap = listFiles { _, _ -> true }
+            .filter { it.isFile }
+            .associate { it.name to it.length().toInt() }
+        telemetryService.logStorageTelemetry(storageTelemetryMap)
     }
 
     /**

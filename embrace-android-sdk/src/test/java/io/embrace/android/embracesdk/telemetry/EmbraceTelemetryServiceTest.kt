@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.telemetry
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -47,5 +48,65 @@ internal class EmbraceTelemetryServiceTest {
 
         // That method isn't in the map anymore
         assertEquals(null, embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.usage.a_method", null))
+    }
+
+    @Test
+    fun `logStorageTelemetry adds sizes to the telemetry attributes`() {
+        // Given some file sizes are added
+        embraceTelemetryService.logStorageTelemetry(
+            mapOf(
+                "a_file" to 1,
+                "another_file" to 2,
+                "yet_another_file" to 3
+            )
+        )
+
+        // When getting telemetry attributes
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // Then the file sizes are in the map
+        assertEquals("1", telemetryAttributes["emb.storage.a_file"])
+        assertEquals("2", telemetryAttributes["emb.storage.another_file"])
+        assertEquals("3", telemetryAttributes["emb.storage.yet_another_file"])
+    }
+
+    @Test
+    fun `getTelemetryAttributes clears the storage map`() {
+        // Given a method is in the map
+        embraceTelemetryService.logStorageTelemetry(mapOf("a_file" to 1))
+
+        // When getting telemetry attributes
+        embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // That method isn't in the map anymore
+        assertEquals(null, embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.storage.a_file", null))
+    }
+
+    @Test
+    fun `getTelemetryAttributes adds app attributes`() {
+        // When getting telemetry attributes
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // Then the app attributes are in the map
+        assertEquals("true", telemetryAttributes["emb.okhttp3"])
+        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
+        assertTrue(telemetryAttributes.containsKey("emb.is_emulator"))
+        assertTrue(telemetryAttributes.containsKey("emb.kotlin_on_classpath"))
+    }
+
+    @Test
+    fun `usage, storage and app attributes are added correctly`() {
+        // Given some usage and storage attributes are added
+        embraceTelemetryService.onPublicApiCalled("a_method")
+        embraceTelemetryService.logStorageTelemetry(mapOf("a_file" to 1))
+
+        // When getting telemetry attributes
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // Then the usage, storage, and app attributes are in the map
+        assertEquals("1", telemetryAttributes["emb.usage.a_method"])
+        assertEquals("1", telemetryAttributes["emb.storage.a_file"])
+        assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
+        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
     }
 }

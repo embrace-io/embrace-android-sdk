@@ -8,6 +8,7 @@ import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -36,6 +37,7 @@ internal class EmbraceSpansServiceTest {
         assertNull(spansService.completedSpans())
         assertNull(spansService.flushSpans())
         assertEquals(CompletableResultCode.ofFailure(), spansService.storeCompletedSpans(listOf()))
+        assertNull(spansService.getSpan("some-span-id"))
     }
 
     @Test
@@ -183,6 +185,17 @@ internal class EmbraceSpansServiceTest {
         assertTrue(spansService.recordCompletedSpan("test-span", 15, 25))
         initializeService()
         assertEquals(2, spansService.completedSpans()?.size)
+    }
+
+    @Test
+    fun `can get span with spanId`() {
+        assertNull(spansService.getSpan("blah"))
+        initializeService()
+        val span = checkNotNull(spansService.createSpan("test-span"))
+        assertTrue(span.start())
+        val spanId = checkNotNull(span.spanId)
+        val spanFromId = spansService.getSpan(spanId)
+        assertSame(spanFromId, span)
     }
 
     private fun initializeService() {

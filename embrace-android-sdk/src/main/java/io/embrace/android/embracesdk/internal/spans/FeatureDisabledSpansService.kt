@@ -39,4 +39,6 @@ internal class FeatureDisabledSpansService : SpansService {
     override fun completedSpans(): List<EmbraceSpanData>? = null
 
     override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData>? = null
+
+    override fun getSpan(spanId: String): EmbraceSpan? = null
 }

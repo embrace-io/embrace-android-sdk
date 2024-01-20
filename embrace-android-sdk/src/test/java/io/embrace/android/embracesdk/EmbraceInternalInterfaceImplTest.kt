@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.defaultImpl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -199,11 +198,6 @@ internal class EmbraceInternalInterfaceImplTest {
             200
         )
 
-        defaultImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
-        verify(exactly = 0) {
-            embraceImpl.recordAndDeduplicateNetworkRequest(any(), any())
-        }
-
         internalImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
         verify(exactly = 1) {
             embraceImpl.recordAndDeduplicateNetworkRequest(callId, capture(captor))
@@ -221,17 +215,10 @@ internal class EmbraceInternalInterfaceImplTest {
     }
 
     @Test
-    fun `check default SDK time implementation`() {
-        assertTrue(beforeObjectInitTime < defaultImpl.getSdkCurrentTime())
-        assertTrue(defaultImpl.getSdkCurrentTime() <= System.currentTimeMillis())
-    }
-
-    @Test
     fun `test isInternalNetworkCaptureDisabled`() {
         assertFalse(internalImpl.isInternalNetworkCaptureDisabled())
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
         assertTrue(internalImpl.isInternalNetworkCaptureDisabled())
-        assertFalse(defaultImpl.isInternalNetworkCaptureDisabled())
     }
 
     @Test
@@ -249,7 +236,6 @@ internal class EmbraceInternalInterfaceImplTest {
         assertFalse(internalImpl.isAnrCaptureEnabled())
         fakeConfigService.anrBehavior = fakeAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 100) })
         assertTrue(internalImpl.isAnrCaptureEnabled())
-        assertFalse(defaultImpl.isAnrCaptureEnabled())
     }
 
     @Test
@@ -258,16 +244,11 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeConfigService.autoDataCaptureBehavior =
             fakeAutoDataCaptureBehavior(localCfg = { LocalConfig("abcde", true, SdkLocalConfig()) })
         assertTrue(internalImpl.isNdkEnabled())
-        assertFalse(defaultImpl.isNdkEnabled())
     }
 
     @Test
     fun `check logInternalError with exception`() {
         val expectedException = SocketException()
-        defaultImpl.logInternalError(expectedException)
-        verify(exactly = 0) {
-            embraceImpl.logInternalError(any())
-        }
         internalImpl.logInternalError(expectedException)
         verify(exactly = 1) {
             embraceImpl.logInternalError(expectedException)
@@ -276,10 +257,6 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Test
     fun `check logInternalError with error type and message`() {
-        defaultImpl.logInternalError("err", "message")
-        verify(exactly = 0) {
-            embraceImpl.logInternalError(any(), any())
-        }
         internalImpl.logInternalError("err", "message")
         verify(exactly = 1) {
             embraceImpl.logInternalError("err", "message")

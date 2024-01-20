@@ -1,20 +1,25 @@
 package io.embrace.android.embracesdk
 
+import android.annotation.SuppressLint
 import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
+@SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
-    private val configService: ConfigService
-) : EmbraceInternalInterface {
+    private val configService: ConfigService,
+    internalTracer: InternalTracer = InternalTracer(initModule.tracer)
+) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
         embraceImpl.logMessage(

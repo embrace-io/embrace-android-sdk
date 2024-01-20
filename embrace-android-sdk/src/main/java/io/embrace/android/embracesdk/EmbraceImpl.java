@@ -72,6 +72,7 @@ import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTrac
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.spans.Initializable;
+import io.embrace.android.embracesdk.internal.spans.InternalTracer;
 import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
@@ -129,6 +130,9 @@ final class EmbraceImpl {
 
     @NonNull
     final EmbraceTracer tracer;
+
+    @NonNull
+    final Lazy<EmbraceInternalInterface> uninitializedSdkInternalInterface;
 
     /**
      * Whether the Embrace SDK has been started yet.
@@ -315,6 +319,7 @@ final class EmbraceImpl {
         this.dataCaptureServiceModuleSupplier = dataCaptureServiceModuleSupplier;
         this.deliveryModuleSupplier = deliveryModuleSupplier;
         this.tracer = initModule.getTracer();
+        uninitializedSdkInternalInterface = LazyKt.lazy(() -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(tracer)));
     }
 
     EmbraceImpl() {
@@ -1451,7 +1456,7 @@ final class EmbraceImpl {
         if (isStarted() && embraceInternalInterface != null) {
             return embraceInternalInterface;
         } else {
-            return EmbraceInternalInterfaceKt.getDefaultImpl();
+            return uninitializedSdkInternalInterface.getValue();
         }
     }
 

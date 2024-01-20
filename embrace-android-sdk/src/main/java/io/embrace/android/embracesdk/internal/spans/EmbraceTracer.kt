@@ -112,4 +112,6 @@ internal class EmbraceTracer(private val spansService: SpansService) : TracingAp
             events = events ?: emptyList(),
             errorCode = errorCode
         )
+
+    fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
 }

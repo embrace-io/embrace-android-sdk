@@ -49,9 +49,9 @@ internal class EmbraceBackgroundActivityService(
         }
         startCapture(
             InitialEnvelopeParams.BackgroundActivityParams(
-                coldStart,
-                LifeEventType.BKGND_STATE,
-                time
+                coldStart = coldStart,
+                startType = LifeEventType.BKGND_STATE,
+                startTime = time
             )
         )
     }
@@ -62,11 +62,9 @@ internal class EmbraceBackgroundActivityService(
         val activity = backgroundActivity ?: return
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
-                activity,
-                timestamp - 1,
-                LifeEventType.BKGND_STATE,
-                null,
-                false
+                initial = activity,
+                endTime = timestamp - 1,
+                lifeEventType = LifeEventType.BKGND_STATE
             )
         )
         deliveryService.saveBackgroundActivity(message)
@@ -78,11 +76,10 @@ internal class EmbraceBackgroundActivityService(
         val now = clock.now()
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
-                activity,
-                now,
-                LifeEventType.BKGND_STATE,
-                crashId,
-                false
+                initial = activity,
+                endTime = now,
+                lifeEventType = LifeEventType.BKGND_STATE,
+                crashId = crashId
             )
         )
         deliveryService.saveBackgroundActivity(message)
@@ -103,19 +100,18 @@ internal class EmbraceBackgroundActivityService(
         val now = clock.now()
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
-                activity,
-                now,
-                LifeEventType.BKGND_MANUAL,
-                null,
-                false
+                initial = activity,
+                endTime = now,
+                lifeEventType = LifeEventType.BKGND_MANUAL,
+                crashId = null
             )
         )
         // start a new background activity session
         startCapture(
             InitialEnvelopeParams.BackgroundActivityParams(
-                false,
-                LifeEventType.BKGND_MANUAL,
-                clock.now()
+                coldStart = false,
+                startType = LifeEventType.BKGND_MANUAL,
+                startTime = clock.now()
             )
         )
         deliveryService.sendBackgroundActivity(message)
@@ -192,11 +188,9 @@ internal class EmbraceBackgroundActivityService(
             lastSaved = clock.now()
             val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                 FinalEnvelopeParams.BackgroundActivityParams(
-                    activity,
-                    activity.endTime ?: clock.now(),
-                    null,
-                    null,
-                    true
+                    initial = activity,
+                    endTime = activity.endTime ?: clock.now(),
+                    lifeEventType = null
                 )
             )
             deliveryService.saveBackgroundActivity(message)

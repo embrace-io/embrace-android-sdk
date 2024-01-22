@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.session
 
+import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.payload.Session
 
 /**
@@ -19,26 +21,33 @@ internal sealed class FinalEnvelopeParams(
         else -> crashId
     }
 
+    abstract val terminationTime: Long?
+    abstract val receivedTermination: Boolean?
+    abstract val endTimeVal: Long?
+    abstract val sdkStartDuration: Long?
+    abstract fun getStartupEventInfo(eventService: EventService): StartupEventInfo?
+
     /**
      * Initial parameters required to create a background activity object.
      */
     internal class BackgroundActivityParams(
         initial: Session,
         endTime: Long,
-        endType: Session.LifeEventType?,
-        crashId: String?,
-        isCacheAttempt: Boolean
-
-        /**
-         * This is an attempt at periodic caching, not a true end message.
-         */
+        lifeEventType: Session.LifeEventType?,
+        crashId: String? = null
     ) : FinalEnvelopeParams(
         initial,
         endTime,
-        endType,
+        lifeEventType,
         crashId,
-        isCacheAttempt
-    )
+        lifeEventType == null
+    ) {
+        override val terminationTime: Long? = null
+        override val receivedTermination: Boolean? = null
+        override val endTimeVal: Long? = null
+        override val sdkStartDuration: Long? = null
+        override fun getStartupEventInfo(eventService: EventService): StartupEventInfo? = null
+    }
 
     /**
      * Initial parameters required to create a session object.
@@ -46,14 +55,42 @@ internal sealed class FinalEnvelopeParams(
     internal class SessionParams(
         initial: Session,
         endTime: Long,
-        endType: Session.LifeEventType?,
-        crashId: String?,
-        isCacheAttempt: Boolean
+        lifeEventType: Session.LifeEventType?,
+        crashId: String? = null,
+        val endType: SessionSnapshotType,
+        sdkStartupDuration: Long,
     ) : FinalEnvelopeParams(
         initial,
         endTime,
-        endType,
+        lifeEventType,
         crashId,
-        isCacheAttempt
-    )
+        endType == SessionSnapshotType.PERIODIC_CACHE
+    ) {
+
+        override val terminationTime: Long? = when {
+            endType.forceQuit -> endTime
+            else -> null
+        }
+        override val receivedTermination: Boolean? = when {
+            endType.forceQuit -> true
+            else -> null
+        }
+
+        // We don't set end time for force-quit, as the API interprets this to be a clean
+        // termination
+        override val endTimeVal: Long? = when {
+            endType.forceQuit -> null
+            else -> endTime
+        }
+
+        override val sdkStartDuration: Long? = when (initial.isColdStart) {
+            true -> sdkStartupDuration
+            false -> null
+        }
+
+        override fun getStartupEventInfo(eventService: EventService) = when {
+            initial.isColdStart -> captureDataSafely(eventService::getStartupMomentInfo)
+            else -> null
+        }
+    }
 }

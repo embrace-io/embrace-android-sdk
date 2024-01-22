@@ -171,13 +171,12 @@ internal class EmbraceSessionService(
             logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
             val fullEndSessionMessage = createSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
-                    session,
-                    endTime,
-                    endType,
-                    null,
-                    false
+                    initial = session,
+                    endTime = endTime,
+                    lifeEventType = endType,
+                    endType = SessionSnapshotType.NORMAL_END,
+                    sdkStartupDuration = sdkStartupDuration ?: 0
                 ),
-                SessionSnapshotType.NORMAL_END,
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
@@ -211,13 +210,13 @@ internal class EmbraceSessionService(
             logger.logDebug("SessionHandler: running onCrash for $crashId")
             val fullEndSessionMessage = createSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
-                    session,
-                    clock.now(),
-                    LifeEventType.STATE,
-                    crashId,
-                    false
-                ),
-                SessionSnapshotType.JVM_CRASH
+                    initial = session,
+                    endTime = clock.now(),
+                    lifeEventType = LifeEventType.STATE,
+                    crashId = crashId,
+                    endType = SessionSnapshotType.JVM_CRASH,
+                    sdkStartupDuration = sdkStartupDuration ?: 0
+                )
             )
             activeSession = null
             fullEndSessionMessage?.let {
@@ -252,13 +251,12 @@ internal class EmbraceSessionService(
             logger.logDeveloper("SessionHandler", "Running periodic cache of active session.")
             val msg = createSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
-                    session,
-                    clock.now(),
-                    LifeEventType.STATE,
-                    null,
-                    true
+                    initial = session,
+                    endTime = clock.now(),
+                    lifeEventType = LifeEventType.STATE,
+                    endType = SessionSnapshotType.PERIODIC_CACHE,
+                    sdkStartupDuration = sdkStartupDuration ?: 0
                 ),
-                SessionSnapshotType.PERIODIC_CACHE,
             )
             msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
             return msg
@@ -284,11 +282,8 @@ internal class EmbraceSessionService(
      * Snapshots the active session. The behavior is controlled by the
      * [SessionSnapshotType] passed to this function.
      */
-    private fun createSessionSnapshot(
-        params: FinalEnvelopeParams.SessionParams,
-        endType: SessionSnapshotType,
-    ): SessionMessage? {
-        if (endType.shouldStopCaching) {
+    private fun createSessionSnapshot(params: FinalEnvelopeParams.SessionParams): SessionMessage? {
+        if (params.endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
         }
 
@@ -297,12 +292,7 @@ internal class EmbraceSessionService(
             return null
         }
 
-        return payloadMessageCollator.buildFinalSessionMessage(
-            params,
-            endedCleanly = endType.endedCleanly,
-            forceQuit = endType.forceQuit,
-            sdkStartupDuration = sdkStartupDuration ?: 0
-        )
+        return payloadMessageCollator.buildFinalSessionMessage(params)
     }
 
     /**

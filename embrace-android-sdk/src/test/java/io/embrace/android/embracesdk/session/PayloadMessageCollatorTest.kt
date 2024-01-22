@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
@@ -50,7 +51,8 @@ internal class PayloadMessageCollatorTest {
             performanceInfoService = FakePerformanceInfoService(),
             spansService = SpansService.Companion.featureDisabledSpansService,
             clock = FakeClock(),
-            sessionPropertiesService = FakeSessionPropertiesService()
+            sessionPropertiesService = FakeSessionPropertiesService(),
+            startupService = FakeStartupService()
         )
     }
 
@@ -121,8 +123,7 @@ internal class PayloadMessageCollatorTest {
                 15000000000,
                 LifeEventType.STATE,
                 "crashId",
-                SessionSnapshotType.NORMAL_END,
-                5
+                SessionSnapshotType.NORMAL_END
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)

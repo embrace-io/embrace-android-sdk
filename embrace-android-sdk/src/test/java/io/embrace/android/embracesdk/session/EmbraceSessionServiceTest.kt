@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.worker.ScheduledWorker
@@ -148,7 +147,6 @@ internal class EmbraceSessionServiceTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             FakeClock(),
-            SpansService.featureDisabledSpansService,
             ScheduledWorker(BlockingScheduledExecutorService())
         )
     }

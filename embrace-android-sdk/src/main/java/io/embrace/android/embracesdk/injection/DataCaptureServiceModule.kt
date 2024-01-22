@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
+import io.embrace.android.embracesdk.capture.startup.StartupService
+import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
@@ -64,6 +66,11 @@ internal interface DataCaptureServiceModule {
      * Registers for the component callback to capture memory events
      */
     val componentCallbackService: ComponentCallbackService
+
+    /**
+     * Captures the startup time of the SDK
+     */
+    val startupService: StartupService
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -145,5 +152,9 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         } else {
             NoOpThermalStatusService()
         }
+    }
+
+    override val startupService: StartupService by singleton {
+        StartupServiceImpl(initModule.spansService)
     }
 }

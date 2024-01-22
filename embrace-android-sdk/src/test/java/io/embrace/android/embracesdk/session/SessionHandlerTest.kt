@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
@@ -38,7 +39,6 @@ import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -54,8 +54,6 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
-import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -175,7 +173,8 @@ internal class SessionHandlerTest {
             preferencesService,
             spansService,
             clock,
-            FakeSessionPropertiesService()
+            FakeSessionPropertiesService(),
+            FakeStartupService()
         )
         sessionService = EmbraceSessionService(
             logger,
@@ -191,7 +190,6 @@ internal class SessionHandlerTest {
             payloadMessageCollator,
             sessionProperties,
             clock,
-            spansService,
             sessionPeriodicCacheScheduledWorker = sessionPeriodicCacheExecutorService
         )
     }
@@ -476,6 +474,7 @@ internal class SessionHandlerTest {
     fun `backgrounding flushes completed spans`() {
         startFakeSession()
         initializeServices()
+        spansService.recordSpan("test-span") {}
         assertEquals(1, spansService.completedSpans()?.size)
 
         clock.tick(15000L)
@@ -495,6 +494,7 @@ internal class SessionHandlerTest {
     fun `crash ending flushes completed spans`() {
         startFakeSession()
         initializeServices()
+        spansService.recordSpan("test-span") {}
         assertEquals(1, spansService.completedSpans()?.size)
 
         sessionService.endSessionWithCrash("crashId")
@@ -515,46 +515,6 @@ internal class SessionHandlerTest {
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
-    @Test
-    fun `initialization records SDK startup span`() {
-        val startTimeMillis = clock.now()
-        clock.tick(10L)
-        val endTimeMillis = clock.now()
-        spansService.initializeService(startTimeMillis)
-        sessionService.setSdkStartupInfo(startTimeMillis, endTimeMillis)
-        val currentSpans = checkNotNull(spansService.completedSpans())
-        assertEquals(1, currentSpans.size)
-        with(currentSpans[0]) {
-            assertEquals("emb-sdk-init", name)
-            assertEquals(SpanId.getInvalid(), parentSpanId)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(startTimeMillis), startTimeNanos)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(endTimeMillis), endTimeNanos)
-            assertEquals(
-                io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.name,
-                attributes[io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.keyName()]
-            )
-            assertTrue(isPrivate())
-            assertEquals(StatusCode.OK, status)
-        }
-    }
-
-    @Test
-    fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
-        spansService.initializeService(10)
-        sessionService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans()?.size)
-        sessionService.setSdkStartupInfo(10, 20)
-        sessionService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans()?.size)
-    }
-
-    @Test
-    fun `sdk startup span recorded if the startup info is set before span service initializes`() {
-        sessionService.setSdkStartupInfo(10, 20)
-        spansService.initializeService(10)
-        assertEquals(1, spansService.completedSpans()?.size)
-    }
-
     private fun startFakeSession() {
         sessionService.startSession(
             params = InitialEnvelopeParams.SessionParams(
@@ -565,16 +525,15 @@ internal class SessionHandlerTest {
         )
     }
 
-    private fun initializeServices(startTimeMillis: Long = clock.now(), endTimeMillis: Long = startTimeMillis + 10L) {
+    private fun initializeServices(startTimeMillis: Long = clock.now()) {
         spansService.initializeService(startTimeMillis)
-        sessionService.setSdkStartupInfo(startTimeMillis, endTimeMillis)
     }
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
         assertNotNull(sessionMessage)
         val spans = checkNotNull(sessionMessage?.spans)
-        assertEquals(3, spans.size)
-        val expectedSpans = listOf("emb-sdk-init", "emb-test-span", "emb-session-span")
+        assertEquals(2, spans.size)
+        val expectedSpans = listOf("emb-test-span", "emb-session-span")
         assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
     }
 }

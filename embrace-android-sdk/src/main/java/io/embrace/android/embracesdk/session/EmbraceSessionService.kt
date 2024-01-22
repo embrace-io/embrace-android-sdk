@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -36,7 +35,6 @@ internal class EmbraceSessionService(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
-    private val spansService: SpansService,
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
 ) : SessionService {
 
@@ -68,12 +66,6 @@ internal class EmbraceSessionService(
      * Guards session state changes.
      */
     private val lock = Any()
-
-    /**
-     * SDK startup time. Only set for cold start sessions.
-     */
-    @Volatile
-    private var sdkStartupDuration: Long? = null
 
     init {
         // Send any sessions that were cached and not yet sent.
@@ -114,17 +106,6 @@ internal class EmbraceSessionService(
                 clock.now()
             )
         )
-    }
-
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
-        if (sdkStartupDuration == null) {
-            spansService.recordCompletedSpan(
-                name = "sdk-init",
-                startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startTimeMs),
-                endTimeNanos = TimeUnit.MILLISECONDS.toNanos(endTimeMs)
-            )
-        }
-        sdkStartupDuration = endTimeMs - startTimeMs
     }
 
     /**
@@ -174,8 +155,7 @@ internal class EmbraceSessionService(
                     initial = session,
                     endTime = endTime,
                     lifeEventType = endType,
-                    endType = SessionSnapshotType.NORMAL_END,
-                    sdkStartupDuration = sdkStartupDuration ?: 0
+                    endType = SessionSnapshotType.NORMAL_END
                 ),
             ) ?: return null
 
@@ -214,8 +194,7 @@ internal class EmbraceSessionService(
                     endTime = clock.now(),
                     lifeEventType = LifeEventType.STATE,
                     crashId = crashId,
-                    endType = SessionSnapshotType.JVM_CRASH,
-                    sdkStartupDuration = sdkStartupDuration ?: 0
+                    endType = SessionSnapshotType.JVM_CRASH
                 )
             )
             activeSession = null
@@ -254,8 +233,7 @@ internal class EmbraceSessionService(
                     initial = session,
                     endTime = clock.now(),
                     lifeEventType = LifeEventType.STATE,
-                    endType = SessionSnapshotType.PERIODIC_CACHE,
-                    sdkStartupDuration = sdkStartupDuration ?: 0
+                    endType = SessionSnapshotType.PERIODIC_CACHE
                 ),
             )
             msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }

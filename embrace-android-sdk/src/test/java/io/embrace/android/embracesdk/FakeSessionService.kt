@@ -25,8 +25,4 @@ internal class FakeSessionService : SessionService {
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         manualEndCount++
     }
-
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
-        TODO("Not yet implemented")
-    }
 }

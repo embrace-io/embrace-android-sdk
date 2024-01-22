@@ -53,7 +53,8 @@ internal class SessionModuleImpl(
             androidServicesModule.preferencesService,
             initModule.spansService,
             initModule.clock,
-            sessionPropertiesService
+            sessionPropertiesService,
+            dataCaptureServiceModule.startupService
         )
     }
 
@@ -83,7 +84,6 @@ internal class SessionModuleImpl(
             payloadMessageCollator,
             sessionProperties,
             initModule.clock,
-            initModule.spansService,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
         )
     }

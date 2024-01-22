@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
-import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -141,8 +139,6 @@ internal class EmbraceSessionServiceTest {
             FakeAndroidMetadataService(),
             FakeBreadcrumbService(),
             ndkService,
-            FakeInternalErrorService(),
-            FakeMemoryCleanerService(),
             deliveryService,
             mockk(relaxed = true),
             mockk(relaxed = true),

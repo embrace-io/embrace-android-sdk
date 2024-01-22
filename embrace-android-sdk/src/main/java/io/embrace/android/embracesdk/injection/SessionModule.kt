@@ -78,8 +78,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.metadataService,
             dataCaptureServiceModule.breadcrumbService,
             ndkService,
-            sdkObservabilityModule.internalErrorService,
-            essentialServiceModule.memoryCleanerService,
             deliveryModule.deliveryService,
             payloadMessageCollator,
             sessionProperties,
@@ -106,7 +104,10 @@ internal class SessionModuleImpl(
             sessionService,
             backgroundActivityService,
             initModule.clock,
-            essentialServiceModule.configService
+            essentialServiceModule.configService,
+            essentialServiceModule.memoryCleanerService,
+            sdkObservabilityModule.internalErrorService,
+
         )
     }
 }

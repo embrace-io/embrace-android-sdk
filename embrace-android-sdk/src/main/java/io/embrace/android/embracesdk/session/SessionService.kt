@@ -18,6 +18,11 @@ internal interface SessionService {
     fun endSessionWithCrash(crashId: String)
 
     /**
+     * Starts a session manually.
+     */
+    fun startSessionWithManual()
+
+    /**
      * Ends a session manually. If [clearUserInfo] is true, the user info will be cleared.
      */
     fun endSessionWithManual(clearUserInfo: Boolean)

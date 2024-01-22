@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -35,11 +34,17 @@ internal class ManualSessionTest {
     fun `calling endSession ends stateful session`() {
         with(testRule) {
             harness.recordSession {
+                harness.fakeClock.tick(10000) // enough to trigger new session
                 embrace.endSession()
             }
-            val message = harness.getSentSessionMessages().single()
-            verifySessionHappened(message)
-            assertEquals(1, message.session.number)
+            val messages = harness.getSentSessionMessages()
+            assertEquals(2, messages.size)
+            val stateSession = messages[0] // started via state, ended manually
+            val manualSession = messages[1] // started manually, ended via state
+            verifySessionHappened(stateSession)
+            verifySessionHappened(manualSession)
+            assertEquals(1, stateSession.session.number)
+            assertEquals(2, manualSession.session.number)
         }
     }
 

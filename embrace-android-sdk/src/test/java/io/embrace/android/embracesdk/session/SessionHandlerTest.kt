@@ -184,8 +184,6 @@ internal class SessionHandlerTest {
             metadataService,
             breadcrumbService,
             ndkService,
-            internalErrorService,
-            memoryCleanerService,
             deliveryService,
             payloadMessageCollator,
             sessionProperties,

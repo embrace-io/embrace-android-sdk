@@ -59,7 +59,7 @@ internal class StorageModuleImpl(
 
     init {
         workerThreadModule
-            .scheduledWorker(WorkerName.PERIODIC_CACHE)
+            .scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
             .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

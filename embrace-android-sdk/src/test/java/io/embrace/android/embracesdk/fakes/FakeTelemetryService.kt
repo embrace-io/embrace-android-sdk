@@ -10,7 +10,7 @@ internal class FakeTelemetryService : TelemetryService {
     }
 
     override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {
-        this.storageTelemetryMap.putAll(storageTelemetry)
+        storageTelemetryMap.putAll(storageTelemetry)
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {

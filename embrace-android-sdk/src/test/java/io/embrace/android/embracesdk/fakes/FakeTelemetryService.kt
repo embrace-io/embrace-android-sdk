@@ -4,13 +4,13 @@ import io.embrace.android.embracesdk.telemetry.TelemetryService
 
 internal class FakeTelemetryService : TelemetryService {
 
-    val storageTelemetryMap = mutableMapOf<String, Int>()
+    val storageTelemetryMap = mutableMapOf<String, String>()
     override fun onPublicApiCalled(name: String) {
         // no-op
     }
 
-    override fun logStorageTelemetry(fileToSizeMap: Map<String, Int>) {
-        this.storageTelemetryMap.putAll(fileToSizeMap)
+    override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {
+        this.storageTelemetryMap.putAll(storageTelemetry)
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {

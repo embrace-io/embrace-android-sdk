@@ -2,10 +2,8 @@ package io.embrace.android.embracesdk.storage
 
 import android.content.Context
 import io.embrace.android.embracesdk.telemetry.TelemetryService
-import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.io.File
 import java.io.FilenameFilter
-import java.util.concurrent.TimeUnit
 
 /**
  * Provides File instances for files and directories used to store data.
@@ -15,13 +13,8 @@ import java.util.concurrent.TimeUnit
  */
 internal class EmbraceStorageService(
     private val context: Context,
-    private val telemetryService: TelemetryService,
-    scheduledWorker: ScheduledWorker
+    private val telemetryService: TelemetryService
 ) : StorageService {
-
-    init {
-        scheduledWorker.schedule<Unit>(::logStorageTelemetry, 30, TimeUnit.SECONDS)
-    }
 
     private val cacheDirectory: File by lazy {
         context.cacheDir
@@ -61,10 +54,14 @@ internal class EmbraceStorageService(
         return filesDir.toList() + cacheDir.toList()
     }
 
-    private fun logStorageTelemetry() {
-        val storageTelemetryMap = listFiles { _, _ -> true }
+    /**
+     * Logs storage telemetry, including the current size utilized by Embrace.
+     */
+    override fun logStorageTelemetry() {
+        val storageUsed = listFiles { _, _ -> true }
             .filter { it.isFile }
-            .associate { it.name to it.length().toInt() }
+            .sumOf { it.length() }
+        val storageTelemetryMap = mapOf("emb.storage.used" to storageUsed.toString())
         telemetryService.logStorageTelemetry(storageTelemetryMap)
     }
 

@@ -39,41 +39,36 @@ internal class EmbraceTelemetryServiceTest {
     }
 
     @Test
-    fun `getTelemetryAttributes clears the usage map`() {
+    fun `getTelemetryAttributes clears maps`() {
         // Given a method is in the map
         embraceTelemetryService.onPublicApiCalled("a_method")
+        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
 
-        // When getting telemetry attributes
+        // After getting telemetry attributes
         embraceTelemetryService.getAndClearTelemetryAttributes()
+        val attributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // That method isn't in the map anymore
-        assertEquals(null, embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.usage.a_method", null))
+        assertEquals(null, attributes.getOrDefault("emb.usage.a_method", null))
+        assertEquals(null, attributes.getOrDefault("emb.storage.used", null))
     }
 
     @Test
-    fun `logStorageTelemetry adds sizes to the telemetry attributes`() {
-        // Given some file sizes are added
-        embraceTelemetryService.logStorageTelemetry(
-            mapOf(
-                "a_file" to 1,
-                "another_file" to 2,
-                "yet_another_file" to 3
-            )
-        )
+    fun `logStorageTelemetry adds usage to the telemetry attributes`() {
+        // Given storage telemetry is added
+        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "1231"))
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
-        // Then the file sizes are in the map
-        assertEquals("1", telemetryAttributes["emb.storage.a_file"])
-        assertEquals("2", telemetryAttributes["emb.storage.another_file"])
-        assertEquals("3", telemetryAttributes["emb.storage.yet_another_file"])
+        // Then storage telemetry is in the map
+        assertEquals("1231", telemetryAttributes["emb.storage.used"])
     }
 
     @Test
     fun `getTelemetryAttributes clears the storage map`() {
         // Given a method is in the map
-        embraceTelemetryService.logStorageTelemetry(mapOf("a_file" to 1))
+        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "1"))
 
         // When getting telemetry attributes
         embraceTelemetryService.getAndClearTelemetryAttributes()
@@ -98,14 +93,14 @@ internal class EmbraceTelemetryServiceTest {
     fun `usage, storage and app attributes are added correctly`() {
         // Given some usage and storage attributes are added
         embraceTelemetryService.onPublicApiCalled("a_method")
-        embraceTelemetryService.logStorageTelemetry(mapOf("a_file" to 1))
+        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // Then the usage, storage, and app attributes are in the map
         assertEquals("1", telemetryAttributes["emb.usage.a_method"])
-        assertEquals("1", telemetryAttributes["emb.storage.a_file"])
+        assertEquals("12", telemetryAttributes["emb.storage.used"])
         assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
         assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
     }

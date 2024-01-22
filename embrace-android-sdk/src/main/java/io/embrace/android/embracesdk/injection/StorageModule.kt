@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.TimeUnit
 
 /**
  * Contains dependencies that are used to store data in the device's storage.
@@ -29,8 +30,7 @@ internal class StorageModuleImpl(
     override val storageService: StorageService by singleton {
         EmbraceStorageService(
             coreModule.context,
-            initModule.telemetryService,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+            initModule.telemetryService
         )
     }
 
@@ -53,5 +53,11 @@ internal class StorageModuleImpl(
             initModule.clock,
             coreModule.jsonSerializer
         )
+    }
+
+    init {
+        workerThreadModule
+            .scheduledWorker(WorkerName.PERIODIC_CACHE)
+            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

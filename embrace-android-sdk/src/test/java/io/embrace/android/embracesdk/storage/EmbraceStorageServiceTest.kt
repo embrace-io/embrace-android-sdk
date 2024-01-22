@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.storage
 import android.content.Context
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -22,6 +21,7 @@ internal class EmbraceStorageServiceTest {
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
     private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
+    private lateinit var fakeTelemetryService: FakeTelemetryService
 
     @Before
     fun setUp() {
@@ -35,7 +35,9 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx, FakeTelemetryService(), ScheduledWorker(blockingScheduledExecutorService))
+        fakeTelemetryService = FakeTelemetryService()
+
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService)
     }
 
     @Test
@@ -82,7 +84,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx, FakeTelemetryService(), ScheduledWorker(blockingScheduledExecutorService))
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService)
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
     }
@@ -103,6 +105,12 @@ internal class EmbraceStorageServiceTest {
 
     @Test
     fun `test storageTelemetry is logged correctly`() {
-        // to be done
+        val fileInCache = File(cacheDir, "test_cache.txt").also { it.writeText("hello") }
+        val fileInFiles = File(embraceFilesDir, "test_files.txt").also { it.writeText("hello again!") }
+
+        storageManager.logStorageTelemetry()
+
+        val expectedSize = fileInCache.length().toInt() + fileInFiles.length().toInt()
+        assertEquals(expectedSize, fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
     }
 }

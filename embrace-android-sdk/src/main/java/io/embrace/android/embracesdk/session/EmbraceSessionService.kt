@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -150,7 +151,7 @@ internal class EmbraceSessionService(
             logger.logDebug("Start session sent to delivery service.")
 
             breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
-            startPeriodicCaching { onPeriodicCacheActiveSession() }
+            startPeriodicCaching { Systrace.trace("snapshot-session") { onPeriodicCacheActiveSession() } }
             ndkService?.updateSessionId(session.sessionId)
         }
     }

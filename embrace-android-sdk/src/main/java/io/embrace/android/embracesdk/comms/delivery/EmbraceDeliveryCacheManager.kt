@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -64,7 +65,9 @@ internal class EmbraceDeliveryCacheManager(
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
             saveBytes(sessionId, writeSync, snapshot) { filename: String ->
-                cacheService.writeSession(filename, sessionMessage)
+                Systrace.trace("serialize-session") {
+                    cacheService.writeSession(filename, sessionMessage)
+                }
             }
         } catch (exc: Throwable) {
             logger.logError("Save session failed", exc, true)

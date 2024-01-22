@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.mockk.every
 import io.mockk.mockk
@@ -20,14 +19,12 @@ internal class EmbraceStorageServiceTest {
     private lateinit var cacheDir: File
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
-    private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
     private lateinit var fakeTelemetryService: FakeTelemetryService
 
     @Before
     fun setUp() {
         cacheDir = Files.createTempDirectory("cache_temp").toFile()
         filesDir = Files.createTempDirectory("files_temp").toFile()
-        blockingScheduledExecutorService = BlockingScheduledExecutorService()
         val embraceFilesPath = Files.createDirectory(
             Paths.get(filesDir.absolutePath, "embrace")
         ).toFile()
@@ -111,6 +108,6 @@ internal class EmbraceStorageServiceTest {
         storageManager.logStorageTelemetry()
 
         val expectedSize = fileInCache.length().toInt() + fileInFiles.length().toInt()
-        assertEquals(expectedSize, fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
+        assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
     }
 }

@@ -61,7 +61,7 @@ internal class EmbraceStorageService(
         val storageUsed = listFiles { _, _ -> true }
             .filter { it.isFile }
             .sumOf { it.length() }
-        val storageTelemetryMap = mapOf("emb.storage.used" to storageUsed.toString())
+        val storageTelemetryMap = mapOf(EMBRACE_TELEMETRY_STORAGE_USE_NAME to storageUsed.toString())
         telemetryService.logStorageTelemetry(storageTelemetryMap)
     }
 
@@ -88,6 +88,11 @@ private const val EMBRACE_DIRECTORY = "embrace"
  * Directory name for the config files that are stored in the cache directory.
  */
 private const val EMBRACE_CONFIG_CACHE_DIRECTORY = "emb_config_cache"
+
+/**
+ * Telemetry attribute name for the storage used by Embrace.
+ */
+private const val EMBRACE_TELEMETRY_STORAGE_USE_NAME = "emb.storage.used"
 
 /**
  * Directory name for the native crash files that are stored in the files directory.

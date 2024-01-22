@@ -14,8 +14,7 @@ internal fun fakeSession(
     isColdStart = true,
     startType = Session.LifeEventType.STATE,
     properties = mapOf(),
-    messageType = Session.MESSAGE_TYPE_END,
-    user = null
+    messageType = Session.MESSAGE_TYPE_END
 )
 
 internal fun fakeSessionMessage(): SessionMessage = SessionMessage(

@@ -32,8 +32,7 @@ internal class BackgroundActivityTest {
         endType = Session.LifeEventType.BKGND_STATE,
         startType = Session.LifeEventType.BKGND_STATE,
         properties = mapOf("fake-key" to "fake-value"),
-        unhandledExceptions = 1,
-        user = UserInfo("fake-user-id", "fake-user-name")
+        unhandledExceptions = 1
     )
 
     @Test

@@ -242,7 +242,6 @@ internal class SessionHandlerTest {
             assertEquals(emptyMapSessionProperties, properties)
             assertEquals("en", messageType)
             assertEquals("foreground", appState)
-            assertEquals(userInfo, user)
         }
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }

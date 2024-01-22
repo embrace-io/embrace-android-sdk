@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -30,7 +29,6 @@ internal class EmbraceSessionService(
     private val ndkService: NdkService?,
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
-    private val sessionProperties: EmbraceSessionProperties,
     private val clock: Clock,
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
 ) : SessionService {
@@ -180,9 +178,6 @@ internal class EmbraceSessionService(
 
             // Clean every collection of those services which have collections in memory.
             metadataService.removeActiveSessionId(session.sessionId)
-            logger.logDebug("Services collections successfully cleaned.")
-            sessionProperties.clearTemporary()
-            logger.logDebug("Session properties successfully temporary cleared.")
             deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
 
             if (endType == LifeEventType.MANUAL && clearUserInfo) {

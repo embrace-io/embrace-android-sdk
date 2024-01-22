@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class SessionOrchestratorImpl(
     private val processStateService: ProcessStateService,
@@ -16,7 +17,8 @@ internal class SessionOrchestratorImpl(
     clock: Clock,
     configService: ConfigService,
     private val memoryCleanerService: MemoryCleanerService,
-    private val internalErrorService: InternalErrorService
+    private val internalErrorService: InternalErrorService,
+    private val sessionProperties: EmbraceSessionProperties
 ) : SessionOrchestrator {
 
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
@@ -67,5 +69,6 @@ internal class SessionOrchestratorImpl(
      */
     private fun prepareForNewEnvelope() {
         memoryCleanerService.cleanServicesCollections(internalErrorService)
+        sessionProperties.clearTemporary()
     }
 }

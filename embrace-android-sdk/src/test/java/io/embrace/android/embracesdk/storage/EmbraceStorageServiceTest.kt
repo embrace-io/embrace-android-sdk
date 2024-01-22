@@ -109,7 +109,7 @@ internal class EmbraceStorageServiceTest {
 
         storageManager.logStorageTelemetry()
 
-        val expectedSize = fileInCache.length().toInt() + fileInFiles.length().toInt()
+        val expectedSize = fileInCache.length() + fileInFiles.length()
         assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
         assertEquals("1000", fakeTelemetryService.storageTelemetryMap["emb.storage.available"])
     }

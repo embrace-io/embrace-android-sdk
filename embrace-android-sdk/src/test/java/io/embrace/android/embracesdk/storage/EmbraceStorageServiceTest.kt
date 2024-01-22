@@ -20,6 +20,7 @@ internal class EmbraceStorageServiceTest {
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
     private lateinit var fakeTelemetryService: FakeTelemetryService
+    private lateinit var fakeStorageAvailabilityChecker: FakeStorageAvailabilityChecker
 
     @Before
     fun setUp() {
@@ -33,8 +34,9 @@ internal class EmbraceStorageServiceTest {
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
         fakeTelemetryService = FakeTelemetryService()
+        fakeStorageAvailabilityChecker = FakeStorageAvailabilityChecker()
 
-        storageManager = EmbraceStorageService(ctx, fakeTelemetryService)
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
     }
 
     @Test
@@ -81,7 +83,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx, fakeTelemetryService)
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
     }
@@ -109,5 +111,6 @@ internal class EmbraceStorageServiceTest {
 
         val expectedSize = fileInCache.length().toInt() + fileInFiles.length().toInt()
         assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
+        assertEquals("1000", fakeTelemetryService.storageTelemetryMap["emb.storage.available"])
     }
 }

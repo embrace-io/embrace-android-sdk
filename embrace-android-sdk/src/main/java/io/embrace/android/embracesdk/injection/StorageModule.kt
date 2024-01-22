@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -30,7 +31,8 @@ internal class StorageModuleImpl(
     override val storageService: StorageService by singleton {
         EmbraceStorageService(
             coreModule.context,
-            initModule.telemetryService
+            initModule.telemetryService,
+            StatFsAvailabilityChecker(coreModule.context)
         )
     }
 

@@ -64,7 +64,6 @@ import io.embrace.android.embracesdk.internal.BuildInfo;
 import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;

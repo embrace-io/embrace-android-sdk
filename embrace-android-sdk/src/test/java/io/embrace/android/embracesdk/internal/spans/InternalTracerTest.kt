@@ -83,6 +83,37 @@ internal class InternalTracerTest {
     }
 
     @Test
+    fun `record completed span with bad event data`() {
+        val expectedName = "test-span"
+        val expectedStartTime = clock.now()
+        val expectedEndTime = expectedStartTime + 100L
+        val eventsInput: List<Map<String, Any>> =
+            listOf(
+                mapOf("name" to "correct event", "timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to 1234),
+                mapOf("name" to "failed event", "timestampNanos" to 123),
+                mapOf("name" to "failed event", "timestampNanos" to "123"),
+                mapOf("name" to "failed event", "attributes" to mapOf("key" to 123)),
+                mapOf("name" to "failed event", "attributes" to mapOf(123 to "123")),
+            )
+
+        assertTrue(
+            internalTracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeNanos = expectedStartTime,
+                endTimeNanos = expectedEndTime,
+                events = eventsInput
+            )
+        )
+
+        with(verifyPublicSpan(expectedName)) {
+            assertEquals(1, events.size)
+            assertEquals("correct event", events[0].name)
+        }
+    }
+
+    @Test
     fun `record completed failed span`() {
         val expectedName = "test-span"
         val expectedStartTime = clock.now()

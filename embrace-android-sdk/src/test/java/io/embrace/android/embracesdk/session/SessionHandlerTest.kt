@@ -287,7 +287,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             Session.LifeEventType.MANUAL,
             1000,
             false
@@ -306,7 +306,7 @@ internal class SessionHandlerTest {
         val startTime = 120L
         activeSession = activeSession.copy(startTime = startTime)
 
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             Session.LifeEventType.MANUAL,
             1000,
             false
@@ -386,7 +386,7 @@ internal class SessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
             endTime = 10L,
             false
@@ -398,7 +398,7 @@ internal class SessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
             endTime = 10L,
             true
@@ -421,7 +421,7 @@ internal class SessionHandlerTest {
             )
         )
         clock.tick(30000)
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             endType = Session.LifeEventType.MANUAL,
             endTime = clock.now(),
             true
@@ -476,7 +476,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spansService.completedSpans()?.size)
 
         clock.tick(15000L)
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
             endTime = clock.now(),
             false
@@ -503,7 +503,7 @@ internal class SessionHandlerTest {
     fun `session message is sent`() {
         startFakeSession()
         clock.tick(10000)
-        sessionService.endSession(
+        sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
             endTime = clock.now(),
             false

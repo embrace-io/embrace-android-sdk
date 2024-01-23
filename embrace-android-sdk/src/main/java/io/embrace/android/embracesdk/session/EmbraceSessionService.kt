@@ -57,7 +57,7 @@ internal class EmbraceSessionService(
 
     internal fun getSessionId(): String? = activeSession?.sessionId
 
-    var scheduledFuture: ScheduledFuture<*>? = null
+    private var scheduledFuture: ScheduledFuture<*>? = null
 
     /**
      * Guards session state changes.
@@ -70,7 +70,26 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithCrash(crashId: String) {
-        onCrash(crashId)
+        synchronized(lock) {
+            val session = activeSession ?: return
+            logger.logDebug("SessionHandler: running onCrash for $crashId")
+            val fullEndSessionMessage = createSessionSnapshot(
+                FinalEnvelopeParams.SessionParams(
+                    initial = session,
+                    endTime = clock.now(),
+                    lifeEventType = LifeEventType.STATE,
+                    crashId = crashId,
+                    endType = SessionSnapshotType.JVM_CRASH
+                )
+            )
+            activeSession = null
+            fullEndSessionMessage?.let {
+                deliveryService.sendSession(
+                    it,
+                    SessionSnapshotType.JVM_CRASH
+                )
+            }
+        }
     }
 
     override fun startSessionWithState(coldStart: Boolean, timestamp: Long) {
@@ -84,7 +103,7 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithState(timestamp: Long) {
-        endSession(LifeEventType.STATE, timestamp, false)
+        endSessionImpl(LifeEventType.STATE, timestamp, false)
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
@@ -93,7 +112,7 @@ internal class EmbraceSessionService(
         }
 
         // Ends active session.
-        endSession(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
+        endSessionImpl(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
     }
 
     override fun startSessionWithManual() {
@@ -142,7 +161,7 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    internal fun endSession(
+    internal fun endSessionImpl(
         endType: LifeEventType,
         endTime: Long,
         clearUserInfo: Boolean
@@ -176,33 +195,6 @@ internal class EmbraceSessionService(
             activeSession = null
             logger.logDebug("SessionHandler: cleared active session")
             return fullEndSessionMessage
-        }
-    }
-
-    /**
-     * Called when a regular crash happens. It will build a session message with associated crashId,
-     * and send it to our servers.
-     */
-    private fun onCrash(crashId: String) {
-        synchronized(lock) {
-            val session = activeSession ?: return
-            logger.logDebug("SessionHandler: running onCrash for $crashId")
-            val fullEndSessionMessage = createSessionSnapshot(
-                FinalEnvelopeParams.SessionParams(
-                    initial = session,
-                    endTime = clock.now(),
-                    lifeEventType = LifeEventType.STATE,
-                    crashId = crashId,
-                    endType = SessionSnapshotType.JVM_CRASH
-                )
-            )
-            activeSession = null
-            fullEndSessionMessage?.let {
-                deliveryService.sendSession(
-                    it,
-                    SessionSnapshotType.JVM_CRASH
-                )
-            }
         }
     }
 

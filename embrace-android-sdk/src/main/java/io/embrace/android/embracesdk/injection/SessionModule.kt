@@ -80,7 +80,6 @@ internal class SessionModuleImpl(
             ndkService,
             deliveryModule.deliveryService,
             payloadMessageCollator,
-            sessionProperties,
             initModule.clock,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
         )
@@ -107,7 +106,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.configService,
             essentialServiceModule.memoryCleanerService,
             sdkObservabilityModule.internalErrorService,
-
+            sessionProperties
         )
     }
 }

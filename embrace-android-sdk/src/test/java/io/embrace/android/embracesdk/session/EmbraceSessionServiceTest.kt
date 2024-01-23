@@ -141,7 +141,6 @@ internal class EmbraceSessionServiceTest {
             ndkService,
             deliveryService,
             mockk(relaxed = true),
-            mockk(relaxed = true),
             FakeClock(),
             ScheduledWorker(BlockingScheduledExecutorService())
         )

@@ -65,7 +65,6 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
-import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -619,12 +618,6 @@ final class EmbraceImpl {
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
-        if (backgroundActivityService != null) {
-            internalEmbraceLogger.logInfo("Background activity capture enabled");
-        } else {
-            internalEmbraceLogger.logInfo("Background activity capture disabled");
-        }
-
         CrashModule crashModule = new CrashModuleImpl(
             initModule,
             storageModule,
@@ -674,9 +667,7 @@ final class EmbraceImpl {
 
         final long endTime = sdkClock.now();
         started.set(true);
-
-        sessionModule.getSessionHandler().setSdkStartupInfo(startTime, endTime);
-        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + (endTime - startTime) + " millis");
+        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
 
         // Sets up the registered services. This method is called after the SDK has been started and
         // no more services can be added to the registry. It sets listeners for any services that were
@@ -804,10 +795,6 @@ final class EmbraceImpl {
      */
     void setUserIdentifier(@Nullable String userId) {
         if (checkSdkStartedAndLogPublicApiUsage("set_user_identifier")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
-                return;
-            }
             userService.setUserIdentifier(userId);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -819,10 +806,6 @@ final class EmbraceImpl {
      */
     void clearUserIdentifier() {
         if (checkSdkStartedAndLogPublicApiUsage("clear_user_identifier")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring identifier update.");
-                return;
-            }
             userService.clearUserIdentifier();
         }
     }
@@ -834,10 +817,6 @@ final class EmbraceImpl {
      */
     void setUserEmail(@Nullable String email) {
         if (checkSdkStartedAndLogPublicApiUsage("set_user_email")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
-                return;
-            }
             userService.setUserEmail(email);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -849,10 +828,6 @@ final class EmbraceImpl {
      */
     void clearUserEmail() {
         if (checkSdkStartedAndLogPublicApiUsage("clear_user_email")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring email update.");
-                return;
-            }
             userService.clearUserEmail();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -864,10 +839,6 @@ final class EmbraceImpl {
      */
     void setUserAsPayer() {
         if (checkSdkStartedAndLogPublicApiUsage("set_user_as_payer")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
-                return;
-            }
             userService.setUserAsPayer();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -880,10 +851,6 @@ final class EmbraceImpl {
      */
     void clearUserAsPayer() {
         if (checkSdkStartedAndLogPublicApiUsage("clear_user_as_payer")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring payer user update.");
-                return;
-            }
             userService.clearUserAsPayer();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -897,10 +864,6 @@ final class EmbraceImpl {
      */
     void addUserPersona(@NonNull String persona) {
         if (checkSdkStartedAndLogPublicApiUsage("add_user_persona")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
-                return;
-            }
             userService.addUserPersona(persona);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -914,10 +877,6 @@ final class EmbraceImpl {
      */
     void clearUserPersona(@NonNull String persona) {
         if (checkSdkStartedAndLogPublicApiUsage("clear_user_persona")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
-                return;
-            }
             userService.clearUserPersona(persona);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -929,10 +888,6 @@ final class EmbraceImpl {
      */
     void clearAllUserPersonas() {
         if (checkSdkStartedAndLogPublicApiUsage("clear_user_personas")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning(ERROR_USER_UPDATES_DISABLED);
-                return;
-            }
             userService.clearAllUserPersonas();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -977,10 +932,6 @@ final class EmbraceImpl {
      */
     void setUsername(@Nullable String username) {
         if (checkSdkStartedAndLogPublicApiUsage("set_username")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
-                return;
-            }
             userService.setUsername(username);
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();
@@ -992,10 +943,6 @@ final class EmbraceImpl {
      */
     void clearUsername() {
         if (checkSdkStartedAndLogPublicApiUsage("clear_username")) {
-            if (!configService.getDataCaptureEventBehavior().isMessageTypeEnabled(MessageType.USER)) {
-                internalEmbraceLogger.logWarning("User updates are disabled, ignoring username update.");
-                return;
-            }
             userService.clearUsername();
             // Update user info in NDK service
             ndkService.onUserInfoUpdate();

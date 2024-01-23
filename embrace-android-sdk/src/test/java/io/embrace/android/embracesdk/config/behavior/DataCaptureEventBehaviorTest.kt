@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.internal.MessageType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +11,6 @@ internal class DataCaptureEventBehaviorTest {
 
     private val remote = RemoteConfig(
         internalExceptionCaptureEnabled = false,
-        disabledMessageTypes = setOf("event"),
         disabledEventAndLogPatterns = setOf("my_event", "my_log"),
         eventLimits = mapOf("test" to 100)
     )
@@ -20,7 +18,6 @@ internal class DataCaptureEventBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeDataCaptureEventBehavior()) {
-            assertTrue(isMessageTypeEnabled(MessageType.EVENT))
             assertTrue(isInternalExceptionCaptureEnabled())
             assertTrue(isEventEnabled("my_event"))
             assertTrue(isEventEnabled("other_event"))
@@ -33,7 +30,6 @@ internal class DataCaptureEventBehaviorTest {
     @Test
     fun testRemoteOnly() {
         with(fakeDataCaptureEventBehavior(remoteCfg = { remote })) {
-            assertFalse(isMessageTypeEnabled(MessageType.EVENT))
             assertFalse(isInternalExceptionCaptureEnabled())
             assertFalse(isEventEnabled("my_event"))
             assertTrue(isEventEnabled("other_event"))

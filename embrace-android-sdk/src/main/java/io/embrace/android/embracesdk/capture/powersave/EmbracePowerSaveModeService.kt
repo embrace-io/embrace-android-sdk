@@ -49,7 +49,7 @@ internal class EmbracePowerSaveModeService(
         }
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         if (powerManager?.isPowerSaveMode == true) {
             addPowerChange(PowerChange(timestamp, Kind.START))
         }

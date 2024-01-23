@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -123,15 +122,6 @@ internal class EventHandlerTest {
     }
 
     @Test
-    fun `if event type is disabled then event should not be allowed to start`() {
-        val event = "event"
-        cfg = cfg.copy(disabledMessageTypes = setOf(MessageType.EVENT.name.toLowerCase()))
-        val allowed = eventHandler.isAllowedToStart(event)
-
-        assertFalse(allowed)
-    }
-
-    @Test
     fun `if worker is shut down, then event should be allowed to start`() {
         val event = "event"
         scheduledExecutorService.shutdown()
@@ -143,21 +133,6 @@ internal class EventHandlerTest {
     fun `if none of the above, event should be allowed to start`() {
         val event = "event"
         val allowed = eventHandler.isAllowedToStart(event)
-
-        assertTrue(allowed)
-    }
-
-    @Test
-    fun `if event type is disabled then event should not be allowed to end`() {
-        cfg = cfg.copy(disabledMessageTypes = setOf(MessageType.EVENT.name.toLowerCase()))
-        val allowed = eventHandler.isAllowedToEnd()
-
-        assertFalse(allowed)
-    }
-
-    @Test
-    fun `verify event is allowed to end`() {
-        val allowed = eventHandler.isAllowedToEnd()
 
         assertTrue(allowed)
     }

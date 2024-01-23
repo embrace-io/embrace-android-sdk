@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.CacheableValue
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -172,10 +171,6 @@ internal class EmbraceLogMessageService(
             synchronized(lock) {
                 if (!configService.dataCaptureEventBehavior.isLogMessageEnabled(message)) {
                     logger.logWarning("Log message disabled. Ignoring log with message $message")
-                    return@submit
-                }
-                if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.LOG)) {
-                    logger.logWarning("Log message disabled. Ignoring all Logs.")
                     return@submit
                 }
                 val id = getEmbUuid()

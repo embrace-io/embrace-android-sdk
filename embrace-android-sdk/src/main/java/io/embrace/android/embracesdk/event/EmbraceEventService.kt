@@ -83,7 +83,7 @@ internal class EmbraceEventService(
             workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         logDeveloper("EmbraceEventService", "coldStart: $coldStart")
         if (coldStart) {
             // Using the system current timestamp here as the startup timestamp is related to the
@@ -210,10 +210,6 @@ internal class EmbraceEventService(
     ) {
         try {
             logDeveloper("EmbraceEventService", "Ending event: $name")
-            if (!eventHandler.isAllowedToEnd()) {
-                logDeveloper("EmbraceEventService", "Event handler not allowed to end")
-                return
-            }
             val eventKey = getInternalEventKey(name, identifier)
             val originEventDescription: EventDescription? = when {
                 late -> activeEvents[eventKey]

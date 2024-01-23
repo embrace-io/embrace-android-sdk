@@ -147,26 +147,10 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendCachedSessions(
-        isNdkEnabled: Boolean,
-        ndkService: NdkService,
+        ndkService: NdkService?,
         currentSession: String?
     ) {
         sendCachedCrash()
-        val service = when {
-            isNdkEnabled -> ndkService
-            else -> null
-        }
-        sendCachedSessions(service, currentSession)
-    }
-
-    private fun sendCachedCrash() {
-        val crash = cacheManager.loadCrash()
-        crash?.let {
-            apiService.sendCrash(it)
-        }
-    }
-
-    private fun sendCachedSessions(ndkService: NdkService?, currentSession: String?) {
         backgroundWorker.submit(TaskPriority.HIGH) {
             val allSessions = cacheManager.getAllCachedSessionIds()
 
@@ -177,6 +161,13 @@ internal class EmbraceDeliveryService(
                 }
             }
             sendCachedSessions(allSessions, currentSession)
+        }
+    }
+
+    private fun sendCachedCrash() {
+        val crash = cacheManager.loadCrash()
+        crash?.let {
+            apiService.sendCrash(it)
         }
     }
 

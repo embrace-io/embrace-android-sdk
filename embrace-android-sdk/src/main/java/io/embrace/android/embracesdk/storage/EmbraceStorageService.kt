@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.telemetry.TelemetryService
 import java.io.File
 import java.io.FilenameFilter
 
@@ -11,7 +12,9 @@ import java.io.FilenameFilter
  * cached config files.
  */
 internal class EmbraceStorageService(
-    private val context: Context
+    private val context: Context,
+    private val telemetryService: TelemetryService,
+    private val storageAvailabilityChecker: StorageAvailabilityChecker
 ) : StorageService {
 
     private val cacheDirectory: File by lazy {
@@ -53,6 +56,21 @@ internal class EmbraceStorageService(
     }
 
     /**
+     * Logs storage telemetry, including the current size utilized by Embrace.
+     */
+    override fun logStorageTelemetry() {
+        val availableStorage = storageAvailabilityChecker.getAvailableBytes()
+        val storageUsed = listFiles { _, _ -> true }
+            .filter { it.isFile }
+            .sumOf { it.length() }
+        val storageTelemetryMap = mapOf(
+            EMBRACE_TELEMETRY_USED_STORAGE_NAME to storageUsed.toString(),
+            EMBRACE_TELEMETRY_AVAILABLE_STORAGE_NAME to availableStorage.toString()
+        )
+        telemetryService.logStorageTelemetry(storageTelemetryMap)
+    }
+
+    /**
      * Get or create the Embrace folder inside the files directory.
      */
     private fun getOrCreateEmbraceFilesDir(): File? {
@@ -75,6 +93,16 @@ private const val EMBRACE_DIRECTORY = "embrace"
  * Directory name for the config files that are stored in the cache directory.
  */
 private const val EMBRACE_CONFIG_CACHE_DIRECTORY = "emb_config_cache"
+
+/**
+ * Telemetry attribute name for the storage used by Embrace.
+ */
+private const val EMBRACE_TELEMETRY_USED_STORAGE_NAME = "emb.storage.used"
+
+/**
+ * Telemetry attribute name for the storage used by Embrace.
+ */
+private const val EMBRACE_TELEMETRY_AVAILABLE_STORAGE_NAME = "emb.storage.available"
 
 /**
  * Directory name for the native crash files that are stored in the files directory.

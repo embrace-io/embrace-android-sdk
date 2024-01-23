@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session.lifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -34,12 +33,6 @@ internal class EmbraceProcessStateService(
      */
     @Volatile
     private var coldStart = true
-
-    /**
-     * States the initialization time of the EmbraceProcessStateService, inferring it is initialized
-     * from the [Embrace.start] method.
-     */
-    private val startTime: Long = clock.now()
 
     /**
      * Returns if the app's in background or not.
@@ -76,11 +69,11 @@ internal class EmbraceProcessStateService(
         isInBackground = false
         val timestamp = clock.now()
 
-        invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, startTime, timestamp) }
+        invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
 
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
             invokeCallbackSafely {
-                listener.onForeground(coldStart, startTime, timestamp)
+                listener.onForeground(coldStart, timestamp)
             }
         }
         coldStart = false

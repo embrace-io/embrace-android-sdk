@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -18,6 +19,8 @@ internal class EmbraceStorageServiceTest {
     private lateinit var cacheDir: File
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
+    private lateinit var fakeTelemetryService: FakeTelemetryService
+    private lateinit var fakeStorageAvailabilityChecker: FakeStorageAvailabilityChecker
 
     @Before
     fun setUp() {
@@ -30,7 +33,10 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx)
+        fakeTelemetryService = FakeTelemetryService()
+        fakeStorageAvailabilityChecker = FakeStorageAvailabilityChecker()
+
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
     }
 
     @Test
@@ -77,7 +83,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        storageManager = EmbraceStorageService(ctx)
+        storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
     }
@@ -94,5 +100,17 @@ internal class EmbraceStorageServiceTest {
         val storageDirForNativeCrash = storageManager.getNativeCrashDir()
         assertNotNull(storageDirForNativeCrash)
         assertEquals("$embraceFilesDir/ndk", storageDirForNativeCrash.absolutePath)
+    }
+
+    @Test
+    fun `test storageTelemetry is logged correctly`() {
+        val fileInCache = File(cacheDir, "test_cache.txt").also { it.writeText("hello") }
+        val fileInFiles = File(embraceFilesDir, "test_files.txt").also { it.writeText("hello again!") }
+
+        storageManager.logStorageTelemetry()
+
+        val expectedSize = fileInCache.length() + fileInFiles.length()
+        assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
+        assertEquals("1000", fakeTelemetryService.storageTelemetryMap["emb.storage.available"])
     }
 }

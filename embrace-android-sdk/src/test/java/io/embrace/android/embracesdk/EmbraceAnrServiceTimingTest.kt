@@ -61,7 +61,7 @@ internal class EmbraceAnrServiceTimingTest {
             anrExecutorService.runCurrentlyBlocked()
             anrExecutorService.runCurrentlyBlocked()
             assertEquals(1, anrExecutorService.scheduledTasksCount())
-            anrService.onForeground(true, clock.now(), clock.now() + 1)
+            anrService.onForeground(true, clock.now() + 1)
             anrExecutorService.runCurrentlyBlocked()
             anrExecutorService.runCurrentlyBlocked()
             assertEquals(1, anrExecutorService.scheduledTasksCount())

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -42,7 +41,6 @@ internal class SessionTest {
         startupThreshold = 5000,
         sdkStartupDuration = 109,
         unhandledExceptions = 1,
-        user = UserInfo("fake-user-id", "fake-user-name"),
         exceptionError = ExceptionError(false),
         orientations = listOf(Orientation(1, 16092342200)),
         properties = mapOf("fake-key" to "fake-value"),

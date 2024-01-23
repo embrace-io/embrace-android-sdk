@@ -6,9 +6,11 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.TimeUnit
 
 /**
  * Contains dependencies that are used to store data in the device's storage.
@@ -27,7 +29,11 @@ internal class StorageModuleImpl(
 ) : StorageModule {
 
     override val storageService: StorageService by singleton {
-        EmbraceStorageService(coreModule.context)
+        EmbraceStorageService(
+            coreModule.context,
+            initModule.telemetryService,
+            StatFsAvailabilityChecker(coreModule.context)
+        )
     }
 
     override val cache by singleton {
@@ -53,5 +59,11 @@ internal class StorageModuleImpl(
             initModule.clock,
             coreModule.jsonSerializer
         )
+    }
+
+    init {
+        workerThreadModule
+            .scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
+            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

@@ -98,7 +98,7 @@ internal class EmbraceDeliveryServiceTest {
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
         initializeDeliveryService()
 
-        deliveryService.sendCachedSessions(false, ndkService, null)
+        deliveryService.sendCachedSessions(null, null)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
@@ -107,7 +107,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage, anotherMessage)
 
-        deliveryService.sendCachedSessions(false, ndkService, null)
+        deliveryService.sendCachedSessions(null, null)
         assertEquals(listOf(sessionMessage, anotherMessage), apiService.sessionRequests)
     }
 
@@ -115,7 +115,7 @@ internal class EmbraceDeliveryServiceTest {
     fun `ignore current session when sending previously cached sessions`() {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage, anotherMessage)
-        deliveryService.sendCachedSessions(false, ndkService, anotherMessage.session.sessionId)
+        deliveryService.sendCachedSessions(null, anotherMessage.session.sessionId)
         assertEquals(listOf(sessionMessage), apiService.sessionRequests)
     }
 
@@ -124,7 +124,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage)
         apiService.throwExceptionSendSession = true
-        deliveryService.sendCachedSessions(false, ndkService, null)
+        deliveryService.sendCachedSessions(null, null)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
@@ -139,7 +139,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `check for native crash info if ndk feature is enabled`() {
         initializeDeliveryService()
-        deliveryService.sendCachedSessions(true, ndkService, "")
+        deliveryService.sendCachedSessions(ndkService, "")
         assertEquals(1, ndkService.checkForNativeCrashCount)
     }
 

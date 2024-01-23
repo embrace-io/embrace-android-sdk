@@ -291,7 +291,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `verify onForeground for a cold start sends a startup moment`() {
-        eventService.onForeground(true, 123, 456)
+        eventService.onForeground(true, 456)
         assertNotNull(eventService.getActiveEvent(STARTUP_EVENT_NAME, null))
         val lastEvent = deliveryService.lastEventSentAsync
         assertEquals(1, deliveryService.eventSentAsyncInvokedCount)
@@ -302,7 +302,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `verify onForeground for a non cold start does not do anything`() {
-        eventService.onForeground(false, 123, 456)
+        eventService.onForeground(false, 456)
         assertNull(eventService.getActiveEvent(STARTUP_EVENT_NAME, null))
         assertNull(deliveryService.lastEventSentAsync)
     }

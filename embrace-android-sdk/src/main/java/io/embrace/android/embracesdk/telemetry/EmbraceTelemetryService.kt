@@ -13,6 +13,7 @@ internal class EmbraceTelemetryService(
 ) : TelemetryService {
 
     private val usageCountMap = ConcurrentHashMap<String, Int>()
+    private val storageTelemetryMap = ConcurrentHashMap<String, String>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -21,8 +22,13 @@ internal class EmbraceTelemetryService(
         }
     }
 
+    override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {
+        this.storageTelemetryMap.putAll(storageTelemetry)
+    }
+
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
         return getAndClearUsageCountTelemetry()
+            .plus(getAndClearStorageTelemetry())
             .plus(appAttributes)
     }
 
@@ -34,6 +40,12 @@ internal class EmbraceTelemetryService(
             usageCountMap.clear()
             return usageCountTelemetryMap
         }
+    }
+
+    private fun getAndClearStorageTelemetry(): Map<String, String> {
+        val result = storageTelemetryMap.toMap()
+        storageTelemetryMap.clear()
+        return result
     }
 
     /**

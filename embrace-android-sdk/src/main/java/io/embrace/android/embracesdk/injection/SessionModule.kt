@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.SessionHandler
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
-    val sessionHandler: SessionHandler
     val sessionService: SessionService
     val backgroundActivityService: BackgroundActivityService?
     val payloadMessageCollator: PayloadMessageCollator
@@ -54,31 +52,9 @@ internal class SessionModuleImpl(
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
             initModule.spansService,
-            initModule.clock
-        )
-    }
-
-    override val sessionHandler: SessionHandler by singleton {
-        val ndkService = when {
-            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
-            else -> null
-        }
-        SessionHandler(
-            coreModule.logger,
-            essentialServiceModule.configService,
-            essentialServiceModule.userService,
-            essentialServiceModule.networkConnectivityService,
-            essentialServiceModule.metadataService,
-            dataCaptureServiceModule.breadcrumbService,
-            ndkService,
-            sdkObservabilityModule.internalErrorService,
-            essentialServiceModule.memoryCleanerService,
-            deliveryModule.deliveryService,
-            payloadMessageCollator,
-            sessionProperties,
             initModule.clock,
-            initModule.spansService,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+            sessionPropertiesService,
+            dataCaptureServiceModule.startupService
         )
     }
 
@@ -90,30 +66,36 @@ internal class SessionModuleImpl(
     }
 
     override val sessionService: SessionService by singleton {
+        val ndkService = when {
+            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
+            else -> null
+        }
         EmbraceSessionService(
-            nativeModule.ndkService,
-            sessionHandler,
+            coreModule.logger,
+            essentialServiceModule.configService,
+            essentialServiceModule.userService,
+            essentialServiceModule.networkConnectivityService,
+            essentialServiceModule.metadataService,
+            dataCaptureServiceModule.breadcrumbService,
+            ndkService,
             deliveryModule.deliveryService,
-            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled(),
+            payloadMessageCollator,
+            sessionProperties,
             initModule.clock,
-            essentialServiceModule.configService
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
         )
     }
 
     override val backgroundActivityService: BackgroundActivityService? by singleton {
-        if (essentialServiceModule.configService.isBackgroundActivityCaptureEnabled()) {
-            EmbraceBackgroundActivityService(
-                essentialServiceModule.metadataService,
-                deliveryModule.deliveryService,
-                essentialServiceModule.configService,
-                nativeModule.ndkService,
-                initModule.clock,
-                payloadMessageCollator,
-                workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
-            )
-        } else {
-            null
-        }
+        EmbraceBackgroundActivityService(
+            essentialServiceModule.metadataService,
+            deliveryModule.deliveryService,
+            essentialServiceModule.configService,
+            nativeModule.ndkService,
+            initModule.clock,
+            payloadMessageCollator,
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+        )
     }
 
     override val sessionOrchestrator: SessionOrchestrator by singleton {
@@ -121,7 +103,11 @@ internal class SessionModuleImpl(
             essentialServiceModule.processStateService,
             sessionService,
             backgroundActivityService,
-            initModule.clock
+            initModule.clock,
+            essentialServiceModule.configService,
+            essentialServiceModule.memoryCleanerService,
+            sdkObservabilityModule.internalErrorService,
+
         )
     }
 }

@@ -206,7 +206,7 @@ internal class EmbraceAutomaticVerification(
         }
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         foregroundEventTriggered = true
         val activity = activityLifecycleTracker.foregroundActivity
 

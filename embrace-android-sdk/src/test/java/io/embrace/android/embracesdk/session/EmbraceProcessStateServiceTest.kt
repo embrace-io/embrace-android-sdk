@@ -87,7 +87,6 @@ internal class EmbraceProcessStateServiceTest {
         stateService.addListener(listener)
         stateService.onForeground()
         assertTrue(listener.coldStart)
-        assertEquals(listener.startupTime, fakeClock.now())
         assertEquals(listener.timestamp, fakeClock.now())
         assertEquals(1, listener.foregroundCount.get())
     }
@@ -250,7 +249,7 @@ internal class EmbraceProcessStateServiceTest {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+        override fun onForeground(coldStart: Boolean, timestamp: Long) {
             invocations.add(javaClass.simpleName)
         }
     }
@@ -264,7 +263,7 @@ internal class EmbraceProcessStateServiceTest {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+        override fun onForeground(coldStart: Boolean, timestamp: Long) {
             invocations.add(javaClass.simpleName)
         }
     }

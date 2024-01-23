@@ -31,4 +31,8 @@ internal class FakeStorageService : StorageService {
         val cacheDir = cacheDirectory.listFiles(filter) ?: emptyArray()
         return filesDir.toList() + cacheDir.toList()
     }
+
+    override fun logStorageTelemetry() {
+        // no-op
+    }
 }

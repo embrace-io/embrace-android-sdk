@@ -9,6 +9,12 @@ internal interface TelemetryService {
     fun onPublicApiCalled(name: String)
 
     /**
+     * Tracks the storage being used, in bytes. storageTelemetry is a map of storage telemetry names and their values in bytes,
+     * such as: emb.storage.usage -> "1234"
+     */
+    fun logStorageTelemetry(storageTelemetry: Map<String, String>)
+
+    /**
      * Returns a map with every telemetry value. This is called when the session ends.
      * We clear the usage count map so we don't count the same usages in the next session.
      */

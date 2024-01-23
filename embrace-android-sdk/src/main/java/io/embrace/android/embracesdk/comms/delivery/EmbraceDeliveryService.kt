@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.compression.Compressor
+import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -23,7 +23,6 @@ internal class EmbraceDeliveryService(
     private val gatingService: GatingService,
     private val backgroundWorker: BackgroundWorker,
     private val serializer: EmbraceSerializer,
-    private val compressor: Compressor,
     private val logger: InternalEmbraceLogger
 ) : DeliveryService {
 
@@ -51,7 +50,7 @@ internal class EmbraceDeliveryService(
             val action = cacheManager.loadSessionAsAction(sessionId) ?: { stream ->
                 // fallback if initial caching failed for whatever reason, so we don't drop
                 // the data
-                compressor.compress(stream) {
+                CompressionOutputStream(stream).use {
                     serializer.toJson(sessionMessage, SessionMessage::class.java, it)
                 }
             }

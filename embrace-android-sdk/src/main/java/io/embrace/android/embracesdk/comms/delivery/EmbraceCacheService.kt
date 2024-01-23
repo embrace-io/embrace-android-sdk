@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.comms.api.SerializationAction
-import io.embrace.android.embracesdk.internal.compression.Compressor
+import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -15,7 +15,6 @@ import java.io.FileNotFoundException
 internal class EmbraceCacheService(
     private val storageService: StorageService,
     private val serializer: EmbraceSerializer,
-    private val compressor: Compressor,
     private val logger: InternalEmbraceLogger
 ) : CacheService {
 
@@ -70,15 +69,9 @@ internal class EmbraceCacheService(
         return { stream ->
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
-                if (compressor.isCompressed(file)) {
+                CompressionOutputStream(stream).use {
                     file.inputStream().buffered().use { input ->
-                        input.copyTo(stream)
-                    }
-                } else {
-                    compressor.compress(stream) {
-                        file.inputStream().buffered().use { input ->
-                            input.copyTo(it)
-                        }
+                        input.copyTo(it)
                     }
                 }
             } catch (ex: FileNotFoundException) {

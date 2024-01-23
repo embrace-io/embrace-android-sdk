@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.internal.compression.GzipCompressor
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -32,7 +31,6 @@ internal class EmbraceCacheServiceTest {
     private lateinit var storageManager: FakeStorageService
 
     private val serializer = EmbraceSerializer()
-    private val compressor = GzipCompressor(InternalEmbraceLogger())
 
     @Before
     fun setUp() {
@@ -40,7 +38,6 @@ internal class EmbraceCacheServiceTest {
         service = EmbraceCacheService(
             storageManager,
             serializer,
-            compressor,
             InternalEmbraceLogger()
         )
 
@@ -136,11 +133,13 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test loadPayload with non-existent file returns null`() {
+    fun `test loadPayload with non-existent file returns empty string in the output stream`() {
         val action = service.loadPayload("some_file.jpeg")
         val stream = ByteArrayOutputStream()
         action(stream)
-        assertEquals("", String(stream.toByteArray()))
+        println(stream.toByteArray())
+        val uncompressed = String(GZIPInputStream(stream.toByteArray().inputStream()).readBytes())
+        assertEquals("", uncompressed)
     }
 
     @Test

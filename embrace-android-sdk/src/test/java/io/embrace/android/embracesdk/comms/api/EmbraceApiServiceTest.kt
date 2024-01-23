@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
-import io.embrace.android.embracesdk.internal.compression.GzipCompressor
+import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -40,7 +40,6 @@ import java.util.concurrent.ScheduledExecutorService
 internal class EmbraceApiServiceTest {
 
     private val serializer = EmbraceSerializer()
-    private val compressor = GzipCompressor(logger = InternalEmbraceLogger())
 
     private lateinit var apiUrlBuilder: ApiUrlBuilder
     private lateinit var fakeApiClient: FakeApiClient
@@ -476,7 +475,7 @@ internal class EmbraceApiServiceTest {
 
     private inline fun <reified T> getExpectedPayloadSerialized(payload: T): ByteArray {
         val os = ByteArrayOutputStream()
-        compressor.compress(os) {
+        CompressionOutputStream(os).use {
             serializer.toJson(payload, T::class.java, it)
         }
         return os.toByteArray()
@@ -515,7 +514,6 @@ internal class EmbraceApiServiceTest {
         apiService = EmbraceApiService(
             apiClient = fakeApiClient,
             serializer = serializer,
-            compressor = GzipCompressor(logger = InternalEmbraceLogger()),
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = InternalEmbraceLogger(),
             backgroundWorker = BackgroundWorker(testScheduledExecutor),

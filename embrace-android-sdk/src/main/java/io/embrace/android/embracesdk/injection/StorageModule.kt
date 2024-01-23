@@ -41,7 +41,6 @@ internal class StorageModuleImpl(
         EmbraceCacheService(
             storageService,
             coreModule.jsonSerializer,
-            coreModule.compressor,
             coreModule.logger
         )
     }

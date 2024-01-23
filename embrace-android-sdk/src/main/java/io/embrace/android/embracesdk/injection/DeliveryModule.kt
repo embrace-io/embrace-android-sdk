@@ -23,7 +23,6 @@ internal class DeliveryModuleImpl(
             essentialServiceModule.gatingService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.jsonSerializer,
-            coreModule.compressor,
             coreModule.logger
         )
     }

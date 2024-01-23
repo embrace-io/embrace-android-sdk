@@ -6,8 +6,6 @@ import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.internal.compression.Compressor
-import io.embrace.android.embracesdk.internal.compression.GzipCompressor
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -50,11 +48,6 @@ internal interface CoreModule {
     val jsonSerializer: EmbraceSerializer
 
     /**
-     * Returns the compressor used to compress data
-     */
-    val compressor: Compressor
-
-    /**
      * Returns an service to retrieve Android resources
      */
     val resources: AndroidResourcesService
@@ -87,10 +80,6 @@ internal class CoreModuleImpl(
 
     override val jsonSerializer: EmbraceSerializer by singleton {
         EmbraceSerializer()
-    }
-
-    override val compressor: Compressor by singleton {
-        GzipCompressor(logger)
     }
 
     override val resources: AndroidResourcesService by singleton {

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.compression.Compressor
+import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -21,7 +21,6 @@ import java.util.concurrent.Future
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: EmbraceSerializer,
-    private val compressor: Compressor,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
     private val backgroundWorker: BackgroundWorker,
@@ -168,7 +167,7 @@ internal class EmbraceApiService(
         logger.logDeveloper(TAG, "Post event")
 
         val action: SerializationAction = { stream ->
-            compressor.compress(stream) {
+            CompressionOutputStream(stream).use {
                 serializer.toJson(payload, T::class.java, it)
             }
         }

@@ -1,4 +1,4 @@
-name: Release2
+name: Release
 
 env:
   SONATYPE_USERNAME: embrace-io

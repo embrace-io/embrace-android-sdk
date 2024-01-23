@@ -7,6 +7,7 @@ internal class FakeSessionService : SessionService {
     val startTimestamps = mutableListOf<Long>()
     val endTimestamps = mutableListOf<Long>()
     var manualEndCount = 0
+    var manualStartCount = 0
 
     override fun startSessionWithState(coldStart: Boolean, timestamp: Long) {
         startTimestamps.add(timestamp)
@@ -24,5 +25,9 @@ internal class FakeSessionService : SessionService {
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         manualEndCount++
+    }
+
+    override fun startSessionWithManual() {
+        manualStartCount++
     }
 }

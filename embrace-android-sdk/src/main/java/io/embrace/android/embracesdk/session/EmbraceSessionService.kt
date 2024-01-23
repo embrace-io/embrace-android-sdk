@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
@@ -29,8 +28,6 @@ internal class EmbraceSessionService(
     private val metadataService: MetadataService,
     private val breadcrumbService: BreadcrumbService,
     private val ndkService: NdkService?,
-    private val internalErrorService: InternalErrorService,
-    private val memoryCleanerService: MemoryCleanerService,
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val sessionProperties: EmbraceSessionProperties,
@@ -97,6 +94,12 @@ internal class EmbraceSessionService(
 
         // Ends active session.
         endSession(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
+    }
+
+    override fun startSessionWithManual() {
+        if (configService.sessionBehavior.isSessionControlEnabled()) {
+            return
+        }
 
         // Starts a new session.
         startSession(
@@ -128,14 +131,11 @@ internal class EmbraceSessionService(
             )
 
             // Record the connection type at the start of the session.
-            networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             metadataService.setActiveSessionId(session.sessionId, true)
-
-            logger.logDebug("Start session sent to delivery service.")
-
+            ndkService?.updateSessionId(session.sessionId)
+            networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
             startPeriodicCaching { Systrace.trace("snapshot-session") { onPeriodicCacheActiveSession() } }
-            ndkService?.updateSessionId(session.sessionId)
         }
     }
 
@@ -160,7 +160,6 @@ internal class EmbraceSessionService(
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
-            memoryCleanerService.cleanServicesCollections(internalErrorService)
             metadataService.removeActiveSessionId(session.sessionId)
             logger.logDebug("Services collections successfully cleaned.")
             sessionProperties.clearTemporary()

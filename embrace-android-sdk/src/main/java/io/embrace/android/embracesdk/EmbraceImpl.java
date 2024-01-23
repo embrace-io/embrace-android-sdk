@@ -65,7 +65,6 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture;
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterfaceKt;
-import io.embrace.android.embracesdk.internal.MessageType;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -668,9 +667,7 @@ final class EmbraceImpl {
 
         final long endTime = sdkClock.now();
         started.set(true);
-
-        sessionModule.getSessionService().setSdkStartupInfo(startTime, endTime);
-        internalEmbraceLogger.logDeveloper("Embrace", "Startup duration: " + (endTime - startTime) + " millis");
+        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
 
         // Sets up the registered services. This method is called after the SDK has been started and
         // no more services can be added to the registry. It sets listeners for any services that were

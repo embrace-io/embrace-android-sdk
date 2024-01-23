@@ -21,6 +21,4 @@ internal interface SessionService {
      * Ends a session manually. If [clearUserInfo] is true, the user info will be cleared.
      */
     fun endSessionWithManual(clearUserInfo: Boolean)
-
-    fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long)
 }

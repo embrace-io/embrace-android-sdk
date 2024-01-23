@@ -24,7 +24,6 @@ internal sealed class FinalEnvelopeParams(
     abstract val terminationTime: Long?
     abstract val receivedTermination: Boolean?
     abstract val endTimeVal: Long?
-    abstract val sdkStartDuration: Long?
     abstract fun getStartupEventInfo(eventService: EventService): StartupEventInfo?
 
     /**
@@ -45,7 +44,6 @@ internal sealed class FinalEnvelopeParams(
         override val terminationTime: Long? = null
         override val receivedTermination: Boolean? = null
         override val endTimeVal: Long? = null
-        override val sdkStartDuration: Long? = null
         override fun getStartupEventInfo(eventService: EventService): StartupEventInfo? = null
     }
 
@@ -57,8 +55,7 @@ internal sealed class FinalEnvelopeParams(
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
         crashId: String? = null,
-        val endType: SessionSnapshotType,
-        sdkStartupDuration: Long,
+        val endType: SessionSnapshotType
     ) : FinalEnvelopeParams(
         initial,
         endTime,
@@ -81,11 +78,6 @@ internal sealed class FinalEnvelopeParams(
         override val endTimeVal: Long? = when {
             endType.forceQuit -> null
             else -> endTime
-        }
-
-        override val sdkStartDuration: Long? = when (initial.isColdStart) {
-            true -> sdkStartupDuration
-            false -> null
         }
 
         override fun getStartupEventInfo(eventService: EventService) = when {

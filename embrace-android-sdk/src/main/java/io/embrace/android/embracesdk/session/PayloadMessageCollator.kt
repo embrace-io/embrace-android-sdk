@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
@@ -37,7 +38,8 @@ internal class PayloadMessageCollator(
     private val preferencesService: PreferencesService,
     private val spansService: SpansService,
     private val clock: Clock,
-    private val sessionPropertiesService: SessionPropertiesService
+    private val sessionPropertiesService: SessionPropertiesService,
+    private val startupService: StartupService
 ) {
 
     /**
@@ -66,6 +68,7 @@ internal class PayloadMessageCollator(
     ): SessionMessage = with(params) {
         val base = buildFinalBackgroundActivity(params)
         val startupInfo = getStartupEventInfo(eventService)
+
         val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
             false -> null
             else -> BetaFeatures(
@@ -86,7 +89,7 @@ internal class PayloadMessageCollator(
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
-            sdkStartupDuration = sdkStartDuration,
+            sdkStartupDuration = startupService.getSdkStartupInfo(initial.isColdStart),
             startupDuration = startupInfo?.duration,
             startupThreshold = startupInfo?.threshold,
             betaFeatures = betaFeatures,
@@ -161,7 +164,6 @@ internal class PayloadMessageCollator(
                     }
                     spansService.flushSpans(appTerminationCause)
                 }
-
                 else -> spansService.completedSpans()
             }
         }

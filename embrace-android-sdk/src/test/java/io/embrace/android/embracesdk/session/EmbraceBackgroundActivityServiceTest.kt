@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -378,7 +379,8 @@ internal class EmbraceBackgroundActivityServiceTest {
             preferencesService,
             spansService,
             clock,
-            FakeSessionPropertiesService()
+            FakeSessionPropertiesService(),
+            FakeStartupService()
         )
         return EmbraceBackgroundActivityService(
             metadataService,

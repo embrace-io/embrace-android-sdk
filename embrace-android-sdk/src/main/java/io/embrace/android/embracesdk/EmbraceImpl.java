@@ -90,6 +90,7 @@ import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
 import io.embrace.android.embracesdk.session.BackgroundActivityService;
 import io.embrace.android.embracesdk.session.SessionService;
+import io.embrace.android.embracesdk.session.id.SessionIdTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator;
@@ -208,6 +209,9 @@ final class EmbraceImpl {
 
     @Nullable
     private volatile MetadataService metadataService;
+
+    @Nullable
+    private volatile SessionIdTracker sessionIdTracker;
 
     @Nullable
     private volatile ProcessStateService processStateService;
@@ -420,6 +424,7 @@ final class EmbraceImpl {
         processStateService = nonNullProcessStateService;
         final MetadataService nonNullMetadataService = essentialServiceModule.getMetadataService();
         metadataService = nonNullMetadataService;
+        sessionIdTracker = essentialServiceModule.getSessionIdTracker();
         final ConfigService nonNullConfigService = essentialServiceModule.getConfigService();
         configService = nonNullConfigService;
 
@@ -1370,9 +1375,9 @@ final class EmbraceImpl {
      */
     @Nullable
     String getCurrentSessionId() {
-        MetadataService localMetaDataService = metadataService;
-        if (localMetaDataService != null && checkSdkStarted("get_current_session_id", false)) {
-            String sessionId = localMetaDataService.getActiveSessionId();
+        SessionIdTracker localSessionIdTracker = sessionIdTracker;
+        if (localSessionIdTracker != null && checkSdkStarted("get_current_session_id", false)) {
+            String sessionId = localSessionIdTracker.getActiveSessionId();
             if (sessionId != null) {
                 return sessionId;
             } else {

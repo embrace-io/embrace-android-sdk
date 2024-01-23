@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.payload.DiskUsage
  * Fake implementation of [MetadataService] that represents an Android device. A [UnsupportedOperationException] will be thrown
  * if you attempt set info about Flutter/Unity/ReactNative on this fake, which is decided for an Android device.
  */
-internal class FakeAndroidMetadataService(sessionId: String? = null) : MetadataService {
+internal class FakeMetadataService(sessionId: String? = null) : MetadataService {
     companion object {
         private val androidAppInfo = AppInfo(
             appVersion = "1.0.0",
@@ -93,19 +93,6 @@ internal class FakeAndroidMetadataService(sessionId: String? = null) : MetadataS
     override fun isAppUpdated(): Boolean = appUpdated
 
     override fun isOsUpdated(): Boolean = osUpdated
-
-    override val activeSessionId: String?
-        get() = appSessionId
-
-    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
-        appSessionId = sessionId
-    }
-
-    override fun removeActiveSessionId(sessionId: String?) {
-        if (appSessionId == sessionId) {
-            appSessionId = null
-        }
-    }
 
     override fun getAppState(): String = appState
 

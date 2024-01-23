@@ -45,6 +45,7 @@ internal class CrashModuleImpl(
             sessionModule.sessionService,
             sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
             dataContainerModule.eventService,

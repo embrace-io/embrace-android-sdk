@@ -7,9 +7,10 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -141,6 +142,8 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
+        val metadataService = FakeMetadataService()
+        val sessionIdTracker = FakeSessionIdTracker()
         EmbraceApplicationExitInfoService(
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             FakeConfigService(
@@ -153,7 +156,8 @@ internal class AeiNdkCrashProtobufSendTest {
             activityManager,
             FakePreferenceService(),
             deliveryService,
-            FakeAndroidMetadataService(),
+            metadataService,
+            sessionIdTracker,
             FakeUserService(),
             VersionChecker { ndkTraceFile }
         )

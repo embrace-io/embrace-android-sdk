@@ -35,6 +35,8 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
@@ -63,6 +65,7 @@ internal interface EssentialServiceModule {
     val deviceArchitecture: DeviceArchitecture
     val networkConnectivityService: NetworkConnectivityService
     val pendingApiCallsSender: PendingApiCallsSender
+    val sessionIdTracker: SessionIdTracker
 }
 
 internal class EssentialServiceModuleImpl(
@@ -275,6 +278,10 @@ internal class EssentialServiceModuleImpl(
         ApiClientImpl(
             coreModule.logger
         )
+    }
+
+    override val sessionIdTracker: SessionIdTracker by singleton {
+        SessionIdTrackerImpl()
     }
 }
 

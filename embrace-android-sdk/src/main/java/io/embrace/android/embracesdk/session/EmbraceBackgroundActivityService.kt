@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -10,13 +9,14 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 internal class EmbraceBackgroundActivityService(
-    private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     private val configService: ConfigService,
     private val ndkService: NdkService,
@@ -134,7 +134,7 @@ internal class EmbraceBackgroundActivityService(
     private fun startCapture(params: InitialEnvelopeParams.BackgroundActivityParams) {
         val activity = payloadMessageCollator.buildInitialSession(params)
         backgroundActivity = activity
-        metadataService.setActiveSessionId(activity.sessionId, false)
+        sessionIdTracker.setActiveSessionId(activity.sessionId, false)
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
             ndkService.updateSessionId(activity.sessionId)
         }

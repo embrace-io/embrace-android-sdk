@@ -10,10 +10,11 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
@@ -48,7 +49,8 @@ internal class EmbraceLogMessageServiceTest {
 
     companion object {
         private lateinit var logMessageService: EmbraceLogMessageService
-        private lateinit var metadataService: FakeAndroidMetadataService
+        private lateinit var metadataService: FakeMetadataService
+        private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var deliveryService: FakeDeliveryService
         private lateinit var userService: UserService
         private lateinit var configService: ConfigService
@@ -62,7 +64,8 @@ internal class EmbraceLogMessageServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            metadataService = FakeAndroidMetadataService()
+            metadataService = FakeMetadataService()
+            sessionIdTracker = FakeSessionIdTracker()
             userService = FakeUserService()
             logcat = InternalEmbraceLogger()
             executor = Executors.newSingleThreadExecutor()
@@ -105,7 +108,7 @@ internal class EmbraceLogMessageServiceTest {
             }
         )
         gatingService = EmbraceGatingService(configService)
-        metadataService.setActiveSessionId("session-123", true)
+        sessionIdTracker.setActiveSessionId("session-123", true)
         metadataService.setAppForeground()
         metadataService.setAppId("appId")
         sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
@@ -114,6 +117,7 @@ internal class EmbraceLogMessageServiceTest {
     private fun getLogMessageService(): EmbraceLogMessageService {
         return EmbraceLogMessageService(
             metadataService,
+            sessionIdTracker,
             deliveryService,
             userService,
             configService,

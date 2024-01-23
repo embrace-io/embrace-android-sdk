@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -24,7 +24,7 @@ internal class EmbraceSessionService(
     private val configService: ConfigService,
     private val userService: UserService,
     private val networkConnectivityService: NetworkConnectivityService,
-    private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val breadcrumbService: BreadcrumbService,
     private val ndkService: NdkService?,
     private val deliveryService: DeliveryService,
@@ -148,7 +148,7 @@ internal class EmbraceSessionService(
             )
 
             // Record the connection type at the start of the session.
-            metadataService.setActiveSessionId(session.sessionId, true)
+            sessionIdTracker.setActiveSessionId(session.sessionId, true)
             ndkService?.updateSessionId(session.sessionId)
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
@@ -177,7 +177,7 @@ internal class EmbraceSessionService(
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
-            metadataService.removeActiveSessionId(session.sessionId)
+            sessionIdTracker.setActiveSessionId(null, false)
             deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
 
             if (endType == LifeEventType.MANUAL && clearUserInfo) {

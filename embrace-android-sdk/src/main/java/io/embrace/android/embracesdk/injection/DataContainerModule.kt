@@ -49,6 +49,7 @@ internal class DataContainerModuleImpl(
                 androidServicesModule.preferencesService,
                 deliveryModule.deliveryService,
                 essentialServiceModule.metadataService,
+                essentialServiceModule.sessionIdTracker,
                 essentialServiceModule.userService
             )
         } else {
@@ -77,6 +78,7 @@ internal class DataContainerModuleImpl(
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             performanceInfoService,
             essentialServiceModule.userService,
             sessionProperties,

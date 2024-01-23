@@ -82,9 +82,6 @@ internal class EmbraceMetadataService private constructor(
     private var reactNativeBundleId: Lazy<String?>
 
     @Volatile
-    private var sessionId: String? = null
-
-    @Volatile
     private var diskUsage: DiskUsage? = null
 
     @Volatile
@@ -358,43 +355,6 @@ internal class EmbraceMetadataService private constructor(
     override fun isAppUpdated(): Boolean = appUpdated.value
 
     override fun isOsUpdated(): Boolean = osUpdated.value
-
-    override val activeSessionId: String?
-        get() = sessionId
-
-    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
-        logDeveloper("EmbraceMetadataService", "Active session Id: $sessionId")
-        this.sessionId = sessionId
-
-        if (isSession) {
-            setSessionIdToProcessStateSummary(this.sessionId)
-        }
-    }
-
-    override fun removeActiveSessionId(sessionId: String?) {
-        if (this.sessionId != null && this.sessionId == sessionId) {
-            logDeveloper("EmbraceMetadataService", "Nulling active session Id")
-            setActiveSessionId(null, false)
-        }
-    }
-
-    /**
-     * On android 11+, we use ActivityManager#setProcessStateSummary to store sessionId
-     * Then, this information will be included in the record of ApplicationExitInfo on the death of the current calling process
-     *
-     * @param sessionId current session id
-     */
-    private fun setSessionIdToProcessStateSummary(sessionId: String?) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (sessionId != null) {
-                try {
-                    activityManager?.setProcessStateSummary(sessionId.toByteArray())
-                } catch (e: Throwable) {
-                    logError("Couldn't set Process State Summary", e)
-                }
-            }
-        }
-    }
 
     override fun getAppState(): String {
         return if (processStateService.isInBackground) {

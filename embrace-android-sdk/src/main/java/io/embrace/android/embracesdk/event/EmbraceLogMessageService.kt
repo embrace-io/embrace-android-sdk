@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Stacktraces
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.sql.Timestamp
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class EmbraceLogMessageService(
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
     private val configService: ConfigService,
@@ -61,6 +63,7 @@ internal class EmbraceLogMessageService(
 
     constructor(
         metadataService: MetadataService,
+        sessionIdTracker: SessionIdTracker,
         deliveryService: DeliveryService,
         userService: UserService,
         configService: ConfigService,
@@ -72,6 +75,7 @@ internal class EmbraceLogMessageService(
         backgroundWorker: BackgroundWorker
     ) : this(
         metadataService,
+        sessionIdTracker,
         deliveryService,
         userService,
         configService,
@@ -95,7 +99,7 @@ internal class EmbraceLogMessageService(
                 synchronized(lock) {
                     val id = getEmbUuid()
                     networkLogIds[networkEventTimestamp] = id
-                    val optionalSessionId = metadataService.activeSessionId
+                    val sessionId = sessionIdTracker.getActiveSessionId()
                     val networkEvent = NetworkEvent(
                         metadataService.getAppId(),
                         metadataService.getAppInfo(),
@@ -104,7 +108,7 @@ internal class EmbraceLogMessageService(
                         networkCaptureCall,
                         Timestamp(networkEventTimestamp).toString(),
                         networkConnectivityService.ipAddress,
-                        optionalSessionId
+                        sessionId
                     )
                     logDeveloper("EmbraceRemoteLogger", "Attempt to Send NETWORK Event")
                     deliveryService.sendNetworkCall(networkEvent)
@@ -234,12 +238,7 @@ internal class EmbraceLogMessageService(
                 }
 
                 // TODO validate event metadata here!
-                var sessionId: String? = null
-                val optionalSessionId = metadataService.activeSessionId
-                if (optionalSessionId != null) {
-                    logDeveloper("EmbraceRemoteLogger", "Adding SessionId to event")
-                    sessionId = optionalSessionId
-                }
+                val sessionId = sessionIdTracker.getActiveSessionId()
                 val event = Event(
                     processedMessage,
                     id,

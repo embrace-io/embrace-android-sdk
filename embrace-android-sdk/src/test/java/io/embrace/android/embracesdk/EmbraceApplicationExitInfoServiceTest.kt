@@ -6,9 +6,10 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.aei.EmbraceApplicationExitInfoService
 import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -49,7 +50,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
     private val deliveryService = FakeDeliveryService()
     private val preferenceService = FakePreferenceService()
-    private val metadataService = FakeAndroidMetadataService()
+    private val metadataService = FakeMetadataService()
+    private val sessionIdTracker = FakeSessionIdTracker()
     private val userService = FakeUserService()
 
     private val mockActivityManager: ActivityManager = mockk {
@@ -85,6 +87,7 @@ internal class EmbraceApplicationExitInfoServiceTest {
             preferenceService,
             deliveryService,
             metadataService,
+            sessionIdTracker,
             userService
         )
     }

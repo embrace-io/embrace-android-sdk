@@ -5,11 +5,12 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.event.EmbraceLogMessageService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.injection.CustomerLogModule
@@ -22,7 +23,8 @@ internal class FakeCustomerLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
 
     override val logMessageService: LogMessageService = EmbraceLogMessageService(
-        FakeAndroidMetadataService(),
+        FakeMetadataService(),
+        FakeSessionIdTracker(),
         FakeDeliveryService(),
         FakeUserService(),
         FakeConfigService(),

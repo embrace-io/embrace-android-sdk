@@ -5,12 +5,13 @@ import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandl
 import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
@@ -40,7 +41,8 @@ internal class EmbraceCrashServiceTest {
     private lateinit var embraceCrashService: EmbraceCrashService
     private lateinit var sessionService: FakeSessionService
     private lateinit var sessionPropertiesService: SessionPropertiesService
-    private lateinit var metadataService: FakeAndroidMetadataService
+    private lateinit var metadataService: FakeMetadataService
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var userService: FakeUserService
     private lateinit var eventService: FakeEventService
@@ -62,7 +64,8 @@ internal class EmbraceCrashServiceTest {
 
         sessionService = FakeSessionService()
         sessionPropertiesService = FakeSessionPropertiesService()
-        metadataService = FakeAndroidMetadataService()
+        metadataService = FakeMetadataService()
+        sessionIdTracker = FakeSessionIdTracker()
         deliveryService = FakeDeliveryService()
         userService = FakeUserService()
         eventService = FakeEventService()
@@ -95,6 +98,7 @@ internal class EmbraceCrashServiceTest {
             sessionService,
             sessionPropertiesService,
             metadataService,
+            sessionIdTracker,
             deliveryService,
             userService,
             eventService,

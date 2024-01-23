@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -40,6 +41,7 @@ internal class EmbraceEventService(
     deliveryService: DeliveryService,
     private val configService: ConfigService,
     metadataService: MetadataService,
+    sessionIdTracker: SessionIdTracker,
     performanceInfoService: PerformanceInfoService,
     userService: UserService,
     private val sessionProperties: EmbraceSessionProperties,
@@ -71,6 +73,7 @@ internal class EmbraceEventService(
         // Session properties
         eventHandler = EventHandler(
             metadataService,
+            sessionIdTracker,
             configService,
             userService,
             performanceInfoService,

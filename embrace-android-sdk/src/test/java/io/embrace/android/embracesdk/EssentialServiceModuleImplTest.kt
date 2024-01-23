@@ -61,6 +61,7 @@ internal class EssentialServiceModuleImplTest {
         assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)
         assertNotNull(module.sharedObjectLoader)
+        assertNotNull(module.sessionIdTracker)
         assertTrue(module.userService is EmbraceUserService)
         assertTrue(module.configService is EmbraceConfigService)
         assertTrue(module.gatingService is EmbraceGatingService)

@@ -5,10 +5,11 @@ import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -28,7 +29,8 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     companion object {
         private var cfg: RemoteConfig = RemoteConfig()
-        private val metadataService: FakeAndroidMetadataService = FakeAndroidMetadataService()
+        private val metadataService: FakeMetadataService = FakeMetadataService()
+        private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
         private lateinit var logMessageService: FakeLogMessageService
         private val configService: FakeConfigService = FakeConfigService(
             networkBehavior = fakeNetworkBehavior { cfg },
@@ -68,7 +70,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         clearAllMocks()
         preferenceService = FakePreferenceService()
         logMessageService = FakeLogMessageService()
-        metadataService.setActiveSessionId("session-123", true)
+        sessionIdTracker.setActiveSessionId("session-123", true)
     }
 
     @Test
@@ -220,6 +222,7 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     private fun getService() = EmbraceNetworkCaptureService(
         metadataService,
+        sessionIdTracker,
         preferenceService,
         logMessageService,
         configService,

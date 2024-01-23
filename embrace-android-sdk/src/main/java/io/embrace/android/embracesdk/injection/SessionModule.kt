@@ -75,7 +75,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.configService,
             essentialServiceModule.userService,
             essentialServiceModule.networkConnectivityService,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             dataCaptureServiceModule.breadcrumbService,
             ndkService,
             deliveryModule.deliveryService,
@@ -87,7 +87,7 @@ internal class SessionModuleImpl(
 
     override val backgroundActivityService: BackgroundActivityService? by singleton {
         EmbraceBackgroundActivityService(
-            essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
             nativeModule.ndkService,

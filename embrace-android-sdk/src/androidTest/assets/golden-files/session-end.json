@@ -22,7 +22,7 @@
     "tb": [],
     "vb": [
       {
-        "vn": "io.embrace.android.embracesdk.internal.MockActivity",
+        "vn": "io.embrace.android.embracesdk.TestActivity",
         "st": "__EMBRACE_TEST_IGNORE__"
       }
     ],

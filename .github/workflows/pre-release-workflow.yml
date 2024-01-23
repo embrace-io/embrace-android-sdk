@@ -75,7 +75,7 @@ jobs:
           path: embrace-android-sdk/build/reports/tests/
 
       - name: Configure git
-          run: |
+        run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
           git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"

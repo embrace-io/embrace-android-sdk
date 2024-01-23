@@ -62,7 +62,7 @@ internal class EmbraceCacheService(
     /**
      * Provides a function that writes the bytes from a cached file, if it exists, to an
      * output stream and compresses it if it's not already compressed.
-     * We are storing compressed files from version 6.3.0 onwards. In order to avoid loosing
+     * We are storing compressed files from version 6.3.0 onwards. In order to avoid losing
      * payloads from previous versions, we need to check if the file is compressed or not.
      */
     override fun loadPayload(name: String): SerializationAction {

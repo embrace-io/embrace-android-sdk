@@ -15,7 +15,7 @@ internal class SessionOrchestratorImpl(
     private val sessionService: SessionService,
     backgroundActivityServiceImpl: BackgroundActivityService?,
     clock: Clock,
-    configService: ConfigService,
+    private val configService: ConfigService,
     private val memoryCleanerService: MemoryCleanerService,
     private val internalErrorService: InternalErrorService,
     private val sessionProperties: EmbraceSessionProperties
@@ -56,6 +56,9 @@ internal class SessionOrchestratorImpl(
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         if (processStateService.isInBackground) {
+            return
+        }
+        if (configService.sessionBehavior.isSessionControlEnabled()) {
             return
         }
         sessionService.endSessionWithManual(clearUserInfo)

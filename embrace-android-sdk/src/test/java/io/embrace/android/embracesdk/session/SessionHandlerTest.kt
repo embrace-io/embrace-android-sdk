@@ -181,7 +181,6 @@ internal class SessionHandlerTest {
         )
         sessionService = EmbraceSessionService(
             logger,
-            configService,
             userService,
             networkConnectivityService,
             sessionIdTracker,

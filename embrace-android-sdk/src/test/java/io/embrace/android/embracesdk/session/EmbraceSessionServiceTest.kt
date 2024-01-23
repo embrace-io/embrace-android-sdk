@@ -133,7 +133,6 @@ internal class EmbraceSessionServiceTest {
 
         service = EmbraceSessionService(
             InternalEmbraceLogger(),
-            configService,
             FakeUserService(),
             FakeNetworkConnectivityService(),
             FakeSessionIdTracker(),

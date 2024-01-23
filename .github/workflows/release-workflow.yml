@@ -28,55 +28,6 @@ jobs:
 #        jdk-version: ["11"]
 #        ndk-version: ["21.4.7075529"]
     steps:
-#      - name: Decode Keystore
-#        run: |
-#          mkdir "$RUNNER_TEMP"/keystore
-#          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
-#          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
-#
-#      - name: Checkout Branch
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#          token: ${{ secrets.CD_GITHUB_TOKEN }}
-#
-#      - uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.gradle/caches
-#            ~/.gradle/wrapper
-#            ~/.m2/repository
-#            ~/.sonar/cache
-#          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-#          restore-keys: |
-#            ${{ runner.os }}-gradle
-#
-#      - name: Install JDK ${{ matrix.jdk-version }}
-#        uses: actions/setup-java@v3
-#        with:
-#          distribution: 'adopt'
-#          java-version: ${{ matrix.jdk-version }}
-#
-#      - name: Setup NDK ${{ matrix.ndk-version }}
-#        run: |
-#           export ANDROID_ROOT=/usr/local/lib/android
-#           export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-#           export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-#           ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
-#
-#      - name: Validate Gradle wrapper
-#        uses: gradle/wrapper-validation-action@v1
-#
-#      # Build the entire project, run the tests, and run all static analysis
-#      - name: Gradle Build
-#        run: ./gradlew assembleRelease check --stacktrace
-#
-#      - name: Archive Test Results
-#        if: ${{ always() }}
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: android-sdk-test-results
-#          path: embrace-android-sdk/build/reports/tests/
       - name: Gradlew Release
         run: |
 #          git config --global user.name 'embrace-ci[bot]'

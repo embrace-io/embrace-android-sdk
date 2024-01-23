@@ -31,7 +31,7 @@ jobs:
           echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
 
       - name: Checkout Branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.CD_GITHUB_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
           ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Checkout Swazzler
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
           ref: master

@@ -8,6 +8,7 @@ import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -175,6 +176,24 @@ internal class InternalTracerTest {
         }
     }
 
+    @Test
+    fun `trying to work with untracked spans returns expected results`() {
+        assertNull(internalTracer.startSpan(name = "test-span", parentSpanId = NON_EXISTENT_SPAN_ID))
+        assertFalse(internalTracer.stopSpan(spanId = NON_EXISTENT_SPAN_ID))
+        assertFalse(internalTracer.addSpanAttribute(spanId = NON_EXISTENT_SPAN_ID, key = "key", value = "value"))
+        assertFalse(internalTracer.addSpanEvent(spanId = NON_EXISTENT_SPAN_ID, name = "even1"))
+        assertEquals(2, internalTracer.recordSpan(name = "test-span", parentSpanId = NON_EXISTENT_SPAN_ID) { 1 + 1 })
+        assertNull(spansService.getSpan(spanId = NON_EXISTENT_SPAN_ID))
+        assertFalse(
+            internalTracer.recordCompletedSpan(
+                name = "test-span",
+                parentSpanId = NON_EXISTENT_SPAN_ID,
+                startTimeNanos = 0L,
+                endTimeNanos = 10L
+            )
+        )
+    }
+
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {
         val currentSpans = spansService.completedSpans()
         assertEquals(1, currentSpans.size)
@@ -188,5 +207,9 @@ internal class InternalTracerTest {
         assertEquals(errorCode?.name, currentSpan.attributes[errorCode?.keyName()])
         assertFalse(currentSpan.isPrivate())
         return currentSpan
+    }
+
+    companion object {
+        private const val NON_EXISTENT_SPAN_ID = "9f70d2bc3b88f393"
     }
 }

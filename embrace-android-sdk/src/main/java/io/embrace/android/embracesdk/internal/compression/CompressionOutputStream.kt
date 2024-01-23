@@ -31,6 +31,11 @@ internal class CompressionOutputStream(
         impl.close()
     }
 
+    override fun flush() {
+        drainBufferIfNeeded()
+        impl.flush()
+    }
+
     /**
      * If the buffer is not drained, it means that we have not yet written the first two bytes
      * of the file, which are the gzip magic number. We need to write them before writing the rest

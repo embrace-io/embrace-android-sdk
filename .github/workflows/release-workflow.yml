@@ -12,9 +12,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      current_version:
-        description: 'Version to release'
-        required: true
       next_version:
         description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
@@ -27,69 +24,19 @@ jobs:
         jdk-version: ["11"]
         ndk-version: ["21.4.7075529"]
     steps:
-      - name: Decode Keystore
-        run: |
-          mkdir "$RUNNER_TEMP"/keystore
-          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
-          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
-
-      - name: Checkout Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
-
-      - name: Install JDK ${{ matrix.jdk-version }}
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'adopt'
-          java-version: ${{ matrix.jdk-version }}
-
-      - name: Setup NDK ${{ matrix.ndk-version }}
-        run: |
-           export ANDROID_ROOT=/usr/local/lib/android
-           export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-           export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-           ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
-
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      # Build the entire project, run the tests, and run all static analysis
-      - name: Gradle Build
-        run: ./gradlew assembleRelease check --stacktrace
-
-      - name: Archive Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: android-sdk-test-results
-          path: embrace-android-sdk/build/reports/tests/
-
       - name: Gradlew Release
+        run: |
+          ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+#          TODO: check if swazzler gets released too
+
+      - name: Generate Documentation
+        run: ./gradlew dokkaHtml
+
+      - name: Configure git
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
           git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.current_version }}"
-          git push
-          ./gradlew clean publishReleasePublicationToSonatypeRepository -Dorg.gradle.parallel=false --stacktrace
-
-      - name: Generate Documentation
-        run: ./gradlew dokkaHtml
 
       - name: Publish gh-pages
         run: |
@@ -118,19 +65,6 @@ jobs:
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
           git push
 
-      - name: Checkout Swazzler
-        uses: actions/checkout@v3
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: master
-          path: ./embrace-swazzler3
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - name: Swazzler Release
-        run: |
-          cd ./embrace-swazzler3
-          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.current_version }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
-
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
@@ -138,17 +72,3 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
-          
-#  measure-sdk-size:
-#    uses: embrace-io/android-size-measure/.github/workflows/analyze-sdk-size.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}
-#
-#  measure-startup-time:
-#    uses: embrace-io/android-sdk-benchmark/.github/workflows/macrobenchmark.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}

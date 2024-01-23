@@ -80,16 +80,6 @@ publishing {
             name = "Snapshot"
             url = "https://repo.embrace.io/repository/android-testing"
         }
-
-        // sonatype repo that provides path to publishing on maven central
-        maven {
-            credentials {
-                username System.getenv("SONATYPE_USERNAME") ?: localProperties.ossrhUsername
-                password System.getenv("SONATYPE_PASSWORD") ?: localProperties.ossrhPassword
-            }
-            name = "sonatype"
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
-        }
     }
 }
 

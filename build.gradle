@@ -18,6 +18,30 @@ buildscript {
     }
 }
 
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+}
+
+group = "io.embrace"
+version = project.properties.version
+
+// load credentials from local properties if present
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            username = System.getenv("SONATYPE_USERNAME") ?: localProperties.ossrhUsername
+            password = System.getenv("SONATYPE_PASSWORD") ?: localProperties.ossrhPassword
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+        }
+    }
+}
+
 allprojects {
     repositories {
         google()

@@ -65,19 +65,6 @@ jobs:
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
           git push
 
-#      - name: Checkout Swazzler
-#        uses: actions/checkout@v3
-#        with:
-#          repository: embrace-io/embrace-swazzler3
-#          ref: master
-#          path: ./embrace-swazzler3
-#          token: ${{ secrets.CD_GITHUB_TOKEN }}
-#
-#      - name: Swazzler Release
-#        run: |
-#          cd ./embrace-swazzler3
-#          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.current_version }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
-
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.

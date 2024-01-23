@@ -87,7 +87,7 @@ jobs:
 #          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.current_version }}"
+          git commit -m "CI/CD:change version to be released: ${{ github.event.inputs.current_version }}"
           git push
           ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 

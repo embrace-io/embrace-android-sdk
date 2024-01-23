@@ -12,10 +12,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-#      NTH: show current version (read-only) with current version that was pre-released
-#      current_version:
-#        description: 'Version to release'
-#        required: true
       next_version:
         description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true

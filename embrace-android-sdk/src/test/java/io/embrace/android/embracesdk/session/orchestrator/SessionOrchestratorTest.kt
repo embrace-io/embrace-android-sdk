@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -26,6 +28,7 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var internalErrorService: FakeInternalErrorService
+    private lateinit var sessionProperties: EmbraceSessionProperties
 
     @Before
     fun setUp() {
@@ -36,6 +39,7 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
         memoryCleanerService = FakeMemoryCleanerService()
         internalErrorService = FakeInternalErrorService()
+        sessionProperties = fakeEmbraceSessionProperties()
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
@@ -43,8 +47,10 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             memoryCleanerService,
-            internalErrorService
+            internalErrorService,
+            sessionProperties
         )
+        sessionProperties.add("key", "value", false)
     }
 
     @Test
@@ -109,6 +115,11 @@ internal class SessionOrchestratorTest {
 
     private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
         assertEquals(expectedCount, memoryCleanerService.callCount)
+        val expectedPropCount = when (expectedCount) {
+            0 -> 1
+            else -> 0
+        }
+        assertEquals(expectedPropCount, sessionProperties.get().size)
     }
 
     private fun createOrchestratorInBackground() {
@@ -123,7 +134,8 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             memoryCleanerService,
-            internalErrorService
+            internalErrorService,
+            sessionProperties
         )
     }
 }

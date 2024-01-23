@@ -186,7 +186,6 @@ internal class SessionHandlerTest {
             ndkService,
             deliveryService,
             payloadMessageCollator,
-            sessionProperties,
             clock,
             sessionPeriodicCacheScheduledWorker = sessionPeriodicCacheExecutorService
         )

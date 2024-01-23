@@ -96,8 +96,7 @@ internal class PayloadMessageCollatorTest {
                 startMsg,
                 15000000000,
                 LifeEventType.BKGND_STATE,
-                "crashId",
-                isCacheAttempt = false
+                "crashId"
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
@@ -122,11 +121,9 @@ internal class PayloadMessageCollatorTest {
                 15000000000,
                 LifeEventType.STATE,
                 "crashId",
-                true
-            ),
-            endedCleanly = true,
-            forceQuit = false,
-            sdkStartupDuration = 10
+                SessionSnapshotType.NORMAL_END,
+                5
+            )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
     }

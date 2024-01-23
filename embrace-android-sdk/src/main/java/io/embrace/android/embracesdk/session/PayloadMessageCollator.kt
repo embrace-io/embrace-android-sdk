@@ -61,46 +61,11 @@ internal class PayloadMessageCollator(
      * Builds a fully populated session message. This can be sent to the backend (or stored
      * on disk).
      */
-    @Suppress("ComplexMethod")
     internal fun buildFinalSessionMessage(
-        params: FinalEnvelopeParams,
-        endedCleanly: Boolean,
-        forceQuit: Boolean,
-        sdkStartupDuration: Long
-    ): SessionMessage = with(params) { // TODO: future incorporate these fields into params class
-        val startTime: Long = initial.startTime
-
-        val terminationTime = when {
-            forceQuit -> endTime
-            else -> null
-        }
-        val receivedTermination = when {
-            forceQuit -> true
-            else -> null
-        }
-        // We don't set end time for force-quit, as the API interprets this to be a clean
-        // termination
-        val endTimeVal = when {
-            forceQuit -> null
-            else -> endTime
-        }
-
-        val sdkStartDuration = when (initial.isColdStart) {
-            true -> sdkStartupDuration
-            false -> null
-        }
-
-        val startupEventInfo = captureDataSafely(eventService::getStartupMomentInfo)
-
-        val startupDuration = when (initial.isColdStart && startupEventInfo != null) {
-            true -> startupEventInfo.duration
-            false -> null
-        }
-        val startupThreshold = when (initial.isColdStart && startupEventInfo != null) {
-            true -> startupEventInfo.threshold
-            false -> null
-        }
-
+        params: FinalEnvelopeParams.SessionParams
+    ): SessionMessage = with(params) {
+        val base = buildFinalBackgroundActivity(params)
+        val startupInfo = getStartupEventInfo(eventService)
         val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
             false -> null
             else -> BetaFeatures(
@@ -108,13 +73,11 @@ internal class PayloadMessageCollator(
             )
         }
 
-        val base = buildFinalBackgroundActivity(params)
-
         val endSession = base.copy(
-            isEndedCleanly = endedCleanly,
+            isEndedCleanly = endType.endedCleanly,
             networkLogIds = captureDataSafely {
                 logMessageService.findNetworkLogIds(
-                    startTime,
+                    initial.startTime,
                     endTime
                 )
             },
@@ -124,12 +87,24 @@ internal class PayloadMessageCollator(
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
             sdkStartupDuration = sdkStartDuration,
-            startupDuration = startupDuration,
-            startupThreshold = startupThreshold,
+            startupDuration = startupInfo?.duration,
+            startupThreshold = startupInfo?.threshold,
             betaFeatures = betaFeatures,
             symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
         )
-        return buildWrapperEnvelope(params, endSession, startTime, endTime)
+        return buildWrapperEnvelope(params, endSession, initial.startTime, endTime)
+    }
+
+    /**
+     * Create the background session message with the current state of the background activity.
+     */
+    fun buildFinalBackgroundActivityMessage(
+        params: FinalEnvelopeParams.BackgroundActivityParams
+    ): SessionMessage {
+        val msg = buildFinalBackgroundActivity(params)
+        val startTime = msg.startTime
+        val endTime = params.endTime
+        return buildWrapperEnvelope(params, msg, startTime, endTime)
     }
 
     /**
@@ -171,18 +146,6 @@ internal class PayloadMessageCollator(
         )
     }
 
-    /**
-     * Create the background session message with the current state of the background activity.
-     */
-    fun buildFinalBackgroundActivityMessage(
-        params: FinalEnvelopeParams.BackgroundActivityParams
-    ): SessionMessage {
-        val msg = buildFinalBackgroundActivity(params)
-        val startTime = msg.startTime
-        val endTime = params.endTime
-        return buildWrapperEnvelope(params, msg, startTime, endTime)
-    }
-
     private fun buildWrapperEnvelope(
         params: FinalEnvelopeParams,
         finalPayload: Session,
@@ -198,6 +161,7 @@ internal class PayloadMessageCollator(
                     }
                     spansService.flushSpans(appTerminationCause)
                 }
+
                 else -> spansService.completedSpans()
             }
         }

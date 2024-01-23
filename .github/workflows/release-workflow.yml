@@ -24,7 +24,16 @@ jobs:
         jdk-version: ["11"]
         ndk-version: ["21.4.7075529"]
     steps:
-      - name: Gradlew Release
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Gradlew Release to maven central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 #          TODO: check if swazzler gets released too

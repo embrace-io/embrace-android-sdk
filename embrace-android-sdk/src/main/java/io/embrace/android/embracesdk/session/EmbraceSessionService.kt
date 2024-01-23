@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
@@ -87,7 +85,13 @@ internal class EmbraceSessionService(
     }
 
     override fun startSessionWithState(coldStart: Boolean, timestamp: Long) {
-        startSession(coldStart, LifeEventType.STATE, timestamp)
+        startSession(
+            InitialEnvelopeParams.SessionParams(
+                coldStart,
+                LifeEventType.STATE,
+                timestamp
+            )
+        )
     }
 
     override fun endSessionWithState(timestamp: Long) {
@@ -103,7 +107,13 @@ internal class EmbraceSessionService(
         endSession(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
 
         // Starts a new session.
-        startSession(false, LifeEventType.MANUAL, clock.now())
+        startSession(
+            InitialEnvelopeParams.SessionParams(
+                false,
+                LifeEventType.MANUAL,
+                clock.now()
+            )
+        )
     }
 
     override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
@@ -120,23 +130,15 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to start a session.
      */
-    fun startSession(
-        coldStart: Boolean,
-        startType: LifeEventType,
-        startTime: Long,
-    ) {
+    internal fun startSession(params: InitialEnvelopeParams.SessionParams) {
         synchronized(lock) {
             logger.logDebug(
-                "SessionHandler: running onSessionStarted. coldStart=$coldStart," +
-                    " startType=$startType, startTime=$startTime"
+                "SessionHandler: running onSessionStarted. coldStart=${params.coldStart}," +
+                    " startType=${params.startType}, startTime=${params.startTime}"
             )
 
             val session = payloadMessageCollator.buildInitialSession(
-                InitialEnvelopeParams.SessionParams(
-                    coldStart,
-                    startType,
-                    startTime
-                )
+                params
             )
             activeSession = session
             InternalStaticEmbraceLogger.logDeveloper(
@@ -150,7 +152,7 @@ internal class EmbraceSessionService(
 
             logger.logDebug("Start session sent to delivery service.")
 
-            breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
+            breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
             startPeriodicCaching { Systrace.trace("snapshot-session") { onPeriodicCacheActiveSession() } }
             ndkService?.updateSessionId(session.sessionId)
         }
@@ -159,7 +161,7 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    fun endSession(
+    internal fun endSession(
         endType: LifeEventType,
         endTime: Long,
         clearUserInfo: Boolean
@@ -168,11 +170,14 @@ internal class EmbraceSessionService(
             val session = activeSession ?: return null
             logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
             val fullEndSessionMessage = createSessionSnapshot(
+                FinalEnvelopeParams.SessionParams(
+                    session,
+                    endTime,
+                    endType,
+                    null,
+                    false
+                ),
                 SessionSnapshotType.NORMAL_END,
-                session,
-                spansService.flushSpans(),
-                endType,
-                endTime
             ) ?: return null
 
             // Clean every collection of those services which have collections in memory.
@@ -200,17 +205,19 @@ internal class EmbraceSessionService(
      * Called when a regular crash happens. It will build a session message with associated crashId,
      * and send it to our servers.
      */
-    fun onCrash(crashId: String) {
+    private fun onCrash(crashId: String) {
         synchronized(lock) {
             val session = activeSession ?: return
             logger.logDebug("SessionHandler: running onCrash for $crashId")
             val fullEndSessionMessage = createSessionSnapshot(
-                SessionSnapshotType.JVM_CRASH,
-                session,
-                spansService.flushSpans(EmbraceAttributes.AppTerminationCause.CRASH),
-                LifeEventType.STATE,
-                clock.now(),
-                crashId,
+                FinalEnvelopeParams.SessionParams(
+                    session,
+                    clock.now(),
+                    LifeEventType.STATE,
+                    crashId,
+                    false
+                ),
+                SessionSnapshotType.JVM_CRASH
             )
             activeSession = null
             fullEndSessionMessage?.let {
@@ -227,7 +234,7 @@ internal class EmbraceSessionService(
      */
     private fun onPeriodicCacheActiveSession() {
         try {
-            onPeriodicCacheActiveSessionImpl(spansService.completedSpans())
+            onPeriodicCacheActiveSessionImpl()
         } catch (ex: Exception) {
             logger.logDebug("Error while caching active session", ex)
         }
@@ -239,18 +246,19 @@ internal class EmbraceSessionService(
      *
      * Note that the session message will not be sent to our servers.
      */
-    fun onPeriodicCacheActiveSessionImpl(
-        completedSpans: List<EmbraceSpanData>? = null
-    ): SessionMessage? {
+    internal fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
         synchronized(lock) {
             val session = activeSession ?: return null
             logger.logDeveloper("SessionHandler", "Running periodic cache of active session.")
             val msg = createSessionSnapshot(
+                FinalEnvelopeParams.SessionParams(
+                    session,
+                    clock.now(),
+                    LifeEventType.STATE,
+                    null,
+                    true
+                ),
                 SessionSnapshotType.PERIODIC_CACHE,
-                session,
-                completedSpans,
-                LifeEventType.STATE,
-                clock.now()
             )
             msg?.let { deliveryService.sendSession(it, SessionSnapshotType.PERIODIC_CACHE) }
             return msg
@@ -265,7 +273,7 @@ internal class EmbraceSessionService(
     /**
      * It determines if we are allowed to build an end session message.
      */
-    private fun isAllowedToEnd(endType: LifeEventType, activeSession: Session): Boolean =
+    private fun isAllowedToEnd(endType: LifeEventType?, activeSession: Session): Boolean =
         when (endType) {
             LifeEventType.STATE -> true
             LifeEventType.MANUAL -> (clock.now() - activeSession.startTime) >= minSessionTime
@@ -277,31 +285,23 @@ internal class EmbraceSessionService(
      * [SessionSnapshotType] passed to this function.
      */
     private fun createSessionSnapshot(
+        params: FinalEnvelopeParams.SessionParams,
         endType: SessionSnapshotType,
-        activeSession: Session,
-        completedSpans: List<EmbraceSpanData>?,
-        lifeEventType: LifeEventType,
-        endTime: Long,
-        crashId: String? = null,
     ): SessionMessage? {
         if (endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
         }
 
-        if (!isAllowedToEnd(lifeEventType, activeSession)) {
+        if (!isAllowedToEnd(params.lifeEventType, params.initial)) {
             logger.logDebug("Session not allowed to end.")
             return null
         }
 
         return payloadMessageCollator.buildFinalSessionMessage(
-            initial = activeSession,
+            params,
             endedCleanly = endType.endedCleanly,
             forceQuit = endType.forceQuit,
-            crashId = crashId,
-            endType = lifeEventType,
-            sdkStartupDuration = sdkStartupDuration ?: 0,
-            endTime = endTime,
-            spans = completedSpans
+            sdkStartupDuration = sdkStartupDuration ?: 0
         )
     }
 

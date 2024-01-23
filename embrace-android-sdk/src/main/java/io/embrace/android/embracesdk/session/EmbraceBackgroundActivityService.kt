@@ -47,73 +47,96 @@ internal class EmbraceBackgroundActivityService(
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        startCapture(time, coldStart, LifeEventType.BKGND_STATE)
+        startCapture(
+            InitialEnvelopeParams.BackgroundActivityParams(
+                coldStart,
+                LifeEventType.BKGND_STATE,
+                time
+            )
+        )
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        val message = stopCapture(timestamp - 1, LifeEventType.BKGND_STATE, null)
-        if (message != null) {
-            deliveryService.saveBackgroundActivity(message)
-        }
+        val activity = backgroundActivity ?: return
+        val message = stopCapture(
+            FinalEnvelopeParams.BackgroundActivityParams(
+                activity,
+                timestamp - 1,
+                LifeEventType.BKGND_STATE,
+                null,
+                false
+            )
+        )
+        deliveryService.saveBackgroundActivity(message)
         deliveryService.sendBackgroundActivities()
     }
 
     override fun endBackgroundActivityWithCrash(crashId: String) {
-        if (backgroundActivity != null) {
-            val now = clock.now()
-            val message = stopCapture(now, LifeEventType.BKGND_STATE, crashId)
-            if (message != null) {
-                deliveryService.saveBackgroundActivity(message)
-            }
-            startCapture(clock.now(), false, LifeEventType.BKGND_STATE)
-        }
+        val activity = backgroundActivity ?: return
+        val now = clock.now()
+        val message = stopCapture(
+            FinalEnvelopeParams.BackgroundActivityParams(
+                activity,
+                now,
+                LifeEventType.BKGND_STATE,
+                crashId,
+                false
+            )
+        )
+        deliveryService.saveBackgroundActivity(message)
+        startCapture(
+            InitialEnvelopeParams.BackgroundActivityParams(
+                false,
+                LifeEventType.BKGND_STATE,
+                clock.now()
+            )
+        )
     }
 
     override fun sendBackgroundActivity() {
         if (!verifyManualSendThresholds()) {
             return
         }
+        val activity = backgroundActivity ?: return
         val now = clock.now()
-        val message = stopCapture(now, LifeEventType.BKGND_MANUAL, null)
+        val message = stopCapture(
+            FinalEnvelopeParams.BackgroundActivityParams(
+                activity,
+                now,
+                LifeEventType.BKGND_MANUAL,
+                null,
+                false
+            )
+        )
         // start a new background activity session
-        startCapture(clock.now(), false, LifeEventType.BKGND_MANUAL)
-        if (message != null) {
-            deliveryService.sendBackgroundActivity(message)
-        }
+        startCapture(
+            InitialEnvelopeParams.BackgroundActivityParams(
+                false,
+                LifeEventType.BKGND_MANUAL,
+                clock.now()
+            )
+        )
+        deliveryService.sendBackgroundActivity(message)
     }
 
     /**
      * Save the background activity to disk
      */
     override fun save() {
-        if (backgroundActivity != null) {
-            val delta = clock.now() - lastSaved
-            val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
-            scheduledWorker.schedule<Unit>(::cacheBackgroundActivity, delay, TimeUnit.MILLISECONDS)
-        }
+        backgroundActivity ?: return
+        val delta = clock.now() - lastSaved
+        val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
+        scheduledWorker.schedule<Unit>(::cacheBackgroundActivity, delay, TimeUnit.MILLISECONDS)
     }
 
     /**
      * Start the background activity capture by starting the cache service and creating the background
      * session.
-     *
-     * @param coldStart defines if the action comes from an application cold start or not
-     * @param startType defines which is the lifecycle of the session
      */
-    private fun startCapture(
-        startTime: Long,
-        coldStart: Boolean,
-        startType: LifeEventType
-    ) {
-        val activity = payloadMessageCollator.buildInitialSession(
-            InitialEnvelopeParams.BackgroundActivityParams(
-                coldStart,
-                startType,
-                startTime
-            )
-        )
+    private fun startCapture(params: InitialEnvelopeParams.BackgroundActivityParams) {
+        val activity = payloadMessageCollator.buildInitialSession(params)
         backgroundActivity = activity
         metadataService.setActiveSessionId(activity.sessionId, false)
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
@@ -126,24 +149,11 @@ internal class EmbraceBackgroundActivityService(
      * Stop the background activity capture by stopping the cache service and putting the background
      * session to its final state with all the data collected up to the current point.
      * Build the next background message and attempt to send it.
-     *
-     * @param endType defines what kind of event ended the background activity capture
      */
     @Synchronized
-    private fun stopCapture(
-        endTime: Long,
-        endType: LifeEventType,
-        crashId: String?
-    ): SessionMessage? {
-        val activity = backgroundActivity ?: return null
+    private fun stopCapture(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
         backgroundActivity = null
-        return payloadMessageCollator.buildFinalBackgroundActivityMessage(
-            activity,
-            endTime,
-            endType,
-            crashId,
-            true
-        )
+        return payloadMessageCollator.buildFinalBackgroundActivityMessage(params)
     }
 
     /**
@@ -178,19 +188,18 @@ internal class EmbraceBackgroundActivityService(
      */
     private fun cacheBackgroundActivity() {
         try {
-            val activity = backgroundActivity
-            if (activity != null) {
-                lastSaved = clock.now()
-                val endTime = activity.endTime ?: clock.now()
-                val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
+            val activity = backgroundActivity ?: return
+            lastSaved = clock.now()
+            val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
+                FinalEnvelopeParams.BackgroundActivityParams(
                     activity,
-                    endTime,
+                    activity.endTime ?: clock.now(),
                     null,
                     null,
-                    false
+                    true
                 )
-                deliveryService.saveBackgroundActivity(message)
-            }
+            )
+            deliveryService.saveBackgroundActivity(message)
         } catch (ex: Exception) {
             logger.logDebug("Error while caching active session", ex)
         }

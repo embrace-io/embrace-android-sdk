@@ -35,7 +35,6 @@ import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockActivity
-import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -178,7 +177,6 @@ internal class SessionHandlerTest {
             clock,
             FakeSessionPropertiesService()
         )
-        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
         sessionService = EmbraceSessionService(
             logger,
             configService,
@@ -212,9 +210,11 @@ internal class SessionHandlerTest {
         // this is needed so session handler creates automatic session stopper
 
         sessionService.startSession(
-            true,
-            sessionStartType,
-            now
+            InitialEnvelopeParams.SessionParams(
+                true,
+                sessionStartType,
+                now
+            )
         )
 
         // verify record connection type
@@ -255,9 +255,11 @@ internal class SessionHandlerTest {
         // this is needed so session handler creates automatic session stopper
 
         sessionService.startSession(
-            true,
-            sessionStartType,
-            now
+            InitialEnvelopeParams.SessionParams(
+                true,
+                sessionStartType,
+                now
+            )
         )
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
@@ -274,9 +276,11 @@ internal class SessionHandlerTest {
         val sessionStartType = Session.LifeEventType.STATE
 
         sessionService.startSession(
-            true,
-            sessionStartType,
-            now
+            InitialEnvelopeParams.SessionParams(
+                true,
+                sessionStartType,
+                now
+            )
         )
 
         // verify we are forcing log view with foreground activity class name
@@ -414,9 +418,11 @@ internal class SessionHandlerTest {
             )
         )
         sessionService.startSession(
-            coldStart = true,
-            startType = Session.LifeEventType.MANUAL,
-            startTime = clock.now()
+            params = InitialEnvelopeParams.SessionParams(
+                true,
+                Session.LifeEventType.MANUAL,
+                clock.now()
+            )
         )
         clock.tick(30000)
         sessionService.endSession(
@@ -442,9 +448,12 @@ internal class SessionHandlerTest {
     fun `periodically cached sessions included currently completed spans`() {
         startFakeSession()
         initializeServices()
-        val sessionMessage = sessionService.onPeriodicCacheActiveSessionImpl(listOf(testSpan))
+        spansService.recordSpan("test-span") {
+            // do nothing
+        }
+        val sessionMessage = sessionService.onPeriodicCacheActiveSessionImpl()
         val spans = checkNotNull(sessionMessage?.spans)
-        assertEquals(testSpan, spans.single())
+        assertEquals(1, spans.count { it.name == "emb-test-span" })
     }
 
     @Test
@@ -548,9 +557,11 @@ internal class SessionHandlerTest {
 
     private fun startFakeSession() {
         sessionService.startSession(
-            coldStart = true,
-            startType = Session.LifeEventType.STATE,
-            startTime = clock.now()
+            params = InitialEnvelopeParams.SessionParams(
+                true,
+                Session.LifeEventType.STATE,
+                clock.now()
+            )
         )
     }
 

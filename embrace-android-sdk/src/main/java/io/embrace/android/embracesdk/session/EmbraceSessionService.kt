@@ -58,11 +58,6 @@ internal class EmbraceSessionService(
      */
     private val lock = Any()
 
-    init {
-        // Send any sessions that were cached and not yet sent.
-        deliveryService.sendCachedSessions(ndkService, getSessionId())
-    }
-
     override fun endSessionWithCrash(crashId: String) {
         synchronized(lock) {
             val session = activeSession ?: return

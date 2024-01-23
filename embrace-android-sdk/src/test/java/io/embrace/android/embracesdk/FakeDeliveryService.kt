@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
@@ -39,8 +40,8 @@ internal class FakeDeliveryService : DeliveryService {
         lastSnapshotType = snapshotType
     }
 
-    override fun sendCachedSessions(ndkService: NdkService?, currentSession: String?) {
-        lastSentCachedSession = currentSession
+    override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
+        lastSentCachedSession = sessionIdTracker.getActiveSessionId()
     }
 
     override fun sendMoment(eventMessage: EventMessage) {

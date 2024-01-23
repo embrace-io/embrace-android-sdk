@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakeBackgroundActivityMessage
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -37,6 +38,7 @@ internal class EmbraceDeliveryServiceTest {
     private lateinit var gatingService: FakeGatingService
     private lateinit var logger: InternalEmbraceLogger
     private lateinit var deliveryService: EmbraceDeliveryService
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
 
     @Before
     fun setUp() {
@@ -46,6 +48,7 @@ internal class EmbraceDeliveryServiceTest {
         ndkService = FakeNdkService()
         gatingService = FakeGatingService()
         logger = InternalEmbraceLogger()
+        sessionIdTracker = FakeSessionIdTracker()
     }
 
     @After
@@ -97,8 +100,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
         initializeDeliveryService()
-
-        deliveryService.sendCachedSessions(null, null)
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
@@ -107,7 +109,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage, anotherMessage)
 
-        deliveryService.sendCachedSessions(null, null)
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
         assertEquals(listOf(sessionMessage, anotherMessage), apiService.sessionRequests)
     }
 
@@ -115,7 +117,8 @@ internal class EmbraceDeliveryServiceTest {
     fun `ignore current session when sending previously cached sessions`() {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage, anotherMessage)
-        deliveryService.sendCachedSessions(null, anotherMessage.session.sessionId)
+        sessionIdTracker.sessionId = anotherMessage.session.sessionId
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
         assertEquals(listOf(sessionMessage), apiService.sessionRequests)
     }
 
@@ -124,7 +127,7 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         deliveryCacheManager.addCachedSessions(sessionMessage)
         apiService.throwExceptionSendSession = true
-        deliveryService.sendCachedSessions(null, null)
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
@@ -139,7 +142,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `check for native crash info if ndk feature is enabled`() {
         initializeDeliveryService()
-        deliveryService.sendCachedSessions(ndkService, "")
+        deliveryService.sendCachedSessions(ndkService, sessionIdTracker)
         assertEquals(1, ndkService.checkForNativeCrashCount)
     }
 

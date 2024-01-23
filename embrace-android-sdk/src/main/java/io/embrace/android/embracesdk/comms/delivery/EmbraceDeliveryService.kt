@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.SessionSnapshotType
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.TimeUnit
@@ -143,10 +144,7 @@ internal class EmbraceDeliveryService(
         apiService.sendAEIBlob(blobMessage)
     }
 
-    override fun sendCachedSessions(
-        ndkService: NdkService?,
-        currentSession: String?
-    ) {
+    override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
         sendCachedCrash()
         backgroundWorker.submit(TaskPriority.HIGH) {
             val allSessions = cacheManager.getAllCachedSessionIds()
@@ -157,7 +155,7 @@ internal class EmbraceDeliveryService(
                     addCrashDataToCachedSession(nativeCrashData)
                 }
             }
-            sendCachedSessions(allSessions, currentSession)
+            sendCachedSessions(allSessions, sessionIdTracker.getActiveSessionId())
         }
     }
 

@@ -181,7 +181,6 @@ internal class SessionHandlerTest {
         )
         sessionService = EmbraceSessionService(
             logger,
-            userService,
             networkConnectivityService,
             sessionIdTracker,
             breadcrumbService,
@@ -290,8 +289,7 @@ internal class SessionHandlerTest {
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
         sessionService.endSessionImpl(
             Session.LifeEventType.MANUAL,
-            1000,
-            false
+            1000
         )
 
         verify { sessionPeriodicCacheExecutorService wasNot Called }
@@ -309,8 +307,7 @@ internal class SessionHandlerTest {
 
         sessionService.endSessionImpl(
             Session.LifeEventType.MANUAL,
-            1000,
-            false
+            1000
         )
 
         verify { sessionPeriodicCacheExecutorService wasNot Called }
@@ -389,8 +386,7 @@ internal class SessionHandlerTest {
         clock.tick(30000)
         sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
-            endTime = 10L,
-            false
+            endTime = 10L
         )
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
@@ -401,33 +397,9 @@ internal class SessionHandlerTest {
         clock.tick(30000)
         sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
-            endTime = 10L,
-            true
+            endTime = 10L
         )
         assertEquals(0, userService.clearedCount)
-    }
-
-    @Test
-    fun `endSession clears user info`() {
-        remoteConfig = remoteConfig.copy(
-            sessionConfig = SessionRemoteConfig(
-                isEnabled = true
-            )
-        )
-        sessionService.startSession(
-            params = InitialEnvelopeParams.SessionParams(
-                true,
-                Session.LifeEventType.MANUAL,
-                clock.now()
-            )
-        )
-        clock.tick(30000)
-        sessionService.endSessionImpl(
-            endType = Session.LifeEventType.MANUAL,
-            endTime = clock.now(),
-            true
-        )
-        assertEquals(1, userService.clearedCount)
     }
 
     @Test
@@ -479,8 +451,7 @@ internal class SessionHandlerTest {
         clock.tick(15000L)
         sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
-            endTime = clock.now(),
-            false
+            endTime = clock.now()
         )
 
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
@@ -506,8 +477,7 @@ internal class SessionHandlerTest {
         clock.tick(10000)
         sessionService.endSessionImpl(
             endType = Session.LifeEventType.STATE,
-            endTime = clock.now(),
-            false
+            endTime = clock.now()
         )
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)

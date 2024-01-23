@@ -23,7 +23,7 @@ internal interface SessionService {
     fun startSessionWithManual()
 
     /**
-     * Ends a session manually. If [clearUserInfo] is true, the user info will be cleared.
+     * Ends a session manually.
      */
-    fun endSessionWithManual(clearUserInfo: Boolean)
+    fun endSessionWithManual()
 }

@@ -23,7 +23,7 @@ internal class FakeSessionService : SessionService {
         this.crashId = crashId
     }
 
-    override fun endSessionWithManual(clearUserInfo: Boolean) {
+    override fun endSessionWithManual() {
         manualEndCount++
     }
 

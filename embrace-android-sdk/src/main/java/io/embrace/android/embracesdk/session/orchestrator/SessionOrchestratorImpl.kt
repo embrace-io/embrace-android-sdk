@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalErrorService
+import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.MemoryCleanerService
@@ -17,8 +19,10 @@ internal class SessionOrchestratorImpl(
     clock: Clock,
     private val configService: ConfigService,
     private val memoryCleanerService: MemoryCleanerService,
-    private val internalErrorService: InternalErrorService,
-    private val sessionProperties: EmbraceSessionProperties
+    private val userService: UserService,
+    private val ndkService: NdkService?,
+    private val sessionProperties: EmbraceSessionProperties,
+    private val internalErrorService: InternalErrorService
 ) : SessionOrchestrator {
 
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
@@ -61,8 +65,8 @@ internal class SessionOrchestratorImpl(
         if (configService.sessionBehavior.isSessionControlEnabled()) {
             return
         }
-        sessionService.endSessionWithManual(clearUserInfo)
-        prepareForNewEnvelope()
+        sessionService.endSessionWithManual()
+        prepareForNewEnvelope(clearUserInfo)
         sessionService.startSessionWithManual()
     }
 
@@ -70,8 +74,13 @@ internal class SessionOrchestratorImpl(
      * Prepares all services/state for a new envelope. Practically this involves
      * resetting collections in services etc.
      */
-    private fun prepareForNewEnvelope() {
+    private fun prepareForNewEnvelope(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections(internalErrorService)
         sessionProperties.clearTemporary()
+
+        if (clearUserInfo) {
+            userService.clearAllUserInfo()
+            ndkService?.onUserInfoUpdate()
+        }
     }
 }

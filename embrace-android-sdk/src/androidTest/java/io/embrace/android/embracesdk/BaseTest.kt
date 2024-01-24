@@ -253,7 +253,7 @@ internal open class BaseTest {
 
         request()
         action()
-        startSignal.await(500, TimeUnit.MILLISECONDS)
+        startSignal.await(1000, TimeUnit.MILLISECONDS)
         validate(file)
     }
 

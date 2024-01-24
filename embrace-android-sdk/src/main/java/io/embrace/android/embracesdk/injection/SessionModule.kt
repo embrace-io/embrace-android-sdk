@@ -65,14 +65,16 @@ internal class SessionModuleImpl(
         )
     }
 
-    override val sessionService: SessionService by singleton {
-        val ndkService = when {
+    private val ndkService by singleton {
+        when {
             essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
             else -> null
         }
+    }
+
+    override val sessionService: SessionService by singleton {
         EmbraceSessionService(
             coreModule.logger,
-            essentialServiceModule.userService,
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.sessionIdTracker,
             dataCaptureServiceModule.breadcrumbService,
@@ -104,8 +106,10 @@ internal class SessionModuleImpl(
             initModule.clock,
             essentialServiceModule.configService,
             essentialServiceModule.memoryCleanerService,
-            sdkObservabilityModule.internalErrorService,
-            sessionProperties
+            essentialServiceModule.userService,
+            ndkService,
+            sessionProperties,
+            sdkObservabilityModule.internalErrorService
         )
     }
 }

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session
 import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -20,7 +19,6 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger,
-    private val userService: UserService,
     private val networkConnectivityService: NetworkConnectivityService,
     private val sessionIdTracker: SessionIdTracker,
     private val breadcrumbService: BreadcrumbService,
@@ -99,11 +97,11 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithState(timestamp: Long) {
-        endSessionImpl(LifeEventType.STATE, timestamp, false)
+        endSessionImpl(LifeEventType.STATE, timestamp)
     }
 
-    override fun endSessionWithManual(clearUserInfo: Boolean) {
-        endSessionImpl(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
+    override fun endSessionWithManual() {
+        endSessionImpl(LifeEventType.MANUAL, clock.now()) ?: return
     }
 
     override fun startSessionWithManual() {
@@ -149,8 +147,7 @@ internal class EmbraceSessionService(
      */
     internal fun endSessionImpl(
         endType: LifeEventType,
-        endTime: Long,
-        clearUserInfo: Boolean
+        endTime: Long
     ): SessionMessage? {
         synchronized(lock) {
             val session = activeSession ?: return null
@@ -167,12 +164,6 @@ internal class EmbraceSessionService(
             // Clean every collection of those services which have collections in memory.
             sessionIdTracker.setActiveSessionId(null, false)
             deliveryService.sendSession(fullEndSessionMessage, SessionSnapshotType.NORMAL_END)
-
-            if (endType == LifeEventType.MANUAL && clearUserInfo) {
-                userService.clearAllUserInfo()
-                // Update user info in NDK service
-                ndkService?.onUserInfoUpdate()
-            }
 
             // clear active session
             activeSession = null

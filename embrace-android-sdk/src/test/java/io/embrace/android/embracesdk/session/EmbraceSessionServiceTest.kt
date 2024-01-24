@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -133,7 +132,6 @@ internal class EmbraceSessionServiceTest {
 
         service = EmbraceSessionService(
             InternalEmbraceLogger(),
-            FakeUserService(),
             FakeNetworkConnectivityService(),
             FakeSessionIdTracker(),
             FakeBreadcrumbService(),

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -31,6 +33,8 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var internalErrorService: FakeInternalErrorService
+    private lateinit var userService: FakeUserService
+    private lateinit var ndkService: FakeNdkService
     private lateinit var sessionProperties: EmbraceSessionProperties
 
     @Before
@@ -43,6 +47,8 @@ internal class SessionOrchestratorTest {
         memoryCleanerService = FakeMemoryCleanerService()
         internalErrorService = FakeInternalErrorService()
         sessionProperties = fakeEmbraceSessionProperties()
+        userService = FakeUserService()
+        ndkService = FakeNdkService()
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
@@ -50,8 +56,10 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             memoryCleanerService,
-            internalErrorService,
-            sessionProperties
+            userService,
+            ndkService,
+            sessionProperties,
+            internalErrorService
         )
         sessionProperties.add("key", "value", false)
     }
@@ -136,6 +144,17 @@ internal class SessionOrchestratorTest {
         verifyPrepareEnvelopeCalled(0)
     }
 
+    @Test
+    fun `ending session manually clears user info`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(10000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, userService.clearedCount)
+        assertEquals(1, ndkService.userUpdateCount)
+    }
+
     private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
         assertEquals(expectedCount, memoryCleanerService.callCount)
         val expectedPropCount = when (expectedCount) {
@@ -157,8 +176,10 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             memoryCleanerService,
-            internalErrorService,
-            sessionProperties
+            userService,
+            ndkService,
+            sessionProperties,
+            internalErrorService
         )
     }
 }

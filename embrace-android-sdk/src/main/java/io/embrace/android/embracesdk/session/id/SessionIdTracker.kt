@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.session.id
 
+import io.embrace.android.embracesdk.ndk.NdkService
+
 internal interface SessionIdTracker {
 
     /**
@@ -16,4 +18,10 @@ internal interface SessionIdTracker {
      * @param isSession true if it's a session, false if it's a background activity
      */
     fun setActiveSessionId(sessionId: String?, isSession: Boolean)
+
+    /**
+     * Reference to the NDK service. This is set later on as bootstrapping is currently required
+     * in the dependency graph.
+     */
+    var ndkService: NdkService?
 }

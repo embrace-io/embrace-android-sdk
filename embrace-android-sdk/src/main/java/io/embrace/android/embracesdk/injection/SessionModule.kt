@@ -78,7 +78,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.sessionIdTracker,
             dataCaptureServiceModule.breadcrumbService,
-            ndkService,
             deliveryModule.deliveryService,
             payloadMessageCollator,
             initModule.clock,
@@ -91,7 +90,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
-            nativeModule.ndkService,
             initModule.clock,
             payloadMessageCollator,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)

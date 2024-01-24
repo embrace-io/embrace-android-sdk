@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -19,7 +18,6 @@ internal class EmbraceBackgroundActivityService(
     private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     private val configService: ConfigService,
-    private val ndkService: NdkService,
     /**
      * Embrace service dependencies of the background activity session service.
      */
@@ -135,9 +133,6 @@ internal class EmbraceBackgroundActivityService(
         val activity = payloadMessageCollator.buildInitialSession(params)
         backgroundActivity = activity
         sessionIdTracker.setActiveSessionId(activity.sessionId, false)
-        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            ndkService.updateSessionId(activity.sessionId)
-        }
         save()
     }
 

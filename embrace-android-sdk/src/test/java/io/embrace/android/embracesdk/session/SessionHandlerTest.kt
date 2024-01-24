@@ -184,7 +184,6 @@ internal class SessionHandlerTest {
             networkConnectivityService,
             sessionIdTracker,
             breadcrumbService,
-            ndkService,
             deliveryService,
             payloadMessageCollator,
             clock,
@@ -226,8 +225,6 @@ internal class SessionHandlerTest {
                 TimeUnit.SECONDS
             )
         }
-        // verify session id gets updated if ndk enabled
-        assertEquals(sessionUuid, ndkService.sessionId)
         // verify session is correctly built
 
         with(checkNotNull(sessionService.activeSession)) {
@@ -427,9 +424,9 @@ internal class SessionHandlerTest {
 
     @Test
     fun `start session successfully`() {
-        assertNull(sessionService.getSessionId())
+        assertNull(sessionService.activeSession?.sessionId)
         startFakeSession()
-        assertNotNull(sessionService.getSessionId())
+        assertNotNull(sessionService.activeSession?.sessionId)
     }
 
     @Test

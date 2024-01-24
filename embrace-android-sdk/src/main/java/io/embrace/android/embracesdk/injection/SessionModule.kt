@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -104,6 +105,16 @@ internal class SessionModuleImpl(
         )
     }
 
+    private val boundaryDelegate by singleton {
+        OrchestratorBoundaryDelegate(
+            essentialServiceModule.memoryCleanerService,
+            essentialServiceModule.userService,
+            ndkService,
+            sessionProperties,
+            sdkObservabilityModule.internalErrorService
+        )
+    }
+
     override val sessionOrchestrator: SessionOrchestrator by singleton {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
@@ -111,11 +122,7 @@ internal class SessionModuleImpl(
             backgroundActivityService,
             initModule.clock,
             essentialServiceModule.configService,
-            essentialServiceModule.memoryCleanerService,
-            essentialServiceModule.userService,
-            ndkService,
-            sessionProperties,
-            sdkObservabilityModule.internalErrorService
+            boundaryDelegate
         )
     }
 }

@@ -1,16 +1,11 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.ConfigGate
-import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class SessionOrchestratorImpl(
     private val processStateService: ProcessStateService,
@@ -18,11 +13,7 @@ internal class SessionOrchestratorImpl(
     backgroundActivityServiceImpl: BackgroundActivityService?,
     private val clock: Clock,
     private val configService: ConfigService,
-    private val memoryCleanerService: MemoryCleanerService,
-    private val userService: UserService,
-    private val ndkService: NdkService?,
-    private val sessionProperties: EmbraceSessionProperties,
-    private val internalErrorService: InternalErrorService
+    private val boundaryDelegate: OrchestratorBoundaryDelegate
 ) : SessionOrchestrator {
 
     companion object {
@@ -58,13 +49,13 @@ internal class SessionOrchestratorImpl(
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         backgroundActivityService?.endBackgroundActivityWithState(timestamp)
-        prepareForNewEnvelope()
+        boundaryDelegate.prepareForNewEnvelope()
         sessionService.startSessionWithState(coldStart, timestamp)
     }
 
     override fun onBackground(timestamp: Long) {
         sessionService.endSessionWithState(timestamp)
-        prepareForNewEnvelope()
+        boundaryDelegate.prepareForNewEnvelope()
         backgroundActivityService?.startBackgroundActivityWithState(false, timestamp)
     }
 
@@ -81,21 +72,7 @@ internal class SessionOrchestratorImpl(
         }
 
         sessionService.endSessionWithManual()
-        prepareForNewEnvelope(clearUserInfo)
+        boundaryDelegate.prepareForNewEnvelope(clearUserInfo)
         sessionService.startSessionWithManual()
-    }
-
-    /**
-     * Prepares all services/state for a new envelope. Practically this involves
-     * resetting collections in services etc.
-     */
-    private fun prepareForNewEnvelope(clearUserInfo: Boolean = false) {
-        memoryCleanerService.cleanServicesCollections(internalErrorService)
-        sessionProperties.clearTemporary()
-
-        if (clearUserInfo) {
-            userService.clearAllUserInfo()
-            ndkService?.onUserInfoUpdate()
-        }
     }
 }

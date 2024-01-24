@@ -6,9 +6,10 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal fun fakeSession(
     sessionId: String = "fakeSessionId",
+    startMs: Long = 160000000000L,
 ): Session = Session(
     sessionId = sessionId,
-    startTime = 160000000000L,
+    startTime = startMs,
     number = 1,
     appState = APPLICATION_STATE_FOREGROUND,
     isColdStart = true,

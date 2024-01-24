@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.session
 
+import io.embrace.android.embracesdk.payload.Session
+
 internal interface SessionService {
+
+    val activeSession: Session?
 
     /**
      * Starts a session in response to a state event.

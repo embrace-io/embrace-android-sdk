@@ -16,7 +16,7 @@ internal class SessionOrchestratorImpl(
     private val processStateService: ProcessStateService,
     private val sessionService: SessionService,
     backgroundActivityServiceImpl: BackgroundActivityService?,
-    clock: Clock,
+    private val clock: Clock,
     private val configService: ConfigService,
     private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
@@ -24,6 +24,16 @@ internal class SessionOrchestratorImpl(
     private val sessionProperties: EmbraceSessionProperties,
     private val internalErrorService: InternalErrorService
 ) : SessionOrchestrator {
+
+    companion object {
+
+        /**
+         * The minimum threshold for how long a session must last. This prevents unintentional
+         * instrumentation from creating new sessions in a hot loop & therefore spamming
+         * our servers.
+         */
+        private const val MIN_SESSION_MS = 5000L
+    }
 
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
         configService.isBackgroundActivityCaptureEnabled()
@@ -65,6 +75,11 @@ internal class SessionOrchestratorImpl(
         if (configService.sessionBehavior.isSessionControlEnabled()) {
             return
         }
+        val startTime = sessionService.activeSession?.startTime ?: 0
+        if ((clock.now() - startTime) < MIN_SESSION_MS) {
+            return
+        }
+
         sessionService.endSessionWithManual()
         prepareForNewEnvelope(clearUserInfo)
         sessionService.startSessionWithManual()

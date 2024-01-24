@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.payload.extensions.CrashFactory
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
@@ -32,6 +33,7 @@ internal class EmbraceCrashService(
     private val sessionService: SessionService,
     private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
     private val eventService: EventService,
@@ -90,14 +92,7 @@ internal class EmbraceCrashService(
             }
             logDeveloper("EmbraceCrashService", "crashId = " + crash.crashId)
 
-            val optionalSessionId = metadataService.activeSessionId
-            val sessionId = if (optionalSessionId != null) {
-                logDeveloper("EmbraceCrashService", "Session id is present:$optionalSessionId")
-                optionalSessionId
-            } else {
-                logDeveloper("EmbraceCrashService", "Session id is not present:")
-                null
-            }
+            val sessionId = sessionIdTracker.getActiveSessionId()
 
             val event = Event(
                 CRASH_REPORT_EVENT_NAME,

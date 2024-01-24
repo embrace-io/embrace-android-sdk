@@ -17,16 +17,17 @@ import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -110,7 +111,8 @@ internal class SessionHandlerTest {
     private var activeSession: Session = fakeSession()
 
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var metadataService: FakeAndroidMetadataService
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var metadataService: FakeMetadataService
     private lateinit var localConfig: LocalConfig
     private lateinit var remoteConfig: RemoteConfig
     private lateinit var sessionLocalConfig: SessionLocalConfig
@@ -129,7 +131,8 @@ internal class SessionHandlerTest {
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
         ndkService = FakeNdkService()
-        metadataService = FakeAndroidMetadataService()
+        metadataService = FakeMetadataService()
+        sessionIdTracker = FakeSessionIdTracker()
         breadcrumbService = FakeBreadcrumbService()
         breadcrumbService.viewBreadcrumbScreenName = "screen"
         memoryCleanerService = FakeMemoryCleanerService()
@@ -181,7 +184,7 @@ internal class SessionHandlerTest {
             configService,
             userService,
             networkConnectivityService,
-            metadataService,
+            sessionIdTracker,
             breadcrumbService,
             ndkService,
             deliveryService,
@@ -215,7 +218,7 @@ internal class SessionHandlerTest {
         // verify record connection type
         verify { networkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify active session is set
-        assertEquals(sessionUuid, metadataService.activeSessionId)
+        assertEquals(sessionUuid, sessionIdTracker.getActiveSessionId())
         // verify periodic caching worker has been scheduled
         verify {
             sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(

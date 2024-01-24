@@ -10,13 +10,14 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.event.EmbraceEventService.Companion.STARTUP_EVENT_NAME
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
@@ -58,6 +59,7 @@ internal class EmbraceEventServiceTest {
 
     companion object {
         private lateinit var metadataService: MetadataService
+        private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var preferenceService: PreferencesService
         private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
@@ -67,7 +69,8 @@ internal class EmbraceEventServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            metadataService = FakeAndroidMetadataService()
+            metadataService = FakeMetadataService()
+            sessionIdTracker = FakeSessionIdTracker()
             preferenceService = FakePreferenceService()
             performanceInfoService = FakePerformanceInfoService()
             processStateService = FakeProcessStateService()
@@ -116,6 +119,7 @@ internal class EmbraceEventServiceTest {
         )
         eventHandler = EventHandler(
             metadataService = metadataService,
+            sessionIdTracker = sessionIdTracker,
             configService = configService,
             userService = userService,
             performanceInfoService = performanceInfoService,
@@ -129,6 +133,7 @@ internal class EmbraceEventServiceTest {
             deliveryService,
             configService,
             metadataService,
+            sessionIdTracker,
             performanceInfoService,
             userService,
             sessionProperties,

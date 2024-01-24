@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeApplicationExitInfoService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakePowerSaveModeService
@@ -29,7 +29,7 @@ internal class EmbracePerformanceInfoServiceTest {
     private val networkLoggingService = FakeNetworkLoggingService()
     private val powerSaveModeService = FakePowerSaveModeService()
     private val memoryService = FakeMemoryService()
-    private val metadataService = FakeAndroidMetadataService()
+    private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val applicationExitInfoService = FakeApplicationExitInfoService()
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()

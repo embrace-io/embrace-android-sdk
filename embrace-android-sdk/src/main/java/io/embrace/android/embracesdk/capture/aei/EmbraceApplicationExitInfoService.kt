@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
 import java.util.concurrent.Future
@@ -32,6 +33,7 @@ internal class EmbraceApplicationExitInfoService(
     private val preferencesService: PreferencesService,
     private val deliveryService: DeliveryService,
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker
 ) : ApplicationExitInfoService, ConfigListener {
@@ -182,7 +184,7 @@ internal class EmbraceApplicationExitInfoService(
                 metadataService.getAppInfo(),
                 appExitInfoWithTraces,
                 metadataService.getDeviceInfo(),
-                BlobSession(metadataService.activeSessionId),
+                BlobSession(sessionIdTracker.getActiveSessionId()),
                 userService.getUserInfo()
             )
             deliveryService.sendAEIBlob(blob)

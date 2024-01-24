@@ -12,15 +12,16 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
@@ -48,6 +49,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
@@ -66,7 +68,8 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun init() {
         clock = FakeClock(10000L)
         performanceInfoService = FakePerformanceInfoService()
-        metadataService = FakeAndroidMetadataService()
+        metadataService = FakeMetadataService()
+        sessionIdTracker = FakeSessionIdTracker()
         breadcrumbService = FakeBreadcrumbService()
         activityService = FakeProcessStateService(isInBackground = true)
         eventService = FakeEventService()
@@ -103,7 +106,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         val payload = checkNotNull(service.backgroundActivity)
         assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
-        assertEquals(payload.sessionId, metadataService.activeSessionId)
+        assertEquals(payload.sessionId, sessionIdTracker.getActiveSessionId())
         assertFalse(payload.isColdStart)
     }
 
@@ -383,7 +386,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             FakeStartupService()
         )
         return EmbraceBackgroundActivityService(
-            metadataService,
+            sessionIdTracker,
             deliveryService,
             configService,
             ndkService,

@@ -32,6 +32,7 @@ internal class CustomerLogModuleImpl(
     override val networkCaptureService: NetworkCaptureService by singleton {
         EmbraceNetworkCaptureService(
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             androidServicesModule.preferencesService,
             logMessageService,
             essentialServiceModule.configService,
@@ -50,6 +51,7 @@ internal class CustomerLogModuleImpl(
     override val logMessageService: LogMessageService by singleton {
         EmbraceLogMessageService(
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
             essentialServiceModule.configService,

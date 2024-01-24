@@ -7,12 +7,13 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
@@ -57,7 +58,8 @@ internal class EventHandlerTest {
         private lateinit var mockStartup: StartupEventInfo
         private lateinit var mockLateTimer: ScheduledFuture<*>
         private lateinit var userInfo: UserInfo
-        private lateinit var fakeMetadataService: FakeAndroidMetadataService
+        private lateinit var fakeMetadataService: FakeMetadataService
+        private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var scheduledExecutorService: ScheduledExecutorService
 
@@ -88,9 +90,11 @@ internal class EventHandlerTest {
         clock = FakeClock()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         scheduledExecutorService = blockingScheduledExecutorService
-        fakeMetadataService = FakeAndroidMetadataService(sessionId = "session-id")
+        fakeMetadataService = FakeMetadataService(sessionId = "session-id")
+        sessionIdTracker = FakeSessionIdTracker()
         eventHandler = EventHandler(
             fakeMetadataService,
+            sessionIdTracker,
             configService,
             userService,
             performanceService,
@@ -187,7 +191,7 @@ internal class EventHandlerTest {
             timestamp = endTime,
             customProperties = customPropertiesMap,
             sessionProperties = sessionPropertiesMap,
-            sessionId = fakeMetadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             duration = endTime - startTime
         )
 
@@ -236,7 +240,7 @@ internal class EventHandlerTest {
             timestamp = endTime,
             customProperties = customPropertiesMap,
             sessionProperties = sessionPropertiesMap,
-            sessionId = fakeMetadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             duration = endTime - startTime
         )
         val builtEndEventMessage = EventMessage(
@@ -275,7 +279,7 @@ internal class EventHandlerTest {
             timestamp = startTime,
             sessionProperties = sessionPropertiesMap,
             customProperties = customProperties,
-            sessionId = fakeMetadataService.activeSessionId
+            sessionId = sessionIdTracker.getActiveSessionId()
         )
 
         clock.setCurrentTime(456)

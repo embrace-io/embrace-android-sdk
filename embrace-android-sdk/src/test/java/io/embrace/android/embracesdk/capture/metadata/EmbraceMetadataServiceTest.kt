@@ -322,9 +322,6 @@ internal class EmbraceMetadataServiceTest {
         activityService.isInBackground = false
         assertEquals("active", metadataService.getAppState())
 
-        metadataService.setActiveSessionId("123", true)
-        assertEquals("123", metadataService.activeSessionId)
-
         assertEquals("appId", metadataService.getAppId())
         assertEquals("10", metadataService.getAppVersionCode())
     }

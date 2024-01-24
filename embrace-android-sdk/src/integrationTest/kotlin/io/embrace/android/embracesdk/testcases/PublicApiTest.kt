@@ -108,7 +108,7 @@ internal class PublicApiTest {
         with(testRule) {
             embrace.start(harness.fakeCoreModule.context)
             harness.recordSession {
-                assertEquals(embrace.currentSessionId, harness.essentialServiceModule.metadataService.activeSessionId)
+                assertEquals(embrace.currentSessionId, harness.essentialServiceModule.sessionIdTracker.getActiveSessionId())
                 assertNotNull(embrace.currentSessionId)
             }
         }

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
@@ -26,6 +27,7 @@ private const val DEFAULT_LATE_THRESHOLD_MILLIS = 5000L
  */
 internal class EventHandler(
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val configService: ConfigService,
     private val userService: UserService,
     private val performanceInfoService: PerformanceInfoService,
@@ -169,7 +171,7 @@ internal class EventHandler(
     ): Event {
         return Event(
             name = eventName,
-            sessionId = metadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             eventId = eventId,
             type = EmbraceEvent.Type.START,
             appState = metadataService.getAppState(),
@@ -191,7 +193,7 @@ internal class EventHandler(
         return Event(
             name = originEvent.name,
             eventId = originEvent.eventId,
-            sessionId = metadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             timestamp = endTime,
             duration = duration,
             appState = metadataService.getAppState(),

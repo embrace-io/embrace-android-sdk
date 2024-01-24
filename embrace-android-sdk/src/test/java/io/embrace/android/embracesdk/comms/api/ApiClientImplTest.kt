@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -223,7 +223,7 @@ internal class ApiClientImplTest {
                 httpMethod = HttpMethod.POST
             )
         ) {
-            CompressionOutputStream(it).use { stream ->
+            ConditionalGzipOutputStream(it).use { stream ->
                 stream.write(payload)
             }
         }

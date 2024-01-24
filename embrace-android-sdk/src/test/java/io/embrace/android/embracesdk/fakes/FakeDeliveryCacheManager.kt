@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -29,7 +29,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         val message = cachedSessions.singleOrNull { it.session.sessionId == sessionId } ?: return null
         return { stream ->
-            CompressionOutputStream(stream).use {
+            ConditionalGzipOutputStream(stream).use {
                 serializer.toJson(message, SessionMessage::class.java, it)
             }
         }
@@ -46,7 +46,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage): SerializationAction? {
         saveBgActivityRequests.add(backgroundActivityMessage)
         return { stream ->
-            CompressionOutputStream(stream).use {
+            ConditionalGzipOutputStream(stream).use {
                 serializer.toJson(backgroundActivityMessage, SessionMessage::class.java, it)
             }
         }
@@ -57,7 +57,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
             it.session.sessionId == backgroundActivityId
         } ?: return null
         return { stream ->
-            CompressionOutputStream(stream).use {
+            ConditionalGzipOutputStream(stream).use {
                 serializer.toJson(message, SessionMessage::class.java, it)
             }
         }

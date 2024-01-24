@@ -4,12 +4,10 @@ import java.io.OutputStream
 import java.util.zip.GZIPOutputStream
 
 /**
- * This Output Stream is used to compress the data that is being written to it.
- * It will only compress the data if it's not already compressed.
- * Given we started compressing payloads to disk from version 6.3.0 onwards,
- * we need to check if the incoming data is already compressed or not for backwards compatibility.
+ * This Output Stream will only compress the data if it's not already compressed.
+ * If the data is already compressed, it will just write it to the output stream.
  */
-internal class CompressionOutputStream(
+internal class ConditionalGzipOutputStream(
     private val outputStream: OutputStream,
 ) : OutputStream() {
 

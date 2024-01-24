@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.comms.api.SerializationAction
-import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -58,12 +58,20 @@ internal class EmbraceCacheService(
         }
     }
 
+    /**
+     * Loads a file from the cache and returns a [SerializationAction] that can be used to write
+     * the data to a stream.
+     * If the file contains compressed data, ConditionalGzipOutputStream won't compress it again.
+     * If the file contains uncompressed data, ConditionalGzipOutputStream will compress it.
+     * We use ConditionalGzipOutputStream for backwards compatibility, because versions of the SDK
+     * before 6.3.0 didn't compress the data.
+     */
     override fun loadPayload(name: String): SerializationAction {
         logger.logDeveloper(TAG, "Attempting to read bytes from $name")
         return { stream ->
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
-                CompressionOutputStream(stream).use {
+                ConditionalGzipOutputStream(stream).use {
                     file.inputStream().buffered().use { input ->
                         input.copyTo(it)
                     }

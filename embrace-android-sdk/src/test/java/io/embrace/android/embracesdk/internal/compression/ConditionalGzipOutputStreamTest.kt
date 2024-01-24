@@ -7,21 +7,21 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
-internal class CompressionOutputStreamTest {
+internal class ConditionalGzipOutputStreamTest {
 
     private lateinit var finalOs: ByteArrayOutputStream
-    private lateinit var compressionOutputStream: CompressionOutputStream
+    private lateinit var conditionalGzipOutputStream: ConditionalGzipOutputStream
 
     @Before
     fun setUp() {
         finalOs = ByteArrayOutputStream()
-        compressionOutputStream = CompressionOutputStream(finalOs)
+        conditionalGzipOutputStream = ConditionalGzipOutputStream(finalOs)
     }
 
     @Test
     fun `test writing uncompressed data, executes compression`() {
         val input = "Hello world!"
-        compressionOutputStream.use {
+        conditionalGzipOutputStream.use {
             it.write(input.toByteArray())
         }
 
@@ -37,7 +37,7 @@ internal class CompressionOutputStreamTest {
             it.write(input.toByteArray())
         }
 
-        compressionOutputStream.use {
+        conditionalGzipOutputStream.use {
             it.write(os.toByteArray())
         }
 
@@ -48,7 +48,7 @@ internal class CompressionOutputStreamTest {
     @Test
     fun `test writing one byte only, compresses correctly`() {
         val input = "H"
-        compressionOutputStream.use {
+        conditionalGzipOutputStream.use {
             it.write(input.toByteArray()[0].toInt())
         }
 
@@ -59,7 +59,7 @@ internal class CompressionOutputStreamTest {
     @Test
     fun `test writing no bytes, returns correctly`() {
         val input = ""
-        compressionOutputStream.use {
+        conditionalGzipOutputStream.use {
             it.write(input.toByteArray())
         }
 

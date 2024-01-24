@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
-import io.embrace.android.embracesdk.internal.compression.CompressionOutputStream
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -475,7 +475,7 @@ internal class EmbraceApiServiceTest {
 
     private inline fun <reified T> getExpectedPayloadSerialized(payload: T): ByteArray {
         val os = ByteArrayOutputStream()
-        CompressionOutputStream(os).use {
+        ConditionalGzipOutputStream(os).use {
             serializer.toJson(payload, T::class.java, it)
         }
         return os.toByteArray()

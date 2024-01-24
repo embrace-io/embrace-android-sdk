@@ -50,7 +50,7 @@ internal class ConditionalGzipOutputStream(
     }
 
     private fun generateOutputStream(): OutputStream {
-        return if (isCompressed(magicNumberBuffer)) {
+        return if (magicNumberBuffer.isEmpty() || isCompressed(magicNumberBuffer)) {
             outputStream.buffered()
         } else {
             GZIPOutputStream(outputStream.buffered())
@@ -58,7 +58,7 @@ internal class ConditionalGzipOutputStream(
     }
 
     /**
-     * Verifies if the file is compressed by reading the first two bytes and checking for the gzip
+     * Verifies if the data is compressed by reading the first two bytes and checking for the gzip
      * magic number, it's a sequence of two bytes that appears at the beginning of a gzip-compressed file.
      * First byte: 0x1F
      * Second byte: 0x8B

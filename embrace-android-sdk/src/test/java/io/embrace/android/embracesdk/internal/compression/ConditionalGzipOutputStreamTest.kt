@@ -63,7 +63,7 @@ internal class ConditionalGzipOutputStreamTest {
             it.write(input.toByteArray())
         }
 
-        val uncompressed = String(GZIPInputStream(finalOs.toByteArray().inputStream()).readBytes())
-        assertEquals("", uncompressed)
+        val result = String(finalOs.toByteArray().inputStream().readBytes())
+        assertEquals("", result)
     }
 }

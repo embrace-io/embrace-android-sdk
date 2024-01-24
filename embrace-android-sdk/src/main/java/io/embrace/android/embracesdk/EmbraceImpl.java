@@ -128,7 +128,7 @@ final class EmbraceImpl {
     private static final Pattern appIdPattern = Pattern.compile("^[A-Za-z0-9]{5}$");
 
     @NonNull
-    final Lazy<EmbraceTracer> tracer;
+    final EmbraceTracer tracer;
 
     /**
      * Whether the Embrace SDK has been started yet.
@@ -314,7 +314,7 @@ final class EmbraceImpl {
         this.essentialServiceModuleSupplier = essentialServiceModuleSupplier;
         this.dataCaptureServiceModuleSupplier = dataCaptureServiceModuleSupplier;
         this.deliveryModuleSupplier = deliveryModuleSupplier;
-        this.tracer = LazyKt.lazy(() -> new EmbraceTracer(initModule.getSpansService()));
+        this.tracer = initModule.getTracer();
     }
 
     EmbraceImpl() {

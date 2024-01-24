@@ -281,11 +281,12 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        service.sendBackgroundActivity()
-        assertNotNull(deliveryService.lastSentBackgroundActivities.single())
+        clock.tick(1000L)
+        service.endBackgroundActivityWithState(clock.now())
+        val msg = deliveryService.lastSentBackgroundActivities.last()
 
         // there should be 1 completed span: the session span
-        assertEquals(1, deliveryService.lastSentBackgroundActivities.single().spans?.size)
+        assertEquals(1, msg.spans?.size)
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -368,7 +369,6 @@ internal class EmbraceBackgroundActivityServiceTest {
         return EmbraceBackgroundActivityService(
             sessionIdTracker,
             deliveryService,
-            configService,
             clock,
             collator,
             ScheduledWorker(blockingExecutorService)

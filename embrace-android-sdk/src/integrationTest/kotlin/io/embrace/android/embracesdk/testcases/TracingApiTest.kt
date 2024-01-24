@@ -184,7 +184,6 @@ internal class TracingApiTest {
     private fun getSdkInitSpanFromBackgroundActivity(): List<EmbraceSpanData> {
         val sentBackgroundActivities = testRule.harness.fakeDeliveryModule.deliveryService.lastSentBackgroundActivities
         val lastSentBackgroundActivity = sentBackgroundActivities.last()
-        val spans = checkNotNull(lastSentBackgroundActivity.spans)
-        return spans.filter { it.name == "emb-sdk-init" }
+        return lastSentBackgroundActivity.spans?.filter { it.name == "emb-sdk-init" } ?: emptyList()
     }
 }

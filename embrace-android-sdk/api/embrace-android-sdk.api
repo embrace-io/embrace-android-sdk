@@ -179,7 +179,7 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
 	public abstract fun getSdkCurrentTime ()J
 	public abstract fun isAnrCaptureEnabled ()Z
 	public abstract fun isInternalNetworkCaptureDisabled ()Z
@@ -198,6 +198,23 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
 	public abstract fun setProcessStartedByNotification ()V
 	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/InternalTracingApi {
+	public abstract fun addSpanAttribute (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun addSpanEvent (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Z
+	public abstract fun recordSpan (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun startSpan (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun stopSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
+}
+
+public final class io/embrace/android/embracesdk/internal/InternalTracingApi$DefaultImpls {
+	public static synthetic fun addSpanEvent$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;ILjava/lang/Object;)Z
+	public static synthetic fun recordCompletedSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;ILjava/lang/Object;)Z
+	public static synthetic fun recordSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun startSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static synthetic fun stopSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;ILjava/lang/Object;)Z
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {

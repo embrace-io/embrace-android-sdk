@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -33,6 +34,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
@@ -159,10 +161,11 @@ internal class EmbraceApiServiceTest {
             )
         )
         apiService.sendLog(event)
+
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
     }
 
@@ -171,9 +174,10 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(successfulPostResponse)
         val blob = BlobMessage()
         apiService.sendAEIBlob(blob)
+
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/blobs",
-            expectedPayload = serializer.toJson(blob).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(blob)
         )
     }
 
@@ -194,7 +198,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/network",
             expectedLogId = "n:network-event-id",
-            expectedPayload = serializer.toJson(networkEvent).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(networkEvent)
         )
     }
 
@@ -211,7 +215,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "e:event-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
     }
 
@@ -228,7 +232,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "c:event-1,event-2",
-            expectedPayload = serializer.toJson(crash).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(crash)
         )
     }
 
@@ -303,7 +307,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
         assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
@@ -329,7 +333,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
         assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
         assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
@@ -358,7 +362,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
@@ -384,7 +388,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
@@ -413,7 +417,7 @@ internal class EmbraceApiServiceTest {
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.toJson(event).toByteArray()
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
@@ -467,6 +471,14 @@ internal class EmbraceApiServiceTest {
         // assert that the pending api call was not scheduled, since all pending api calls
         // are executed once the network connection is restored.
         assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    private inline fun <reified T> getExpectedPayloadSerialized(payload: T): ByteArray {
+        val os = ByteArrayOutputStream()
+        ConditionalGzipOutputStream(os).use {
+            serializer.toJson(payload, T::class.java, it)
+        }
+        return os.toByteArray()
     }
 
     private fun verifyOnlyRequest(

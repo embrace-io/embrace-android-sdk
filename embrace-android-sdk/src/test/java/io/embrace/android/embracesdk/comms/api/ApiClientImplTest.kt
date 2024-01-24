@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -19,7 +20,6 @@ import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import kotlin.IllegalStateException
 
 /**
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
@@ -223,7 +223,9 @@ internal class ApiClientImplTest {
                 httpMethod = HttpMethod.POST
             )
         ) {
-            it.write(payload)
+            ConditionalGzipOutputStream(it).use { stream ->
+                stream.write(payload)
+            }
         }
 
     private fun createThrowingRequest(): ApiRequest {

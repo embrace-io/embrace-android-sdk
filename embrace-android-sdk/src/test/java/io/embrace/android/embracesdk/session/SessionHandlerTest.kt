@@ -180,7 +180,6 @@ internal class SessionHandlerTest {
         sessionService = EmbraceSessionService(
             logger,
             networkConnectivityService,
-            sessionIdTracker,
             breadcrumbService,
             deliveryService,
             payloadMessageCollator,
@@ -206,8 +205,6 @@ internal class SessionHandlerTest {
 
         // verify record connection type
         verify { networkConnectivityService.networkStatusOnSessionStarted(now) }
-        // verify active session is set
-        assertEquals(sessionUuid, sessionIdTracker.getActiveSessionId())
         // verify periodic caching worker has been scheduled
         assertEquals(1, executorService.submitCount)
 

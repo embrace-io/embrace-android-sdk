@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class SessionOrchestratorImpl(
@@ -13,6 +14,7 @@ internal class SessionOrchestratorImpl(
     backgroundActivityServiceImpl: BackgroundActivityService?,
     private val clock: Clock,
     private val configService: ConfigService,
+    private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate
 ) : SessionOrchestrator {
 
@@ -36,7 +38,8 @@ internal class SessionOrchestratorImpl(
         processStateService.addListener(this)
         configService.addListener(backgroundActivityGate)
 
-        if (processStateService.isInBackground) {
+        val inBackground = processStateService.isInBackground
+        val sessionId = if (inBackground) {
             backgroundActivityService?.startBackgroundActivityWithState(true, clock.now())
         } else {
             // If the app goes to foreground before the SDK finishes its startup,
@@ -45,18 +48,24 @@ internal class SessionOrchestratorImpl(
             // If so, force a cold session start.
             sessionService.startSessionWithState(true, clock.now())
         }
+        sessionIdTracker.setActiveSessionId(
+            sessionId = sessionId,
+            isSession = !inBackground
+        )
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         backgroundActivityService?.endBackgroundActivityWithState(timestamp)
         boundaryDelegate.prepareForNewEnvelope()
-        sessionService.startSessionWithState(coldStart, timestamp)
+        val sessionId = sessionService.startSessionWithState(coldStart, timestamp)
+        sessionIdTracker.setActiveSessionId(sessionId, true)
     }
 
     override fun onBackground(timestamp: Long) {
         sessionService.endSessionWithState(timestamp)
         boundaryDelegate.prepareForNewEnvelope()
-        backgroundActivityService?.startBackgroundActivityWithState(false, timestamp)
+        val sessionId = backgroundActivityService?.startBackgroundActivityWithState(false, timestamp)
+        sessionIdTracker.setActiveSessionId(sessionId, false)
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
@@ -73,6 +82,7 @@ internal class SessionOrchestratorImpl(
 
         sessionService.endSessionWithManual()
         boundaryDelegate.prepareForNewEnvelope(clearUserInfo)
-        sessionService.startSessionWithManual()
+        val sessionId = sessionService.startSessionWithManual()
+        sessionIdTracker.setActiveSessionId(sessionId, true)
     }
 }

@@ -7,13 +7,11 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 internal class EmbraceBackgroundActivityService(
-    private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     /**
      * Embrace service dependencies of the background activity session service.
@@ -32,14 +30,14 @@ internal class EmbraceBackgroundActivityService(
     @Volatile
     var backgroundActivity: Session? = null
 
-    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
+    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long): String {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
         val time = when {
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        startCapture(
+        return startCapture(
             InitialEnvelopeParams.BackgroundActivityParams(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
@@ -91,11 +89,11 @@ internal class EmbraceBackgroundActivityService(
      * Start the background activity capture by starting the cache service and creating the background
      * session.
      */
-    private fun startCapture(params: InitialEnvelopeParams.BackgroundActivityParams) {
+    private fun startCapture(params: InitialEnvelopeParams.BackgroundActivityParams): String {
         val activity = payloadMessageCollator.buildInitialSession(params)
         backgroundActivity = activity
-        sessionIdTracker.setActiveSessionId(activity.sessionId, false)
         save()
+        return activity.sessionId
     }
 
     /**

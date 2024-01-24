@@ -75,13 +75,6 @@ internal class EmbraceBackgroundActivityService(
             )
         )
         deliveryService.saveBackgroundActivity(message)
-        startCapture(
-            InitialEnvelopeParams.BackgroundActivityParams(
-                false,
-                LifeEventType.BKGND_STATE,
-                clock.now()
-            )
-        )
     }
 
     /**

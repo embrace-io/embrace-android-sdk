@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeSessionService
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -8,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
+import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,7 +58,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in background`() {
-        createOrchestratorInBackground()
+        createOrchestrator(true)
         verifyPrepareEnvelopeCalled(0)
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(0, sessionService.startTimestamps.size)
@@ -72,7 +75,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test on foreground call`() {
-        createOrchestratorInBackground()
+        createOrchestrator(true)
         orchestrator.onForeground(true, TIMESTAMP)
         verifyPrepareEnvelopeCalled()
         assertEquals(TIMESTAMP, sessionService.startTimestamps.single())
@@ -107,10 +110,30 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test background activity capture disabled`() {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
-        createOrchestratorInBackground()
+        createOrchestrator(true)
         orchestrator.onBackground(TIMESTAMP)
         verifyPrepareEnvelopeCalled()
         assertTrue(backgroundActivityService.startTimestamps.isEmpty())
+    }
+
+    @Test
+    fun `test manual session end disabled for session gating`() {
+        configService = FakeConfigService(
+            sessionBehavior = fakeSessionBehavior {
+                RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        isEnabled = true
+                    ),
+                )
+            }
+        )
+        createOrchestrator(false)
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual(false)
+        assertEquals(1, sessionService.startTimestamps.size)
+        assertEquals(0, sessionService.manualEndCount)
+        verifyPrepareEnvelopeCalled(0)
     }
 
     private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
@@ -122,9 +145,9 @@ internal class SessionOrchestratorTest {
         assertEquals(expectedPropCount, sessionProperties.get().size)
     }
 
-    private fun createOrchestratorInBackground() {
+    private fun createOrchestrator(background: Boolean) {
         processStateService.listeners.clear()
-        processStateService.isInBackground = true
+        processStateService.isInBackground = background
         sessionService.startTimestamps.clear()
         backgroundActivityService.startTimestamps.clear()
         orchestrator = SessionOrchestratorImpl(

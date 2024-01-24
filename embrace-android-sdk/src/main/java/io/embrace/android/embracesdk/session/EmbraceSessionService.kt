@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger,
-    private val configService: ConfigService,
     private val userService: UserService,
     private val networkConnectivityService: NetworkConnectivityService,
     private val sessionIdTracker: SessionIdTracker,
@@ -105,20 +103,10 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
-        if (configService.sessionBehavior.isSessionControlEnabled()) {
-            return
-        }
-
-        // Ends active session.
         endSessionImpl(LifeEventType.MANUAL, clock.now(), clearUserInfo) ?: return
     }
 
     override fun startSessionWithManual() {
-        if (configService.sessionBehavior.isSessionControlEnabled()) {
-            return
-        }
-
-        // Starts a new session.
         startSession(
             InitialEnvelopeParams.SessionParams(
                 false,

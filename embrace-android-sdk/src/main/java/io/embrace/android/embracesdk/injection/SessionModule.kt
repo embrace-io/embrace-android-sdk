@@ -72,7 +72,6 @@ internal class SessionModuleImpl(
         }
         EmbraceSessionService(
             coreModule.logger,
-            essentialServiceModule.configService,
             essentialServiceModule.userService,
             essentialServiceModule.networkConnectivityService,
             essentialServiceModule.sessionIdTracker,

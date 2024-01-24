@@ -95,7 +95,7 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to start a session.
      */
-    internal fun startSession(params: InitialEnvelopeParams.SessionParams) {
+    private fun startSession(params: InitialEnvelopeParams.SessionParams) {
         synchronized(lock) {
             logger.logDebug(
                 "SessionHandler: running onSessionStarted. coldStart=${params.coldStart}," +
@@ -122,7 +122,7 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to end a session.
      */
-    internal fun endSessionImpl(
+    private fun endSessionImpl(
         endType: LifeEventType,
         endTime: Long
     ): SessionMessage? {
@@ -165,7 +165,7 @@ internal class EmbraceSessionService(
      *
      * Note that the session message will not be sent to our servers.
      */
-    internal fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
+    private fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
         synchronized(lock) {
             val session = activeSession ?: return null
             logger.logDeveloper("SessionHandler", "Running periodic cache of active session.")

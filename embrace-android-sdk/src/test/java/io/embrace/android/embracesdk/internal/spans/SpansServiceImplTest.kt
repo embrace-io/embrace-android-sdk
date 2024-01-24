@@ -24,6 +24,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -660,6 +661,19 @@ internal class SpansServiceImplTest {
         }
         assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeNanos = 0, endTimeNanos = 1))
         assertEquals(0, spansService.completedSpans().size)
+    }
+
+    @Test
+    fun `get same EmbraceSpan using spanId`() {
+        initAndFlushService()
+        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
+        assertTrue(embraceSpan.start())
+        val spanId = checkNotNull(embraceSpan.spanId)
+        val spanFromService = checkNotNull(spansService.getSpan(spanId))
+        assertSame(spanFromService, embraceSpan)
+        assertTrue(spanFromService.stop())
+        assertFalse(embraceSpan.isRecording)
+        verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
     private fun initService(sdkInitStartTimeMillis: Long = clock.now()) {

@@ -68,6 +68,11 @@ internal interface SpansService {
      */
     fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause? = null): List<EmbraceSpanData>?
 
+    /**
+     * Return the [EmbraceSpan] for the given [spanId] if it's available
+     */
+    fun getSpan(spanId: String): EmbraceSpan?
+
     companion object {
         val featureDisabledSpansService = FeatureDisabledSpansService()
     }

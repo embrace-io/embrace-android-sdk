@@ -66,11 +66,14 @@ internal class SpansServiceImpl(
      */
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
 
+    private val spansRepository = SpansRepository()
+
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && validateAndUpdateContext(parent, internal)) {
             EmbraceSpanImpl(
                 spanBuilder = createRootSpanBuilder(name = name, type = type, internal = internal),
-                parent = parent
+                parent = parent,
+                spansRepository = spansRepository
             )
         } else {
             null
@@ -172,6 +175,8 @@ internal class SpansServiceImpl(
             return flushedSpans
         }
     }
+
+    override fun getSpan(spanId: String): EmbraceSpan? = spansRepository.getSpan(spanId)
 
     /**
      * Creating a new Span is only possible if the current session span is active, the parent has already been started, and the total

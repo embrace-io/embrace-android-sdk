@@ -121,6 +121,8 @@ internal class EmbraceSpansService(
     override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData>? =
         currentDelegate.flushSpans(appTerminationCause = appTerminationCause)
 
+    override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId)
+
     private fun recordBufferedCalls() {
         if (initialized()) {
             synchronized(bufferedCalls) {

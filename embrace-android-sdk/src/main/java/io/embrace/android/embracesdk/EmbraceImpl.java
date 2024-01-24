@@ -623,6 +623,12 @@ final class EmbraceImpl {
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
+        // Send any sessions that were cached and not yet sent.
+        deliveryModule.getDeliveryService().sendCachedSessions(
+            nativeModule.getNdkService(),
+            essentialServiceModule.getSessionIdTracker()
+        );
+
         CrashModule crashModule = new CrashModuleImpl(
             initModule,
             storageModule,

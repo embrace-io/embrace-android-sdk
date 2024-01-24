@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
@@ -39,7 +40,7 @@ import org.junit.Test
 internal class EmbraceCrashServiceTest {
 
     private lateinit var embraceCrashService: EmbraceCrashService
-    private lateinit var sessionService: FakeSessionService
+    private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var metadataService: FakeMetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -62,7 +63,7 @@ internal class EmbraceCrashServiceTest {
         mockkStatic(Crash::class)
         mockkObject(CrashFactory)
 
-        sessionService = FakeSessionService()
+        sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
@@ -95,7 +96,7 @@ internal class EmbraceCrashServiceTest {
 
         embraceCrashService = EmbraceCrashService(
             configService,
-            sessionService,
+            sessionOrchestrator,
             sessionPropertiesService,
             metadataService,
             sessionIdTracker,
@@ -105,7 +106,6 @@ internal class EmbraceCrashServiceTest {
             anrService,
             ndkService,
             gatingService,
-            null,
             preferencesService,
             crashMarker,
             fakeClock
@@ -124,7 +124,7 @@ internal class EmbraceCrashServiceTest {
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         val lastSentCrash = deliveryService.lastSentCrash
         assertNotNull(lastSentCrash)
-        assertEquals(crash.crashId, sessionService.crashId)
+        assertEquals(crash.crashId, sessionOrchestrator.crashId)
 
         /*
         * Verify mainCrashHandled is true after the first execution
@@ -134,7 +134,7 @@ internal class EmbraceCrashServiceTest {
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)
         assertSame(lastSentCrash, deliveryService.lastSentCrash)
-        assertEquals(crash.crashId, sessionService.crashId)
+        assertEquals(crash.crashId, sessionOrchestrator.crashId)
     }
 
     @Test
@@ -148,7 +148,7 @@ internal class EmbraceCrashServiceTest {
         verify { CrashFactory.ofThrowable(testException, localJsException, 1, "Unity123") }
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)
-        assertEquals(crash.crashId, sessionService.crashId)
+        assertEquals(crash.crashId, sessionOrchestrator.crashId)
     }
 
     @Test

@@ -203,6 +203,22 @@ internal class SessionOrchestratorTest {
         assertEquals(0, sessionService.manualEndCount)
     }
 
+    @Test
+    fun `end with crash in background`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(true)
+        orchestrator.endSessionWithCrash("crashId")
+        assertEquals("crashId", backgroundActivityService.crashId)
+    }
+
+    @Test
+    fun `end with crash in foreground`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(false)
+        orchestrator.endSessionWithCrash("crashId")
+        assertEquals("crashId", sessionService.crashId)
+    }
+
     private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
         assertEquals(expectedCount, memoryCleanerService.callCount)
         val expectedPropCount = when (expectedCount) {

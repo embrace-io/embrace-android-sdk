@@ -85,4 +85,9 @@ internal class SessionOrchestratorImpl(
         val sessionId = sessionService.startSessionWithManual()
         sessionIdTracker.setActiveSessionId(sessionId, true)
     }
+
+    override fun endSessionWithCrash(crashId: String) {
+        sessionService.endSessionWithCrash(crashId)
+        backgroundActivityService?.endBackgroundActivityWithCrash(crashId)
+    }
 }

@@ -137,7 +137,6 @@ internal class EmbraceCacheServiceTest {
         val action = service.loadPayload("some_file.jpeg")
         val stream = ByteArrayOutputStream()
         action(stream)
-        println(stream.toByteArray())
         val uncompressed = String(GZIPInputStream(stream.toByteArray().inputStream()).readBytes())
         assertEquals("", uncompressed)
     }

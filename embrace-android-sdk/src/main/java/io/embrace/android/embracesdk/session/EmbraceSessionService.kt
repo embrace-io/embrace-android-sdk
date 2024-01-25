@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -12,8 +10,6 @@ import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 
 internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger,
-    private val networkConnectivityService: NetworkConnectivityService,
-    private val breadcrumbService: BreadcrumbService,
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val clock: Clock,
@@ -27,7 +23,7 @@ internal class EmbraceSessionService(
     @Volatile
     override var activeSession: Session? = null
 
-    override fun startSessionWithState(coldStart: Boolean, timestamp: Long): String {
+    override fun startSessionWithState(timestamp: Long, coldStart: Boolean): String {
         return startSession(
             InitialEnvelopeParams.SessionParams(
                 coldStart,
@@ -37,12 +33,12 @@ internal class EmbraceSessionService(
         )
     }
 
-    override fun startSessionWithManual(): String {
+    override fun startSessionWithManual(timestamp: Long): String {
         return startSession(
             InitialEnvelopeParams.SessionParams(
                 false,
                 LifeEventType.MANUAL,
-                clock.now()
+                timestamp
             )
         )
     }
@@ -51,17 +47,17 @@ internal class EmbraceSessionService(
         endSessionImpl(LifeEventType.STATE, timestamp)
     }
 
-    override fun endSessionWithManual() {
-        endSessionImpl(LifeEventType.MANUAL, clock.now()) ?: return
+    override fun endSessionWithManual(timestamp: Long) {
+        endSessionImpl(LifeEventType.MANUAL, timestamp) ?: return
     }
 
-    override fun endSessionWithCrash(crashId: String) {
+    override fun endSessionWithCrash(timestamp: Long, crashId: String) {
         val session = activeSession ?: return
         logger.logDebug("SessionHandler: running onCrash for $crashId")
         createAndProcessSessionSnapshot(
             FinalEnvelopeParams.SessionParams(
                 initial = session,
-                endTime = clock.now(),
+                endTime = timestamp,
                 lifeEventType = LifeEventType.STATE,
                 crashId = crashId,
                 endType = SessionSnapshotType.JVM_CRASH
@@ -88,9 +84,6 @@ internal class EmbraceSessionService(
             "Started new session. ID=${session.sessionId}"
         )
 
-        // Record the connection type at the start of the session.
-        networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
-        breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
         periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
         return session.sessionId
     }

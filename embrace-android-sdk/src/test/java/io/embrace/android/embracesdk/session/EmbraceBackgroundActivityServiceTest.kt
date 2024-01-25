@@ -99,7 +99,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `test background activity state when going to the background`() {
         this.service = createService()
 
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
 
         val payload = checkNotNull(service.backgroundActivity)
         assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
@@ -150,7 +150,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 5000)
-        service.startBackgroundActivityWithState(false, startTime + 5000)
+        service.startBackgroundActivityWithState(startTime + 5000, false)
         assertEquals(3, deliveryService.saveBackgroundActivityInvokedCount)
     }
 
@@ -171,7 +171,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         // tick 4999 milliseconds, the activity should not be cached yet
         clock.tick(4999)
         blockingExecutorService.runCurrentlyBlocked()
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         // tick an extra millisecond, the delayed job should execute
@@ -187,7 +187,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         assertNull(deliveryService.lastSavedBackgroundActivities.singleOrNull())
 
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
 
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
     }
@@ -202,7 +202,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(0, deliveryService.saveBackgroundActivityInvokedCount)
 
         // start capturing background activity 10 seconds later, activity is first cached
-        service.startBackgroundActivityWithState(false, startTime + 10 * 1000)
+        service.startBackgroundActivityWithState(startTime + 10 * 1000, false)
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // elapse another 10 seconds to get around the 5 seconds limitation
@@ -219,7 +219,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         this.service = createService(false)
         assertEquals(0, deliveryService.saveBackgroundActivityInvokedCount)
 
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // save() will not persist to disk since the last time was less than 5 seconds ago
@@ -255,7 +255,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now)
-        service.endBackgroundActivityWithCrash("crashId")
+        service.endBackgroundActivityWithCrash(now, "crashId")
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
         // there should be 1 completed span: the session span
@@ -320,7 +320,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(0, deliveryService.lastSentBackgroundActivities.size)
 
         // next BA is recorded correctly
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
         clock.tick(1000L)
         service.endBackgroundActivityWithState(clock.now())
         assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
@@ -331,7 +331,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `background activity capture disabled after onBackground`() {
         service = createService(createInitialSession = false)
 
-        service.startBackgroundActivityWithState(true, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), true)
         clock.tick(1000L)
 
         // missing end call simulates service being enabled halfway through.
@@ -339,7 +339,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(0, deliveryService.lastSentBackgroundActivities.size)
 
         // next BA is recorded correctly
-        service.startBackgroundActivityWithState(false, clock.now())
+        service.startBackgroundActivityWithState(clock.now(), false)
         clock.tick(1000L)
         service.endBackgroundActivityWithState(clock.now())
         assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
@@ -373,7 +373,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             Any()
         ).apply {
             if (createInitialSession) {
-                startBackgroundActivityWithState(true, clock.now())
+                startBackgroundActivityWithState(clock.now(), true)
             }
         }
     }

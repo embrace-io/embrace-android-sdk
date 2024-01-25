@@ -87,8 +87,6 @@ internal class SessionModuleImpl(
     override val sessionService: SessionService by singleton {
         EmbraceSessionService(
             coreModule.logger,
-            essentialServiceModule.networkConnectivityService,
-            dataCaptureServiceModule.breadcrumbService,
             deliveryModule.deliveryService,
             payloadMessageCollator,
             initModule.clock,
@@ -113,7 +111,9 @@ internal class SessionModuleImpl(
             essentialServiceModule.userService,
             ndkService,
             sessionProperties,
-            sdkObservabilityModule.internalErrorService
+            sdkObservabilityModule.internalErrorService,
+            essentialServiceModule.networkConnectivityService,
+            dataCaptureServiceModule.breadcrumbService,
         )
     }
 

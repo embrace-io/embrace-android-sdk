@@ -17,8 +17,11 @@ internal class FakeNetworkConnectivityService(
             notifyListeners()
         }
 
+    public var networkStatusOnSessionStartedCount = 0
+
     override fun networkStatusOnSessionStarted(startTime: Long) {
         notifyListeners()
+        networkStatusOnSessionStartedCount += 1
     }
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {

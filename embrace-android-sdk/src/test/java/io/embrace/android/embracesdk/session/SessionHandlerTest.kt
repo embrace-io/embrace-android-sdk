@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -70,8 +69,6 @@ import org.junit.Test
 internal class SessionHandlerTest {
 
     companion object {
-        private val networkConnectivityService: NetworkConnectivityService =
-            mockk(relaxUnitFun = true)
         private val eventService: EventService = FakeEventService()
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
@@ -179,8 +176,6 @@ internal class SessionHandlerTest {
         )
         sessionService = EmbraceSessionService(
             logger,
-            networkConnectivityService,
-            breadcrumbService,
             deliveryService,
             payloadMessageCollator,
             clock,
@@ -202,10 +197,8 @@ internal class SessionHandlerTest {
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
-        sessionService.startSessionWithState(true, now)
+        sessionService.startSessionWithState(now, true)
 
-        // verify record connection type
-        verify { networkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify periodic caching worker has been scheduled
         assertEquals(1, executorService.submitCount)
 
@@ -229,7 +222,7 @@ internal class SessionHandlerTest {
         sessionLocalConfig = SessionLocalConfig()
         // this is needed so session handler creates automatic session stopper
 
-        sessionService.startSessionWithState(true, now)
+        sessionService.startSessionWithState(now, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
         checkNotNull(sessionService.activeSession)
@@ -242,10 +235,7 @@ internal class SessionHandlerTest {
         val mockActivity: Activity = mockActivity()
         // let's return a foreground activity
         activityLifecycleTracker.foregroundActivity = mockActivity
-        sessionService.startSessionWithState(true, now)
-
-        // verify we are forcing log view with foreground activity class name
-        assertEquals(now, breadcrumbService.firstViewBreadcrumbCalls.single())
+        sessionService.startSessionWithState(now, true)
         checkNotNull(sessionService.activeSession)
         // no need to verify anything else because it's already verified in another test case
     }
@@ -266,7 +256,7 @@ internal class SessionHandlerTest {
         // since now=123, then duration will be less than 5 seconds
         val startTime = 120L
         activeSession = activeSession.copy(startTime = startTime)
-        sessionService.endSessionWithManual()
+        sessionService.endSessionWithManual(clock.now())
 
         assertEquals(0, executorService.submitCount)
         assertEquals(0, memoryCleanerService.callCount)
@@ -286,7 +276,7 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        sessionService.endSessionWithCrash(crashId)
+        sessionService.endSessionWithCrash(clock.now(), crashId)
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
@@ -361,7 +351,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {
             // do nothing
         }
-        sessionService.endSessionWithCrash("fakeCrashId")
+        sessionService.endSessionWithCrash(clock.now(), "fakeCrashId")
         assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
@@ -418,7 +408,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {}
         assertEquals(1, spansService.completedSpans()?.size)
 
-        sessionService.endSessionWithCrash("crashId")
+        sessionService.endSessionWithCrash(clock.now(), "crashId")
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -433,7 +423,7 @@ internal class SessionHandlerTest {
     }
 
     private fun startFakeSession() {
-        sessionService.startSessionWithState(true, now)
+        sessionService.startSessionWithState(now, true)
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

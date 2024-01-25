@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -19,14 +21,16 @@ internal class OrchestratorBoundaryDelegate(
     private val userService: UserService,
     private val ndkService: NdkService?,
     private val sessionProperties: EmbraceSessionProperties,
-    private val internalErrorService: InternalErrorService
+    private val internalErrorService: InternalErrorService,
+    private val networkConnectivityService: NetworkConnectivityService,
+    private val breadcrumbService: BreadcrumbService
 ) {
 
     /**
      * Prepares all services/state for a new envelope. Practically this involves
      * resetting collections in services etc.
      */
-    fun prepareForNewEnvelope(clearUserInfo: Boolean = false) {
+    fun prepareForNewEnvelope(startTime: Long, clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections(internalErrorService)
         sessionProperties.clearTemporary()
 
@@ -34,5 +38,9 @@ internal class OrchestratorBoundaryDelegate(
             userService.clearAllUserInfo()
             ndkService?.onUserInfoUpdate()
         }
+
+        // Record the connection type at the start of the session.
+        networkConnectivityService.networkStatusOnSessionStarted(startTime)
+        breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
     }
 }

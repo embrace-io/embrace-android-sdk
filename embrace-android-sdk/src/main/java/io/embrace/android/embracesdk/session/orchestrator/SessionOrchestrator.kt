@@ -13,4 +13,9 @@ internal interface SessionOrchestrator : ProcessStateListener {
      * the user info will be cleared. This has no effect on background activities.
      */
     fun endSessionWithManual(clearUserInfo: Boolean)
+
+    /**
+     * Handles an uncaught exception, ending the active session and saving it to disk.
+     */
+    fun endSessionWithCrash(crashId: String)
 }

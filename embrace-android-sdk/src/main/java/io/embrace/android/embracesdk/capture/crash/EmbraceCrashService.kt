@@ -20,9 +20,8 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.extensions.CrashFactory
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.BackgroundActivityService
-import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
@@ -30,7 +29,7 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
  */
 internal class EmbraceCrashService(
     configService: ConfigService,
-    private val sessionService: SessionService,
+    private val sessionOrchestrator: SessionOrchestrator,
     private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
@@ -40,7 +39,6 @@ internal class EmbraceCrashService(
     private val anrService: AnrService?,
     private val ndkService: NdkService,
     private val gatingService: GatingService,
-    private val backgroundActivityService: BackgroundActivityService?,
     private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
     private val clock: Clock
@@ -136,8 +134,7 @@ internal class EmbraceCrashService(
             deliveryService.sendCrash(crashEvent, true)
 
             // End, cache and send the session
-            sessionService.endSessionWithCrash(crash.crashId)
-            backgroundActivityService?.endBackgroundActivityWithCrash(crash.crashId)
+            sessionOrchestrator.endSessionWithCrash(crash.crashId)
 
             // Indicate that a crash happened so we can know that in the next launch
             crashMarker.mark()

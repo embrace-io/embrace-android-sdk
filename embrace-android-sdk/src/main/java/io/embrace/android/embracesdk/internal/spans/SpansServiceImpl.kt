@@ -162,6 +162,7 @@ internal class SpansServiceImpl(
 
             if (appTerminationCause == null) {
                 currentSessionSpan.get().endSpan()
+                spansRepository.clearCompletedSpans()
                 currentSessionSpan.set(startSessionSpan(clock.now()))
             } else {
                 currentSessionSpan.get()?.let {

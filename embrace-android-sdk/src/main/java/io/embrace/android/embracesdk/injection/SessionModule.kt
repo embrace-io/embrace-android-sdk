@@ -27,7 +27,6 @@ internal interface SessionModule {
 
 internal class SessionModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
@@ -86,7 +85,6 @@ internal class SessionModuleImpl(
 
     override val sessionService: SessionService by singleton {
         EmbraceSessionService(
-            coreModule.logger,
             deliveryModule.deliveryService,
             payloadMessageCollator,
             initModule.clock,

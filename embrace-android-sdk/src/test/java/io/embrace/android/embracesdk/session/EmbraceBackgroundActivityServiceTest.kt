@@ -97,11 +97,10 @@ internal class EmbraceBackgroundActivityServiceTest {
 
     @Test
     fun `test background activity state when going to the background`() {
-        this.service = createService()
-
+        this.service = createService(createInitialSession = false)
         service.startBackgroundActivityWithState(clock.now(), false)
 
-        val payload = checkNotNull(service.backgroundActivity)
+        val payload = deliveryService.lastSavedBackgroundActivities.single().session
         assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
         assertFalse(payload.isColdStart)
@@ -110,12 +109,8 @@ internal class EmbraceBackgroundActivityServiceTest {
     @Test
     fun `test background activity state when going to the foreground`() {
         this.service = createService()
-
         val timestamp = 1669392000L
-
         service.endBackgroundActivityWithState(timestamp)
-
-        assertNull(service.backgroundActivity)
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
@@ -128,7 +123,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `background activity is not started whn the service initializes in the foreground`() {
         activityService.isInBackground = false
         this.service = createService(false)
-        assertNull(service.backgroundActivity)
+        assertTrue(deliveryService.lastSavedBackgroundActivities.isEmpty())
     }
 
     @Test

@@ -9,12 +9,10 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 
 internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger,
     private val networkConnectivityService: NetworkConnectivityService,
-    private val sessionIdTracker: SessionIdTracker,
     private val breadcrumbService: BreadcrumbService,
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
@@ -33,6 +31,34 @@ internal class EmbraceSessionService(
      */
     private val lock = Any()
 
+    override fun startSessionWithState(coldStart: Boolean, timestamp: Long): String {
+        return startSession(
+            InitialEnvelopeParams.SessionParams(
+                coldStart,
+                LifeEventType.STATE,
+                timestamp
+            )
+        )
+    }
+
+    override fun startSessionWithManual(): String {
+        return startSession(
+            InitialEnvelopeParams.SessionParams(
+                false,
+                LifeEventType.MANUAL,
+                clock.now()
+            )
+        )
+    }
+
+    override fun endSessionWithState(timestamp: Long) {
+        endSessionImpl(LifeEventType.STATE, timestamp)
+    }
+
+    override fun endSessionWithManual() {
+        endSessionImpl(LifeEventType.MANUAL, clock.now()) ?: return
+    }
+
     override fun endSessionWithCrash(crashId: String) {
         synchronized(lock) {
             val session = activeSession ?: return
@@ -50,38 +76,10 @@ internal class EmbraceSessionService(
         }
     }
 
-    override fun startSessionWithState(coldStart: Boolean, timestamp: Long) {
-        startSession(
-            InitialEnvelopeParams.SessionParams(
-                coldStart,
-                LifeEventType.STATE,
-                timestamp
-            )
-        )
-    }
-
-    override fun endSessionWithState(timestamp: Long) {
-        endSessionImpl(LifeEventType.STATE, timestamp)
-    }
-
-    override fun endSessionWithManual() {
-        endSessionImpl(LifeEventType.MANUAL, clock.now()) ?: return
-    }
-
-    override fun startSessionWithManual() {
-        startSession(
-            InitialEnvelopeParams.SessionParams(
-                false,
-                LifeEventType.MANUAL,
-                clock.now()
-            )
-        )
-    }
-
     /**
      * It performs all corresponding operations in order to start a session.
      */
-    private fun startSession(params: InitialEnvelopeParams.SessionParams) {
+    private fun startSession(params: InitialEnvelopeParams.SessionParams): String {
         synchronized(lock) {
             logger.logDebug(
                 "SessionHandler: running onSessionStarted. coldStart=${params.coldStart}," +
@@ -98,10 +96,10 @@ internal class EmbraceSessionService(
             )
 
             // Record the connection type at the start of the session.
-            sessionIdTracker.setActiveSessionId(session.sessionId, true)
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
             periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
+            return session.sessionId
         }
     }
 
@@ -123,11 +121,6 @@ internal class EmbraceSessionService(
                     endType = SessionSnapshotType.NORMAL_END
                 ),
             )
-
-            // Clean every collection of those services which have collections in memory.
-            sessionIdTracker.setActiveSessionId(null, false)
-
-            // clear active session
             activeSession = null
             logger.logDebug("SessionHandler: cleared active session")
             return fullEndSessionMessage

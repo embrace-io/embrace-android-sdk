@@ -7,8 +7,9 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
     val endTimestamps = mutableListOf<Long>()
     val startTimestamps = mutableListOf<Long>()
 
-    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
+    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long): String {
         startTimestamps.add(timestamp)
+        return "fakeBackgroundActivityId"
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {

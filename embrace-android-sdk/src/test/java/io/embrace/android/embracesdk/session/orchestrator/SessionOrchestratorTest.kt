@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
@@ -36,6 +37,7 @@ internal class SessionOrchestratorTest {
     private lateinit var userService: FakeUserService
     private lateinit var ndkService: FakeNdkService
     private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
 
     @Before
     fun setUp() {
@@ -49,12 +51,14 @@ internal class SessionOrchestratorTest {
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
         ndkService = FakeNdkService()
+        sessionIdTracker = FakeSessionIdTracker()
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
             backgroundActivityService,
             clock,
             configService,
+            sessionIdTracker,
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
@@ -73,6 +77,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(0, sessionService.startTimestamps.size)
         assertEquals(1, backgroundActivityService.startTimestamps.size)
+        assertEquals("fakeBackgroundActivityId", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -81,6 +86,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(1, sessionService.startTimestamps.size)
         assertEquals(0, backgroundActivityService.startTimestamps.size)
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -90,6 +96,7 @@ internal class SessionOrchestratorTest {
         verifyPrepareEnvelopeCalled()
         assertEquals(TIMESTAMP, sessionService.startTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.endTimestamps.single())
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -98,6 +105,7 @@ internal class SessionOrchestratorTest {
         verifyPrepareEnvelopeCalled()
         assertEquals(TIMESTAMP, sessionService.endTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.startTimestamps.single())
+        assertEquals("fakeBackgroundActivityId", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -107,6 +115,7 @@ internal class SessionOrchestratorTest {
         verifyPrepareEnvelopeCalled()
         assertEquals(1, sessionService.manualEndCount)
         assertEquals(1, sessionService.manualStartCount)
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -214,6 +223,7 @@ internal class SessionOrchestratorTest {
             backgroundActivityService,
             clock,
             configService,
+            sessionIdTracker,
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,

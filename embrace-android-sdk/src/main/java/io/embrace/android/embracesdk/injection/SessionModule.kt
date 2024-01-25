@@ -86,7 +86,6 @@ internal class SessionModuleImpl(
         EmbraceSessionService(
             coreModule.logger,
             essentialServiceModule.networkConnectivityService,
-            essentialServiceModule.sessionIdTracker,
             dataCaptureServiceModule.breadcrumbService,
             deliveryModule.deliveryService,
             payloadMessageCollator,
@@ -97,7 +96,6 @@ internal class SessionModuleImpl(
 
     override val backgroundActivityService: BackgroundActivityService? by singleton {
         EmbraceBackgroundActivityService(
-            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             initModule.clock,
             payloadMessageCollator,
@@ -122,6 +120,7 @@ internal class SessionModuleImpl(
             backgroundActivityService,
             initModule.clock,
             essentialServiceModule.configService,
+            essentialServiceModule.sessionIdTracker,
             boundaryDelegate
         )
     }

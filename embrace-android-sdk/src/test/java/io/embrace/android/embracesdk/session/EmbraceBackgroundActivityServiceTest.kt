@@ -104,7 +104,6 @@ internal class EmbraceBackgroundActivityServiceTest {
         val payload = checkNotNull(service.backgroundActivity)
         assertEquals(Session.LifeEventType.BKGND_STATE, payload.startType)
         assertEquals(5, payload.number)
-        assertEquals(payload.sessionId, sessionIdTracker.getActiveSessionId())
         assertFalse(payload.isColdStart)
     }
 
@@ -367,7 +366,6 @@ internal class EmbraceBackgroundActivityServiceTest {
             FakeStartupService()
         )
         return EmbraceBackgroundActivityService(
-            sessionIdTracker,
             deliveryService,
             clock,
             collator,

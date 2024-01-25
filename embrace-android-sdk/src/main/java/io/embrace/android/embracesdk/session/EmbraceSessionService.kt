@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
@@ -32,11 +31,6 @@ internal class EmbraceSessionService(
     companion object {
 
         /**
-         * The minimum threshold for how long a session must last. Package-private for test accessibility
-         */
-        private const val minSessionTime = 5000L
-
-        /**
          * Session caching interval in seconds.
          */
         private const val SESSION_CACHING_INTERVAL = 2
@@ -46,8 +40,7 @@ internal class EmbraceSessionService(
      * The currently active session.
      */
     @Volatile
-    @VisibleForTesting
-    internal var activeSession: Session? = null
+    override var activeSession: Session? = null
 
     internal fun getSessionId(): String? = activeSession?.sessionId
 
@@ -148,7 +141,7 @@ internal class EmbraceSessionService(
                     lifeEventType = endType,
                     endType = SessionSnapshotType.NORMAL_END
                 ),
-            ) ?: return null
+            )
 
             // Clean every collection of those services which have collections in memory.
             sessionIdTracker.setActiveSessionId(null, false)
@@ -198,27 +191,12 @@ internal class EmbraceSessionService(
     }
 
     /**
-     * It determines if we are allowed to build an end session message.
-     */
-    private fun isAllowedToEnd(endType: LifeEventType?, activeSession: Session): Boolean =
-        when (endType) {
-            LifeEventType.STATE -> true
-            LifeEventType.MANUAL -> (clock.now() - activeSession.startTime) >= minSessionTime
-            else -> false // background activity
-        }
-
-    /**
      * Snapshots the active session. The behavior is controlled by the
      * [SessionSnapshotType] passed to this function.
      */
-    private fun createAndProcessSessionSnapshot(params: FinalEnvelopeParams.SessionParams): SessionMessage? {
+    private fun createAndProcessSessionSnapshot(params: FinalEnvelopeParams.SessionParams): SessionMessage {
         if (params.endType.shouldStopCaching) {
             stopPeriodicSessionCaching()
-        }
-
-        if (!isAllowedToEnd(params.lifeEventType, params.initial)) {
-            logger.logDebug("Session not allowed to end.")
-            return null
         }
 
         return payloadMessageCollator.buildFinalSessionMessage(params).also {

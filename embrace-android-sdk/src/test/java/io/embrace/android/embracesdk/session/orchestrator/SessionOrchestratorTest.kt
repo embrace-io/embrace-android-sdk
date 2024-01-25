@@ -100,6 +100,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end session with manual in foreground`() {
+        clock.tick(10000)
         orchestrator.endSessionWithManual(true)
         verifyPrepareEnvelopeCalled()
         assertEquals(1, sessionService.manualEndCount)
@@ -153,6 +154,42 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual(true)
         assertEquals(1, userService.clearedCount)
         assertEquals(1, ndkService.userUpdateCount)
+    }
+
+    @Test
+    fun `ending session manually above time threshold succeeds`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(10000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, sessionService.startTimestamps.size)
+        assertEquals(1, sessionService.manualStartCount)
+        assertEquals(1, sessionService.manualEndCount)
+    }
+
+    @Test
+    fun `ending session manually below time threshold fails`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(1000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, sessionService.startTimestamps.size)
+        assertEquals(0, sessionService.manualStartCount)
+        assertEquals(0, sessionService.manualEndCount)
+    }
+
+    @Test
+    fun `ending session manually when no session exists starts new session`() {
+        configService = FakeConfigService()
+        createOrchestrator(true)
+        clock.tick(1000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(0, sessionService.startTimestamps.size)
+        assertEquals(0, sessionService.manualStartCount)
+        assertEquals(0, sessionService.manualEndCount)
     }
 
     private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {

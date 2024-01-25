@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -11,13 +10,11 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 internal class EmbraceBackgroundActivityService(
     private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
-    private val configService: ConfigService,
     /**
      * Embrace service dependencies of the background activity session service.
      */
@@ -34,9 +31,6 @@ internal class EmbraceBackgroundActivityService(
      */
     @Volatile
     var backgroundActivity: Session? = null
-    private val manualBkgSessionsSent = AtomicInteger(0)
-
-    private var lastSendAttempt: Long = clock.now()
 
     override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
@@ -90,31 +84,6 @@ internal class EmbraceBackgroundActivityService(
         )
     }
 
-    override fun sendBackgroundActivity() {
-        if (!verifyManualSendThresholds()) {
-            return
-        }
-        val activity = backgroundActivity ?: return
-        val now = clock.now()
-        val message = stopCapture(
-            FinalEnvelopeParams.BackgroundActivityParams(
-                initial = activity,
-                endTime = now,
-                lifeEventType = LifeEventType.BKGND_MANUAL,
-                crashId = null
-            )
-        )
-        // start a new background activity session
-        startCapture(
-            InitialEnvelopeParams.BackgroundActivityParams(
-                coldStart = false,
-                startType = LifeEventType.BKGND_MANUAL,
-                startTime = clock.now()
-            )
-        )
-        deliveryService.sendBackgroundActivity(message)
-    }
-
     /**
      * Save the background activity to disk
      */
@@ -145,33 +114,6 @@ internal class EmbraceBackgroundActivityService(
     private fun stopCapture(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
         backgroundActivity = null
         return payloadMessageCollator.buildFinalBackgroundActivityMessage(params)
-    }
-
-    /**
-     * Verify if the amount of background activities captured reach the limit or if the last send
-     * attempt was less than 5 sec ago.
-     *
-     * @return false if the verify failed, true otherwise
-     */
-    private fun verifyManualSendThresholds(): Boolean {
-        val behavior = configService.backgroundActivityBehavior
-        val manualBackgroundActivityLimit = behavior.getManualBackgroundActivityLimit()
-        val minBackgroundActivityDuration = behavior.getMinBackgroundActivityDuration()
-        if (manualBkgSessionsSent.getAndIncrement() >= manualBackgroundActivityLimit) {
-            logger.logWarning(
-                "Warning, failed to send background activity. " +
-                    "The amount of background activity that can be sent reached the limit.."
-            )
-            return false
-        }
-        if (lastSendAttempt < minBackgroundActivityDuration) {
-            logger.logWarning(
-                "Warning, failed to send background activity. The last attempt " +
-                    "to send background activity was less than 5 seconds ago."
-            )
-            return false
-        }
-        return true
     }
 
     /**

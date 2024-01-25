@@ -89,7 +89,6 @@ internal class SessionModuleImpl(
         EmbraceBackgroundActivityService(
             essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
-            essentialServiceModule.configService,
             initModule.clock,
             payloadMessageCollator,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)

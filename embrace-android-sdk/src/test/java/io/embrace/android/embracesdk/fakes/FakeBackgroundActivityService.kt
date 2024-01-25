@@ -15,10 +15,6 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
         endTimestamps.add(timestamp)
     }
 
-    override fun sendBackgroundActivity() {
-        TODO("Not yet implemented")
-    }
-
     override fun endBackgroundActivityWithCrash(crashId: String) {
     }
 

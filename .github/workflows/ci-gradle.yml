@@ -11,6 +11,7 @@ on:
 jobs:
   gradle-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         jdk-version: ["11"]

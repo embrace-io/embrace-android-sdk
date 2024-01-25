@@ -17,6 +17,7 @@ env:
 jobs:
   test:
     runs-on: macos-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         jdk-version: ["11"]

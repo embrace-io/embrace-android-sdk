@@ -20,7 +20,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule(clock = FakeClock(currentTime = beforeObjectInitTime))
-        impl = UninitializedSdkInternalInterfaceImpl(InternalTracer(initModule.tracer))
+        impl = UninitializedSdkInternalInterfaceImpl(InternalTracer(initModule.tracer, initModule.clock))
     }
 
     @Test

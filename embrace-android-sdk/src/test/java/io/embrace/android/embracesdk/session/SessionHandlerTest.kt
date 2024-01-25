@@ -47,6 +47,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
@@ -118,12 +119,12 @@ internal class SessionHandlerTest {
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var sessionService: EmbraceSessionService
     private lateinit var executorService: BlockingScheduledExecutorService
-    private lateinit var sessionPeriodicCacheExecutorService: ScheduledWorker
+    private lateinit var scheduledWorker: ScheduledWorker
 
     @Before
     fun before() {
         executorService = BlockingScheduledExecutorService()
-        sessionPeriodicCacheExecutorService = ScheduledWorker(executorService)
+        scheduledWorker = ScheduledWorker(executorService)
         clock.setCurrentTime(now)
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
@@ -184,7 +185,7 @@ internal class SessionHandlerTest {
             deliveryService,
             payloadMessageCollator,
             clock,
-            sessionPeriodicCacheScheduledWorker = sessionPeriodicCacheExecutorService
+            PeriodicSessionCacher(FakeClock(), scheduledWorker)
         )
     }
 

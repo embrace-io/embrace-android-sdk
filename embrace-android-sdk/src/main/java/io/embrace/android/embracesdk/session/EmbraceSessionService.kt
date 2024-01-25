@@ -3,17 +3,13 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.worker.ScheduledWorker
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 
 internal class EmbraceSessionService(
     private val logger: InternalEmbraceLogger,
@@ -23,24 +19,14 @@ internal class EmbraceSessionService(
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val clock: Clock,
-    private val sessionPeriodicCacheScheduledWorker: ScheduledWorker
+    private val periodicSessionCacher: PeriodicSessionCacher
 ) : SessionService {
-
-    companion object {
-
-        /**
-         * Session caching interval in seconds.
-         */
-        private const val SESSION_CACHING_INTERVAL = 2
-    }
 
     /**
      * The currently active session.
      */
     @Volatile
     override var activeSession: Session? = null
-
-    private var scheduledFuture: ScheduledFuture<*>? = null
 
     /**
      * Guards session state changes.
@@ -106,7 +92,7 @@ internal class EmbraceSessionService(
                 params
             )
             activeSession = session
-            InternalStaticEmbraceLogger.logDeveloper(
+            logger.logDeveloper(
                 "SessionHandler",
                 "Started new session. ID=${session.sessionId}"
             )
@@ -115,7 +101,7 @@ internal class EmbraceSessionService(
             sessionIdTracker.setActiveSessionId(session.sessionId, true)
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
-            startPeriodicCaching { Systrace.trace("snapshot-session") { onPeriodicCacheActiveSession() } }
+            periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
         }
     }
 
@@ -149,26 +135,25 @@ internal class EmbraceSessionService(
     }
 
     /**
-     * Caches the session, with performance information generated up to the current point.
+     * Snapshots the active session. The behavior is controlled by the
+     * [SessionSnapshotType] passed to this function.
      */
-    private fun onPeriodicCacheActiveSession() {
-        try {
-            onPeriodicCacheActiveSessionImpl()
-        } catch (ex: Exception) {
-            logger.logDebug("Error while caching active session", ex)
+    private fun createAndProcessSessionSnapshot(params: FinalEnvelopeParams.SessionParams): SessionMessage {
+        if (params.endType.shouldStopCaching) {
+            periodicSessionCacher.stop()
+        }
+
+        return payloadMessageCollator.buildFinalSessionMessage(params).also {
+            deliveryService.sendSession(it, params.endType)
         }
     }
 
     /**
-     * Called when periodic cache update needs to be performed.
-     * It will update current session 's cache state.
-     *
-     * Note that the session message will not be sent to our servers.
+     * Called when the session is persisted every 2s to cache its state.
      */
     private fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
         synchronized(lock) {
             val session = activeSession ?: return null
-            logger.logDeveloper("SessionHandler", "Running periodic cache of active session.")
             return createAndProcessSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
                     initial = session,
@@ -178,37 +163,5 @@ internal class EmbraceSessionService(
                 ),
             )
         }
-    }
-
-    private fun stopPeriodicSessionCaching() {
-        logger.logDebug("Stopping session caching.")
-        scheduledFuture?.cancel(false)
-    }
-
-    /**
-     * Snapshots the active session. The behavior is controlled by the
-     * [SessionSnapshotType] passed to this function.
-     */
-    private fun createAndProcessSessionSnapshot(params: FinalEnvelopeParams.SessionParams): SessionMessage {
-        if (params.endType.shouldStopCaching) {
-            stopPeriodicSessionCaching()
-        }
-
-        return payloadMessageCollator.buildFinalSessionMessage(params).also {
-            deliveryService.sendSession(it, params.endType)
-        }
-    }
-
-    /**
-     * It starts a background job that will schedule a callback to do periodic caching.
-     */
-    private fun startPeriodicCaching(cacheCallback: Runnable) {
-        scheduledFuture = this.sessionPeriodicCacheScheduledWorker.scheduleWithFixedDelay(
-            cacheCallback,
-            0,
-            SESSION_CACHING_INTERVAL.toLong(),
-            TimeUnit.SECONDS
-        )
-        logger.logDebug("Periodic session cache successfully scheduled.")
     }
 }

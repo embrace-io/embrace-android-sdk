@@ -59,6 +59,7 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             sessionIdTracker,
+            Any(),
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
@@ -240,6 +241,7 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             sessionIdTracker,
+            Any(),
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,

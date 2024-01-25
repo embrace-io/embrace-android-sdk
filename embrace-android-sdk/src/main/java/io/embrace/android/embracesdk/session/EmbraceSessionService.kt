@@ -17,7 +17,8 @@ internal class EmbraceSessionService(
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val clock: Clock,
-    private val periodicSessionCacher: PeriodicSessionCacher
+    private val periodicSessionCacher: PeriodicSessionCacher,
+    private val orchestrationLock: Any // synchronises session orchestration. Temporarily passed in.
 ) : SessionService {
 
     /**
@@ -25,11 +26,6 @@ internal class EmbraceSessionService(
      */
     @Volatile
     override var activeSession: Session? = null
-
-    /**
-     * Guards session state changes.
-     */
-    private val lock = Any()
 
     override fun startSessionWithState(coldStart: Boolean, timestamp: Long): String {
         return startSession(
@@ -60,47 +56,43 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithCrash(crashId: String) {
-        synchronized(lock) {
-            val session = activeSession ?: return
-            logger.logDebug("SessionHandler: running onCrash for $crashId")
-            createAndProcessSessionSnapshot(
-                FinalEnvelopeParams.SessionParams(
-                    initial = session,
-                    endTime = clock.now(),
-                    lifeEventType = LifeEventType.STATE,
-                    crashId = crashId,
-                    endType = SessionSnapshotType.JVM_CRASH
-                )
+        val session = activeSession ?: return
+        logger.logDebug("SessionHandler: running onCrash for $crashId")
+        createAndProcessSessionSnapshot(
+            FinalEnvelopeParams.SessionParams(
+                initial = session,
+                endTime = clock.now(),
+                lifeEventType = LifeEventType.STATE,
+                crashId = crashId,
+                endType = SessionSnapshotType.JVM_CRASH
             )
-            activeSession = null
-        }
+        )
+        activeSession = null
     }
 
     /**
      * It performs all corresponding operations in order to start a session.
      */
     private fun startSession(params: InitialEnvelopeParams.SessionParams): String {
-        synchronized(lock) {
-            logger.logDebug(
-                "SessionHandler: running onSessionStarted. coldStart=${params.coldStart}," +
-                    " startType=${params.startType}, startTime=${params.startTime}"
-            )
+        logger.logDebug(
+            "SessionHandler: running onSessionStarted. coldStart=${params.coldStart}," +
+                " startType=${params.startType}, startTime=${params.startTime}"
+        )
 
-            val session = payloadMessageCollator.buildInitialSession(
-                params
-            )
-            activeSession = session
-            logger.logDeveloper(
-                "SessionHandler",
-                "Started new session. ID=${session.sessionId}"
-            )
+        val session = payloadMessageCollator.buildInitialSession(
+            params
+        )
+        activeSession = session
+        logger.logDeveloper(
+            "SessionHandler",
+            "Started new session. ID=${session.sessionId}"
+        )
 
-            // Record the connection type at the start of the session.
-            networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
-            breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
-            periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
-            return session.sessionId
-        }
+        // Record the connection type at the start of the session.
+        networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
+        breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
+        periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
+        return session.sessionId
     }
 
     /**
@@ -110,21 +102,19 @@ internal class EmbraceSessionService(
         endType: LifeEventType,
         endTime: Long
     ): SessionMessage? {
-        synchronized(lock) {
-            val session = activeSession ?: return null
-            logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
-            val fullEndSessionMessage = createAndProcessSessionSnapshot(
-                FinalEnvelopeParams.SessionParams(
-                    initial = session,
-                    endTime = endTime,
-                    lifeEventType = endType,
-                    endType = SessionSnapshotType.NORMAL_END
-                ),
-            )
-            activeSession = null
-            logger.logDebug("SessionHandler: cleared active session")
-            return fullEndSessionMessage
-        }
+        val session = activeSession ?: return null
+        logger.logDebug("SessionHandler: running onSessionEnded. endType=$endType, endTime=$endTime")
+        val fullEndSessionMessage = createAndProcessSessionSnapshot(
+            FinalEnvelopeParams.SessionParams(
+                initial = session,
+                endTime = endTime,
+                lifeEventType = endType,
+                endType = SessionSnapshotType.NORMAL_END
+            ),
+        )
+        activeSession = null
+        logger.logDebug("SessionHandler: cleared active session")
+        return fullEndSessionMessage
     }
 
     /**
@@ -145,7 +135,7 @@ internal class EmbraceSessionService(
      * Called when the session is persisted every 2s to cache its state.
      */
     private fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
-        synchronized(lock) {
+        synchronized(orchestrationLock) {
             val session = activeSession ?: return null
             return createAndProcessSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(

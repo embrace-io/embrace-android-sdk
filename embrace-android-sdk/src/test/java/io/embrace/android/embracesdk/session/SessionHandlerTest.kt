@@ -184,7 +184,8 @@ internal class SessionHandlerTest {
             deliveryService,
             payloadMessageCollator,
             clock,
-            PeriodicSessionCacher(FakeClock(), scheduledWorker)
+            PeriodicSessionCacher(FakeClock(), scheduledWorker),
+            Any()
         )
     }
 

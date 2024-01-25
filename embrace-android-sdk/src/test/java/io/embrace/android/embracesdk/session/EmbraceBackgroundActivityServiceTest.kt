@@ -369,7 +369,8 @@ internal class EmbraceBackgroundActivityServiceTest {
             deliveryService,
             clock,
             collator,
-            ScheduledWorker(blockingExecutorService)
+            ScheduledWorker(blockingExecutorService),
+            Any()
         ).apply {
             if (createInitialSession) {
                 startBackgroundActivityWithState(true, clock.now())

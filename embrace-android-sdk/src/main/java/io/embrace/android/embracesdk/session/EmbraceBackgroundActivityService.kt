@@ -19,6 +19,7 @@ internal class EmbraceBackgroundActivityService(
     private val clock: Clock,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val scheduledWorker: ScheduledWorker,
+    private val orchestrationLock: Any, // synchronises session orchestration. Temporarily passed in.
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BackgroundActivityService {
 
@@ -101,7 +102,6 @@ internal class EmbraceBackgroundActivityService(
      * session to its final state with all the data collected up to the current point.
      * Build the next background message and attempt to send it.
      */
-    @Synchronized
     private fun stopCapture(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
         backgroundActivity = null
         return payloadMessageCollator.buildFinalBackgroundActivityMessage(params)
@@ -111,19 +111,21 @@ internal class EmbraceBackgroundActivityService(
      * Cache the activity, with performance information generated up to the current point.
      */
     private fun cacheBackgroundActivity() {
-        try {
-            val activity = backgroundActivity ?: return
-            lastSaved = clock.now()
-            val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
-                FinalEnvelopeParams.BackgroundActivityParams(
-                    initial = activity,
-                    endTime = activity.endTime ?: clock.now(),
-                    lifeEventType = null
+        synchronized(orchestrationLock) {
+            try {
+                val activity = backgroundActivity ?: return
+                lastSaved = clock.now()
+                val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
+                    FinalEnvelopeParams.BackgroundActivityParams(
+                        initial = activity,
+                        endTime = activity.endTime ?: clock.now(),
+                        lifeEventType = null
+                    )
                 )
-            )
-            deliveryService.saveBackgroundActivity(message)
-        } catch (ex: Exception) {
-            logger.logDebug("Error while caching active session", ex)
+                deliveryService.saveBackgroundActivity(message)
+            } catch (ex: Exception) {
+                logger.logDebug("Error while caching active session", ex)
+            }
         }
     }
 

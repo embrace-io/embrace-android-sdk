@@ -133,7 +133,8 @@ internal class EmbraceSessionServiceTest {
             deliveryService,
             mockk(relaxed = true),
             FakeClock(),
-            PeriodicSessionCacher(FakeClock(), ScheduledWorker(BlockingScheduledExecutorService()))
+            PeriodicSessionCacher(FakeClock(), ScheduledWorker(BlockingScheduledExecutorService())),
+            Any()
         )
     }
 }

@@ -15,6 +15,7 @@ internal class SessionOrchestratorImpl(
     private val clock: Clock,
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
+    private val lock: Any,
     private val boundaryDelegate: OrchestratorBoundaryDelegate
 ) : SessionOrchestrator {
 
@@ -38,56 +39,70 @@ internal class SessionOrchestratorImpl(
         processStateService.addListener(this)
         configService.addListener(backgroundActivityGate)
 
-        val inBackground = processStateService.isInBackground
-        val sessionId = if (inBackground) {
-            backgroundActivityService?.startBackgroundActivityWithState(true, clock.now())
-        } else {
-            // If the app goes to foreground before the SDK finishes its startup,
-            // the session service will not be registered to the activity listener and will not
-            // start the cold session.
-            // If so, force a cold session start.
-            sessionService.startSessionWithState(true, clock.now())
+        createInitialEnvelope()
+    }
+
+    private fun createInitialEnvelope() {
+        synchronized(lock) {
+            val inBackground = processStateService.isInBackground
+            val sessionId = if (inBackground) {
+                backgroundActivityService?.startBackgroundActivityWithState(true, clock.now())
+            } else {
+                // If the app goes to foreground before the SDK finishes its startup,
+                // the session service will not be registered to the activity listener and will not
+                // start the cold session.
+                // If so, force a cold session start.
+                sessionService.startSessionWithState(true, clock.now())
+            }
+            sessionIdTracker.setActiveSessionId(
+                sessionId = sessionId,
+                isSession = !inBackground
+            )
         }
-        sessionIdTracker.setActiveSessionId(
-            sessionId = sessionId,
-            isSession = !inBackground
-        )
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
-        backgroundActivityService?.endBackgroundActivityWithState(timestamp)
-        boundaryDelegate.prepareForNewEnvelope()
-        val sessionId = sessionService.startSessionWithState(coldStart, timestamp)
-        sessionIdTracker.setActiveSessionId(sessionId, true)
+        synchronized(lock) {
+            backgroundActivityService?.endBackgroundActivityWithState(timestamp)
+            boundaryDelegate.prepareForNewEnvelope()
+            val sessionId = sessionService.startSessionWithState(coldStart, timestamp)
+            sessionIdTracker.setActiveSessionId(sessionId, true)
+        }
     }
 
     override fun onBackground(timestamp: Long) {
-        sessionService.endSessionWithState(timestamp)
-        boundaryDelegate.prepareForNewEnvelope()
-        val sessionId = backgroundActivityService?.startBackgroundActivityWithState(false, timestamp)
-        sessionIdTracker.setActiveSessionId(sessionId, false)
+        synchronized(lock) {
+            sessionService.endSessionWithState(timestamp)
+            boundaryDelegate.prepareForNewEnvelope()
+            val sessionId = backgroundActivityService?.startBackgroundActivityWithState(false, timestamp)
+            sessionIdTracker.setActiveSessionId(sessionId, false)
+        }
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
-        if (processStateService.isInBackground) {
-            return
-        }
-        if (configService.sessionBehavior.isSessionControlEnabled()) {
-            return
-        }
-        val startTime = sessionService.activeSession?.startTime ?: 0
-        if ((clock.now() - startTime) < MIN_SESSION_MS) {
-            return
-        }
+        synchronized(lock) {
+            if (processStateService.isInBackground) {
+                return
+            }
+            if (configService.sessionBehavior.isSessionControlEnabled()) {
+                return
+            }
+            val startTime = sessionService.activeSession?.startTime ?: 0
+            if ((clock.now() - startTime) < MIN_SESSION_MS) {
+                return
+            }
 
-        sessionService.endSessionWithManual()
-        boundaryDelegate.prepareForNewEnvelope(clearUserInfo)
-        val sessionId = sessionService.startSessionWithManual()
-        sessionIdTracker.setActiveSessionId(sessionId, true)
+            sessionService.endSessionWithManual()
+            boundaryDelegate.prepareForNewEnvelope(clearUserInfo)
+            val sessionId = sessionService.startSessionWithManual()
+            sessionIdTracker.setActiveSessionId(sessionId, true)
+        }
     }
 
     override fun endSessionWithCrash(crashId: String) {
-        sessionService.endSessionWithCrash(crashId)
-        backgroundActivityService?.endBackgroundActivityWithCrash(crashId)
+        synchronized(lock) {
+            sessionService.endSessionWithCrash(crashId)
+            backgroundActivityService?.endBackgroundActivityWithCrash(crashId)
+        }
     }
 }

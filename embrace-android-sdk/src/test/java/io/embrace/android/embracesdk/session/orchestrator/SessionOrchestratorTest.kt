@@ -55,11 +55,13 @@ internal class SessionOrchestratorTest {
             backgroundActivityService,
             clock,
             configService,
-            memoryCleanerService,
-            userService,
-            ndkService,
-            sessionProperties,
-            internalErrorService
+            OrchestratorBoundaryDelegate(
+                memoryCleanerService,
+                userService,
+                ndkService,
+                sessionProperties,
+                internalErrorService
+            )
         )
         sessionProperties.add("key", "value", false)
     }
@@ -212,11 +214,13 @@ internal class SessionOrchestratorTest {
             backgroundActivityService,
             clock,
             configService,
-            memoryCleanerService,
-            userService,
-            ndkService,
-            sessionProperties,
-            internalErrorService
+            OrchestratorBoundaryDelegate(
+                memoryCleanerService,
+                userService,
+                ndkService,
+                sessionProperties,
+                internalErrorService
+            )
         )
     }
 }

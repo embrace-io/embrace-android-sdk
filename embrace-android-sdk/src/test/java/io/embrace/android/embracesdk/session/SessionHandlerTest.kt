@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
@@ -48,7 +49,6 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -65,9 +65,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 internal class SessionHandlerTest {
 
@@ -78,8 +75,6 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
-        private val sessionPeriodicCacheExecutorService: ScheduledWorker =
-            mockk(relaxed = true)
         private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
         private const val now = 123L
         private var sessionNumber = 5
@@ -89,8 +84,6 @@ internal class SessionHandlerTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockkStatic(ScheduledExecutorService::class)
-            mockkStatic(ExecutorService::class)
             mockkStatic(Uuid::class)
             every { Uuid.getEmbUuid() } returns sessionUuid
         }
@@ -124,9 +117,13 @@ internal class SessionHandlerTest {
     private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var sessionService: EmbraceSessionService
+    private lateinit var executorService: BlockingScheduledExecutorService
+    private lateinit var sessionPeriodicCacheExecutorService: ScheduledWorker
 
     @Before
     fun before() {
+        executorService = BlockingScheduledExecutorService()
+        sessionPeriodicCacheExecutorService = ScheduledWorker(executorService)
         clock.setCurrentTime(now)
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
@@ -204,29 +201,16 @@ internal class SessionHandlerTest {
         val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
-        sessionService.startSession(
-            InitialEnvelopeParams.SessionParams(
-                true,
-                sessionStartType,
-                now
-            )
-        )
+        sessionService.startSessionWithState(true, now)
 
         // verify record connection type
         verify { networkConnectivityService.networkStatusOnSessionStarted(now) }
         // verify active session is set
         assertEquals(sessionUuid, sessionIdTracker.getActiveSessionId())
         // verify periodic caching worker has been scheduled
-        verify {
-            sessionPeriodicCacheExecutorService.scheduleWithFixedDelay(
-                any(),
-                0,
-                2,
-                TimeUnit.SECONDS
-            )
-        }
-        // verify session is correctly built
+        assertEquals(1, executorService.submitCount)
 
+        // verify session is correctly built
         with(checkNotNull(sessionService.activeSession)) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
@@ -244,16 +228,9 @@ internal class SessionHandlerTest {
         // return absent session number
         sessionNumber = 0
         sessionLocalConfig = SessionLocalConfig()
-        val sessionStartType = Session.LifeEventType.STATE
         // this is needed so session handler creates automatic session stopper
 
-        sessionService.startSession(
-            InitialEnvelopeParams.SessionParams(
-                true,
-                sessionStartType,
-                now
-            )
-        )
+        sessionService.startSessionWithState(true, now)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
         checkNotNull(sessionService.activeSession)
@@ -266,15 +243,7 @@ internal class SessionHandlerTest {
         val mockActivity: Activity = mockActivity()
         // let's return a foreground activity
         activityLifecycleTracker.foregroundActivity = mockActivity
-        val sessionStartType = Session.LifeEventType.STATE
-
-        sessionService.startSession(
-            InitialEnvelopeParams.SessionParams(
-                true,
-                sessionStartType,
-                now
-            )
-        )
+        sessionService.startSessionWithState(true, now)
 
         // verify we are forcing log view with foreground activity class name
         assertEquals(now, breadcrumbService.firstViewBreadcrumbCalls.single())
@@ -284,12 +253,9 @@ internal class SessionHandlerTest {
 
     @Test
     fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
-        sessionService.endSessionImpl(
-            Session.LifeEventType.MANUAL,
-            1000
-        )
+        sessionService.endSessionWithState(1000)
 
-        verify { sessionPeriodicCacheExecutorService wasNot Called }
+        assertEquals(0, executorService.submitCount)
         assertEquals(0, memoryCleanerService.callCount)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
@@ -301,13 +267,9 @@ internal class SessionHandlerTest {
         // since now=123, then duration will be less than 5 seconds
         val startTime = 120L
         activeSession = activeSession.copy(startTime = startTime)
+        sessionService.endSessionWithManual()
 
-        sessionService.endSessionImpl(
-            Session.LifeEventType.MANUAL,
-            1000
-        )
-
-        verify { sessionPeriodicCacheExecutorService wasNot Called }
+        assertEquals(0, executorService.submitCount)
         assertEquals(0, memoryCleanerService.callCount)
         assertTrue(deliveryService.lastSentSessions.isEmpty())
         assertEquals(0, gatingService.sessionMessagesFiltered.size)
@@ -363,9 +325,9 @@ internal class SessionHandlerTest {
     @Test
     fun `onPeriodicCacheActiveSession caches session successfully`() {
         startFakeSession()
-        val sessionMessage = sessionService.onPeriodicCacheActiveSessionImpl()
-
-        assertNotNull(sessionMessage)
+        assertNull(deliveryService.lastSavedSession)
+        executorService.runCurrentlyBlocked()
+        checkNotNull(deliveryService.lastSavedSession)
 
         // when periodic caching, the following calls should not be made
         assertEquals(0, memoryCleanerService.callCount)
@@ -381,10 +343,7 @@ internal class SessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        sessionService.endSessionImpl(
-            endType = Session.LifeEventType.STATE,
-            endTime = 10L
-        )
+        sessionService.endSessionWithState(10L)
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
@@ -392,10 +351,7 @@ internal class SessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        sessionService.endSessionImpl(
-            endType = Session.LifeEventType.STATE,
-            endTime = 10L
-        )
+        sessionService.endSessionWithState(10L)
         assertEquals(0, userService.clearedCount)
     }
 
@@ -417,8 +373,10 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {
             // do nothing
         }
-        val sessionMessage = sessionService.onPeriodicCacheActiveSessionImpl()
-        val spans = checkNotNull(sessionMessage?.spans)
+
+        executorService.runCurrentlyBlocked()
+        val sessionMessage = checkNotNull(deliveryService.lastSavedSession)
+        val spans = checkNotNull(sessionMessage.spans)
         assertEquals(1, spans.count { it.name == "emb-test-span" })
     }
 
@@ -432,7 +390,7 @@ internal class SessionHandlerTest {
     @Test
     fun `verify periodic caching`() {
         startFakeSession()
-        sessionService.onPeriodicCacheActiveSessionImpl()
+        executorService.runCurrentlyBlocked()
         val session = checkNotNull(deliveryService.lastSavedSession).session
         assertEquals(false, session.isEndedCleanly)
         assertEquals(true, session.isReceivedTermination)
@@ -446,10 +404,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spansService.completedSpans()?.size)
 
         clock.tick(15000L)
-        sessionService.endSessionImpl(
-            endType = Session.LifeEventType.STATE,
-            endTime = clock.now()
-        )
+        sessionService.endSessionWithState(clock.now())
 
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
         val spans = checkNotNull(sessionMessage.spans)
@@ -472,23 +427,14 @@ internal class SessionHandlerTest {
     fun `session message is sent`() {
         startFakeSession()
         clock.tick(10000)
-        sessionService.endSessionImpl(
-            endType = Session.LifeEventType.STATE,
-            endTime = clock.now()
-        )
+        sessionService.endSessionWithState(clock.now())
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
     private fun startFakeSession() {
-        sessionService.startSession(
-            params = InitialEnvelopeParams.SessionParams(
-                true,
-                Session.LifeEventType.STATE,
-                clock.now()
-            )
-        )
+        sessionService.startSessionWithState(true, now)
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

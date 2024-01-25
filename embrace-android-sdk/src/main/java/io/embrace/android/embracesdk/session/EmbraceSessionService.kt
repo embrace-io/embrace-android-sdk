@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -21,7 +20,6 @@ internal class EmbraceSessionService(
     private val networkConnectivityService: NetworkConnectivityService,
     private val sessionIdTracker: SessionIdTracker,
     private val breadcrumbService: BreadcrumbService,
-    private val ndkService: NdkService?,
     private val deliveryService: DeliveryService,
     private val payloadMessageCollator: PayloadMessageCollator,
     private val clock: Clock,
@@ -41,8 +39,6 @@ internal class EmbraceSessionService(
      */
     @Volatile
     override var activeSession: Session? = null
-
-    internal fun getSessionId(): String? = activeSession?.sessionId
 
     private var scheduledFuture: ScheduledFuture<*>? = null
 
@@ -117,7 +113,6 @@ internal class EmbraceSessionService(
 
             // Record the connection type at the start of the session.
             sessionIdTracker.setActiveSessionId(session.sessionId, true)
-            ndkService?.updateSessionId(session.sessionId)
             networkConnectivityService.networkStatusOnSessionStarted(session.startTime)
             breadcrumbService.addFirstViewBreadcrumbForSession(params.startTime)
             startPeriodicCaching { Systrace.trace("snapshot-session") { onPeriodicCacheActiveSession() } }

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -13,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -38,7 +36,6 @@ internal class EmbraceSessionServiceTest {
     companion object {
 
         private val processStateService = FakeProcessStateService()
-        private val ndkService: NdkService = FakeNdkService()
         private val clock = FakeClock()
 
         @BeforeClass
@@ -71,7 +68,7 @@ internal class EmbraceSessionServiceTest {
 
     @Test
     fun `initializing service should detect early sessions`() {
-        initializeSessionService(ndkService = ndkService, isActivityInBackground = false)
+        initializeSessionService(isActivityInBackground = false)
         assertNull(deliveryService.lastSentCachedSession)
     }
 
@@ -125,7 +122,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     private fun initializeSessionService(
-        ndkService: NdkService? = null,
         isActivityInBackground: Boolean = true
     ) {
         processStateService.isInBackground = isActivityInBackground
@@ -135,7 +131,6 @@ internal class EmbraceSessionServiceTest {
             FakeNetworkConnectivityService(),
             FakeSessionIdTracker(),
             FakeBreadcrumbService(),
-            ndkService,
             deliveryService,
             mockk(relaxed = true),
             FakeClock(),

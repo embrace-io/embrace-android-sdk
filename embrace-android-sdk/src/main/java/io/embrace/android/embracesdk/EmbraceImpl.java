@@ -627,6 +627,10 @@ final class EmbraceImpl {
         backgroundActivityService = sessionModule.getBackgroundActivityService();
         serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
+        if (configService.getAutoDataCaptureBehavior().isNdkEnabled()) {
+            sessionIdTracker.setNdkService(nativeModule.getNdkService());
+        }
+
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
             nativeModule.getNdkService(),

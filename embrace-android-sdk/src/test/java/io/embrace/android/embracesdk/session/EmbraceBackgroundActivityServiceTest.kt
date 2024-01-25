@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -27,7 +26,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
@@ -231,24 +229,6 @@ internal class EmbraceBackgroundActivityServiceTest {
     }
 
     @Test
-    fun `NDK session id is updated when NDK is enabled`() {
-        configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                localCfg = { LocalConfig("", true, SdkLocalConfig()) }
-            )
-        )
-        this.service = createService()
-        val id = checkNotNull(service.backgroundActivity).sessionId
-        assertEquals(id, ndkService.sessionId)
-    }
-
-    @Test
-    fun `NDK session id is not updated when NDK is not enabled`() {
-        this.service = createService()
-        assertNull(ndkService.sessionId)
-    }
-
-    @Test
     fun `saving will persist the current completed spans but will not flush`() {
         val startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.now())
         service = createService()
@@ -389,7 +369,6 @@ internal class EmbraceBackgroundActivityServiceTest {
             sessionIdTracker,
             deliveryService,
             configService,
-            ndkService,
             clock,
             collator,
             ScheduledWorker(blockingExecutorService)

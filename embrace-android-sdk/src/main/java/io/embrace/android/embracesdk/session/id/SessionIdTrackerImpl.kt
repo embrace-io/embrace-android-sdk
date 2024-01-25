@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.id
 import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class SessionIdTrackerImpl(
     private val activityManager: ActivityManager? = null
@@ -10,6 +11,16 @@ internal class SessionIdTrackerImpl(
 
     @Volatile
     private var sessionId: String? = null
+        set(value) {
+            field = value
+            ndkService?.updateSessionId(value ?: "")
+        }
+
+    override var ndkService: NdkService? = null
+        set(value) {
+            field = value
+            ndkService?.updateSessionId(sessionId ?: "")
+        }
 
     override fun getActiveSessionId(): String? = sessionId
 

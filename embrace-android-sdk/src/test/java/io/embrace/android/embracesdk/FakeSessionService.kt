@@ -10,8 +10,7 @@ internal class FakeSessionService : SessionService {
     val endTimestamps = mutableListOf<Long>()
     var manualEndCount = 0
     var manualStartCount = 0
-
-    override var activeSession: Session? = null
+    var activeSession: Session? = null
 
     override fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
         startTimestamps.add(timestamp)
@@ -25,19 +24,19 @@ internal class FakeSessionService : SessionService {
         return checkNotNull(activeSession)
     }
 
-    override fun endSessionWithState(timestamp: Long) {
+    override fun endSessionWithState(initial: Session, timestamp: Long) {
         endTimestamps.add(timestamp)
         activeSession = null
     }
 
     var crashId: String? = null
 
-    override fun endSessionWithCrash(timestamp: Long, crashId: String) {
+    override fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String) {
         this.crashId = crashId
         activeSession = null
     }
 
-    override fun endSessionWithManual(timestamp: Long) {
+    override fun endSessionWithManual(initial: Session, timestamp: Long) {
         manualEndCount++
         activeSession = null
     }

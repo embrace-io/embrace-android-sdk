@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -37,7 +36,6 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -48,18 +46,14 @@ import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 
 internal class SessionHandlerTest {
@@ -68,27 +62,15 @@ internal class SessionHandlerTest {
         private val eventService: EventService = FakeEventService()
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
-        private val internalErrorService = EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
-        private const val sessionUuid = "99fcae22-0db5-4b63-b49d-315eecce4889"
+        private val internalErrorService =
+            EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
         private const val now = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            mockkStatic(Uuid::class)
-            every { Uuid.getEmbUuid() } returns sessionUuid
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun afterClass() {
-            unmockkAll()
-        }
     }
 
+    private val initial = fakeSession(startMs = now)
     private val userService: FakeUserService = FakeUserService()
     private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
     private val webViewService: WebViewService = FakeWebViewService()
@@ -149,7 +131,8 @@ internal class SessionHandlerTest {
         gatingService = FakeGatingService(configService = configService)
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
-        spansService = EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
+        spansService =
+            EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
         val payloadMessageCollator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -194,12 +177,12 @@ internal class SessionHandlerTest {
 
         // verify periodic caching worker has been scheduled
         assertEquals(1, executorService.submitCount)
-        sessionService.endSessionWithState(now)
+        sessionService.endSessionWithState(initial, now)
 
         // verify session is correctly built
         val message = deliveryService.lastSentSessions.last().first
         with(message.session) {
-            assertEquals(sessionUuid, this.sessionId)
+            assertEquals("fakeSessionId", this.sessionId)
             assertEquals(startTime, now)
             assertTrue(isColdStart)
             assertEquals(sessionStartType, startType)
@@ -223,30 +206,6 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `onSession not allowed to end because session control is disabled for MANUAL event type`() {
-        sessionService.endSessionWithState(1000)
-
-        assertEquals(0, executorService.submitCount)
-        assertEquals(0, memoryCleanerService.callCount)
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
-    fun `onSession not allowed to end MANUALLY because session duration is less than 5 seconds`() {
-        remoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
-        // since now=123, then duration will be less than 5 seconds
-        val startTime = 120L
-        activeSession = activeSession.copy(startTime = startTime)
-        sessionService.endSessionWithManual(clock.now())
-
-        assertEquals(0, executorService.submitCount)
-        assertEquals(0, memoryCleanerService.callCount)
-        assertTrue(deliveryService.lastSentSessions.isEmpty())
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
     fun `onCrash ended session successfully`() {
         startFakeSession()
 
@@ -258,7 +217,7 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        sessionService.endSessionWithCrash(clock.now(), crashId)
+        sessionService.endSessionWithCrash(initial, clock.now(), crashId)
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
@@ -314,7 +273,7 @@ internal class SessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        sessionService.endSessionWithState(10L)
+        sessionService.endSessionWithState(initial, 10L)
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
@@ -322,7 +281,7 @@ internal class SessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        sessionService.endSessionWithState(10L)
+        sessionService.endSessionWithState(initial, 10L)
         assertEquals(0, userService.clearedCount)
     }
 
@@ -333,7 +292,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {
             // do nothing
         }
-        sessionService.endSessionWithCrash(clock.now(), "fakeCrashId")
+        sessionService.endSessionWithCrash(initial, clock.now(), "fakeCrashId")
         assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
@@ -373,7 +332,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spansService.completedSpans()?.size)
 
         clock.tick(15000L)
-        sessionService.endSessionWithState(clock.now())
+        sessionService.endSessionWithState(initial, clock.now())
 
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
         val spans = checkNotNull(sessionMessage.spans)
@@ -388,7 +347,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {}
         assertEquals(1, spansService.completedSpans()?.size)
 
-        sessionService.endSessionWithCrash(clock.now(), "crashId")
+        sessionService.endSessionWithCrash(initial, clock.now(), "crashId")
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -396,7 +355,7 @@ internal class SessionHandlerTest {
     fun `session message is sent`() {
         startFakeSession()
         clock.tick(10000)
-        sessionService.endSessionWithState(clock.now())
+        sessionService.endSessionWithState(initial, clock.now())
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })

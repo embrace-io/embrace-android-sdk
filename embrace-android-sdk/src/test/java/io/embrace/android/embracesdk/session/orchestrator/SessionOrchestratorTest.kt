@@ -135,7 +135,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test background activity capture disabled`() {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
-        createOrchestrator(true)
+        createOrchestrator(false)
         orchestrator.onBackground(TIMESTAMP)
         assertEquals(2, memoryCleanerService.callCount)
         assertTrue(backgroundActivityService.startTimestamps.isEmpty())

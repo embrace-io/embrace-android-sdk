@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService
 
 internal class EmbraceSessionServiceTest {
 
+    private val initial = fakeSession()
     private lateinit var service: EmbraceSessionService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var spansService: EmbraceSpansService
@@ -85,23 +87,6 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `simulate session capture enabled after onForeground`() {
-        initializeSessionService()
-
-        // missing start call simulates service being enabled halfway through.
-        service.endSessionWithState(clock.now())
-
-        // nothing is delivered
-        assertEquals(0, deliveryService.lastSentSessions.size)
-
-        // next session is recorded correctly
-        service.startSessionWithState(clock.now(), false)
-        clock.tick(10000L)
-        service.endSessionWithState(clock.now())
-        assertEquals(1, deliveryService.lastSentSessions.size)
-    }
-
-    @Test
     fun `session capture disabled after onForeground`() {
         initializeSessionService()
 
@@ -114,7 +99,7 @@ internal class EmbraceSessionServiceTest {
 
         service.startSessionWithState(clock.now(), false)
         clock.tick(10000L)
-        service.endSessionWithState(clock.now())
+        service.endSessionWithState(initial, clock.now())
         assertEquals(1, deliveryService.lastSentSessions.size)
     }
 

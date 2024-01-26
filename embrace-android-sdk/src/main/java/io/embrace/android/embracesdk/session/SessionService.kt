@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.payload.Session
 
 internal interface SessionService {
 
-    val activeSession: Session?
-
     /**
      * Starts a session in response to a state event.
      */
@@ -19,15 +17,15 @@ internal interface SessionService {
     /**
      * Ends a session in response to a state event.
      */
-    fun endSessionWithState(timestamp: Long)
+    fun endSessionWithState(initial: Session, timestamp: Long)
 
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual(timestamp: Long)
+    fun endSessionWithManual(initial: Session, timestamp: Long)
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.
      */
-    fun endSessionWithCrash(timestamp: Long, crashId: String)
+    fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String)
 }

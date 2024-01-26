@@ -15,12 +15,6 @@ internal class EmbraceSessionService(
     private val orchestrationLock: Any // synchronises session orchestration. Temporarily passed in.
 ) : SessionService {
 
-    /**
-     * The currently active session.
-     */
-    @Volatile
-    override var activeSession: Session? = null
-
     override fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
         return startSession(
             InitialEnvelopeParams.SessionParams(
@@ -41,8 +35,7 @@ internal class EmbraceSessionService(
         )
     }
 
-    override fun endSessionWithState(timestamp: Long) {
-        val initial = activeSession ?: return
+    override fun endSessionWithState(initial: Session, timestamp: Long) {
         createAndProcessSessionSnapshot(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -51,11 +44,9 @@ internal class EmbraceSessionService(
                 endType = SessionSnapshotType.NORMAL_END
             ),
         )
-        activeSession = null
     }
 
-    override fun endSessionWithManual(timestamp: Long) {
-        val initial = activeSession ?: return
+    override fun endSessionWithManual(initial: Session, timestamp: Long) {
         createAndProcessSessionSnapshot(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -64,11 +55,9 @@ internal class EmbraceSessionService(
                 endType = SessionSnapshotType.NORMAL_END
             ),
         )
-        activeSession = null
     }
 
-    override fun endSessionWithCrash(timestamp: Long, crashId: String) {
-        val initial = activeSession ?: return
+    override fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String) {
         createAndProcessSessionSnapshot(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -78,7 +67,6 @@ internal class EmbraceSessionService(
                 endType = SessionSnapshotType.JVM_CRASH
             )
         )
-        activeSession = null
     }
 
     /**
@@ -86,8 +74,7 @@ internal class EmbraceSessionService(
      */
     private fun startSession(params: InitialEnvelopeParams.SessionParams): Session {
         val session = payloadMessageCollator.buildInitialSession(params)
-        activeSession = session
-        periodicSessionCacher.start { onPeriodicCacheActiveSessionImpl(clock.now()) }
+        periodicSessionCacher.start { onPeriodicCacheActiveSessionImpl(session, clock.now()) }
         return session
     }
 
@@ -108,9 +95,8 @@ internal class EmbraceSessionService(
     /**
      * Called when the session is persisted every 2s to cache its state.
      */
-    private fun onPeriodicCacheActiveSessionImpl(timestamp: Long): SessionMessage? {
+    private fun onPeriodicCacheActiveSessionImpl(initial: Session, timestamp: Long): SessionMessage {
         synchronized(orchestrationLock) {
-            val initial = activeSession ?: return null
             return createAndProcessSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
                     initial = initial,

@@ -15,15 +15,15 @@ internal interface BackgroundActivityService {
     /**
      * Handles an uncaught exception, ending the session and saving the activity to disk.
      */
-    fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String)
+    fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String)
 
     /**
      * Starts a background activity in response to a state event.
      */
-    fun endBackgroundActivityWithState(timestamp: Long)
+    fun endBackgroundActivityWithState(initial: Session, timestamp: Long)
 
     /**
      * Save the current background activity to disk
      */
-    fun saveBackgroundActivitySnapshot()
+    fun saveBackgroundActivitySnapshot(initial: Session,)
 }

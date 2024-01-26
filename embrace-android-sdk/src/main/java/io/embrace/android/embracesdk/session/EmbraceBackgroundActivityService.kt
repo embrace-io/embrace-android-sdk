@@ -29,7 +29,7 @@ internal class EmbraceBackgroundActivityService(
      * The active background activity session.
      */
     @Volatile
-    var backgroundActivity: Session? = null
+    private var backgroundActivity: Session? = null
 
     override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
@@ -50,10 +50,10 @@ internal class EmbraceBackgroundActivityService(
     override fun endBackgroundActivityWithState(timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        val activity = backgroundActivity ?: return
+        val initial = backgroundActivity ?: return
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
-                initial = activity,
+                initial = initial,
                 endTime = timestamp - 1,
                 lifeEventType = LifeEventType.BKGND_STATE
             )
@@ -63,10 +63,10 @@ internal class EmbraceBackgroundActivityService(
     }
 
     override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
-        val activity = backgroundActivity ?: return
+        val initial = backgroundActivity ?: return
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
-                initial = activity,
+                initial = initial,
                 endTime = timestamp,
                 lifeEventType = LifeEventType.BKGND_STATE,
                 crashId = crashId
@@ -112,12 +112,12 @@ internal class EmbraceBackgroundActivityService(
     private fun cacheBackgroundActivity() {
         synchronized(orchestrationLock) {
             try {
-                val activity = backgroundActivity ?: return
                 lastSaved = clock.now()
+                val initial = backgroundActivity ?: return
                 val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                     FinalEnvelopeParams.BackgroundActivityParams(
-                        initial = activity,
-                        endTime = activity.endTime ?: clock.now(),
+                        initial = initial,
+                        endTime = clock.now(),
                         lifeEventType = null
                     )
                 )

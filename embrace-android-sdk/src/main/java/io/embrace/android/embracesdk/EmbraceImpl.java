@@ -609,7 +609,6 @@ final class EmbraceImpl {
 
         SessionModule sessionModule = new SessionModuleImpl(
             initModule,
-            coreModule,
             androidServicesModule,
             essentialServiceModule,
             nativeModule,

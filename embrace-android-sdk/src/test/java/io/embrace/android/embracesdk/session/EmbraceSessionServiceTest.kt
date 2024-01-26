@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
@@ -125,7 +124,6 @@ internal class EmbraceSessionServiceTest {
         processStateService.isInBackground = isActivityInBackground
 
         service = EmbraceSessionService(
-            InternalEmbraceLogger(),
             deliveryService,
             mockk(relaxed = true),
             FakeClock(),

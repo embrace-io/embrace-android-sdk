@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import android.app.Activity
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
@@ -36,13 +34,11 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
@@ -93,9 +89,7 @@ internal class SessionHandlerTest {
         }
     }
 
-    private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
     private val userService: FakeUserService = FakeUserService()
-    private val activityLifecycleTracker = FakeActivityTracker()
     private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
     private val webViewService: WebViewService = FakeWebViewService()
     private val userInfo: UserInfo = UserInfo()
@@ -175,7 +169,6 @@ internal class SessionHandlerTest {
             FakeStartupService()
         )
         sessionService = EmbraceSessionService(
-            logger,
             deliveryService,
             payloadMessageCollator,
             clock,
@@ -201,9 +194,11 @@ internal class SessionHandlerTest {
 
         // verify periodic caching worker has been scheduled
         assertEquals(1, executorService.submitCount)
+        sessionService.endSessionWithState(now)
 
         // verify session is correctly built
-        with(checkNotNull(sessionService.activeSession)) {
+        val message = deliveryService.lastSentSessions.last().first
+        with(message.session) {
             assertEquals(sessionUuid, this.sessionId)
             assertEquals(startTime, now)
             assertTrue(isColdStart)
@@ -225,19 +220,6 @@ internal class SessionHandlerTest {
         sessionService.startSessionWithState(now, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
-        checkNotNull(sessionService.activeSession)
-        // no need to verify anything else because it's already verified in another test case
-    }
-
-    @Test
-    fun `onSession started and resuming with no previous screen name but with foregroundActivity, it should force log view breadcrumb`() {
-        breadcrumbService.viewBreadcrumbScreenName = null
-        val mockActivity: Activity = mockActivity()
-        // let's return a foreground activity
-        activityLifecycleTracker.foregroundActivity = mockActivity
-        sessionService.startSessionWithState(now, true)
-        checkNotNull(sessionService.activeSession)
-        // no need to verify anything else because it's already verified in another test case
     }
 
     @Test
@@ -371,9 +353,7 @@ internal class SessionHandlerTest {
 
     @Test
     fun `start session successfully`() {
-        assertNull(sessionService.activeSession?.sessionId)
-        startFakeSession()
-        assertNotNull(sessionService.activeSession?.sessionId)
+        assertNotNull(startFakeSession())
     }
 
     @Test
@@ -422,8 +402,8 @@ internal class SessionHandlerTest {
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
-    private fun startFakeSession() {
-        sessionService.startSessionWithState(now, true)
+    private fun startFakeSession(): String {
+        return sessionService.startSessionWithState(now, true)
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

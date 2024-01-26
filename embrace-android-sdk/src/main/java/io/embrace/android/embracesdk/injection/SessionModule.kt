@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
 import io.embrace.android.embracesdk.session.EmbraceSessionService
 import io.embrace.android.embracesdk.session.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
@@ -23,6 +24,7 @@ internal interface SessionModule {
     val sessionPropertiesService: SessionPropertiesService
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
+    val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
 }
 
 internal class SessionModuleImpl(
@@ -81,6 +83,13 @@ internal class SessionModuleImpl(
         )
     }
 
+    override val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
+        PeriodicBackgroundActivityCacher(
+            initModule.clock,
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+        )
+    }
+
     private val orchestrationLock = Any()
 
     override val sessionService: SessionService by singleton {
@@ -96,9 +105,9 @@ internal class SessionModuleImpl(
     override val backgroundActivityService: BackgroundActivityService? by singleton {
         EmbraceBackgroundActivityService(
             deliveryModule.deliveryService,
-            initModule.clock,
             payloadMessageCollator,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            initModule.clock,
+            periodicBackgroundActivityCacher,
             orchestrationLock
         )
     }

@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -202,7 +203,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         // elapse another 10 seconds to get around the 5 seconds limitation
         clock.setCurrentTime(startTime + 20 * 1000)
-        service.save()
+        service.saveBackgroundActivitySnapshot()
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
     }
@@ -218,7 +219,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // save() will not persist to disk since the last time was less than 5 seconds ago
-        service.save()
+        service.saveBackgroundActivitySnapshot()
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
     }
 
@@ -236,7 +237,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, spansService.completedSpans()?.size)
         // move time ahead so the save will actually persist the new background activity message
         clock.tick(6000)
-        service.save()
+        service.saveBackgroundActivitySnapshot()
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
@@ -297,7 +298,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `saving background activity in the background will not flush breadcrumbs`() {
         service = createService()
         clock.tick(1000L)
-        service.save()
+        service.saveBackgroundActivitySnapshot()
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         assertEquals(0, breadcrumbService.flushCount)
     }
@@ -360,12 +361,16 @@ internal class EmbraceBackgroundActivityServiceTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
+        val cacher = PeriodicBackgroundActivityCacher(
+            clock,
+            ScheduledWorker(blockingExecutorService)
+        )
         return EmbraceBackgroundActivityService(
             deliveryService,
-            clock,
             collator,
-            ScheduledWorker(blockingExecutorService),
-            Any()
+            clock,
+            cacher,
+            Any(),
         ).apply {
             if (createInitialSession) {
                 startBackgroundActivityWithState(clock.now(), true)

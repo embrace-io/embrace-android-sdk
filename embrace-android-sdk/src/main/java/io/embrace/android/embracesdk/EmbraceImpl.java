@@ -1538,7 +1538,7 @@ final class EmbraceImpl {
 
     private void onActivityReported() {
         if (backgroundActivityService != null) {
-            backgroundActivityService.save();
+            backgroundActivityService.saveBackgroundActivitySnapshot();
         }
     }
 

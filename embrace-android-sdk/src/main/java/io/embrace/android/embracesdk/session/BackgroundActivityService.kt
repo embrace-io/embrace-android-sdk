@@ -23,5 +23,5 @@ internal interface BackgroundActivityService {
     /**
      * Save the current background activity to disk
      */
-    fun save()
+    fun saveBackgroundActivitySnapshot()
 }

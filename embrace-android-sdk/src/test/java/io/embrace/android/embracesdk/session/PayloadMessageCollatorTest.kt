@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.UninitializedSdkSpansService
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -49,7 +49,7 @@ internal class PayloadMessageCollatorTest {
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
-            spansService = SpansService.Companion.featureDisabledSpansService,
+            spansService = UninitializedSdkSpansService(),
             clock = FakeClock(),
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService()

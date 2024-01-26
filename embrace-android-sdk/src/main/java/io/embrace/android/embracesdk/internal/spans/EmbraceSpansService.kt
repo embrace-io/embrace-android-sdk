@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -26,15 +25,13 @@ internal class EmbraceSpansService(
      */
     private val initialized = AtomicBoolean(false)
 
-    // Not putting a limit on the number of calls to buffer because this is only being used internally
-    // Once this is exposed to customers directly, we will restrict the calls to accept to something reasonable
-    private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
+    private val uninitializedSdkSpansService: UninitializedSdkSpansService = UninitializedSdkSpansService()
 
     @Volatile
     private var sdkInitStartTime: Long? = null
 
     @Volatile
-    private var currentDelegate: SpansService = SpansService.featureDisabledSpansService
+    private var currentDelegate: SpansService = uninitializedSdkSpansService
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
         if (!initialized.get()) {
@@ -47,7 +44,7 @@ internal class EmbraceSpansService(
                         telemetryService = telemetryService
                     )
                     initialized.set(true)
-                    recordBufferedCalls()
+                    uninitializedSdkSpansService.recordBufferedCalls(this)
                 }
             }
         }
@@ -77,41 +74,17 @@ internal class EmbraceSpansService(
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
-    ): Boolean {
-        return if (!initialized()) {
-            /**
-             * Note: there's no way to public way to create an [EmbraceSpan] before the service is initialized, so while we buffer
-             * the passed in [parent], we should never get a valid non-null value for it here.
-             */
-            bufferedCalls.add(
-                BufferedRecordCompletedSpan(
-                    name = name,
-                    startTimeNanos = startTimeNanos,
-                    endTimeNanos = endTimeNanos,
-                    parent = parent,
-                    type = type,
-                    internal = internal,
-                    attributes = attributes,
-                    events = events,
-                    errorCode = errorCode
-                )
-            )
-            recordBufferedCalls()
-            true
-        } else {
-            currentDelegate.recordCompletedSpan(
-                name = name,
-                startTimeNanos = startTimeNanos,
-                endTimeNanos = endTimeNanos,
-                parent = parent,
-                type = type,
-                internal = internal,
-                attributes = attributes,
-                events = events,
-                errorCode = errorCode
-            )
-        }
-    }
+    ): Boolean = currentDelegate.recordCompletedSpan(
+        name = name,
+        startTimeNanos = startTimeNanos,
+        endTimeNanos = endTimeNanos,
+        parent = parent,
+        type = type,
+        internal = internal,
+        attributes = attributes,
+        events = events,
+        errorCode = errorCode
+    )
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode =
         currentDelegate.storeCompletedSpans(spans = spans)
@@ -122,41 +95,4 @@ internal class EmbraceSpansService(
         currentDelegate.flushSpans(appTerminationCause = appTerminationCause)
 
     override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId)
-
-    private fun recordBufferedCalls() {
-        if (initialized()) {
-            synchronized(bufferedCalls) {
-                do {
-                    bufferedCalls.poll()?.let {
-                        currentDelegate.recordCompletedSpan(
-                            name = it.name,
-                            startTimeNanos = it.startTimeNanos,
-                            endTimeNanos = it.endTimeNanos,
-                            parent = it.parent,
-                            type = it.type,
-                            internal = it.internal,
-                            attributes = it.attributes,
-                            events = it.events,
-                            errorCode = it.errorCode
-                        )
-                    }
-                } while (bufferedCalls.isNotEmpty())
-            }
-        }
-    }
 }
-
-/**
- * Represents a call to [EmbraceSpansService.recordCompletedSpan] that is saved to be invoked later when the service is initialized
- */
-private data class BufferedRecordCompletedSpan(
-    val name: String,
-    val startTimeNanos: Long,
-    val endTimeNanos: Long,
-    val parent: EmbraceSpan?,
-    val type: EmbraceAttributes.Type,
-    val internal: Boolean,
-    val attributes: Map<String, String>,
-    val events: List<EmbraceSpanEvent>,
-    val errorCode: ErrorCode?
-)

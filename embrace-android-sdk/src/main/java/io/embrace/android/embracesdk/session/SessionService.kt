@@ -9,12 +9,12 @@ internal interface SessionService {
     /**
      * Starts a session in response to a state event.
      */
-    fun startSessionWithState(coldStart: Boolean, timestamp: Long): String
+    fun startSessionWithState(timestamp: Long, coldStart: Boolean): String
 
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(): String
+    fun startSessionWithManual(timestamp: Long): String
 
     /**
      * Ends a session in response to a state event.
@@ -24,10 +24,10 @@ internal interface SessionService {
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual()
+    fun endSessionWithManual(timestamp: Long)
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.
      */
-    fun endSessionWithCrash(crashId: String)
+    fun endSessionWithCrash(timestamp: Long, crashId: String)
 }

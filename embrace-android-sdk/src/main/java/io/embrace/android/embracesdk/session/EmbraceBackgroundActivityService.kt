@@ -31,7 +31,7 @@ internal class EmbraceBackgroundActivityService(
     @Volatile
     var backgroundActivity: Session? = null
 
-    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long): String {
+    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
         val time = when {
@@ -62,13 +62,12 @@ internal class EmbraceBackgroundActivityService(
         deliveryService.sendBackgroundActivities()
     }
 
-    override fun endBackgroundActivityWithCrash(crashId: String) {
+    override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
         val activity = backgroundActivity ?: return
-        val now = clock.now()
         val message = stopCapture(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = activity,
-                endTime = now,
+                endTime = timestamp,
                 lifeEventType = LifeEventType.BKGND_STATE,
                 crashId = crashId
             )

@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
@@ -77,7 +75,7 @@ internal class EmbraceSessionServiceTest {
         initializeSessionService()
         val coldStart = true
 
-        service.startSessionWithState(coldStart, 456)
+        service.startSessionWithState(456, coldStart)
         assertNull(deliveryService.lastSentCachedSession)
     }
 
@@ -98,7 +96,7 @@ internal class EmbraceSessionServiceTest {
         assertEquals(0, deliveryService.lastSentSessions.size)
 
         // next session is recorded correctly
-        service.startSessionWithState(false, clock.now())
+        service.startSessionWithState(clock.now(), false)
         clock.tick(10000L)
         service.endSessionWithState(clock.now())
         assertEquals(1, deliveryService.lastSentSessions.size)
@@ -108,14 +106,14 @@ internal class EmbraceSessionServiceTest {
     fun `session capture disabled after onForeground`() {
         initializeSessionService()
 
-        service.startSessionWithState(true, clock.now())
+        service.startSessionWithState(clock.now(), true)
         clock.tick(10000)
         // missing end call simulates service being disabled halfway through.
 
         // nothing is delivered
         assertEquals(0, deliveryService.lastSentSessions.size)
 
-        service.startSessionWithState(false, clock.now())
+        service.startSessionWithState(clock.now(), false)
         clock.tick(10000L)
         service.endSessionWithState(clock.now())
         assertEquals(1, deliveryService.lastSentSessions.size)
@@ -128,8 +126,6 @@ internal class EmbraceSessionServiceTest {
 
         service = EmbraceSessionService(
             InternalEmbraceLogger(),
-            FakeNetworkConnectivityService(),
-            FakeBreadcrumbService(),
             deliveryService,
             mockk(relaxed = true),
             FakeClock(),

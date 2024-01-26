@@ -8,12 +8,12 @@ internal interface BackgroundActivityService {
     /**
      * Ends a background activity in response to a state event.
      */
-    fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long): String
+    fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String
 
     /**
      * Handles an uncaught exception, ending the session and saving the activity to disk.
      */
-    fun endBackgroundActivityWithCrash(crashId: String)
+    fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String)
 
     /**
      * Starts a background activity in response to a state event.

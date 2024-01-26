@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -65,7 +67,9 @@ internal class SessionOrchestratorTest {
                 userService,
                 ndkService,
                 sessionProperties,
-                internalErrorService
+                internalErrorService,
+                FakeNetworkConnectivityService(),
+                FakeBreadcrumbService()
             )
         )
         sessionProperties.add("key", "value", false)
@@ -74,7 +78,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test initial behavior in background`() {
         createOrchestrator(true)
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(0, sessionService.startTimestamps.size)
         assertEquals(1, backgroundActivityService.startTimestamps.size)
@@ -83,7 +87,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in foreground`() {
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(1, sessionService.startTimestamps.size)
         assertEquals(0, backgroundActivityService.startTimestamps.size)
@@ -94,7 +98,7 @@ internal class SessionOrchestratorTest {
     fun `test on foreground call`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
+        assertEquals(2, memoryCleanerService.callCount)
         assertEquals(TIMESTAMP, sessionService.startTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.endTimestamps.single())
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
@@ -103,7 +107,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test on background call`() {
         orchestrator.onBackground(TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
+        assertEquals(2, memoryCleanerService.callCount)
         assertEquals(TIMESTAMP, sessionService.endTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.startTimestamps.single())
         assertEquals("fakeBackgroundActivityId", sessionIdTracker.sessionId)
@@ -113,7 +117,7 @@ internal class SessionOrchestratorTest {
     fun `end session with manual in foreground`() {
         clock.tick(10000)
         orchestrator.endSessionWithManual(true)
-        verifyPrepareEnvelopeCalled()
+        assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, sessionService.manualEndCount)
         assertEquals(1, sessionService.manualStartCount)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
@@ -123,7 +127,7 @@ internal class SessionOrchestratorTest {
     fun `end session with manual in background`() {
         processStateService.isInBackground = true
         orchestrator.endSessionWithManual(true)
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, sessionService.manualEndCount)
         assertEquals(0, sessionService.manualStartCount)
     }
@@ -133,7 +137,7 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
         createOrchestrator(true)
         orchestrator.onBackground(TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
+        assertEquals(2, memoryCleanerService.callCount)
         assertTrue(backgroundActivityService.startTimestamps.isEmpty())
     }
 
@@ -154,7 +158,7 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual(false)
         assertEquals(1, sessionService.startTimestamps.size)
         assertEquals(0, sessionService.manualEndCount)
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
     }
 
     @Test
@@ -220,20 +224,12 @@ internal class SessionOrchestratorTest {
         assertEquals("crashId", sessionService.crashId)
     }
 
-    private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
-        assertEquals(expectedCount, memoryCleanerService.callCount)
-        val expectedPropCount = when (expectedCount) {
-            0 -> 1
-            else -> 0
-        }
-        assertEquals(expectedPropCount, sessionProperties.get().size)
-    }
-
     private fun createOrchestrator(background: Boolean) {
         processStateService.listeners.clear()
         processStateService.isInBackground = background
         sessionService.startTimestamps.clear()
         backgroundActivityService.startTimestamps.clear()
+        memoryCleanerService = FakeMemoryCleanerService()
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
@@ -247,7 +243,9 @@ internal class SessionOrchestratorTest {
                 userService,
                 ndkService,
                 sessionProperties,
-                internalErrorService
+                internalErrorService,
+                FakeNetworkConnectivityService(),
+                FakeBreadcrumbService()
             )
         )
     }

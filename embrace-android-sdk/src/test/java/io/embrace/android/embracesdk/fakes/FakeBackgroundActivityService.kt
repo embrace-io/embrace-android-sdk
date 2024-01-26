@@ -8,7 +8,7 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
     val startTimestamps = mutableListOf<Long>()
     var crashId: String? = null
 
-    override fun startBackgroundActivityWithState(coldStart: Boolean, timestamp: Long): String {
+    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String {
         startTimestamps.add(timestamp)
         return "fakeBackgroundActivityId"
     }
@@ -17,7 +17,7 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
         endTimestamps.add(timestamp)
     }
 
-    override fun endBackgroundActivityWithCrash(crashId: String) {
+    override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
         this.crashId = crashId
     }
 

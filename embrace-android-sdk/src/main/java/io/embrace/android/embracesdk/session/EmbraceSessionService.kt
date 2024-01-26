@@ -21,7 +21,7 @@ internal class EmbraceSessionService(
     @Volatile
     override var activeSession: Session? = null
 
-    override fun startSessionWithState(timestamp: Long, coldStart: Boolean): String {
+    override fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
         return startSession(
             InitialEnvelopeParams.SessionParams(
                 coldStart,
@@ -31,7 +31,7 @@ internal class EmbraceSessionService(
         )
     }
 
-    override fun startSessionWithManual(timestamp: Long): String {
+    override fun startSessionWithManual(timestamp: Long): Session {
         return startSession(
             InitialEnvelopeParams.SessionParams(
                 false,
@@ -84,11 +84,11 @@ internal class EmbraceSessionService(
     /**
      * It performs all corresponding operations in order to start a session.
      */
-    private fun startSession(params: InitialEnvelopeParams.SessionParams): String {
+    private fun startSession(params: InitialEnvelopeParams.SessionParams): Session {
         val session = payloadMessageCollator.buildInitialSession(params)
         activeSession = session
         periodicSessionCacher.start { onPeriodicCacheActiveSessionImpl(clock.now()) }
-        return session.sessionId
+        return session
     }
 
     /**

@@ -1537,8 +1537,9 @@ final class EmbraceImpl {
     }
 
     private void onActivityReported() {
-        if (backgroundActivityService != null) {
-            backgroundActivityService.saveBackgroundActivitySnapshot();
+        SessionOrchestrator orchestrator = sessionOrchestrator;
+        if (orchestrator != null) {
+            orchestrator.reportBackgroundActivityStateChange();
         }
     }
 

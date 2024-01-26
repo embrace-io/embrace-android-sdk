@@ -87,7 +87,7 @@ internal class EmbraceSessionService(
     private fun startSession(params: InitialEnvelopeParams.SessionParams): String {
         val session = payloadMessageCollator.buildInitialSession(params)
         activeSession = session
-        periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
+        periodicSessionCacher.start { onPeriodicCacheActiveSessionImpl(clock.now()) }
         return session.sessionId
     }
 
@@ -108,13 +108,13 @@ internal class EmbraceSessionService(
     /**
      * Called when the session is persisted every 2s to cache its state.
      */
-    private fun onPeriodicCacheActiveSessionImpl(): SessionMessage? {
+    private fun onPeriodicCacheActiveSessionImpl(timestamp: Long): SessionMessage? {
         synchronized(orchestrationLock) {
             val initial = activeSession ?: return null
             return createAndProcessSessionSnapshot(
                 FinalEnvelopeParams.SessionParams(
                     initial = initial,
-                    endTime = clock.now(),
+                    endTime = timestamp,
                     lifeEventType = LifeEventType.STATE,
                     endType = SessionSnapshotType.PERIODIC_CACHE
                 ),

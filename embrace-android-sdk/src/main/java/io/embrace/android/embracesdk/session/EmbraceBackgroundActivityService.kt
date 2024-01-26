@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -38,33 +37,37 @@ internal class EmbraceBackgroundActivityService(
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        return startCapture(
+        val activity = payloadMessageCollator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
                 startTime = time
             )
         )
+        backgroundActivity = activity
+        save()
+        return activity.sessionId
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
         val initial = backgroundActivity ?: return
-        val message = stopCapture(
+        val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp - 1,
                 lifeEventType = LifeEventType.BKGND_STATE
             )
         )
+        backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
         deliveryService.sendBackgroundActivities()
     }
 
     override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
         val initial = backgroundActivity ?: return
-        val message = stopCapture(
+        val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp,
@@ -72,6 +75,7 @@ internal class EmbraceBackgroundActivityService(
                 crashId = crashId
             )
         )
+        backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
     }
 
@@ -82,42 +86,25 @@ internal class EmbraceBackgroundActivityService(
         backgroundActivity ?: return
         val delta = clock.now() - lastSaved
         val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
-        scheduledWorker.schedule<Unit>(::cacheBackgroundActivity, delay, TimeUnit.MILLISECONDS)
-    }
-
-    /**
-     * Start the background activity capture by starting the cache service and creating the background
-     * session.
-     */
-    private fun startCapture(params: InitialEnvelopeParams.BackgroundActivityParams): String {
-        val activity = payloadMessageCollator.buildInitialSession(params)
-        backgroundActivity = activity
-        save()
-        return activity.sessionId
-    }
-
-    /**
-     * Stop the background activity capture by stopping the cache service and putting the background
-     * session to its final state with all the data collected up to the current point.
-     * Build the next background message and attempt to send it.
-     */
-    private fun stopCapture(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
-        backgroundActivity = null
-        return payloadMessageCollator.buildFinalBackgroundActivityMessage(params)
+        scheduledWorker.schedule<Unit>(
+            { cacheBackgroundActivity(clock.now()) },
+            delay,
+            TimeUnit.MILLISECONDS
+        )
     }
 
     /**
      * Cache the activity, with performance information generated up to the current point.
      */
-    private fun cacheBackgroundActivity() {
+    private fun cacheBackgroundActivity(timestamp: Long) {
         synchronized(orchestrationLock) {
             try {
-                lastSaved = clock.now()
+                lastSaved = timestamp
                 val initial = backgroundActivity ?: return
                 val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                     FinalEnvelopeParams.BackgroundActivityParams(
                         initial = initial,
-                        endTime = clock.now(),
+                        endTime = timestamp,
                         lifeEventType = null
                     )
                 )

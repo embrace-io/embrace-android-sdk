@@ -42,11 +42,29 @@ internal class EmbraceSessionService(
     }
 
     override fun endSessionWithState(timestamp: Long) {
-        endSessionImpl(LifeEventType.STATE, timestamp)
+        val initial = activeSession ?: return
+        createAndProcessSessionSnapshot(
+            FinalEnvelopeParams.SessionParams(
+                initial = initial,
+                endTime = timestamp,
+                lifeEventType = LifeEventType.STATE,
+                endType = SessionSnapshotType.NORMAL_END
+            ),
+        )
+        activeSession = null
     }
 
     override fun endSessionWithManual(timestamp: Long) {
-        endSessionImpl(LifeEventType.MANUAL, timestamp) ?: return
+        val initial = activeSession ?: return
+        createAndProcessSessionSnapshot(
+            FinalEnvelopeParams.SessionParams(
+                initial = initial,
+                endTime = timestamp,
+                lifeEventType = LifeEventType.MANUAL,
+                endType = SessionSnapshotType.NORMAL_END
+            ),
+        )
+        activeSession = null
     }
 
     override fun endSessionWithCrash(timestamp: Long, crashId: String) {
@@ -71,26 +89,6 @@ internal class EmbraceSessionService(
         activeSession = session
         periodicSessionCacher.start(::onPeriodicCacheActiveSessionImpl)
         return session.sessionId
-    }
-
-    /**
-     * It performs all corresponding operations in order to end a session.
-     */
-    private fun endSessionImpl(
-        endType: LifeEventType,
-        endTime: Long
-    ): SessionMessage? {
-        val initial = activeSession ?: return null
-        val fullEndSessionMessage = createAndProcessSessionSnapshot(
-            FinalEnvelopeParams.SessionParams(
-                initial = initial,
-                endTime = endTime,
-                lifeEventType = endType,
-                endType = SessionSnapshotType.NORMAL_END
-            ),
-        )
-        activeSession = null
-        return fullEndSessionMessage
     }
 
     /**

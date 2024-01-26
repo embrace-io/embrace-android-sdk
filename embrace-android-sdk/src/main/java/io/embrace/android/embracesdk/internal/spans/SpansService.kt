@@ -72,8 +72,4 @@ internal interface SpansService {
      * Return the [EmbraceSpan] for the given [spanId] if it's available
      */
     fun getSpan(spanId: String): EmbraceSpan?
-
-    companion object {
-        val featureDisabledSpansService = FeatureDisabledSpansService()
-    }
 }

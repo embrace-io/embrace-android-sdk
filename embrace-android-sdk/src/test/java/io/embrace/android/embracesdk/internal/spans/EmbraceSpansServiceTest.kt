@@ -188,6 +188,14 @@ internal class EmbraceSpansServiceTest {
     }
 
     @Test
+    fun `verify ceiling to how many recordCompleteSpan calls can be buffered`() {
+        repeat(1000) {
+            assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
+        }
+        assertFalse(spansService.recordCompletedSpan("test-span", 10, 20))
+    }
+
+    @Test
     fun `can get span with spanId`() {
         assertNull(spansService.getSpan("blah"))
         initializeService()

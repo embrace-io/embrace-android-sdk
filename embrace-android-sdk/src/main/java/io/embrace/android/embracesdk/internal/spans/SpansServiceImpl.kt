@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Tracer
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation of the core logic for [SpansService]
@@ -15,6 +16,17 @@ internal class SpansServiceImpl(
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
 ) : SpansService, SpansSink by spansSink {
+    private val initialized = AtomicBoolean(false)
+
+    override fun initializeService(sdkInitStartTimeNanos: Long) {
+        synchronized(initialized) {
+            currentSessionSpan.startInitialSession(sdkInitStartTimeNanos)
+            initialized.set(true)
+        }
+    }
+
+    override fun initialized(): Boolean = initialized.get()
+
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.validateAndUpdateContext(parent, internal)) {
             EmbraceSpanImpl(

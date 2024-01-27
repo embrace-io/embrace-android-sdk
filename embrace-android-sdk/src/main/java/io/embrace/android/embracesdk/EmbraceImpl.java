@@ -73,9 +73,7 @@ import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
-import io.embrace.android.embracesdk.internal.spans.Initializable;
 import io.embrace.android.embracesdk.internal.spans.InternalTracer;
-import io.embrace.android.embracesdk.internal.spans.SpansService;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
@@ -382,10 +380,7 @@ final class EmbraceImpl {
 
         final Future<?> spansInitTask =
             nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL, () -> {
-                final SpansService spansService = initModule.getSpansService();
-                if (spansService instanceof Initializable) {
-                    ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
-                }
+                initModule.getSpansService().initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
                 return null;
             });
 

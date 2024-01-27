@@ -14,9 +14,12 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @InternalApi
 internal class UninitializedSdkSpansService : SpansService {
-
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)
+
+    override fun initializeService(sdkInitStartTimeNanos: Long) { }
+
+    override fun initialized(): Boolean = true
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? = null
 

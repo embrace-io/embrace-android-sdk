@@ -19,7 +19,7 @@ internal class EmbraceSpansService(
     private val spansSink: SpansSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
-) : Initializable, SpansService {
+) : SpansService {
     /**
      * When this instance has been initialized with an instance of [SpansService] that does the proper spans logging
      */
@@ -34,14 +34,16 @@ internal class EmbraceSpansService(
         if (!initialized.get()) {
             synchronized(initialized) {
                 if (!initialized.get()) {
-                    currentSessionSpan.startInitialSession(sdkInitStartTimeNanos)
                     currentDelegate = SpansServiceImpl(
                         spansSink = spansSink,
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracer,
                     )
-                    initialized.set(true)
-                    uninitializedSdkSpansService.recordBufferedCalls(this)
+                    currentDelegate.initializeService(sdkInitStartTimeNanos)
+                    if (currentDelegate.initialized()) {
+                        initialized.set(true)
+                        uninitializedSdkSpansService.recordBufferedCalls(this)
+                    }
                 }
             }
         }
@@ -83,8 +85,7 @@ internal class EmbraceSpansService(
         errorCode = errorCode
     )
 
-    override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode =
-        currentDelegate.storeCompletedSpans(spans = spans)
+    override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode = currentDelegate.storeCompletedSpans(spans = spans)
 
     override fun completedSpans(): List<EmbraceSpanData> = currentDelegate.completedSpans()
 

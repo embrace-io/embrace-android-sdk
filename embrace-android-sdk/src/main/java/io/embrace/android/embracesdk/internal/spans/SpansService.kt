@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -8,7 +9,7 @@ import io.opentelemetry.api.trace.Span
 /**
  * Public interface for an internal service that manages the recording, storage, and propagation of Spans
  */
-internal interface SpansService : SpansSink {
+internal interface SpansService : Initializable, SpansSink {
     /**
      * Return an [EmbraceSpan] that can be started and stopped
      */

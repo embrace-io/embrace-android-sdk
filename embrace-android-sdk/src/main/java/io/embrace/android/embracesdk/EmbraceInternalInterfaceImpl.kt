@@ -18,7 +18,7 @@ internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
     private val configService: ConfigService,
-    internalTracer: InternalTracer = InternalTracer(initModule.tracer, initModule.clock)
+    internalTracer: InternalTracer = InternalTracer(initModule.embraceTracer, initModule.clock)
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {

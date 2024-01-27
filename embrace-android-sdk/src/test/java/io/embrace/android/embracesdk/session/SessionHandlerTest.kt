@@ -26,14 +26,14 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
@@ -76,6 +76,7 @@ internal class SessionHandlerTest {
     private val webViewService: WebViewService = FakeWebViewService()
     private var activeSession: Session = fakeSession()
 
+    private lateinit var initModule: InitModule
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
@@ -130,8 +131,12 @@ internal class SessionHandlerTest {
         gatingService = FakeGatingService(configService = configService)
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
-        spansService =
-            EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
+        initModule = FakeInitModule(clock = clock)
+        spansService = EmbraceSpansService(
+            spansSink = initModule.spansSink,
+            currentSessionSpan = initModule.currentSessionSpan,
+            tracer = initModule.tracer
+        )
         val payloadMessageCollator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -145,7 +150,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             userService,
             preferencesService,
-            spansService,
+            initModule.currentSessionSpan,
             clock,
             FakeSessionPropertiesService(),
             FakeStartupService()
@@ -261,7 +266,7 @@ internal class SessionHandlerTest {
         startFakeSession()
         initializeServices()
         spansService.recordSpan("test-span") {}
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(1, spansService.completedSpans().size)
 
         clock.tick(15000L)
         sessionService.endSessionWithState(initial, clock.now())
@@ -269,7 +274,7 @@ internal class SessionHandlerTest {
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
         val spans = checkNotNull(sessionMessage.spans)
         assertEquals(2, spans.size)
-        assertEquals(0, spansService.completedSpans()?.size)
+        assertEquals(0, spansService.completedSpans().size)
     }
 
     @Test
@@ -277,10 +282,10 @@ internal class SessionHandlerTest {
         startFakeSession()
         initializeServices()
         spansService.recordSpan("test-span") {}
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(1, spansService.completedSpans().size)
 
         sessionService.endSessionWithCrash(initial, clock.now(), "crashId")
-        assertEquals(0, spansService.completedSpans()?.size)
+        assertEquals(0, spansService.completedSpans().size)
     }
 
     @Test

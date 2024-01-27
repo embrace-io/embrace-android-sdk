@@ -3,8 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.telemetry.TelemetryService
-import io.opentelemetry.sdk.common.Clock
+import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import java.util.concurrent.atomic.AtomicBoolean
@@ -17,8 +16,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * it may not be fast and doing it in the background doesn't affect how it works.
  */
 internal class EmbraceSpansService(
-    private val clock: Clock,
-    private val telemetryService: TelemetryService
+    private val spansSink: SpansSink,
+    private val currentSessionSpan: CurrentSessionSpan,
+    private val tracer: Tracer,
 ) : Initializable, SpansService {
     /**
      * When this instance has been initialized with an instance of [SpansService] that does the proper spans logging
@@ -28,20 +28,17 @@ internal class EmbraceSpansService(
     private val uninitializedSdkSpansService: UninitializedSdkSpansService = UninitializedSdkSpansService()
 
     @Volatile
-    private var sdkInitStartTime: Long? = null
-
-    @Volatile
     private var currentDelegate: SpansService = uninitializedSdkSpansService
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
         if (!initialized.get()) {
-            sdkInitStartTime = sdkInitStartTimeNanos
             synchronized(initialized) {
                 if (!initialized.get()) {
+                    currentSessionSpan.startInitialSession(sdkInitStartTimeNanos)
                     currentDelegate = SpansServiceImpl(
-                        sdkInitStartTimeNanos = sdkInitStartTimeNanos,
-                        clock = clock,
-                        telemetryService = telemetryService
+                        spansSink = spansSink,
+                        currentSessionSpan = currentSessionSpan,
+                        tracer = tracer,
                     )
                     initialized.set(true)
                     uninitializedSdkSpansService.recordBufferedCalls(this)
@@ -89,10 +86,11 @@ internal class EmbraceSpansService(
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode =
         currentDelegate.storeCompletedSpans(spans = spans)
 
-    override fun completedSpans(): List<EmbraceSpanData>? = currentDelegate.completedSpans()
+    override fun completedSpans(): List<EmbraceSpanData> = currentDelegate.completedSpans()
 
-    override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData>? =
-        currentDelegate.flushSpans(appTerminationCause = appTerminationCause)
+    override fun flushSpans(): List<EmbraceSpanData> = currentDelegate.flushSpans()
 
     override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId)
+
+    override fun getSpansRepository(): SpansRepository? = currentDelegate.getSpansRepository()
 }

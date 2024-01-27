@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.capture.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.opentelemetry.api.trace.SpanId
@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 
 internal class StartupServiceImplTest {
 
+    private lateinit var initModule: InitModule
     private lateinit var spansService: EmbraceSpansService
     private lateinit var startupService: StartupService
     private lateinit var clock: FakeClock
@@ -22,8 +23,13 @@ internal class StartupServiceImplTest {
     @Before
     fun setUp() {
         clock = FakeClock(10000000)
-        spansService =
-            EmbraceSpansService(OpenTelemetryClock(embraceClock = clock), FakeTelemetryService())
+        initModule = FakeInitModule(clock = clock)
+        spansService = EmbraceSpansService(
+            spansSink = initModule.spansSink,
+            currentSessionSpan = initModule.currentSessionSpan,
+            tracer = initModule.tracer
+        )
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         startupService = StartupServiceImpl(spansService)
     }
 
@@ -54,16 +60,16 @@ internal class StartupServiceImplTest {
     fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
         spansService.initializeService(10)
         startupService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(1, spansService.completedSpans().size)
         startupService.setSdkStartupInfo(10, 20)
         startupService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(1, spansService.completedSpans().size)
     }
 
     @Test
     fun `sdk startup span recorded if the startup info is set before span service initializes`() {
         startupService.setSdkStartupInfo(10, 20)
         spansService.initializeService(10)
-        assertEquals(1, spansService.completedSpans()?.size)
+        assertEquals(1, spansService.completedSpans().size)
     }
 }

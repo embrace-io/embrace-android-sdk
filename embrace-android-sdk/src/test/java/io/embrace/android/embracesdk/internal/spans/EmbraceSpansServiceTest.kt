@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
@@ -15,14 +15,17 @@ import org.junit.Test
 
 internal class EmbraceSpansServiceTest {
 
+    private lateinit var initModule: InitModule
     private lateinit var spansService: EmbraceSpansService
     private val clock = FakeClock(10000L)
 
     @Before
     fun setup() {
+        initModule = FakeInitModule(clock = clock)
         spansService = EmbraceSpansService(
-            clock = OpenTelemetryClock(clock),
-            telemetryService = FakeTelemetryService()
+            spansSink = initModule.spansSink,
+            currentSessionSpan = initModule.currentSessionSpan,
+            tracer = initModule.tracer
         )
     }
 
@@ -34,8 +37,8 @@ internal class EmbraceSpansServiceTest {
         var lambdaRan = false
         spansService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertNull(spansService.completedSpans())
-        assertNull(spansService.flushSpans())
+        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansService.flushSpans().size)
         assertEquals(CompletableResultCode.ofFailure(), spansService.storeCompletedSpans(listOf()))
         assertNull(spansService.getSpan("some-span-id"))
     }
@@ -48,8 +51,8 @@ internal class EmbraceSpansServiceTest {
         var lambdaRan = false
         spansService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertEquals(2, spansService.completedSpans()?.size)
-        assertEquals(3, spansService.flushSpans()?.size)
+        assertEquals(2, spansService.completedSpans().size)
+        assertEquals(3, initModule.currentSessionSpan.endSession().size)
     }
 
     @Test
@@ -184,7 +187,7 @@ internal class EmbraceSpansServiceTest {
         assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
         assertTrue(spansService.recordCompletedSpan("test-span", 15, 25))
         initializeService()
-        assertEquals(2, spansService.completedSpans()?.size)
+        assertEquals(2, spansService.completedSpans().size)
     }
 
     @Test

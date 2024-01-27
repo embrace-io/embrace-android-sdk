@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -13,21 +13,25 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 internal class EmbraceTracerTest {
 
-    private lateinit var spansService: SpansServiceImpl
+    private lateinit var initModule: InitModule
+    private lateinit var spansService: EmbraceSpansService
     private lateinit var embraceTracer: EmbraceTracer
     private val clock = FakeClock(10000L)
 
     @Before
     fun setup() {
-        spansService = SpansServiceImpl(
-            sdkInitStartTimeNanos = 100L,
-            clock = FakeOpenTelemetryClock(embraceClock = clock),
-            telemetryService = FakeTelemetryService()
+        initModule = FakeInitModule(clock = clock)
+        spansService = EmbraceSpansService(
+            spansSink = initModule.spansSink,
+            currentSessionSpan = initModule.currentSessionSpan,
+            tracer = initModule.tracer
         )
-        embraceTracer = EmbraceTracer(spansService)
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        embraceTracer = EmbraceTracer(spansService = spansService)
         spansService.flushSpans()
     }
 

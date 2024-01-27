@@ -4,13 +4,11 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
  * Public interface for an internal service that manages the recording, storage, and propagation of Spans
  */
-internal interface SpansService {
+internal interface SpansService : SpansSink {
     /**
      * Return an [EmbraceSpan] that can be started and stopped
      */
@@ -50,26 +48,4 @@ internal interface SpansService {
         events: List<EmbraceSpanEvent> = emptyList(),
         errorCode: ErrorCode? = null
     ): Boolean
-
-    /**
-     * Store the given list of completed Spans to be sent to the backend at the next available time
-     */
-    fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode
-
-    /**
-     * Return the list of the currently stored completed Spans that have not been sent to the backend
-     */
-    fun completedSpans(): List<EmbraceSpanData>?
-
-    /**
-     * Flush and return all of the stored completed Spans. This should be called when the stored completed spans are ready to be sent to
-     * the backend. If the flush is being triggered because the app is about to terminate, set [appTerminationCause] to the appropriate
-     * value. Setting this to null means the app is not terminating.
-     */
-    fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause? = null): List<EmbraceSpanData>?
-
-    /**
-     * Return the [EmbraceSpan] for the given [spanId] if it's available
-     */
-    fun getSpan(spanId: String): EmbraceSpan?
 }

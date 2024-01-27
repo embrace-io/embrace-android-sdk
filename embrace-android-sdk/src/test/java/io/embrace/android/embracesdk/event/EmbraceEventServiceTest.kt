@@ -18,11 +18,11 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceEventServiceTest {
 
+    private lateinit var initModule: InitModule
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
     private lateinit var gatingService: GatingService
@@ -113,10 +114,13 @@ internal class EmbraceEventServiceTest {
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
+        initModule = InitModuleImpl(clock = fakeClock)
         spansService = EmbraceSpansService(
-            clock = OpenTelemetryClock(embraceClock = fakeClock),
-            telemetryService = FakeTelemetryService()
+            spansSink = initModule.spansSink,
+            currentSessionSpan = initModule.currentSessionSpan,
+            tracer = initModule.tracer
         )
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(fakeClock.now()))
         eventHandler = EventHandler(
             metadataService = metadataService,
             sessionIdTracker = sessionIdTracker,
@@ -426,7 +430,7 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        spansService.flushSpans()
+        initModule.currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
@@ -447,7 +451,7 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        spansService.flushSpans()
+        initModule.currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
@@ -474,7 +478,7 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        spansService.flushSpans()
+        initModule.currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         assertNull(eventService.getStartupMomentInfo())
         fakeClock.tick(10000L)

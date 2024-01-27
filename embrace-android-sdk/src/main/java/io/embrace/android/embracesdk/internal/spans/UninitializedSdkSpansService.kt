@@ -63,11 +63,13 @@ internal class UninitializedSdkSpansService : SpansService {
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode = CompletableResultCode.ofFailure()
 
-    override fun completedSpans(): List<EmbraceSpanData>? = null
+    override fun completedSpans(): List<EmbraceSpanData> = emptyList()
 
-    override fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData>? = null
+    override fun flushSpans(): List<EmbraceSpanData> = emptyList()
 
     override fun getSpan(spanId: String): EmbraceSpan? = null
+
+    override fun getSpansRepository(): SpansRepository? = null
 
     fun recordBufferedCalls(delegateSpansService: SpansService) {
         synchronized(bufferedCalls) {

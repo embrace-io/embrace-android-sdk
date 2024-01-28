@@ -310,7 +310,9 @@ final class EmbraceImpl {
         this.deliveryModuleSupplier = deliveryModuleSupplier;
         this.tracer = initModule.getEmbraceTracer();
         uninitializedSdkInternalInterface =
-            LazyKt.lazy(() -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(tracer, sdkClock)));
+            LazyKt.lazy(
+                () -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(initModule.getSpansRepository(), tracer, sdkClock))
+            );
     }
 
     EmbraceImpl() {

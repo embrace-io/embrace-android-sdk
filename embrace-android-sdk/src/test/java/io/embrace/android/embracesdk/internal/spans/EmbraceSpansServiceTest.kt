@@ -13,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceSpansServiceTest {
+    private lateinit var spansRepository: SpansRepository
     private lateinit var spansSink: SpansSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpansService
@@ -21,6 +22,7 @@ internal class EmbraceSpansServiceTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
+        spansRepository = initModule.spansRepository
         spansSink = initModule.spansSink
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService
@@ -37,7 +39,7 @@ internal class EmbraceSpansServiceTest {
         assertEquals(0, spansSink.completedSpans().size)
         assertEquals(0, spansSink.flushSpans().size)
         assertEquals(CompletableResultCode.ofSuccess(), spansSink.storeCompletedSpans(listOf()))
-        assertNull(spansSink.getSpan("some-span-id"))
+        assertNull(spansRepository.getSpan("some-span-id"))
     }
 
     @Test
@@ -197,12 +199,12 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can get span with spanId`() {
-        assertNull(spansSink.getSpan("blah"))
+        assertNull(spansRepository.getSpan("blah"))
         initializeService()
         val span = checkNotNull(spansService.createSpan("test-span"))
         assertTrue(span.start())
         val spanId = checkNotNull(span.spanId)
-        val spanFromId = spansSink.getSpan(spanId)
+        val spanFromId = spansRepository.getSpan(spanId)
         assertSame(spanFromId, span)
     }
 

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.TimeUnit
 
 internal class InternalTracer(
+    private val spansRepository: SpansRepository,
     private val embraceTracer: EmbraceTracer,
     private val clock: Clock
 ) : InternalTracingApi {
@@ -28,7 +29,7 @@ internal class InternalTracer(
     }
 
     override fun stopSpan(spanId: String, errorCode: ErrorCode?): Boolean =
-        embraceTracer.getSpan(spanId = spanId)?.stop(errorCode = errorCode) ?: false
+        spansRepository.getSpan(spanId = spanId)?.stop(errorCode = errorCode) ?: false
 
     override fun <T> recordSpan(
         name: String,
@@ -75,14 +76,14 @@ internal class InternalTracer(
     }
 
     override fun addSpanEvent(spanId: String, name: String, time: Long?, attributes: Map<String, String>?): Boolean =
-        embraceTracer.getSpan(spanId = spanId)?.addEvent(
+        spansRepository.getSpan(spanId = spanId)?.addEvent(
             name = name,
             time = time,
             attributes = attributes
         ) ?: false
 
     override fun addSpanAttribute(spanId: String, key: String, value: String): Boolean =
-        embraceTracer.getSpan(spanId = spanId)?.addAttribute(
+        spansRepository.getSpan(spanId = spanId)?.addAttribute(
             key = key,
             value = value
         ) ?: false
@@ -103,7 +104,7 @@ internal class InternalTracer(
     }
 
     private fun validateParent(parentSpanId: String?): Parent {
-        val parentSpan = parentSpanId?.let { embraceTracer.getSpan(spanId = parentSpanId) }
+        val parentSpan = parentSpanId?.let { spansRepository.getSpan(spanId = parentSpanId) }
         return Parent(isValid = parentSpanId == null || parentSpan != null, spanReference = parentSpan)
     }
 

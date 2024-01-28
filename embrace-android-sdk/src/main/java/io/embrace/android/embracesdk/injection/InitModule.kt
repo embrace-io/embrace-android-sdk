@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
@@ -35,16 +36,33 @@ internal interface InitModule {
      */
     val telemetryService: TelemetryService
 
+    /**
+     * Caches [EmbraceSpan] instances that are in progress or completed in the current session
+     */
+    val spansRepository: SpansRepository
+
+    /**
+     * Provides storage for completed spans that have not been sent off-device
+     */
     val spansSink: SpansSink
 
+    /**
+     * An instance of the OpenTelemetry SDK initialized and configured to be used by the SDK
+     */
     val openTelemetrySdk: OpenTelemetry
 
+    /**
+     * An instance of the OpenTelemetry component obtained from the wrapped SDK to create spans
+     */
     val tracer: Tracer
 
+    /**
+     * Component that manages and provides access to the current session span
+     */
     val currentSessionSpan: CurrentSessionSpan
 
     /**
-     * Service to log traces
+     * Service to record spans
      */
     val spansService: SpansService
 
@@ -58,6 +76,7 @@ internal class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: OpenTelemetryClock = OpenTelemetryClock(clock),
     override val telemetryService: TelemetryService = EmbraceTelemetryService(),
+    override val spansRepository: SpansRepository = SpansRepository(),
     override val spansSink: SpansSink = SpansSinkImpl(),
     override val openTelemetrySdk: OpenTelemetry =
         OpenTelemetrySdk.builder()
@@ -74,16 +93,17 @@ internal class InitModuleImpl(
         CurrentSessionSpanImpl(
             clock = openTelemetryClock,
             telemetryService = telemetryService,
+            spansRepository = spansRepository,
             spansSink = spansSink,
             tracer = tracer
         ),
     override val spansService: SpansService = EmbraceSpansService(
-        spansSink = spansSink,
+        spansRepository = spansRepository,
         currentSessionSpan = currentSessionSpan,
         tracer = tracer,
     ),
     override val embraceTracer: EmbraceTracer = EmbraceTracer(
-        spansSink = spansSink,
+        spansRepository = spansRepository,
         spansService = spansService
     )
 ) : InitModule

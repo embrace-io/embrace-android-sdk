@@ -1,22 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 
 internal class SpansSinkImpl : SpansSink {
-
-    private val spansRepository = SpansRepository()
-
-    /**
-     * Spans that have finished, successfully or not, that will be sent with the next session or background activity payload. These
-     * should be cached along with the other data in the payload.
-     */
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
-
-    override fun getSpan(spanId: String): EmbraceSpan? = spansRepository.getSpan(spanId)
-
-    override fun getSpansRepository(): SpansRepository = spansRepository
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode {
         try {

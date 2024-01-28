@@ -169,6 +169,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             breadcrumbService,
             userService,
             preferencesService,
+            spansSink,
             currentSessionSpan,
             clock,
             FakeSessionPropertiesService(),

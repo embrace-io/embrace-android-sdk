@@ -4,14 +4,14 @@ import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.Span
 
 /**
- * Public interface for an internal service that manages the recording, storage, and propagation of Spans
+ * Internal service that supports the creation and recording of [EmbraceSpan]
  */
-internal interface SpansService : Initializable, SpansSink {
+internal interface SpansService : Initializable {
     /**
-     * Return an [EmbraceSpan] that can be started and stopped
+     * Return an [EmbraceSpan] instance that can be used to record spans. Returns null if at least one input parameter is not valid or if
+     * the SDK or session is not in a state where a new span can be recorded.
      */
     fun createSpan(
         name: String,
@@ -21,10 +21,8 @@ internal interface SpansService : Initializable, SpansSink {
     ): EmbraceSpan?
 
     /**
-     * Record a key span around the given lambda with the current session span as its parent where the start time will be when the lambda
-     * starts and the end time will be when the lambda ends. If the lambda throws an exception, it will be recorded as a
-     * [ErrorCode.FAILURE]. The name of the span will be the provided name with the appropriate prefix prepended to it
-     * if [internal] is true.
+     * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a
+     * [ErrorCode.FAILURE]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal] is true.
      */
     fun <T> recordSpan(
         name: String,
@@ -35,8 +33,8 @@ internal interface SpansService : Initializable, SpansSink {
     ): T
 
     /**
-     * Record a completed [Span] for work that has already been done. Returns true if the span was recorded or queued to be recorded,
-     * false if it wasn't.
+     * Record a completed span for an operation with the given start and end times. Returns true if the span was recorded or queued to be
+     * recorded, false if it wasn't.
      */
     fun recordCompletedSpan(
         name: String,

@@ -55,6 +55,7 @@ internal class SessionModuleImpl(
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
+            initModule.spansSink,
             initModule.currentSessionSpan,
             initModule.clock,
             sessionPropertiesService,

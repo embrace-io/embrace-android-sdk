@@ -56,6 +56,7 @@ internal class PayloadMessageCollatorTest {
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
+            spansSink = initModule.spansSink,
             currentSessionSpan = initModule.currentSessionSpan,
             clock = FakeClock(),
             sessionPropertiesService = FakeSessionPropertiesService(),

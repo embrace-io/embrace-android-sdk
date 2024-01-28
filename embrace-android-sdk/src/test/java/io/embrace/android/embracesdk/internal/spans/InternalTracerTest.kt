@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -16,22 +15,21 @@ import java.util.concurrent.TimeUnit
 
 internal class InternalTracerTest {
 
-    private lateinit var initModule: InitModule
-    private lateinit var spansService: EmbraceSpansService
+    private lateinit var spansSink: SpansSink
+    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var spansService: SpansService
     private lateinit var internalTracer: InternalTracer
     private val clock = FakeClock(10000L)
 
     @Before
     fun setup() {
-        initModule = FakeInitModule(clock = clock)
-        spansService = EmbraceSpansService(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
-            tracer = initModule.tracer
-        )
+        val initModule = FakeInitModule(clock = clock)
+        spansSink = initModule.spansSink
+        currentSessionSpan = initModule.currentSessionSpan
+        spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        internalTracer = InternalTracer(EmbraceTracer(spansService), clock)
-        spansService.flushSpans()
+        internalTracer = InternalTracer(EmbraceTracer(spansSink, spansService), clock)
+        spansSink.flushSpans()
     }
 
     @Test
@@ -46,7 +44,7 @@ internal class InternalTracerTest {
         with(verifyPublicSpan(name = "test-span", traceRoot = false)) {
             assertEquals("valuez", attributes["keyz"])
         }
-        spansService.flushSpans()
+        spansSink.flushSpans()
         assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, "first event"))
         assertTrue(internalTracer.stopSpan(parentSpanId))
         assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "second event"))
@@ -226,7 +224,7 @@ internal class InternalTracerTest {
         assertFalse(internalTracer.addSpanAttribute(spanId = NON_EXISTENT_SPAN_ID, key = "key", value = "value"))
         assertFalse(internalTracer.addSpanEvent(spanId = NON_EXISTENT_SPAN_ID, name = "even1"))
         assertEquals(2, internalTracer.recordSpan(name = "test-span", parentSpanId = NON_EXISTENT_SPAN_ID) { 1 + 1 })
-        assertNull(spansService.getSpan(spanId = NON_EXISTENT_SPAN_ID))
+        assertNull(spansSink.getSpan(spanId = NON_EXISTENT_SPAN_ID))
         assertFalse(
             internalTracer.recordCompletedSpan(
                 name = "test-span",
@@ -238,7 +236,7 @@ internal class InternalTracerTest {
     }
 
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {
-        val currentSpans = spansService.completedSpans()
+        val currentSpans = spansSink.completedSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)

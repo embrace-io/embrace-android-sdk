@@ -27,9 +27,10 @@ import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
@@ -43,7 +44,6 @@ import java.util.concurrent.TimeUnit
 internal class PayloadFactoryBaTest {
 
     private val initial = fakeBackgroundActivity()
-    private lateinit var initModule: InitModule
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: FakePerformanceInfoService
@@ -59,7 +59,9 @@ internal class PayloadFactoryBaTest {
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
     private lateinit var localConfig: LocalConfig
-    private lateinit var spansService: EmbraceSpansService
+    private lateinit var spansSink: SpansSink
+    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var spansService: SpansService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
@@ -78,12 +80,10 @@ internal class PayloadFactoryBaTest {
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = FakeUserService()
-        initModule = FakeInitModule(clock = clock)
-        spansService = EmbraceSpansService(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
-            tracer = initModule.tracer
-        )
+        val initModule = FakeInitModule(clock = clock)
+        spansSink = initModule.spansSink
+        currentSessionSpan = initModule.currentSessionSpan
+        spansService = initModule.spansService
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true
         )
@@ -118,7 +118,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session span
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.lastSavedBackgroundActivities.single().spans?.size)
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -130,7 +130,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -143,7 +143,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -169,7 +169,7 @@ internal class PayloadFactoryBaTest {
             breadcrumbService,
             userService,
             preferencesService,
-            initModule.currentSessionSpan,
+            currentSessionSpan,
             clock,
             FakeSessionPropertiesService(),
             FakeStartupService()

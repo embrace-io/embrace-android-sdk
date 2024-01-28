@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.capture.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
+import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
@@ -15,20 +15,17 @@ import java.util.concurrent.TimeUnit
 
 internal class StartupServiceImplTest {
 
-    private lateinit var initModule: InitModule
-    private lateinit var spansService: EmbraceSpansService
+    private lateinit var spansSink: SpansSink
+    private lateinit var spansService: SpansService
     private lateinit var startupService: StartupService
     private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
         clock = FakeClock(10000000)
-        initModule = FakeInitModule(clock = clock)
-        spansService = EmbraceSpansService(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
-            tracer = initModule.tracer
-        )
+        val initModule = FakeInitModule(clock = clock)
+        spansSink = initModule.spansSink
+        spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         startupService = StartupServiceImpl(spansService)
     }
@@ -40,7 +37,7 @@ internal class StartupServiceImplTest {
         val endTimeMillis = clock.now()
         spansService.initializeService(startTimeMillis)
         startupService.setSdkStartupInfo(startTimeMillis, endTimeMillis)
-        val currentSpans = checkNotNull(spansService.completedSpans())
+        val currentSpans = spansSink.completedSpans()
         assertEquals(1, currentSpans.size)
         with(currentSpans[0]) {
             assertEquals("emb-sdk-init", name)
@@ -60,16 +57,16 @@ internal class StartupServiceImplTest {
     fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
         spansService.initializeService(10)
         startupService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans().size)
+        assertEquals(1, spansSink.completedSpans().size)
         startupService.setSdkStartupInfo(10, 20)
         startupService.setSdkStartupInfo(10, 20)
-        assertEquals(1, spansService.completedSpans().size)
+        assertEquals(1, spansSink.completedSpans().size)
     }
 
     @Test
     fun `sdk startup span recorded if the startup info is set before span service initializes`() {
         startupService.setSdkStartupInfo(10, 20)
         spansService.initializeService(10)
-        assertEquals(1, spansService.completedSpans().size)
+        assertEquals(1, spansSink.completedSpans().size)
     }
 }

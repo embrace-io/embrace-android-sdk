@@ -5,12 +5,14 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
 import io.embrace.android.embracesdk.internal.spans.UninitializedSdkSpansService
+import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.mockk.mockk
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -24,24 +26,27 @@ internal class InitModuleImplTest {
     fun testInitModuleImplDefaults() {
         val initModule = InitModuleImpl()
         assertTrue(initModule.clock is NormalizedIntervalClock)
+        assertTrue(initModule.telemetryService is EmbraceTelemetryService)
+        assertTrue(initModule.spansSink is SpansSinkImpl)
         assertTrue(initModule.spansService is EmbraceSpansService)
+        assertTrue(initModule.currentSessionSpan is CurrentSessionSpanImpl)
     }
 
     @Test
     fun testInitModuleImplOverrideComponents() {
         val clock = FakeClock()
         val telemetryService = FakeTelemetryService()
+        val spansRepository = SpansRepository()
         val spansSink = SpansSinkImpl()
         val spansService = UninitializedSdkSpansService()
-        val openTelemetrySdk: OpenTelemetry = mockk()
         val tracer: Tracer = mockk()
         val currentSessionSpan: CurrentSessionSpan = mockk()
         val embraceTracer: EmbraceTracer = mockk()
         val initModule = InitModuleImpl(
             clock = clock,
             telemetryService = telemetryService,
+            spansRepository = spansRepository,
             spansSink = spansSink,
-            openTelemetrySdk = openTelemetrySdk,
             spansService = spansService,
             tracer = tracer,
             currentSessionSpan = currentSessionSpan,
@@ -49,8 +54,8 @@ internal class InitModuleImplTest {
         )
         assertSame(clock, initModule.clock)
         assertSame(telemetryService, initModule.telemetryService)
+        assertSame(spansRepository, initModule.spansRepository)
         assertSame(spansSink, initModule.spansSink)
-        assertSame(openTelemetrySdk, initModule.openTelemetrySdk)
         assertSame(spansService, initModule.spansService)
         assertSame(tracer, initModule.tracer)
         assertSame(currentSessionSpan, initModule.currentSessionSpan)

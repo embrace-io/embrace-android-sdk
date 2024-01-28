@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -17,7 +16,6 @@ import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -29,7 +27,7 @@ internal interface InitModule {
     /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */
-    val clock: Clock
+    val clock: io.embrace.android.embracesdk.internal.clock.Clock
 
     /**
      * Service to track usage of public APIs and other internal metrics
@@ -45,11 +43,6 @@ internal interface InitModule {
      * Provides storage for completed spans that have not been sent off-device
      */
     val spansSink: SpansSink
-
-    /**
-     * An instance of the OpenTelemetry SDK initialized and configured to be used by the SDK
-     */
-    val openTelemetrySdk: OpenTelemetry
 
     /**
      * An instance of the OpenTelemetry component obtained from the wrapped SDK to create spans
@@ -73,13 +66,14 @@ internal interface InitModule {
 }
 
 internal class InitModuleImpl(
-    override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
-    openTelemetryClock: OpenTelemetryClock = OpenTelemetryClock(clock),
+    override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock(systemClock = SystemClock()),
+    openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock),
     override val telemetryService: TelemetryService = EmbraceTelemetryService(),
     override val spansRepository: SpansRepository = SpansRepository(),
     override val spansSink: SpansSink = SpansSinkImpl(),
-    override val openTelemetrySdk: OpenTelemetry =
-        OpenTelemetrySdk.builder()
+    override val tracer: Tracer =
+        OpenTelemetrySdk
+            .builder()
             .setTracerProvider(
                 SdkTracerProvider
                     .builder()
@@ -87,8 +81,8 @@ internal class InitModuleImpl(
                     .setClock(openTelemetryClock)
                     .build()
             )
-            .build(),
-    override val tracer: Tracer = openTelemetrySdk.getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME),
+            .build()
+            .getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME),
     override val currentSessionSpan: CurrentSessionSpan =
         CurrentSessionSpanImpl(
             clock = openTelemetryClock,

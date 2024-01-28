@@ -40,9 +40,6 @@ internal class TracingApiTest {
             harness.fakeClock.tick(100L)
             embrace.start(harness.fakeCoreModule.context)
             harness.recordSession {
-                assertTrue(
-                    returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) { embrace.isTracingAvailable() }
-                )
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start())
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
@@ -91,7 +88,7 @@ internal class TracingApiTest {
                 val backgroundActivitySpansCount = getSdkInitSpanFromBackgroundActivity().size
                 assertTrue(
                     returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) {
-                        checkNotNull(harness.initModule.spansService.completedSpans()).size == (5 - backgroundActivitySpansCount)
+                        checkNotNull(harness.initModule.spansSink.completedSpans()).size == (5 - backgroundActivitySpansCount)
                     }
                 )
             }

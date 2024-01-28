@@ -50,5 +50,8 @@ internal class FakeInitModule(
         currentSessionSpan = currentSessionSpan,
         tracer = tracer,
     ),
-    override val embraceTracer: EmbraceTracer = EmbraceTracer(spansService)
+    override val embraceTracer: EmbraceTracer = EmbraceTracer(
+        spansSink = spansSink,
+        spansService = spansService
+    )
 ) : InitModule

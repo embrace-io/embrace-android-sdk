@@ -53,8 +53,7 @@ internal class EmbraceSpansService(
         type: EmbraceAttributes.Type,
         internal: Boolean,
         code: () -> T
-    ): T =
-        currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
+    ): T = currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
 
     override fun recordCompletedSpan(
         name: String,

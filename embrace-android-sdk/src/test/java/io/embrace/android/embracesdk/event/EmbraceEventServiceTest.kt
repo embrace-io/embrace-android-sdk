@@ -21,9 +21,10 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -45,12 +46,13 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceEventServiceTest {
 
-    private lateinit var initModule: InitModule
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
     private lateinit var gatingService: GatingService
     private lateinit var fakeWorkerThreadModule: FakeWorkerThreadModule
-    private lateinit var spansService: EmbraceSpansService
+    private lateinit var spansSink: SpansSink
+    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var spansService: SpansService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var eventService: EmbraceEventService
     private lateinit var fakeClock: FakeClock
@@ -114,12 +116,10 @@ internal class EmbraceEventServiceTest {
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
-        initModule = InitModuleImpl(clock = fakeClock)
-        spansService = EmbraceSpansService(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
-            tracer = initModule.tracer
-        )
+        val initModule = InitModuleImpl(clock = fakeClock)
+        spansSink = initModule.spansSink
+        currentSessionSpan = initModule.currentSessionSpan
+        spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(fakeClock.now()))
         eventHandler = EventHandler(
             metadataService = metadataService,
@@ -430,12 +430,12 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        initModule.currentSessionSpan.endSession()
+        currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        val completedSpans = checkNotNull(spansService.completedSpans())
+        val completedSpans = spansSink.completedSpans()
         assertEquals(1, completedSpans.size)
         with(completedSpans[0]) {
             assertEquals("emb-startup-moment", name)
@@ -451,18 +451,18 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        initModule.currentSessionSpan.endSession()
+        currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
         val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
         executor.runCurrentlyBlocked()
-        val completedSpans = checkNotNull(spansService.completedSpans())
+        val completedSpans = spansSink.completedSpans()
         assertEquals(0, completedSpans.size)
 
         fakeClock.setCurrentTime(20L)
         eventService.endEvent(STARTUP_EVENT_NAME)
         executor.runCurrentlyBlocked()
-        val completedSpansAgain = checkNotNull(spansService.completedSpans())
+        val completedSpansAgain = spansSink.completedSpans()
         assertEquals(1, completedSpansAgain.size)
 
         with(completedSpansAgain[0]) {
@@ -478,13 +478,12 @@ internal class EmbraceEventServiceTest {
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
         )
         configService.updateListeners()
-        initModule.currentSessionSpan.endSession()
+        currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         assertNull(eventService.getStartupMomentInfo())
         fakeClock.tick(10000L)
         fakeWorkerThreadModule.scheduledExecutor(WorkerName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
         assertNotNull(eventService.getStartupMomentInfo())
-        val completedSpans = checkNotNull(spansService.completedSpans())
-        assertEquals(0, completedSpans.size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 }

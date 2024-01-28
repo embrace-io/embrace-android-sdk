@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
 import io.embrace.android.embracesdk.fixtures.tooBigAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEvents
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.spans.SpansServiceImpl.Companion.MAX_SPAN_COUNT_PER_TRACE
 import io.embrace.android.embracesdk.internal.spans.SpansServiceImpl.Companion.MAX_TRACE_COUNT_PER_SESSION
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -35,8 +34,8 @@ import java.util.concurrent.TimeUnit
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class SpansServiceImplTest {
-
-    private lateinit var initModule: InitModule
+    private lateinit var spansSink: SpansSink
+    private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpansServiceImpl
     private val clock = FakeClock(1000L)
 
@@ -90,7 +89,7 @@ internal class SpansServiceImplTest {
         assertTrue(childSpan.stop())
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansService.completedSpans()
+        val currentSpans = spansSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
 
@@ -116,14 +115,14 @@ internal class SpansServiceImplTest {
     fun `start span created from previous session`() {
         initAndStartNextSession()
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        spansService.flushSpans()
+        spansSink.flushSpans()
         assertTrue(embraceSpan.start())
     }
 
     @Test
     fun `cannot create span with no session span`() {
         initAndStartNextSession()
-        initModule.currentSessionSpan.endSession(appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
+        currentSessionSpan.endSession(appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
         assertNull(spansService.createSpan(name = "test"))
     }
 
@@ -216,7 +215,7 @@ internal class SpansServiceImplTest {
         }
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansService.completedSpans()
+        val currentSpans = spansSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -231,7 +230,7 @@ internal class SpansServiceImplTest {
         val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(parentSpan.stop())
-        spansService.flushSpans()
+        spansSink.flushSpans()
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
@@ -272,7 +271,7 @@ internal class SpansServiceImplTest {
             with(verifyAndReturnSoleCompletedSpan("emb-test${it.name}")) {
                 assertEquals(it.name, attributes[it.keyName()])
             }
-            spansService.flushSpans()
+            spansSink.flushSpans()
         }
     }
 
@@ -291,7 +290,7 @@ internal class SpansServiceImplTest {
     @Test
     fun `cannot record completed span if there is not current session span`() {
         initAndStartNextSession()
-        initModule.currentSessionSpan.endSession(
+        currentSessionSpan.endSession(
             appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION
         )
         assertFalse(
@@ -334,7 +333,7 @@ internal class SpansServiceImplTest {
 
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansService.completedSpans()
+        val currentSpans = spansSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -356,7 +355,7 @@ internal class SpansServiceImplTest {
         }
 
         assertEquals(2, returnValue)
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -371,7 +370,7 @@ internal class SpansServiceImplTest {
         }
 
         assertEquals(2, returnValue)
-        assertEquals(2, spansService.completedSpans().size)
+        assertEquals(2, spansSink.completedSpans().size)
     }
 
     @Test
@@ -394,7 +393,7 @@ internal class SpansServiceImplTest {
     @Test
     fun `logging span as lambda with no current active session will run code but not log span`() {
         initAndStartNextSession()
-        initModule.currentSessionSpan.endSession(
+        currentSessionSpan.endSession(
             appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION
         )
         var executed = false
@@ -403,7 +402,7 @@ internal class SpansServiceImplTest {
         }
 
         assertTrue(executed)
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -412,11 +411,11 @@ internal class SpansServiceImplTest {
         assertNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME))
         assertFalse(spansService.recordCompletedSpan(name = TOO_LONG_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME) { 1 })
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME) { 2 })
         assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
-        assertEquals(2, spansService.completedSpans().size)
+        assertEquals(2, spansSink.completedSpans().size)
     }
 
     @Test
@@ -439,7 +438,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        spansService.flushSpans()
+        spansSink.flushSpans()
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -462,7 +461,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        val completedSpans = spansService.completedSpans()
+        val completedSpans = spansSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(10, completedSpans[0].events.size)
         assertEquals(8, completedSpans[0].events[0].attributes.size)
@@ -488,7 +487,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        spansService.flushSpans()
+        spansSink.flushSpans()
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -507,7 +506,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        val completedSpans = spansService.completedSpans()
+        val completedSpans = spansSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(48, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
     }
@@ -580,9 +579,9 @@ internal class SpansServiceImplTest {
                 internal = false
             )
         )
-        spansService.flushSpans()
+        spansSink.flushSpans()
         assertEquals(2, spansService.recordSpan(name = "failed-span", parent = parentSpan, internal = false) { 2 })
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -615,9 +614,9 @@ internal class SpansServiceImplTest {
         repeat(3) {
             spansService.recordSpan("test$it") { }
         }
-        assertEquals(3, spansService.completedSpans().size)
+        assertEquals(3, spansSink.completedSpans().size)
 
-        val flushedSpans = initModule.currentSessionSpan.endSession()
+        val flushedSpans = currentSessionSpan.endSession()
         assertEquals(4, flushedSpans.size)
 
         val lastFlushedSpan = flushedSpans[3]
@@ -631,14 +630,14 @@ internal class SpansServiceImplTest {
             assertEquals(StatusCode.OK, status)
         }
 
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
     fun `flushing with app termination and termination reason flushes session span with right termination type`() {
         EmbraceAttributes.AppTerminationCause.values().forEach {
             initAndStartNextSession()
-            val flushedSpans = initModule.currentSessionSpan.endSession(it)
+            val flushedSpans = currentSessionSpan.endSession(it)
             assertEquals(1, flushedSpans.size)
 
             val lastFlushedSpan = flushedSpans[0]
@@ -653,19 +652,19 @@ internal class SpansServiceImplTest {
                 assertEquals(it.name, attributes[it.keyName()])
             }
 
-            assertEquals(0, spansService.completedSpans().size)
+            assertEquals(0, spansSink.completedSpans().size)
         }
     }
 
     @Test
     fun `after flushing with app termination, spans cannot be recorded`() {
         initService()
-        initModule.currentSessionSpan.endSession(EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
+        currentSessionSpan.endSession(EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
         spansService.recordSpan("test-span") {
             // do thing
         }
         assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeNanos = 0, endTimeNanos = 1))
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -674,7 +673,7 @@ internal class SpansServiceImplTest {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
         val spanId = checkNotNull(embraceSpan.spanId)
-        val spanFromService = checkNotNull(spansService.getSpan(spanId))
+        val spanFromService = checkNotNull(spansSink.getSpan(spanId))
         assertSame(spanFromService, embraceSpan)
         assertTrue(spanFromService.stop())
         assertFalse(embraceSpan.isRecording)
@@ -690,39 +689,41 @@ internal class SpansServiceImplTest {
         val parentSpan = checkNotNull(spansService.createSpan(name = "parent-span"))
         assertTrue(parentSpan.start())
         val parentSpanId = checkNotNull(parentSpan.spanId)
-        val parentSpanFromService = checkNotNull(spansService.getSpan(parentSpanId))
+        val parentSpanFromService = checkNotNull(spansSink.getSpan(parentSpanId))
         assertTrue(parentSpanFromService.stop())
-        initModule.currentSessionSpan.endSession()
+        currentSessionSpan.endSession()
 
         // completed span not available after flush
-        assertNull(spansService.getSpan(parentSpanId))
+        assertNull(spansSink.getSpan(parentSpanId))
 
         // existing reference to completed span can still be used
         checkNotNull(spansService.createSpan(name = "child-span", parent = parentSpan))
 
         // active span from before flush is still available and working
-        val activeSpanFromBeforeFlush = checkNotNull(spansService.getSpan(embraceSpanId))
+        val activeSpanFromBeforeFlush = checkNotNull(spansSink.getSpan(embraceSpanId))
         assertTrue(activeSpanFromBeforeFlush.stop())
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
     private fun initService() {
-        initModule = FakeInitModule(clock = clock)
+        val initModule = FakeInitModule(clock = clock)
+        spansSink = initModule.spansSink
+        currentSessionSpan = initModule.currentSessionSpan
         spansService = SpansServiceImpl(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
+            spansSink = spansSink,
+            currentSessionSpan = currentSessionSpan,
             tracer = initModule.tracer
         )
-        initModule.currentSessionSpan.startInitialSession(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
     }
 
     private fun initAndStartNextSession() {
         initService()
-        initModule.currentSessionSpan.endSession()
+        currentSessionSpan.endSession()
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): EmbraceSpanData {
-        val currentSpans = spansService.completedSpans()
+        val currentSpans = spansSink.completedSpans()
         assertEquals(1, currentSpans.size)
         assertEquals(name, currentSpans[0].name)
         return currentSpans[0]

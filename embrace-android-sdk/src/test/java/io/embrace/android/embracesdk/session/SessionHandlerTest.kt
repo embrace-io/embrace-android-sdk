@@ -148,6 +148,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             userService,
             preferencesService,
+            initModule.spansSink,
             initModule.currentSessionSpan,
             clock,
             FakeSessionPropertiesService(),

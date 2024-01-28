@@ -4,20 +4,18 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * An implementation of [SpansService] used when the SDK is not enabled
+ * An implementation of [SpansService] used when the SDK has not been started.
  */
 @InternalApi
 internal class UninitializedSdkSpansService : SpansService {
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) { }
+    override fun initializeService(sdkInitStartTimeNanos: Long) {}
 
     override fun initialized(): Boolean = true
 
@@ -64,16 +62,6 @@ internal class UninitializedSdkSpansService : SpansService {
         }
     }
 
-    override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode = CompletableResultCode.ofFailure()
-
-    override fun completedSpans(): List<EmbraceSpanData> = emptyList()
-
-    override fun flushSpans(): List<EmbraceSpanData> = emptyList()
-
-    override fun getSpan(spanId: String): EmbraceSpan? = null
-
-    override fun getSpansRepository(): SpansRepository? = null
-
     fun recordBufferedCalls(delegateSpansService: SpansService) {
         synchronized(bufferedCalls) {
             do {
@@ -99,7 +87,7 @@ internal class UninitializedSdkSpansService : SpansService {
     }
 
     /**
-     * Represents a call to [EmbraceSpansService.recordCompletedSpan] that is saved to be invoked later when the service is initialized
+     * Represents a call to [SpansService.recordCompletedSpan] that can be saved and replayed later when the SDK is initialized.
      */
     data class BufferedRecordCompletedSpan(
         val name: String,

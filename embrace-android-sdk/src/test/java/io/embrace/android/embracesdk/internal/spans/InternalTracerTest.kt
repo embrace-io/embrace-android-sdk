@@ -14,7 +14,6 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 internal class InternalTracerTest {
-
     private lateinit var spansSink: SpansSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpansService
@@ -28,7 +27,11 @@ internal class InternalTracerTest {
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        internalTracer = InternalTracer(EmbraceTracer(spansSink, spansService), clock)
+        internalTracer = InternalTracer(
+            initModule.spansRepository,
+            initModule.embraceTracer,
+            clock
+        )
         spansSink.flushSpans()
     }
 
@@ -224,7 +227,6 @@ internal class InternalTracerTest {
         assertFalse(internalTracer.addSpanAttribute(spanId = NON_EXISTENT_SPAN_ID, key = "key", value = "value"))
         assertFalse(internalTracer.addSpanEvent(spanId = NON_EXISTENT_SPAN_ID, name = "even1"))
         assertEquals(2, internalTracer.recordSpan(name = "test-span", parentSpanId = NON_EXISTENT_SPAN_ID) { 1 + 1 })
-        assertNull(spansSink.getSpan(spanId = NON_EXISTENT_SPAN_ID))
         assertFalse(
             internalTracer.recordCompletedSpan(
                 name = "test-span",

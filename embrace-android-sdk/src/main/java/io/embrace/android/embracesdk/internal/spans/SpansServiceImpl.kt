@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Implementation of the core logic for [SpansService]
  */
 internal class SpansServiceImpl(
-    private val spansSink: SpansSink,
+    private val spansRepository: SpansRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
-) : SpansService, SpansSink by spansSink {
+) : SpansService {
     private val initialized = AtomicBoolean(false)
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
@@ -28,11 +28,11 @@ internal class SpansServiceImpl(
     override fun initialized(): Boolean = initialized.get()
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
-        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.validateAndUpdateContext(parent, internal)) {
+        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             EmbraceSpanImpl(
                 spanBuilder = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal),
                 parent = parent,
-                spansRepository = spansSink.getSpansRepository()
+                spansRepository = spansRepository
             )
         } else {
             null
@@ -46,7 +46,7 @@ internal class SpansServiceImpl(
         internal: Boolean,
         code: () -> T
     ): T {
-        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.validateAndUpdateContext(parent, internal)) {
+        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).updateParent(parent).record(code)
         } else {
             code()
@@ -69,7 +69,7 @@ internal class SpansServiceImpl(
         }
 
         return if (EmbraceSpanImpl.inputsValid(name, events, attributes) &&
-            currentSessionSpan.validateAndUpdateContext(parent, internal)
+            currentSessionSpan.canStartNewSpan(parent, internal)
         ) {
             val span = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
                 .updateParent(parent)

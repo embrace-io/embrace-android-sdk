@@ -46,6 +46,8 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.backgroundActivityService)
         assertNotNull(module.sessionOrchestrator)
+        assertNotNull(module.periodicSessionCacher)
+        assertNotNull(module.periodicBackgroundActivityCacher)
     }
 
     @Test

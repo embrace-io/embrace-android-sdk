@@ -2,27 +2,17 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.worker.ScheduledWorker
-import java.util.concurrent.TimeUnit
-import kotlin.math.max
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 
 internal class EmbraceBackgroundActivityService(
     private val deliveryService: DeliveryService,
-    /**
-     * Embrace service dependencies of the background activity session service.
-     */
-    private val clock: Clock,
     private val payloadMessageCollator: PayloadMessageCollator,
-    private val scheduledWorker: ScheduledWorker,
-    private val orchestrationLock: Any, // synchronises session orchestration. Temporarily passed in.
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val clock: Clock,
+    private val periodicCacher: PeriodicBackgroundActivityCacher, // synchronises session orchestration. Temporarily passed in.
+    private val orchestrationLock: Any
 ) : BackgroundActivityService {
-
-    private var lastSaved: Long = 0
 
     /**
      * The active background activity session.
@@ -45,7 +35,7 @@ internal class EmbraceBackgroundActivityService(
             )
         )
         backgroundActivity = activity
-        save()
+        saveBackgroundActivitySnapshot()
         return activity.sessionId
     }
 
@@ -63,6 +53,7 @@ internal class EmbraceBackgroundActivityService(
         backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
         deliveryService.sendBackgroundActivities()
+        periodicCacher.stop()
     }
 
     override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
@@ -77,30 +68,17 @@ internal class EmbraceBackgroundActivityService(
         )
         backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
+        periodicCacher.stop()
     }
 
     /**
-     * Save the background activity to disk
+     * Saves a snapshot of the current background activity message to disk
      */
-    override fun save() {
-        backgroundActivity ?: return
-        val delta = clock.now() - lastSaved
-        val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
-        scheduledWorker.schedule<Unit>(
-            { cacheBackgroundActivity(clock.now()) },
-            delay,
-            TimeUnit.MILLISECONDS
-        )
-    }
-
-    /**
-     * Cache the activity, with performance information generated up to the current point.
-     */
-    private fun cacheBackgroundActivity(timestamp: Long) {
-        synchronized(orchestrationLock) {
-            try {
-                lastSaved = timestamp
-                val initial = backgroundActivity ?: return
+    override fun saveBackgroundActivitySnapshot() {
+        periodicCacher.scheduleSave {
+            synchronized(orchestrationLock) {
+                val initial = backgroundActivity ?: return@synchronized
+                val timestamp = clock.now()
                 val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                     FinalEnvelopeParams.BackgroundActivityParams(
                         initial = initial,
@@ -109,17 +87,8 @@ internal class EmbraceBackgroundActivityService(
                     )
                 )
                 deliveryService.saveBackgroundActivity(message)
-            } catch (ex: Exception) {
-                logger.logDebug("Error while caching active session", ex)
             }
+            null
         }
-    }
-
-    companion object {
-
-        /**
-         * Minimum time between writes of the background activity to disk
-         */
-        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 5000
     }
 }

@@ -21,7 +21,6 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
         this.crashId = crashId
     }
 
-    override fun save() {
-        TODO("Not yet implemented")
+    override fun saveBackgroundActivitySnapshot() {
     }
 }

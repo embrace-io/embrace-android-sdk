@@ -12,8 +12,11 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      current_version:
-        description: 'Version to release'
+      version_to_release:
+        description: 'Version to release. A new branch called `release/<version>` will be created for it where the release-specific changes will be committed.'
+        required: true
+      next_version:
+        description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
 
 jobs:
@@ -31,9 +34,11 @@ jobs:
           echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
           echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
 
-      - name: Checkout Branch
+      - name: Create and Checkout Branch
         uses: actions/checkout@v3
         with:
+          run: | 
+            git checkout -b release/${{ github.event.inputs.version_to_release }}
           fetch-depth: 0
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
@@ -83,11 +88,19 @@ jobs:
 
       - name: Gradlew Pre-Release
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.current_version }}"
+          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}"
           git push
           ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+
+      - name: Set next SDK version
+        run: |
+          git checkout master
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
+          git push
 
       - name: Checkout Swazzler
         uses: actions/checkout@v3
@@ -100,7 +113,7 @@ jobs:
       - name: Swazzler Release
         run: |
           cd ./embrace-swazzler3
-          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.current_version }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
+          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.pushReleaseVersionBranch=release/${{ github.event.inputs.version_to_release }} -Prelease.releaseVersion=${{ github.event.inputs.version_to_release }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
@@ -109,17 +122,3 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
-          
-#  measure-sdk-size:
-#    uses: embrace-io/android-size-measure/.github/workflows/analyze-sdk-size.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}
-#
-#  measure-startup-time:
-#    uses: embrace-io/android-sdk-benchmark/.github/workflows/macrobenchmark.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}

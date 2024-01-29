@@ -18,4 +18,10 @@ internal interface SessionOrchestrator : ProcessStateListener {
      * Handles an uncaught exception, ending the active session and saving it to disk.
      */
     fun endSessionWithCrash(crashId: String)
+
+    /**
+     * Reports a change that means we should schedule snapshotting & writing to disk of the
+     * current snapshot. This function is kept for legacy reasons and will eventually be removed.
+     */
+    fun reportBackgroundActivityStateChange()
 }

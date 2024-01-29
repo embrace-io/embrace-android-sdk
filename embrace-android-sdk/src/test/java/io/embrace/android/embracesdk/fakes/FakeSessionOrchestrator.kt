@@ -14,4 +14,7 @@ internal class FakeSessionOrchestrator : SessionOrchestrator {
     override fun endSessionWithCrash(crashId: String) {
         this.crashId = crashId
     }
+
+    override fun reportBackgroundActivityStateChange() {
+    }
 }

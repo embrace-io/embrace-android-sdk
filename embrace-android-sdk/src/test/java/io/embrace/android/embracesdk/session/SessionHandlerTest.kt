@@ -402,7 +402,7 @@ internal class SessionHandlerTest {
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
-    private fun startFakeSession(): String {
+    private fun startFakeSession(): Session {
         return sessionService.startSessionWithState(now, true)
     }
 

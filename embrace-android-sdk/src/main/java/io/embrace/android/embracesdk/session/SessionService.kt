@@ -9,12 +9,12 @@ internal interface SessionService {
     /**
      * Starts a session in response to a state event.
      */
-    fun startSessionWithState(timestamp: Long, coldStart: Boolean): String
+    fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session
 
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long): String
+    fun startSessionWithManual(timestamp: Long): Session
 
     /**
      * Ends a session in response to a state event.

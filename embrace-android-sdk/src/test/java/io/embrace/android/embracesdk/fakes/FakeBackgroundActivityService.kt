@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.fakeBackgroundActivity
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 
 internal class FakeBackgroundActivityService : BackgroundActivityService {
@@ -8,9 +10,9 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
     val startTimestamps = mutableListOf<Long>()
     var crashId: String? = null
 
-    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String {
+    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session {
         startTimestamps.add(timestamp)
-        return "fakeBackgroundActivityId"
+        return fakeBackgroundActivity()
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {

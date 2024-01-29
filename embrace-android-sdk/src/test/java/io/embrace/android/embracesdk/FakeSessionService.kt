@@ -13,16 +13,16 @@ internal class FakeSessionService : SessionService {
 
     override var activeSession: Session? = null
 
-    override fun startSessionWithState(timestamp: Long, coldStart: Boolean): String {
+    override fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
         startTimestamps.add(timestamp)
         activeSession = fakeSession(startMs = timestamp)
-        return activeSession?.sessionId ?: ""
+        return checkNotNull(activeSession)
     }
 
-    override fun startSessionWithManual(timestamp: Long): String {
+    override fun startSessionWithManual(timestamp: Long): Session {
         manualStartCount++
         activeSession = fakeSession()
-        return activeSession?.sessionId ?: ""
+        return checkNotNull(activeSession)
     }
 
     override fun endSessionWithState(timestamp: Long) {

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.session
 
+import io.embrace.android.embracesdk.payload.Session
+
 /**
  * Service that captures and sends information when the app is in background
  */
@@ -8,7 +10,7 @@ internal interface BackgroundActivityService {
     /**
      * Ends a background activity in response to a state event.
      */
-    fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String
+    fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session
 
     /**
      * Handles an uncaught exception, ending the session and saving the activity to disk.

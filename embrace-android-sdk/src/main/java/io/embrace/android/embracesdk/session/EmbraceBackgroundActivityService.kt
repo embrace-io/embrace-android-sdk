@@ -20,7 +20,7 @@ internal class EmbraceBackgroundActivityService(
     @Volatile
     private var backgroundActivity: Session? = null
 
-    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): String {
+    override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
         val time = when {
@@ -36,7 +36,7 @@ internal class EmbraceBackgroundActivityService(
         )
         backgroundActivity = activity
         saveBackgroundActivitySnapshot()
-        return activity.sessionId
+        return activity
     }
 
     override fun endBackgroundActivityWithState(timestamp: Long) {

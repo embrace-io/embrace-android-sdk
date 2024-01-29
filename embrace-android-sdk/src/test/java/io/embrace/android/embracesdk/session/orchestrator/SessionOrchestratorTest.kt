@@ -82,7 +82,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(0, sessionService.startTimestamps.size)
         assertEquals(1, backgroundActivityService.startTimestamps.size)
-        assertEquals("fakeBackgroundActivityId", sessionIdTracker.sessionId)
+        assertEquals("fake-activity", sessionIdTracker.sessionId)
     }
 
     @Test
@@ -110,7 +110,7 @@ internal class SessionOrchestratorTest {
         assertEquals(2, memoryCleanerService.callCount)
         assertEquals(TIMESTAMP, sessionService.endTimestamps.single())
         assertEquals(TIMESTAMP, backgroundActivityService.startTimestamps.single())
-        assertEquals("fakeBackgroundActivityId", sessionIdTracker.sessionId)
+        assertEquals("fake-activity", sessionIdTracker.sessionId)
     }
 
     @Test

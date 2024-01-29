@@ -28,10 +28,7 @@ internal class EmbraceTracerTest {
         spansSink = initModule.spansSink
         spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        embraceTracer = EmbraceTracer(
-            spansRepository = spansRepository,
-            spansService = spansService
-        )
+        embraceTracer = initModule.embraceTracer
         spansSink.flushSpans()
     }
 

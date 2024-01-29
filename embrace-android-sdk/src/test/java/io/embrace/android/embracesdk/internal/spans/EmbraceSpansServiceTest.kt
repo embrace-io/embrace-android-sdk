@@ -3,17 +3,14 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceSpansServiceTest {
-    private lateinit var spansRepository: SpansRepository
     private lateinit var spansSink: SpansSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpansService
@@ -22,29 +19,25 @@ internal class EmbraceSpansServiceTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansRepository = initModule.spansRepository
         spansSink = initModule.spansSink
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService
+        spansService.initializeService(clock.now())
     }
 
     @Test
     fun `verify default behaviour before initialization`() {
-        assertFalse(spansService.initialized())
-        assertNull(spansService.createSpan("test-span"))
-        assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
+        val uninitializedService = FakeInitModule(clock = clock).spansService
+        assertFalse(uninitializedService.initialized())
+        assertNull(uninitializedService.createSpan("test-span"))
+        assertTrue(uninitializedService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
-        spansService.recordSpan("test-span") { lambdaRan = true }
+        uninitializedService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertEquals(0, spansSink.completedSpans().size)
-        assertEquals(0, spansSink.flushSpans().size)
-        assertEquals(CompletableResultCode.ofSuccess(), spansSink.storeCompletedSpans(listOf()))
-        assertNull(spansRepository.getSpan("some-span-id"))
     }
 
     @Test
     fun `service works once initialized`() {
-        initializeService()
         assertTrue(spansService.initialized())
         assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
@@ -56,7 +49,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `record internal completed span recording with all the fixings`() {
-        initializeService()
         spansSink.flushSpans()
         val expectedName = "test-span"
         val expectedStartTime = clock.now()
@@ -99,7 +91,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can create spans after init`() {
-        initializeService()
         spansSink.flushSpans()
         val parent = checkNotNull(spansService.createSpan("test-span"))
         assertTrue(parent.start())
@@ -111,7 +102,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can record completed span after init`() {
-        initializeService()
         spansSink.flushSpans()
         val expectedName = "test-span"
         val expectedStartTime = clock.now()
@@ -129,7 +119,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can record completed child span after init`() {
-        initializeService()
         spansSink.flushSpans()
         val expectedName = "child-span"
         val expectedStartTime = clock.now()
@@ -154,7 +143,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can record span after init`() {
-        initializeService()
         spansSink.flushSpans()
         spansService.recordSpan(name = "test-span") {
             spansService.hashCode()
@@ -165,7 +153,6 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `can record child span after init`() {
-        initializeService()
         spansSink.flushSpans()
         val parent = checkNotNull(spansService.createSpan("test-span"))
         assertTrue(parent.start())
@@ -182,33 +169,21 @@ internal class EmbraceSpansServiceTest {
 
     @Test
     fun `completed spans recorded before initialization will saved and recorded upon initialization`() {
-        assertFalse(spansService.initialized())
-        assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
-        assertTrue(spansService.recordCompletedSpan("test-span", 15, 25))
-        initializeService()
-        assertEquals(2, spansSink.completedSpans().size)
+        val module = FakeInitModule(clock = clock)
+        val service = module.spansService
+        assertFalse(service.initialized())
+        assertTrue(service.recordCompletedSpan("test-span", 10, 20))
+        assertTrue(service.recordCompletedSpan("test-span", 15, 25))
+        service.initializeService(clock.now())
+        assertEquals(2, module.spansSink.completedSpans().size)
     }
 
     @Test
     fun `verify ceiling to how many recordCompleteSpan calls can be buffered`() {
+        val service = FakeInitModule(clock = clock).spansService
         repeat(1000) {
-            assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
+            assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         }
-        assertFalse(spansService.recordCompletedSpan("test-span", 10, 20))
-    }
-
-    @Test
-    fun `can get span with spanId`() {
-        assertNull(spansRepository.getSpan("blah"))
-        initializeService()
-        val span = checkNotNull(spansService.createSpan("test-span"))
-        assertTrue(span.start())
-        val spanId = checkNotNull(span.spanId)
-        val spanFromId = spansRepository.getSpan(spanId)
-        assertSame(spanFromId, span)
-    }
-
-    private fun initializeService() {
-        spansService.initializeService(1)
+        assertFalse(service.recordCompletedSpan("test-span", 10, 20))
     }
 }

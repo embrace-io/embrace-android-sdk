@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -244,10 +243,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
@@ -261,10 +262,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive"
             ),

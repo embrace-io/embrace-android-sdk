@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class PayloadMessageCollator(

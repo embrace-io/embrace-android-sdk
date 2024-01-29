@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.message.SessionService
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.payload.Session
 

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class EmbraceSessionService(
     private val deliveryService: DeliveryService,

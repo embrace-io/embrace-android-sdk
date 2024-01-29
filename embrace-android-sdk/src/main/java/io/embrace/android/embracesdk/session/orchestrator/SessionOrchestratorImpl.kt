@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 internal class SessionOrchestratorImpl(
@@ -19,32 +20,16 @@ internal class SessionOrchestratorImpl(
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val lock: Any,
-    private val boundaryDelegate: OrchestratorBoundaryDelegate,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val boundaryDelegate: OrchestratorBoundaryDelegate
 ) : SessionOrchestrator {
-
-    companion object {
-
-        /**
-         * The minimum threshold for how long a session must last. This prevents unintentional
-         * instrumentation from creating new sessions in a hot loop & therefore spamming
-         * our servers.
-         */
-        private const val MIN_SESSION_MS = 5000L
-    }
-
-    private enum class State {
-        FOREGROUND,
-        BACKGROUND
-    }
 
     /**
      * The currently active session.
      */
     private var activeSession: Session? = null
     private var state = when {
-        processStateService.isInBackground -> State.BACKGROUND
-        else -> State.FOREGROUND
+        processStateService.isInBackground -> ProcessState.BACKGROUND
+        else -> ProcessState.FOREGROUND
     }
 
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
@@ -61,14 +46,12 @@ internal class SessionOrchestratorImpl(
 
     private fun createInitialEnvelope() {
         val timestamp = clock.now()
-
         transitionState(
             description = "initial",
             timestamp = timestamp,
             endProcessState = state,
-            oldSessionAction = {}, // no-op
             newSessionAction = {
-                if (state == State.BACKGROUND) {
+                if (state == ProcessState.BACKGROUND) {
                     backgroundActivityService?.startBackgroundActivityWithState(timestamp, true)
                 } else {
                     sessionService.startSessionWithState(timestamp, true)
@@ -81,7 +64,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             description = "onForeground",
             timestamp = timestamp,
-            endProcessState = State.FOREGROUND,
+            endProcessState = ProcessState.FOREGROUND,
             oldSessionAction = { initial: Session ->
                 backgroundActivityService?.endBackgroundActivityWithState(initial, timestamp)
             },
@@ -89,12 +72,7 @@ internal class SessionOrchestratorImpl(
                 sessionService.startSessionWithState(timestamp, coldStart)
             },
             earlyTerminationCondition = {
-                return@transitionState if (state == State.FOREGROUND) {
-                    logger.logWarning("Detected unbalanced call to onBackground. Ignoring..")
-                    true
-                } else {
-                    false
-                }
+                return@transitionState shouldRunOnForeground(state)
             }
         )
     }
@@ -103,7 +81,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             description = "onBackground",
             timestamp = timestamp,
-            endProcessState = State.BACKGROUND,
+            endProcessState = ProcessState.BACKGROUND,
             oldSessionAction = { initial: Session ->
                 sessionService.endSessionWithState(initial, timestamp)
             },
@@ -111,19 +89,13 @@ internal class SessionOrchestratorImpl(
                 backgroundActivityService?.startBackgroundActivityWithState(timestamp, false)
             },
             earlyTerminationCondition = {
-                return@transitionState if (state == State.BACKGROUND) {
-                    logger.logWarning("Detected unbalanced call to onBackground. Ignoring..")
-                    true
-                } else {
-                    false
-                }
+                return@transitionState shouldRunOnBackground(state)
             }
         )
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         val timestamp = clock.now()
-
         transitionState(
             description = "endManual",
             timestamp = timestamp,
@@ -136,32 +108,14 @@ internal class SessionOrchestratorImpl(
                 sessionService.startSessionWithManual(timestamp)
             },
             earlyTerminationCondition = {
-                return@transitionState canEndManualSession()
+                return@transitionState shouldEndManualSession(
+                    configService,
+                    clock,
+                    activeSession,
+                    state
+                )
             }
         )
-    }
-
-    private fun canEndManualSession(): Boolean {
-        if (state == State.BACKGROUND) {
-            logger.logWarning("Cannot manually end session while in background.")
-            return true
-        }
-        if (configService.sessionBehavior.isSessionControlEnabled()) {
-            logger.logWarning("Cannot manually end session while session control is enabled.")
-            return true
-        }
-        val initial = activeSession ?: return true
-        val startTime = initial.startTime
-        val delta = clock.now() - startTime
-        if (delta < MIN_SESSION_MS) {
-            logger.logWarning(
-                "Cannot manually end session while session is <5s long." +
-                    "This protects against instrumentation unintentionally creating too" +
-                    "many sessions"
-            )
-            return true
-        }
-        return false
     }
 
     override fun endSessionWithCrash(crashId: String) {
@@ -180,13 +134,12 @@ internal class SessionOrchestratorImpl(
                 } else {
                     sessionService.endSessionWithCrash(initial, timestamp, crashId)
                 }
-            },
-            newSessionAction = { null } // no-op
+            }
         )
     }
 
     override fun reportBackgroundActivityStateChange() {
-        if (state == State.BACKGROUND) {
+        if (state == ProcessState.BACKGROUND) {
             val initial = activeSession ?: return
             backgroundActivityService?.saveBackgroundActivitySnapshot(initial)
         }
@@ -212,9 +165,9 @@ internal class SessionOrchestratorImpl(
     private fun transitionState(
         description: String,
         timestamp: Long,
-        endProcessState: State,
-        oldSessionAction: (initial: Session) -> Unit,
-        newSessionAction: () -> Session?,
+        endProcessState: ProcessState,
+        oldSessionAction: ((initial: Session) -> Unit)? = null,
+        newSessionAction: (() -> Session?)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
     ) {
@@ -231,19 +184,21 @@ internal class SessionOrchestratorImpl(
             // first, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
-                oldSessionAction(initial)
+                oldSessionAction?.invoke(initial)
             }
 
             // next, clean up any previous session state
             boundaryDelegate.prepareForNewEnvelope(timestamp, clearUserInfo)
 
             // finally, start the next session or background activity
-            val newState = newSessionAction()
+            val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            val inForeground = endProcessState == State.FOREGROUND
+            val inForeground = endProcessState == ProcessState.FOREGROUND
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
             state = endProcessState
+
+            // log the state change
             logSessionStateChange(
                 sessionId,
                 timestamp,
@@ -257,7 +212,8 @@ internal class SessionOrchestratorImpl(
         sessionId: String?,
         timestamp: Long,
         inBackground: Boolean,
-        stateChange: String
+        stateChange: String,
+        logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
     ) {
         val type = when {
             inBackground -> "background"

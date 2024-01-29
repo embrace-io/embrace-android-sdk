@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
@@ -60,8 +61,12 @@ public class EmbraceContext(public val context: Context) : Application() {
             activity.setContext(context)
         }
 
-        val latch = FailureLatch(2000)
-        val pauseLatch = FailureLatch(3000)
+        val factor = when {
+            Debug.isDebuggerConnected() -> 10L
+            else -> 1L
+        }
+        val latch = FailureLatch(2000 * factor)
+        val pauseLatch = FailureLatch(3000 * factor)
 
         // invoke Activity callbacks on the Main Thread, like it would in a real application.
         //

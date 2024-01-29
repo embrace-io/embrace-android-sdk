@@ -37,6 +37,7 @@ internal class SessionOrchestratorImpl(
      * The currently active session.
      */
     private var activeSession: Session? = null
+    private var inBackground = processStateService.isInBackground
 
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
         configService.isBackgroundActivityCaptureEnabled()
@@ -55,7 +56,6 @@ internal class SessionOrchestratorImpl(
             val timestamp = clock.now()
             boundaryDelegate.prepareForNewEnvelope(timestamp)
 
-            val inBackground = processStateService.isInBackground
             val session = if (inBackground) {
                 backgroundActivityService?.startBackgroundActivityWithState(timestamp, true)
             } else {
@@ -73,9 +73,10 @@ internal class SessionOrchestratorImpl(
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         synchronized(lock) {
-            if (!processStateService.isInBackground) {
+            if (!inBackground) {
                 return
             }
+            inBackground = false
             val initial = activeSession
             if (initial != null) {
                 backgroundActivityService?.endBackgroundActivityWithState(initial, timestamp)
@@ -91,9 +92,10 @@ internal class SessionOrchestratorImpl(
 
     override fun onBackground(timestamp: Long) {
         synchronized(lock) {
-            if (processStateService.isInBackground) {
+            if (inBackground) {
                 return
             }
+            inBackground = true
             val initial = activeSession
             if (initial != null) {
                 sessionService.endSessionWithState(initial, timestamp)
@@ -114,7 +116,7 @@ internal class SessionOrchestratorImpl(
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         synchronized(lock) {
             val initial = activeSession ?: return
-            if (processStateService.isInBackground) {
+            if (inBackground) {
                 logger.logWarning("Cannot manually end session while in background.")
                 return
             }
@@ -150,7 +152,7 @@ internal class SessionOrchestratorImpl(
             val initial = activeSession ?: return
             val timestamp = clock.now()
 
-            if (processStateService.isInBackground) {
+            if (inBackground) {
                 backgroundActivityService?.endBackgroundActivityWithCrash(
                     initial,
                     timestamp,
@@ -165,7 +167,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun reportBackgroundActivityStateChange() {
-        if (processStateService.isInBackground) {
+        if (inBackground) {
             val initial = activeSession ?: return
             backgroundActivityService?.saveBackgroundActivitySnapshot(initial)
         }

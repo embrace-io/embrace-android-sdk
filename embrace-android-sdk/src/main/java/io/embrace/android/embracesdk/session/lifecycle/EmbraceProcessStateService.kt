@@ -65,7 +65,7 @@ internal class EmbraceProcessStateService(
             val msg = "Unbalanced call to onForeground(). This will contribute to session loss."
             logger.logError(msg, InternalError(msg))
         }
-
+        isInBackground = false
         val timestamp = clock.now()
 
         invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
@@ -75,7 +75,6 @@ internal class EmbraceProcessStateService(
                 listener.onForeground(coldStart, timestamp)
             }
         }
-        isInBackground = false
         coldStart = false
     }
 
@@ -86,6 +85,7 @@ internal class EmbraceProcessStateService(
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     override fun onBackground() {
         logDebug("AppState: App entered background")
+        isInBackground = true
         val timestamp = clock.now()
         invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
 
@@ -94,7 +94,6 @@ internal class EmbraceProcessStateService(
                 listener.onBackground(timestamp)
             }
         }
-        isInBackground = true
     }
 
     private inline fun invokeCallbackSafely(action: () -> Unit) {

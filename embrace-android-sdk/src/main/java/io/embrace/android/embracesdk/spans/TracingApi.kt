@@ -3,22 +3,11 @@ package io.embrace.android.embracesdk.spans
 import io.embrace.android.embracesdk.annotation.BetaApi
 
 /**
- * The public API used to add traces to your application. Use [isTracingAvailable] to determine if the SDK is ready log traces. Note that
- * [recordCompletedSpan] methods can still be invoked successfully before the [isTracingAvailable] returns true - the actual trace won't
- * be recorded until the system is ready, but the SDK will buffer the call and record it once it is. The other tracing methods, however,
- * will not work until [isTracingAvailable] returns true.
+ * The public API used to add traces to your application. Note that [recordCompletedSpan] can be used before the SDK is initialized.
+ * The actual trace won't be recorded until the SDK is started, but it's safe to use this prior to SDK initialization.
  */
 @BetaApi
 internal interface TracingApi {
-    /**
-     * Returns true if the tracing API is fully initialized so that [createSpan] and [recordSpan] methods will work. This is different than
-     * what [Embrace.isStarted] returned as the tracing service is initialized asynchronously shortly after the SDK is initialized. Until
-     * this returns true, the [recordCompletedSpan] method can be used as invocations to it will be buffered and replayed when tracing
-     * service is ready to be used.
-     */
-    @BetaApi
-    fun isTracingAvailable(): Boolean
-
     /**
      * Create an [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the [EmbraceSpan] cannot
      * be created given the current conditions of the SDK or an invalid name.
@@ -142,4 +131,10 @@ internal interface TracingApi {
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean
+
+    /**
+     * @see [Embrace.isStarted]
+     */
+    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
+    fun isTracingAvailable(): Boolean
 }

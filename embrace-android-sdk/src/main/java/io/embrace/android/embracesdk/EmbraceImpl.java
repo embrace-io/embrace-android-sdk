@@ -13,7 +13,10 @@ import androidx.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -122,8 +125,6 @@ import kotlin.jvm.functions.Function5;
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 final class EmbraceImpl {
-
-    private static final String ERROR_USER_UPDATES_DISABLED = "User updates are disabled, ignoring user persona update.";
 
     private static final Pattern appIdPattern = Pattern.compile("^[A-Za-z0-9]{5}$");
 
@@ -363,7 +364,7 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) {
+                           @NonNull Embrace.AppFramework framework) throws ExecutionException, InterruptedException, TimeoutException {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             InternalStaticEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -387,13 +388,14 @@ final class EmbraceImpl {
         final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke(initModule);
         workerThreadModule = nonNullWorkerThreadModule;
 
-        nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.NORMAL, () -> {
-            final SpansService spansService = initModule.getSpansService();
-            if (spansService instanceof Initializable) {
-                ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
-            }
-            return null;
-        });
+        final Future<?> spansInitTask =
+            nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL, () -> {
+                final SpansService spansService = initModule.getSpansService();
+                if (spansService instanceof Initializable) {
+                    ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
+                }
+                return null;
+            });
 
         final SystemServiceModule systemServiceModule = systemServiceModuleSupplier.invoke(coreModule);
         final AndroidServicesModule androidServicesModule =
@@ -704,6 +706,10 @@ final class EmbraceImpl {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             nonNullEventService.sendStartupMoment();
         }
+
+        // This should return immediately given that EmbraceSpansService initialization should be finished at this point
+        // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
+        spansInitTask.get(5, TimeUnit.SECONDS);
     }
 
     /**

@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
 internal class EmbraceTracer(private val spansService: SpansService) : TracingApi {
-    override fun isTracingAvailable(): Boolean = spansService is Initializable && spansService.initialized()
-
     override fun createSpan(name: String): EmbraceSpan? =
         createSpan(name = name, parent = null)
 
@@ -114,4 +112,7 @@ internal class EmbraceTracer(private val spansService: SpansService) : TracingAp
         )
 
     fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
+
+    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
+    override fun isTracingAvailable(): Boolean = spansService is Initializable && spansService.initialized()
 }

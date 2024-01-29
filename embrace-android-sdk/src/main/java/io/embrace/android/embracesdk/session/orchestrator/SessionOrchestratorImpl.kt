@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.BackgroundActivityService
 import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.SessionService
@@ -32,6 +33,11 @@ internal class SessionOrchestratorImpl(
         private const val MIN_SESSION_MS = 5000L
     }
 
+    /**
+     * The currently active session.
+     */
+    private var activeSession: Session? = null
+
     private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
         configService.isBackgroundActivityCaptureEnabled()
     }
@@ -55,6 +61,7 @@ internal class SessionOrchestratorImpl(
             } else {
                 sessionService.startSessionWithState(timestamp, true)
             }
+            activeSession = session
             val sessionId = session?.sessionId
             sessionIdTracker.setActiveSessionId(
                 sessionId = sessionId,
@@ -66,9 +73,16 @@ internal class SessionOrchestratorImpl(
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         synchronized(lock) {
-            backgroundActivityService?.endBackgroundActivityWithState(timestamp)
+            if (!processStateService.isInBackground) {
+                return
+            }
+            val initial = activeSession
+            if (initial != null) {
+                backgroundActivityService?.endBackgroundActivityWithState(initial, timestamp)
+            }
             boundaryDelegate.prepareForNewEnvelope(timestamp)
             val session = sessionService.startSessionWithState(timestamp, coldStart)
+            activeSession = session
             val sessionId = session.sessionId
             sessionIdTracker.setActiveSessionId(sessionId, true)
             logSessionStateChange(sessionId, timestamp, false, "onForeground")
@@ -77,12 +91,20 @@ internal class SessionOrchestratorImpl(
 
     override fun onBackground(timestamp: Long) {
         synchronized(lock) {
-            sessionService.endSessionWithState(timestamp)
+            if (processStateService.isInBackground) {
+                return
+            }
+            val initial = activeSession
+            if (initial != null) {
+                sessionService.endSessionWithState(initial, timestamp)
+            }
+            activeSession = null
             boundaryDelegate.prepareForNewEnvelope(timestamp)
             val session = backgroundActivityService?.startBackgroundActivityWithState(
                 timestamp,
                 false
             )
+            activeSession = session
             val sessionId = session?.sessionId
             sessionIdTracker.setActiveSessionId(sessionId, false)
             logSessionStateChange(sessionId, timestamp, true, "onBackground")
@@ -91,6 +113,7 @@ internal class SessionOrchestratorImpl(
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         synchronized(lock) {
+            val initial = activeSession ?: return
             if (processStateService.isInBackground) {
                 logger.logWarning("Cannot manually end session while in background.")
                 return
@@ -99,7 +122,7 @@ internal class SessionOrchestratorImpl(
                 logger.logWarning("Cannot manually end session while session control is enabled.")
                 return
             }
-            val startTime = sessionService.activeSession?.startTime ?: 0
+            val startTime = initial.startTime
             val delta = clock.now() - startTime
             if (delta < MIN_SESSION_MS) {
                 logger.logWarning(
@@ -111,9 +134,11 @@ internal class SessionOrchestratorImpl(
             }
 
             val timestamp = clock.now()
-            sessionService.endSessionWithManual(timestamp)
+            sessionService.endSessionWithManual(initial, timestamp)
+            activeSession = null
             boundaryDelegate.prepareForNewEnvelope(timestamp, clearUserInfo)
             val session = sessionService.startSessionWithManual(timestamp)
+            activeSession = session
             val sessionId = session.sessionId
             sessionIdTracker.setActiveSessionId(sessionId, true)
             logSessionStateChange(sessionId, timestamp, false, "endManual")
@@ -122,20 +147,27 @@ internal class SessionOrchestratorImpl(
 
     override fun endSessionWithCrash(crashId: String) {
         synchronized(lock) {
+            val initial = activeSession ?: return
             val timestamp = clock.now()
 
             if (processStateService.isInBackground) {
-                backgroundActivityService?.endBackgroundActivityWithCrash(timestamp, crashId)
+                backgroundActivityService?.endBackgroundActivityWithCrash(
+                    initial,
+                    timestamp,
+                    crashId
+                )
             } else {
-                sessionService.endSessionWithCrash(timestamp, crashId)
+                sessionService.endSessionWithCrash(initial, timestamp, crashId)
             }
+            activeSession = null
             logger.logDebug("Session ended with crash")
         }
     }
 
     override fun reportBackgroundActivityStateChange() {
         if (processStateService.isInBackground) {
-            backgroundActivityService?.saveBackgroundActivitySnapshot()
+            val initial = activeSession ?: return
+            backgroundActivityService?.saveBackgroundActivitySnapshot(initial)
         }
     }
 

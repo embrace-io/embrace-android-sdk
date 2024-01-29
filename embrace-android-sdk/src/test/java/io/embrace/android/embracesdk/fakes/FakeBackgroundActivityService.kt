@@ -15,14 +15,14 @@ internal class FakeBackgroundActivityService : BackgroundActivityService {
         return fakeBackgroundActivity()
     }
 
-    override fun endBackgroundActivityWithState(timestamp: Long) {
+    override fun endBackgroundActivityWithState(initial: Session, timestamp: Long) {
         endTimestamps.add(timestamp)
     }
 
-    override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
+    override fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String) {
         this.crashId = crashId
     }
 
-    override fun saveBackgroundActivitySnapshot() {
+    override fun saveBackgroundActivitySnapshot(initial: Session) {
     }
 }

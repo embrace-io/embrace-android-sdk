@@ -14,12 +14,6 @@ internal class EmbraceBackgroundActivityService(
     private val orchestrationLock: Any
 ) : BackgroundActivityService {
 
-    /**
-     * The active background activity session.
-     */
-    @Volatile
-    private var backgroundActivity: Session? = null
-
     override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
@@ -34,15 +28,13 @@ internal class EmbraceBackgroundActivityService(
                 startTime = time
             )
         )
-        backgroundActivity = activity
-        saveBackgroundActivitySnapshot()
+        saveBackgroundActivitySnapshot(activity)
         return activity
     }
 
-    override fun endBackgroundActivityWithState(timestamp: Long) {
+    override fun endBackgroundActivityWithState(initial: Session, timestamp: Long) {
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        val initial = backgroundActivity ?: return
         val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
@@ -50,14 +42,12 @@ internal class EmbraceBackgroundActivityService(
                 lifeEventType = LifeEventType.BKGND_STATE
             )
         )
-        backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
         deliveryService.sendBackgroundActivities()
         periodicCacher.stop()
     }
 
-    override fun endBackgroundActivityWithCrash(timestamp: Long, crashId: String) {
-        val initial = backgroundActivity ?: return
+    override fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String) {
         val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
@@ -66,7 +56,6 @@ internal class EmbraceBackgroundActivityService(
                 crashId = crashId
             )
         )
-        backgroundActivity = null
         deliveryService.saveBackgroundActivity(message)
         periodicCacher.stop()
     }
@@ -74,10 +63,9 @@ internal class EmbraceBackgroundActivityService(
     /**
      * Saves a snapshot of the current background activity message to disk
      */
-    override fun saveBackgroundActivitySnapshot() {
+    override fun saveBackgroundActivitySnapshot(initial: Session) {
         periodicCacher.scheduleSave {
             synchronized(orchestrationLock) {
-                val initial = backgroundActivity ?: return@synchronized
                 val timestamp = clock.now()
                 val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
                     FinalEnvelopeParams.BackgroundActivityParams(

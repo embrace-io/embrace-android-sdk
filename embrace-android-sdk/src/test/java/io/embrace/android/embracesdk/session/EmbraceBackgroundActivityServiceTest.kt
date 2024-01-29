@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
+import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbraceBackgroundActivityServiceTest {
 
+    private val initial = fakeBackgroundActivity()
     private lateinit var service: EmbraceBackgroundActivityService
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: FakePerformanceInfoService
@@ -111,13 +113,13 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `test background activity state when going to the foreground`() {
         this.service = createService()
         val timestamp = 1669392000L
-        service.endBackgroundActivityWithState(timestamp)
+        service.endBackgroundActivityWithState(initial, timestamp)
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.sendBackgroundActivitiesInvokedCount)
         val payload = checkNotNull(deliveryService.lastSavedBackgroundActivities.last())
-        assertEquals(5, payload.session.number)
-        assertTrue(payload.session.isColdStart)
+        assertEquals(1, payload.session.number)
+        assertFalse(payload.session.isColdStart)
     }
 
     @Test
@@ -142,7 +144,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 1000)
-        service.endBackgroundActivityWithState(startTime + 1000)
+        service.endBackgroundActivityWithState(initial, startTime + 1000)
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         clock.setCurrentTime(startTime + 5000)
@@ -161,7 +163,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         clock.tick(1000)
         blockingExecutorService.runCurrentlyBlocked()
-        service.endBackgroundActivityWithState(clock.now())
+        service.endBackgroundActivityWithState(initial, clock.now())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
 
         // tick 4999 milliseconds, the activity should not be cached yet
@@ -203,7 +205,7 @@ internal class EmbraceBackgroundActivityServiceTest {
 
         // elapse another 10 seconds to get around the 5 seconds limitation
         clock.setCurrentTime(startTime + 20 * 1000)
-        service.saveBackgroundActivitySnapshot()
+        service.saveBackgroundActivitySnapshot(initial)
 
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
     }
@@ -219,7 +221,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
 
         // save() will not persist to disk since the last time was less than 5 seconds ago
-        service.saveBackgroundActivitySnapshot()
+        service.saveBackgroundActivitySnapshot(initial)
         assertEquals(1, deliveryService.saveBackgroundActivityInvokedCount)
     }
 
@@ -237,7 +239,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, spansService.completedSpans()?.size)
         // move time ahead so the save will actually persist the new background activity message
         clock.tick(6000)
-        service.saveBackgroundActivitySnapshot()
+        service.saveBackgroundActivitySnapshot(initial)
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(2, deliveryService.saveBackgroundActivityInvokedCount)
         assertEquals(1, deliveryService.lastSavedBackgroundActivities.last().spans?.size)
@@ -251,7 +253,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
         spansService.initializeService(now)
-        service.endBackgroundActivityWithCrash(now, "crashId")
+        service.endBackgroundActivityWithCrash(initial, now, "crashId")
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
 
         // there should be 1 completed span: the session span
@@ -264,7 +266,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
-        service.endBackgroundActivityWithState(clock.now())
+        service.endBackgroundActivityWithState(initial, clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
 
         // there should be 1 completed span: the session span
@@ -277,7 +279,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         service = createService()
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         clock.tick(1000L)
-        service.endBackgroundActivityWithState(clock.now())
+        service.endBackgroundActivityWithState(initial, clock.now())
         val msg = deliveryService.lastSentBackgroundActivities.last()
 
         // there should be 1 completed span: the session span
@@ -289,7 +291,7 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `foregrounding background activity flushes breadcrumbs`() {
         service = createService()
         clock.tick(1000L)
-        service.endBackgroundActivityWithState(clock.now())
+        service.endBackgroundActivityWithState(initial, clock.now())
         assertNotNull(deliveryService.lastSavedBackgroundActivities.last())
         assertEquals(1, breadcrumbService.flushCount)
     }
@@ -298,29 +300,9 @@ internal class EmbraceBackgroundActivityServiceTest {
     fun `saving background activity in the background will not flush breadcrumbs`() {
         service = createService()
         clock.tick(1000L)
-        service.saveBackgroundActivitySnapshot()
+        service.saveBackgroundActivitySnapshot(initial)
         assertNotNull(deliveryService.lastSavedBackgroundActivities.single())
         assertEquals(0, breadcrumbService.flushCount)
-    }
-
-    @Test
-    fun `simulate background activity capture enabled after onBackground`() {
-        service = createService(createInitialSession = false)
-
-        // missing start call simulates service being enabled halfway through.
-        clock.tick(1000L)
-        service.endBackgroundActivityWithState(clock.now())
-
-        // nothing is delivered
-        assertEquals(0, deliveryService.lastSavedBackgroundActivities.size)
-        assertEquals(0, deliveryService.lastSentBackgroundActivities.size)
-
-        // next BA is recorded correctly
-        service.startBackgroundActivityWithState(clock.now(), false)
-        clock.tick(1000L)
-        service.endBackgroundActivityWithState(clock.now())
-        assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
-        assertEquals(2, deliveryService.lastSentBackgroundActivities.size)
     }
 
     @Test
@@ -337,7 +319,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         // next BA is recorded correctly
         service.startBackgroundActivityWithState(clock.now(), false)
         clock.tick(1000L)
-        service.endBackgroundActivityWithState(clock.now())
+        service.endBackgroundActivityWithState(initial, clock.now())
         assertEquals(2, deliveryService.lastSavedBackgroundActivities.size)
         assertEquals(2, deliveryService.lastSentBackgroundActivities.size)
     }

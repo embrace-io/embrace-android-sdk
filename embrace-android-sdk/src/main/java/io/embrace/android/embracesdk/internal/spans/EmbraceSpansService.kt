@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A [SpansService] that can be instantiated quickly. At that time, it will defer calls to the [SpansService] interface to a stubby
@@ -20,20 +19,15 @@ internal class EmbraceSpansService(
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
 ) : SpansService {
-    /**
-     * When this instance has been initialized with an instance of [SpansService] that does the proper spans logging
-     */
-    private val initialized = AtomicBoolean(false)
-
     private val uninitializedSdkSpansService: UninitializedSdkSpansService = UninitializedSdkSpansService()
 
     @Volatile
     private var currentDelegate: SpansService = uninitializedSdkSpansService
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
-        if (!initialized.get()) {
-            synchronized(initialized) {
-                if (!initialized.get()) {
+        if (!initialized()) {
+            synchronized(currentDelegate) {
+                if (!initialized()) {
                     currentDelegate = SpansServiceImpl(
                         spansSink = spansSink,
                         currentSessionSpan = currentSessionSpan,
@@ -41,7 +35,6 @@ internal class EmbraceSpansService(
                     )
                     currentDelegate.initializeService(sdkInitStartTimeNanos)
                     if (currentDelegate.initialized()) {
-                        initialized.set(true)
                         uninitializedSdkSpansService.recordBufferedCalls(this)
                     }
                 }
@@ -49,7 +42,7 @@ internal class EmbraceSpansService(
         }
     }
 
-    override fun initialized(): Boolean = initialized.get()
+    override fun initialized(): Boolean = currentDelegate is SpansServiceImpl
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? =
         currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal)

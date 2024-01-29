@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -363,7 +364,7 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) throws ExecutionException, InterruptedException {
+                           @NonNull Embrace.AppFramework framework) throws ExecutionException, InterruptedException, TimeoutException {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             InternalStaticEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -706,8 +707,9 @@ final class EmbraceImpl {
             nonNullEventService.sendStartupMoment();
         }
 
-        // This should return immediately given that EmbraceSpansService initialization should be fished at this point
-        spansInitTask.get();
+        // This should return immediately given that EmbraceSpansService initialization should be finished at this point
+        // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
+        spansInitTask.get(5, TimeUnit.SECONDS);
     }
 
     /**

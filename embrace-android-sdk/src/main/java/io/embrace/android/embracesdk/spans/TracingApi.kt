@@ -135,6 +135,6 @@ internal interface TracingApi {
     /**
      * @see [Embrace.isStarted]
      */
-    @Deprecated("No required. Use Embrace.isStarted() to know when the full tracing API is available")
+    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     fun isTracingAvailable(): Boolean
 }

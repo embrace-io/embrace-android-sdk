@@ -13,11 +13,12 @@ on:
   workflow_dispatch:
     inputs:
       version_to_release:
-        description: 'SDK version this workflow run will release. It will use the branch `release/<version>`.'
+        description: 'SDK version this workflow run will release. Specify <major.minor> only, without the patch number, e.g. `6.3`. It will use the branch `release/<version>`.'
         required: true
-      next_version:
-        description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
+      patch_version_of_release:
+        description: 'The patch version for this release, i.e. the third number per semantic versioning <major.minor.patch>. If it is not a hotfix, use the default of 0'
         required: true
+        default: '0'
 
 jobs:
   release:
@@ -60,16 +61,16 @@ jobs:
           mv .docs-newly-generated docs
           date > docs/version.txt
           echo ${{ github.sha }} >> docs/version.txt
-          echo ${{ github.event.inputs.version_to_release }} >> docs/version.txt
+          echo ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }} >> docs/version.txt
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}' docs/
           git push --force origin gh-pages
 
-      - name: Record SDK Version History (${{ github.event.inputs.version_to_release }})
+      - name: Record SDK Version History (${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }})
         run: |
-          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.version_to_release }}"}'
+          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}"}'
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

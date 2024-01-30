@@ -13,10 +13,10 @@ on:
   workflow_dispatch:
     inputs:
       version_to_release:
-        description: 'Version to release. A new branch called `release/<version>` will be created for it where the release-specific changes will be committed.'
+        description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. `6.3`. A new branch called `release/<version>` will be created for it where the release-specific changes will be committed.'
         required: true
       next_version:
-        description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
+        description: 'Next Version. Specify <major.minor.patch>, e.g. `6.4.0` (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
 
 jobs:
@@ -88,9 +88,9 @@ jobs:
 
       - name: Gradlew Pre-Release
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}"
+          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push
           ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
@@ -113,7 +113,7 @@ jobs:
       - name: Swazzler Release
         run: |
           cd ./embrace-swazzler3
-          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.pushReleaseVersionBranch=release/${{ github.event.inputs.version_to_release }} -Prelease.releaseVersion=${{ github.event.inputs.version_to_release }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
+          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.pushReleaseVersionBranch=release/${{ github.event.inputs.version_to_release }} -Prelease.releaseVersion=${{ github.event.inputs.version_to_release }}.0 -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

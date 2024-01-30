@@ -30,6 +30,11 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
+    fun `cannot create span before session is created`() {
+        assertFalse(FakeInitModule(clock = clock).currentSessionSpan.canStartNewSpan(null, true))
+    }
+
+    @Test
     fun `check trace limits with maximum not started traces`() {
         repeat(SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
             assertNotNull(spansService.createSpan(name = "spanzzz$it", internal = false))

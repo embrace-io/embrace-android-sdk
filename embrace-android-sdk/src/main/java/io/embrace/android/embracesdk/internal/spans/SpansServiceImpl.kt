@@ -20,7 +20,7 @@ internal class SpansServiceImpl(
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
         synchronized(initialized) {
-            currentSessionSpan.startInitialSession(sdkInitStartTimeNanos)
+            currentSessionSpan.initializeService(sdkInitStartTimeNanos)
             initialized.set(true)
         }
     }

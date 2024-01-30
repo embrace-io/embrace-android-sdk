@@ -2,10 +2,12 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
+import io.embrace.android.embracesdk.utils.lockAndRun
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -20,20 +22,31 @@ internal class CurrentSessionSpanImpl(
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
      */
-    private val currentSessionTraceCount = AtomicInteger(0)
+    private val traceCount = AtomicInteger(0)
 
-    private val currentSessionChildSpansCount = mutableMapOf<String, Int>()
+    /**
+     * The total child spans per trace. This should not be cleared at session boundaries because child spans can be created for
+     * completed spans.
+     */
+    private val traceChildSpanCount = ConcurrentHashMap<String, Int>()
+
+    /**
+     * Provide locks for each trace so creating spans in unrelated traces will not block each other
+     */
+    private val mutatingTraces: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
 
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val currentSessionSpan: AtomicReference<Span> = AtomicReference()
+    private val sessionSpan: AtomicReference<Span?> = AtomicReference(null)
 
-    override fun startInitialSession(sdkInitStartTimeNanos: Long) {
-        synchronized(currentSessionSpan) {
-            currentSessionSpan.set(startSessionSpan(sdkInitStartTimeNanos))
+    override fun initializeService(sdkInitStartTimeNanos: Long) {
+        synchronized(sessionSpan) {
+            sessionSpan.set(startSessionSpan(sdkInitStartTimeNanos))
         }
     }
+
+    override fun initialized(): Boolean = sessionSpan.get() != null
 
     /**
      * Creating a new Span is only possible if the current session span is active, the parent has already been started, and the total
@@ -41,89 +54,71 @@ internal class CurrentSessionSpanImpl(
      * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
      */
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
-        if (!currentSessionSpan.get().isRecording || (parent != null && parent.spanId == null)) {
+        val currentSession = sessionSpan.get() ?: return false
+        if (!currentSession.isRecording || (parent != null && parent.spanId == null)) {
             return false
         }
 
-        if (!internal) {
-            if (parent == null) {
-                if (currentSessionTraceCount.get() < SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
-                    synchronized(currentSessionTraceCount) {
-                        if (currentSessionTraceCount.get() < SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
-                            currentSessionTraceCount.incrementAndGet()
-                        } else {
-                            return false
-                        }
-                    }
-                } else {
-                    return false
-                }
+        if (internal) {
+            return true
+        }
+
+        if (parent == null) {
+            return if (traceCount.get() >= SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
+                false
             } else {
-                val rootSpanId = getRootSpanId(parent)
-                val currentSpanCount = currentSessionChildSpansCount[rootSpanId]
-                if (currentSpanCount == null) {
-                    updateChildrenCount(rootSpanId)
-                } else if (currentSpanCount < SpansServiceImpl.MAX_SPAN_COUNT_PER_TRACE) {
-                    synchronized(currentSessionChildSpansCount) {
-                        val currentSpanCountAgain = currentSessionChildSpansCount[rootSpanId]
-                        if (currentSpanCountAgain == null || currentSpanCountAgain < SpansServiceImpl.MAX_SPAN_COUNT_PER_TRACE) {
-                            updateChildrenCount(rootSpanId)
-                        } else {
-                            return false
-                        }
-                    }
-                } else {
-                    return false
+                synchronized(traceCount) {
+                    traceCount.getAndIncrement() < SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION
                 }
             }
         }
 
-        return true
-    }
-
-    override fun endSession(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
-        synchronized(this) {
-            // Right now, session spans don't survive native crashes and sudden process terminations,
-            // so telemetry will not be recorded in those cases, for now.
-            val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
-
-            currentSessionSpan.get().setAllAttributes(Attributes.builder().fromMap(telemetryAttributes).build())
-
-            if (appTerminationCause == null) {
-                currentSessionSpan.get().endSpan()
-                spansRepository.clearCompletedSpans()
-                currentSessionSpan.set(startSessionSpan(clock.now()))
-            } else {
-                currentSessionSpan.get()?.let {
-                    it.setAttribute(appTerminationCause.keyName(), appTerminationCause.name)
-                    it.endSpan()
-                }
-            }
-
-            return spansSink.flushSpans()
-        }
-    }
-
-    private fun getRootSpanId(span: EmbraceSpan): String {
-        var currentSpan: EmbraceSpan = span
+        // Recursively traverse the current span's parent to obtain the spanId of the root of the trace
+        var currentSpan: EmbraceSpan = parent
         while (currentSpan.parent != null) {
             currentSpan.parent?.let { currentSpan = it }
         }
 
-        return currentSpan.spanId ?: ""
+        val rootSpanId = currentSpan.spanId ?: return false
+        return mutatingTraces.lockAndRun(rootSpanId) {
+            val childSpanCount = traceChildSpanCount[rootSpanId] ?: 0
+            if (childSpanCount >= SpansServiceImpl.MAX_SPAN_COUNT_PER_TRACE) {
+                return@lockAndRun false
+            }
+
+            if (childSpanCount == 0) {
+                // The first time we encounter a particular rootSpanId is when a child is being added to it.
+                // Prior to that, when adding a prospective root span, the ID is not known yet. So the first time a root span
+                // is encountered add both it and the new child to the count.
+                //
+                // NOTE: Because we don't know whether the root span is internal or not at this point, it is assumed that it isn't.
+                // Therefore, it will count towards the limit if a non-internal span is added to the trace.
+                traceChildSpanCount[rootSpanId] = 2
+            } else {
+                traceChildSpanCount[rootSpanId] = childSpanCount + 1
+            }
+
+            return@lockAndRun true
+        }
     }
 
-    private fun updateChildrenCount(rootSpanId: String) {
-        val currentCount = currentSessionChildSpansCount[rootSpanId]
-        if (currentCount == null) {
-            // The first time we'll know a root span ID is when a child is being added to it. Prior to that, when adding a prospective
-            // root span, the ID is not known yet. So the first time a root span is encountered add both it and the new child to the count.
-            //
-            // NOTE: Because we don't know whether the root span is internal or not at this point, it is assumed that it isn't.
-            // Therefore, it will count towards the limit if a non-internal span is added to the trace.
-            currentSessionChildSpansCount[rootSpanId] = 2
-        } else {
-            currentSessionChildSpansCount[rootSpanId] = currentCount + 1
+    override fun endSession(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
+        val endingSessionSpan = sessionSpan.get() ?: return emptyList()
+        synchronized(sessionSpan) {
+            // Right now, session spans don't survive native crashes and sudden process terminations,
+            // so telemetry will not be recorded in those cases, for now.
+            val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
+            endingSessionSpan.setAllAttributes(Attributes.builder().fromMap(telemetryAttributes).build())
+
+            if (appTerminationCause == null) {
+                endingSessionSpan.endSpan()
+                spansRepository.clearCompletedSpans()
+                sessionSpan.set(startSessionSpan(clock.now()))
+            } else {
+                endingSessionSpan.setAttribute(appTerminationCause.keyName(), appTerminationCause.name)
+                endingSessionSpan.endSpan()
+            }
+            return spansSink.flushSpans()
         }
     }
 
@@ -131,7 +126,7 @@ internal class CurrentSessionSpanImpl(
      * This method should always be used when starting a new session span
      */
     private fun startSessionSpan(startTimeNanos: Long): Span {
-        currentSessionTraceCount.set(0)
+        traceCount.set(0)
         return createEmbraceSpanBuilder(tracer = tracer, name = "session-span", type = EmbraceAttributes.Type.SESSION)
             .setNoParent()
             .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)

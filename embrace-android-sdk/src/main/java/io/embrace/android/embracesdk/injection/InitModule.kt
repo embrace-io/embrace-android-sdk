@@ -67,11 +67,22 @@ internal interface InitModule {
 
 internal class InitModuleImpl(
     override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock(systemClock = SystemClock()),
-    openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock),
-    override val telemetryService: TelemetryService = EmbraceTelemetryService(),
-    override val spansRepository: SpansRepository = SpansRepository(),
-    override val spansSink: SpansSink = SpansSinkImpl(),
-    override val tracer: Tracer =
+    openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock)
+) : InitModule {
+
+    override val telemetryService: TelemetryService by singleton {
+        EmbraceTelemetryService()
+    }
+
+    override val spansRepository: SpansRepository by singleton {
+        SpansRepository()
+    }
+
+    override val spansSink: SpansSink by singleton {
+        SpansSinkImpl()
+    }
+
+    override val tracer: Tracer by singleton {
         OpenTelemetrySdk
             .builder()
             .setTracerProvider(
@@ -82,22 +93,31 @@ internal class InitModuleImpl(
                     .build()
             )
             .build()
-            .getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME),
-    override val currentSessionSpan: CurrentSessionSpan =
+            .getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME)
+    }
+
+    override val currentSessionSpan: CurrentSessionSpan by singleton {
         CurrentSessionSpanImpl(
             clock = openTelemetryClock,
             telemetryService = telemetryService,
             spansRepository = spansRepository,
             spansSink = spansSink,
             tracer = tracer
-        ),
-    override val spansService: SpansService = EmbraceSpansService(
-        spansRepository = spansRepository,
-        currentSessionSpan = currentSessionSpan,
-        tracer = tracer,
-    ),
-    override val embraceTracer: EmbraceTracer = EmbraceTracer(
-        spansRepository = spansRepository,
-        spansService = spansService
-    )
-) : InitModule
+        )
+    }
+
+    override val spansService: SpansService by singleton {
+        EmbraceSpansService(
+            spansRepository = spansRepository,
+            currentSessionSpan = currentSessionSpan,
+            tracer = tracer,
+        )
+    }
+
+    override val embraceTracer: EmbraceTracer by singleton {
+        EmbraceTracer(
+            spansRepository = spansRepository,
+            spansService = spansService
+        )
+    }
+}

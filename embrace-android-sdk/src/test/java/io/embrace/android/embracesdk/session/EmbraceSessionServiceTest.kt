@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -9,9 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.EmbraceSessionService
-import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -111,10 +108,7 @@ internal class EmbraceSessionServiceTest {
 
         service = EmbraceSessionService(
             deliveryService,
-            mockk(relaxed = true),
-            FakeClock(),
-            PeriodicSessionCacher(FakeClock(), ScheduledWorker(BlockingScheduledExecutorService())),
-            Any()
+            mockk(relaxed = true)
         )
     }
 }

@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.ConfigGate
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -19,9 +21,13 @@ internal class SessionOrchestratorImpl(
     private val clock: Clock,
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
-    private val lock: Any,
-    private val boundaryDelegate: OrchestratorBoundaryDelegate
+    private val boundaryDelegate: OrchestratorBoundaryDelegate,
+    private val periodicSessionCacher: PeriodicSessionCacher,
+    private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionOrchestrator {
+
+    private val lock = Any()
 
     /**
      * The currently active session.
@@ -136,7 +142,7 @@ internal class SessionOrchestratorImpl(
     override fun reportBackgroundActivityStateChange() {
         if (state == ProcessState.BACKGROUND) {
             val initial = activeSession ?: return
-            backgroundActivityService?.saveBackgroundActivitySnapshot(initial)
+            scheduleBackgroundActivitySave(initial)
         }
     }
 
@@ -183,13 +189,26 @@ internal class SessionOrchestratorImpl(
             // next, clean up any previous session state
             boundaryDelegate.prepareForNewEnvelope(timestamp, clearUserInfo)
 
-            // finally, start the next session or background activity
+            // start the next session or background activity
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
             val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
+
+            // disable any previous periodic caching.
+            when (endProcessState) {
+                ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
+                ProcessState.BACKGROUND -> periodicSessionCacher.stop()
+            }
+
+            // initiate periodic caching of the payload if required
+            if (transitionType != TransitionType.CRASH && newState != null) {
+                initiatePeriodicCaching(endProcessState, newState)
+            }
+
+            // update the current state
             state = endProcessState
 
             // log the state change
@@ -199,6 +218,30 @@ internal class SessionOrchestratorImpl(
                 !inForeground,
                 transitionType.name
             )
+        }
+    }
+
+    private fun initiatePeriodicCaching(
+        endProcessState: ProcessState,
+        newState: Session
+    ) {
+        when (endProcessState) {
+            ProcessState.FOREGROUND -> {
+                periodicSessionCacher.start {
+                    synchronized(lock) {
+                        sessionService.snapshotSession(newState, clock.now())
+                    }
+                }
+            }
+            ProcessState.BACKGROUND -> scheduleBackgroundActivitySave(newState)
+        }
+    }
+
+    private fun scheduleBackgroundActivitySave(initial: Session) {
+        periodicBackgroundActivityCacher.scheduleSave {
+            synchronized(lock) {
+                backgroundActivityService?.snapshotBackgroundActivity(initial, clock.now())
+            }
         }
     }
 

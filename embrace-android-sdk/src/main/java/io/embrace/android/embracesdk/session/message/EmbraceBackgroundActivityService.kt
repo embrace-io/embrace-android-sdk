@@ -1,17 +1,13 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class EmbraceBackgroundActivityService(
     private val deliveryService: DeliveryService,
-    private val payloadMessageCollator: PayloadMessageCollator,
-    private val clock: Clock,
-    private val periodicCacher: PeriodicBackgroundActivityCacher, // synchronises session orchestration. Temporarily passed in.
-    private val orchestrationLock: Any
+    private val payloadMessageCollator: PayloadMessageCollator
 ) : BackgroundActivityService {
 
     override fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session {
@@ -28,7 +24,6 @@ internal class EmbraceBackgroundActivityService(
                 startTime = time
             )
         )
-        saveBackgroundActivitySnapshot(activity)
         return activity
     }
 
@@ -44,10 +39,13 @@ internal class EmbraceBackgroundActivityService(
         )
         deliveryService.saveBackgroundActivity(message)
         deliveryService.sendBackgroundActivities()
-        periodicCacher.stop()
     }
 
-    override fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String) {
+    override fun endBackgroundActivityWithCrash(
+        initial: Session,
+        timestamp: Long,
+        crashId: String
+    ) {
         val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
@@ -57,26 +55,17 @@ internal class EmbraceBackgroundActivityService(
             )
         )
         deliveryService.saveBackgroundActivity(message)
-        periodicCacher.stop()
     }
 
-    /**
-     * Saves a snapshot of the current background activity message to disk
-     */
-    override fun saveBackgroundActivitySnapshot(initial: Session) {
-        periodicCacher.scheduleSave {
-            synchronized(orchestrationLock) {
-                val timestamp = clock.now()
-                val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
-                    FinalEnvelopeParams.BackgroundActivityParams(
-                        initial = initial,
-                        endTime = timestamp,
-                        lifeEventType = null
-                    )
-                )
-                deliveryService.saveBackgroundActivity(message)
-            }
-            null
-        }
+    override fun snapshotBackgroundActivity(initial: Session, timestamp: Long): SessionMessage {
+        val message = payloadMessageCollator.buildFinalBackgroundActivityMessage(
+            FinalEnvelopeParams.BackgroundActivityParams(
+                initial = initial,
+                endTime = timestamp,
+                lifeEventType = null
+            )
+        )
+        deliveryService.saveBackgroundActivity(message)
+        return message
     }
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal interface SessionService {
 
@@ -28,4 +29,9 @@ internal interface SessionService {
      * Handles an uncaught exception, ending the session and saving the session to disk.
      */
     fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String)
+
+    /**
+     * Provides a snapshot of the active session
+     */
+    fun snapshotSession(initial: Session, timestamp: Long): SessionMessage?
 }

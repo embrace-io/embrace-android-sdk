@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.message.SessionService
 
 internal class FakeSessionService : SessionService {
@@ -10,6 +11,7 @@ internal class FakeSessionService : SessionService {
     val endTimestamps = mutableListOf<Long>()
     var manualEndCount = 0
     var manualStartCount = 0
+    var snapshotCount = 0
     var activeSession: Session? = null
 
     override fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
@@ -39,5 +41,10 @@ internal class FakeSessionService : SessionService {
     override fun endSessionWithManual(initial: Session, timestamp: Long) {
         manualEndCount++
         activeSession = null
+    }
+
+    override fun snapshotSession(initial: Session, timestamp: Long): SessionMessage? {
+        snapshotCount++
+        return null
     }
 }

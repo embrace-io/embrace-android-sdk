@@ -47,9 +47,8 @@ internal class SessionOrchestratorImpl(
     private fun createInitialEnvelope() {
         val timestamp = clock.now()
         transitionState(
-            description = "initial",
+            transitionType = TransitionType.INITIAL,
             timestamp = timestamp,
-            endProcessState = state,
             newSessionAction = {
                 if (state == ProcessState.BACKGROUND) {
                     backgroundActivityService?.startBackgroundActivityWithState(timestamp, true)
@@ -62,9 +61,8 @@ internal class SessionOrchestratorImpl(
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         transitionState(
-            description = "onForeground",
+            transitionType = TransitionType.ON_FOREGROUND,
             timestamp = timestamp,
-            endProcessState = ProcessState.FOREGROUND,
             oldSessionAction = { initial: Session ->
                 backgroundActivityService?.endBackgroundActivityWithState(initial, timestamp)
             },
@@ -79,9 +77,8 @@ internal class SessionOrchestratorImpl(
 
     override fun onBackground(timestamp: Long) {
         transitionState(
-            description = "onBackground",
+            transitionType = TransitionType.ON_BACKGROUND,
             timestamp = timestamp,
-            endProcessState = ProcessState.BACKGROUND,
             oldSessionAction = { initial: Session ->
                 sessionService.endSessionWithState(initial, timestamp)
             },
@@ -97,10 +94,9 @@ internal class SessionOrchestratorImpl(
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         val timestamp = clock.now()
         transitionState(
-            description = "endManual",
+            transitionType = TransitionType.END_MANUAL,
             timestamp = timestamp,
             clearUserInfo = clearUserInfo,
-            endProcessState = state,
             oldSessionAction = { initial: Session ->
                 sessionService.endSessionWithManual(initial, timestamp)
             },
@@ -121,9 +117,8 @@ internal class SessionOrchestratorImpl(
     override fun endSessionWithCrash(crashId: String) {
         val timestamp = clock.now()
         transitionState(
-            description = "crash",
+            transitionType = TransitionType.CRASH,
             timestamp = timestamp,
-            endProcessState = state,
             oldSessionAction = { initial: Session ->
                 if (processStateService.isInBackground) {
                     backgroundActivityService?.endBackgroundActivityWithCrash(
@@ -153,9 +148,8 @@ internal class SessionOrchestratorImpl(
      * 2. Clean up any previous session state.
      * 3. Start the next session or background activity.
      *
-     * @param description       A key used in logs to identify the transition
+     * @param transitionType    The transition type
      * @param timestamp         The timestamp of the transition.
-     * @param endProcessState   The process state (foreground/background) upon ending the transition
      * @param oldSessionAction  The action that ends the old session or background activity (if any).
      * The initial session object (if any) is passed as a parameter to allow building a full payload.
      * @param newSessionAction  The action that starts the new session or background activity (if any).
@@ -163,9 +157,8 @@ internal class SessionOrchestratorImpl(
      * @param clearUserInfo     Whether to clear user info when ending the session. Defaults to false
      */
     private fun transitionState(
-        description: String,
+        transitionType: TransitionType,
         timestamp: Long,
-        endProcessState: ProcessState,
         oldSessionAction: ((initial: Session) -> Unit)? = null,
         newSessionAction: (() -> Session?)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
@@ -194,6 +187,7 @@ internal class SessionOrchestratorImpl(
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
+            val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
             state = endProcessState
@@ -203,7 +197,7 @@ internal class SessionOrchestratorImpl(
                 sessionId,
                 timestamp,
                 !inForeground,
-                description
+                transitionType.name
             )
         }
     }

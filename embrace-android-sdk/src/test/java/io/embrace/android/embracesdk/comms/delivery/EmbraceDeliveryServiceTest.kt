@@ -14,9 +14,9 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
-import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
-import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.After
 import org.junit.Assert.assertEquals

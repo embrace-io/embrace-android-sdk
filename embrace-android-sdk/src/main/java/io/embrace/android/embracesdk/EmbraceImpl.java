@@ -91,8 +91,6 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.session.id.SessionIdTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
@@ -200,16 +198,10 @@ final class EmbraceImpl {
     private volatile BreadcrumbService breadcrumbService;
 
     @Nullable
-    private volatile SessionService sessionService;
-
-    @Nullable
     private volatile SessionOrchestrator sessionOrchestrator;
 
     @Nullable
     private volatile SessionPropertiesService sessionPropertiesService;
-
-    @Nullable
-    private volatile BackgroundActivityService backgroundActivityService;
 
     @Nullable
     private volatile MetadataService metadataService;
@@ -623,11 +615,8 @@ final class EmbraceImpl {
             nonNullWorkerThreadModule
         );
 
-        sessionService = sessionModule.getSessionService();
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
-        backgroundActivityService = sessionModule.getBackgroundActivityService();
-        serviceRegistry.registerServices(sessionService, backgroundActivityService);
 
         if (configService.getAutoDataCaptureBehavior().isNdkEnabled()) {
             sessionIdTracker.setNdkService(nativeModule.getNdkService());

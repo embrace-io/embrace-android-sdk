@@ -1,8 +1,10 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.session.captureDataSafely
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 /**
  * Holds the parameters & logic needed to create a final session object that can be

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.session.message.SessionService
 
 internal class FakeSessionService : SessionService {
 

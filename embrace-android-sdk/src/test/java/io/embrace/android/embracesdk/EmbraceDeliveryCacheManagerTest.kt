@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.SessionSnapshotType.JVM_CRASH
-import io.embrace.android.embracesdk.session.SessionSnapshotType.NORMAL_END
-import io.embrace.android.embracesdk.session.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every

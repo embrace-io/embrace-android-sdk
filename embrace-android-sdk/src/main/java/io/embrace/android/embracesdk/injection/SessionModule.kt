@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.BackgroundActivityService
-import io.embrace.android.embracesdk.session.EmbraceBackgroundActivityService
-import io.embrace.android.embracesdk.session.EmbraceSessionService
-import io.embrace.android.embracesdk.session.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.session.message.BackgroundActivityService
+import io.embrace.android.embracesdk.session.message.EmbraceBackgroundActivityService
+import io.embrace.android.embracesdk.session.message.EmbraceSessionService
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.SessionService
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -124,7 +124,7 @@ internal class SessionModuleImpl(
         )
     }
 
-    override val sessionOrchestrator: SessionOrchestrator by singleton {
+    override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
             sessionService,

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.session.BackgroundActivityService
+import io.embrace.android.embracesdk.session.message.BackgroundActivityService
 
 internal class FakeBackgroundActivityService : BackgroundActivityService {
 

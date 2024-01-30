@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.orchestrator
 
 /**
  * Defines the states in which a session can end.

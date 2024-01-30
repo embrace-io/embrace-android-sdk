@@ -41,10 +41,9 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule
         )
-        assertNotNull(module.sessionService)
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
-        assertNotNull(module.backgroundActivityService)
+        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
         assertNotNull(module.periodicSessionCacher)
         assertNotNull(module.periodicBackgroundActivityCacher)
@@ -65,10 +64,9 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule
         )
-        assertNotNull(module.sessionService)
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
-        assertNotNull(module.backgroundActivityService)
+        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }
 

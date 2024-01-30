@@ -11,13 +11,11 @@ import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.message.BackgroundActivityService
-import io.embrace.android.embracesdk.session.message.SessionService
+import io.embrace.android.embracesdk.session.message.PayloadFactory
 
 internal class SessionOrchestratorImpl(
     private val processStateService: ProcessStateService,
-    private val sessionService: SessionService,
-    backgroundActivityServiceImpl: BackgroundActivityService?,
+    private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
@@ -38,10 +36,10 @@ internal class SessionOrchestratorImpl(
         else -> ProcessState.FOREGROUND
     }
 
-    private val backgroundActivityGate = ConfigGate(backgroundActivityServiceImpl) {
+    private val backgroundActivityGate = ConfigGate(payloadFactory) {
         configService.isBackgroundActivityCaptureEnabled()
     }
-    private val backgroundActivityService: BackgroundActivityService?
+    private val backgroundActivityFactory: PayloadFactory?
         get() = backgroundActivityGate.getService()
 
     init {
@@ -57,9 +55,9 @@ internal class SessionOrchestratorImpl(
             timestamp = timestamp,
             newSessionAction = {
                 if (state == ProcessState.BACKGROUND) {
-                    backgroundActivityService?.startBackgroundActivityWithState(timestamp, true)
+                    backgroundActivityFactory?.startBackgroundActivityWithState(timestamp, true)
                 } else {
-                    sessionService.startSessionWithState(timestamp, true)
+                    payloadFactory.startSessionWithState(timestamp, true)
                 }
             }
         )
@@ -70,10 +68,10 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.ON_FOREGROUND,
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
-                backgroundActivityService?.endBackgroundActivityWithState(initial, timestamp)
+                backgroundActivityFactory?.endBackgroundActivityWithState(initial, timestamp)
             },
             newSessionAction = {
-                sessionService.startSessionWithState(timestamp, coldStart)
+                payloadFactory.startSessionWithState(timestamp, coldStart)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnForeground(state)
@@ -86,10 +84,10 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.ON_BACKGROUND,
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
-                sessionService.endSessionWithState(initial, timestamp)
+                payloadFactory.endSessionWithState(initial, timestamp)
             },
             newSessionAction = {
-                backgroundActivityService?.startBackgroundActivityWithState(timestamp, false)
+                backgroundActivityFactory?.startBackgroundActivityWithState(timestamp, false)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
@@ -104,10 +102,10 @@ internal class SessionOrchestratorImpl(
             timestamp = timestamp,
             clearUserInfo = clearUserInfo,
             oldSessionAction = { initial: Session ->
-                sessionService.endSessionWithManual(initial, timestamp)
+                payloadFactory.endSessionWithManual(initial, timestamp)
             },
             newSessionAction = {
-                sessionService.startSessionWithManual(timestamp)
+                payloadFactory.startSessionWithManual(timestamp)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldEndManualSession(
@@ -127,13 +125,13 @@ internal class SessionOrchestratorImpl(
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
                 if (processStateService.isInBackground) {
-                    backgroundActivityService?.endBackgroundActivityWithCrash(
+                    backgroundActivityFactory?.endBackgroundActivityWithCrash(
                         initial,
                         timestamp,
                         crashId
                     )
                 } else {
-                    sessionService.endSessionWithCrash(initial, timestamp, crashId)
+                    payloadFactory.endSessionWithCrash(initial, timestamp, crashId)
                 }
             }
         )
@@ -229,7 +227,7 @@ internal class SessionOrchestratorImpl(
             ProcessState.FOREGROUND -> {
                 periodicSessionCacher.start {
                     synchronized(lock) {
-                        sessionService.snapshotSession(newState, clock.now())
+                        payloadFactory.snapshotSession(newState, clock.now())
                     }
                 }
             }
@@ -240,7 +238,7 @@ internal class SessionOrchestratorImpl(
     private fun scheduleBackgroundActivitySave(initial: Session) {
         periodicBackgroundActivityCacher.scheduleSave {
             synchronized(lock) {
-                backgroundActivityService?.snapshotBackgroundActivity(initial, clock.now())
+                backgroundActivityFactory?.snapshotBackgroundActivity(initial, clock.now())
             }
         }
     }

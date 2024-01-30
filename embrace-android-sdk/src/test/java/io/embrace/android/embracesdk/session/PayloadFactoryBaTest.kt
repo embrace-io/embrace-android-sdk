@@ -31,7 +31,7 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.session.message.EmbraceBackgroundActivityService
+import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -40,10 +40,10 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-internal class EmbraceBackgroundActivityServiceTest {
+internal class PayloadFactoryBaTest {
 
     private val initial = fakeBackgroundActivity()
-    private lateinit var service: EmbraceBackgroundActivityService
+    private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
@@ -152,7 +152,7 @@ internal class EmbraceBackgroundActivityServiceTest {
         assertEquals(1, breadcrumbService.flushCount)
     }
 
-    private fun createService(createInitialSession: Boolean = true): EmbraceBackgroundActivityService {
+    private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val collator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -171,7 +171,7 @@ internal class EmbraceBackgroundActivityServiceTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        return EmbraceBackgroundActivityService(
+        return PayloadFactoryImpl(
             deliveryService,
             collator
         ).apply {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionService
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
@@ -16,7 +17,10 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,6 +44,10 @@ internal class SessionOrchestratorTest {
     private lateinit var ndkService: FakeNdkService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var periodicSessionCacher: PeriodicSessionCacher
+    private lateinit var periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
+    private lateinit var baCacheExecutor: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
@@ -54,6 +62,12 @@ internal class SessionOrchestratorTest {
         userService = FakeUserService()
         ndkService = FakeNdkService()
         sessionIdTracker = FakeSessionIdTracker()
+        sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
+        baCacheExecutor = BlockingScheduledExecutorService(clock, true)
+        periodicSessionCacher = PeriodicSessionCacher(clock, ScheduledWorker(sessionCacheExecutor))
+        periodicBackgroundActivityCacher =
+            PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor))
+
         orchestrator = SessionOrchestratorImpl(
             processStateService,
             sessionService,
@@ -61,7 +75,6 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             sessionIdTracker,
-            Any(),
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
@@ -70,7 +83,9 @@ internal class SessionOrchestratorTest {
                 internalErrorService,
                 FakeNetworkConnectivityService(),
                 FakeBreadcrumbService()
-            )
+            ),
+            periodicSessionCacher,
+            periodicBackgroundActivityCacher
         )
         sessionProperties.add("key", "value", false)
     }
@@ -224,6 +239,13 @@ internal class SessionOrchestratorTest {
         assertEquals("crashId", sessionService.crashId)
     }
 
+    @Test
+    fun `periodic caching started with initial session`() {
+        assertEquals(0, sessionService.snapshotCount)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(1, sessionService.snapshotCount)
+    }
+
     private fun createOrchestrator(background: Boolean) {
         processStateService.listeners.clear()
         processStateService.isInBackground = background
@@ -237,7 +259,6 @@ internal class SessionOrchestratorTest {
             clock,
             configService,
             sessionIdTracker,
-            Any(),
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
@@ -246,7 +267,9 @@ internal class SessionOrchestratorTest {
                 internalErrorService,
                 FakeNetworkConnectivityService(),
                 FakeBreadcrumbService()
-            )
+            ),
+            periodicSessionCacher,
+            periodicBackgroundActivityCacher
         )
     }
 }

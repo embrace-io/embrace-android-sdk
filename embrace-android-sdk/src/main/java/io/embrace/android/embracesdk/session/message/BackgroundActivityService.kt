@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 
 /**
  * Service that captures and sends information when the app is in background
@@ -23,7 +24,7 @@ internal interface BackgroundActivityService {
     fun endBackgroundActivityWithState(initial: Session, timestamp: Long)
 
     /**
-     * Save the current background activity to disk
+     * Provides a snapshot of the active background activity
      */
-    fun saveBackgroundActivitySnapshot(initial: Session,)
+    fun snapshotBackgroundActivity(initial: Session, timestamp: Long): SessionMessage
 }

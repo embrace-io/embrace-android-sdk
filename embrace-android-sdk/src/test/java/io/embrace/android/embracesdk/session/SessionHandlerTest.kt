@@ -39,8 +39,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.UserInfo
-import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.EmbraceSessionService
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -55,7 +53,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -77,7 +74,6 @@ internal class SessionHandlerTest {
     private val userService: FakeUserService = FakeUserService()
     private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
     private val webViewService: WebViewService = FakeWebViewService()
-    private val userInfo: UserInfo = UserInfo()
     private var activeSession: Session = fakeSession()
 
     private lateinit var preferencesService: FakePreferenceService
@@ -156,44 +152,13 @@ internal class SessionHandlerTest {
         )
         sessionService = EmbraceSessionService(
             deliveryService,
-            payloadMessageCollator,
-            clock,
-            PeriodicSessionCacher(FakeClock(), scheduledWorker),
-            Any()
+            payloadMessageCollator
         )
     }
 
     @After
     fun after() {
         clearAllMocks(answers = false)
-    }
-
-    @Test
-    fun `onSession started successfully`() {
-        sessionLocalConfig = SessionLocalConfig()
-        userService.obj = userInfo
-
-        val sessionStartType = Session.LifeEventType.STATE
-        // this is needed so session handler creates automatic session stopper
-
-        sessionService.startSessionWithState(now, true)
-
-        // verify periodic caching worker has been scheduled
-        assertEquals(1, executorService.submitCount)
-        sessionService.endSessionWithState(initial, now)
-
-        // verify session is correctly built
-        val message = deliveryService.lastSentSessions.last().first
-        with(message.session) {
-            assertEquals("fakeSessionId", this.sessionId)
-            assertEquals(startTime, now)
-            assertTrue(isColdStart)
-            assertEquals(sessionStartType, startType)
-            assertEquals(emptyMapSessionProperties, properties)
-            assertEquals("en", messageType)
-            assertEquals("foreground", appState)
-        }
-        assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }
 
     @Test
@@ -256,19 +221,6 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `onPeriodicCacheActiveSession caches session successfully`() {
-        startFakeSession()
-        assertNull(deliveryService.lastSavedSession)
-        executorService.runCurrentlyBlocked()
-        checkNotNull(deliveryService.lastSavedSession)
-
-        // when periodic caching, the following calls should not be made
-        assertEquals(0, memoryCleanerService.callCount)
-        verify(exactly = 0) { sessionProperties.clearTemporary() }
-        assertEquals(0, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
     fun `endSession includes completed spans in message`() {
         startFakeSession()
         initializeServices()
@@ -300,31 +252,8 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `periodically cached sessions included currently completed spans`() {
-        startFakeSession()
-        initializeServices()
-        spansService.recordSpan("test-span") {
-            // do nothing
-        }
-
-        executorService.runCurrentlyBlocked()
-        val sessionMessage = checkNotNull(deliveryService.lastSavedSession)
-        val spans = checkNotNull(sessionMessage.spans)
-        assertEquals(1, spans.count { it.name == "emb-test-span" })
-    }
-
-    @Test
     fun `start session successfully`() {
         assertNotNull(startFakeSession())
-    }
-
-    @Test
-    fun `verify periodic caching`() {
-        startFakeSession()
-        executorService.runCurrentlyBlocked()
-        val session = checkNotNull(deliveryService.lastSavedSession).session
-        assertEquals(false, session.isEndedCleanly)
-        assertEquals(true, session.isReceivedTermination)
     }
 
     @Test

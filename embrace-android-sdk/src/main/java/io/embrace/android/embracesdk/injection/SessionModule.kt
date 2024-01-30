@@ -90,25 +90,17 @@ internal class SessionModuleImpl(
         )
     }
 
-    private val orchestrationLock = Any()
-
     override val sessionService: SessionService by singleton {
         EmbraceSessionService(
             deliveryModule.deliveryService,
-            payloadMessageCollator,
-            initModule.clock,
-            periodicSessionCacher,
-            orchestrationLock
+            payloadMessageCollator
         )
     }
 
     override val backgroundActivityService: BackgroundActivityService? by singleton {
         EmbraceBackgroundActivityService(
             deliveryModule.deliveryService,
-            payloadMessageCollator,
-            initModule.clock,
-            periodicBackgroundActivityCacher,
-            orchestrationLock
+            payloadMessageCollator
         )
     }
 
@@ -132,8 +124,9 @@ internal class SessionModuleImpl(
             initModule.clock,
             essentialServiceModule.configService,
             essentialServiceModule.sessionIdTracker,
-            orchestrationLock,
-            boundaryDelegate
+            boundaryDelegate,
+            periodicSessionCacher,
+            periodicBackgroundActivityCacher
         )
     }
 }

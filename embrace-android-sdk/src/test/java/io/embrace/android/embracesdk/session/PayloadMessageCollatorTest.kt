@@ -14,11 +14,15 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.UninitializedSdkSpansService
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
+import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -49,7 +53,7 @@ internal class PayloadMessageCollatorTest {
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
-            spansService = SpansService.Companion.featureDisabledSpansService,
+            spansService = UninitializedSdkSpansService(),
             clock = FakeClock(),
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService()

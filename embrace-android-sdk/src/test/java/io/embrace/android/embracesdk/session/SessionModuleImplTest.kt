@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
@@ -31,7 +30,6 @@ internal class SessionModuleImplTest {
     fun testDefaultImplementations() {
         val module = SessionModuleImpl(
             InitModuleImpl(),
-            FakeCoreModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeNativeModule(),
@@ -43,18 +41,18 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule
         )
-        assertNotNull(module.sessionService)
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
-        assertNotNull(module.backgroundActivityService)
+        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
+        assertNotNull(module.periodicSessionCacher)
+        assertNotNull(module.periodicBackgroundActivityCacher)
     }
 
     @Test
     fun testEnabledBehaviors() {
         val module = SessionModuleImpl(
             InitModuleImpl(),
-            FakeCoreModule(),
             FakeAndroidServicesModule(),
             createEnabledBehavior(),
             FakeNativeModule(),
@@ -66,10 +64,9 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule
         )
-        assertNotNull(module.sessionService)
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
-        assertNotNull(module.backgroundActivityService)
+        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }
 

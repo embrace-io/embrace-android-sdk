@@ -10,8 +10,10 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
+import java.util.zip.GZIPInputStream
 
 internal class FakeApiService : ApiService {
 
@@ -60,9 +62,14 @@ internal class FakeApiService : ApiService {
         }
         val stream = ByteArrayOutputStream()
         action(stream)
-        val json = String(stream.toByteArray())
-        val obj = serializer.fromJson(json, SessionMessage::class.java)
+        val obj = readBodyAsSessionMessage(stream.toByteArray().inputStream())
         sessionRequests.add(obj)
         return FutureTask { }
+    }
+
+    private fun readBodyAsSessionMessage(inputStream: InputStream): SessionMessage {
+        return GZIPInputStream(inputStream).use {
+            serializer.fromJson(it, SessionMessage::class.java)
+        }
     }
 }

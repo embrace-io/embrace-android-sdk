@@ -22,6 +22,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 internal class EmbraceCacheServiceTest {
 
@@ -90,7 +92,7 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test cachePayload and loadPayload`() {
+    fun `test cachePayload stores uncompressed data and loadPayload returns compressed data`() {
         service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) { it.write("test".toByteArray()) }
         val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
@@ -99,7 +101,28 @@ internal class EmbraceCacheServiceTest {
         val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
         val stream = ByteArrayOutputStream()
         action(stream)
-        assertEquals("test", String(stream.toByteArray()))
+        val compressed = stream.toByteArray()
+        val uncompressed = String(GZIPInputStream(compressed.inputStream()).readBytes())
+        assertEquals("test", uncompressed)
+    }
+
+    @Test
+    fun `test cachePayload stores compressed data and loadPayload returns compressed data`() {
+        service.cachePayload(CUSTOM_OBJECT_1_FILE_NAME) {
+            GZIPOutputStream(it.buffered()).use { gzipStream ->
+                gzipStream.write("test".toByteArray())
+            }
+        }
+        val children = checkNotNull(storageManager.filesDirectory.listFiles())
+        val file = children.single()
+        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
+
+        val action = checkNotNull(service.loadPayload(CUSTOM_OBJECT_1_FILE_NAME))
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = String(GZIPInputStream(compressed.inputStream()).readBytes())
+        assertEquals("test", uncompressed)
     }
 
     @Test
@@ -110,11 +133,12 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test loadPayload with non-existent file returns null`() {
+    fun `test loadPayload with non-existent file returns empty string in the output stream`() {
         val action = service.loadPayload("some_file.jpeg")
         val stream = ByteArrayOutputStream()
         action(stream)
-        assertEquals("", String(stream.toByteArray()))
+        val result = String(stream.toByteArray().inputStream().readBytes())
+        assertEquals("", result)
     }
 
     @Test

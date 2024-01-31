@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
 import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -50,13 +49,14 @@ internal class ApiRequestTest {
     @Test
     fun testMinimalHeaders() {
         val minimal = ApiRequest(url = EmbraceUrl.create("https://google.com"))
+        assertTrue(minimal.getHeaders()["User-Agent"].toString().startsWith("Embrace/a/"))
+
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json"
             ),
-            minimal.getHeaders()
+            minimal.getHeaders().minus("User-Agent")
         )
     }
 

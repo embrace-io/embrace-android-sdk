@@ -7,7 +7,6 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -200,12 +199,13 @@ internal class EmbraceMetadataServiceTest {
 
         every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
 
+        val obj = getMetadataService().getAppInfo()
         val expectedInfo = ResourceReader.readResourceAsText("metadata_appinfo_expected.json")
-            .replace("{versionName}", BuildConfig.VERSION_NAME)
-            .replace("{versionCode}", BuildConfig.VERSION_CODE)
+            .replace("{versionName}", checkNotNull(obj.sdkVersion))
+            .replace("{versionCode}", checkNotNull(obj.sdkSimpleVersion))
             .filter { !it.isWhitespace() }
 
-        val appInfo = serializer.toJson(getMetadataService().getAppInfo())
+        val appInfo = serializer.toJson(obj)
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
@@ -219,17 +219,17 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.javaScriptPatchNumber }.returns(null)
         every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
 
+        val metadataService = getReactNativeMetadataService()
+        val obj = metadataService.getAppInfo()
         val expectedInfo =
             ResourceReader.readResourceAsText("metadata_react_native_appinfo_expected.json")
-                .replace("{versionName}", BuildConfig.VERSION_NAME)
-                .replace("{versionCode}", BuildConfig.VERSION_CODE)
+                .replace("{versionName}", checkNotNull(obj.sdkVersion))
+                .replace("{versionCode}", checkNotNull(obj.sdkSimpleVersion))
                 .filter { !it.isWhitespace() }
-
-        val metadataService = getReactNativeMetadataService()
 
         metadataService.setReactNativeBundleId(context, "1234")
 
-        val appInfo = serializer.toJson(metadataService.getAppInfo())
+        val appInfo = serializer.toJson(obj)
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 

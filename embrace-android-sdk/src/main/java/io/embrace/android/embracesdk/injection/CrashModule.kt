@@ -42,7 +42,7 @@ internal class CrashModuleImpl(
     override val crashService: CrashService by singleton {
         EmbraceCrashService(
             essentialServiceModule.configService,
-            sessionModule.sessionService,
+            sessionModule.sessionOrchestrator,
             sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
             essentialServiceModule.sessionIdTracker,
@@ -52,7 +52,6 @@ internal class CrashModuleImpl(
             anrModule.anrService,
             nativeModule.ndkService,
             essentialServiceModule.gatingService,
-            sessionModule.backgroundActivityService,
             androidServicesModule.preferencesService,
             crashMarker,
             initModule.clock

@@ -1,19 +1,25 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.FakeSessionService
+import io.embrace.android.embracesdk.FakePayloadFactory
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -26,8 +32,7 @@ internal class SessionOrchestratorTest {
     }
 
     private lateinit var orchestrator: SessionOrchestratorImpl
-    private lateinit var sessionService: FakeSessionService
-    private lateinit var backgroundActivityService: FakeBackgroundActivityService
+    private lateinit var payloadFactory: FakePayloadFactory
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
@@ -36,12 +41,16 @@ internal class SessionOrchestratorTest {
     private lateinit var userService: FakeUserService
     private lateinit var ndkService: FakeNdkService
     private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var periodicSessionCacher: PeriodicSessionCacher
+    private lateinit var periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
+    private lateinit var baCacheExecutor: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
         processStateService = FakeProcessStateService()
-        sessionService = FakeSessionService()
-        backgroundActivityService = FakeBackgroundActivityService()
+        payloadFactory = FakePayloadFactory()
         clock = FakeClock()
         configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
         memoryCleanerService = FakeMemoryCleanerService()
@@ -49,17 +58,30 @@ internal class SessionOrchestratorTest {
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
         ndkService = FakeNdkService()
+        sessionIdTracker = FakeSessionIdTracker()
+        sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
+        baCacheExecutor = BlockingScheduledExecutorService(clock, true)
+        periodicSessionCacher = PeriodicSessionCacher(clock, ScheduledWorker(sessionCacheExecutor))
+        periodicBackgroundActivityCacher =
+            PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor))
+
         orchestrator = SessionOrchestratorImpl(
             processStateService,
-            sessionService,
-            backgroundActivityService,
+            payloadFactory,
             clock,
             configService,
-            memoryCleanerService,
-            userService,
-            ndkService,
-            sessionProperties,
-            internalErrorService
+            sessionIdTracker,
+            OrchestratorBoundaryDelegate(
+                memoryCleanerService,
+                userService,
+                ndkService,
+                sessionProperties,
+                internalErrorService,
+                FakeNetworkConnectivityService(),
+                FakeBreadcrumbService()
+            ),
+            periodicSessionCacher,
+            periodicBackgroundActivityCacher
         )
         sessionProperties.add("key", "value", false)
     }
@@ -67,61 +89,67 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test initial behavior in background`() {
         createOrchestrator(true)
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(0, sessionService.startTimestamps.size)
-        assertEquals(1, backgroundActivityService.startTimestamps.size)
+        assertEquals(0, payloadFactory.startSessionTimestamps.size)
+        assertEquals(1, payloadFactory.startBaTimestamps.size)
+        assertEquals("fake-activity", sessionIdTracker.sessionId)
     }
 
     @Test
     fun `test initial behavior in foreground`() {
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(1, sessionService.startTimestamps.size)
-        assertEquals(0, backgroundActivityService.startTimestamps.size)
+        assertEquals(1, payloadFactory.startSessionTimestamps.size)
+        assertEquals(0, payloadFactory.startBaTimestamps.size)
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
     fun `test on foreground call`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
-        assertEquals(TIMESTAMP, sessionService.startTimestamps.single())
-        assertEquals(TIMESTAMP, backgroundActivityService.endTimestamps.single())
+        assertEquals(2, memoryCleanerService.callCount)
+        assertEquals(TIMESTAMP, payloadFactory.startSessionTimestamps.single())
+        assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
     fun `test on background call`() {
         orchestrator.onBackground(TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
-        assertEquals(TIMESTAMP, sessionService.endTimestamps.single())
-        assertEquals(TIMESTAMP, backgroundActivityService.startTimestamps.single())
+        assertEquals(2, memoryCleanerService.callCount)
+        assertEquals(TIMESTAMP, payloadFactory.endSessionTimestamps.single())
+        assertEquals(TIMESTAMP, payloadFactory.startBaTimestamps.single())
+        assertEquals("fake-activity", sessionIdTracker.sessionId)
     }
 
     @Test
     fun `end session with manual in foreground`() {
+        clock.tick(10000)
         orchestrator.endSessionWithManual(true)
-        verifyPrepareEnvelopeCalled()
-        assertEquals(1, sessionService.manualEndCount)
-        assertEquals(1, sessionService.manualStartCount)
+        assertEquals(2, memoryCleanerService.callCount)
+        assertEquals(1, payloadFactory.manualSessionEndCount)
+        assertEquals(1, payloadFactory.manualSessionStartCount)
+        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
     }
 
     @Test
     fun `end session with manual in background`() {
         processStateService.isInBackground = true
         orchestrator.endSessionWithManual(true)
-        verifyPrepareEnvelopeCalled(0)
-        assertEquals(0, sessionService.manualEndCount)
-        assertEquals(0, sessionService.manualStartCount)
+        assertEquals(1, memoryCleanerService.callCount)
+        assertEquals(0, payloadFactory.manualSessionEndCount)
+        assertEquals(0, payloadFactory.manualSessionStartCount)
     }
 
     @Test
     fun `test background activity capture disabled`() {
         configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
-        createOrchestrator(true)
+        createOrchestrator(false)
         orchestrator.onBackground(TIMESTAMP)
-        verifyPrepareEnvelopeCalled()
-        assertTrue(backgroundActivityService.startTimestamps.isEmpty())
+        assertEquals(2, memoryCleanerService.callCount)
+        assertTrue(payloadFactory.startBaTimestamps.isEmpty())
     }
 
     @Test
@@ -139,9 +167,9 @@ internal class SessionOrchestratorTest {
 
         clock.tick(10000)
         orchestrator.endSessionWithManual(false)
-        assertEquals(1, sessionService.startTimestamps.size)
-        assertEquals(0, sessionService.manualEndCount)
-        verifyPrepareEnvelopeCalled(0)
+        assertEquals(1, payloadFactory.startSessionTimestamps.size)
+        assertEquals(0, payloadFactory.manualSessionEndCount)
+        assertEquals(1, memoryCleanerService.callCount)
     }
 
     @Test
@@ -155,31 +183,88 @@ internal class SessionOrchestratorTest {
         assertEquals(1, ndkService.userUpdateCount)
     }
 
-    private fun verifyPrepareEnvelopeCalled(expectedCount: Int = 1) {
-        assertEquals(expectedCount, memoryCleanerService.callCount)
-        val expectedPropCount = when (expectedCount) {
-            0 -> 1
-            else -> 0
-        }
-        assertEquals(expectedPropCount, sessionProperties.get().size)
+    @Test
+    fun `ending session manually above time threshold succeeds`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(10000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, payloadFactory.startSessionTimestamps.size)
+        assertEquals(1, payloadFactory.manualSessionStartCount)
+        assertEquals(1, payloadFactory.manualSessionEndCount)
+    }
+
+    @Test
+    fun `ending session manually below time threshold fails`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(1000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, payloadFactory.startSessionTimestamps.size)
+        assertEquals(0, payloadFactory.manualSessionStartCount)
+        assertEquals(0, payloadFactory.manualSessionEndCount)
+    }
+
+    @Test
+    fun `ending session manually when no session exists starts new session`() {
+        configService = FakeConfigService()
+        createOrchestrator(true)
+        clock.tick(1000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(0, payloadFactory.startSessionTimestamps.size)
+        assertEquals(0, payloadFactory.manualSessionStartCount)
+        assertEquals(0, payloadFactory.manualSessionEndCount)
+    }
+
+    @Test
+    fun `end with crash in background`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(true)
+        orchestrator.endSessionWithCrash("crashId")
+        assertEquals("crashId", payloadFactory.baCrashId)
+    }
+
+    @Test
+    fun `end with crash in foreground`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(false)
+        orchestrator.endSessionWithCrash("crashId")
+        assertEquals("crashId", payloadFactory.crashId)
+    }
+
+    @Test
+    fun `periodic caching started with initial session`() {
+        assertEquals(0, payloadFactory.snapshotSessionCount)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(1, payloadFactory.snapshotSessionCount)
     }
 
     private fun createOrchestrator(background: Boolean) {
         processStateService.listeners.clear()
         processStateService.isInBackground = background
-        sessionService.startTimestamps.clear()
-        backgroundActivityService.startTimestamps.clear()
+        payloadFactory.startSessionTimestamps.clear()
+        payloadFactory.startBaTimestamps.clear()
+        memoryCleanerService = FakeMemoryCleanerService()
         orchestrator = SessionOrchestratorImpl(
             processStateService,
-            sessionService,
-            backgroundActivityService,
+            payloadFactory,
             clock,
             configService,
-            memoryCleanerService,
-            userService,
-            ndkService,
-            sessionProperties,
-            internalErrorService
+            sessionIdTracker,
+            OrchestratorBoundaryDelegate(
+                memoryCleanerService,
+                userService,
+                ndkService,
+                sessionProperties,
+                internalErrorService,
+                FakeNetworkConnectivityService(),
+                FakeBreadcrumbService()
+            ),
+            periodicSessionCacher,
+            periodicBackgroundActivityCacher
         )
     }
 }

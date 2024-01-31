@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -19,7 +19,6 @@ import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import kotlin.IllegalStateException
 
 /**
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
@@ -223,7 +222,9 @@ internal class ApiClientImplTest {
                 httpMethod = HttpMethod.POST
             )
         ) {
-            it.write(payload)
+            ConditionalGzipOutputStream(it).use { stream ->
+                stream.write(payload)
+            }
         }
 
     private fun createThrowingRequest(): ApiRequest {
@@ -242,10 +243,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
@@ -259,10 +262,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive"
             ),

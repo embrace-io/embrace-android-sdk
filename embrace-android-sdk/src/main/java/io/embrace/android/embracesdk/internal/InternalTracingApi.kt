@@ -48,6 +48,17 @@ public interface InternalTracingApi {
     /**
      * Record a span around the execution of the given lambda. If an uncaught exception occurs during the execution, the span will be
      * terminated as a failure.
+     *
+     * The map representing an event has the following schema:
+     *
+     * {
+     *  "name": [String],
+     *  "timestampNanos": [Long] (optional),
+     *  "attributes": [Map<String, String>] (optional)
+     * }
+     *
+     * Any object passed in the list that violates that schema will be dropped and no event will be created for it. If an entry in the
+     * attributes map isn't <String, String>, it'll also be dropped. Omitting or passing in nulls for the optional fields are OK.
      */
     public fun <T> recordSpan(
         name: String,

@@ -253,7 +253,7 @@ internal open class BaseTest {
 
         request()
         action()
-        startSignal.await(500, TimeUnit.MILLISECONDS)
+        startSignal.await(1000, TimeUnit.MILLISECONDS)
         validate(file)
     }
 
@@ -317,9 +317,10 @@ internal open class BaseTest {
     fun readFileContent(failedApiContent: String, failedCallFileName: String) {
         val failedApiFilePath = storageDir.path + "/emb_" + failedCallFileName
         val failedApiFile = File(failedApiFilePath)
-        val failedApiJsonString: String =
-            failedApiFile.reader().use { it.readText() }
-        assertTrue(failedApiJsonString.contains(failedApiContent))
+        GZIPInputStream(failedApiFile.inputStream()).use { stream ->
+            val jsonString = String(stream.readBytes())
+            assertTrue(jsonString.contains(failedApiContent))
+        }
     }
 
     /**

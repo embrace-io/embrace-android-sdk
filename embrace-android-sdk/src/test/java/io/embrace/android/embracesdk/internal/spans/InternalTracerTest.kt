@@ -12,6 +12,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 internal class InternalTracerTest {
 
@@ -26,7 +27,7 @@ internal class InternalTracerTest {
             clock = FakeOpenTelemetryClock(embraceClock = clock),
             telemetryService = FakeTelemetryService()
         )
-        internalTracer = InternalTracer(EmbraceTracer(spansService))
+        internalTracer = InternalTracer(EmbraceTracer(spansService), clock)
         spansService.flushSpans()
     }
 
@@ -90,12 +91,13 @@ internal class InternalTracerTest {
         val eventsInput: List<Map<String, Any>> =
             listOf(
                 mapOf("name" to "correct event", "timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to "correct event2"),
                 mapOf("timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
                 mapOf("name" to 1234),
                 mapOf("name" to "failed event", "timestampNanos" to 123),
                 mapOf("name" to "failed event", "timestampNanos" to "123"),
-                mapOf("name" to "failed event", "attributes" to mapOf("key" to 123)),
-                mapOf("name" to "failed event", "attributes" to mapOf(123 to "123")),
+                mapOf("name" to "partial event", "attributes" to mapOf("key" to 123)),
+                mapOf("name" to "partial event2", "attributes" to mapOf(123 to "123")),
             )
 
         assertTrue(
@@ -108,8 +110,15 @@ internal class InternalTracerTest {
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(1, events.size)
+            assertEquals(4, events.size)
             assertEquals("correct event", events[0].name)
+            assertEquals(0L, events[0].timestampNanos)
+            assertEquals("correct event2", events[1].name)
+            assertEquals(TimeUnit.MILLISECONDS.toNanos(expectedStartTime), events[1].timestampNanos)
+            assertEquals("partial event", events[2].name)
+            assertEquals(0, events[2].attributes.size)
+            assertEquals("partial event2", events[3].name)
+            assertEquals(0, events[3].attributes.size)
         }
     }
 

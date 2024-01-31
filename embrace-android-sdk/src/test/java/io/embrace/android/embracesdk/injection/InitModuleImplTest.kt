@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.UninitializedSdkSpansService
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,7 +24,7 @@ internal class InitModuleImplTest {
     @Test
     fun testInitModuleImplOverrideComponents() {
         val clock = FakeClock()
-        val spansService = SpansService.featureDisabledSpansService
+        val spansService = UninitializedSdkSpansService()
         val embraceTracer = EmbraceTracer(spansService)
         val initModule = InitModuleImpl(
             clock = clock,

@@ -676,6 +676,31 @@ internal class SpansServiceImplTest {
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
+    @Test
+    fun `validate tracked spans update when service is flushed`() {
+        initService()
+        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
+        assertTrue(embraceSpan.start())
+        val embraceSpanId = checkNotNull(embraceSpan.spanId)
+        val parentSpan = checkNotNull(spansService.createSpan(name = "parent-span"))
+        assertTrue(parentSpan.start())
+        val parentSpanId = checkNotNull(parentSpan.spanId)
+        val parentSpanFromService = checkNotNull(spansService.getSpan(parentSpanId))
+        assertTrue(parentSpanFromService.stop())
+        spansService.flushSpans()
+
+        // completed span not available after flush
+        assertNull(spansService.getSpan(parentSpanId))
+
+        // existing reference to completed span can still be used
+        checkNotNull(spansService.createSpan(name = "child-span", parent = parentSpan))
+
+        // active span from before flush is still available and working
+        val activeSpanFromBeforeFlush = checkNotNull(spansService.getSpan(embraceSpanId))
+        assertTrue(activeSpanFromBeforeFlush.stop())
+        verifyAndReturnSoleCompletedSpan("emb-test-span")
+    }
+
     private fun initService(sdkInitStartTimeMillis: Long = clock.now()) {
         spansService = SpansServiceImpl(
             sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(sdkInitStartTimeMillis),

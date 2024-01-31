@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -166,8 +167,11 @@ internal class EmbraceApiService(
         logger.logDeveloper(TAG, "Post event")
 
         val action: SerializationAction = { stream ->
-            serializer.toJson(payload, T::class.java, stream)
+            ConditionalGzipOutputStream(stream).use {
+                serializer.toJson(payload, T::class.java, it)
+            }
         }
+
         return postOnWorker(action, request, onComplete)
     }
 

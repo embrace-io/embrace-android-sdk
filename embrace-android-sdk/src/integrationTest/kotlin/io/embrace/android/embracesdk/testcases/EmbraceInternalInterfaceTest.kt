@@ -13,8 +13,11 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -22,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.net.SocketException
+import java.util.concurrent.TimeUnit
 
 /**
  * Validation of the internal API
@@ -269,6 +273,45 @@ internal class EmbraceInternalInterfaceTest {
             assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
             embrace.start(harness.fakeCoreModule.context)
             assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+        }
+    }
+
+    @Test
+    fun `internal tracing APIs work as expected`() {
+        with(testRule) {
+            embrace.start(harness.fakeCoreModule.context)
+            val sessionPayload = harness.recordSession {
+                with(embrace.internalInterface) {
+                    val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
+                    harness.fakeClock.tick(10)
+                    val childSpanId = checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
+                    addSpanAttribute(spanId = parentSpanId, "testkey", "testvalue")
+                    addSpanEvent(spanId = childSpanId, name = "cool event bro", attributes = mapOf("key" to "value"))
+                    recordSpan(name = "tz-another-span", parentSpanId = parentSpanId) { }
+                    recordCompletedSpan(
+                        name = "tz-old-span",
+                        startTimeNanos = TimeUnit.MILLISECONDS.toNanos(harness.fakeClock.now() - 1),
+                        endTimeNanos = TimeUnit.MILLISECONDS.toNanos(harness.fakeClock.now()),
+                    )
+                    stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
+                    stopSpan(parentSpanId)
+                }
+            }
+
+            val spans = checkNotNull(sessionPayload?.spans?.filter { it.name.startsWith("tz-") }?.associateBy { it.name })
+            assertEquals(4, spans.size)
+            with(checkNotNull(spans["tz-parent-span"])) {
+                assertEquals("testvalue", attributes["testkey"])
+            }
+            with(checkNotNull(spans["tz-child-span"])) {
+                assertEquals("cool event bro", events[0].name)
+                assertEquals("value", events[0].attributes["key"])
+                assertEquals(StatusCode.ERROR, status)
+            }
+            with(checkNotNull(spans["tz-another-span"])) {
+                assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
+            }
+            assertNotNull(spans["tz-old-span"])
         }
     }
 

@@ -65,7 +65,6 @@ internal class EmbraceProcessStateService(
             val msg = "Unbalanced call to onForeground(). This will contribute to session loss."
             logger.logError(msg, InternalError(msg))
         }
-
         isInBackground = false
         val timestamp = clock.now()
 

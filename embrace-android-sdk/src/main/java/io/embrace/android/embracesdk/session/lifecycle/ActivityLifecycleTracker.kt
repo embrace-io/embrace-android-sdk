@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.session.SessionService
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
@@ -170,16 +169,8 @@ internal class ActivityLifecycleTracker(
     }
 
     override fun addListener(listener: ActivityLifecycleListener) {
-        // assumption: we always need to run the Session service first, then everything else,
-        // because otherwise the session envelope will not be created. The ActivityListener
-        // could use separating from session handling, but that's a bigger change.
-        val priority = listener is SessionService
         if (!listeners.contains(listener)) {
-            if (priority) {
-                listeners.add(0, listener)
-            } else {
-                listeners.addIfAbsent(listener)
-            }
+            listeners.addIfAbsent(listener)
         }
     }
 

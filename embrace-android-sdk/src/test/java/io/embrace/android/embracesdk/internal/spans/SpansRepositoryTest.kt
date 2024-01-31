@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpan
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
@@ -77,5 +78,16 @@ internal class SpansRepositoryTest {
         repository.trackedSpanStopped(spanId)
         assertEquals(0, repository.getActiveSpans().size)
         assertEquals(1, repository.getCompletedSpans().size)
+    }
+
+    @Test
+    fun `completed span not available after clearing but existing reference still valid`() {
+        val completedSpan = FakeEmbraceSpan.stopped()
+        repository.trackStartedSpan(completedSpan)
+        checkNotNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
+        assertEquals(1, repository.getCompletedSpans().size)
+        repository.clearCompletedSpans()
+        assertNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
+        assertEquals(0, repository.getCompletedSpans().size)
     }
 }

@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import java.util.concurrent.TimeUnit
 
 internal class InternalTracer(
-    private val embraceTracer: EmbraceTracer
+    private val embraceTracer: EmbraceTracer,
+    private val clock: Clock
 ) : InternalTracingApi {
 
     override fun startSpan(name: String, parentSpanId: String?): String? {
@@ -88,11 +91,11 @@ internal class InternalTracer(
         val name = map["name"]
         val timestampNanos = map["timestampNanos"]
         val attributes = map["attributes"]
-        return if (name is String && timestampNanos is Long && attributes is Map<*, *>) {
+        return if (name is String && timestampNanos is Long? && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampNanos = timestampNanos,
-                attributes = toStringMap(attributes)
+                timestampNanos = timestampNanos ?: TimeUnit.MILLISECONDS.toNanos(clock.now()),
+                attributes = attributes?.let { toStringMap(it) }
             )
         } else {
             null
@@ -104,7 +107,10 @@ internal class InternalTracer(
         return Parent(isValid = parentSpanId == null || parentSpan != null, spanReference = parentSpan)
     }
 
-    private fun toStringMap(map: Map<*, *>): Map<String, String> = map.entries.associate { Pair(it.key.toString(), it.value.toString()) }
+    private fun toStringMap(map: Map<*, *>): Map<String, String> =
+        map.entries
+            .filter { it.key is String && it.value is String }
+            .associate { Pair(it.key.toString(), it.value.toString()) }
 
     private data class Parent(val isValid: Boolean, val spanReference: EmbraceSpan?)
 }

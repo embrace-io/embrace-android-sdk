@@ -13,7 +13,10 @@ import androidx.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -88,8 +91,6 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
 import io.embrace.android.embracesdk.registry.ServiceRegistry;
-import io.embrace.android.embracesdk.session.BackgroundActivityService;
-import io.embrace.android.embracesdk.session.SessionService;
 import io.embrace.android.embracesdk.session.id.SessionIdTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
@@ -122,8 +123,6 @@ import kotlin.jvm.functions.Function5;
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 final class EmbraceImpl {
-
-    private static final String ERROR_USER_UPDATES_DISABLED = "User updates are disabled, ignoring user persona update.";
 
     private static final Pattern appIdPattern = Pattern.compile("^[A-Za-z0-9]{5}$");
 
@@ -199,16 +198,10 @@ final class EmbraceImpl {
     private volatile BreadcrumbService breadcrumbService;
 
     @Nullable
-    private volatile SessionService sessionService;
-
-    @Nullable
     private volatile SessionOrchestrator sessionOrchestrator;
 
     @Nullable
     private volatile SessionPropertiesService sessionPropertiesService;
-
-    @Nullable
-    private volatile BackgroundActivityService backgroundActivityService;
 
     @Nullable
     private volatile MetadataService metadataService;
@@ -318,7 +311,8 @@ final class EmbraceImpl {
         this.dataCaptureServiceModuleSupplier = dataCaptureServiceModuleSupplier;
         this.deliveryModuleSupplier = deliveryModuleSupplier;
         this.tracer = initModule.getTracer();
-        uninitializedSdkInternalInterface = LazyKt.lazy(() -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(tracer)));
+        uninitializedSdkInternalInterface =
+            LazyKt.lazy(() -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(tracer, sdkClock)));
     }
 
     EmbraceImpl() {
@@ -362,7 +356,7 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) {
+                           @NonNull Embrace.AppFramework framework) throws ExecutionException, InterruptedException, TimeoutException {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             InternalStaticEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -386,13 +380,14 @@ final class EmbraceImpl {
         final WorkerThreadModule nonNullWorkerThreadModule = workerThreadModuleSupplier.invoke(initModule);
         workerThreadModule = nonNullWorkerThreadModule;
 
-        nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.NORMAL, () -> {
-            final SpansService spansService = initModule.getSpansService();
-            if (spansService instanceof Initializable) {
-                ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
-            }
-            return null;
-        });
+        final Future<?> spansInitTask =
+            nonNullWorkerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL, () -> {
+                final SpansService spansService = initModule.getSpansService();
+                if (spansService instanceof Initializable) {
+                    ((Initializable) spansService).initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
+                }
+                return null;
+            });
 
         final SystemServiceModule systemServiceModule = systemServiceModuleSupplier.invoke(coreModule);
         final AndroidServicesModule androidServicesModule =
@@ -608,7 +603,6 @@ final class EmbraceImpl {
 
         SessionModule sessionModule = new SessionModuleImpl(
             initModule,
-            coreModule,
             androidServicesModule,
             essentialServiceModule,
             nativeModule,
@@ -621,11 +615,12 @@ final class EmbraceImpl {
             nonNullWorkerThreadModule
         );
 
-        sessionService = sessionModule.getSessionService();
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
-        backgroundActivityService = sessionModule.getBackgroundActivityService();
-        serviceRegistry.registerServices(sessionService, backgroundActivityService);
+
+        if (configService.getAutoDataCaptureBehavior().isNdkEnabled()) {
+            sessionIdTracker.setNdkService(nativeModule.getNdkService());
+        }
 
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
@@ -700,6 +695,10 @@ final class EmbraceImpl {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             nonNullEventService.sendStartupMoment();
         }
+
+        // This should return immediately given that EmbraceSpansService initialization should be finished at this point
+        // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
+        spansInitTask.get(5, TimeUnit.SECONDS);
     }
 
     /**
@@ -1533,8 +1532,9 @@ final class EmbraceImpl {
     }
 
     private void onActivityReported() {
-        if (backgroundActivityService != null) {
-            backgroundActivityService.save();
+        SessionOrchestrator orchestrator = sessionOrchestrator;
+        if (orchestrator != null) {
+            orchestrator.reportBackgroundActivityStateChange();
         }
     }
 

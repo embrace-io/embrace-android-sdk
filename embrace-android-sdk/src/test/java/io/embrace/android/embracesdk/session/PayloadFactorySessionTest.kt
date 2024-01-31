@@ -1,20 +1,15 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.session.message.PayloadFactory
+import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -28,9 +23,10 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutorService
 
-internal class EmbraceSessionServiceTest {
+internal class PayloadFactorySessionTest {
 
-    private lateinit var service: EmbraceSessionService
+    private val initial = fakeSession()
+    private lateinit var service: PayloadFactory
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var spansService: EmbraceSpansService
     private lateinit var configService: FakeConfigService
@@ -38,7 +34,6 @@ internal class EmbraceSessionServiceTest {
     companion object {
 
         private val processStateService = FakeProcessStateService()
-        private val ndkService: NdkService = FakeNdkService()
         private val clock = FakeClock()
 
         @BeforeClass
@@ -71,7 +66,7 @@ internal class EmbraceSessionServiceTest {
 
     @Test
     fun `initializing service should detect early sessions`() {
-        initializeSessionService(ndkService = ndkService, isActivityInBackground = false)
+        initializeSessionService(isActivityInBackground = false)
         assertNull(deliveryService.lastSentCachedSession)
     }
 
@@ -80,7 +75,7 @@ internal class EmbraceSessionServiceTest {
         initializeSessionService()
         val coldStart = true
 
-        service.startSessionWithState(coldStart, 456)
+        service.startSessionWithState(456, coldStart)
         assertNull(deliveryService.lastSentCachedSession)
     }
 
@@ -91,55 +86,30 @@ internal class EmbraceSessionServiceTest {
     }
 
     @Test
-    fun `simulate session capture enabled after onForeground`() {
-        initializeSessionService()
-
-        // missing start call simulates service being enabled halfway through.
-        service.endSessionWithState(clock.now())
-
-        // nothing is delivered
-        assertEquals(0, deliveryService.lastSentSessions.size)
-
-        // next session is recorded correctly
-        service.startSessionWithState(false, clock.now())
-        clock.tick(10000L)
-        service.endSessionWithState(clock.now())
-        assertEquals(1, deliveryService.lastSentSessions.size)
-    }
-
-    @Test
     fun `session capture disabled after onForeground`() {
         initializeSessionService()
 
-        service.startSessionWithState(true, clock.now())
+        service.startSessionWithState(clock.now(), true)
         clock.tick(10000)
         // missing end call simulates service being disabled halfway through.
 
         // nothing is delivered
         assertEquals(0, deliveryService.lastSentSessions.size)
 
-        service.startSessionWithState(false, clock.now())
+        service.startSessionWithState(clock.now(), false)
         clock.tick(10000L)
-        service.endSessionWithState(clock.now())
+        service.endSessionWithState(initial, clock.now())
         assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     private fun initializeSessionService(
-        ndkService: NdkService? = null,
         isActivityInBackground: Boolean = true
     ) {
         processStateService.isInBackground = isActivityInBackground
 
-        service = EmbraceSessionService(
-            InternalEmbraceLogger(),
-            FakeNetworkConnectivityService(),
-            FakeSessionIdTracker(),
-            FakeBreadcrumbService(),
-            ndkService,
+        service = PayloadFactoryImpl(
             deliveryService,
-            mockk(relaxed = true),
-            FakeClock(),
-            ScheduledWorker(BlockingScheduledExecutorService())
+            mockk(relaxed = true)
         )
     }
 }

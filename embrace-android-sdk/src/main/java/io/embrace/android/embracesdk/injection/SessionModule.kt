@@ -89,10 +89,7 @@ internal class SessionModuleImpl(
     }
 
     override val payloadFactory: PayloadFactory by singleton {
-        PayloadFactoryImpl(
-            deliveryModule.deliveryService,
-            payloadMessageCollator
-        )
+        PayloadFactoryImpl(payloadMessageCollator)
     }
 
     private val boundaryDelegate by singleton {
@@ -115,6 +112,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.configService,
             essentialServiceModule.sessionIdTracker,
             boundaryDelegate,
+            deliveryModule.deliveryService,
             periodicSessionCacher,
             periodicBackgroundActivityCacher
         )

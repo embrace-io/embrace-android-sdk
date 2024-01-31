@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getLastSavedSessionMessage
+import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
@@ -36,7 +37,7 @@ internal class CrashSessionTest {
         }
 
         // verify first session
-        val message = checkNotNull(testRule.harness.getLastSavedSessionMessage())
+        val message = checkNotNull(testRule.harness.getLastSentSessionMessage())
         verifySessionHappened(message)
         assertNotNull(message.session.crashReportId)
     }

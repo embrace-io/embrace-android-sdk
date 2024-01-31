@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.returnIfConditionMet
@@ -93,8 +94,8 @@ internal class TracingApiTest {
                 )
             }
             val sessionEndTime = harness.fakeClock.now()
-            assertEquals(1, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
-            val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[0]
+            assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
+            val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1]
             assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
             val allSpans = getSdkInitSpanFromBackgroundActivity() + checkNotNull(sessionMessage.first.spans)
             assertEquals(6, allSpans.size)
@@ -179,8 +180,7 @@ internal class TracingApiTest {
     }
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<EmbraceSpanData> {
-        val sentBackgroundActivities = testRule.harness.fakeDeliveryModule.deliveryService.lastSentBackgroundActivities
-        val lastSentBackgroundActivity = sentBackgroundActivities.last()
+        val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities().last()
         return lastSentBackgroundActivity.spans?.filter { it.name == "emb-sdk-init" } ?: emptyList()
     }
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.message.PayloadFactory
@@ -23,12 +24,14 @@ internal class FakePayloadFactory : PayloadFactory {
         return fakeBackgroundActivity()
     }
 
-    override fun endBackgroundActivityWithState(initial: Session, timestamp: Long) {
+    override fun endBackgroundActivityWithState(initial: Session, timestamp: Long): SessionMessage {
         endBaTimestamps.add(timestamp)
+        return fakeBackgroundActivityMessage()
     }
 
-    override fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String) {
+    override fun endBackgroundActivityWithCrash(initial: Session, timestamp: Long, crashId: String): SessionMessage {
         this.baCrashId = crashId
+        return fakeBackgroundActivityMessage()
     }
 
     override fun snapshotBackgroundActivity(initial: Session, timestamp: Long): SessionMessage {
@@ -48,21 +51,24 @@ internal class FakePayloadFactory : PayloadFactory {
         return checkNotNull(activeSession)
     }
 
-    override fun endSessionWithState(initial: Session, timestamp: Long) {
+    override fun endSessionWithState(initial: Session, timestamp: Long): SessionMessage {
         endSessionTimestamps.add(timestamp)
         activeSession = null
+        return fakeSessionMessage()
     }
 
     var crashId: String? = null
 
-    override fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String) {
+    override fun endSessionWithCrash(initial: Session, timestamp: Long, crashId: String): SessionMessage {
         this.crashId = crashId
         activeSession = null
+        return fakeSessionMessage()
     }
 
-    override fun endSessionWithManual(initial: Session, timestamp: Long) {
+    override fun endSessionWithManual(initial: Session, timestamp: Long): SessionMessage {
         manualSessionEndCount++
         activeSession = null
+        return fakeSessionMessage()
     }
 
     override fun snapshotSession(initial: Session, timestamp: Long): SessionMessage? {

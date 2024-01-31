@@ -69,8 +69,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             cacheService,
             worker,
             logger,
-            fakeClock,
-            serializer
+            fakeClock
         )
     }
 

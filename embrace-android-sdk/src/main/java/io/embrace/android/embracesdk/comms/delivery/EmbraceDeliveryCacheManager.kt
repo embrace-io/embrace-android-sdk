@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -18,8 +17,7 @@ internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
     private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
-    private val clock: Clock,
-    private val serializer: EmbraceSerializer
+    private val clock: Clock
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
@@ -132,27 +130,6 @@ internal class EmbraceDeliveryCacheManager(
             }
         }
         return cachedSessions.keys.toList()
-    }
-
-    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage): SerializationAction? {
-        val baId = backgroundActivityMessage.session.sessionId
-        // Do not add background activities to disk if we are over the limit
-        if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
-            saveBytes(baId) { filename ->
-                val baBytes = serializer.toJson(backgroundActivityMessage).toByteArray()
-                cacheService.cacheBytes(filename, baBytes)
-            }
-            return loadBackgroundActivity(baId)
-        }
-        return null
-    }
-
-    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
-        cachedSessions[backgroundActivityId]?.let { cachedSession ->
-            return loadPayloadAsAction(cachedSession.filename)
-        }
-        logger.logWarning("Background activity $backgroundActivityId is not in cache")
-        return null
     }
 
     override fun saveCrash(crash: EventMessage) {

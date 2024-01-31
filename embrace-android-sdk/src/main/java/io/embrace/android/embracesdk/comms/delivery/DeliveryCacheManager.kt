@@ -11,8 +11,6 @@ internal interface DeliveryCacheManager {
     fun loadSessionAsAction(sessionId: String): SerializationAction?
     fun deleteSession(sessionId: String)
     fun getAllCachedSessionIds(): List<String>
-    fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage): SerializationAction?
-    fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction?
     fun saveCrash(crash: EventMessage)
     fun loadCrash(): EventMessage?
     fun deleteCrash()

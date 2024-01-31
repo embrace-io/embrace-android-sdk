@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.comms.delivery
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.fakeBackgroundActivityMessage
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -147,14 +146,6 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     @Test
-    fun testSaveBackgroundActivity() {
-        initializeDeliveryService()
-        val obj = fakeBackgroundActivityMessage()
-        deliveryService.saveBackgroundActivity(obj)
-        assertEquals(obj, deliveryCacheManager.saveBgActivityRequests.last())
-    }
-
-    @Test
     fun testSendEventAsync() {
         initializeDeliveryService()
         val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
@@ -169,25 +160,5 @@ internal class EmbraceDeliveryServiceTest {
         deliveryService.sendCrash(obj, true)
         assertEquals(obj, deliveryCacheManager.saveCrashRequests.single())
         assertEquals(obj, apiService.crashRequests.single())
-    }
-
-    @Test
-    fun testSendBackgroundActivity() {
-        initializeDeliveryService()
-        val obj = fakeBackgroundActivityMessage()
-        deliveryService.sendBackgroundActivity(obj)
-
-        // cache the object first in case process terminates
-        assertEquals(obj, deliveryCacheManager.saveBgActivityRequests.last())
-        assertEquals(1, apiService.sessionRequests.size)
-    }
-
-    @Test
-    fun testSendBackgroundActivities() {
-        initializeDeliveryService()
-        val obj = fakeBackgroundActivityMessage()
-        deliveryService.saveBackgroundActivity(obj)
-        deliveryService.sendBackgroundActivities()
-        assertEquals(1, apiService.sessionRequests.size)
     }
 }

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
@@ -26,6 +27,7 @@ internal class FakeInitModule(
     override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     fakeOpenTelemetryClock: FakeOpenTelemetryClock = FakeOpenTelemetryClock(clock),
     override val telemetryService: TelemetryService = EmbraceTelemetryService(),
+    override val spansRepository: SpansRepository = SpansRepository(),
     override val spansSink: SpansSink = SpansSinkImpl(),
     override val openTelemetrySdk: OpenTelemetry =
         OpenTelemetrySdk.builder()
@@ -42,16 +44,17 @@ internal class FakeInitModule(
         CurrentSessionSpanImpl(
             clock = fakeOpenTelemetryClock,
             telemetryService = telemetryService,
+            spansRepository = spansRepository,
             spansSink = spansSink,
             tracer = tracer
         ),
     override val spansService: SpansService = EmbraceSpansService(
-        spansSink = spansSink,
+        spansRepository = spansRepository,
         currentSessionSpan = currentSessionSpan,
         tracer = tracer,
     ),
     override val embraceTracer: EmbraceTracer = EmbraceTracer(
-        spansSink = spansSink,
+        spansRepository = spansRepository,
         spansService = spansService
     )
 ) : InitModule

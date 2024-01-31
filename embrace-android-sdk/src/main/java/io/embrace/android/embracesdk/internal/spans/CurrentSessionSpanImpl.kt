@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class CurrentSessionSpanImpl(
     private val clock: Clock,
     private val telemetryService: TelemetryService,
+    private val spansRepository: SpansRepository,
     private val spansSink: SpansSink,
     private val tracer: Tracer,
 ) : CurrentSessionSpan {
@@ -39,7 +40,7 @@ internal class CurrentSessionSpanImpl(
      * session trace limit has not been reached. Once this method returns true, a new span is assumed to have been created and will
      * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
      */
-    override fun validateAndUpdateContext(parent: EmbraceSpan?, internal: Boolean): Boolean {
+    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
         if (!currentSessionSpan.get().isRecording || (parent != null && parent.spanId == null)) {
             return false
         }
@@ -90,7 +91,7 @@ internal class CurrentSessionSpanImpl(
 
             if (appTerminationCause == null) {
                 currentSessionSpan.get().endSpan()
-                spansSink.getSpansRepository()?.clearCompletedSpans()
+                spansRepository.clearCompletedSpans()
                 currentSessionSpan.set(startSessionSpan(clock.now()))
             } else {
                 currentSessionSpan.get()?.let {
@@ -102,8 +103,6 @@ internal class CurrentSessionSpanImpl(
             return spansSink.flushSpans()
         }
     }
-
-    override fun completedSpans(): List<EmbraceSpanData> = spansSink.completedSpans()
 
     private fun getRootSpanId(span: EmbraceSpan): String {
         var currentSpan: EmbraceSpan = span

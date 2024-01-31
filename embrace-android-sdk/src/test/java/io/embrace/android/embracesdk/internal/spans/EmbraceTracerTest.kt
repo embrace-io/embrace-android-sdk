@@ -15,6 +15,7 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceTracerTest {
+    private lateinit var spansRepository: SpansRepository
     private lateinit var spansSink: SpansSink
     private lateinit var spansService: SpansService
     private lateinit var embraceTracer: EmbraceTracer
@@ -23,11 +24,12 @@ internal class EmbraceTracerTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
+        spansRepository = initModule.spansRepository
         spansSink = initModule.spansSink
         spansService = initModule.spansService
         spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
         embraceTracer = EmbraceTracer(
-            spansSink = spansSink,
+            spansRepository = spansRepository,
             spansService = spansService
         )
         spansSink.flushSpans()

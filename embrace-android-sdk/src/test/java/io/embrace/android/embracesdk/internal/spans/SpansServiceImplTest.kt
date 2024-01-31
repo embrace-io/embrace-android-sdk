@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 @RunWith(AndroidJUnit4::class)
 internal class SpansServiceImplTest {
     private lateinit var spansSink: SpansSink
+    private lateinit var spansRepository: SpansRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpansServiceImpl
     private val clock = FakeClock(1000L)
@@ -673,7 +674,7 @@ internal class SpansServiceImplTest {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
         val spanId = checkNotNull(embraceSpan.spanId)
-        val spanFromService = checkNotNull(spansSink.getSpan(spanId))
+        val spanFromService = checkNotNull(spansRepository.getSpan(spanId))
         assertSame(spanFromService, embraceSpan)
         assertTrue(spanFromService.stop())
         assertFalse(embraceSpan.isRecording)
@@ -689,18 +690,18 @@ internal class SpansServiceImplTest {
         val parentSpan = checkNotNull(spansService.createSpan(name = "parent-span"))
         assertTrue(parentSpan.start())
         val parentSpanId = checkNotNull(parentSpan.spanId)
-        val parentSpanFromService = checkNotNull(spansSink.getSpan(parentSpanId))
+        val parentSpanFromService = checkNotNull(spansRepository.getSpan(parentSpanId))
         assertTrue(parentSpanFromService.stop())
         currentSessionSpan.endSession()
 
         // completed span not available after flush
-        assertNull(spansSink.getSpan(parentSpanId))
+        assertNull(spansRepository.getSpan(parentSpanId))
 
         // existing reference to completed span can still be used
         checkNotNull(spansService.createSpan(name = "child-span", parent = parentSpan))
 
         // active span from before flush is still available and working
-        val activeSpanFromBeforeFlush = checkNotNull(spansSink.getSpan(embraceSpanId))
+        val activeSpanFromBeforeFlush = checkNotNull(spansRepository.getSpan(embraceSpanId))
         assertTrue(activeSpanFromBeforeFlush.stop())
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
@@ -708,9 +709,10 @@ internal class SpansServiceImplTest {
     private fun initService() {
         val initModule = FakeInitModule(clock = clock)
         spansSink = initModule.spansSink
+        spansRepository = initModule.spansRepository
         currentSessionSpan = initModule.currentSessionSpan
         spansService = SpansServiceImpl(
-            spansSink = spansSink,
+            spansRepository = spansRepository,
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.tracer
         )

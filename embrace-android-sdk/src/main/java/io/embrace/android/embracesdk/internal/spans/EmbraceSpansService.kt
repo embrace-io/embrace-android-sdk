@@ -4,18 +4,14 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
- * A [SpansService] that can be instantiated quickly. At that time, it will defer calls to the [SpansService] interface to a stubby
- * implementation that does nothing, to be continually used if the spans feature is not turned in. If after instantiate, we know that
- * the feature is on, you can change its delegation to an actual functioning [SpansService] implementation (i.e. [SpansServiceImpl])
- * by calling the [initializeService] method. It is recommended that this is done in the background rather than on the main thread because
- * it may not be fast and doing it in the background doesn't affect how it works.
+ * A [SpansService] that can be instantiated quickly. At that time, it will defer calls an implementation that handles the case when
+ * the SDK has not been started ([UninitializedSdkSpansService]. When [initializeService] is called during SDK startup, it will
+ * instantiate and initialize [SpansServiceImpl] to provide the span recording functionality.
  */
 internal class EmbraceSpansService(
-    private val spansSink: SpansSink,
+    private val spansRepository: SpansRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
 ) : SpansService {
@@ -29,7 +25,7 @@ internal class EmbraceSpansService(
             synchronized(currentDelegate) {
                 if (!initialized()) {
                     currentDelegate = SpansServiceImpl(
-                        spansSink = spansSink,
+                        spansRepository = spansRepository,
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracer,
                     )
@@ -76,14 +72,4 @@ internal class EmbraceSpansService(
         events = events,
         errorCode = errorCode
     )
-
-    override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode = currentDelegate.storeCompletedSpans(spans = spans)
-
-    override fun completedSpans(): List<EmbraceSpanData> = currentDelegate.completedSpans()
-
-    override fun flushSpans(): List<EmbraceSpanData> = currentDelegate.flushSpans()
-
-    override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId)
-
-    override fun getSpansRepository(): SpansRepository? = currentDelegate.getSpansRepository()
 }

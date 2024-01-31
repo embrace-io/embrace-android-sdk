@@ -10,12 +10,12 @@ on:
 
 jobs:
   gradle-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 30
     strategy:
       matrix:
         jdk-version: ["11"]
-        ndk-version: ["21.4.7075529"]
+#        ndk-version: ["21.4.7075529"]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v3
@@ -39,12 +39,14 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
 
-      - name: Setup NDK ${{ matrix.ndk-version }}
-        run: |
-          export ANDROID_ROOT=/usr/local/lib/android
-          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
+#      - name: Setup NDK ${{ matrix.ndk-version }}
+#        run: |
+#          echo "Android home: $ANDROID_HOME"
+#          echo "Android Root: $ANDROID_ROOT"
+#          export ANDROID_ROOT=/usr/local/lib/android
+#          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+#          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+#          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1

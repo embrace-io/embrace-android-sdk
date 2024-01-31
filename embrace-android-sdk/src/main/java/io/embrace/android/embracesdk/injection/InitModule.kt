@@ -17,6 +17,9 @@ import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.exporter.logging.LoggingSpanExporter
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
@@ -83,7 +86,8 @@ internal class InitModuleImpl(
     private val openTelemetrySdk: OpenTelemetrySdk by singleton {
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
-            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            //spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            spanProcessor = BatchSpanProcessor.builder(LoggingSpanExporter.create()).build()
         )
     }
 

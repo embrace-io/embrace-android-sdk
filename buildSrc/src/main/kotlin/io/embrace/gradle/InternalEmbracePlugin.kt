@@ -11,6 +11,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.quality.Checkstyle
 import org.gradle.api.plugins.quality.CheckstyleExtension
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
@@ -143,6 +144,14 @@ class InternalEmbracePlugin : Plugin<Project> {
                 // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
                 unitTests.isReturnDefaultValues = true
                 unitTests.isIncludeAndroidResources = true
+
+                unitTests {
+                    all { test ->
+                        test.testLogging {
+                            this.exceptionFormat = TestExceptionFormat.FULL
+                        }
+                    }
+                }
             }
 
             buildTypes {

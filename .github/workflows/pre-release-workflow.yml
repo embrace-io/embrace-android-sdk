@@ -30,10 +30,10 @@ jobs:
           echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
           echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
 
-      - name: Checkout Branch
+      - name: Checkout SDK
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          ref: master
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - uses: actions/cache@v3
@@ -63,9 +63,10 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-      # Build the entire project, run the tests, and run all static analysis
-      - name: Gradle Build
-        run: ./gradlew assembleRelease check --stacktrace
+      - name: SDK Pre-Release - Publish and Close sonatype repository
+        run: |
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
+          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -74,32 +75,17 @@ jobs:
           name: android-sdk-test-results
           path: embrace-android-sdk/build/reports/tests/
 
-      - name: Configure git
-        run: |
-          git config --global user.name 'embrace-ci[bot]'
-          git config --global user.email 'embrace-ci@users.noreply.github.com'
-          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
-
-      - name: Gradlew Pre-Release
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.current_version }}"
-          git push
-          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-
       - name: Checkout Swazzler
         uses: actions/checkout@v3
         with:
           repository: embrace-io/embrace-swazzler3
           ref: master
-          path: ./embrace-swazzler3
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - name: Swazzler Release
+      - name: Swazzler Pre-Release - Publish and Close repository
         run: |
-          cd ./embrace-swazzler3
-          ./gradlew clean release -Dorg.gradle.parallel=false -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.current_version }} -Prelease.newVersion=${{ github.event.inputs.next_version }}-SNAPSHOT --stacktrace
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
+          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
@@ -108,17 +94,3 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
-          
-#  measure-sdk-size:
-#    uses: embrace-io/android-size-measure/.github/workflows/analyze-sdk-size.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}
-#
-#  measure-startup-time:
-#    uses: embrace-io/android-sdk-benchmark/.github/workflows/macrobenchmark.yml@main
-#    needs: release
-#    with:
-#      sdk_version: ${{ github.event.inputs.current_version }}
-#      token: ${{ secrets.CD_GITHUB_TOKEN }}

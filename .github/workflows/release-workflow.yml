@@ -19,24 +19,19 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        jdk-version: ["11"]
-        ndk-version: ["21.4.7075529"]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          ref: master
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Gradlew Release to maven central
+      - name: Gradlew Release SDK to maven central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-#          TODO: check if swazzler gets released too
 
       - name: Generate Documentation
         run: ./gradlew dokkaHtml
@@ -66,7 +61,29 @@ jobs:
         run: |
           curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.current_version }}"}'
 
-      - name: Set next SDK version
+      - name: Set next SDK version to remote
+        run: |
+          git checkout master
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
+          git push
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v3
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Gradlew Release Swazzler to maven central
+        run: |
+          ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+
+      - name: Set next Swazzler version
         run: |
           git checkout master
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties

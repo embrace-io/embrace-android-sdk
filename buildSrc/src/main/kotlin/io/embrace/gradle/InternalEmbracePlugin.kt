@@ -10,6 +10,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.quality.Checkstyle
 import org.gradle.api.plugins.quality.CheckstyleExtension
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
@@ -27,6 +28,7 @@ class InternalEmbracePlugin : Plugin<Project> {
         project.pluginManager.withPlugin("com.android.library") {
             val android = project.extensions.getByType(LibraryExtension::class.java)
             configureAndroidExtension(project, android)
+            configureJavaOptions(project)
             configureKotlinOptions(project)
         }
 
@@ -170,6 +172,13 @@ class InternalEmbracePlugin : Plugin<Project> {
                 //  Disabling this check for now.
                 allWarningsAsErrors = false
             }
+        }
+    }
+
+    private fun configureJavaOptions(project: Project) {
+        project.tasks.withType(JavaCompile::class.java).all {
+            val args = listOf("-Xlint:unchecked", "-Xlint:deprecation")
+            options.compilerArgs.addAll(args)
         }
     }
 

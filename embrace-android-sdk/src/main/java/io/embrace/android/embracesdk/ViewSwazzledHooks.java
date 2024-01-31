@@ -25,7 +25,7 @@ public final class ViewSwazzledHooks {
             } catch (Exception e) {
                 viewName = UNKNOWN_ELEMENT_NAME;
             }
-            Pair point = null;
+            Pair<Float, Float> point = null;
             try {
                 point = new Pair<>(view.getX(), view.getY());
             } catch (Exception e) {

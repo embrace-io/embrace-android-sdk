@@ -19,6 +19,7 @@ internal class UninitializedSdkInternalInterfaceImpl(
 
     override fun logError(message: String, properties: Map<String, Any>?, stacktrace: String?, isException: Boolean) {}
 
+    @Suppress("DEPRECATION")
     override fun logHandledException(
         throwable: Throwable,
         type: LogType,

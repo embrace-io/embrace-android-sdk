@@ -23,6 +23,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
         impl = UninitializedSdkInternalInterfaceImpl(InternalTracer(initModule.tracer, initModule.clock))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `check no errors thrown when invoked`() {
         impl.logInfo("", emptyMap())

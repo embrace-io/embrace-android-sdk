@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.session.lifecycle
 
 import androidx.lifecycle.Lifecycle

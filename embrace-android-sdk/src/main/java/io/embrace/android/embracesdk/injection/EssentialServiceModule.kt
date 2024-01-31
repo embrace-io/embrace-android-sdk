@@ -92,6 +92,7 @@ internal class EssentialServiceModuleImpl(
         coreModule.jsonSerializer
     )
 
+    @Suppress("DEPRECATION")
     private val lazyPackageInfo = lazy {
         coreModule.context.packageManager.getPackageInfo(coreModule.context.packageName, 0)
     }
@@ -106,6 +107,7 @@ internal class EssentialServiceModuleImpl(
         }
     }
 
+    @Suppress("DEPRECATION")
     private val lazyAppVersionCode: Lazy<String> = lazy {
         try {
             lazyPackageInfo.value.versionCode.toString()

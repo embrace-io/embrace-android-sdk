@@ -413,6 +413,7 @@ public final class Embrace implements EmbraceAndroidApi {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean isTracingAvailable() {
         return impl.tracer.isTracingAvailable();

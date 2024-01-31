@@ -109,6 +109,7 @@ final class MetadataUtils {
      * @return the device's screen resolution
      */
     @Nullable
+    @SuppressWarnings("deprecation")
     static String getScreenResolution(WindowManager windowManager) {
         try {
             InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Computing screen resolution");
@@ -164,6 +165,7 @@ final class MetadataUtils {
      */
     @TargetApi(Build.VERSION_CODES.O)
     @Nullable
+    @SuppressWarnings("deprecation")
     static Long getDeviceDiskAppUsage(
         StorageStatsManager storageStatsManager,
         PackageManager packageManager,

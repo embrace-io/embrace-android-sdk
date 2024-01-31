@@ -30,12 +30,13 @@ internal class PeriodicBackgroundActivityCacher(
      * Save the background activity to disk
      */
     fun scheduleSave(provider: () -> SessionMessage?) {
-        val delta = clock.now() - lastSaved
-        val delay = max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
+        val delay = calculateDelay()
         val action: () -> Unit = {
             try {
-                provider()
-                lastSaved = clock.now()
+                if (calculateDelay() <= 0) {
+                    provider()
+                    lastSaved = clock.now()
+                }
             } catch (ex: Exception) {
                 logger.logDebug("Error while caching active session", ex)
             }
@@ -45,6 +46,11 @@ internal class PeriodicBackgroundActivityCacher(
             delay,
             TimeUnit.MILLISECONDS
         )
+    }
+
+    private fun calculateDelay(): Long {
+        val delta = clock.now() - lastSaved
+        return max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
     }
 
     fun stop() {

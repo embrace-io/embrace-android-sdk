@@ -115,7 +115,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansSink.completedSpans()?.size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test
@@ -126,7 +126,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansSink.completedSpans()?.size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test

@@ -14,12 +14,12 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.AfterClass
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutorService
+import org.junit.Assert.assertEquals
 
 internal class PayloadFactorySessionTest {
 

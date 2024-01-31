@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
@@ -14,11 +13,10 @@ import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.trace.SdkTracerProvider
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
@@ -82,18 +80,15 @@ internal class InitModuleImpl(
         SpansSinkImpl()
     }
 
+    private val openTelemetrySdk: OpenTelemetrySdk by singleton {
+        OpenTelemetrySdk(
+            openTelemetryClock = openTelemetryClock,
+            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+        )
+    }
+
     override val tracer: Tracer by singleton {
-        OpenTelemetrySdk
-            .builder()
-            .setTracerProvider(
-                SdkTracerProvider
-                    .builder()
-                    .addSpanProcessor(EmbraceSpanProcessor(EmbraceSpanExporter(spansSink)))
-                    .setClock(openTelemetryClock)
-                    .build()
-            )
-            .build()
-            .getTracer(BuildConfig.LIBRARY_PACKAGE_NAME, BuildConfig.VERSION_NAME)
+        openTelemetrySdk.getOpenTelemetryTracer()
     }
 
     override val currentSessionSpan: CurrentSessionSpan by singleton {

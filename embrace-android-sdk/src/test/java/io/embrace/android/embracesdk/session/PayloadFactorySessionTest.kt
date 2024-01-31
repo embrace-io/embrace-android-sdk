@@ -6,8 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
+import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.mockk.clearAllMocks
@@ -26,10 +25,9 @@ import java.util.concurrent.ExecutorService
 internal class PayloadFactorySessionTest {
 
     private val initial = fakeSession()
-    private lateinit var initModule: InitModule
+    private lateinit var spansSink: SpansSink
     private lateinit var service: PayloadFactory
     private lateinit var deliveryService: FakeDeliveryService
-    private lateinit var spansService: EmbraceSpansService
     private lateinit var configService: FakeConfigService
 
     companion object {
@@ -54,12 +52,7 @@ internal class PayloadFactorySessionTest {
     fun before() {
         deliveryService = FakeDeliveryService()
         configService = FakeConfigService()
-        initModule = FakeInitModule(clock = clock)
-        spansService = EmbraceSpansService(
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
-            tracer = initModule.tracer
-        )
+        spansSink = FakeInitModule(clock = clock).spansSink
     }
 
     @After
@@ -85,7 +78,7 @@ internal class PayloadFactorySessionTest {
     @Test
     fun `spanService that is not initialized will not result in any complete spans`() {
         initializeSessionService()
-        assertEquals(0, spansService.completedSpans().size)
+        assertEquals(0, spansSink.completedSpans().size)
     }
 
     @Test

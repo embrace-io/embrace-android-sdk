@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.session.message.EmbraceSessionService
+import io.embrace.android.embracesdk.session.message.PayloadFactory
+import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -22,10 +23,10 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutorService
 
-internal class EmbraceSessionServiceTest {
+internal class PayloadFactorySessionTest {
 
     private val initial = fakeSession()
-    private lateinit var service: EmbraceSessionService
+    private lateinit var service: PayloadFactory
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var spansService: EmbraceSpansService
     private lateinit var configService: FakeConfigService
@@ -106,7 +107,7 @@ internal class EmbraceSessionServiceTest {
     ) {
         processStateService.isInBackground = isActivityInBackground
 
-        service = EmbraceSessionService(
+        service = PayloadFactoryImpl(
             deliveryService,
             mockk(relaxed = true)
         )

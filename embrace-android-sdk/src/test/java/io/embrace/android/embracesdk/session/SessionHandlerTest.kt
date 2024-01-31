@@ -39,7 +39,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.message.EmbraceSessionService
+import io.embrace.android.embracesdk.session.message.PayloadFactory
+import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -89,7 +90,7 @@ internal class SessionHandlerTest {
     private lateinit var ndkService: FakeNdkService
     private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
-    private lateinit var sessionService: EmbraceSessionService
+    private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var scheduledWorker: ScheduledWorker
 
@@ -150,7 +151,7 @@ internal class SessionHandlerTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        sessionService = EmbraceSessionService(
+        payloadFactory = PayloadFactoryImpl(
             deliveryService,
             payloadMessageCollator
         )
@@ -168,7 +169,7 @@ internal class SessionHandlerTest {
         sessionLocalConfig = SessionLocalConfig()
         // this is needed so session handler creates automatic session stopper
 
-        sessionService.startSessionWithState(now, true)
+        payloadFactory.startSessionWithState(now, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }
@@ -185,7 +186,7 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        sessionService.endSessionWithCrash(initial, clock.now(), crashId)
+        payloadFactory.endSessionWithCrash(initial, clock.now(), crashId)
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
@@ -228,7 +229,7 @@ internal class SessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        sessionService.endSessionWithState(initial, 10L)
+        payloadFactory.endSessionWithState(initial, 10L)
         assertSpanInSessionMessage(deliveryService.lastSentSessions.last().first)
     }
 
@@ -236,7 +237,7 @@ internal class SessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        sessionService.endSessionWithState(initial, 10L)
+        payloadFactory.endSessionWithState(initial, 10L)
         assertEquals(0, userService.clearedCount)
     }
 
@@ -247,7 +248,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {
             // do nothing
         }
-        sessionService.endSessionWithCrash(initial, clock.now(), "fakeCrashId")
+        payloadFactory.endSessionWithCrash(initial, clock.now(), "fakeCrashId")
         assertSpanInSessionMessage(deliveryService.lastSavedSession)
     }
 
@@ -264,7 +265,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spansService.completedSpans()?.size)
 
         clock.tick(15000L)
-        sessionService.endSessionWithState(initial, clock.now())
+        payloadFactory.endSessionWithState(initial, clock.now())
 
         val sessionMessage = checkNotNull(deliveryService.lastSentSessions.last().first)
         val spans = checkNotNull(sessionMessage.spans)
@@ -279,7 +280,7 @@ internal class SessionHandlerTest {
         spansService.recordSpan("test-span") {}
         assertEquals(1, spansService.completedSpans()?.size)
 
-        sessionService.endSessionWithCrash(initial, clock.now(), "crashId")
+        payloadFactory.endSessionWithCrash(initial, clock.now(), "crashId")
         assertEquals(0, spansService.completedSpans()?.size)
     }
 
@@ -287,14 +288,14 @@ internal class SessionHandlerTest {
     fun `session message is sent`() {
         startFakeSession()
         clock.tick(10000)
-        sessionService.endSessionWithState(initial, clock.now())
+        payloadFactory.endSessionWithState(initial, clock.now())
         val sessions = deliveryService.lastSentSessions
         assertEquals(1, sessions.size)
         assertEquals(1, sessions.count { it.second == SessionSnapshotType.NORMAL_END })
     }
 
     private fun startFakeSession(): Session {
-        return sessionService.startSessionWithState(now, true)
+        return payloadFactory.startSessionWithState(now, true)
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

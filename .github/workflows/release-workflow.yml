@@ -12,6 +12,9 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      version_to_release:
+        description: 'Version to be released.'
+        required: true
       next_version:
         description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
@@ -50,11 +53,11 @@ jobs:
           mv .docs-newly-generated docs
           date > docs/version.txt
           echo ${{ github.sha }} >> docs/version.txt
-          echo ${{ github.event.release.tag_name }} >> docs/version.txt
+          echo ${{ github.event.inputs.version_to_release }} >> docs/version.txt
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.release.tag_name }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}' docs/
           git push --force origin gh-pages
 
       - name: Record SDK Version History (${{ github.event.inputs.current_version }})

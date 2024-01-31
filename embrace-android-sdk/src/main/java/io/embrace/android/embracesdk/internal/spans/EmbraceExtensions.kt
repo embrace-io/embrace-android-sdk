@@ -59,6 +59,9 @@ internal fun Tracer.embraceSpanBuilder(name: String, internal: Boolean): SpanBui
     }
 }
 
+/**
+ * Create a [SpanBuilder] that will create a [Span] with the appropriate custom Embrace attributes
+ */
 internal fun createEmbraceSpanBuilder(
     tracer: Tracer,
     name: String,
@@ -66,6 +69,9 @@ internal fun createEmbraceSpanBuilder(
     internal: Boolean = true
 ): SpanBuilder = tracer.embraceSpanBuilder(name, internal).setType(type)
 
+/**
+ * Create a [SpanBuilder] that will create a root [Span] with the appropriate custom Embrace attributes
+ */
 internal fun createRootSpanBuilder(
     tracer: Tracer,
     name: String,

@@ -17,7 +17,7 @@ internal class CurrentSessionSpanImpl(
     private val tracer: Tracer,
 ) : CurrentSessionSpan {
     /**
-     * Number of traces created in the current session. This value should be reset when a new session is created.
+     * Number of traces created in the current session. This value will be reset when a new session is created.
      */
     private val currentSessionTraceCount = AtomicInteger(0)
 

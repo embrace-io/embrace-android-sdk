@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
@@ -37,7 +37,7 @@ internal class PayloadMessageCollator(
     private val breadcrumbService: BreadcrumbService,
     private val userService: UserService,
     private val preferencesService: PreferencesService,
-    private val spansService: SpansService,
+    private val currentSessionSpan: CurrentSessionSpan,
     private val clock: Clock,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService
@@ -163,9 +163,9 @@ internal class PayloadMessageCollator(
                         finalPayload.crashReportId != null -> EmbraceAttributes.AppTerminationCause.CRASH
                         else -> null
                     }
-                    spansService.flushSpans(appTerminationCause)
+                    currentSessionSpan.endSession(appTerminationCause)
                 }
-                else -> spansService.completedSpans()
+                else -> currentSessionSpan.completedSpans()
             }
         }
         val breadcrumbs = captureDataSafely {

@@ -52,7 +52,7 @@ internal class SessionModuleImpl(
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
-            initModule.spansService,
+            initModule.currentSessionSpan,
             initModule.clock,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService

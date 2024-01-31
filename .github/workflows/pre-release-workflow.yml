@@ -84,7 +84,7 @@ jobs:
 
       - name: Swazzler Pre-Release - Publish and Close repository
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.current_version }}#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version= ${{ github.event.inputs.current_version }}#" gradle.properties
           ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Cleanup Gradle Cache

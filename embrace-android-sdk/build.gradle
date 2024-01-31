@@ -90,8 +90,8 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-api:${Versions.openTelemetry}"
     implementation "io.opentelemetry:opentelemetry-sdk:${Versions.openTelemetry}"
     implementation "io.opentelemetry:opentelemetry-context:${Versions.openTelemetry}"
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.34.1'
-    implementation 'io.opentelemetry:opentelemetry-exporter-logging:1.34.1'
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp:${Versions.openTelemetry}"
+    implementation "io.opentelemetry:opentelemetry-exporter-logging:${Versions.openTelemetry}"
 
     // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
     // Please, don"t update it until we update compileSdk.

@@ -36,7 +36,7 @@ jobs:
           ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches

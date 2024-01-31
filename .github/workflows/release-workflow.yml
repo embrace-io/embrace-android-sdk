@@ -26,7 +26,7 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@v3
         with:
-          ref: master
+          ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
@@ -64,13 +64,14 @@ jobs:
         run: |
           curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.current_version }}"}'
 
-      - name: Set next SDK version to remote
-        run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
-          git push
+# Not needed for now. but we will keep it.
+#      - name: Set next SDK version to remote
+#        run: |
+#          git checkout master
+#          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
+#          git add gradle.properties
+#          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
+#          git push
 
       - name: Checkout Swazzler
         uses: actions/checkout@v3
@@ -86,13 +87,14 @@ jobs:
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
-      - name: Set next Swazzler version
-        run: |
-          git checkout master
-          sed -i -r "s#version= ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
-          git push
+      # Not needed for now. but we will keep it.
+#      - name: Set next Swazzler version
+#        run: |
+#          git checkout master
+#          sed -i -r "s#version= ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
+#          git add gradle.properties
+#          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
+#          git push
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

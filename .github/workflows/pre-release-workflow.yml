@@ -70,7 +70,7 @@ jobs:
 
       - name: Archive Test Results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-sdk-test-results
           path: embrace-android-sdk/build/reports/tests/

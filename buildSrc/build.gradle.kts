@@ -21,7 +21,7 @@ dependencies {
     compileOnly(gradleApi())
 
     // TODO: future - these versions must be kept in sync when updating buildscript deps.
-    implementation("com.android.tools.build:gradle:7.3.0")
+    implementation("com.android.tools.build:gradle:7.4.2")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.22.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.32")
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.12.1")

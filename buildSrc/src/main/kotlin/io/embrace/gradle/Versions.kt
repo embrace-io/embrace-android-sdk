@@ -30,7 +30,7 @@ object Versions {
     val binaryCompatValidator = "0.12.1"
 
     @JvmField
-    val agp = "7.3.0"
+    val agp = "7.4.2"
 
     @JvmField
     val lint = "30.1.0"

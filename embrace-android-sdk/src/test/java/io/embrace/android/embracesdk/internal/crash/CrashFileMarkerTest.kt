@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.mockk.every
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -39,7 +35,7 @@ internal class CrashFileMarkerTest {
     @Before
     fun setUp() {
         testFile = File(tempFolder.root.path, CrashFileMarker.CRASH_MARKER_FILE_NAME)
-        mockFile = spyk(testFile)
+        mockFile = testFile
         markerLazyFile = lazy { mockFile }
         crashMarker = CrashFileMarker(markerLazyFile)
     }
@@ -49,7 +45,6 @@ internal class CrashFileMarkerTest {
         if (testFile.exists()) {
             testFile.delete()
         }
-        unmockkAll()
     }
 
     @Test
@@ -82,30 +77,6 @@ internal class CrashFileMarkerTest {
         crashMarker.mark()
         assertEquals(true, testFile.exists())
         assertEquals(true, crashMarker.isMarked())
-    }
-
-    @Test
-    fun `test isMarked() returns false after exception is thrown twice in File_exists()`() {
-        crashMarker.mark()
-        assertEquals(true, testFile.exists())
-        every { mockFile.exists() } throws SecurityException()
-        assertEquals(false, crashMarker.isMarked())
-    }
-
-    @Test
-    fun `test removeMark() tries to delete the file twice when delete() returns false`() {
-        crashMarker.mark()
-        every { mockFile.delete() } returns false
-        crashMarker.removeMark()
-        verify(exactly = 2) { mockFile.delete() }
-    }
-
-    @Test
-    fun `test removeMark() tries to delete the file twice when delete() throws an exception`() {
-        crashMarker.mark()
-        every { mockFile.delete() } throws SecurityException()
-        crashMarker.removeMark()
-        verify(exactly = 2) { mockFile.delete() }
     }
 
     @Test

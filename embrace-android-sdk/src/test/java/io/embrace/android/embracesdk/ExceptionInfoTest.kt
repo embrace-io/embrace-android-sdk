@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.ExceptionInfo
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -44,18 +42,12 @@ internal class ExceptionInfoTest {
 
     @Test
     fun testOfThrowable() {
-        val info = ExceptionInfo.ofThrowable(
-            mockk {
-                every { message } returns "UhOh."
-                every { stackTrace } returns arrayOf(
-                    StackTraceElement("Foo", "bar", "Foo.kt", 5)
-                )
-            }
-        )
+        val throwable = object : Throwable("UhOh.") {}
+        val info = ExceptionInfo.ofThrowable(throwable)
         assertNotNull(info)
         assertEquals("UhOh.", info.message)
-        assertEquals("java.lang.Throwable", info.name)
-        assertEquals("Foo.bar(Foo.kt:5)", info.lines.single())
+        assertEquals("io.embrace.android.embracesdk.ExceptionInfoTest\$testOfThrowable\$throwable\$1", info.name)
+        assertEquals("io.embrace.android.embracesdk.ExceptionInfoTest.testOfThrowable(ExceptionInfoTest.kt:45)", info.lines.first())
         assertNull(info.originalLength)
     }
 

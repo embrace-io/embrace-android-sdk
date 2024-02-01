@@ -50,20 +50,6 @@ internal class FakeDeliveryService : DeliveryService {
         sentMoments.add(eventMessage)
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage) {
-        saveBackgroundActivityInvokedCount++
-        lastSavedBackgroundActivities.add(backgroundActivityMessage)
-    }
-
-    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage) {
-        lastSentBackgroundActivities.add(backgroundActivityMessage)
-    }
-
-    override fun sendBackgroundActivities() {
-        lastSentBackgroundActivities.addAll(lastSavedBackgroundActivities)
-        sendBackgroundActivitiesInvokedCount++
-    }
-
     override fun sendLog(eventMessage: EventMessage) {
         lastSentLogs.add(eventMessage)
     }

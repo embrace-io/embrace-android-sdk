@@ -43,26 +43,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         return cachedSessions.map { it.session.sessionId }
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage): SerializationAction? {
-        saveBgActivityRequests.add(backgroundActivityMessage)
-        return { stream ->
-            ConditionalGzipOutputStream(stream).use {
-                serializer.toJson(backgroundActivityMessage, SessionMessage::class.java, it)
-            }
-        }
-    }
-
-    override fun loadBackgroundActivity(backgroundActivityId: String): SerializationAction? {
-        val message = saveBgActivityRequests.singleOrNull {
-            it.session.sessionId == backgroundActivityId
-        } ?: return null
-        return { stream ->
-            ConditionalGzipOutputStream(stream).use {
-                serializer.toJson(message, SessionMessage::class.java, it)
-            }
-        }
-    }
-
     override fun saveCrash(crash: EventMessage) {
         saveCrashRequests.add(crash)
     }

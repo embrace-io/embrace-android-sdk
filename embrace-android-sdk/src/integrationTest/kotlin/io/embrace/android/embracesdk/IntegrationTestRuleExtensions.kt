@@ -42,14 +42,14 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
  * Returns a list of [SessionMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
-    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }
+    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "foreground" }
 }
 
 /**
  * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
-    return fakeDeliveryModule.deliveryService.lastSentBackgroundActivities
+    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "background" }
 }
 
 /**

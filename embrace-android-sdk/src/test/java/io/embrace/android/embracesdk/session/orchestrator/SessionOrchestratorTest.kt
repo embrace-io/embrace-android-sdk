@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
+import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakePayloadFactory
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -40,6 +41,7 @@ internal class SessionOrchestratorTest {
     private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var userService: FakeUserService
     private lateinit var ndkService: FakeNdkService
+    private lateinit var deliveryService: FakeDeliveryService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var periodicSessionCacher: PeriodicSessionCacher
@@ -49,6 +51,7 @@ internal class SessionOrchestratorTest {
 
     @Before
     fun setUp() {
+        deliveryService = FakeDeliveryService()
         processStateService = FakeProcessStateService()
         payloadFactory = FakePayloadFactory()
         clock = FakeClock()
@@ -80,6 +83,7 @@ internal class SessionOrchestratorTest {
                 FakeNetworkConnectivityService(),
                 FakeBreadcrumbService()
             ),
+            deliveryService,
             periodicSessionCacher,
             periodicBackgroundActivityCacher
         )
@@ -94,6 +98,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadFactory.startSessionTimestamps.size)
         assertEquals(1, payloadFactory.startBaTimestamps.size)
         assertEquals("fake-activity", sessionIdTracker.sessionId)
+        assertEquals(0, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -103,6 +108,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startSessionTimestamps.size)
         assertEquals(0, payloadFactory.startBaTimestamps.size)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
+        assertEquals(0, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -113,6 +119,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.startSessionTimestamps.single())
         assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -122,6 +129,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.endSessionTimestamps.single())
         assertEquals(TIMESTAMP, payloadFactory.startBaTimestamps.single())
         assertEquals("fake-activity", sessionIdTracker.sessionId)
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -132,6 +140,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.manualSessionEndCount)
         assertEquals(1, payloadFactory.manualSessionStartCount)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -141,6 +150,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, payloadFactory.manualSessionEndCount)
         assertEquals(0, payloadFactory.manualSessionStartCount)
+        assertEquals(0, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -150,6 +160,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground(TIMESTAMP)
         assertEquals(2, memoryCleanerService.callCount)
         assertTrue(payloadFactory.startBaTimestamps.isEmpty())
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -170,6 +181,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startSessionTimestamps.size)
         assertEquals(0, payloadFactory.manualSessionEndCount)
         assertEquals(1, memoryCleanerService.callCount)
+        assertEquals(0, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -225,6 +237,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.endSessionWithCrash("crashId")
         assertEquals("crashId", payloadFactory.baCrashId)
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -233,6 +246,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         orchestrator.endSessionWithCrash("crashId")
         assertEquals("crashId", payloadFactory.crashId)
+        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test
@@ -263,6 +277,7 @@ internal class SessionOrchestratorTest {
                 FakeNetworkConnectivityService(),
                 FakeBreadcrumbService()
             ),
+            deliveryService,
             periodicSessionCacher,
             periodicBackgroundActivityCacher
         )

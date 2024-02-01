@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -33,8 +32,6 @@ internal class EmbraceDeliveryService(
         private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
-    private val backgroundActivities by lazy { mutableSetOf<String>() }
-
     /**
      * Caches a generated session message, with performance information generated up to the current
      * point.
@@ -65,61 +62,6 @@ internal class EmbraceDeliveryService(
             logger.logInfo(
                 "Failed to send session end message. Embrace will store the " +
                     "session message and attempt to deliver it at a future date."
-            )
-        }
-    }
-
-    /**
-     * Caches a background activity message
-     *
-     * @param backgroundActivityMessage    The background activity message to cache
-     */
-    override fun saveBackgroundActivity(backgroundActivityMessage: SessionMessage) {
-        backgroundActivities.add(backgroundActivityMessage.session.sessionId)
-        cacheManager.saveBackgroundActivity(backgroundActivityMessage)
-    }
-
-    /**
-     * Caches and sends a background activity message
-     *
-     * @param backgroundActivityMessage    The background activity message to send
-     */
-    override fun sendBackgroundActivity(backgroundActivityMessage: SessionMessage) {
-        logger.logDeveloper(TAG, "Sending background activity message")
-        val id = backgroundActivityMessage.session.sessionId
-        val action = cacheManager.saveBackgroundActivity(backgroundActivityMessage) ?: return
-        sendBackgroundActivityImpl(id, action)
-    }
-
-    /**
-     * Sends cached background activities messages
-     */
-    override fun sendBackgroundActivities() {
-        logger.logDeveloper(TAG, "Sending background activity message")
-
-        backgroundActivities.forEach { backgroundActivityId ->
-            logger.logDeveloper(
-                TAG,
-                "Sending background activity message - background job started"
-            )
-            val action = cacheManager.loadBackgroundActivity(backgroundActivityId) ?: return@forEach
-            sendBackgroundActivityImpl(backgroundActivityId, action)
-        }
-    }
-
-    private fun sendBackgroundActivityImpl(
-        backgroundActivityId: String,
-        action: SerializationAction
-    ) {
-        try {
-            apiService.sendSession(action) {
-                cacheManager.deleteSession(backgroundActivityId)
-            }
-            logger.logDeveloper(TAG, "Session message queued to be sent.")
-        } catch (ex: Exception) {
-            logger.logInfo(
-                "Failed to send background activity message. Embrace will " +
-                    "attempt to deliver it at a future date."
             )
         }
     }

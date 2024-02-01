@@ -56,8 +56,7 @@ internal class StorageModuleImpl(
             cacheService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.logger,
-            initModule.clock,
-            coreModule.jsonSerializer
+            initModule.clock
         )
     }
 

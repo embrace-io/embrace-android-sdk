@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -268,7 +269,7 @@ internal class NetworkRequestApiTest {
                 embrace.recordNetworkRequest(request)
             }
 
-            val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
+            val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
             val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
@@ -317,7 +318,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkCall(): NetworkCallV2 {
-        val session = testRule.harness.fakeDeliveryModule.deliveryService.lastSentSessions[0].first
+        val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
 
         // Look for a specific error where the fetch from the cache returns a stale value
         session.session.exceptionError?.exceptionErrors?.forEach { errorInfo ->

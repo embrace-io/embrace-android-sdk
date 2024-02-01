@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -20,6 +22,7 @@ internal class SessionOrchestratorImpl(
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
+    private val deliveryService: DeliveryService,
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
@@ -163,7 +166,7 @@ internal class SessionOrchestratorImpl(
     private fun transitionState(
         transitionType: TransitionType,
         timestamp: Long,
-        oldSessionAction: ((initial: Session) -> Unit)? = null,
+        oldSessionAction: ((initial: Session) -> SessionMessage?)? = null,
         newSessionAction: (() -> Session?)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
@@ -181,7 +184,8 @@ internal class SessionOrchestratorImpl(
             // first, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
-                oldSessionAction?.invoke(initial)
+                val endMessage = oldSessionAction?.invoke(initial)
+                processEndMessage(endMessage, transitionType)
             }
 
             // next, clean up any previous session state
@@ -219,6 +223,16 @@ internal class SessionOrchestratorImpl(
         }
     }
 
+    private fun processEndMessage(endMessage: SessionMessage?, transitionType: TransitionType) {
+        endMessage?.let {
+            val type = when (transitionType) {
+                TransitionType.CRASH -> SessionSnapshotType.JVM_CRASH
+                else -> SessionSnapshotType.NORMAL_END
+            }
+            deliveryService.sendSession(it, type)
+        }
+    }
+
     private fun initiatePeriodicCaching(
         endProcessState: ProcessState,
         newState: Session
@@ -227,7 +241,9 @@ internal class SessionOrchestratorImpl(
             ProcessState.FOREGROUND -> {
                 periodicSessionCacher.start {
                     synchronized(lock) {
-                        payloadFactory.snapshotSession(newState, clock.now())
+                        payloadFactory.snapshotSession(newState, clock.now())?.apply {
+                            deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                        }
                     }
                 }
             }
@@ -238,7 +254,9 @@ internal class SessionOrchestratorImpl(
     private fun scheduleBackgroundActivitySave(initial: Session) {
         periodicBackgroundActivityCacher.scheduleSave {
             synchronized(lock) {
-                backgroundActivityFactory?.snapshotBackgroundActivity(initial, clock.now())
+                backgroundActivityFactory?.snapshotBackgroundActivity(initial, clock.now())?.apply {
+                    deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                }
             }
         }
     }

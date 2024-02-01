@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
@@ -226,9 +226,9 @@ internal class EmbraceEventServiceTest {
         val eventName = "event-to-end"
         eventService.startEvent(eventName)
         assertNotNull(deliveryService.lastEventSentAsync)
-        assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName)
-        assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.END, deliveryService.lastEventSentAsync?.event?.type)
     }
 
     @Test
@@ -236,9 +236,9 @@ internal class EmbraceEventServiceTest {
         val eventName = "event-to-end"
         val identifier = "identifier"
         eventService.startEvent(eventName, identifier)
-        assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName, identifier)
-        assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.END, deliveryService.lastEventSentAsync?.event?.type)
     }
 
     @Test
@@ -246,9 +246,9 @@ internal class EmbraceEventServiceTest {
         val eventName = "event-to-end"
         val customProperties = mapOf("yel" to "lows")
         eventService.startEvent(eventName)
-        assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName, customProperties)
-        assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.END, deliveryService.lastEventSentAsync?.event?.type)
         val eventProperties = deliveryService.lastEventSentAsync?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
@@ -262,9 +262,9 @@ internal class EmbraceEventServiceTest {
         val eventName = "event-to-end"
         val customProperties = mapOf("yel" to "lows")
         eventService.startEvent(eventName)
-        assertEquals(EmbraceEvent.Type.START, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
         eventService.endEvent(eventName, customProperties)
-        assertEquals(EmbraceEvent.Type.END, deliveryService.lastEventSentAsync?.event?.type)
+        assertEquals(EventType.END, deliveryService.lastEventSentAsync?.event?.type)
         val eventProperties = deliveryService.lastEventSentAsync?.event?.customProperties
         checkNotNull(eventProperties)
         assertEquals(customProperties.size, eventProperties.size)
@@ -305,7 +305,7 @@ internal class EmbraceEventServiceTest {
         val lastEvent = deliveryService.lastEventSentAsync
         assertEquals(1, deliveryService.eventSentAsyncInvokedCount)
         assertNotNull(lastEvent)
-        assertEquals(EmbraceEvent.Type.START, lastEvent?.event?.type)
+        assertEquals(EventType.START, lastEvent?.event?.type)
         assertEquals(STARTUP_EVENT_NAME, lastEvent?.event?.name)
     }
 
@@ -323,7 +323,7 @@ internal class EmbraceEventServiceTest {
         val lastEvent = deliveryService.lastEventSentAsync
         assertEquals(2, deliveryService.eventSentAsyncInvokedCount)
         assertNotNull(lastEvent)
-        assertEquals(EmbraceEvent.Type.END, lastEvent?.event?.type)
+        assertEquals(EventType.END, lastEvent?.event?.type)
         assertEquals(STARTUP_EVENT_NAME, lastEvent?.event?.name)
     }
 
@@ -420,7 +420,7 @@ internal class EmbraceEventServiceTest {
         eventService.applicationStartupComplete()
         val lastEvent = deliveryService.lastEventSentAsync
         assertEquals(1, deliveryService.eventSentAsyncInvokedCount)
-        assertNotEquals(EmbraceEvent.Type.END, lastEvent?.event?.type)
+        assertNotEquals(EventType.END, lastEvent?.event?.type)
         assertNotEquals(STARTUP_EVENT_NAME, lastEvent?.event?.name)
     }
 

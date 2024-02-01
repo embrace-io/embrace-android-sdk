@@ -4,7 +4,7 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
@@ -125,25 +125,25 @@ internal class EmbraceInternalInterfaceTest {
                 assertLogMessageReceived(
                     logs[0],
                     message = "info",
-                    eventType = EmbraceEvent.Type.INFO_LOG,
+                    eventType = EventType.INFO_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[1],
                     message = "warning",
-                    eventType = EmbraceEvent.Type.WARNING_LOG,
+                    eventType = EventType.WARNING_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[2],
                     message = "error",
-                    eventType = EmbraceEvent.Type.ERROR_LOG,
+                    eventType = EventType.ERROR_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[3],
                     message = "",
-                    eventType = EmbraceEvent.Type.ERROR_LOG,
+                    eventType = EventType.ERROR_LOG,
                     properties = expectedProperties
                 )
             }
@@ -252,7 +252,7 @@ internal class EmbraceInternalInterfaceTest {
             embrace.start(harness.fakeCoreModule.context)
             embrace.internalInterface.setProcessStartedByNotification()
             harness.recordSession(simulateAppStartup = true) { }
-            assertEquals(EmbraceEvent.Type.START, harness.fakeDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
+            assertEquals(EventType.START, harness.fakeDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
         }
     }
 

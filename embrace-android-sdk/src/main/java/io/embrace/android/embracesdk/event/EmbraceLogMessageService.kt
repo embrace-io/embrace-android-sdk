@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.event
 
 import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -125,7 +125,7 @@ internal class EmbraceLogMessageService(
 
     override fun log(
         message: String,
-        type: EmbraceEvent.Type,
+        type: EventType,
         properties: Map<String, Any>?
     ) {
         log(
@@ -146,7 +146,7 @@ internal class EmbraceLogMessageService(
     @Suppress("CyclomaticComplexMethod", "ComplexMethod", "LongParameterList")
     override fun log(
         message: String,
-        type: EmbraceEvent.Type,
+        type: EventType,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -178,7 +178,7 @@ internal class EmbraceLogMessageService(
                     return@submit
                 }
                 val id = getEmbUuid()
-                if (type == EmbraceEvent.Type.INFO_LOG) {
+                if (type == EventType.INFO_LOG) {
                     logDeveloper("EmbraceRemoteLogger", "New INFO log")
                     logsInfoCount.incrementAndGet()
                     if (infoLogIds.size < configService.logMessageBehavior.getInfoLogLimit()) {
@@ -191,7 +191,7 @@ internal class EmbraceLogMessageService(
                         logger.logWarning("Info Log limit has been reached.")
                         return@submit
                     }
-                } else if (type == EmbraceEvent.Type.WARNING_LOG) {
+                } else if (type == EventType.WARNING_LOG) {
                     logsWarnCount.incrementAndGet()
                     if (warningLogIds.size < configService.logMessageBehavior.getWarnLogLimit()) {
                         logDeveloper(
@@ -203,7 +203,7 @@ internal class EmbraceLogMessageService(
                         logger.logWarning("Warning Log limit has been reached.")
                         return@submit
                     }
-                } else if (type == EmbraceEvent.Type.ERROR_LOG) {
+                } else if (type == EventType.ERROR_LOG) {
                     logsErrorCount.incrementAndGet()
                     if (errorLogIds.size < configService.logMessageBehavior.getErrorLogLimit()) {
                         logDeveloper(
@@ -361,9 +361,9 @@ internal class EmbraceLogMessageService(
      * @param type of the log event
      * @return true if the log should be gated
      */
-    fun checkIfShouldGateLog(type: EmbraceEvent.Type?): Boolean {
+    fun checkIfShouldGateLog(type: EventType?): Boolean {
         return when (type) {
-            EmbraceEvent.Type.INFO_LOG -> {
+            EventType.INFO_LOG -> {
                 val shouldGate = configService.sessionBehavior.shouldGateInfoLog()
                 logDeveloper(
                     "EmbraceRemoteLogger",
@@ -372,7 +372,7 @@ internal class EmbraceLogMessageService(
                 shouldGate
             }
 
-            EmbraceEvent.Type.WARNING_LOG -> {
+            EventType.WARNING_LOG -> {
                 val shouldGate = configService.sessionBehavior.shouldGateWarnLog()
                 logDeveloper(
                     "EmbraceRemoteLogger",

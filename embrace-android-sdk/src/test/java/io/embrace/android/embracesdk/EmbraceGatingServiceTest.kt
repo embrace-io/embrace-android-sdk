@@ -386,7 +386,7 @@ internal class EmbraceGatingServiceTest {
             event = Event(
                 eventId = Uuid.getEmbUuid(),
                 timestamp = 100L,
-                type = EmbraceEvent.Type.INFO_LOG
+                type = EventType.INFO_LOG
             ),
             userInfo = userInfo,
             performanceInfo = PerformanceInfo()

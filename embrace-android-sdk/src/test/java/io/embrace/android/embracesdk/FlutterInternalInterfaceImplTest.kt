@@ -76,7 +76,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Dart error",
                 null,
                 null,
@@ -96,7 +96,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Dart error",
                 null,
                 null,

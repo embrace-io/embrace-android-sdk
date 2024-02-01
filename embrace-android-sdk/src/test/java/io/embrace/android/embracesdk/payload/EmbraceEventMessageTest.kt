@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeJsonFromResource
@@ -16,7 +16,7 @@ internal class EmbraceEventMessageTest {
         messageId = "messageId",
         name = "test",
         timestamp = 1111L,
-        type = EmbraceEvent.Type.WARNING_LOG,
+        type = EventType.WARNING_LOG,
         logExceptionType = LogExceptionType.NONE.value,
         screenshotTaken = false,
         appState = "active",

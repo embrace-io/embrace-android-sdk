@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.event
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
@@ -27,7 +27,7 @@ internal interface LogMessageService : MemoryCleanerListener {
      */
     fun log(
         message: String,
-        type: EmbraceEvent.Type,
+        type: EventType,
         properties: Map<String, Any>?
     )
 
@@ -46,7 +46,7 @@ internal interface LogMessageService : MemoryCleanerListener {
     @Suppress("LongParameterList")
     fun log(
         message: String,
-        type: EmbraceEvent.Type,
+        type: EventType,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,

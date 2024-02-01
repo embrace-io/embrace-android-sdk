@@ -11,7 +11,7 @@ internal class EmbraceEventTest {
     private val event = Event(
         eventId = Uuid.getEmbUuid(),
         timestamp = 100L,
-        type = EmbraceEvent.Type.CRASH
+        type = EventType.CRASH
     )
 
     private val eventComplete = Event(
@@ -20,7 +20,7 @@ internal class EmbraceEventTest {
         messageId = "messageId",
         name = "test",
         timestamp = 1111L,
-        type = EmbraceEvent.Type.WARNING_LOG,
+        type = EventType.WARNING_LOG,
         logExceptionType = LogExceptionType.NONE.value,
         screenshotTaken = false,
         appState = "active",
@@ -48,7 +48,7 @@ internal class EmbraceEventTest {
         assertEquals("messageId", obj.messageId)
         assertEquals("test", obj.name)
         assertEquals(1111L, obj.timestamp)
-        assertEquals(EmbraceEvent.Type.WARNING_LOG, obj.type)
+        assertEquals(EventType.WARNING_LOG, obj.type)
         assertEquals(LogExceptionType.NONE.value, obj.logExceptionType)
         assertEquals(false, obj.screenshotTaken)
         assertEquals("active", obj.appState)

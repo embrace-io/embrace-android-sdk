@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
@@ -14,13 +14,13 @@ internal class FakeLogMessageService : LogMessageService {
         networkCaptureCall?.let(networkCalls::add)
     }
 
-    override fun log(message: String, type: EmbraceEvent.Type, properties: Map<String, Any>?) {
+    override fun log(message: String, type: EventType, properties: Map<String, Any>?) {
         TODO("Not yet implemented")
     }
 
     override fun log(
         message: String,
-        type: EmbraceEvent.Type,
+        type: EventType,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
@@ -268,7 +268,7 @@ internal class EmbracePendingApiCallsSenderTest {
             val request = mapper.logRequest(
                 EventMessage(
                     Event(
-                        type = EmbraceEvent.Type.INFO_LOG,
+                        type = EventType.INFO_LOG,
                         eventId = "eventId",
                         messageId = "message_id_$k"
                     )

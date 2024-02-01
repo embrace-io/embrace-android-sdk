@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.event
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -136,16 +136,16 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService = getLogMessageService()
 
         val props = mapOf("foo" to "bar")
-        logMessageService.log("Hello world", EmbraceEvent.Type.INFO_LOG, props)
-        logMessageService.log("Warning world", EmbraceEvent.Type.WARNING_LOG, null)
-        logMessageService.log("Hello errors", EmbraceEvent.Type.ERROR_LOG, null)
+        logMessageService.log("Hello world", EventType.INFO_LOG, props)
+        logMessageService.log("Warning world", EventType.WARNING_LOG, null)
+        logMessageService.log("Hello errors", EventType.ERROR_LOG, null)
 
         val logs = deliveryService.lastSentLogs
         assertEquals(3, logs.size)
         val first = logs[0]
         assertEquals("Hello world", first.event.name)
         assertNotNull(first.event.timestamp)
-        assertEquals(EmbraceEvent.Type.INFO_LOG, first.event.type)
+        assertEquals(EventType.INFO_LOG, first.event.type)
         assertEquals(props, first.event.customProperties)
         assertNotNull(first.event.messageId)
         assertNotNull(first.event.eventId)
@@ -155,7 +155,7 @@ internal class EmbraceLogMessageServiceTest {
 
         val second = logs[1]
         assertEquals("Warning world", second.event.name)
-        assertEquals(EmbraceEvent.Type.WARNING_LOG, second.event.type)
+        assertEquals(EventType.WARNING_LOG, second.event.type)
         assertNull(second.event.customProperties)
         assertNotNull(second.event.messageId)
         assertNotNull(second.event.eventId)
@@ -165,7 +165,7 @@ internal class EmbraceLogMessageServiceTest {
 
         val third = logs[2]
         assertEquals("Hello errors", third.event.name)
-        assertEquals(EmbraceEvent.Type.ERROR_LOG, third.event.type)
+        assertEquals(EventType.ERROR_LOG, third.event.type)
         assertNull(third.event.customProperties)
         assertNotNull(third.event.messageId)
         assertNotNull(third.event.eventId)
@@ -187,7 +187,7 @@ internal class EmbraceLogMessageServiceTest {
 
         logMessageService.log(
             "Hello world",
-            EmbraceEvent.Type.ERROR_LOG,
+            EventType.ERROR_LOG,
             LogExceptionType.NONE,
             null,
             exception.stackTrace,
@@ -201,7 +201,7 @@ internal class EmbraceLogMessageServiceTest {
 
         val message = deliveryService.lastSentLogs.single()
         assertEquals("Hello world", message.event.name)
-        assertEquals(EmbraceEvent.Type.ERROR_LOG, message.event.type)
+        assertEquals(EventType.ERROR_LOG, message.event.type)
         assertEquals("NullPointerException", message.event.exceptionName)
         assertEquals("exception message", message.event.exceptionMessage)
         assertNotNull(message.event.messageId)
@@ -241,7 +241,7 @@ internal class EmbraceLogMessageServiceTest {
     @Test
     fun testDefaultMaxMessageLength() {
         logMessageService = getLogMessageService()
-        logMessageService.log("Hi".repeat(65), EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Hi".repeat(65), EventType.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(62) + "H...")
@@ -257,7 +257,7 @@ internal class EmbraceLogMessageServiceTest {
         )
 
         logMessageService = getLogMessageService()
-        logMessageService.log("Hi".repeat(50), EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Hi".repeat(50), EventType.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(23) + "H...")
@@ -268,8 +268,8 @@ internal class EmbraceLogMessageServiceTest {
         cfg = cfg.copy(disabledEventAndLogPatterns = setOf("Hello World"))
         logMessageService = getLogMessageService()
 
-        logMessageService.log("Hello World", EmbraceEvent.Type.INFO_LOG, null)
-        logMessageService.log("Another", EmbraceEvent.Type.INFO_LOG, null)
+        logMessageService.log("Hello World", EventType.INFO_LOG, null)
+        logMessageService.log("Another", EventType.INFO_LOG, null)
 
         deliveryService.lastSentLogs.single().let {
             assertEquals("Another", it.event.name)
@@ -281,9 +281,9 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService = getLogMessageService()
 
         repeat(500) { k ->
-            logMessageService.log("Test info $k", EmbraceEvent.Type.INFO_LOG, null)
-            logMessageService.log("Test warning $k", EmbraceEvent.Type.WARNING_LOG, null)
-            logMessageService.log("Test error $k", EmbraceEvent.Type.ERROR_LOG, null)
+            logMessageService.log("Test info $k", EventType.INFO_LOG, null)
+            logMessageService.log("Test warning $k", EventType.WARNING_LOG, null)
+            logMessageService.log("Test error $k", EventType.ERROR_LOG, null)
         }
 
         assertEquals(100, logMessageService.findInfoLogIds(0L, Long.MAX_VALUE).size)
@@ -300,7 +300,7 @@ internal class EmbraceLogMessageServiceTest {
 
         logMessageService.log(
             "Unity".repeat(1000),
-            EmbraceEvent.Type.INFO_LOG,
+            EventType.INFO_LOG,
             LogExceptionType.HANDLED,
             null,
             null,
@@ -326,7 +326,7 @@ internal class EmbraceLogMessageServiceTest {
 
         logMessageService.log(
             "Unity".repeat(1000),
-            EmbraceEvent.Type.INFO_LOG,
+            EventType.INFO_LOG,
             LogExceptionType.UNHANDLED,
             null,
             null,
@@ -351,7 +351,7 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService = getLogMessageService()
         logMessageService.log(
             "Dart error",
-            EmbraceEvent.Type.ERROR_LOG,
+            EventType.ERROR_LOG,
             LogExceptionType.UNHANDLED,
             null,
             null,
@@ -378,8 +378,8 @@ internal class EmbraceLogMessageServiceTest {
     fun testIfShouldGateInfoLog() {
         logMessageService = getLogMessageService()
         cfg = buildCustomRemoteConfig(setOf())
-        assertTrue(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
-        assertTrue(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
+        assertTrue(logMessageService.checkIfShouldGateLog(EventType.INFO_LOG))
+        assertTrue(logMessageService.checkIfShouldGateLog(EventType.WARNING_LOG))
     }
 
     @Test
@@ -388,8 +388,8 @@ internal class EmbraceLogMessageServiceTest {
         cfg = buildCustomRemoteConfig(
             setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN)
         )
-        assertFalse(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.INFO_LOG))
-        assertFalse(logMessageService.checkIfShouldGateLog(EmbraceEvent.Type.WARNING_LOG))
+        assertFalse(logMessageService.checkIfShouldGateLog(EventType.INFO_LOG))
+        assertFalse(logMessageService.checkIfShouldGateLog(EventType.WARNING_LOG))
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.EmbraceEvent.Type
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
@@ -98,8 +98,8 @@ internal class SessionBehavior(
      */
     fun shouldSendFullMessage(eventMessage: EventMessage): Boolean {
         val type = eventMessage.event.type
-        return (type == Type.ERROR_LOG && shouldSendFullForErrorLog()) ||
-            (type == Type.CRASH && shouldSendFullForCrash())
+        return (type == EventType.ERROR_LOG && shouldSendFullForErrorLog()) ||
+            (type == EventType.CRASH && shouldSendFullForCrash())
     }
 
     /**

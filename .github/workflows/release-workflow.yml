@@ -1,4 +1,4 @@
-name: Release
+name: Release - Release RC and Update Documentation
 
 env:
   SONATYPE_USERNAME: embrace-io
@@ -13,26 +13,33 @@ on:
   workflow_dispatch:
     inputs:
       version_to_release:
-        description: 'Version to be released.'
+        description: 'SDK version this workflow run will release. Specify <major.minor> only, without the patch number, e.g. 6.3. It will use the branch "release/<version>".'
         required: true
-      next_version:
-        description: 'Next Version (Do NOT include -SNAPSHOT, will be added automatically)'
+      patch_version_of_release:
+        description: 'The patch version for this release, i.e. the third number per semantic versioning <major.minor.patch>. If it is not a hotfix, use the default of 0'
         required: true
+        default: '0'
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        jdk-version: ["11"]
+        ndk-version: ["21.4.7075529"]
     steps:
-      - name: Checkout Branch
+      - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
+          ref: release/${{ github.event.inputs.version_to_release }}
+          fetch-depth: 0
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Gradlew Release SDK to maven central
+      - name: Gradlew Release SDK to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
@@ -53,48 +60,30 @@ jobs:
           mv .docs-newly-generated docs
           date > docs/version.txt
           echo ${{ github.sha }} >> docs/version.txt
-          echo ${{ github.event.inputs.version_to_release }} >> docs/version.txt
+          echo ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }} >> docs/version.txt
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}' docs/
           git push --force origin gh-pages
 
-      - name: Record SDK Version History (${{ github.event.inputs.current_version }})
+      - name: Record SDK Version History (${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }})
         run: |
-          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.current_version }}"}'
-
-# Not needed for now. but we will keep it.
-#      - name: Set next SDK version to remote
-#        run: |
-#          git checkout master
-#          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
-#          git add gradle.properties
-#          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
-#          git push
+          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}"}'
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
+          ref: release/${{ github.event.inputs.version_to_release }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Gradlew Release Swazzler to maven central
+      - name: Gradlew Release Swazzler to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-
-      # Not needed for now. but we will keep it.
-#      - name: Set next Swazzler version
-#        run: |
-#          git checkout master
-#          sed -i -r "s#version= ([^\']+)#version = ${{ github.event.inputs.next_version }}-SNAPSHOT#" gradle.properties
-#          git add gradle.properties
-#          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
-#          git push
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
           token: ${{ secrets.CD_GITHUB_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
 #          git push
 
       - name: Checkout Swazzler
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
           ref: master

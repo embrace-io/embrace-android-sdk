@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -148,13 +148,13 @@ internal class EventHandlerTest {
         val startEvent = Event(
             eventId = Uuid.getEmbUuid(),
             timestamp = 100L,
-            type = EmbraceEvent.Type.START,
+            type = EventType.START,
             lateThreshold = threshold
         )
         val endEvent = Event(
             eventId = Uuid.getEmbUuid(),
             timestamp = 200L,
-            type = EmbraceEvent.Type.END,
+            type = EventType.END,
             duration = duration
         )
 
@@ -179,13 +179,13 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
 
         val builtEndEvent = Event(
             eventId = originEventId,
-            type = EmbraceEvent.Type.END,
+            type = EventType.END,
             appState = fakeMetadataService.getAppState(),
             name = originEventName,
             timestamp = endTime,
@@ -228,13 +228,13 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
 
         val endEvent = Event(
             eventId = originEventId,
-            type = EmbraceEvent.Type.LATE,
+            type = EventType.LATE,
             appState = fakeMetadataService.getAppState(),
             name = originEventName,
             timestamp = endTime,
@@ -272,7 +272,7 @@ internal class EventHandlerTest {
         val customProperties: Map<String, String> = mapOf()
         val builtEvent = Event(
             eventId = eventId,
-            type = EmbraceEvent.Type.START,
+            type = EventType.START,
             appState = fakeMetadataService.getAppState(),
             name = eventName,
             lateThreshold = threshold,
@@ -438,7 +438,7 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
         cfg = createGatingConfig(emptySet())
@@ -465,7 +465,7 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
         cfg = createGatingConfig(setOf("s_mts"))
@@ -492,7 +492,7 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
         cfg = createGatingConfig(emptySet())
@@ -520,7 +520,7 @@ internal class EventHandlerTest {
             timestamp = startTime,
             eventId = originEventId,
             name = originEventName,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
         val originEventDescription = EventDescription(mockLateTimer, originEvent)
         createGatingConfig(setOf("s_mts"))

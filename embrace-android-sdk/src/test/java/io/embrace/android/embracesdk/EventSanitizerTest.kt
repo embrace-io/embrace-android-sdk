@@ -19,7 +19,7 @@ internal class EventSanitizerTest {
         val errorLogEvent = Event(
             eventId = Uuid.getEmbUuid(),
             timestamp = 100L,
-            type = EmbraceEvent.Type.ERROR_LOG,
+            type = EventType.ERROR_LOG,
             customProperties = mapOf("custom" to 123)
         )
 
@@ -36,7 +36,7 @@ internal class EventSanitizerTest {
         val infoLogEvent = Event(
             eventId = Uuid.getEmbUuid(),
             timestamp = 100L,
-            type = EmbraceEvent.Type.INFO_LOG,
+            type = EventType.INFO_LOG,
             customProperties = mapOf("custom" to 123)
         )
 
@@ -53,7 +53,7 @@ internal class EventSanitizerTest {
         val warningLogEvent = Event(
             eventId = Uuid.getEmbUuid(),
             timestamp = 100L,
-            type = EmbraceEvent.Type.WARNING_LOG,
+            type = EventType.WARNING_LOG,
             customProperties = mapOf("custom" to 123)
         )
 
@@ -71,7 +71,7 @@ internal class EventSanitizerTest {
             eventId = Uuid.getEmbUuid(),
             timestamp = 100L,
             customProperties = mapOf("custom" to 123),
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
 
         val result = EventSanitizer(noLogEvent, components).sanitize()
@@ -88,7 +88,7 @@ internal class EventSanitizerTest {
             timestamp = 100L,
             duration = 1000L,
             appState = "state",
-            type = EmbraceEvent.Type.INFO_LOG,
+            type = EventType.INFO_LOG,
             customProperties = mapOf("custom" to 123),
             sessionProperties = mapOf("custom" to "custom"),
             logExceptionType = LogExceptionType.NONE.value
@@ -101,7 +101,7 @@ internal class EventSanitizerTest {
         assertEquals("123", result.eventId)
         assertEquals(1000L, result.duration)
         assertEquals("state", result.appState)
-        assertEquals(EmbraceEvent.Type.INFO_LOG, result.type)
+        assertEquals(EventType.INFO_LOG, result.type)
         assertEquals(null, result.customProperties)
         assertEquals(null, result.sessionProperties)
         assertEquals(LogExceptionType.NONE.value, result.logExceptionType)
@@ -118,7 +118,7 @@ internal class EventSanitizerTest {
             appState = "state",
             sessionProperties = mapOf("custom" to "custom"),
             logExceptionType = LogExceptionType.NONE.value,
-            type = EmbraceEvent.Type.START
+            type = EventType.START
         )
 
         val sanitizer = EventSanitizer(event, components)

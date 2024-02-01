@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.gating
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOG_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -45,9 +45,9 @@ internal class EventSanitizer(
     }
 
     private fun isLogEvent() =
-        event.type == EmbraceEvent.Type.ERROR_LOG ||
-            event.type == EmbraceEvent.Type.WARNING_LOG ||
-            event.type == EmbraceEvent.Type.INFO_LOG
+        event.type == EventType.ERROR_LOG ||
+            event.type == EventType.WARNING_LOG ||
+            event.type == EventType.INFO_LOG
 
     private fun shouldSendLogProperties() =
         enabledComponents.contains(LOG_PROPERTIES)

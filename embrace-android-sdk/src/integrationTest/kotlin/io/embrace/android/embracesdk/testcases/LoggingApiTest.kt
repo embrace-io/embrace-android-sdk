@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
@@ -26,7 +26,7 @@ internal class LoggingApiTest {
             assertLogMessageReceived(
                 eventMessage,
                 message = "test message",
-                eventType = EmbraceEvent.Type.INFO_LOG
+                eventType = EventType.INFO_LOG
             )
         }
     }
@@ -39,7 +39,7 @@ internal class LoggingApiTest {
             assertLogMessageReceived(
                 eventMessage,
                 message = "test message",
-                eventType = EmbraceEvent.Type.WARNING_LOG
+                eventType = EventType.WARNING_LOG
             )
         }
     }
@@ -52,7 +52,7 @@ internal class LoggingApiTest {
             assertLogMessageReceived(
                 eventMessage,
                 message = "test message",
-                eventType = EmbraceEvent.Type.ERROR_LOG
+                eventType = EventType.ERROR_LOG
             )
         }
     }
@@ -69,7 +69,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = expectedMessage,
-                    eventType = EmbraceEvent.Type.fromSeverity(severity)
+                    eventType = EventType.fromSeverity(severity)
                 )
             }
         }
@@ -87,7 +87,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = expectedMessage,
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     properties = customProperties
                 )
             }
@@ -102,7 +102,7 @@ internal class LoggingApiTest {
             assertLogMessageReceived(
                 eventMessage,
                 message = checkNotNull(testException.message),
-                eventType = EmbraceEvent.Type.ERROR_LOG,
+                eventType = EventType.ERROR_LOG,
                 logType = LogExceptionType.HANDLED,
                 exception = testException
             )
@@ -120,7 +120,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = checkNotNull(testException.message),
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     logType = LogExceptionType.HANDLED,
                     exception = testException
                 )
@@ -139,7 +139,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = checkNotNull(testException.message),
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     properties = customProperties,
                     logType = LogExceptionType.HANDLED,
                     exception = testException
@@ -160,7 +160,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = expectedMessage,
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     properties = customProperties,
                     logType = LogExceptionType.HANDLED,
                     exception = testException
@@ -177,7 +177,7 @@ internal class LoggingApiTest {
             assertLogMessageReceived(
                 eventMessage,
                 message = "",
-                eventType = EmbraceEvent.Type.ERROR_LOG,
+                eventType = EventType.ERROR_LOG,
                 logType = LogExceptionType.HANDLED,
                 stack = stacktrace
             )
@@ -195,7 +195,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = "",
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     logType = LogExceptionType.HANDLED,
                     stack = stacktrace
                 )
@@ -214,7 +214,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = "",
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     properties = customProperties,
                     logType = LogExceptionType.HANDLED,
                     stack = stacktrace
@@ -235,7 +235,7 @@ internal class LoggingApiTest {
                 assertLogMessageReceived(
                     eventMessage,
                     message = expectedMessage,
-                    eventType = EmbraceEvent.Type.fromSeverity(severity),
+                    eventType = EventType.fromSeverity(severity),
                     properties = customProperties,
                     logType = LogExceptionType.HANDLED,
                     stack = stacktrace

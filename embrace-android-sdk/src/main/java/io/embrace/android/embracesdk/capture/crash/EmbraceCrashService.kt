@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.capture.crash
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -97,7 +97,7 @@ internal class EmbraceCrashService(
                 null,
                 getEmbUuid(),
                 sessionId,
-                EmbraceEvent.Type.CRASH,
+                EventType.CRASH,
                 clock.now(),
                 null,
                 false,

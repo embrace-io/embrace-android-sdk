@@ -19,7 +19,7 @@ internal class EventSanitizerFacadeTest {
         timestamp = 100L,
         duration = 1000L,
         appState = "state",
-        type = EmbraceEvent.Type.INFO_LOG,
+        type = EventType.INFO_LOG,
         customProperties = mapOf("custom" to 123),
         sessionProperties = mapOf("custom" to "custom"),
         logExceptionType = LogExceptionType.NONE.value

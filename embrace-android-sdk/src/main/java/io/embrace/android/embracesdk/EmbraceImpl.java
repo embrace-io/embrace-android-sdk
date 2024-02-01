@@ -1099,7 +1099,7 @@ final class EmbraceImpl {
                     @NonNull Severity severity,
                     @Nullable Map<String, Object> properties) {
         logMessage(
-            EmbraceEvent.Type.Companion.fromSeverity(severity),
+            EventType.Companion.fromSeverity(severity),
             message,
             properties,
             null,
@@ -1116,7 +1116,7 @@ final class EmbraceImpl {
                       @Nullable String message) {
         String exceptionMessage = throwable.getMessage() != null ? throwable.getMessage() : "";
         logMessage(
-            EmbraceEvent.Type.Companion.fromSeverity(severity),
+            EventType.Companion.fromSeverity(severity),
             message != null ? message : exceptionMessage,
             properties,
             ThrowableUtilsKt.getSafeStackTrace(throwable),
@@ -1133,7 +1133,7 @@ final class EmbraceImpl {
                              @Nullable Map<String, Object> properties,
                              @Nullable String message) {
         logMessage(
-            EmbraceEvent.Type.Companion.fromSeverity(severity),
+            EventType.Companion.fromSeverity(severity),
             message != null ? message : "",
             properties,
             stacktraceElements,
@@ -1146,7 +1146,7 @@ final class EmbraceImpl {
     }
 
     void logMessage(
-        @NonNull EmbraceEvent.Type type,
+        @NonNull EventType type,
         @NonNull String message,
         @Nullable Map<String, Object> properties,
         @Nullable StackTraceElement[] stackTraceElements,
@@ -1167,7 +1167,7 @@ final class EmbraceImpl {
     }
 
     void logMessage(
-        @NonNull EmbraceEvent.Type type,
+        @NonNull EventType type,
         @NonNull String message,
         @Nullable Map<String, Object> properties,
         @Nullable StackTraceElement[] stackTraceElements,

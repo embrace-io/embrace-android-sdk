@@ -23,7 +23,7 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
         embraceImpl.logMessage(
-            EmbraceEvent.Type.INFO_LOG,
+            EventType.INFO_LOG,
             message,
             properties,
             null,
@@ -40,7 +40,7 @@ internal class EmbraceInternalInterfaceImpl(
         stacktrace: String?
     ) {
         embraceImpl.logMessage(
-            EmbraceEvent.Type.WARNING_LOG,
+            EventType.WARNING_LOG,
             message,
             properties,
             null,
@@ -58,7 +58,7 @@ internal class EmbraceInternalInterfaceImpl(
         isException: Boolean,
     ) {
         embraceImpl.logMessage(
-            EmbraceEvent.Type.ERROR_LOG,
+            EventType.ERROR_LOG,
             message,
             properties,
             null,

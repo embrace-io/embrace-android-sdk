@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
@@ -157,7 +157,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         apiService.sendLog(event)
@@ -208,7 +208,7 @@ internal class EmbraceApiServiceTest {
         val event = EventMessage(
             event = Event(
                 eventId = "event-id",
-                type = EmbraceEvent.Type.END
+                type = EventType.END
             )
         )
         apiService.sendEvent(event)
@@ -225,7 +225,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "crash-id",
                 activeEventIds = listOf("event-1", "event-2"),
-                type = EmbraceEvent.Type.CRASH
+                type = EventType.CRASH
             )
         )
         apiService.sendCrash(crash)
@@ -275,7 +275,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         apiService.sendLog(event)
@@ -296,7 +296,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -322,7 +322,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -351,7 +351,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -377,7 +377,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -406,7 +406,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -440,7 +440,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
 
@@ -460,7 +460,7 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
 

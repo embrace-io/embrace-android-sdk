@@ -52,7 +52,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logInfo("", emptyMap())
         verify(exactly = 1) {
             embraceImpl.logMessage(
-                EmbraceEvent.Type.INFO_LOG,
+                EventType.INFO_LOG,
                 "",
                 emptyMap(),
                 null,
@@ -69,7 +69,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logWarning("", emptyMap(), null)
         verify(exactly = 1) {
             embraceImpl.logMessage(
-                EmbraceEvent.Type.WARNING_LOG,
+                EventType.WARNING_LOG,
                 "",
                 emptyMap(),
                 null,
@@ -86,7 +86,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logError("", emptyMap(), null, false)
         verify(exactly = 1) {
             embraceImpl.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "",
                 emptyMap(),
                 null,
@@ -105,7 +105,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logHandledException(exception, LogType.ERROR, emptyMap(), null)
         verify(exactly = 1) {
             embraceImpl.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "handled exception",
                 emptyMap(),
                 exception.stackTrace,

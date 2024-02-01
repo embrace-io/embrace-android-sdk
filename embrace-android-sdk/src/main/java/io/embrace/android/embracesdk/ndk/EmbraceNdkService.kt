@@ -7,7 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Base64
 import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
@@ -531,7 +531,7 @@ internal class EmbraceNdkService(
             null,
             getEmbUuid(),
             nativeCrash.sessionId,
-            EmbraceEvent.Type.CRASH,
+            EventType.CRASH,
             nativeCrash.timestamp,
             null,
             false,

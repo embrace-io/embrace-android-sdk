@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -48,7 +48,7 @@ internal class ApiRequestMapperTest {
         val request = mapper.logRequest(
             EventMessage(
                 Event(
-                    type = EmbraceEvent.Type.INFO_LOG,
+                    type = EventType.INFO_LOG,
                     eventId = "eventId",
                     messageId = "messageId"
                 )
@@ -69,7 +69,7 @@ internal class ApiRequestMapperTest {
         val request = mapper.eventMessageRequest(
             EventMessage(
                 Event(
-                    type = EmbraceEvent.Type.INFO_LOG,
+                    type = EventType.INFO_LOG,
                     eventId = "eventId"
                 )
             )
@@ -83,7 +83,7 @@ internal class ApiRequestMapperTest {
         val request = mapper.eventMessageRequest(
             EventMessage(
                 Event(
-                    type = EmbraceEvent.Type.CRASH,
+                    type = EventType.CRASH,
                     eventId = "eventId",
                     activeEventIds = listOf("activeEventId1", "activeEventId2")
                 )

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -173,7 +173,7 @@ internal class EventHandler(
             name = eventName,
             sessionId = sessionIdTracker.getActiveSessionId(),
             eventId = eventId,
-            type = EmbraceEvent.Type.START,
+            type = EventType.START,
             appState = metadataService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
@@ -197,7 +197,7 @@ internal class EventHandler(
             timestamp = endTime,
             duration = duration,
             appState = metadataService.getAppState(),
-            type = if (late) EmbraceEvent.Type.LATE else EmbraceEvent.Type.END,
+            type = if (late) EventType.LATE else EventType.END,
             customProperties = eventProperties?.toMap(),
             sessionProperties = sessionProperties.get().toMap()
         )

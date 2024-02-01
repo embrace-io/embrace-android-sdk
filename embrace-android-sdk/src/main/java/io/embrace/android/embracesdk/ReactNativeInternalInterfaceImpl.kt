@@ -41,7 +41,7 @@ internal class ReactNativeInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 message,
                 properties,
                 null,

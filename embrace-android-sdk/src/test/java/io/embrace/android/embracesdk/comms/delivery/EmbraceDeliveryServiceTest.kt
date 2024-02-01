@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
@@ -148,7 +148,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSendEventAsync() {
         initializeDeliveryService()
-        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.END))
+        val obj = EventMessage(Event(eventId = "abc", type = EventType.END))
         deliveryService.sendMoment(obj)
         assertEquals(obj, apiService.eventRequests.single())
     }
@@ -156,7 +156,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun testSaveCrash() {
         initializeDeliveryService()
-        val obj = EventMessage(Event(eventId = "abc", type = EmbraceEvent.Type.CRASH))
+        val obj = EventMessage(Event(eventId = "abc", type = EventType.CRASH))
         deliveryService.sendCrash(obj, true)
         assertEquals(obj, deliveryCacheManager.saveCrashRequests.single())
         assertEquals(obj, apiService.crashRequests.single())

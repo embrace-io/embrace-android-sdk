@@ -31,12 +31,12 @@ jobs:
           echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
 
       - name: Checkout SDK
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-gradle
 
       - name: Install JDK ${{ matrix.jdk-version }}
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
@@ -76,7 +76,7 @@ jobs:
           path: embrace-android-sdk/build/reports/tests/
 
       - name: Checkout Swazzler
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
           ref: master

@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
           fetch-depth: 0
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -45,7 +45,7 @@ jobs:
 
       # Cache the emulator
       - name: AVD cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: avd-cache
         with:
           path: |
@@ -63,7 +63,7 @@ jobs:
           script: echo "Generated AVD snapshot for caching."
 
       - name: Install JDK ${{ matrix.jdk-version }}
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
@@ -109,7 +109,7 @@ jobs:
       - name: Post workflow result
         id: slack
         if: ${{steps.runFunctionalTests1.outcome == 'failure'}}
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
             {

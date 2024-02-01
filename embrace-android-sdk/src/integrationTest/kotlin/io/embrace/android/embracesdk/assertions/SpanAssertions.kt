@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.isKey
 import io.embrace.android.embracesdk.internal.spans.isPrivate
@@ -7,7 +8,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
-import java.util.concurrent.TimeUnit
 
 /**
  * Assert the [EmbraceSpanData] is as expected
@@ -27,8 +27,8 @@ internal fun assertEmbraceSpanData(
 ) {
     checkNotNull(span)
     with(span) {
-        assertEquals(TimeUnit.MILLISECONDS.toNanos(expectedStartTimeMs), startTimeNanos)
-        assertEquals(TimeUnit.MILLISECONDS.toNanos(expectedEndTimeMs), endTimeNanos)
+        assertEquals(expectedStartTimeMs.millisToNanos(), startTimeNanos)
+        assertEquals(expectedEndTimeMs.millisToNanos(), endTimeNanos)
         assertEquals(expectedParentId, parentSpanId)
         if (expectedTraceId != null) {
             assertEquals(expectedTraceId, traceId)

@@ -23,7 +23,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class SpansServiceImplTest {
@@ -42,7 +41,7 @@ internal class SpansServiceImplTest {
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.tracer
         )
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.nowInNanos())
     }
 
     @Test

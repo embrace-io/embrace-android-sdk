@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -12,7 +13,6 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 internal class EmbraceTracerTest {
     private lateinit var spansRepository: SpansRepository
@@ -27,7 +27,7 @@ internal class EmbraceTracerTest {
         spansRepository = initModule.spansRepository
         spansSink = initModule.spansSink
         spansService = initModule.spansService
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.now().millisToNanos())
         embraceTracer = initModule.embraceTracer
         spansSink.flushSpans()
     }

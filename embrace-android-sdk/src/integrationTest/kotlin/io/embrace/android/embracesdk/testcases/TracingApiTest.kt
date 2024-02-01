@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.returnIfConditionMet
@@ -21,7 +22,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.util.concurrent.TimeUnit
 
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
@@ -76,8 +76,8 @@ internal class TracingApiTest {
                 assertTrue(
                     embrace.recordCompletedSpan(
                         name = "completed-span",
-                        startTimeNanos = TimeUnit.MILLISECONDS.toNanos(failedOpStartTime),
-                        endTimeNanos = TimeUnit.MILLISECONDS.toNanos(failedOpEndTime),
+                        startTimeNanos = failedOpStartTime.millisToNanos(),
+                        endTimeNanos = failedOpEndTime.millisToNanos(),
                         errorCode = ErrorCode.FAILURE,
                         parent = parentSpan,
                         attributes = attributes,
@@ -127,14 +127,14 @@ internal class TracingApiTest {
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "parent event",
-                            timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 200),
+                            timestampNanos = (testStartTime + 200).millisToNanos(),
                             attributes = null
                         )
                     ),
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "delayed event",
-                            timestampNanos = TimeUnit.MILLISECONDS.toNanos(testStartTime + 350),
+                            timestampNanos = (testStartTime + 350).millisToNanos(),
                             attributes = null
                         ),
                     )

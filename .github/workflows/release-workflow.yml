@@ -26,7 +26,7 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:
-          ref: e9fbe5bd4a8aeb0a618487b3494e3f7f1f399a4d
+          ref: master
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper

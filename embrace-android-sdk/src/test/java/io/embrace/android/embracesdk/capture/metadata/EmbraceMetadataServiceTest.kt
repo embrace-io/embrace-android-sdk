@@ -191,7 +191,7 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Test
-    fun `test app info`() {
+    fun `test app info`() { // FIXME: causing mockk error
         every { preferencesService.appVersion }.returns(null)
         every { preferencesService.osVersion }.returns(null)
         every { preferencesService.unityVersionNumber }.returns(null)

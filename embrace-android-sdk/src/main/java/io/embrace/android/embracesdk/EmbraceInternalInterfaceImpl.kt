@@ -69,6 +69,7 @@ internal class EmbraceInternalInterfaceImpl(
         )
     }
 
+    @Suppress("DEPRECATION")
     override fun logHandledException(
         throwable: Throwable,
         type: LogType,

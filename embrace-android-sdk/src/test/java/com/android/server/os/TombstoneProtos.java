@@ -3,6 +3,7 @@
 
 package com.android.server.os;
 
+@SuppressWarnings("deprecation")
 public final class TombstoneProtos {
   private TombstoneProtos() {}
   public static void registerAllExtensions(

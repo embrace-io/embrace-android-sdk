@@ -141,6 +141,7 @@ internal class EmbracePreferencesService(
         editor.apply()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun SharedPreferences.getMapPreference(
         key: String
     ): Map<String, String>? {

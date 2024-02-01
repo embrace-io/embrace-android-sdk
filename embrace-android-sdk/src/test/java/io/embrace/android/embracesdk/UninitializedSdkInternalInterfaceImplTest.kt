@@ -29,6 +29,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `check no errors thrown when invoked`() {
         impl.logInfo("", emptyMap())

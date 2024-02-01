@@ -62,6 +62,7 @@ import java.util.Stack;
  * @see <a href="https://cwiki.apache.org/confluence/display/MAVENOLD/Versioning">"Versioning" on Maven Wiki</a>
  */
 
+@SuppressWarnings("unchecked")
 class ComparableVersion implements Comparable<ComparableVersion> {
     private String value;
 

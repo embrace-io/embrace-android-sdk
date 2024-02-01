@@ -31,7 +31,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
-import java.nio.charset.Charset
 
 internal class EmbraceDeliveryCacheManagerTest {
 
@@ -150,11 +149,9 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.cacheBytes(any(), any()) } throws Exception()
 
         val sessionMessage = createSessionMessage("test_cache_fails")
-        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
 
         deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
 
-        val charset = Charset.defaultCharset()
         assertNull(deliveryCacheManager.loadSessionAsAction("test_cache_fails"))
     }
 

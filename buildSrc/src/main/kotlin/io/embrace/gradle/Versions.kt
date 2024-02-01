@@ -21,7 +21,7 @@ object Versions {
     val kotlinExposed = "1.4.32"
 
     @JvmField
-    val dokka = "1.7.10"
+    val dokka = "1.9.10"
 
     @JvmField
     val detekt = "1.23.0" // kotlin 1.9 required before any further upgrades

@@ -8,7 +8,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
-@Config(sdk = [VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class SystraceTest {
 

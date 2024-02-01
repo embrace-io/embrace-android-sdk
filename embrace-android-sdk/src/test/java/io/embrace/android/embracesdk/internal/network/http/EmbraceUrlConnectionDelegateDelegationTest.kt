@@ -1,18 +1,15 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
 
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlConnectionDelegateDelegationTest {
     private lateinit var mockConnection: HttpsURLConnection

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
@@ -17,12 +16,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 /**
  * Validation of the basic and miscellaneous functionality of the Android SDK
  */
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class PublicApiTest {
     @Rule

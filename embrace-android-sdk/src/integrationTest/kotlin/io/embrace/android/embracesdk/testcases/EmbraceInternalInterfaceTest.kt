@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceEvent
 import io.embrace.android.embracesdk.IntegrationTestRule
@@ -23,14 +22,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.net.SocketException
 import java.util.concurrent.TimeUnit
 
 /**
  * Validation of the internal API
  */
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceInternalInterfaceTest {
     @Rule

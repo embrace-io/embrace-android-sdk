@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
@@ -15,10 +14,8 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.net.URL
 
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
     private lateinit var mockEmbrace: Embrace

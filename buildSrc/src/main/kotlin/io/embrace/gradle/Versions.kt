@@ -27,7 +27,7 @@ object Versions {
     val detekt = "1.23.0" // kotlin 1.9 required before any further upgrades
 
     @JvmField
-    val binaryCompatValidator = "0.12.1"
+    val binaryCompatValidator = "0.14.0"
 
     @JvmField
     val agp = "7.4.2"

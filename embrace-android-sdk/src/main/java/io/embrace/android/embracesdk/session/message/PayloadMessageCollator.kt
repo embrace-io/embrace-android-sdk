@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -40,7 +39,6 @@ internal class PayloadMessageCollator(
     private val preferencesService: PreferencesService,
     private val spansSink: SpansSink,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val clock: Clock,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService
 ) {

@@ -24,7 +24,7 @@ object Versions {
     val dokka = "1.7.10"
 
     @JvmField
-    val detekt = "1.22.0"
+    val detekt = "1.23.0" // kotlin 1.9 required before any further upgrades
 
     @JvmField
     val binaryCompatValidator = "0.12.1"

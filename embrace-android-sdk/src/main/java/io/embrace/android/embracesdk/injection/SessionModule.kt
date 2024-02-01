@@ -54,7 +54,6 @@ internal class SessionModuleImpl(
             androidServicesModule.preferencesService,
             initModule.spansSink,
             initModule.currentSessionSpan,
-            initModule.clock,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService
         )
@@ -75,10 +74,7 @@ internal class SessionModuleImpl(
     }
 
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
-        PeriodicSessionCacher(
-            initModule.clock,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
-        )
+        PeriodicSessionCacher(workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE))
     }
 
     override val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {

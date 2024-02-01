@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
@@ -58,7 +57,6 @@ internal class PayloadMessageCollatorTest {
             performanceInfoService = FakePerformanceInfoService(),
             spansSink = initModule.spansSink,
             currentSessionSpan = initModule.currentSessionSpan,
-            clock = FakeClock(),
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService()
         )

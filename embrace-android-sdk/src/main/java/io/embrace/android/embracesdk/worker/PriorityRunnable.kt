@@ -51,5 +51,5 @@ internal enum class TaskPriority(
     CRITICAL(0),
     HIGH(5_000),
     NORMAL(30_000),
-    LOW(60_000);
+    LOW(60_000)
 }

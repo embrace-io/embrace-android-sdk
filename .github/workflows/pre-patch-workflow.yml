@@ -46,6 +46,7 @@ jobs:
           git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Checkout SDK
+        uses: actions/checkout@v4
         with:
           ref: release/${{ github.event.inputs.version_to_patch }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}

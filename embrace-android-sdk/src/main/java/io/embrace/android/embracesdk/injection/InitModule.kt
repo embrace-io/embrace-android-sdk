@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
+import io.embrace.android.embracesdk.internal.spans.CompositeSpanExporter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.SpansRepository
@@ -18,13 +19,14 @@ import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.exporter.logging.LoggingSpanExporter
-import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
+import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
  */
 internal interface InitModule {
+    fun addSpanExporter(spanExporter: SpanExporter)
     /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */
@@ -67,9 +69,14 @@ internal interface InitModule {
 }
 
 internal class InitModuleImpl(
-    override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock(systemClock = SystemClock()),
+    override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock)
 ) : InitModule {
+    override fun addSpanExporter(spanExporter: SpanExporter) {
+        this.customExporter = spanExporter
+    }
+
+    private lateinit var customExporter: SpanExporter
 
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService()
@@ -84,10 +91,15 @@ internal class InitModuleImpl(
     }
 
     private val openTelemetrySdk: OpenTelemetrySdk by singleton {
+        val exporter = CompositeSpanExporter()
+        exporter.add(EmbraceSpanExporter(spansSink))
+        //exporter.add(LoggingSpanExporter.create())
+        if(::customExporter.isInitialized) exporter.add(customExporter)
+
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
-            //spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
-            spanProcessor = BatchSpanProcessor.builder(LoggingSpanExporter.create()).build()
+            // spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            spanProcessor = BatchSpanProcessor.builder(exporter).build()
         )
     }
 

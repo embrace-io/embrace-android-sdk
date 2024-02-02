@@ -32,7 +32,7 @@ internal class InitModuleImplTest {
         val openTelemetryClock = FakeOpenTelemetryClock(clock)
         val initModule = InitModuleImpl(
             clock = clock,
-            openTelemetryClock = openTelemetryClock
+            openTelemetryClock = openTelemetryClock,
         )
         assertSame(clock, initModule.clock)
     }

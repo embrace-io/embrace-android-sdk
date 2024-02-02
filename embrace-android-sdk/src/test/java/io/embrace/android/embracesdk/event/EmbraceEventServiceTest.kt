@@ -116,7 +116,7 @@ internal class EmbraceEventServiceTest {
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
-        val initModule = InitModuleImpl(clock = fakeClock)
+        val initModule = InitModuleImpl(clock = fakeClock,)
         spansSink = initModule.spansSink
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 internal class FakeWorkerThreadModule(
     fakeClock: FakeClock,
     private val name: WorkerName,
-    private val base: WorkerThreadModule = WorkerThreadModuleImpl(InitModuleImpl(fakeClock))
+    private val base: WorkerThreadModule = WorkerThreadModuleImpl(InitModuleImpl(fakeClock,))
 ) : WorkerThreadModule by base {
 
     val executor = BlockingScheduledExecutorService(fakeClock)

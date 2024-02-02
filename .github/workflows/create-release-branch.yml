@@ -80,6 +80,7 @@ jobs:
       - name: Set Release Version
         run: |
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
+          git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push
 
@@ -104,6 +105,7 @@ jobs:
       - name: Set Release Version
         run: |
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
+          git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push
 

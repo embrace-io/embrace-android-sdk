@@ -81,6 +81,7 @@ jobs:
       - name: Patch Pre-Release - Publish and close Sonatype repository
         run: |
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}#" gradle.properties
+          git add gradle.properties
           git commit -m "CI/CD: change patch version to be released: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}"
           git push
           ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
@@ -109,6 +110,7 @@ jobs:
       - name: Swazzler Patch Pre-Release - Publish and Close repository
         run: |
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}#" gradle.properties
+          git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}"
           git push
           ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace

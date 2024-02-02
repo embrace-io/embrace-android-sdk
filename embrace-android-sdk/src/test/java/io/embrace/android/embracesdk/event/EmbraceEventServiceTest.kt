@@ -42,7 +42,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 internal class EmbraceEventServiceTest {
 
@@ -120,7 +119,7 @@ internal class EmbraceEventServiceTest {
         spansSink = initModule.spansSink
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(fakeClock.now()))
+        spansService.initializeService(fakeClock.nowInNanos())
         eventHandler = EventHandler(
             metadataService = metadataService,
             sessionIdTracker = sessionIdTracker,
@@ -427,7 +426,7 @@ internal class EmbraceEventServiceTest {
     @Test
     fun `startup logged as span if startup moment automatic end is enabled`() {
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
+            sdkInitStartTimeNanos = 1_000_000
         )
         configService.updateListeners()
         currentSessionSpan.endSession()
@@ -439,8 +438,8 @@ internal class EmbraceEventServiceTest {
         assertEquals(1, completedSpans.size)
         with(completedSpans[0]) {
             assertEquals("emb-startup-moment", name)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(10), endTimeNanos)
+            assertEquals(1_000_000L, startTimeNanos)
+            assertEquals(10_000_000L, endTimeNanos)
         }
     }
 
@@ -448,7 +447,7 @@ internal class EmbraceEventServiceTest {
     fun `startup logged as span if when startup moment manually ends`() {
         startupMomentLocalConfig = StartupMomentLocalConfig(automaticallyEnd = false)
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
+            sdkInitStartTimeNanos = 1_000_000
         )
         configService.updateListeners()
         currentSessionSpan.endSession()
@@ -467,15 +466,15 @@ internal class EmbraceEventServiceTest {
 
         with(completedSpansAgain[0]) {
             assertEquals("emb-startup-moment", name)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(1), startTimeNanos)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(20), endTimeNanos)
+            assertEquals(1_000_000L, startTimeNanos)
+            assertEquals(20_000_000L, endTimeNanos)
         }
     }
 
     @Test
     fun `startup not logged as span if startup moment is ended via a timeout`() {
         spansService.initializeService(
-            sdkInitStartTimeNanos = TimeUnit.MILLISECONDS.toNanos(1)
+            sdkInitStartTimeNanos = 1_000_000
         )
         configService.updateListeners()
         currentSessionSpan.endSession()

@@ -19,10 +19,6 @@ on:
         description: 'Patch number. e.g. for 6.3.1, use "1"'
         default: '1'
         required: true
-      next_patch_number:
-        description: 'Next patch number. e.g. for 6.3.2, use "2"'
-        default: '2'
-        required: true
 
 jobs:
   release:
@@ -93,13 +89,6 @@ jobs:
           name: android-sdk-test-results
           path: embrace-android-sdk/build/reports/tests/
 
-      - name: Set Next Patch Version
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}"
-          git push
-
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
@@ -114,13 +103,6 @@ jobs:
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}"
           git push
           ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-
-      - name: Set Next Swazzler Version
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}"
-          git push
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

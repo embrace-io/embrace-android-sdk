@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal
 
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.utils.BuildVersionChecker
 
 /**
  * A clock that is compatible with the OpenTelemetry SDK that defers to the internal clock used by Embrace. This allows the times recorded
@@ -19,11 +17,5 @@ internal class OpenTelemetryClock(
 
     override fun now(): Long = embraceClock.nowInNanos()
 
-    override fun nanoTime(): Long {
-        return if (BuildVersionChecker.isAtLeast(17)) {
-            SystemClock.elapsedRealtimeNanos()
-        } else {
-            SystemClock.elapsedRealtime().millisToNanos()
-        }
-    }
+    override fun nanoTime(): Long = SystemClock.elapsedRealtimeNanos()
 }

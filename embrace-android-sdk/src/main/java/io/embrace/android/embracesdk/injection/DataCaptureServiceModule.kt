@@ -98,10 +98,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val powerSaveModeService: PowerSaveModeService by singleton {
-        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() && versionChecker.isAtLeast(
-                Build.VERSION_CODES.LOLLIPOP
-            )
-        ) {
+        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
             EmbracePowerSaveModeService(
                 coreModule.context,
                 backgroundWorker,

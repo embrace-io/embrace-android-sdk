@@ -18,8 +18,8 @@ import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusServi
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.util.concurrent.Executor

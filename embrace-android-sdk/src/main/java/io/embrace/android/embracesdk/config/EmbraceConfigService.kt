@@ -39,7 +39,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val logger: InternalEmbraceLogger,
     private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
-    private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
 ) : ConfigService, ProcessStateListener {
 
@@ -271,7 +270,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         getConfig()
         if (Embrace.getInstance().isStarted && isSdkDisabled()) {
             logger.logInfo("Embrace SDK disabled by config")
-            stopBehavior()
+            Embrace.getInstance().internalInterface.stopSdk()
         }
     }
 

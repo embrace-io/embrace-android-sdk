@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
@@ -45,10 +44,8 @@ internal class EssentialServiceModuleImplTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
-            buildInfo = BuildInfo("", "", ""),
             customAppId = "abcde",
             enableIntegrationTesting = false,
-            configStopAction = {},
             configServiceProvider = { null }
         )
 
@@ -81,10 +78,8 @@ internal class EssentialServiceModuleImplTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
-            buildInfo = BuildInfo("", "", ""),
             customAppId = null,
             enableIntegrationTesting = false,
-            configStopAction = {},
             configServiceProvider = { fakeConfigService }
         )
 

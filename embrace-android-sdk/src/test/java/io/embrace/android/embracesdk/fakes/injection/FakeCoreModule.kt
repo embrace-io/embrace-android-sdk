@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.isDebug
+import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -30,8 +31,8 @@ internal class FakeCoreModule(
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
     override val jsonSerializer: EmbraceSerializer = EmbraceSerializer(),
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
-    override val isDebug: Boolean =
-        if (isMockKMock(context)) false else context.applicationInfo.isDebug()
+    override val isDebug: Boolean = if (isMockKMock(context)) false else context.applicationInfo.isDebug(),
+    override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName)
 ) : CoreModule {
 
     companion object {

@@ -199,4 +199,8 @@ internal class EmbraceInternalInterfaceImpl(
     override fun logInternalError(error: Throwable) {
         embraceImpl.logInternalError(error)
     }
+
+    override fun stopSdk() {
+        embraceImpl.stop()
+    }
 }

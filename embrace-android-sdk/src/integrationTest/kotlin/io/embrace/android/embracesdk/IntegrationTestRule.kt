@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -104,7 +103,7 @@ internal class IntegrationTestRule(
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
                 { _, _, _ -> storageModule },
-                { _, _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
                 { _, _, _, _ -> fakeDeliveryModule }
             )
@@ -150,7 +149,7 @@ internal class IntegrationTestRule(
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
                 remoteCfg = {
                     DEFAULT_SDK_REMOTE_CONFIG.copy(
-                        // disable thermal status capture as it interfes with unit tests
+                        // disable thermal status capture as it interferes with unit tests
                         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
                     )
                 }
@@ -178,10 +177,8 @@ internal class IntegrationTestRule(
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
                 storageModule = storageModule,
-                buildInfo = BuildInfo.fromResources(fakeCoreModule.resources, fakeCoreModule.context.packageName),
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,
-                configStopAction = { Embrace.getImpl().stop() },
                 configServiceProvider = { fakeConfigService }
             ),
         val dataCaptureServiceModule: DataCaptureServiceModule =

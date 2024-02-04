@@ -68,6 +68,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
         )
         impl.logInternalError(SocketException())
         impl.logInternalError("err", "message")
+        impl.stopSdk()
     }
 
     @Test

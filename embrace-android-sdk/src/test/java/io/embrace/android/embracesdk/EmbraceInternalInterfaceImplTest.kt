@@ -263,6 +263,12 @@ internal class EmbraceInternalInterfaceImplTest {
         }
     }
 
+    @Test
+    fun `check stopping SDK`() {
+        internalImpl.stopSdk()
+        assertFalse(embraceImpl.isStarted)
+    }
+
     companion object {
         private val beforeObjectInitTime = System.currentTimeMillis() - 1
     }

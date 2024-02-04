@@ -207,6 +207,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
 	public abstract fun setProcessStartedByNotification ()V
 	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun stopSdk ()V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/InternalTracingApi {

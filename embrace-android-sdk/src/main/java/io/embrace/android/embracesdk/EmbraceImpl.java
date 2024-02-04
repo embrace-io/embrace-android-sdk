@@ -63,9 +63,6 @@ import io.embrace.android.embracesdk.injection.StorageModuleImpl;
 import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
-import io.embrace.android.embracesdk.internal.BuildInfo;
-import io.embrace.android.embracesdk.internal.DeviceArchitecture;
-import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
@@ -103,14 +100,13 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule;
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl;
 import kotlin.Lazy;
 import kotlin.LazyKt;
-import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function12;
 import kotlin.jvm.functions.Function2;
 import kotlin.jvm.functions.Function3;
 import kotlin.jvm.functions.Function4;
 import kotlin.jvm.functions.Function5;
+import kotlin.jvm.functions.Function9;
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -161,9 +157,8 @@ final class EmbraceImpl {
     private final Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier;
 
     @NonNull
-    private final Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule,
-        StorageModule, BuildInfo, String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture,
-        EssentialServiceModule> essentialServiceModuleSupplier;
+    private final Function9<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule,
+        StorageModule, String, Boolean, Function0<ConfigService>, EssentialServiceModule> essentialServiceModuleSupplier;
 
     @NonNull
     private final Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
@@ -291,9 +286,8 @@ final class EmbraceImpl {
                 @NonNull Function1<CoreModule, SystemServiceModule> systemServiceModuleSupplier,
                 @NonNull Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule> androidServiceModuleSupplier,
                 @NonNull Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule> storageModuleSupplier,
-                @NonNull Function12<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, StorageModule, BuildInfo,
-                    String, Boolean, Function0<Unit>, Function0<ConfigService>, DeviceArchitecture, EssentialServiceModule>
-                    essentialServiceModuleSupplier,
+                @NonNull Function9<InitModule, CoreModule, WorkerThreadModule, SystemServiceModule, AndroidServicesModule, StorageModule,
+                    String, Boolean, Function0<ConfigService>, EssentialServiceModule> essentialServiceModuleSupplier,
                 @NonNull Function5<InitModule, CoreModule, SystemServiceModule, EssentialServiceModule, WorkerThreadModule,
                     DataCaptureServiceModule> dataCaptureServiceModuleSupplier,
                 @NonNull Function4<CoreModule, StorageModule, EssentialServiceModule, WorkerThreadModule,
@@ -406,15 +400,9 @@ final class EmbraceImpl {
             systemServiceModule,
             androidServicesModule,
             storageModule,
-            BuildInfo.fromResources(coreModule.getResources(), coreModule.getContext().getPackageName()),
             customAppId,
             enableIntegrationTesting,
-            () -> {
-                Embrace.getImpl().stop();
-                return null;
-            },
-            () -> null,
-            new DeviceArchitectureImpl());
+            () -> null);
 
         final ProcessStateService nonNullProcessStateService = essentialServiceModule.getProcessStateService();
         processStateService = nonNullProcessStateService;

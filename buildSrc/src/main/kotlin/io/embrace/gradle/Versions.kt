@@ -13,6 +13,7 @@ object Versions {
     @JvmField
     val junit = "4.13.2"
 
+    // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     @JvmField
     val kotlin = "1.7.21"
 
@@ -21,16 +22,15 @@ object Versions {
     val kotlinExposed = "1.4.32"
 
     @JvmField
-    val dokka = "1.7.10"
+    val dokka = "1.9.10"
 
+    // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     @JvmField
-    val detekt = "1.22.0"
+    val detekt = "1.23.0" // kotlin 1.9 required before any further upgrades
 
+    // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     @JvmField
-    val binaryCompatValidator = "0.12.1"
-
-    @JvmField
-    val agp = "7.3.0"
+    val agp = "7.4.2"
 
     @JvmField
     val lint = "30.1.0"

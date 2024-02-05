@@ -64,7 +64,7 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        periodicSessionCacher = PeriodicSessionCacher(clock, ScheduledWorker(sessionCacheExecutor))
+        periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor))
         periodicBackgroundActivityCacher =
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor))
 

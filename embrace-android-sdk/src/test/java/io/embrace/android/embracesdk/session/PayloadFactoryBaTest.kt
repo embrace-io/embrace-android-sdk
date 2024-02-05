@@ -164,7 +164,6 @@ internal class PayloadFactoryBaTest {
             preferencesService,
             spansSink,
             currentSessionSpan,
-            clock,
             FakeSessionPropertiesService(),
             FakeStartupService()
         )

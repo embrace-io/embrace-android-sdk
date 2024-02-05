@@ -328,7 +328,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `EmbraceCustomPathException records incomplete network request with custom path and the correct error type and message`() {
         postRequestBuilder.header("x-emb-path", customPath)
-        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(customPath, IllegalStateException("Burned")) }
+        preNetworkInterceptorBeforeRequestSupplier = {
+            throw EmbraceCustomPathException(customPath, IllegalStateException("Burned"))
+        }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(IllegalStateException::class.java.canonicalName, errorType)

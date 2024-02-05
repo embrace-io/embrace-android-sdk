@@ -56,8 +56,10 @@ style:
     maxLineLength: 140
   ReturnCount:
     active: false
-  MandatoryBracesIfStatements:
+  BracesOnIfStatements:
     active: true
+    singleLine: 'consistent'
+    multiLine: 'always'
   MandatoryBracesLoops:
     active: true
   SpacingBetweenPackageAndImports:

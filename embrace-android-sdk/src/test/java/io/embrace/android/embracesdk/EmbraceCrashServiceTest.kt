@@ -127,9 +127,9 @@ internal class EmbraceCrashServiceTest {
         assertEquals(crash.crashId, sessionOrchestrator.crashId)
 
         /*
-        * Verify mainCrashHandled is true after the first execution
-        * by testing that a second execution of handleCrash wont run anything
-        */
+         * Verify mainCrashHandled is true after the first execution
+         * by testing that a second execution of handleCrash wont run anything
+         */
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)

@@ -13,7 +13,7 @@ internal class ConstantNameThreadFactory(
     uniquePerInstance: Boolean = false
 ) : ThreadFactory {
     private val defaultFactory: ThreadFactory = Executors.defaultThreadFactory()
-    private val threadName = "emb-$namePrefix${if (uniquePerInstance) {"-${hashCode()}"} else ""}"
+    private val threadName = "emb-$namePrefix${if (uniquePerInstance) "-${hashCode()}" else ""}"
 
     override fun newThread(r: Runnable?): Thread = defaultFactory.newThread(r).apply { name = threadName }
 }

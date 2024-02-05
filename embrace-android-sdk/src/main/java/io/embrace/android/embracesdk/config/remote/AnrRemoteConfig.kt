@@ -93,7 +93,7 @@ internal data class AnrRemoteConfig(
 
     enum class Unwinder(internal val code: Int) {
         LIBUNWIND(0),
-        LIBUNWINDSTACK(1);
+        LIBUNWINDSTACK(1)
     }
 
     @JsonClass(generateAdapter = true)

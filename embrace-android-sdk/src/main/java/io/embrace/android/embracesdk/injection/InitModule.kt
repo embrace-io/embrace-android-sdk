@@ -66,7 +66,8 @@ internal interface InitModule {
 }
 
 internal class InitModuleImpl(
-    override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock(systemClock = SystemClock()),
+    override val clock: io.embrace.android.embracesdk.internal.clock.Clock =
+        NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock)
 ) : InitModule {
 

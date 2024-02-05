@@ -29,7 +29,8 @@ internal class ApplicationExitInfoRemoteConfigTest {
 
     @Test
     fun testDeserialization() {
-        val appExitInfoConfig = deserializeJsonFromResource<AppExitInfoConfig>("application_exit_info_remote_config.json")
+        val appExitInfoConfig =
+            deserializeJsonFromResource<AppExitInfoConfig>("application_exit_info_remote_config.json")
         assertEquals(100, appExitInfoConfig.appExitInfoTracesLimit)
         assertEquals(100f, appExitInfoConfig.pctAeiCaptureEnabled)
         assertEquals(50, appExitInfoConfig.aeiMaxNum)

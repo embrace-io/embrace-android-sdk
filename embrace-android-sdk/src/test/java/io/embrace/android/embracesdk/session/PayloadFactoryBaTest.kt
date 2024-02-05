@@ -38,7 +38,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 internal class PayloadFactoryBaTest {
 
@@ -109,7 +108,7 @@ internal class PayloadFactoryBaTest {
         // Prevent background thread from overwriting deliveryService.lastSavedBackgroundActivity
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
         service = createService()
-        val now = TimeUnit.MILLISECONDS.toNanos(clock.now())
+        val now = clock.nowInNanos()
         spansService.initializeService(now)
         val msg = service.endBackgroundActivityWithCrash(initial, now, "crashId")
 
@@ -121,7 +120,7 @@ internal class PayloadFactoryBaTest {
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.nowInNanos())
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 
         // there should be 1 completed span: the session span
@@ -132,7 +131,7 @@ internal class PayloadFactoryBaTest {
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.nowInNanos())
         clock.tick(1000L)
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 

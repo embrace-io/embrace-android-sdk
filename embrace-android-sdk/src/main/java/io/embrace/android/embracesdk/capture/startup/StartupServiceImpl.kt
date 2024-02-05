@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.startup
 
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpansService
-import java.util.concurrent.TimeUnit
 
 internal class StartupServiceImpl(
     private val spansService: SpansService
@@ -17,8 +17,8 @@ internal class StartupServiceImpl(
         if (sdkStartupDuration == null) {
             spansService.recordCompletedSpan(
                 name = "sdk-init",
-                startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startTimeMs),
-                endTimeNanos = TimeUnit.MILLISECONDS.toNanos(endTimeMs)
+                startTimeNanos = startTimeMs.millisToNanos(),
+                endTimeNanos = endTimeMs.millisToNanos()
             )
         }
         sdkStartupDuration = endTimeMs - startTimeMs

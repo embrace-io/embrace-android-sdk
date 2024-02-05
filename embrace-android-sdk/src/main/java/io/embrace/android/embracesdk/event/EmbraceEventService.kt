@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -27,7 +28,6 @@ import java.util.NavigableMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.TimeUnit
 
 /**
  * Handles the lifecycle of events (moments).
@@ -290,8 +290,8 @@ internal class EmbraceEventService(
         backgroundWorker.submit {
             spansService.recordCompletedSpan(
                 name = STARTUP_SPAN_NAME,
-                startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startupStartTime),
-                endTimeNanos = TimeUnit.MILLISECONDS.toNanos(startupEndTimeMillis),
+                startTimeNanos = startupStartTime.millisToNanos(),
+                endTimeNanos = startupEndTimeMillis.millisToNanos(),
                 internal = false
             )
         }

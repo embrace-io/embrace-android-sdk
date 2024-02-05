@@ -219,6 +219,15 @@ public final class io/embrace/android/embracesdk/internal/InternalTracingApi$Def
 
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {
 	public abstract fun now ()J
+	public abstract fun nowInNanos ()J
+}
+
+public final class io/embrace/android/embracesdk/internal/clock/Clock$DefaultImpls {
+	public static fun nowInNanos (Lio/embrace/android/embracesdk/internal/clock/Clock;)J
+}
+
+public final class io/embrace/android/embracesdk/internal/clock/ClockKt {
+	public static final fun millisToNanos (J)J
 }
 
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {

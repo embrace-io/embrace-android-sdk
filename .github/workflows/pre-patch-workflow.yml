@@ -1,4 +1,4 @@
-name: Release - Cut Release Branch and Create Release Candidate
+name: Patch - Create Release Candidate
 
 env:
   SONATYPE_USERNAME: embrace-io
@@ -12,11 +12,16 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. 6.3. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
+      version_to_patch:
+        description: 'Version to patch. Specify <major.minor> only, e.g. 6.3'
         required: true
-      next_version:
-        description: 'Next Version. Specify <major.minor.patch>, e.g. 6.4.0 (Do NOT include -SNAPSHOT, will be added automatically)'
+      patch_number:
+        description: 'Patch number. e.g. for 6.3.1, use "1"'
+        default: '1'
+        required: true
+      next_patch_number:
+        description: 'Next patch number. e.g. for 6.3.2, use "2"'
+        default: '2'
         required: true
 
 jobs:
@@ -25,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        jdk-version: ["17"]
+        jdk-version: ["11"]
         ndk-version: ["21.4.7075529"]
     steps:
       - name: Decode Keystore
@@ -43,12 +48,8 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: release/${{ github.event.inputs.version_to_patch }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - name: Create Release Branch "release/${{ github.event.inputs.version_to_release }}"
-        run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
 
       - uses: actions/cache@v4
         with:
@@ -69,19 +70,19 @@ jobs:
 
       - name: Setup NDK ${{ matrix.ndk-version }}
         run: |
-           export ANDROID_ROOT=/usr/local/lib/android
-           export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-           export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-           ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
+          export ANDROID_ROOT=/usr/local/lib/android
+          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
-      - name: SDK Pre-Release - Publish and close Sonatype repository
+      - name: Patch Pre-Release - Publish and close Sonatype repository
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
+          git commit -m "CI/CD: change patch version to be released: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}"
           git push
           ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
@@ -92,39 +93,33 @@ jobs:
           name: android-sdk-test-results
           path: embrace-android-sdk/build/reports/tests/
 
-      - name: Set next SDK version
+      - name: Set Next Patch Version
         run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}-SNAPSHOT#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}"
           git push
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
+          ref: release/${{ github.event.inputs.version_to_patch }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"
+      - name: Swazzler Patch Pre-Release - Publish and Close repository
         run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
-
-      - name: Swazzler Pre-Release - Publish and Close repository
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
+          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.patch_number }}"
           git push
           ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Set Next Swazzler Version
         run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}-SNAPSHOT#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.version_to_patch }}.${{ github.event.inputs.next_patch_number }}"
           git push
 
       - name: Cleanup Gradle Cache

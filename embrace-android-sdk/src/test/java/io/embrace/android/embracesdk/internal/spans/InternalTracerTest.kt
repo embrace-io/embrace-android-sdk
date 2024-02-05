@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -11,7 +12,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 internal class InternalTracerTest {
     private lateinit var spansSink: SpansSink
@@ -26,7 +26,7 @@ internal class InternalTracerTest {
         spansSink = initModule.spansSink
         currentSessionSpan = initModule.currentSessionSpan
         spansService = initModule.spansService
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.nowInNanos())
         internalTracer = InternalTracer(
             initModule.spansRepository,
             initModule.embraceTracer,
@@ -118,7 +118,7 @@ internal class InternalTracerTest {
             assertEquals("correct event", events[0].name)
             assertEquals(0L, events[0].timestampNanos)
             assertEquals("correct event2", events[1].name)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(expectedStartTime), events[1].timestampNanos)
+            assertEquals(expectedStartTime.millisToNanos(), events[1].timestampNanos)
             assertEquals("partial event", events[2].name)
             assertEquals(0, events[2].attributes.size)
             assertEquals("partial event2", events[3].name)

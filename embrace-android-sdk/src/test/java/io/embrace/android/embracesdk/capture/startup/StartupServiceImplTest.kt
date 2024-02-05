@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.capture.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.isPrivate
@@ -11,7 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 internal class StartupServiceImplTest {
 
@@ -26,7 +26,7 @@ internal class StartupServiceImplTest {
         val initModule = FakeInitModule(clock = clock)
         spansSink = initModule.spansSink
         spansService = initModule.spansService
-        spansService.initializeService(TimeUnit.MILLISECONDS.toNanos(clock.now()))
+        spansService.initializeService(clock.nowInNanos())
         startupService = StartupServiceImpl(spansService)
     }
 
@@ -42,8 +42,8 @@ internal class StartupServiceImplTest {
         with(currentSpans[0]) {
             assertEquals("emb-sdk-init", name)
             assertEquals(SpanId.getInvalid(), parentSpanId)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(startTimeMillis), startTimeNanos)
-            assertEquals(TimeUnit.MILLISECONDS.toNanos(endTimeMillis), endTimeNanos)
+            assertEquals(startTimeMillis.millisToNanos(), startTimeNanos)
+            assertEquals(endTimeMillis.millisToNanos(), endTimeNanos)
             assertEquals(
                 io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.name,
                 attributes[io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.keyName()]

@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import java.util.concurrent.TimeUnit
 
 internal class InternalTracer(
     private val spansRepository: SpansRepository,
@@ -95,7 +94,7 @@ internal class InternalTracer(
         return if (name is String && timestampNanos is Long? && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampNanos = timestampNanos ?: TimeUnit.MILLISECONDS.toNanos(clock.now()),
+                timestampNanos = timestampNanos ?: clock.nowInNanos(),
                 attributes = attributes?.let { toStringMap(it) }
             )
         } else {

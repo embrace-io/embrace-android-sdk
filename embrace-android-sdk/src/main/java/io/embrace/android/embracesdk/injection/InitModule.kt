@@ -73,10 +73,8 @@ internal class InitModuleImpl(
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock)
 ) : InitModule {
     override fun addSpanExporter(spanExporter: SpanExporter) {
-        this.customExporter = spanExporter
+        exporter.add(spanExporter)
     }
-
-    private lateinit var customExporter: SpanExporter
 
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService()
@@ -90,12 +88,11 @@ internal class InitModuleImpl(
         SpansSinkImpl()
     }
 
+    val exporter = CompositeSpanExporter()
+
     private val openTelemetrySdk: OpenTelemetrySdk by singleton {
-        val exporter = CompositeSpanExporter()
         exporter.add(EmbraceSpanExporter(spansSink))
         //exporter.add(LoggingSpanExporter.create())
-        if(::customExporter.isInitialized) exporter.add(customExporter)
-
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
             // spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))

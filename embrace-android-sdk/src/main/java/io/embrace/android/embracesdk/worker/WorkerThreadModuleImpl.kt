@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
@@ -15,9 +14,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-internal class WorkerThreadModuleImpl @JvmOverloads constructor(
-    initModule: InitModule,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+internal class WorkerThreadModuleImpl(
+    initModule: InitModule
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
     private val clock = initModule.clock
@@ -66,7 +64,9 @@ internal class WorkerThreadModuleImpl @JvmOverloads constructor(
      * never return a value.
      */
     override fun rejectedExecution(runnable: Runnable, executor: ThreadPoolExecutor) {
-        logger.logWarning("Rejected execution of $runnable on $executor. Ignoring - the process is likely terminating.")
+        InternalStaticEmbraceLogger.logger.logWarning(
+            "Rejected execution of $runnable on $executor. Ignoring - the process is likely terminating."
+        )
     }
 
     private fun createThreadFactory(name: WorkerName): ThreadFactory {

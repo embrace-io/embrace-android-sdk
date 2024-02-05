@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -45,9 +45,8 @@ internal class WorkerThreadModuleImplTest {
     @Test
     fun `rejected execution policy`() {
         val action = FakeLoggerAction()
-        val logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
-        val module = WorkerThreadModuleImpl(initModule, logger)
-
+        InternalStaticEmbraceLogger.logger.addLoggerAction(action)
+        val module = WorkerThreadModuleImpl(initModule)
         val worker = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
         module.close()
 
@@ -55,5 +54,6 @@ internal class WorkerThreadModuleImplTest {
         val msg = action.msgQueue.single().msg
         assertTrue(msg.startsWith("Rejected execution of"))
         assertNotNull(future)
+        InternalStaticEmbraceLogger.logger.setToDefault()
     }
 }

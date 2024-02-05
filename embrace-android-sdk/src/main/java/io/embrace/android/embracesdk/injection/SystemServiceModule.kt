@@ -7,8 +7,8 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.PowerManager
 import android.view.WindowManager
-import io.embrace.android.embracesdk.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 internal interface SystemServiceModule {
     val activityManager: ActivityManager?

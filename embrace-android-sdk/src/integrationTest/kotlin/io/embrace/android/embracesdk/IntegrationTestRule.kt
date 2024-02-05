@@ -104,7 +104,7 @@ internal class IntegrationTestRule(
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
                 { _, _, _ -> storageModule },
-                { _, _, _, _, _, _, _,_, _, _, _, _ -> essentialServiceModule },
+                { _, _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
                 { _, _, _, _ -> fakeDeliveryModule }
             )
@@ -148,10 +148,12 @@ internal class IntegrationTestRule(
                 NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
             },
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG.copy(
-                    // disable thermal status capture as it interfes with unit tests
-                    dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
-                ) }
+                remoteCfg = {
+                    DEFAULT_SDK_REMOTE_CONFIG.copy(
+                        // disable thermal status capture as it interfes with unit tests
+                        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
+                    )
+                }
             )
         ),
         val systemServiceModule: SystemServiceModule =

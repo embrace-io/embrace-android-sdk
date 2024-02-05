@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        jdk-version: ["11"]
+        jdk-version: ["17"]
         ndk-version: ["21.4.7075529"]
     steps:
       - name: Decode Keystore

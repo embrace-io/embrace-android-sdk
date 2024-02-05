@@ -1294,21 +1294,6 @@ final class EmbraceImpl {
     }
 
     /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    void logView(String screen) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_view")) {
-            breadcrumbService.logView(screen, sdkClock.now());
-            onActivityReported();
-        }
-    }
-
-    /**
      * Saves captured push notification information into session payload
      *
      * @param title                    the title of the notification as a string (or null)
@@ -1501,7 +1486,10 @@ final class EmbraceImpl {
             return;
         }
 
-        logView(screen);
+        if (checkSdkStartedAndLogPublicApiUsage("log RN view")) {
+            breadcrumbService.logView(screen, sdkClock.now());
+            onActivityReported();
+        }
     }
 
     /**

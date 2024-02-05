@@ -4,11 +4,14 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakePayloadFactory
+import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.arch.DataSourceState
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
@@ -48,6 +51,8 @@ internal class SessionOrchestratorTest {
     private lateinit var periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var baCacheExecutor: BlockingScheduledExecutorService
+    private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
+    private lateinit var fakeDataSource: FakeDataSource
 
     @Before
     fun setUp() {
@@ -67,6 +72,16 @@ internal class SessionOrchestratorTest {
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor))
         periodicBackgroundActivityCacher =
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor))
+        fakeDataSource = FakeDataSource()
+        dataCaptureOrchestrator = DataCaptureOrchestrator(
+            listOf(
+                DataSourceState(
+                    factory = { fakeDataSource },
+                    configGate = { true },
+                    currentEnvelope = null
+                )
+            )
+        )
 
         orchestrator = SessionOrchestratorImpl(
             processStateService,
@@ -85,7 +100,8 @@ internal class SessionOrchestratorTest {
             ),
             deliveryService,
             periodicSessionCacher,
-            periodicBackgroundActivityCacher
+            periodicBackgroundActivityCacher,
+            dataCaptureOrchestrator
         )
         sessionProperties.add("key", "value", false)
     }
@@ -99,6 +115,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startBaTimestamps.size)
         assertEquals("fake-activity", sessionIdTracker.sessionId)
         assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(1, fakeDataSource.registerCount)
     }
 
     @Test
@@ -109,6 +126,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadFactory.startBaTimestamps.size)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
         assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(1, fakeDataSource.registerCount)
     }
 
     @Test
@@ -120,6 +138,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
         assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, fakeDataSource.registerCount)
     }
 
     @Test
@@ -279,7 +298,8 @@ internal class SessionOrchestratorTest {
             ),
             deliveryService,
             periodicSessionCacher,
-            periodicBackgroundActivityCacher
+            periodicBackgroundActivityCacher,
+            dataCaptureOrchestrator
         )
     }
 }

@@ -1,13 +1,46 @@
 package io.embrace.android.embracesdk.arch
 
+import io.embrace.android.embracesdk.fakes.FakeDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class DataSourceStateTest {
 
     @Test
+    fun `null envelope is never enabled`() {
+        val source = FakeDataSource()
+        val state = DataSourceState(
+            factory = { source },
+            configGate = { true },
+            currentEnvelope = null
+        )
+
+        // data capture is enabled by default.
+        state.onConfigChange()
+        state.onEnvelopeTypeChange(null)
+        assertEquals(0, source.registerCount)
+        assertEquals(0, source.unregisterCount)
+
+        // data capture enabled for an envelope
+        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
+        assertEquals(1, source.registerCount)
+        assertEquals(0, source.unregisterCount)
+
+        // data capture disabled for no envelope
+        state.onEnvelopeTypeChange(null)
+        assertEquals(1, source.registerCount)
+        assertEquals(1, source.unregisterCount)
+
+        // functions can be called multiple times without issue
+        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
+        state.onEnvelopeTypeChange(null)
+        assertEquals(2, source.registerCount)
+        assertEquals(2, source.unregisterCount)
+    }
+
+    @Test
     fun `test config gate enabled by default`() {
-        val source = ExampleDataSource()
+        val source = FakeDataSource()
         DataSourceState(
             factory = { source },
             configGate = { true },
@@ -21,7 +54,7 @@ internal class DataSourceStateTest {
 
     @Test
     fun `test config gate affects data capture`() {
-        val source = ExampleDataSource()
+        val source = FakeDataSource()
         var enabled = false
         val state = DataSourceState(
             factory = { source },
@@ -61,7 +94,7 @@ internal class DataSourceStateTest {
 
     @Test
     fun `test envelope type affects data capture`() {
-        val source = ExampleDataSource()
+        val source = FakeDataSource()
         val state = DataSourceState(
             factory = { source },
             configGate = { true },
@@ -90,18 +123,5 @@ internal class DataSourceStateTest {
         state.onEnvelopeTypeChange(EnvelopeType.BACKGROUND_ACTIVITY)
         assertEquals(2, source.registerCount)
         assertEquals(2, source.unregisterCount)
-    }
-
-    private class ExampleDataSource : DataSource<String> {
-        var registerCount = 0
-        var unregisterCount = 0
-
-        override fun registerListeners() {
-            registerCount++
-        }
-
-        override fun unregisterListeners() {
-            unregisterCount++
-        }
     }
 }

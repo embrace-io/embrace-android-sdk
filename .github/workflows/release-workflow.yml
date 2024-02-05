@@ -37,7 +37,7 @@ jobs:
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
       - name: Gradlew Release SDK to Maven Central
         run: |
@@ -79,7 +79,7 @@ jobs:
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
       - name: Gradlew Release Swazzler to Maven Central
         run: |

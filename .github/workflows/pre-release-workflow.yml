@@ -75,7 +75,7 @@ jobs:
            ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
       - name: SDK Pre-Release - Publish and close Sonatype repository
         run: |
@@ -87,7 +87,7 @@ jobs:
 
       - name: Archive Test Results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-sdk-test-results
           path: embrace-android-sdk/build/reports/tests/

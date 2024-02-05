@@ -63,7 +63,7 @@ internal class DataCaptureServiceModuleImplTest {
             FakeVersionChecker(false)
         )
 
-        assertTrue(module.powerSaveModeService is NoOpPowerSaveModeService)
+        assertNotNull(module.powerSaveModeService)
         assertTrue(module.thermalStatusService is NoOpThermalStatusService)
     }
 

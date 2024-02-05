@@ -87,8 +87,7 @@ class InternalEmbracePlugin : Plugin<Project> {
         detekt.run {
             buildUponDefaultConfig = true
             autoCorrect = true
-            config =
-                project.files("${project.rootDir}/config/detekt/detekt.yml") // overwrite default behaviour here
+            config.from(project.files("${project.rootDir}/config/detekt/detekt.yml")) // overwrite default behaviour here
             baseline =
                 project.file("${project.projectDir}/config/detekt/baseline.xml") // suppress pre-existing issues
         }

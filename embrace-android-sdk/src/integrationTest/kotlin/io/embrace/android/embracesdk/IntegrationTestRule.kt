@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
+import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
@@ -97,15 +98,17 @@ internal class IntegrationTestRule(
         harness = harnessSupplier.invoke()
         with(harness) {
             val embraceImpl = EmbraceImpl(
-                { initModule },
-                { _, _ -> fakeCoreModule },
-                { workerThreadModule },
-                { _ -> systemServiceModule },
-                { _, _, _ -> androidServicesModule },
-                { _, _, _ -> storageModule },
-                { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
-                { _, _, _, _, _ -> dataCaptureServiceModule },
-                { _, _, _, _ -> fakeDeliveryModule }
+                ModuleInitBootstrapper(
+                    initModule = initModule,
+                    coreModuleSupplier = { _, _ -> fakeCoreModule },
+                    workerThreadModuleSupplier = { workerThreadModule },
+                    systemServiceModuleSupplier = { _, _ -> systemServiceModule },
+                    androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
+                    storageModuleSupplier = { _, _, _ -> storageModule },
+                    essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> dataCaptureServiceModule },
+                    deliveryModuleSupplier = { _, _, _, _ -> fakeDeliveryModule }
+                )
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {

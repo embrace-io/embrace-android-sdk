@@ -110,7 +110,7 @@ internal class EmbraceSpanImpl(
         return false
     }
 
-    internal fun wrappedSpan(): Span? = startedSpan.get()
+    internal fun wrappe,dSpan(): Span? = startedSpan.get()
 
     /**
      * Returns the underlying [Span] if it's currently recording

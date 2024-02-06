@@ -85,4 +85,6 @@ internal class UninitializedSdkInternalInterfaceImpl(
     override fun logInternalError(message: String?, details: String?) {}
 
     override fun logInternalError(error: Throwable) {}
+
+    override fun stopSdk() {}
 }

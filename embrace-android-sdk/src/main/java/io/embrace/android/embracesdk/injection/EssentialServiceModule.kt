@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -75,12 +74,9 @@ internal class EssentialServiceModuleImpl(
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
-    buildInfo: BuildInfo,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    private val configStopAction: () -> Unit,
     private val configServiceProvider: () -> ConfigService? = { null },
-    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl(),
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
@@ -160,7 +156,6 @@ internal class EssentialServiceModuleImpl(
                 coreModule.logger,
                 backgroundWorker,
                 coreModule.isDebug,
-                configStopAction,
                 thresholdCheck
             )
     }
@@ -173,10 +168,14 @@ internal class EssentialServiceModuleImpl(
         EmbraceCpuInfoDelegate(sharedObjectLoader, coreModule.logger)
     }
 
+    override val deviceArchitecture: DeviceArchitecture by singleton {
+        DeviceArchitectureImpl()
+    }
+
     override val metadataService: MetadataService by singleton {
         EmbraceMetadataService.ofContext(
             coreModule.context,
-            buildInfo,
+            coreModule.buildInfo,
             configService,
             coreModule.appFramework,
             androidServicesModule.preferencesService,

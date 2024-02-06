@@ -140,8 +140,14 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      */
     public fun isInternalNetworkCaptureDisabled(): Boolean
 
+    /**
+     * Whether the ANR capture service is enabled
+     */
     public fun isAnrCaptureEnabled(): Boolean
 
+    /**
+     * Whether the native crash capture is enabled
+     */
     public fun isNdkEnabled(): Boolean
 
     /**
@@ -153,4 +159,9 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     public fun logInternalError(error: Throwable)
+
+    /**
+     * Stop the Embrace SDK and disable its functionality
+     */
+    public fun stopSdk()
 }

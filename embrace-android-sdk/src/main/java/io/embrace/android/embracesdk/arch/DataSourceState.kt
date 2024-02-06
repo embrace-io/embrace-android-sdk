@@ -22,7 +22,7 @@ internal class DataSourceState<T : DataSource<R>, R>(
     /**
      * The type of envelope that contains the data.
      */
-    private var currentEnvelope: EnvelopeType,
+    private var currentEnvelope: EnvelopeType? = null,
 
     /**
      * An envelope type where data capture should be disabled. For example,
@@ -41,7 +41,7 @@ internal class DataSourceState<T : DataSource<R>, R>(
     /**
      * Callback that is invoked when the envelope type changes.
      */
-    fun onEnvelopeTypeChange(envelopeType: EnvelopeType) {
+    fun onEnvelopeTypeChange(envelopeType: EnvelopeType?) {
         this.currentEnvelope = envelopeType
         updateDataSource()
     }
@@ -54,7 +54,7 @@ internal class DataSourceState<T : DataSource<R>, R>(
     }
 
     private fun updateDataSource() {
-        val enabled = currentEnvelope != disabledEnvelopeType && configGate()
+        val enabled = currentEnvelope != null && currentEnvelope != disabledEnvelopeType && configGate()
 
         if (enabled && dataSource == null) {
             dataSource = enabledDataSource.apply {

@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.injection.SessionModuleImpl
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionModuleImplTest {
@@ -26,12 +27,14 @@ internal class SessionModuleImplTest {
             executorProvider = ::BlockableExecutorService
         )
 
+    private val configService = FakeConfigService()
+
     @Test
     fun testDefaultImplementations() {
         val module = SessionModuleImpl(
             InitModuleImpl(),
             FakeAndroidServicesModule(),
-            FakeEssentialServiceModule(),
+            FakeEssentialServiceModule(configService = configService),
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
@@ -47,6 +50,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionOrchestrator)
         assertNotNull(module.periodicSessionCacher)
         assertNotNull(module.periodicBackgroundActivityCacher)
+        assertTrue(configService.listeners.contains(module.dataCaptureOrchestrator))
     }
 
     @Test
@@ -68,6 +72,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
+        assertNotNull(module.dataCaptureOrchestrator)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

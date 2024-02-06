@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.arch.EnvelopeType
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -25,6 +27,7 @@ internal class SessionOrchestratorImpl(
     private val deliveryService: DeliveryService,
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
+    private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : SessionOrchestrator {
 
@@ -212,6 +215,13 @@ internal class SessionOrchestratorImpl(
 
             // update the current state
             state = endProcessState
+
+            // update data capture orchestrator
+            val envelopeType = when (endProcessState) {
+                ProcessState.FOREGROUND -> EnvelopeType.SESSION
+                ProcessState.BACKGROUND -> EnvelopeType.BACKGROUND_ACTIVITY
+            }
+            dataCaptureOrchestrator.onEnvelopeChange(envelopeType)
 
             // log the state change
             logSessionStateChange(

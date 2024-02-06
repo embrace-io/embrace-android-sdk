@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -22,6 +23,7 @@ internal interface SessionModule {
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
     val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    val dataCaptureOrchestrator: DataCaptureOrchestrator
 }
 
 internal class SessionModuleImpl(
@@ -100,6 +102,13 @@ internal class SessionModuleImpl(
         )
     }
 
+    override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
+        // orchestrates data capture (an empty list of data sources is passed for now)
+        DataCaptureOrchestrator(emptyList()).apply {
+            essentialServiceModule.configService.addListener(this)
+        }
+    }
+
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
@@ -110,7 +119,8 @@ internal class SessionModuleImpl(
             boundaryDelegate,
             deliveryModule.deliveryService,
             periodicSessionCacher,
-            periodicBackgroundActivityCacher
+            periodicBackgroundActivityCacher,
+            dataCaptureOrchestrator
         )
     }
 }

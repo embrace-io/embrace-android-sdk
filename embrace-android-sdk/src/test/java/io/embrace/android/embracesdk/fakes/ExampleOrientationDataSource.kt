@@ -16,6 +16,10 @@ internal class ExampleOrientationDataSource(
     sink: DataSinkProvider
 ) : DataSourceImpl(sink), ComponentCallbacks2 {
 
+    companion object {
+        const val SPAN_NAME = "emb_orientation"
+    }
+
     override fun registerListeners() {
         ctx.registerComponentCallbacks(this)
     }
@@ -33,6 +37,26 @@ internal class ExampleOrientationDataSource(
     }
 
     override fun onTrimMemory(level: Int) {
+        captureData {
+            val runtime = Runtime.getRuntime()
+
+            // start a span.
+            val spanId = startSpan(SPAN_NAME) {
+                addAttribute("trimMemory", level.toString())
+            } ?: return@captureData
+
+            // mutate the span. in an ordinary implementation spanId would be held in a property
+            // and this would be called at a later date.
+            mutateSpan(spanId) {
+                addAttribute("freeMemory", runtime.freeMemory().toString())
+            }
+
+            // stop the span. in an ordinary implementation spanId would be held in a property
+            // and this would be called at a later date.
+            stopSpan(spanId) {
+                addAttribute("maxMemory", runtime.maxMemory().toString())
+            }
+        }
     }
 
     override fun onLowMemory() {

@@ -94,7 +94,7 @@ internal class InitModuleImpl(
         exporter.add(EmbraceSpanExporter(spansSink))
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
-            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            spanProcessor = EmbraceSpanProcessor(exporter)
             //spanProcessor = BatchSpanProcessor.builder(exporter).build()
         )
     }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.spans.CompositeSpanExporter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.SpansRepository
@@ -72,10 +73,6 @@ internal class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(clock)
 ) : InitModule {
-    override fun addSpanExporter(spanExporter: SpanExporter) {
-        exporter.add(spanExporter)
-    }
-
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService()
     }
@@ -88,15 +85,17 @@ internal class InitModuleImpl(
         SpansSinkImpl()
     }
 
-    val exporter = CompositeSpanExporter()
+    private val exporter = CompositeSpanExporter()
+    override fun addSpanExporter(spanExporter: SpanExporter) {
+        exporter.add(spanExporter)
+    }
 
     private val openTelemetrySdk: OpenTelemetrySdk by singleton {
         exporter.add(EmbraceSpanExporter(spansSink))
-        //exporter.add(LoggingSpanExporter.create())
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
-            // spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
-            spanProcessor = BatchSpanProcessor.builder(exporter).build()
+            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            //spanProcessor = BatchSpanProcessor.builder(exporter).build()
         )
     }
 

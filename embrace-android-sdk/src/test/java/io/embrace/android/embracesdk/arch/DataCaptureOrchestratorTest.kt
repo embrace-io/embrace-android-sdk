@@ -17,7 +17,7 @@ internal class DataCaptureOrchestratorTest {
         dataSource = FakeDataSource()
         orchestrator = DataCaptureOrchestrator(
             listOf(
-                DataSourceState(
+                DataSourceState<FakeDataSource>(
                     factory = { dataSource },
                     configGate = { enabled },
                     currentEnvelope = null

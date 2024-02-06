@@ -9,7 +9,7 @@ internal class DataSourceStateTest {
     @Test
     fun `null envelope is never enabled`() {
         val source = FakeDataSource()
-        val state = DataSourceState(
+        val state = DataSourceState<FakeDataSource>(
             factory = { source },
             configGate = { true },
             currentEnvelope = null
@@ -41,7 +41,7 @@ internal class DataSourceStateTest {
     @Test
     fun `test config gate enabled by default`() {
         val source = FakeDataSource()
-        DataSourceState(
+        DataSourceState<FakeDataSource>(
             factory = { source },
             configGate = { true },
             currentEnvelope = EnvelopeType.SESSION
@@ -56,7 +56,7 @@ internal class DataSourceStateTest {
     fun `test config gate affects data capture`() {
         val source = FakeDataSource()
         var enabled = false
-        val state = DataSourceState(
+        val state = DataSourceState<FakeDataSource>(
             factory = { source },
             configGate = { enabled },
             currentEnvelope = EnvelopeType.SESSION
@@ -95,7 +95,7 @@ internal class DataSourceStateTest {
     @Test
     fun `test envelope type affects data capture`() {
         val source = FakeDataSource()
-        val state = DataSourceState(
+        val state = DataSourceState<FakeDataSource>(
             factory = { source },
             configGate = { true },
             EnvelopeType.BACKGROUND_ACTIVITY,

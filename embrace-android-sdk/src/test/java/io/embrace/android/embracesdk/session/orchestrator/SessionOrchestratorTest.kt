@@ -75,7 +75,7 @@ internal class SessionOrchestratorTest {
         fakeDataSource = FakeDataSource()
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             listOf(
-                DataSourceState(
+                DataSourceState<FakeDataSource>(
                     factory = { fakeDataSource },
                     configGate = { true },
                     currentEnvelope = null

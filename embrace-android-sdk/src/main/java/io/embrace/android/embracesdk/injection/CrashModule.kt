@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandler
-import java.io.File
 
 /**
  * Contains dependencies that capture crashes
@@ -19,17 +18,20 @@ internal interface CrashModule {
 
 internal class CrashModuleImpl(
     initModule: InitModule,
+    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
     dataContainerModule: DataContainerModule,
-    coreModule: CoreModule
+    androidServicesModule: AndroidServicesModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
-        val markerFile = lazy { File(coreModule.context.cacheDir.path, CrashFileMarker.CRASH_MARKER_FILE_NAME) }
+        val markerFile = lazy {
+            storageModule.storageService.getFileForWrite(CrashFileMarker.CRASH_MARKER_FILE_NAME)
+        }
         CrashFileMarker(markerFile)
     }
 
@@ -40,16 +42,17 @@ internal class CrashModuleImpl(
     override val crashService: CrashService by singleton {
         EmbraceCrashService(
             essentialServiceModule.configService,
-            sessionModule.sessionService,
+            sessionModule.sessionOrchestrator,
             sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
             dataContainerModule.eventService,
             anrModule.anrService,
             nativeModule.ndkService,
             essentialServiceModule.gatingService,
-            sessionModule.backgroundActivityService,
+            androidServicesModule.preferencesService,
             crashMarker,
             initModule.clock
         )

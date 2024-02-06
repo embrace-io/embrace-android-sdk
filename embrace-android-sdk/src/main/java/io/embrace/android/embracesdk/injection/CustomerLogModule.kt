@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.event.EmbraceRemoteLogger
+import io.embrace.android.embracesdk.event.EmbraceLogMessageService
+import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -15,7 +16,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
     val networkLoggingService: NetworkLoggingService
-    val remoteLogger: EmbraceRemoteLogger
+    val logMessageService: LogMessageService
 }
 
 internal class CustomerLogModuleImpl(
@@ -31,8 +32,9 @@ internal class CustomerLogModuleImpl(
     override val networkCaptureService: NetworkCaptureService by singleton {
         EmbraceNetworkCaptureService(
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             androidServicesModule.preferencesService,
-            remoteLogger,
+            logMessageService,
             essentialServiceModule.configService,
             coreModule.jsonSerializer
         )
@@ -46,9 +48,10 @@ internal class CustomerLogModuleImpl(
         )
     }
 
-    override val remoteLogger: EmbraceRemoteLogger by singleton {
-        EmbraceRemoteLogger(
+    override val logMessageService: LogMessageService by singleton {
+        EmbraceLogMessageService(
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
             essentialServiceModule.configService,
@@ -57,7 +60,7 @@ internal class CustomerLogModuleImpl(
             initModule.clock,
             essentialServiceModule.gatingService,
             essentialServiceModule.networkConnectivityService,
-            workerThreadModule.backgroundExecutor(ExecutorName.REMOTE_LOGGING)
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
         )
     }
 }

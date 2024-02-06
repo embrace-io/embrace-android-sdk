@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.config.local
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal class AppLocalConfig(
 
-    @SerializedName("report_disk_usage")
+    @Json(name = "report_disk_usage")
     val reportDiskUsage: Boolean? = null
 )

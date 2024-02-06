@@ -14,7 +14,7 @@ internal interface ProcessStateListener {
      * Triggered when the application is resumed.
      *
      * @param coldStart   whether this is a cold start
-     * @param startupTime the timestamp at which the application started
+     * @param timestamp the timestamp at which the application entered the foreground
      */
-    fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {}
+    fun onForeground(coldStart: Boolean, timestamp: Long) {}
 }

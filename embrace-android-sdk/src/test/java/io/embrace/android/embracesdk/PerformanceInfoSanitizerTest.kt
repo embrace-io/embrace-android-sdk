@@ -1,20 +1,15 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.gating.PerformanceInfoSanitizer
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.payload.PerformanceInfo
-import io.mockk.mockk
-import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class PerformanceInfoSanitizerTest {
 
-    private val performanceInfo = PerformanceInfo(
-        anrIntervals = mockk(relaxed = true),
-        networkInterfaceIntervals = mockk(),
-        memoryWarnings = mockk(),
-        diskUsage = mockk()
-    )
+    private val performanceInfo = fakePerformanceInfo()
 
     @Test
     fun `test if it keeps all performance info fields`() {
@@ -29,10 +24,10 @@ internal class PerformanceInfoSanitizerTest {
 
         val result = PerformanceInfoSanitizer(performanceInfo, components).sanitize()
 
-        Assert.assertNotNull(result?.anrIntervals)
-        Assert.assertNotNull(result?.networkInterfaceIntervals)
-        Assert.assertNotNull(result?.memoryWarnings)
-        Assert.assertNotNull(result?.diskUsage)
+        assertNotNull(result?.anrIntervals)
+        assertNotNull(result?.networkInterfaceIntervals)
+        assertNotNull(result?.memoryWarnings)
+        assertNotNull(result?.diskUsage)
     }
 
     @Test
@@ -41,9 +36,9 @@ internal class PerformanceInfoSanitizerTest {
 
         val result = PerformanceInfoSanitizer(performanceInfo, components).sanitize()
 
-        Assert.assertNull(result?.anrIntervals)
-        Assert.assertNull(result?.networkInterfaceIntervals)
-        Assert.assertNull(result?.memoryWarnings)
-        Assert.assertNull(result?.diskUsage)
+        assertNull(result?.anrIntervals)
+        assertNull(result?.networkInterfaceIntervals)
+        assertNull(result?.memoryWarnings)
+        assertNull(result?.diskUsage)
     }
 }

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.config
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -31,8 +31,7 @@ internal class LogRemoteConfigTest {
 
     @Test
     fun testDeserialization() {
-        val data = ResourceReader.readResourceAsText("log_config.json")
-        val cfg = Gson().fromJson(data, LogRemoteConfig::class.java)
+        val cfg = deserializeJsonFromResource<LogRemoteConfig>("log_config.json")
         assertEquals(768, cfg.logMessageMaximumAllowedLength)
         assertEquals(50, cfg.logInfoLimit)
         assertEquals(200, cfg.logWarnLimit)
@@ -41,7 +40,7 @@ internal class LogRemoteConfigTest {
 
     @Test
     fun testDeserializationEmptyObj() {
-        val cfg = Gson().fromJson("{}", LogRemoteConfig::class.java)
+        val cfg = deserializeEmptyJsonString<LogRemoteConfig>()
         verifyDefaults(cfg)
     }
 

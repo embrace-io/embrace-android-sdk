@@ -1,71 +1,50 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.utils.MessageUtils
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class DeviceInfo(
 
-    @SerializedName("dm")
+    @Json(name = "dm")
     val manufacturer: String? = null,
 
-    @SerializedName("do")
+    @Json(name = "do")
     val model: String? = null,
 
-    @SerializedName("da")
+    @Json(name = "da")
     val architecture: String? = null,
 
-    @SerializedName("jb")
+    @Json(name = "jb")
     val jailbroken: Boolean? = null,
 
-    @SerializedName("lc")
+    @Json(name = "lc")
     val locale: String? = null,
 
-    @SerializedName("ms")
+    @Json(name = "ms")
     val internalStorageTotalCapacity: Long? = null,
 
-    @SerializedName("os")
+    @Json(name = "os")
     val operatingSystemType: String? = null,
 
-    @SerializedName("ov")
+    @Json(name = "ov")
     val operatingSystemVersion: String? = null,
 
-    @SerializedName("oc")
+    @Json(name = "oc")
     val operatingSystemVersionCode: Int? = null,
 
-    @SerializedName("sr")
+    @Json(name = "sr")
     val screenResolution: String? = null,
 
-    @SerializedName("tz")
+    @Json(name = "tz")
     val timezoneDescription: String? = null,
 
-    @SerializedName("up")
-    val uptime: Long? = null,
-
-    @SerializedName("nc")
+    @Json(name = "nc")
     val cores: Int? = null,
 
-    @SerializedName("pt")
+    @Json(name = "pt")
     val cpuName: String? = null,
 
-    @SerializedName("gp")
-    private val egl: String? = null
-) {
-
-    fun toJson(): String {
-        return "{\"dm\": " + MessageUtils.withNull(manufacturer) +
-            ",\"do\": " + MessageUtils.withNull(model) +
-            ",\"da\":" + MessageUtils.withNull(architecture) +
-            ",\"jb\":" + MessageUtils.boolToStr(jailbroken) +
-            ",\"lc\":" + MessageUtils.withNull(locale) +
-            ",\"ms\":" + MessageUtils.withNull(internalStorageTotalCapacity) +
-            ",\"os\":" + MessageUtils.withNull(operatingSystemType) +
-            ",\"ov\":" + MessageUtils.withNull(operatingSystemVersion) +
-            ",\"oc\":" + MessageUtils.withNull(operatingSystemVersionCode) +
-            ",\"sr\":" + MessageUtils.withNull(screenResolution) +
-            ",\"tz\":" + MessageUtils.withNull(timezoneDescription) +
-            ",\"up\":" + MessageUtils.withNull(uptime) +
-            ",\"nc\":" + MessageUtils.withNull(cores) +
-            ",\"pt\":" + MessageUtils.withNull(cpuName) +
-            ",\"gp\":" + MessageUtils.withNull(egl) + "}"
-    }
-}
+    @Json(name = "gp")
+    val egl: String? = null
+)

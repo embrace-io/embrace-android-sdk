@@ -1,18 +1,24 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -20,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.net.SocketException
+import java.util.concurrent.TimeUnit
 
 /**
  * Validation of the internal API
@@ -119,25 +126,25 @@ internal class EmbraceInternalInterfaceTest {
                 assertLogMessageReceived(
                     logs[0],
                     message = "info",
-                    eventType = EmbraceEvent.Type.INFO_LOG,
+                    eventType = EventType.INFO_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[1],
                     message = "warning",
-                    eventType = EmbraceEvent.Type.WARNING_LOG,
+                    eventType = EventType.WARNING_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[2],
                     message = "error",
-                    eventType = EmbraceEvent.Type.ERROR_LOG,
+                    eventType = EventType.ERROR_LOG,
                     properties = expectedProperties
                 )
                 assertLogMessageReceived(
                     logs[3],
                     message = "",
-                    eventType = EmbraceEvent.Type.ERROR_LOG,
+                    eventType = EventType.ERROR_LOG,
                     properties = expectedProperties
                 )
             }
@@ -200,7 +207,7 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            val requests = checkNotNull(session?.performanceInfo?.networkRequests?.networkSessionV2?.requests)
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -221,7 +228,7 @@ internal class EmbraceInternalInterfaceTest {
                 embrace.internalInterface.logComposeTap(android.util.Pair.create(expectedX, expectedY), expectedElementName)
             }
 
-            val tapBreadcrumb = checkNotNull(session.breadcrumbs?.tapBreadcrumbs?.last())
+            val tapBreadcrumb = checkNotNull(session?.breadcrumbs?.tapBreadcrumbs?.last())
             assertEquals("10,99", tapBreadcrumb.location)
             assertEquals(expectedElementName, tapBreadcrumb.tappedElementName)
         }
@@ -246,7 +253,7 @@ internal class EmbraceInternalInterfaceTest {
             embrace.start(harness.fakeCoreModule.context)
             embrace.internalInterface.setProcessStartedByNotification()
             harness.recordSession(simulateAppStartup = true) { }
-            assertEquals(EmbraceEvent.Type.START, harness.fakeDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
+            assertEquals(EventType.START, harness.fakeDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
         }
     }
 
@@ -267,6 +274,45 @@ internal class EmbraceInternalInterfaceTest {
             assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
             embrace.start(harness.fakeCoreModule.context)
             assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+        }
+    }
+
+    @Test
+    fun `internal tracing APIs work as expected`() {
+        with(testRule) {
+            embrace.start(harness.fakeCoreModule.context)
+            val sessionPayload = harness.recordSession {
+                with(embrace.internalInterface) {
+                    val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
+                    harness.fakeClock.tick(10)
+                    val childSpanId = checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
+                    addSpanAttribute(spanId = parentSpanId, "testkey", "testvalue")
+                    addSpanEvent(spanId = childSpanId, name = "cool event bro", attributes = mapOf("key" to "value"))
+                    recordSpan(name = "tz-another-span", parentSpanId = parentSpanId) { }
+                    recordCompletedSpan(
+                        name = "tz-old-span",
+                        startTimeNanos = (harness.fakeClock.now() - 1L).millisToNanos(),
+                        endTimeNanos = harness.fakeClock.now().millisToNanos(),
+                    )
+                    stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
+                    stopSpan(parentSpanId)
+                }
+            }
+
+            val spans = checkNotNull(sessionPayload?.spans?.filter { it.name.startsWith("tz-") }?.associateBy { it.name })
+            assertEquals(4, spans.size)
+            with(checkNotNull(spans["tz-parent-span"])) {
+                assertEquals("testvalue", attributes["testkey"])
+            }
+            with(checkNotNull(spans["tz-child-span"])) {
+                assertEquals("cool event bro", events[0].name)
+                assertEquals("value", events[0].attributes["key"])
+                assertEquals(StatusCode.ERROR, status)
+            }
+            with(checkNotNull(spans["tz-another-span"])) {
+                assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
+            }
+            assertNotNull(spans["tz-old-span"])
         }
     }
 

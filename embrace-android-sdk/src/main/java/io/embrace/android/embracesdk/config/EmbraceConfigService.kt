@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -25,10 +24,8 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
-import java.util.concurrent.Callable
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
 import kotlin.math.min
 
 /**
@@ -40,9 +37,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
-    private val stopBehavior: () -> Unit = {},
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
 ) : ConfigService, ProcessStateListener {
 
@@ -120,12 +116,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             localSupplier = localConfig.sdkConfig::startupMoment
         )
 
-    override val spansBehavior: SpansBehavior =
-        SpansBehavior(
-            thresholdCheck = thresholdCheck,
-            remoteSupplier = { getConfig().spansConfig }
-        )
-
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehavior(
         thresholdCheck = thresholdCheck,
         remoteSupplier = remoteSupplier
@@ -174,16 +164,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
     private fun performInitialConfigLoad() {
         logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
-        try {
-            executorService.submit(
-                Callable<Any?> {
-                    loadConfigFromCache()
-                    null
-                }
-            )
-        } catch (ex: RejectedExecutionException) {
-            logger.logDebug("Failed to schedule initial config load from cache.", ex)
-        }
+        backgroundWorker.submit(runnable = ::loadConfigFromCache)
     }
 
     /**
@@ -225,36 +206,33 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private fun refreshConfig() {
         logger.logDeveloper("EmbraceConfigService", "Attempting to refresh config")
         val previousConfig = configProp
-        executorService.submit(
-            Callable<Any> {
-                logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
+        backgroundWorker.submit {
+            logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
 
-                // Ensure that another thread didn't refresh it already in the meantime
-                if (configRequiresRefresh()) {
-                    try {
-                        lastRefreshConfigAttempt = clock.now()
-                        val newConfig = apiService.getConfig()
-                        if (newConfig != null) {
-                            updateConfig(previousConfig, newConfig)
-                            lastUpdated = clock.now()
-                        }
-                        configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
-                        logger.logDeveloper("EmbraceConfigService", "Config updated")
-                    } catch (ex: Exception) {
-                        configRetrySafeWindow =
-                            min(
-                                MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
-                                configRetrySafeWindow * 2
-                            )
-                        logger.logWarning(
-                            "Failed to load SDK config from the server. " +
-                                "Trying again in " + configRetrySafeWindow + " seconds."
-                        )
+            // Ensure that another thread didn't refresh it already in the meantime
+            if (configRequiresRefresh()) {
+                try {
+                    lastRefreshConfigAttempt = clock.now()
+                    val newConfig = apiService.getConfig()
+                    if (newConfig != null) {
+                        updateConfig(previousConfig, newConfig)
+                        lastUpdated = clock.now()
                     }
+                    configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
+                    logger.logDeveloper("EmbraceConfigService", "Config updated")
+                } catch (ex: Exception) {
+                    configRetrySafeWindow =
+                        min(
+                            MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
+                            configRetrySafeWindow * 2
+                        )
+                    logger.logWarning(
+                        "Failed to load SDK config from the server. " +
+                            "Trying again in " + configRetrySafeWindow + " seconds."
+                    )
                 }
-                configProp
             }
-        )
+        }
     }
 
     private fun updateConfig(previousConfig: RemoteConfig, newConfig: RemoteConfig) {
@@ -287,12 +265,12 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         listeners.add(configListener)
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
         if (Embrace.getInstance().isStarted && isSdkDisabled()) {
             logger.logInfo("Embrace SDK disabled by config")
-            stopBehavior()
+            Embrace.getInstance().internalInterface.stopSdk()
         }
     }
 

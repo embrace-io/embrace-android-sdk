@@ -2,13 +2,30 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.payload.SessionMessage
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.concurrent.Future
+import java.util.concurrent.FutureTask
+import java.util.zip.GZIPInputStream
 
 internal class FakeApiService : ApiService {
+
+    var throwExceptionSendSession: Boolean = false
+    private val serializer = EmbraceSerializer()
+    val logRequests = mutableListOf<EventMessage>()
+    val networkCallRequests = mutableListOf<NetworkEvent>()
+    val eventRequests = mutableListOf<EventMessage>()
+    val crashRequests = mutableListOf<EventMessage>()
+    val blobRequests = mutableListOf<BlobMessage>()
+    val sessionRequests = mutableListOf<SessionMessage>()
+    val bgActivityRequests = mutableListOf<SessionMessage>()
 
     override fun getConfig(): RemoteConfig? {
         TODO("Not yet implemented")
@@ -19,30 +36,40 @@ internal class FakeApiService : ApiService {
     }
 
     override fun sendLog(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
+        logRequests.add(eventMessage)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        TODO("Not yet implemented")
+        networkCallRequests.add(networkEvent)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
+        eventRequests.add(eventMessage)
     }
 
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendCrash(crash: EventMessage) {
-        TODO("Not yet implemented")
+    override fun sendCrash(crash: EventMessage): Future<*> {
+        crashRequests.add(crash)
+        return FutureTask { }
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        TODO("Not yet implemented")
+        blobRequests.add(blobMessage)
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        TODO("Not yet implemented")
+    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*>? {
+        if (throwExceptionSendSession) {
+            error("FakeApiService.sendSession")
+        }
+        val stream = ByteArrayOutputStream()
+        action(stream)
+        val obj = readBodyAsSessionMessage(stream.toByteArray().inputStream())
+        sessionRequests.add(obj)
+        return FutureTask { }
+    }
+
+    private fun readBodyAsSessionMessage(inputStream: InputStream): SessionMessage {
+        return GZIPInputStream(inputStream).use {
+            serializer.fromJson(it, SessionMessage::class.java)
+        }
     }
 }

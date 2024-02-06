@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal
 
 import android.util.Pair
@@ -12,7 +14,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
  * with the Android SDK. This is not publicly supported and methods can change at any time.
  */
 @InternalApi
-public interface EmbraceInternalInterface {
+public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.logInfo]
      */
@@ -137,67 +139,29 @@ public interface EmbraceInternalInterface {
      * Whether network capture has been disabled through an internal, not-publicly supported means
      */
     public fun isInternalNetworkCaptureDisabled(): Boolean
-}
 
-internal val defaultImpl = object : EmbraceInternalInterface {
+    /**
+     * Whether the ANR capture service is enabled
+     */
+    public fun isAnrCaptureEnabled(): Boolean
 
-    override fun logInfo(message: String, properties: Map<String, Any>?) { }
+    /**
+     * Whether the native crash capture is enabled
+     */
+    public fun isNdkEnabled(): Boolean
 
-    override fun logWarning(message: String, properties: Map<String, Any>?, stacktrace: String?) { }
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    public fun logInternalError(message: String?, details: String?)
 
-    override fun logError(message: String, properties: Map<String, Any>?, stacktrace: String?, isException: Boolean) { }
+    /**
+     * Logs an internal error to the Embrace SDK - this is not intended for public use.
+     */
+    public fun logInternalError(error: Throwable)
 
-    override fun logHandledException(
-        throwable: Throwable,
-        type: LogType,
-        properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?
-    ) { }
-
-    override fun recordCompletedNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        statusCode: Int,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) { }
-
-    override fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        error: Throwable?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) { }
-
-    override fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) { }
-
-    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) { }
-
-    override fun logComposeTap(point: Pair<Float, Float>, elementName: String) { }
-
-    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
-
-    override fun setProcessStartedByNotification() { }
-
-    override fun isNetworkSpanForwardingEnabled(): Boolean = false
-
-    override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
-
-    override fun isInternalNetworkCaptureDisabled(): Boolean = false
+    /**
+     * Stop the Embrace SDK and disable its functionality
+     */
+    public fun stopSdk()
 }

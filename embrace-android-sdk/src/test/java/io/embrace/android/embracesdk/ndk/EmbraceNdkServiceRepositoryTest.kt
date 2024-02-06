@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.ndk
 
-import android.content.Context
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.mockk.every
@@ -20,16 +20,16 @@ internal class EmbraceNdkServiceRepositoryTest {
 
     companion object {
         private lateinit var repository: EmbraceNdkServiceRepository
-        private lateinit var context: Context
+        private lateinit var storageManager: FakeStorageService
         private lateinit var logger: InternalEmbraceLogger
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
             mockkStatic(InternalEmbraceLogger::class)
-            context = mockk(relaxUnitFun = true)
+            storageManager = FakeStorageService()
             logger = mockk(relaxed = true)
-            repository = EmbraceNdkServiceRepository(context, logger)
+            repository = EmbraceNdkServiceRepository(storageManager, logger)
         }
 
         @AfterClass
@@ -62,10 +62,6 @@ internal class EmbraceNdkServiceRepositoryTest {
         every { file2.isDirectory } returns true
         every { file1.name } returns "ndk"
         every { file2.name } returns "ndk"
-
-        val fileArray = arrayOf(file1, file2)
-        every { context.cacheDir } returns mockk()
-        every { context.cacheDir.listFiles() } returns fileArray
 
         mockedRepository.sortNativeCrashes(true)
         verify { mockedRepository["getNativeFiles"](any() as FilenameFilter) }

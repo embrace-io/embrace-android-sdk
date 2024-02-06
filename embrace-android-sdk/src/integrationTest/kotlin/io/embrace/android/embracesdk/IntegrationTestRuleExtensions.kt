@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.annotation.StartupActivity
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
@@ -10,6 +9,7 @@ import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -42,14 +42,28 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
  * Returns a list of [SessionMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
-    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }
+    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "foreground" }
+}
+
+/**
+ * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
+ */
+internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
+    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "background" }
+}
+
+/**
+ * Returns the last [SessionMessage] that was saved by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMessage? {
+    return fakeDeliveryModule.deliveryService.lastSavedSession
 }
 
 /**
  * Returns the last [SessionMessage] that was sent by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage {
-    return getSentSessionMessages().last()
+internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
+    return getSentSessionMessages().lastOrNull()
 }
 
 /**
@@ -64,21 +78,17 @@ internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMes
  */
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
-    action: () -> Unit
-): SessionMessage {
+    action: () -> Unit = {}
+): SessionMessage? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
-    val activityController = if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
+    val activityController =
+        if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
 
     activityController?.create()
     activityController?.start()
     activityService.onForeground()
     activityController?.resume()
-
-    // assert a session was started.
-    val startSession = getLastSentSessionMessage()
-    assertEquals("st", startSession.session.messageType)
-    // TODO: future: increase number of assertions on what is always in a start message?
 
     // perform a custom action during the session boundary, e.g. adding a breadcrumb.
     action()
@@ -88,17 +98,10 @@ internal fun IntegrationTestRule.Harness.recordSession(
     activityController?.pause()
     activityService.onBackground()
     activityController?.stop()
-
-    val endSession = getLastSentSessionMessage()
-    assertEquals("en", endSession.session.messageType)
-    // TODO: future: increase number of assertions on what is always in a start message?
-
-
-    // return the session end message for further assertions.
-    return endSession
+    return getLastSentSessionMessage()
 }
 
-internal fun exceptionsService(): EmbraceInternalErrorService? = Embrace.getImpl().exceptionsService
+internal fun internalErrorService(): InternalErrorService? = Embrace.getImpl().internalErrorService
 
 /**
  * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs] elapses. Otherwise, throws [TimeoutException]
@@ -116,6 +119,40 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs:
     }
 
     throw TimeoutException("Timeout period elapsed before condition met")
+}
+
+internal fun verifySessionHappened(message: SessionMessage) {
+    verifySessionMessage(message)
+    assertEquals("en", message.session.messageType)
+}
+
+internal fun verifySessionMessage(sessionMessage: SessionMessage) {
+    assertNotNull(sessionMessage.session)
+    assertNotNull(sessionMessage.appInfo)
+    assertNotNull(sessionMessage.deviceInfo)
+
+    if (sessionMessage.session.messageType == "en") {
+        assertNotNull(sessionMessage.userInfo)
+        assertNotNull(sessionMessage.breadcrumbs)
+        assertNotNull(sessionMessage.performanceInfo)
+    }
+}
+
+internal fun verifyBgActivityHappened(message: SessionMessage) {
+    verifyBgActivityMessage(message)
+    assertEquals("en", message.session.messageType)
+}
+
+internal fun verifyBgActivityMessage(message: SessionMessage) {
+    assertNotNull(message.session)
+    assertNotNull(message.appInfo)
+    assertNotNull(message.deviceInfo)
+
+    if (message.session.messageType == "en") {
+        assertNotNull(message.userInfo)
+        assertNotNull(message.breadcrumbs)
+        assertNotNull(message.performanceInfo)
+    }
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

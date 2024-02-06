@@ -10,22 +10,25 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.payload.Interval
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.NavigableMap
 import java.util.TreeMap
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val clock: Clock,
-    private val registrationExecutorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
     private val connectivityManager: ConnectivityManager?,
     private val isNetworkCaptureEnabled: Boolean
 ) : BroadcastReceiver(), NetworkConnectivityService {
+
+    companion object {
+        private const val MAX_CAPTURED_NETWORK_STATUS = 100
+    }
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private val networkReachable: NavigableMap<Long, NetworkStatus> = TreeMap()
@@ -118,7 +121,9 @@ internal class EmbraceNetworkConnectivityService(
 
     private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus) {
         synchronized(this) {
-            networkReachable[timestamp] = networkStatus
+            if (networkReachable.size < MAX_CAPTURED_NETWORK_STATUS) {
+                networkReachable[timestamp] = networkStatus
+            }
         }
     }
 
@@ -126,20 +131,17 @@ internal class EmbraceNetworkConnectivityService(
         lastNetworkStatus == null || lastNetworkStatus != newNetworkStatus
 
     private fun registerConnectivityActionReceiver() {
-        registrationExecutorService.submit(
-            Callable<Any?> {
-                try {
-                    context.registerReceiver(this, intentFilter)
-                } catch (ex: Exception) {
-                    logger.logDebug(
-                        "Failed to register EmbraceNetworkConnectivityService " +
-                            "broadcast receiver. Connectivity status will be unavailable.",
-                        ex
-                    )
-                }
-                null
+        backgroundWorker.submit {
+            try {
+                context.registerReceiver(this, intentFilter)
+            } catch (ex: Exception) {
+                logger.logDebug(
+                    "Failed to register EmbraceNetworkConnectivityService " +
+                        "broadcast receiver. Connectivity status will be unavailable.",
+                    ex
+                )
             }
-        )
+        }
     }
 
     override fun close() {

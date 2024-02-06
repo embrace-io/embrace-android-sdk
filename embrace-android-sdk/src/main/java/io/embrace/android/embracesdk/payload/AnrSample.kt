@@ -1,16 +1,18 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Holds thread data taken during an [AnrInterval].
  */
+@JsonClass(generateAdapter = true)
 internal data class AnrSample(
 
     /**
      * The timestamp in milliseconds at which this sample was captured
      */
-    @SerializedName("ts")
+    @Json(name = "ts")
     val timestamp: Long,
 
     /**
@@ -21,13 +23,13 @@ internal data class AnrSample(
     /**
      * The overhead in milliseconds associated with capturing thread traces for this sample
      */
-    @SerializedName("o")
+    @Json(name = "o")
     val sampleOverheadMs: Long?,
 
     /**
      * The status code of the ANR sample.
      */
-    @SerializedName("c")
+    @Json(name = "c")
     val code: Int? = CODE_DEFAULT
 ) {
 

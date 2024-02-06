@@ -20,6 +20,7 @@ internal class AutoDataCaptureBehavior(
 
     companion object {
         const val MEMORY_SERVICE_ENABLED_DEFAULT = true
+        const val THERMAL_STATUS_ENABLED_DEFAULT = true
         const val POWER_SAVE_MODE_SERVICE_ENABLED_DEFAULT = true
         const val NETWORK_CONNECTIVITY_SERVICE_ENABLED_DEFAULT = true
         const val ANR_SERVICE_ENABLED_DEFAULT = true
@@ -35,6 +36,14 @@ internal class AutoDataCaptureBehavior(
     fun isMemoryServiceEnabled(): Boolean {
         return local?.sdkConfig?.automaticDataCaptureConfig?.memoryServiceEnabled
             ?: MEMORY_SERVICE_ENABLED_DEFAULT
+    }
+
+    /**
+     * Returns true if SDK should automatically capture thermal status data
+     */
+    fun isThermalStatusCaptureEnabled(): Boolean {
+        return thresholdCheck.isBehaviorEnabled(remote?.dataConfig?.pctThermalStatusEnabled)
+            ?: THERMAL_STATUS_ENABLED_DEFAULT
     }
 
     /**

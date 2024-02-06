@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.SessionLifeEventType
-import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -36,13 +35,12 @@ internal class SessionTest {
         warnLogsAttemptedToSend = 2,
         errorLogsAttemptedToSend = 3,
         crashReportId = "fake-crash-id",
-        endType = SessionLifeEventType.STATE,
-        startType = SessionLifeEventType.STATE,
+        endType = LifeEventType.STATE,
+        startType = LifeEventType.STATE,
         startupDuration = 1223,
         startupThreshold = 5000,
         sdkStartupDuration = 109,
         unhandledExceptions = 1,
-        user = UserInfo("fake-user-id", "fake-user-name"),
         exceptionError = ExceptionError(false),
         orientations = listOf(Orientation(1, 16092342200)),
         properties = mapOf("fake-key" to "fake-value"),
@@ -59,16 +57,12 @@ internal class SessionTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("session_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("session_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("session_expected.json")
-        val obj = Gson().fromJson(json, Session::class.java)
+        val obj = deserializeJsonFromResource<Session>("session_expected.json")
         assertNotNull(obj)
 
         with(obj) {
@@ -92,8 +86,8 @@ internal class SessionTest {
             assertEquals(2, warnLogsAttemptedToSend)
             assertEquals(3, errorLogsAttemptedToSend)
             assertEquals("fake-crash-id", crashReportId)
-            assertEquals(SessionLifeEventType.STATE, endType)
-            assertEquals(SessionLifeEventType.STATE, startType)
+            assertEquals(LifeEventType.STATE, endType)
+            assertEquals(LifeEventType.STATE, startType)
             assertEquals(1223L, startupDuration)
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)
@@ -107,9 +101,8 @@ internal class SessionTest {
         }
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", Session::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<Session>()
     }
 }

@@ -26,7 +26,8 @@ import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.utils.eagerLazyLoad
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.eagerLazyLoad
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -34,7 +35,6 @@ import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 /**
  * Provides information about the state of the device, retrieved from Android system services,
@@ -67,7 +67,7 @@ internal class EmbraceMetadataService private constructor(
     buildGuid: String?,
     unitySdkVersion: String?,
     rnSdkVersion: String?,
-    private val metadataRetrieveExecutorService: ExecutorService,
+    private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture
@@ -80,9 +80,6 @@ internal class EmbraceMetadataService private constructor(
     private val buildGuid: String?
     private val unitySdkVersion: String?
     private var reactNativeBundleId: Lazy<String?>
-
-    @Volatile
-    private var sessionId: String? = null
 
     @Volatile
     private var diskUsage: DiskUsage? = null
@@ -144,15 +141,11 @@ internal class EmbraceMetadataService private constructor(
     }
 
     private fun asyncRetrieveAdditionalDeviceInfo() {
-        if (!configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            logDeveloper("EmbraceMetadataService", "NDK not enabled")
-            return
-        }
         if (!cpuName.isNullOrEmpty() && !egl.isNullOrEmpty()) {
             logDeveloper("EmbraceMetadataService", "Additional device info already exists")
             return
         }
-        metadataRetrieveExecutorService.submit {
+        metadataBackgroundWorker.submit {
             logDeveloper("EmbraceMetadataService", "Async retrieve cpuName & egl")
             val storedCpuName = preferencesService.cpuName
             val storedEgl = preferencesService.egl
@@ -179,7 +172,7 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Screen resolution already exists")
             return
         }
-        metadataRetrieveExecutorService.submit {
+        metadataBackgroundWorker.submit {
             logDeveloper("EmbraceMetadataService", "Async retrieve screen resolution")
             val storedScreenResolution = preferencesService.screenResolution
             // get from shared preferences
@@ -207,46 +200,42 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "Jailbroken already exists")
             return
         }
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
-                val storedIsJailbroken = preferencesService.jailbroken
-                // load value from shared preferences
-                if (storedIsJailbroken != null) {
-                    logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
-                    isJailbroken = storedIsJailbroken
-                } else {
-                    isJailbroken = MetadataUtils.isJailbroken()
-                    preferencesService.jailbroken = isJailbroken
-                    logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
-                }
-                logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
-                null
+        metadataBackgroundWorker.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve jailbroken")
+            val storedIsJailbroken = preferencesService.jailbroken
+            // load value from shared preferences
+            if (storedIsJailbroken != null) {
+                logDeveloper("EmbraceMetadataService", "Jailbroken is present, loading from store")
+                isJailbroken = storedIsJailbroken
+            } else {
+                isJailbroken = MetadataUtils.isJailbroken()
+                preferencesService.jailbroken = isJailbroken
+                logDeveloper("EmbraceMetadataService", "Jailbroken processed and stored")
             }
-        )
+            logDeveloper("EmbraceMetadataService", "Jailbroken: $isJailbroken")
+        }
     }
 
     fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
-        metadataRetrieveExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
-                val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
-                if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
-                    val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
-                        storageStatsManager, packageManager, packageName
-                    )
-                    if (deviceDiskAppUsage != null) {
-                        logDeveloper("EmbraceMetadataService", "Disk usage is present")
-                        diskUsage = DiskUsage(deviceDiskAppUsage, free)
-                    }
+        metadataBackgroundWorker.submit {
+            logDeveloper("EmbraceMetadataService", "Async retrieve disk usage")
+            val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
+            if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+                val deviceDiskAppUsage = MetadataUtils.getDeviceDiskAppUsage(
+                    storageStatsManager,
+                    packageManager,
+                    packageName
+                )
+                if (deviceDiskAppUsage != null) {
+                    logDeveloper("EmbraceMetadataService", "Disk usage is present")
+                    diskUsage = DiskUsage(deviceDiskAppUsage, free)
                 }
-                if (diskUsage == null) {
-                    diskUsage = DiskUsage(null, free)
-                }
-                logDeveloper("EmbraceMetadataService", "Device disk free: $free")
-                null
             }
-        )
+            if (diskUsage == null) {
+                diskUsage = DiskUsage(null, free)
+            }
+            logDeveloper("EmbraceMetadataService", "Device disk free: $free")
+        }
     }
 
     fun getReactNativeBundleId(): String? = reactNativeBundleId.value
@@ -276,7 +265,6 @@ internal class EmbraceMetadataService private constructor(
             MetadataUtils.getOperatingSystemVersionCode(),
             getScreenResolution(),
             MetadataUtils.getTimezoneId(),
-            MetadataUtils.getSystemUptime(),
             MetadataUtils.getNumberOfCores(),
             if (populateAllFields) getCpuName() else null,
             if (populateAllFields) getEgl() else null
@@ -368,40 +356,6 @@ internal class EmbraceMetadataService private constructor(
 
     override fun isOsUpdated(): Boolean = osUpdated.value
 
-    override val activeSessionId: String?
-        get() = sessionId
-
-    override fun setActiveSessionId(sessionId: String?) {
-        logDeveloper("EmbraceMetadataService", "Active session Id: $sessionId")
-        this.sessionId = sessionId
-        setSessionIdToProcessStateSummary(this.sessionId)
-    }
-
-    override fun removeActiveSessionId(sessionId: String?) {
-        if (this.sessionId != null && this.sessionId == sessionId) {
-            logDeveloper("EmbraceMetadataService", "Nulling active session Id")
-            setActiveSessionId(null)
-        }
-    }
-
-    /**
-     * On android 11+, we use ActivityManager#setProcessStateSummary to store sessionId
-     * Then, this information will be included in the record of ApplicationExitInfo on the death of the current calling process
-     *
-     * @param sessionId current session id
-     */
-    private fun setSessionIdToProcessStateSummary(sessionId: String?) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (sessionId != null) {
-                try {
-                    activityManager?.setProcessStateSummary(sessionId.toByteArray())
-                } catch (e: Throwable) {
-                    logError("Couldn't set Process State Summary", e)
-                }
-            }
-        }
-    }
-
     override fun getAppState(): String {
         return if (processStateService.isInBackground) {
             logDeveloper("EmbraceMetadataService", "App state: BACKGROUND")
@@ -443,7 +397,7 @@ internal class EmbraceMetadataService private constructor(
         preferencesService.javaScriptBundleURL = jsBundleIdUrl
 
         // get the hashed bundle ID file from the bundle ID URL
-        reactNativeBundleId = metadataRetrieveExecutorService.eagerLazyLoad(
+        reactNativeBundleId = metadataBackgroundWorker.eagerLazyLoad(
             Callable {
                 computeReactNativeBundleId(
                     context,
@@ -515,7 +469,7 @@ internal class EmbraceMetadataService private constructor(
             appFramework: AppFramework,
             preferencesService: PreferencesService,
             processStateService: ProcessStateService,
-            metadataRetrieveExecutorService: ExecutorService,
+            metadataBackgroundWorker: BackgroundWorker,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
             activityManager: ActivityManager?,
@@ -553,7 +507,7 @@ internal class EmbraceMetadataService private constructor(
             val reactNativeBundleId: Lazy<String?>
             if (appFramework == AppFramework.REACT_NATIVE) {
                 reactNativeBundleId =
-                    metadataRetrieveExecutorService.eagerLazyLoad(
+                    metadataBackgroundWorker.eagerLazyLoad(
                         Callable {
                             val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
                             if (lastKnownJsBundleUrl != null) {
@@ -635,7 +589,7 @@ internal class EmbraceMetadataService private constructor(
                 buildGuid,
                 unitySdkVersion,
                 rnSdkVersion,
-                metadataRetrieveExecutorService,
+                metadataBackgroundWorker,
                 clock,
                 embraceCpuInfoDelegate,
                 deviceArchitecture
@@ -686,7 +640,6 @@ internal class EmbraceMetadataService private constructor(
             if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
                 bundleStream = getBundleAsset(context, bundleUrl)
-                logDeveloper("EmbraceMetadataService", "Loaded bundle file asset: $bundleStream")
             } else {
                 // looks for the bundle file from the custom path
                 bundleStream = getCustomBundleStream(bundleUrl)
@@ -721,6 +674,8 @@ internal class EmbraceMetadataService private constructor(
             // if the hashing of the JS bundle URL fails, returns the default bundle ID
             return defaultBundleId
         }
+
+        fun isEmulator(): Boolean = MetadataUtils.isEmulator()
 
         private fun hashBundleToMd5(bundle: ByteArray): String {
             val hashBundle: String

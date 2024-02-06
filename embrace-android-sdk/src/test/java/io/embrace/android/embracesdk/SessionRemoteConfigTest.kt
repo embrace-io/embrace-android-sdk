@@ -7,11 +7,11 @@ import org.junit.Test
 
 internal class SessionRemoteConfigTest {
 
+    @Suppress("DEPRECATION")
     @Test
     fun testDefaults() {
-        val cfg = SessionRemoteConfig(false, false, null, null)
+        val cfg = SessionRemoteConfig(false, null, null)
         assertFalse(checkNotNull(cfg.isEnabled))
-        assertFalse(checkNotNull(cfg.endAsync))
         assertNull(cfg.sessionComponents)
         assertNull(cfg.fullSessionEvents)
     }

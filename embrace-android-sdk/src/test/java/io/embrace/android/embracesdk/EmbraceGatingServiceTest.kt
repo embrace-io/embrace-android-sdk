@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -33,7 +34,7 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
@@ -156,7 +157,7 @@ internal class EmbraceGatingServiceTest {
 
     @Test
     fun `test gating feature from local and remote config`() {
-        localConfig = LocalConfig.buildConfig(
+        localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
             "{\"session\": {\"components\": [" +
@@ -385,7 +386,7 @@ internal class EmbraceGatingServiceTest {
             event = Event(
                 eventId = Uuid.getEmbUuid(),
                 timestamp = 100L,
-                type = EmbraceEvent.Type.INFO_LOG
+                type = EventType.INFO_LOG
             ),
             userInfo = userInfo,
             performanceInfo = PerformanceInfo()
@@ -478,7 +479,6 @@ internal class EmbraceGatingServiceTest {
         RemoteConfig(
             sessionConfig = SessionRemoteConfig(
                 true,
-                false,
                 components,
                 fullSessionEvents
             )

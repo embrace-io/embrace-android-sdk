@@ -1,13 +1,18 @@
 package io.embrace.android.embracesdk.anr
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
 import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.payload.extensions.clearSamples
+import io.embrace.android.embracesdk.payload.extensions.deepCopy
+import io.embrace.android.embracesdk.payload.extensions.duration
+import io.embrace.android.embracesdk.payload.extensions.size
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -15,7 +20,10 @@ import org.junit.Test
 internal class AnrIntervalTest {
 
     private val threadInfo = ThreadInfo(
-        13, Thread.State.RUNNABLE, "my-thread", 5,
+        13,
+        Thread.State.RUNNABLE,
+        "my-thread",
+        5,
         listOf(
             "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
             "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
@@ -50,17 +58,12 @@ internal class AnrIntervalTest {
 
     @Test
     fun testAnrTickSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("anr_interval_expected.json")
-            .filter { !it.isWhitespace() }
-
-        val observed = Gson().toJson(interval.copy())
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("anr_interval_expected.json", interval.copy())
     }
 
     @Test
     fun testAnrTickDeserialization() {
-        val json = ResourceReader.readResourceAsText("anr_interval_expected.json")
-        val obj = Gson().fromJson(json, AnrInterval::class.java)
+        val obj = deserializeJsonFromResource<AnrInterval>("anr_interval_expected.json")
         assertEquals(150980980980, obj.startTime)
         assertEquals(150980980980 + 5000, obj.endTime)
         assertEquals(150980980980 + 4000, obj.lastKnownTime)
@@ -68,10 +71,9 @@ internal class AnrIntervalTest {
         assertEquals(anrSampleList, obj.anrSampleList)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testAnrIntervalEmptyObject() {
-        val anrInterval = Gson().fromJson("{}", AnrInterval::class.java)
-        assertNotNull(anrInterval)
+        deserializeEmptyJsonString<AnrInterval>()
     }
 
     @Test

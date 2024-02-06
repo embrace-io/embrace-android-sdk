@@ -24,10 +24,12 @@ internal class EmbraceInternalErrorService(
     private val processStateService: ProcessStateService,
     private val clock: Clock,
     private val logStrictMode: Boolean
-) {
+) : InternalErrorService {
     private var configService: ConfigService? = null
-    var currentExceptionError: ExceptionError? = null
-        private set
+    private var err: ExceptionError? = null
+
+    override val currentExceptionError: ExceptionError?
+        get() = err
 
     // ignore network-related exceptions since they are expected
     private val ignoredExceptionClasses by lazy {
@@ -49,7 +51,7 @@ internal class EmbraceInternalErrorService(
         ignoredExceptionClasses.map { it.name }
     }
 
-    fun setConfigService(configService: ConfigService?) {
+    override fun setConfigService(configService: ConfigService?) {
         this.configService = configService
     }
 
@@ -71,11 +73,13 @@ internal class EmbraceInternalErrorService(
                 val addResult = capturedThrowable.add(throwable)
                 addResult && ignoreThrowableCause(throwable.cause, capturedThrowable)
             }
-        } else false
+        } else {
+            false
+        }
     }
 
     @Synchronized
-    fun handleInternalError(throwable: Throwable) {
+    override fun handleInternalError(throwable: Throwable) {
         logDebug("ignoreThrowableCause - handleInternalError")
         if (ignoredExceptionClasses.contains(throwable.javaClass)) {
             logDeveloper("EmbraceInternalErrorService", "Exception ignored: " + throwable.javaClass)
@@ -99,8 +103,8 @@ internal class EmbraceInternalErrorService(
             logDeveloper("EmbraceInternalErrorService", "Ignored exception: $throwable")
             return
         }
-        if (currentExceptionError == null) {
-            currentExceptionError = ExceptionError(logStrictMode)
+        if (err == null) {
+            err = ExceptionError(logStrictMode)
         }
 
         // if the config service has not been set yet, capture the exception
@@ -109,7 +113,7 @@ internal class EmbraceInternalErrorService(
                 "EmbraceInternalErrorService",
                 "Capturing exception, config service is not set yet: $throwable"
             )
-            currentExceptionError?.addException(
+            err?.addException(
                 throwable,
                 getApplicationState(),
                 clock
@@ -123,8 +127,8 @@ internal class EmbraceInternalErrorService(
     }
 
     @Synchronized
-    fun resetExceptionErrorObject() {
-        currentExceptionError = null
+    override fun resetExceptionErrorObject() {
+        err = null
     }
 
     companion object {

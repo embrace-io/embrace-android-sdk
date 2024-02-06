@@ -1,36 +1,35 @@
 package io.embrace.android.embracesdk.comms.api
 
-import com.google.gson.stream.JsonReader
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import java.io.StringReader
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: InternalEmbraceLogger,
-    private val scheduledExecutorService: ScheduledExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
-    private val deliveryRetryManager: DeliveryRetryManager,
+    private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
     appId: String,
     urlBuilder: ApiUrlBuilder,
-    networkConnectivityService: NetworkConnectivityService
+    networkConnectivityService: NetworkConnectivityService,
 ) : ApiService, NetworkConnectivityListener {
 
     private val mapper = ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
@@ -40,7 +39,7 @@ internal class EmbraceApiService(
     init {
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
-        deliveryRetryManager.setRetryMethod(this::executePost)
+        pendingApiCallsSender.setSendMethod(this::executePost)
     }
 
     /**
@@ -63,8 +62,9 @@ internal class EmbraceApiService(
         return when (val response = apiClient.executeGet(request)) {
             is ApiResponse.Success -> {
                 logger.logInfo("Fetched new config successfully.")
-                val jsonReader = JsonReader(StringReader(response.body))
-                serializer.loadObject(jsonReader, RemoteConfig::class.java)
+                response.body?.let {
+                    serializer.fromJson(it, RemoteConfig::class.java)
+                }
             }
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")
@@ -146,92 +146,88 @@ internal class EmbraceApiService(
     }
 
     /**
-     * Sends an event to the API and waits for the request to be completed
-     *
-     * @param eventMessage the event message containing the event
-     */
-    override fun sendEventAndWait(eventMessage: EventMessage) {
-        post(eventMessage, mapper::eventMessageRequest)?.get()
-    }
-
-    /**
      * Sends a crash event to the API and reschedules it if the request times out
      *
      * @param crash the event message containing the crash
      */
-    override fun sendCrash(crash: EventMessage) {
-        try {
-            post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }?.get(
-                CRASH_TIMEOUT,
-                TimeUnit.SECONDS
-            )
-        } catch (e: Exception) {
-            logger.logError("The crash report request has timed out.")
-        }
+    override fun sendCrash(crash: EventMessage): Future<*> {
+        return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(sessionPayload: ByteArray, onFinish: (() -> Unit)?): Future<*> {
-        val request: ApiRequest = mapper.sessionRequest()
-        return postOnExecutor(sessionPayload, request, onFinish)
+    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
+        return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(
         payload: T,
         mapper: (T) -> ApiRequest,
-        noinline onComplete: (() -> Unit)? = null
-    ): Future<*>? {
-        val bytes = serializer.bytesFromPayload(payload, T::class.java)
+        noinline onComplete: (() -> Unit)? = null,
+    ): Future<*> {
         val request: ApiRequest = mapper(payload)
+        logger.logDeveloper(TAG, "Post event")
 
-        bytes?.let {
-            logger.logDeveloper(TAG, "Post event")
-            return postOnExecutor(it, request, onComplete)
+        val action: SerializationAction = { stream ->
+            ConditionalGzipOutputStream(stream).use {
+                serializer.toJson(payload, T::class.java, it)
+            }
         }
-        logger.logError("Failed to post event")
-        return null
+
+        return postOnWorker(action, request, onComplete)
     }
 
-    private fun postOnExecutor(
-        payload: ByteArray,
+    /**
+     * Submits a [NetworkRequestRunnable] to the [backgroundWorker].
+     * This way, we prioritize the sending of sessions over other network requests.
+     */
+    private fun postOnWorker(
+        action: SerializationAction,
         request: ApiRequest,
-        onComplete: (() -> Any)?
+        onComplete: (() -> Any)?,
     ): Future<*> {
-        return scheduledExecutorService.submit {
+        val priority = when (request.isSessionRequest()) {
+            true -> TaskPriority.CRITICAL
+            else -> TaskPriority.NORMAL
+        }
+        return backgroundWorker.submit(priority) {
             try {
-                if (lastNetworkStatus != NetworkStatus.NOT_REACHABLE) {
-                    executePost(request, payload)
-                } else {
-                    deliveryRetryManager.scheduleForRetry(request, payload)
-                    logger.logWarning("No connection available. Request was queued to retry later.")
-                }
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to post Embrace API call. Will retry.", ex)
-                deliveryRetryManager.scheduleForRetry(request, payload)
-                throw ex
+                handleApiRequest(request, action)
             } finally {
                 onComplete?.invoke()
             }
         }
     }
 
-    @Suppress("UseCheckOrError")
-    private fun executePost(request: ApiRequest, payload: ByteArray) {
-        val response = apiClient.executePost(request, payload)
-        if (response !is ApiResponse.Success) {
-            throw IllegalStateException("Failed to retrieve from Embrace server.")
+    /**
+     * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
+     * Otherwise, the API call is saved to be sent later.
+     */
+    private fun handleApiRequest(request: ApiRequest, action: SerializationAction) {
+        val endpoint = request.url.endpoint()
+
+        if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
+            // Execute the request if the device is online and the endpoint is not rate limited.
+            val response = executePost(request, action)
+
+            if (response.shouldRetry) {
+                pendingApiCallsSender.savePendingApiCall(request, action)
+                pendingApiCallsSender.scheduleRetry(response)
+            }
+
+            if (response !is ApiResponse.Success) {
+                // If the API call failed, propagate the error to the caller.
+                error("Failed to post Embrace API call. ")
+            }
+        } else {
+            // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
+            pendingApiCallsSender.savePendingApiCall(request, action)
         }
     }
 
-    companion object {
-        enum class Endpoint(val path: String) {
-            EVENTS("events"),
-            BLOBS("blobs"),
-            LOGGING("logging"),
-            NETWORK("network"),
-            SESSIONS("sessions")
-        }
-    }
+    /**
+     * Executes a POST request by calling [ApiClient.executePost].
+     */
+    private fun executePost(request: ApiRequest, action: SerializationAction) =
+        apiClient.executePost(request, action)
 }
 
 private const val TAG = "EmbraceApiService"
-private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash

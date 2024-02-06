@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.mockk.every
 import io.mockk.mockk
@@ -14,12 +14,12 @@ internal class FlutterInternalInterfaceImplTest {
     private lateinit var impl: FlutterInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var logger: InternalEmbraceLogger
-    private lateinit var metadataService: FakeAndroidMetadataService
+    private lateinit var metadataService: FakeMetadataService
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
-        metadataService = FakeAndroidMetadataService()
+        metadataService = FakeMetadataService()
         logger = mockk(relaxed = true)
         impl = FlutterInternalInterfaceImpl(embrace, mockk(), metadataService, logger)
     }
@@ -76,7 +76,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Dart error",
                 null,
                 null,
@@ -96,7 +96,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Dart error",
                 null,
                 null,

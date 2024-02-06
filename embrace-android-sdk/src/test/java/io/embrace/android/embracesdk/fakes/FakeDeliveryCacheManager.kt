@@ -1,26 +1,38 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryFailedApiCalls
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
-        TODO("Not yet implemented")
-    }
 
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        TODO("Not yet implemented")
+    val saveSessionRequests = mutableListOf<Pair<SessionMessage, SessionSnapshotType>>()
+    val saveBgActivityRequests = mutableListOf<SessionMessage>()
+    val saveCrashRequests = mutableListOf<EventMessage>()
+
+    private val cachedSessions = mutableListOf<SessionMessage>()
+    private val serializer = EmbraceSerializer()
+
+    override fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+        saveSessionRequests.add(Pair(sessionMessage, snapshotType))
     }
 
     override fun loadSession(sessionId: String): SessionMessage? {
         TODO("Not yet implemented")
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
-        TODO("Not yet implemented")
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
+        val message = cachedSessions.singleOrNull { it.session.sessionId == sessionId } ?: return null
+        return { stream ->
+            ConditionalGzipOutputStream(stream).use {
+                serializer.toJson(message, SessionMessage::class.java, it)
+            }
+        }
     }
 
     override fun deleteSession(sessionId: String) {
@@ -28,30 +40,18 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun getAllCachedSessionIds(): List<String> {
-        TODO("Not yet implemented")
-    }
-
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
-        TODO("Not yet implemented")
-    }
-
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
-        TODO("Not yet implemented")
+        return cachedSessions.map { it.session.sessionId }
     }
 
     override fun saveCrash(crash: EventMessage) {
-        TODO("Not yet implemented")
+        saveCrashRequests.add(crash)
     }
 
     override fun loadCrash(): EventMessage? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun deleteCrash() {
-        TODO("Not yet implemented")
-    }
-
-    override fun savePayload(bytes: ByteArray): String {
         TODO("Not yet implemented")
     }
 
@@ -63,11 +63,23 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun saveFailedApiCalls(failedApiCalls: DeliveryFailedApiCalls) {
+    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
         TODO("Not yet implemented")
     }
 
-    override fun loadFailedApiCalls(): DeliveryFailedApiCalls {
+    override fun loadPendingApiCalls(): PendingApiCalls {
         TODO("Not yet implemented")
+    }
+
+    override fun savePayload(action: SerializationAction): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayloadAsAction(name: String): SerializationAction {
+        TODO("Not yet implemented")
+    }
+
+    fun addCachedSessions(vararg sessionMessages: SessionMessage) {
+        cachedSessions.addAll(sessionMessages)
     }
 }

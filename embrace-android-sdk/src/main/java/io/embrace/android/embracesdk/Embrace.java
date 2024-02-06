@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.config.ConfigService;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
@@ -414,16 +413,17 @@ public final class Embrace implements EmbraceAndroidApi {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean isTracingAvailable() {
-        return impl.tracer.getValue().isTracingAvailable();
+        return impl.tracer.isTracingAvailable();
     }
 
     @Nullable
     @Override
     public EmbraceSpan createSpan(@NonNull String name) {
         if (verifyNonNullParameters("createSpan", name)) {
-            return impl.tracer.getValue().createSpan(name);
+            return impl.tracer.createSpan(name);
         }
 
         return null;
@@ -433,7 +433,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public EmbraceSpan createSpan(@NonNull String name, @Nullable EmbraceSpan parent) {
         if (verifyNonNullParameters("createSpan", name)) {
-            return impl.tracer.getValue().createSpan(name, parent);
+            return impl.tracer.createSpan(name, parent);
         }
 
         return null;
@@ -442,7 +442,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public <T> T recordSpan(@NonNull String name, @NonNull Function0<? extends T> code) {
         if (verifyNonNullParameters("recordSpan", name, code)) {
-            return impl.tracer.getValue().recordSpan(name, code);
+            return impl.tracer.recordSpan(name, code);
         }
 
         return code != null ? code.invoke() : null;
@@ -451,7 +451,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public <T> T recordSpan(@NonNull String name, @Nullable EmbraceSpan parent, @NonNull Function0<? extends T> code) {
         if (verifyNonNullParameters("recordSpan", name, code)) {
-            return impl.tracer.getValue().recordSpan(name, parent, code);
+            return impl.tracer.recordSpan(name, parent, code);
         }
 
         return code != null ? code.invoke() : null;
@@ -462,7 +462,7 @@ public final class Embrace implements EmbraceAndroidApi {
                                        @Nullable EmbraceSpan parent, @Nullable Map<String, String> attributes,
                                        @Nullable List<EmbraceSpanEvent> events) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent, attributes, events);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent, attributes, events);
         }
 
         return false;
@@ -471,7 +471,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos);
         }
 
         return false;
@@ -480,7 +480,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode);
         }
 
         return false;
@@ -489,7 +489,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable EmbraceSpan parent) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos, parent);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, parent);
         }
 
         return false;
@@ -499,7 +499,7 @@ public final class Embrace implements EmbraceAndroidApi {
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode,
                                        @Nullable EmbraceSpan parent) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent);
         }
 
         return false;
@@ -509,7 +509,7 @@ public final class Embrace implements EmbraceAndroidApi {
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos,
                                        @Nullable Map<String, String> attributes, @Nullable List<EmbraceSpanEvent> events) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.getValue().recordCompletedSpan(name, startTimeNanos, endTimeNanos, attributes, events);
+            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, attributes, events);
         }
 
         return false;
@@ -569,6 +569,7 @@ public final class Embrace implements EmbraceAndroidApi {
 
     /**
      * Get internal interface for the intra-Embrace, not-publicly-supported API
+     *
      * @hide
      */
     @NonNull
@@ -578,35 +579,9 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logInternalError(@Nullable String message, @Nullable String details) {
-        impl.logInternalError(message, details);
-    }
-
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logInternalError(@NonNull Throwable error) {
-        impl.logInternalError(error);
-    }
-
-    /**
-     * @hide
-     */
-    @Nullable
-    @InternalApi
-    public ConfigService getConfigService() {
-        return impl.getConfigService();
-    }
-
-    /**
      * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native.
+     * communication with the Android SDK for React Native. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
@@ -616,34 +591,11 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Logs a React Native Redux Action - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logRnAction(@NonNull String name, long startTime, long endTime,
-                            @NonNull Map<String, Object> properties, int bytesSent, @NonNull String output) {
-        if (verifyNonNullParameters("logRnAction", name, properties, output)) {
-            impl.logRnAction(name, startTime, endTime, properties, bytesSent, output);
-        }
-    }
-
-    /**
-     * Logs the fact that a particular view was entered.
-     * <p>
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     * @hide
      *
-     * @param screen the name of the view to log
-     */
-    @InternalApi
-    public void logRnView(@NonNull String screen) {
-        impl.logRnView(screen);
-    }
-
-    /**
+     * @hide
      * Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity.
+     * communication with the Android SDK for Unity. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
@@ -652,76 +604,16 @@ public final class Embrace implements EmbraceAndroidApi {
         return impl.getUnityInternalInterface();
     }
 
-    @InternalApi
-    void installUnityThreadSampler() {
-        getImpl().installUnityThreadSampler();
-    }
-
     /**
      * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter.
+     * communication with the Android SDK for Flutter. Not part of the supported public API.
+     *
      * @hide
      */
     @Nullable
     @InternalApi
     public FlutterInternalInterface getFlutterInternalInterface() {
         return impl.getFlutterInternalInterface();
-    }
-
-    /**
-     * Sets the Embrace Flutter SDK version - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void setEmbraceFlutterSdkVersion(@Nullable String version) {
-        impl.setEmbraceFlutterSdkVersion(version);
-    }
-
-    /**
-     * Sets the Dart version - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void setDartVersion(@Nullable String version) {
-        impl.setDartVersion(version);
-    }
-
-    /**
-     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logHandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.HANDLED);
-    }
-
-    /**
-     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
-     * @hide
-     */
-    @InternalApi
-    public void logUnhandledDartException(
-        @Nullable String stack,
-        @Nullable String name,
-        @Nullable String message,
-        @Nullable String context,
-        @Nullable String library
-    ) {
-        impl.logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED);
-    }
-
-    /**
-     * @hide
-     */
-    @InternalApi
-    public void sampleCurrentThreadDuringAnrs() {
-        impl.sampleCurrentThreadDuringAnrs();
     }
 
     private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {

@@ -1,144 +1,123 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.internal.utils.MessageUtils
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class AppInfo(
     /**
      * The version of the app which has embedded the Embrace SDK.
      */
-    @SerializedName("v")
+    @Json(name = "v")
     val appVersion: String? = null,
     /**
      * The framework used by the app.
      */
-    @SerializedName("f")
+    @Json(name = "f")
     val appFramework: Int? = null,
 
     /**
      * A unique ID for the build which is generated at build time. This is written to a JSON file in
      * the build directory and read by {@link BuildInfo}.
      */
-    @SerializedName("bi")
+    @Json(name = "bi")
     val buildId: String? = null,
 
     /**
      * The build type name. This is written to a JSON file in the build directory and read by
      * {@link BuildInfo}.
      */
-    @SerializedName("bt")
+    @Json(name = "bt")
     val buildType: String? = null,
 
     /**
      * The flavor name. This is written to a JSON file in the build directory and read by
      * {@link BuildInfo}.
      */
-    @SerializedName("fl")
+    @Json(name = "fl")
     val buildFlavor: String? = null,
 
     /**
      * The name of the environment, i.e. dev or prod, determined by whether this is a debug build.
      */
-    @SerializedName("e")
+    @Json(name = "e")
     val environment: String? = null,
 
     /**
      * Whether the app was updated since the previous launch.
      */
-    @SerializedName("vu")
+    @Json(name = "vu")
     val appUpdated: Boolean? = null,
 
     /**
      * Whether the app was updated since the previous launch.
      */
-    @SerializedName("vul")
+    @Json(name = "vul")
     val appUpdatedThisLaunch: Boolean? = null,
 
     /**
      * The app bundle version.
      */
-    @SerializedName("bv")
+    @Json(name = "bv")
     val bundleVersion: String? = null,
 
     /**
      * Whether the OS was updated since the last launch.
      */
-    @SerializedName("ou")
+    @Json(name = "ou")
     val osUpdated: Boolean? = null,
 
     /**
      * Whether the OS was updated since the last launch.
      */
-    @SerializedName("oul")
+    @Json(name = "oul")
     val osUpdatedThisLaunch: Boolean? = null,
 
     /**
      * The version number of the Embrace SDK.
      */
-    @SerializedName("sdk")
+    @Json(name = "sdk")
     val sdkVersion: String? = null,
 
     /**
      * The simple version number of the Embrace SDK.
      */
-    @SerializedName("sdc")
+    @Json(name = "sdc")
     val sdkSimpleVersion: String? = null,
 
     /**
      * The react native bundle hashed.
      */
-    @SerializedName("rn")
+    @Json(name = "rn")
     val reactNativeBundleId: String? = null,
 
     /**
      * The java script patch number.
      */
-    @SerializedName("jsp")
+    @Json(name = "jsp")
     val javaScriptPatchNumber: String? = null,
 
     /**
      * The react native version number.
      */
-    @SerializedName("rnv")
+    @Json(name = "rnv")
     val reactNativeVersion: String? = null,
 
     /**
      * The version number of the platform (e.g. Unity 2021)
      */
-    @SerializedName("unv")
+    @Json(name = "unv")
     val hostedPlatformVersion: String? = null,
 
     /**
      * The unity build id number.
      */
-    @SerializedName("ubg")
+    @Json(name = "ubg")
     val buildGuid: String? = null,
 
     /**
      * The version number of the hosted SDK (e.g. Embrace Unity 1.7.0)
      */
-    @SerializedName("usv")
+    @Json(name = "usv")
     val hostedSdkVersion: String? = null,
-) {
-    fun toJson(): String {
-        return "{\"v\": " + MessageUtils.withNull(appVersion) +
-            ",\"f\": " + appFramework +
-            ",\"bi\":" + MessageUtils.withNull(buildId) +
-            ",\"bt\":" + MessageUtils.withNull(buildType) +
-            ",\"fl\":" + MessageUtils.withNull(buildFlavor) +
-            ",\"e\":" + MessageUtils.withNull(environment) +
-            ",\"vu\":" + MessageUtils.boolToStr(appUpdated) +
-            ",\"vul\":" + MessageUtils.boolToStr(appUpdatedThisLaunch) +
-            ",\"bv\":" + MessageUtils.withNull(bundleVersion) +
-            ",\"ou\":" + MessageUtils.boolToStr(osUpdated) +
-            ",\"oul\":" + MessageUtils.boolToStr(osUpdatedThisLaunch) +
-            ",\"sdk\":" + MessageUtils.withNull(sdkVersion) +
-            ",\"sdc\":" + MessageUtils.withNull(sdkSimpleVersion) +
-            ",\"rn\":" + MessageUtils.withNull(reactNativeBundleId) +
-            ",\"jsp\":" + MessageUtils.withNull(javaScriptPatchNumber) +
-            ",\"rnv\":" + MessageUtils.withNull(reactNativeVersion) +
-            ",\"unv\":" + MessageUtils.withNull(hostedPlatformVersion) +
-            ",\"ubg\":" + MessageUtils.withNull(buildGuid) +
-            ",\"usv\":" + MessageUtils.withNull(hostedSdkVersion) + "}"
-    }
-}
+)

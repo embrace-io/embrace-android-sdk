@@ -11,11 +11,12 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -44,12 +45,12 @@ internal class EmbraceSessionPropertiesTest {
 
     @Before
     fun setUp() {
-        val executorService = Executors.newSingleThreadExecutor()
+        val worker = BackgroundWorker(Executors.newSingleThreadExecutor())
         context = ApplicationProvider.getApplicationContext()
         logger = InternalEmbraceLogger()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }
         preferencesService =
-            EmbracePreferencesService(executorService, prefs, fakeClock, EmbraceSerializer())
+            EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())
 
         config = RemoteConfig()
         configService = FakeConfigService(
@@ -188,7 +189,8 @@ internal class EmbraceSessionPropertiesTest {
             sessionProperties.add("prop0", otherValue, true)
         )
         assertEquals(
-            "property was updated", otherValue,
+            "property was updated",
+            otherValue,
             sessionProperties.get()["prop0"]
         )
         assertTrue(sessionProperties.remove("prop0"))

@@ -1,59 +1,61 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 
+@JsonClass(generateAdapter = true)
 internal class NativeThreadAnrInterval(
 
     /**
      * The JVM ID of the sampled thread
      */
-    @SerializedName("id")
+    @Json(name = "id")
     internal val id: Long?,
 
     /**
      * The JVM name of the sampled thread
      */
-    @SerializedName("n")
+    @Json(name = "n")
     internal val name: String?,
 
     /**
      * The priority of the sampled thread
      */
-    @SerializedName("p")
+    @Json(name = "p")
     internal val priority: Int?,
 
     /**
      * The offset in milliseconds that was used to take the native sample
      */
-    @SerializedName("os")
+    @Json(name = "os")
     internal val sampleOffsetMs: Long?,
 
     /**
      * The timestamp in milliseconds at which the monitored thread was first detected as blocked.
      */
-    @SerializedName("t")
+    @Json(name = "t")
     internal val threadBlockedTimestamp: Long?,
 
     /**
      * The stacktrace from the sampled thread.
      */
-    @SerializedName("ss")
+    @Json(name = "ss")
     internal val samples: MutableList<NativeThreadAnrSample>?,
 
-    state: ThreadState?,
-    unwinder: AnrRemoteConfig.Unwinder?
+    threadState: ThreadState? = null,
+    unwinderType: AnrRemoteConfig.Unwinder? = null
 ) {
 
     /**
      * The stack unwinder used
      */
-    @SerializedName("uw")
-    internal val unwinder: Int? = unwinder?.code
+    @Json(name = "uw")
+    internal var unwinder: Int? = unwinderType?.code
 
     /**
      * The JVM state of the sampled thread
      */
-    @SerializedName("s")
-    internal val state: Int? = state?.code
+    @Json(name = "s")
+    internal var state: Int? = threadState?.code
 }

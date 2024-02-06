@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
@@ -9,17 +9,23 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
-import io.embrace.android.embracesdk.fakes.FakeDeliveryRetryManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.mockk.every
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
+import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,9 +34,13 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
+
+    private val serializer = EmbraceSerializer()
+
     private lateinit var apiUrlBuilder: ApiUrlBuilder
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
@@ -38,7 +48,7 @@ internal class EmbraceApiServiceTest {
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
-    private lateinit var fakeDeliveryRetryManager: FakeDeliveryRetryManager
+    private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
 
     @Before
     fun setUp() {
@@ -56,10 +66,18 @@ internal class EmbraceApiServiceTest {
         networkConnectivityService = FakeNetworkConnectivityService()
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
-        fakeDeliveryRetryManager = FakeDeliveryRetryManager()
+        fakePendingApiCallsSender = FakePendingApiCallsSender()
         initApiService()
     }
 
+    @After
+    fun tearDown() {
+        Endpoint.values().forEach {
+            it.clearRateLimit()
+        }
+    }
+
+    @Suppress("DEPRECATION")
     @Test
     fun `test getConfig returns correct values in Response`() {
         fakeApiClient.queueResponse(
@@ -74,7 +92,6 @@ internal class EmbraceApiServiceTest {
         // verify a few fields were serialized correctly.
         checkNotNull(remoteConfig)
         assertTrue(checkNotNull(remoteConfig.sessionConfig?.isEnabled))
-        assertFalse(checkNotNull(remoteConfig.sessionConfig?.endAsync))
         assertEquals(100, remoteConfig.threshold)
     }
 
@@ -140,14 +157,15 @@ internal class EmbraceApiServiceTest {
             event = Event(
                 eventId = "event-id",
                 messageId = "message-id",
-                type = EmbraceEvent.Type.ERROR_LOG
+                type = EventType.ERROR_LOG
             )
         )
         apiService.sendLog(event)
+
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
-            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
     }
 
@@ -156,22 +174,31 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(successfulPostResponse)
         val blob = BlobMessage()
         apiService.sendAEIBlob(blob)
+
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/blobs",
-            expectedPayload = serializer.bytesFromPayload(blob, BlobMessage::class.java)
+            expectedPayload = getExpectedPayloadSerialized(blob)
         )
     }
 
     @Test
     fun `send network request is as expected`() {
         fakeApiClient.queueResponse(successfulPostResponse)
-        val networkEvent: NetworkEvent = mockk(relaxed = true)
-        every { networkEvent.eventId } answers { "network-event-id" }
+        val networkEvent = NetworkEvent(
+            "",
+            AppInfo(),
+            "",
+            "network-event-id",
+            NetworkCapturedCall(),
+            "",
+            null,
+            null
+        )
         apiService.sendNetworkCall(networkEvent)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/network",
             expectedLogId = "n:network-event-id",
-            expectedPayload = serializer.bytesFromPayload(networkEvent, NetworkEvent::class.java)
+            expectedPayload = getExpectedPayloadSerialized(networkEvent)
         )
     }
 
@@ -181,14 +208,14 @@ internal class EmbraceApiServiceTest {
         val event = EventMessage(
             event = Event(
                 eventId = "event-id",
-                type = EmbraceEvent.Type.END
+                type = EventType.END
             )
         )
         apiService.sendEvent(event)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "e:event-id",
-            expectedPayload = serializer.bytesFromPayload(event, EventMessage::class.java)
+            expectedPayload = getExpectedPayloadSerialized(event)
         )
     }
 
@@ -197,15 +224,15 @@ internal class EmbraceApiServiceTest {
         val crash = EventMessage(
             event = Event(
                 eventId = "crash-id",
-                activeEventIdsList = listOf("event-1", "event-2"),
-                type = EmbraceEvent.Type.CRASH
+                activeEventIds = listOf("event-1", "event-2"),
+                type = EventType.CRASH
             )
         )
         apiService.sendCrash(crash)
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "c:event-1,event-2",
-            expectedPayload = serializer.bytesFromPayload(crash, EventMessage::class.java)
+            expectedPayload = getExpectedPayloadSerialized(crash)
         )
     }
 
@@ -214,12 +241,244 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(successfulPostResponse)
         val payload = "{}".toByteArray(Charsets.UTF_8)
         var finished = false
-        apiService.sendSession(payload) { finished = true }
+        apiService.sendSession({ it.write(payload) }) { finished = true }
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
             expectedPayload = payload
         )
         assertTrue(finished)
+    }
+
+    @Test
+    fun `validate all API endpoint URLs`() {
+        Endpoint.values().forEach {
+            assertEquals(
+                "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
+                apiUrlBuilder.getEmbraceUrlWithSuffix(it.path)
+            )
+        }
+    }
+
+    @Test
+    fun `network request runnable is used`() {
+        testScheduledExecutor = mockk(relaxed = true)
+        initApiService()
+        val payload = "{}".toByteArray(Charsets.UTF_8)
+        apiService.sendSession({ it.write(payload) }) {}
+        verify(exactly = 1) { testScheduledExecutor.submit(any<Runnable>()) }
+    }
+
+    @Test
+    fun `unsuccessful requests are queued for later`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        apiService.sendLog(event)
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        val request = fakePendingApiCallsSender.retryQueue.single().first
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.toString())
+    }
+
+    @Test
+    fun `test that requests returning a TooManyRequests response, saves and schedule a pending api call`() {
+        val response = ApiResponse.TooManyRequests(
+            endpoint = Endpoint.LOGGING,
+            retryAfter = 3
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = getExpectedPayloadSerialized(event)
+        )
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Incomplete response, saves and schedule a pending api call`() {
+        val response = ApiResponse.Incomplete(Throwable())
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = getExpectedPayloadSerialized(event)
+        )
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        assertTrue(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Failure response, do not save a pending api call`() {
+        val response = ApiResponse.Failure(
+            code = 400,
+            headers = emptyMap()
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = getExpectedPayloadSerialized(event)
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a PayloadTooLarge response, do not save a pending api call`() {
+        val response = ApiResponse.PayloadTooLarge
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = getExpectedPayloadSerialized(event)
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests returning a Success response, do not save a pending api call`() {
+        val response = ApiResponse.Success(
+            headers = emptyMap(),
+            body = ""
+        )
+        fakeApiClient.queueResponse(response)
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+
+        apiService.sendLog(event)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
+            expectedLogId = "el:message-id",
+            expectedPayload = getExpectedPayloadSerialized(event)
+        )
+        assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
+        val callback = mockk<() -> Unit>(relaxed = true)
+        val endpoint = Endpoint.LOGGING
+        with(endpoint) {
+            updateRateLimitStatus()
+            scheduleRetry(
+                scheduledWorker = ScheduledWorker(testScheduledExecutor),
+                retryAfter = 3,
+                retryMethod = callback
+            )
+        }
+
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+
+        apiService.sendLog(event)
+
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        // assert that the pending api call was not scheduled, since all pending api calls
+        // are executed once the rate limit for the endpoint is lifted.
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    @Test
+    fun `test that requests with no connection, do not execute the request and save a pending api call`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        val event = EventMessage(
+            event = Event(
+                eventId = "event-id",
+                messageId = "message-id",
+                type = EventType.ERROR_LOG
+            )
+        )
+
+        apiService.sendLog(event)
+
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+        // assert that the pending api call was not scheduled, since all pending api calls
+        // are executed once the network connection is restored.
+        assertFalse(fakePendingApiCallsSender.didScheduleApiCall)
+    }
+
+    private inline fun <reified T> getExpectedPayloadSerialized(payload: T): ByteArray {
+        val os = ByteArrayOutputStream()
+        ConditionalGzipOutputStream(os).use {
+            serializer.toJson(payload, T::class.java, it)
+        }
+        return os.toByteArray()
     }
 
     private fun verifyOnlyRequest(
@@ -246,15 +505,8 @@ internal class EmbraceApiServiceTest {
         }
 
         expectedPayload?.let {
-            assertArrayEquals(it, fakeApiClient.sentRequests[0].second)
+            assertArrayEquals(it, fakeApiClient.sentRequests[0].second?.readBytes())
         } ?: assertNull(fakeApiClient.sentRequests[0].second)
-    }
-
-    @Test
-    fun `validate all API endpoint URLs`() {
-        EmbraceApiService.Companion.Endpoint.values().forEach {
-            assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}", apiUrlBuilder.getEmbraceUrlWithSuffix(it.path))
-        }
     }
 
     private fun initApiService() {
@@ -264,11 +516,11 @@ internal class EmbraceApiServiceTest {
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = InternalEmbraceLogger(),
-            scheduledExecutorService = testScheduledExecutor,
+            backgroundWorker = BackgroundWorker(testScheduledExecutor),
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
-            deliveryRetryManager = fakeDeliveryRetryManager,
+            pendingApiCallsSender = fakePendingApiCallsSender,
             urlBuilder = apiUrlBuilder,
             networkConnectivityService = networkConnectivityService
         )
@@ -278,11 +530,11 @@ internal class EmbraceApiServiceTest {
         private const val fakeAppId = "A1B2C"
         private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
-        private val defaultConfigResponseBody = ResourceReader.readResourceAsText("remote_config_response.json")
+        private val defaultConfigResponseBody =
+            ResourceReader.readResourceAsText("remote_config_response.json")
         private val successfulPostResponse = ApiResponse.Success(
             headers = emptyMap(),
             body = ""
         )
-        private val serializer = EmbraceSerializer()
     }
 }

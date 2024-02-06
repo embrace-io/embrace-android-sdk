@@ -1,19 +1,20 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.clock.Clock
 
 /**
  * Describes an Exception Error with a count of occurrences and a list of exceptions (causes).
  */
-internal data class ExceptionError(@Transient private val logStrictMode: Boolean) {
-    @SerializedName("c")
+@JsonClass(generateAdapter = true)
+internal data class ExceptionError(@Transient private val logStrictMode: Boolean = false) {
 
+    @Json(name = "c")
     var occurrences = 0
 
-    @SerializedName("rep")
-
-    val exceptionErrors = mutableListOf<ExceptionErrorInfo>()
+    @Json(name = "rep")
+    var exceptionErrors = mutableListOf<ExceptionErrorInfo>()
 
     /**
      * Add a new exception error info if exceptionError's size is below 20.

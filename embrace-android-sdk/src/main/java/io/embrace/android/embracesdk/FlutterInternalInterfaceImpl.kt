@@ -61,7 +61,7 @@ internal class FlutterInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Dart error",
                 null,
                 null,

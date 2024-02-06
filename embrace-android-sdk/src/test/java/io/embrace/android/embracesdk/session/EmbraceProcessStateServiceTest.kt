@@ -5,12 +5,16 @@ import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import io.embrace.android.embracesdk.FakeSessionService
-import io.embrace.android.embracesdk.fakes.FakeBackgroundActivityService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
+import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
+import io.embrace.android.embracesdk.fakes.system.mockLooper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -29,7 +33,7 @@ internal class EmbraceProcessStateServiceTest {
     private lateinit var stateService: EmbraceProcessStateService
 
     companion object {
-        private lateinit var mockLooper: Looper
+        private lateinit var looper: Looper
         private lateinit var mockLifeCycleOwner: LifecycleOwner
         private lateinit var mockLifecycle: Lifecycle
         private lateinit var mockApplication: Application
@@ -38,7 +42,7 @@ internal class EmbraceProcessStateServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockLooper = mockk()
+            looper = mockLooper()
             mockLifeCycleOwner = mockk()
             mockLifecycle = mockk(relaxed = true)
             mockkStatic(Looper::class)
@@ -47,8 +51,7 @@ internal class EmbraceProcessStateServiceTest {
 
             fakeClock.setCurrentTime(1234)
             every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
-            every { Looper.getMainLooper() } returns mockLooper
-            every { mockLooper.thread } returns Thread.currentThread()
+            every { Looper.getMainLooper() } returns looper
             every { ProcessLifecycleOwner.get() } returns mockLifeCycleOwner
             every { mockLifeCycleOwner.lifecycle } returns mockLifecycle
             every { mockLifecycle.addObserver(any()) } returns Unit
@@ -61,6 +64,8 @@ internal class EmbraceProcessStateServiceTest {
         }
     }
 
+    private lateinit var logger: FakeLoggerAction
+
     @Before
     fun before() {
         clearAllMocks(
@@ -69,9 +74,10 @@ internal class EmbraceProcessStateServiceTest {
             constructorMocks = false,
             staticMocks = false
         )
-
+        logger = FakeLoggerAction()
         stateService = EmbraceProcessStateService(
-            fakeClock
+            fakeClock,
+            InternalEmbraceLogger().apply { addLoggerAction(logger) }
         )
     }
 
@@ -81,7 +87,6 @@ internal class EmbraceProcessStateServiceTest {
         stateService.addListener(listener)
         stateService.onForeground()
         assertTrue(listener.coldStart)
-        assertEquals(listener.startupTime, fakeClock.now())
         assertEquals(listener.timestamp, fakeClock.now())
         assertEquals(1, listener.foregroundCount.get())
     }
@@ -170,15 +175,13 @@ internal class EmbraceProcessStateServiceTest {
     fun `verify listener call order`() {
         val invocations = mutableListOf<String>()
         stateService.addListener(DecoratedListener(invocations))
-        stateService.addListener(DecoratedSessionService(invocations))
-        stateService.addListener(DecoratedBackgroundActivityService(invocations))
+        stateService.addListener(DecoratedSessionOrchestrator(invocations))
         assertTrue(invocations.isEmpty())
 
         // verify on foreground follows specific call order
         stateService.onForeground()
         val foregroundExpected = listOf(
-            "DecoratedBackgroundActivityService",
-            "DecoratedSessionService",
+            "DecoratedSessionOrchestrator",
             "DecoratedListener"
         )
         assertEquals(foregroundExpected, invocations)
@@ -187,11 +190,55 @@ internal class EmbraceProcessStateServiceTest {
         invocations.clear()
         stateService.onBackground()
         val backgroundExpected = listOf(
-            "DecoratedSessionService",
-            "DecoratedBackgroundActivityService",
+            "DecoratedSessionOrchestrator",
             "DecoratedListener"
         )
         assertEquals(backgroundExpected, invocations)
+    }
+
+    @Test
+    fun testBalancedLifecycleCalls() {
+        repeat(10) {
+            stateService.onForeground()
+            stateService.onBackground()
+        }
+        val messages = fetchLogMessages()
+        assertTrue(messages.isEmpty())
+    }
+
+    @Test
+    fun testUnbalancedForegroundCall() {
+        repeat(3) {
+            stateService.onForeground()
+        }
+        stateService.onBackground()
+        stateService.onForeground()
+
+        val messages = fetchLogMessages().map { it.msg }
+        assertEquals(2, messages.size)
+        assertEquals(
+            listOf(
+                "Unbalanced call to onForeground(). This will contribute to session loss.",
+                "Unbalanced call to onForeground(). This will contribute to session loss.",
+            ),
+            messages
+        )
+    }
+
+    @Test
+    fun testUnbalancedBackgroundCall() {
+        repeat(4) {
+            stateService.onBackground()
+        }
+        stateService.onForeground()
+        stateService.onBackground()
+
+        val messages = fetchLogMessages().map { it.msg }
+        assertEquals(0, messages.size)
+    }
+
+    private fun fetchLogMessages() = logger.msgQueue.filter {
+        it.severity >= InternalStaticEmbraceLogger.Severity.ERROR
     }
 
     private class DecoratedListener(
@@ -202,35 +249,21 @@ internal class EmbraceProcessStateServiceTest {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+        override fun onForeground(coldStart: Boolean, timestamp: Long) {
             invocations.add(javaClass.simpleName)
         }
     }
 
-    private class DecoratedSessionService(
+    private class DecoratedSessionOrchestrator(
         private val invocations: MutableList<String>,
-        private val service: SessionService = FakeSessionService()
-    ) : SessionService by service {
+        private val orchestrator: SessionOrchestrator = FakeSessionOrchestrator()
+    ) : SessionOrchestrator by orchestrator {
 
         override fun onBackground(timestamp: Long) {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-            invocations.add(javaClass.simpleName)
-        }
-    }
-
-    private class DecoratedBackgroundActivityService(
-        private val invocations: MutableList<String>,
-        private val service: BackgroundActivityService = FakeBackgroundActivityService()
-    ) : BackgroundActivityService by service {
-
-        override fun onBackground(timestamp: Long) {
-            invocations.add(javaClass.simpleName)
-        }
-
-        override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+        override fun onForeground(coldStart: Boolean, timestamp: Long) {
             invocations.add(javaClass.simpleName)
         }
     }

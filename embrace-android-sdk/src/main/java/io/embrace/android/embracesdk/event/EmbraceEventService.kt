@@ -9,24 +9,25 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.stream
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.TimeUnit
 
 /**
  * Handles the lifecycle of events (moments).
@@ -40,6 +41,7 @@ internal class EmbraceEventService(
     deliveryService: DeliveryService,
     private val configService: ConfigService,
     metadataService: MetadataService,
+    sessionIdTracker: SessionIdTracker,
     performanceInfoService: PerformanceInfoService,
     userService: UserService,
     private val sessionProperties: EmbraceSessionProperties,
@@ -48,7 +50,7 @@ internal class EmbraceEventService(
     private val clock: Clock,
     private val spansService: SpansService
 ) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
-    private val executorService: ExecutorService
+    private val backgroundWorker: BackgroundWorker
 
     /**
      * Timeseries of event IDs, keyed on the start time of the event.
@@ -71,19 +73,20 @@ internal class EmbraceEventService(
         // Session properties
         eventHandler = EventHandler(
             metadataService,
+            sessionIdTracker,
             configService,
             userService,
             performanceInfoService,
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+            workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
         )
-        executorService =
-            workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+        backgroundWorker =
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     }
 
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
         logDeveloper("EmbraceEventService", "coldStart: $coldStart")
         if (coldStart) {
             // Using the system current timestamp here as the startup timestamp is related to the
@@ -180,7 +183,8 @@ internal class EmbraceEventService(
         } catch (ex: Exception) {
             logger.logError(
                 "Cannot start event with name: $name, identifier: $identifier due to an exception",
-                ex, false
+                ex,
+                false
             )
         }
     }
@@ -209,10 +213,6 @@ internal class EmbraceEventService(
     ) {
         try {
             logDeveloper("EmbraceEventService", "Ending event: $name")
-            if (!eventHandler.isAllowedToEnd()) {
-                logDeveloper("EmbraceEventService", "Event handler not allowed to end")
-                return
-            }
             val eventKey = getInternalEventKey(name, identifier)
             val originEventDescription: EventDescription? = when {
                 late -> activeEvents[eventKey]
@@ -260,7 +260,7 @@ internal class EmbraceEventService(
     override fun getActiveEventIds(): List<String> {
         val ids: MutableList<String> = ArrayList()
         stream<EventDescription>(activeEvents.values) { (_, event): EventDescription ->
-            event.eventId?.let(ids::add)
+            ids.add(event.eventId)
         }
         return ids
     }
@@ -287,11 +287,11 @@ internal class EmbraceEventService(
 
     private fun logStartupSpan() {
         val startupEndTimeMillis = clock.now()
-        executorService.submit {
+        backgroundWorker.submit {
             spansService.recordCompletedSpan(
                 name = STARTUP_SPAN_NAME,
-                startTimeNanos = TimeUnit.MILLISECONDS.toNanos(startupStartTime),
-                endTimeNanos = TimeUnit.MILLISECONDS.toNanos(startupEndTimeMillis),
+                startTimeNanos = startupStartTime.millisToNanos(),
+                endTimeNanos = startupEndTimeMillis.millisToNanos(),
                 internal = false
             )
         }

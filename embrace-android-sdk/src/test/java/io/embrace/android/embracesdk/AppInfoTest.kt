@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.payload.AppInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,27 +31,23 @@ internal class AppInfoTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("app_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("app_info_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("app_info_expected.json")
-        val obj = Gson().fromJson(json, AppInfo::class.java)
+        val obj: AppInfo = deserializeJsonFromResource("app_info_expected.json")
         assertEquals("1.0", obj.appVersion)
         assertEquals(Embrace.AppFramework.NATIVE.value, obj.appFramework)
         assertEquals("1234", obj.buildId)
         assertEquals("release", obj.buildType)
         assertEquals("demo", obj.buildFlavor)
         assertEquals("prod", obj.environment)
-        assertFalse(obj.appUpdated!!)
-        assertFalse(obj.appUpdatedThisLaunch!!)
+        assertFalse(checkNotNull(obj.appUpdated))
+        assertFalse(checkNotNull(obj.appUpdatedThisLaunch))
         assertEquals("5ac7fe", obj.bundleVersion)
-        assertFalse(obj.osUpdated!!)
-        assertFalse(obj.osUpdatedThisLaunch!!)
+        assertFalse(checkNotNull(obj.osUpdated))
+        assertFalse(checkNotNull(obj.osUpdatedThisLaunch))
         assertEquals("5.10.0", obj.sdkSimpleVersion)
         assertEquals("5.11.0", obj.sdkVersion)
         assertEquals("fba09c9f", obj.reactNativeBundleId)
@@ -63,7 +58,7 @@ internal class AppInfoTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", AppInfo::class.java)
-        assertNotNull(info)
+        val obj = deserializeEmptyJsonString<AppInfo>()
+        assertNotNull(obj)
     }
 }

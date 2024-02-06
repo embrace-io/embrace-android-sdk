@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSpanImpl(
     private val spanBuilder: SpanBuilder,
-    override val parent: EmbraceSpan? = null
+    override val parent: EmbraceSpan? = null,
+    private val spansRepository: SpansRepository? = null
 ) : EmbraceSpan {
 
     init {
@@ -37,10 +38,15 @@ internal class EmbraceSpanImpl(
         return if (startedSpan.get() != null) {
             false
         } else {
+            var successful: Boolean
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan())
-                startedSpan.get() != null
+                successful = startedSpan.get() != null
             }
+            if (successful) {
+                spansRepository?.trackStartedSpan(this)
+            }
+            return successful
         }
     }
 
@@ -50,10 +56,15 @@ internal class EmbraceSpanImpl(
         return if (startedSpan.get()?.isRecording == false) {
             false
         } else {
+            var successful: Boolean
             synchronized(startedSpan) {
                 startedSpan.get()?.endSpan(errorCode)
-                startedSpan.get()?.isRecording == false
+                successful = startedSpan.get()?.isRecording == false
             }
+            if (successful) {
+                spanId?.let { spansRepository?.trackedSpanStopped(it) }
+            }
+            return successful
         }
     }
 
@@ -113,7 +124,11 @@ internal class EmbraceSpanImpl(
         internal const val MAX_ATTRIBUTE_KEY_LENGTH = 50
         internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 200
 
-        internal fun inputsValid(name: String, events: List<EmbraceSpanEvent>? = null, attributes: Map<String, String>? = null) =
+        internal fun inputsValid(
+            name: String,
+            events: List<EmbraceSpanEvent>? = null,
+            attributes: Map<String, String>? = null
+        ) =
             name.isNotBlank() &&
                 name.length <= MAX_NAME_LENGTH &&
                 (events == null || events.size <= MAX_EVENT_COUNT) &&

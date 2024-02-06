@@ -4,8 +4,6 @@ import android.os.Build
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.crumbs.activity.ActivityLifecycleBreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.activity.EmbraceActivityLifecycleBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
@@ -13,18 +11,18 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.strictmode.EmbraceStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.NoOpStrictModeService
-import io.embrace.android.embracesdk.capture.strictmode.StrictModeService
+import io.embrace.android.embracesdk.capture.startup.StartupService
+import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.utils.VersionChecker
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.Executor
 
 /**
  * This modules provides services that capture data from within an application. It could be argued
@@ -60,24 +58,19 @@ internal interface DataCaptureServiceModule {
     val pushNotificationService: PushNotificationCaptureService
 
     /**
-     * Captures strict mode violations
-     */
-    val strictModeService: StrictModeService
-
-    /**
      * Captures thermal state events
      */
     val thermalStatusService: ThermalStatusService
 
     /**
-     * Captures breadcrumbs of the activity lifecycle
-     */
-    val activityLifecycleBreadcrumbService: ActivityLifecycleBreadcrumbService?
-
-    /**
      * Registers for the component callback to capture memory events
      */
     val componentCallbackService: ComponentCallbackService
+
+    /**
+     * Captures the startup time of the SDK
+     */
+    val startupService: StartupService
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -89,8 +82,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     versionChecker: VersionChecker = BuildVersionChecker
 ) : DataCaptureServiceModule {
 
-    private val backgroundExecutorService = workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
-    private val scheduledExecutor = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION)
+    private val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     private val configService = essentialServiceModule.configService
 
     override val memoryService: MemoryService by singleton {
@@ -106,13 +98,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val powerSaveModeService: PowerSaveModeService by singleton {
-        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() && versionChecker.isAtLeast(
-                Build.VERSION_CODES.LOLLIPOP
-            )
-        ) {
+        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
             EmbracePowerSaveModeService(
                 coreModule.context,
-                backgroundExecutorService,
+                backgroundWorker,
                 initModule.clock,
                 systemServiceModule.powerManager
             )
@@ -129,28 +118,30 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         EmbraceBreadcrumbService(
             initModule.clock,
             configService,
+            essentialServiceModule.activityLifecycleTracker,
             coreModule.logger
         )
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
         PushNotificationCaptureService(
-            breadcrumbService, coreModule.logger
+            breadcrumbService,
+            coreModule.logger
         )
     }
 
-    override val strictModeService: StrictModeService by singleton {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.P) && configService.anrBehavior.isStrictModeListenerEnabled()) {
-            EmbraceStrictModeService(configService, scheduledExecutor, initModule.clock)
-        } else {
-            NoOpStrictModeService()
-        }
-    }
-
     override val thermalStatusService: ThermalStatusService by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+        if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+            // Android API only accepts an executor. We don't want to directly expose those
+            // to everything in the codebase so we decorate the BackgroundWorker here as an
+            // alternative
+            val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+            val executor = Executor {
+                backgroundWorker.submit(runnable = it)
+            }
+
             EmbraceThermalStatusService(
-                scheduledExecutor,
+                executor,
                 initModule.clock,
                 coreModule.logger,
                 systemServiceModule.powerManager
@@ -160,11 +151,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         }
     }
 
-    override val activityLifecycleBreadcrumbService: EmbraceActivityLifecycleBreadcrumbService? by singleton {
-        if (configService.sdkModeBehavior.isBetaFeaturesEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            EmbraceActivityLifecycleBreadcrumbService(configService, initModule.clock)
-        } else {
-            null
-        }
+    override val startupService: StartupService by singleton {
+        StartupServiceImpl(initModule.spansService)
     }
 }

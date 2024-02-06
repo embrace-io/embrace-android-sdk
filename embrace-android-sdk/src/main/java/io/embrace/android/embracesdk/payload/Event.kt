@@ -1,79 +1,71 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.annotations.SerializedName
-import io.embrace.android.embracesdk.EmbraceEvent.Type
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.EventType
 
+@JsonClass(generateAdapter = true)
 internal data class Event constructor(
-    @SerializedName("n")
+    @Json(name = "n")
     @JvmField
     val name: String? = null,
 
-    @SerializedName("li")
+    @Json(name = "li")
     @JvmField
     val messageId: String? = null,
 
-    @SerializedName("id")
+    @Json(name = "id")
     @JvmField
     val eventId: String,
 
-    @SerializedName("si")
+    @Json(name = "si")
     @JvmField
     val sessionId: String? = null,
 
-    @SerializedName("t")
+    @Json(name = "t")
     @JvmField
-    val type: Type,
+    val type: EventType,
 
-    @SerializedName("ts")
+    @Json(name = "ts")
     @JvmField
     val timestamp: Long? = null,
 
-    @SerializedName("th")
+    @Json(name = "th")
     @JvmField
     val lateThreshold: Long? = null,
 
-    @SerializedName("sc")
+    @Json(name = "sc")
     @JvmField
     val screenshotTaken: Boolean? = false,
 
-    @SerializedName("du")
+    @Json(name = "du")
     @JvmField
     val duration: Long? = null,
 
-    @SerializedName("st")
+    @Json(name = "st")
     @JvmField
     val appState: String? = null,
 
-    @Transient
-    private val customProperties: Map<String, Any>? = null,
+    @Json(name = "pr")
+    val customProperties: Map<String, Any>? = null,
+
+    @Json(name = "sp")
+    val sessionProperties: Map<String, String>? = null,
 
     @Transient
-    private val sessionProperties: Map<String, String>? = null,
+    val activeEventIds: List<String>? = null,
 
-    @Transient
-    private val activeEventIdsList: List<String>? = null,
-
-    @SerializedName("et")
+    @Json(name = "et")
     @JvmField
     val logExceptionType: String? = null,
 
-    @SerializedName("en")
+    @Json(name = "en")
     val exceptionName: String? = null,
 
-    @SerializedName("em")
+    @Json(name = "em")
     val exceptionMessage: String? = null,
 
-    @SerializedName("f")
+    @Json(name = "f")
     @JvmField
     val framework: Int? = null,
-) {
-
-    @SerializedName("pr")
-    val customPropertiesMap: Map<String, Any>? = customProperties?.toMutableMap()
-
-    @SerializedName("sp")
-    val sessionPropertiesMap: Map<String, String>? = sessionProperties?.toMutableMap()
-
-    @Transient
-    val activeEventIds: List<String>? = activeEventIdsList?.toMutableList()
-}
+)

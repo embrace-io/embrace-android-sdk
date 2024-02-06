@@ -2,7 +2,10 @@
   "s": {
     "id": "fake-activity",
     "st": 0,
-    "as": ""
+    "sn": 1,
+    "ty": "en",
+    "as": "background",
+    "cs": false
   },
   "u": {
     "id": "fake-user-id"

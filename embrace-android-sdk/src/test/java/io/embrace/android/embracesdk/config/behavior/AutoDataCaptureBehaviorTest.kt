@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.config.local.ComposeLocalConfig
 import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
@@ -33,7 +34,8 @@ internal class AutoDataCaptureBehaviorTest {
     )
 
     private val remote = RemoteConfig(
-        killSwitchConfig = KillSwitchRemoteConfig(sigHandlerDetection = false, jetpackCompose = false)
+        killSwitchConfig = KillSwitchRemoteConfig(sigHandlerDetection = false, jetpackCompose = false),
+        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
     )
 
     @Test
@@ -48,6 +50,7 @@ internal class AutoDataCaptureBehaviorTest {
             assertTrue(isSigHandlerDetectionEnabled())
             assertFalse(isNdkEnabled())
             assertTrue(isDiskUsageReportingEnabled())
+            assertTrue(isThermalStatusCaptureEnabled())
         }
     }
 
@@ -71,6 +74,7 @@ internal class AutoDataCaptureBehaviorTest {
         with(fakeAutoDataCaptureBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertFalse(isSigHandlerDetectionEnabled())
             assertFalse(isComposeOnClickEnabled())
+            assertFalse(isThermalStatusCaptureEnabled())
         }
     }
 

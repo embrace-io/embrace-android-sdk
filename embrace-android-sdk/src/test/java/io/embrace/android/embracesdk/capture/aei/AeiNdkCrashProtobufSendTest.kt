@@ -4,17 +4,19 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import com.google.common.util.concurrent.MoreExecutors
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
-import io.embrace.android.embracesdk.fakes.FakeAndroidMetadataService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -55,8 +57,9 @@ internal class AeiNdkCrashProtobufSendTest {
         assertProtobufIsReadable(obj.asStream())
 
         // JSON serialization does not corrupt the protobuf
-        val json = Gson().toJson(obj)
-        val aei = Gson().fromJson(json, AppExitInfoData::class.java)
+        val serializer = EmbraceSerializer()
+        val json = serializer.toJson(obj)
+        val aei = serializer.fromJson(json, AppExitInfoData::class.java)
         val byteStream = aei.asStream()
         assertProtobufIsReadable(byteStream)
     }
@@ -139,8 +142,10 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
+        val metadataService = FakeMetadataService()
+        val sessionIdTracker = FakeSessionIdTracker()
         EmbraceApplicationExitInfoService(
-            MoreExecutors.newDirectExecutorService(),
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             FakeConfigService(
                 appExitInfoBehavior = fakeAppExitInfoBehavior(localCfg = {
                     AppExitInfoLocalConfig(
@@ -151,7 +156,8 @@ internal class AeiNdkCrashProtobufSendTest {
             activityManager,
             FakePreferenceService(),
             deliveryService,
-            FakeAndroidMetadataService(),
+            metadataService,
+            sessionIdTracker,
             FakeUserService(),
             VersionChecker { ndkTraceFile }
         )

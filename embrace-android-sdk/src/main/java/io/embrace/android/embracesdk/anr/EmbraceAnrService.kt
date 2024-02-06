@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.anr
 
 import android.os.Looper
 import androidx.annotation.VisibleForTesting
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorSampler
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
@@ -15,9 +13,9 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,16 +32,14 @@ internal class EmbraceAnrService(
     logger: InternalEmbraceLogger,
     sigquitDetectionService: SigquitDetectionService,
     livenessCheckScheduler: LivenessCheckScheduler,
-    anrExecutorService: ScheduledExecutorService,
+    private val anrMonitorWorker: ScheduledWorker,
     state: ThreadMonitoringState,
-    private val anrProcessErrorSampler: AnrProcessErrorSampler,
     @field:VisibleForTesting val clock: Clock,
     private val anrMonitorThread: AtomicReference<Thread>
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val state: ThreadMonitoringState
     private val targetThread: Thread
-    private val anrExecutorService: ScheduledExecutorService
     val stacktraceSampler: AnrStacktraceSampler
     private val logger: InternalEmbraceLogger
     private val sigquitDetectionService: SigquitDetectionService
@@ -56,21 +52,17 @@ internal class EmbraceAnrService(
         this.logger = logger
         this.sigquitDetectionService = sigquitDetectionService
         this.state = state
-        this.anrExecutorService = anrExecutorService
         targetThreadHeartbeatScheduler = livenessCheckScheduler
-        stacktraceSampler = AnrStacktraceSampler(configService, clock, targetThread, anrMonitorThread, anrExecutorService)
+        stacktraceSampler = AnrStacktraceSampler(configService, clock, targetThread, anrMonitorThread, anrMonitorWorker)
 
         // add listeners
         listeners.add(stacktraceSampler)
         listeners.add(UnbalancedCallDetector(logger))
-        listeners.add(
-            anrProcessErrorSampler
-        )
         livenessCheckScheduler.listener = this
     }
 
     private fun startAnrCapture() {
-        anrExecutorService.submit {
+        this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.startMonitoringThread()
         }
     }
@@ -104,21 +96,15 @@ internal class EmbraceAnrService(
                     "ANR samples to be cached is null"
                 }
             }
-            anrExecutorService.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
+            anrMonitorWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
             logger.logError("Failed to getAnrIntervals()", exc, true)
             emptyList()
         }
     }
 
-    override fun getAnrProcessErrors(
-        startTime: Long
-    ): List<AnrProcessErrorStateInfo> {
-        return anrProcessErrorSampler.getAnrProcessErrors(startTime)
-    }
-
     override fun forceAnrTrackingStopOnCrash() {
-        anrExecutorService.submit {
+        this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.stopMonitoringThread()
         }
     }
@@ -167,8 +153,8 @@ internal class EmbraceAnrService(
      * When app goes to foreground, we need to monitor the target thread again to
      * capture ANRs.
      */
-    override fun onForeground(coldStart: Boolean, startupTime: Long, timestamp: Long) {
-        anrExecutorService.submit {
+    override fun onForeground(coldStart: Boolean, timestamp: Long) {
+        this.anrMonitorWorker.submit {
             enforceThread(anrMonitorThread)
             state.resetState()
             targetThreadHeartbeatScheduler.startMonitoringThread()
@@ -181,7 +167,7 @@ internal class EmbraceAnrService(
      * want to affect customer's app performance.
      */
     override fun onBackground(timestamp: Long) {
-        anrExecutorService.submit {
+        this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.stopMonitoringThread()
         }
     }

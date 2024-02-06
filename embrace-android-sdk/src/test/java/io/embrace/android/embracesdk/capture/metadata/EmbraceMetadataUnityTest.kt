@@ -7,16 +7,22 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -34,12 +40,12 @@ internal class EmbraceMetadataUnityTest {
         private val fakeClock = FakeClock()
         private lateinit var context: Context
         private val packageInfo = PackageInfo()
+        private val serializer = EmbraceSerializer()
         private lateinit var buildInfo: BuildInfo
         private lateinit var configService: ConfigService
         private lateinit var preferencesService: FakePreferenceService
         private lateinit var processStateService: ProcessStateService
-        private lateinit var cacheService: EmbraceCacheService
-        private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
+        private lateinit var cpuInfoDelegate: FakeCpuInfoDelegate
         private val deviceArchitecture = FakeDeviceArchitecture()
 
         @BeforeClass
@@ -49,26 +55,26 @@ internal class EmbraceMetadataUnityTest {
             mockkStatic(MetadataUtils::class)
             mockkStatic(Environment::class)
 
-            context = mockk(relaxed = true)
-            buildInfo = mockk()
-            configService = mockk(relaxed = true)
+            context = mockContext()
+            buildInfo = BuildInfo("1234", "debug", "debug")
+            configService = FakeConfigService()
             preferencesService = FakePreferenceService()
             processStateService = FakeProcessStateService()
-            cacheService = mockk()
-            cpuInfoDelegate = mockk(relaxed = true)
+            cpuInfoDelegate = FakeCpuInfoDelegate()
 
             initContext()
             initPreferences()
         }
 
         @AfterClass
+        @JvmStatic
         fun tearDown() {
             unmockkAll()
         }
 
+        @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.versionName = "1.0.0"
-            @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
 
             every { context.getSystemService(Context.WINDOW_SERVICE) }.returns(mockk<WindowManager>())
@@ -78,10 +84,6 @@ internal class EmbraceMetadataUnityTest {
         }
 
         private fun initPreferences() {
-            every { buildInfo.buildId }.returns("1234")
-            every { buildInfo.buildType }.returns("debug")
-            every { buildInfo.buildFlavor }.returns("debug")
-
             preferencesService.appVersion = "app-version"
             preferencesService.osVersion = "os-version"
         }
@@ -97,6 +99,7 @@ internal class EmbraceMetadataUnityTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
         buildInfo,
@@ -104,10 +107,10 @@ internal class EmbraceMetadataUnityTest {
         Embrace.AppFramework.UNITY,
         preferencesService,
         processStateService,
-        MoreExecutors.newDirectExecutorService(),
-        mockk(),
-        mockk(),
-        mockk(),
+        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+        mockStorageStatsManager(),
+        mockWindowManager(),
+        mockActivityManager(),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,
@@ -121,7 +124,7 @@ internal class EmbraceMetadataUnityTest {
         preferencesService.unityBuildIdNumber = "unityBuildIdNumber"
 
         val metadataService = getMetadataService()
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
 
         assertTrue(appInfo.contains("\"unv\":\"unityVersionNumber\""))
         assertTrue(appInfo.contains("\"ubg\":\"unityBuildIdNumber\""))
@@ -137,7 +140,7 @@ internal class EmbraceMetadataUnityTest {
         preferencesService.unityVersionNumber = "unityVersionNumber"
         preferencesService.unityBuildIdNumber = "unityBuildIdNumber"
 
-        val appInfo = metadataService.getAppInfo().toJson()
+        val appInfo = serializer.toJson(metadataService.getAppInfo())
 
         assertTrue(appInfo.contains("\"unv\":\"unityVersionNumber\""))
         assertTrue(appInfo.contains("\"ubg\":\"unityBuildIdNumber\""))

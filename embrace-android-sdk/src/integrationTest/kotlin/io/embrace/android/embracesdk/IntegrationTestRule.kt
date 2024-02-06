@@ -4,16 +4,16 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.fakeSpansBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -26,9 +26,10 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.injection.StorageModule
+import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -101,9 +102,10 @@ internal class IntegrationTestRule(
                 { workerThreadModule },
                 { _ -> systemServiceModule },
                 { _, _, _ -> androidServicesModule },
-                { _, _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                { _, _, _ -> storageModule },
+                { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                 { _, _, _, _, _ -> dataCaptureServiceModule },
-                { _, _, _ -> fakeDeliveryModule }
+                { _, _, _, _ -> fakeDeliveryModule }
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
@@ -130,7 +132,7 @@ internal class IntegrationTestRule(
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: InitModule = FakeInitModule(clock = fakeClock),
         val fakeCoreModule: FakeCoreModule = FakeCoreModule(),
-        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(),
+        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
         val fakeConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             sdkModeBehavior = fakeSdkModeBehavior(
@@ -144,9 +146,14 @@ internal class IntegrationTestRule(
             networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
                 NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
             },
-            spansBehavior = fakeSpansBehavior {
-                SpansRemoteConfig(pctEnabled = 100f)
-            }
+            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+                remoteCfg = {
+                    DEFAULT_SDK_REMOTE_CONFIG.copy(
+                        // disable thermal status capture as it interferes with unit tests
+                        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
+                    )
+                }
+            )
         ),
         val systemServiceModule: SystemServiceModule =
             SystemServiceModuleImpl(
@@ -157,6 +164,11 @@ internal class IntegrationTestRule(
             coreModule = fakeCoreModule,
             workerThreadModule = workerThreadModule,
         ),
+        val storageModule: StorageModule = StorageModuleImpl(
+            initModule = initModule,
+            workerThreadModule = workerThreadModule,
+            coreModule = fakeCoreModule,
+        ),
         val essentialServiceModule: EssentialServiceModule =
             EssentialServiceModuleImpl(
                 initModule = initModule,
@@ -164,10 +176,9 @@ internal class IntegrationTestRule(
                 workerThreadModule = workerThreadModule,
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
-                buildInfo = BuildInfo.fromResources(fakeCoreModule.resources, fakeCoreModule.context.packageName),
+                storageModule = storageModule,
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,
-                configStopAction = { Embrace.getImpl().stop() },
                 configServiceProvider = { fakeConfigService }
             ),
         val dataCaptureServiceModule: DataCaptureServiceModule =

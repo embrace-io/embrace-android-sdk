@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
+import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry
@@ -56,6 +58,8 @@ internal interface CoreModule {
      * Whether the application is a debug build
      */
     val isDebug: Boolean
+
+    val buildInfo: BuildInfo
 }
 
 internal class CoreModuleImpl(
@@ -86,7 +90,13 @@ internal class CoreModuleImpl(
         EmbraceAndroidResourcesService(context)
     }
 
-    override val isDebug: Boolean by lazy { context.applicationInfo.isDebug() }
+    override val isDebug: Boolean by lazy {
+        context.applicationInfo.isDebug()
+    }
+
+    override val buildInfo: BuildInfo by lazy {
+        fromResources(resources, context.packageName)
+    }
 }
 
 internal fun ApplicationInfo.isDebug() = flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

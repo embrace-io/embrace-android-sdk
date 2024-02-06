@@ -12,16 +12,20 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.system.mockActivityManager
+import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
+import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import java.io.FileInputStream
@@ -67,15 +71,15 @@ internal class EmbraceMetadataReactNativeTest {
         appFramework,
         preferencesService,
         processStateService,
-        MoreExecutors.newDirectExecutorService(),
-        mockk(),
-        mockk(),
-        mockk(),
+        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+        mockStorageStatsManager(),
+        mockWindowManager(),
+        mockActivityManager(),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,
-        mockk(),
-        mockk()
+        lazy { "" },
+        lazy { "" }
     )
 
     @Test
@@ -116,7 +120,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 
@@ -131,7 +135,7 @@ internal class EmbraceMetadataReactNativeTest {
         // get the react native Bundle ID once to call the lazy property
         metadataService.getReactNativeBundleId()
 
-        Assert.assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 

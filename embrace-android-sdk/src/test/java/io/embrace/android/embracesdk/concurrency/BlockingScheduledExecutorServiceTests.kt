@@ -131,9 +131,11 @@ internal class BlockingScheduledExecutorServiceTests {
             unit = TimeUnit.SECONDS
         )
         assertFalse(taskStatus.isDone)
+        assertEquals(1, executorService.scheduledTasksCount())
         executorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(10L))
         assertEquals(1, tasksExecuted)
         assertTrue(taskStatus.isDone)
+        assertEquals(0, executorService.scheduledTasksCount())
     }
 
     @Test
@@ -144,11 +146,13 @@ internal class BlockingScheduledExecutorServiceTests {
             unit = TimeUnit.SECONDS
         )
         assertFalse(taskStatus.isDone)
+        assertEquals(1, executorService.scheduledTasksCount())
         executorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(10L))
         assertEquals(1, tasksExecuted)
         assertTrue(taskStatus.isDone)
         // welp, callable result not returned
         assertEquals(0, taskStatus.get())
+        assertEquals(0, executorService.scheduledTasksCount())
     }
 
     @Test
@@ -160,11 +164,13 @@ internal class BlockingScheduledExecutorServiceTests {
         )
         assertFalse(taskStatus.isDone)
         assertFalse(taskStatus.isCancelled)
+        assertEquals(1, executorService.scheduledTasksCount())
         taskStatus.cancel(true)
         executorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(10L))
         assertEquals(0, tasksExecuted)
         assertTrue(taskStatus.isDone)
         assertTrue(taskStatus.isCancelled)
+        assertEquals(0, executorService.scheduledTasksCount())
     }
 
     @Test
@@ -188,11 +194,13 @@ internal class BlockingScheduledExecutorServiceTests {
         executorService.moveForwardAndRunBlocked(1L)
         assertEquals(3, tasksExecuted)
         assertFalse(taskStatus.isDone)
+        assertEquals(1, executorService.scheduledTasksCount())
         taskStatus.cancel(true)
         assertTrue(taskStatus.isDone)
         assertTrue(taskStatus.isCancelled)
         executorService.moveForwardAndRunBlocked(10L)
         assertEquals(3, tasksExecuted)
+        assertEquals(0, executorService.scheduledTasksCount())
     }
 
     @Test
@@ -233,11 +241,13 @@ internal class BlockingScheduledExecutorServiceTests {
         executorService.moveForwardAndRunBlocked(1L)
         assertEquals(3, tasksExecuted)
         assertFalse(taskStatus.isDone)
+        assertEquals(1, executorService.scheduledTasksCount())
         taskStatus.cancel(true)
         assertTrue(taskStatus.isDone)
         assertTrue(taskStatus.isCancelled)
         executorService.moveForwardAndRunBlocked(10L)
         assertEquals(3, tasksExecuted)
+        assertEquals(0, executorService.scheduledTasksCount())
     }
 
     @Test

@@ -8,8 +8,9 @@ import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnecti
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -21,7 +22,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutorService
 
 @Suppress("DEPRECATION")
 internal class EmbraceNetworkConnectivityServiceTest {
@@ -29,11 +29,10 @@ internal class EmbraceNetworkConnectivityServiceTest {
     private lateinit var service: EmbraceNetworkConnectivityService
 
     companion object {
-        private lateinit var mockContext: Context
-        private lateinit var mockCleanerService: MemoryCleanerService
+        private lateinit var context: Context
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var mockConnectivityManager: ConnectivityManager
-        private lateinit var executor: ExecutorService
+        private lateinit var worker: BackgroundWorker
         private lateinit var fakeClock: FakeClock
 
         /**
@@ -42,12 +41,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @BeforeClass
         @JvmStatic
         fun setupBeforeAll() {
-            mockContext = mockk(relaxUnitFun = true)
-            mockCleanerService = mockk(relaxUnitFun = true)
+            context = mockContext()
             logger = InternalEmbraceLogger()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()
-            executor = MoreExecutors.newDirectExecutorService()
+            worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         }
 
         /**
@@ -57,7 +55,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @JvmStatic
         fun tearDownAfterAll() {
             unmockkAll()
-            executor.shutdown()
         }
     }
 
@@ -66,12 +63,12 @@ internal class EmbraceNetworkConnectivityServiceTest {
      */
     @Before
     fun setup() {
-        every { mockContext.getSystemService(Context.CONNECTIVITY_SERVICE) } returns mockConnectivityManager
+        every { context.getSystemService(Context.CONNECTIVITY_SERVICE) } returns mockConnectivityManager
 
         service = EmbraceNetworkConnectivityService(
-            mockContext,
+            context,
             fakeClock,
-            executor,
+            worker,
             logger,
             mockConnectivityManager,
             true
@@ -92,16 +89,16 @@ internal class EmbraceNetworkConnectivityServiceTest {
     @Test
     @Throws(InterruptedException::class)
     fun `test connectivity broadcast receiver can register and unregister`() {
-        verify { mockContext.registerReceiver(service, any()) }
+        verify { context.registerReceiver(service, any()) }
         service.close()
-        verify { mockContext.unregisterReceiver(service) }
+        verify { context.unregisterReceiver(service) }
     }
 
     @Test
     fun `test onReceive with no connection creates an interval`() {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
         fakeClock.tick(2000)
         val intervals = service.getCapturedData()
 
@@ -186,7 +183,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI) }
     }
@@ -201,7 +198,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WAN) }
     }
@@ -215,7 +212,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE) }
     }
@@ -229,7 +226,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo } throws Exception("")
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.UNKNOWN) }
     }
@@ -244,14 +241,30 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WAN) }
 
         // remove listener and call onReceive again
         service.removeNetworkConnectivityListener(listener)
-        service.onReceive(mockContext, mockIntent)
+        service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(any()) }
+    }
+
+    @Test
+    fun `test limit exceeded`() {
+        val mockIntent = mockk<Intent>(relaxed = true)
+
+        repeat(60) {
+            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
+            fakeClock.tick(1)
+            service.onReceive(context, mockIntent)
+
+            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
+            fakeClock.tick(1)
+            service.onReceive(context, mockIntent)
+        }
+        assertEquals(100, service.getCapturedData().size)
     }
 }

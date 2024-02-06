@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,7 +18,7 @@ internal class BlockedThreadDetectorTest {
     private lateinit var detector: BlockedThreadDetector
     private lateinit var configService: ConfigService
     private lateinit var clock: FakeClock
-    private lateinit var listener: BlockedThreadListener
+    private lateinit var listener: FakeBlockedThreadListener
     private lateinit var state: ThreadMonitoringState
     private lateinit var anrMonitorThread: AtomicReference<Thread>
 
@@ -28,7 +26,7 @@ internal class BlockedThreadDetectorTest {
     fun setUp() {
         configService = FakeConfigService()
         clock = FakeClock(BASELINE_MS)
-        listener = mockk(relaxUnitFun = true)
+        listener = FakeBlockedThreadListener()
         state = ThreadMonitoringState(clock)
         anrMonitorThread = AtomicReference(Thread.currentThread())
         detector = BlockedThreadDetector(
@@ -58,7 +56,7 @@ internal class BlockedThreadDetectorTest {
         val now = BASELINE_MS + 3000
         clock.setCurrentTime(now)
         detector.updateAnrTracking(BASELINE_MS + 2000)
-        verify(exactly = 1) { listener.onThreadBlockedInterval(any(), any()) }
+        assertEquals(1, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now, state.lastSampleAttemptMs)
     }
@@ -71,7 +69,7 @@ internal class BlockedThreadDetectorTest {
         state.lastSampleAttemptMs = now - 10
 
         detector.updateAnrTracking(now)
-        verify(exactly = 0) { listener.onThreadBlockedInterval(any(), any()) }
+        assertEquals(0, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now - 10, state.lastSampleAttemptMs)
     }

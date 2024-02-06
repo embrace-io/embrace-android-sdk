@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
+import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
@@ -23,7 +24,7 @@ internal class EmbraceAutomaticVerificationTest {
 
     companion object {
         private lateinit var embraceSamples: EmbraceAutomaticVerification
-        private val activity: Activity = mockk(relaxed = true)
+        private val activity: Activity = mockActivity()
         private val scheduledExecutorService: ScheduledExecutorService = mockk(relaxed = true)
 
         @BeforeClass

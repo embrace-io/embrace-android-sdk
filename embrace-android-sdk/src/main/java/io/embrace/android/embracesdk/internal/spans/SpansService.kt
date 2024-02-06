@@ -1,18 +1,17 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
- * Public interface for an internal service that manages the recording, storage, and propagation of Spans
+ * Internal service that supports the creation and recording of [EmbraceSpan]
  */
-internal interface SpansService {
+internal interface SpansService : Initializable {
     /**
-     * Return an [EmbraceSpan] that can be started and stopped
+     * Return an [EmbraceSpan] instance that can be used to record spans. Returns null if at least one input parameter is not valid or if
+     * the SDK or session is not in a state where a new span can be recorded.
      */
     fun createSpan(
         name: String,
@@ -22,10 +21,8 @@ internal interface SpansService {
     ): EmbraceSpan?
 
     /**
-     * Record a key span around the given lambda with the current session span as its parent where the start time will be when the lambda
-     * starts and the end time will be when the lambda ends. If the lambda throws an exception, it will be recorded as a
-     * [ErrorCode.FAILURE]. The name of the span will be the provided name with the appropriate prefix prepended to it
-     * if [internal] is true.
+     * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a
+     * [ErrorCode.FAILURE]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal] is true.
      */
     fun <T> recordSpan(
         name: String,
@@ -36,8 +33,8 @@ internal interface SpansService {
     ): T
 
     /**
-     * Record a completed [Span] for work that has already been done. Returns true if the span was recorded or queued to be recorded,
-     * false if it wasn't.
+     * Record a completed span for an operation with the given start and end times. Returns true if the span was recorded or queued to be
+     * recorded, false if it wasn't.
      */
     fun recordCompletedSpan(
         name: String,
@@ -50,25 +47,4 @@ internal interface SpansService {
         events: List<EmbraceSpanEvent> = emptyList(),
         errorCode: ErrorCode? = null
     ): Boolean
-
-    /**
-     * Store the given list of completed Spans to be sent to the backend at the next available time
-     */
-    fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode
-
-    /**
-     * Return the list of the currently stored completed Spans that have not been sent to the backend
-     */
-    fun completedSpans(): List<EmbraceSpanData>?
-
-    /**
-     * Flush and return all of the stored completed Spans. This should be called when the stored completed spans are ready to be sent to
-     * the backend. If the flush is being triggered because the app is about to terminate, set [appTerminationCause] to the appropriate
-     * value. Setting this to null means the app is not terminating.
-     */
-    fun flushSpans(appTerminationCause: EmbraceAttributes.AppTerminationCause? = null): List<EmbraceSpanData>?
-
-    companion object {
-        val featureDisabledSpansService = FeatureDisabledSpansService()
-    }
 }

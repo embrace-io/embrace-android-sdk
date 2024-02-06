@@ -27,10 +27,6 @@ internal class ReactNativeInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             val exception = JsException(name, message, type, stacktrace)
-            logger.logDeveloper(
-                "Embrace",
-                "Log Unhandled JS exception: $name -- stacktrace: $stacktrace"
-            )
             crashService.logUnhandledJsException(exception)
         } else {
             logger.logSDKNotInitialized("log JS exception")
@@ -44,12 +40,8 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?
     ) {
         if (embrace.isStarted) {
-            logger.logDeveloper(
-                "Embrace",
-                "Log Handled JS exception: $name -- stacktrace: $stacktrace"
-            )
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 message,
                 properties,
                 null,
@@ -76,6 +68,14 @@ internal class ReactNativeInternalInterfaceImpl(
             preferencesService.javaScriptPatchNumber = number
         } else {
             logger.logSDKNotInitialized("set JavaScript patch number")
+        }
+    }
+
+    override fun setReactNativeSdkVersion(version: String?) {
+        if (embrace.isStarted) {
+            metadataService.setRnSdkVersion(version)
+        } else {
+            logger.logSDKNotInitialized("set React Native SDK version")
         }
     }
 
@@ -108,5 +108,20 @@ internal class ReactNativeInternalInterfaceImpl(
         } else {
             logger.logSDKNotInitialized("set JavaScript bundle URL")
         }
+    }
+
+    override fun logRnAction(
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        properties: Map<String?, Any?>,
+        bytesSent: Int,
+        output: String
+    ) {
+        embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+    }
+
+    override fun logRnView(screen: String) {
+        embrace.logRnView(screen)
     }
 }

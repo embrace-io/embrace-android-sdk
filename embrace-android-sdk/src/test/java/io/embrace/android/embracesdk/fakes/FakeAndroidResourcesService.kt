@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.content.res.Resources
-import io.embrace.android.embracesdk.config.local.LocalConfig
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
 
@@ -23,9 +23,9 @@ internal class FakeAndroidResourcesService : AndroidResourcesService {
             Triple(BuildInfo.BUILD_INFO_BUILD_ID, 9991, "5.22.0"),
             Triple(BuildInfo.BUILD_INFO_BUILD_TYPE, 9992, "release"),
             Triple(BuildInfo.BUILD_INFO_BUILD_FLAVOR, 9993, "delicious"),
-            Triple(LocalConfig.BUILD_INFO_APP_ID, 9994, "true"),
-            Triple(LocalConfig.BUILD_INFO_NDK_ENABLED, 9995, "true"),
-            Triple(LocalConfig.NDK_ENABLED_DEFAULT.toString(), 9996, "true")
+            Triple(LocalConfigParser.BUILD_INFO_APP_ID, 9994, "true"),
+            Triple(LocalConfigParser.BUILD_INFO_NDK_ENABLED, 9995, "true"),
+            Triple(LocalConfigParser.NDK_ENABLED_DEFAULT.toString(), 9996, "true")
         )
     }
 }

@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.EmbraceEvent
-import io.embrace.android.embracesdk.comms.api.EmbraceApiService.Companion.Endpoint
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -66,7 +65,7 @@ internal class ApiRequestMapper(
         checkNotNull(event.eventId) { "event ID must be set" }
         val url = Endpoint.EVENTS.asEmbraceUrl()
         val abbreviation = event.type.abbreviation
-        val eventIdentifier: String = if (event.type == EmbraceEvent.Type.CRASH) {
+        val eventIdentifier: String = if (event.type == EventType.CRASH) {
             createCrashActiveEventsHeader(abbreviation, event.activeEventIds)
         } else {
             abbreviation + ":" + event.eventId
@@ -76,7 +75,7 @@ internal class ApiRequestMapper(
 
     fun networkEventRequest(networkEvent: NetworkEvent): ApiRequest {
         val url = Endpoint.NETWORK.asEmbraceUrl()
-        val abbreviation = EmbraceEvent.Type.NETWORK_LOG.abbreviation
+        val abbreviation = EventType.NETWORK_LOG.abbreviation
         val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
         return requestBuilder(url).copy(logId = networkIdentifier)
     }

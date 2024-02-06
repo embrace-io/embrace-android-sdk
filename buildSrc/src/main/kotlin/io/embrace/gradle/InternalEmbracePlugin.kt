@@ -10,6 +10,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.quality.Checkstyle
 import org.gradle.api.plugins.quality.CheckstyleExtension
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
@@ -22,13 +24,12 @@ class InternalEmbracePlugin : Plugin<Project> {
         configureBuildPlugins(project)
 
         // TODO: (future) - these scripts should be integrated into this class.
-        if (project.name != "test-server") { // don't want to release our test code...
-            project.apply(from = project.file("../scripts/release.gradle"))
-        }
+        project.apply(from = project.file("../scripts/release.gradle"))
 
         project.pluginManager.withPlugin("com.android.library") {
             val android = project.extensions.getByType(LibraryExtension::class.java)
             configureAndroidExtension(project, android)
+            configureJavaOptions(project)
             configureKotlinOptions(project)
         }
 
@@ -86,8 +87,7 @@ class InternalEmbracePlugin : Plugin<Project> {
         detekt.run {
             buildUponDefaultConfig = true
             autoCorrect = true
-            config =
-                project.files("${project.rootDir}/config/detekt/detekt.yml") // overwrite default behaviour here
+            config.from(project.files("${project.rootDir}/config/detekt/detekt.yml")) // overwrite default behaviour here
             baseline =
                 project.file("${project.projectDir}/config/detekt/baseline.xml") // suppress pre-existing issues
         }
@@ -120,7 +120,7 @@ class InternalEmbracePlugin : Plugin<Project> {
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
                 aarMetadata {
-                    minCompileSdk = 16
+                    minCompileSdk = Versions.minSdk
                 }
             }
 
@@ -143,6 +143,14 @@ class InternalEmbracePlugin : Plugin<Project> {
                 // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
                 unitTests.isReturnDefaultValues = true
                 unitTests.isIncludeAndroidResources = true
+
+                unitTests {
+                    all { test ->
+                        test.testLogging {
+                            this.exceptionFormat = TestExceptionFormat.FULL
+                        }
+                    }
+                }
             }
 
             buildTypes {
@@ -172,6 +180,13 @@ class InternalEmbracePlugin : Plugin<Project> {
                 //  Disabling this check for now.
                 allWarningsAsErrors = false
             }
+        }
+    }
+
+    private fun configureJavaOptions(project: Project) {
+        project.tasks.withType(JavaCompile::class.java).all {
+            val args = listOf("-Xlint:unchecked", "-Xlint:deprecation")
+            options.compilerArgs.addAll(args)
         }
     }
 

@@ -1,17 +1,22 @@
 package io.embrace.android.embracesdk
 
 import android.os.Looper
+import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
+import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
+import io.embrace.android.embracesdk.capture.user.EmbraceUserService
+import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -31,16 +36,16 @@ internal class EssentialServiceModuleImplTest {
         every { Looper.getMainLooper() } returns mockk(relaxed = true)
 
         val coreModule = FakeCoreModule()
+        val initModule = InitModuleImpl()
         val module = EssentialServiceModuleImpl(
-            initModule = InitModuleImpl(),
+            initModule = initModule,
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(),
+            workerThreadModule = WorkerThreadModuleImpl(initModule),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
-            buildInfo = BuildInfo("", "", ""),
+            storageModule = FakeStorageModule(),
             customAppId = "abcde",
             enableIntegrationTesting = false,
-            configStopAction = {},
             configServiceProvider = { null }
         )
 
@@ -49,12 +54,18 @@ internal class EssentialServiceModuleImplTest {
         assertTrue(module.processStateService is EmbraceProcessStateService)
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.urlBuilder)
-        assertNotNull(module.cache)
         assertNotNull(module.apiClient)
         assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)
+        assertNotNull(module.sharedObjectLoader)
+        assertNotNull(module.sessionIdTracker)
+        assertTrue(module.userService is EmbraceUserService)
         assertTrue(module.configService is EmbraceConfigService)
         assertTrue(module.gatingService is EmbraceGatingService)
+        assertTrue(module.cpuInfoDelegate is EmbraceCpuInfoDelegate)
+        assertTrue(module.networkConnectivityService is EmbraceNetworkConnectivityService)
+        assertTrue(module.deviceArchitecture is DeviceArchitectureImpl)
+        assertTrue(module.pendingApiCallsSender is EmbracePendingApiCallsSender)
     }
 
     @Test
@@ -66,10 +77,9 @@ internal class EssentialServiceModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
-            buildInfo = BuildInfo("", "", ""),
+            storageModule = FakeStorageModule(),
             customAppId = null,
             enableIntegrationTesting = false,
-            configStopAction = {},
             configServiceProvider = { fakeConfigService }
         )
 

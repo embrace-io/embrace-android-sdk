@@ -34,7 +34,7 @@ internal class BlockingScheduledExecutorService(
     private val fakeClock: FakeClock = FakeClock(),
     blockingMode: Boolean = true
 ) : AbstractExecutorService(), ScheduledExecutorService {
-    private val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
+    val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
     private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
 
     /**
@@ -88,12 +88,17 @@ internal class BlockingScheduledExecutorService(
         runCurrentlyBlocked()
     }
 
+    fun scheduledTasksCount(): Int = scheduledTasks.size
+
+    var submitCount = 0
+
     override fun execute(command: Runnable?) {
         requireNotNull(command)
         delegateExecutorService.execute(command)
     }
 
     override fun submit(task: Runnable?): Future<*> {
+        submitCount++
         requireNotNull(task)
         return delegateExecutorService.submit(task)
     }
@@ -271,6 +276,14 @@ internal class BlockingScheduledExecutorService(
         }
 
         override fun isPeriodic(): Boolean = periodMs != 0L
+
+        override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+            val cancelled = super.cancel(mayInterruptIfRunning)
+            if (cancelled) {
+                scheduledTasks.remove(this)
+            }
+            return cancelled
+        }
     }
 
     private class BlockedScheduledFutureTaskComparator : Comparator<BlockedFutureScheduledTask<*>> {

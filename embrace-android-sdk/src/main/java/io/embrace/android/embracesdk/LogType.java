@@ -12,14 +12,14 @@ public enum LogType {
     WARNING,
     ERROR;
 
-    final EmbraceEvent.Type toEventType() {
+    final EventType toEventType() {
         switch (this) {
             case WARNING:
-                return EmbraceEvent.Type.WARNING_LOG;
+                return EventType.WARNING_LOG;
             case ERROR:
-                return EmbraceEvent.Type.ERROR_LOG;
+                return EventType.ERROR_LOG;
             default:
-                return EmbraceEvent.Type.INFO_LOG;
+                return EventType.INFO_LOG;
         }
     }
 }

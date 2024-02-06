@@ -10,10 +10,10 @@ internal interface ApiClient {
     fun executeGet(request: ApiRequest): ApiResponse
 
     /**
-     * Executes [ApiRequest] as a POST with the given body defined by [payloadToCompress], returning the response as a [ApiResponse].
-     * The body will be gzip compressed.
+     * Executes [ApiRequest] as a POST with the supplied action that writes to an outputstream,
+     * returning the response as a [ApiResponse]. The body will be gzip compressed.
      */
-    fun executePost(request: ApiRequest, payloadToCompress: ByteArray): ApiResponse
+    fun executePost(request: ApiRequest, action: SerializationAction): ApiResponse
 
     companion object {
         /**

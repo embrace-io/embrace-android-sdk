@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.anr.detection.AnrProcessErrorStateInfo
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
+import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.WrongThreadException
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.mockk.every
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -71,28 +69,12 @@ internal class EmbraceAnrServiceTest {
     }
 
     @Test
-    fun testGetAnrProcessErrors() {
-        with(rule) {
-            val startTime = 10L
-            every { mockAnrProcessErrorSampler.getAnrProcessErrors(startTime) } returns listOf(
-                anrProcessErrorStateInfo
-            )
-
-            val anrErrors = anrService.getAnrProcessErrors(startTime)
-
-            assertTrue(anrErrors.size == 1)
-            assertEquals(anrProcessErrorStateInfo, anrErrors.get(0))
-        }
-    }
-
-    @Test
     fun testListener() {
         with(rule) {
             val listener = FakeBlockedThreadListener()
             anrService.addBlockedThreadListener(listener)
             assertEquals(anrService, blockedThreadDetector.listener)
             assertTrue(anrService.listeners.contains(listener))
-            assertTrue(anrService.listeners.contains(mockAnrProcessErrorSampler))
         }
     }
 
@@ -101,7 +83,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             // cold starts should always be ignored
             state.lastTargetThreadResponseMs = 1
-            anrService.onForeground(true, 0L, 0L)
+            anrService.onForeground(true, 0L)
 
             // assert no ANR interval was added
             assertEquals(0, anrService.stacktraceSampler.anrIntervals.size)
@@ -237,10 +219,10 @@ internal class EmbraceAnrServiceTest {
         val anrEndTs = 15023000L
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrStartTs, anrInProgressTs)
+            anrService.onForeground(false, anrInProgressTs)
             anrService.onBackground(anrEndTs)
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs, anrEndTs)
+            anrService.onForeground(false, anrEndTs)
             // Since Looper is a mock, we execute this operation to
             // ensure onMainThreadUnblocked runs and lastTargetThreadResponseMs gets updated
             targetThreadHandler.onIdleThread()
@@ -257,10 +239,10 @@ internal class EmbraceAnrServiceTest {
 
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrStartTs, anrInProgressTs)
+            anrService.onForeground(false, anrInProgressTs)
             anrService.onBackground(anrEndTs)
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs, anrEndTs)
+            anrService.onForeground(false, anrEndTs)
             targetThreadHandler.onIdleThread()
             val intervals = anrService.getCapturedData()
             assertEquals(0, intervals.size)
@@ -439,7 +421,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             clock.setCurrentTime(14000000L)
             cfg = cfg.copy(pctBgEnabled = 100)
-            anrService.onForeground(true, clock.now(), clock.now())
+            anrService.onForeground(true, clock.now())
             anrExecutorService.submit {
                 assertTrue(state.started.get())
             }
@@ -474,32 +456,5 @@ internal class EmbraceAnrServiceTest {
                 anrMonitorThread.set(previousAnrMonitoringThread)
             }
         }
-    }
-
-    class FakeBlockedThreadListener : BlockedThreadListener {
-        var blockedCount = 0
-        var unblockedCount = 0
-        var intervalCount = 0
-
-        override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-            blockedCount++
-        }
-
-        override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-            intervalCount++
-        }
-
-        override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-            unblockedCount++
-        }
-    }
-
-    companion object {
-        val anrProcessErrorStateInfo = AnrProcessErrorStateInfo(
-            "tag",
-            "shortMsg",
-            "longMsg",
-            "stacktrace"
-        )
     }
 }

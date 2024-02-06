@@ -5,6 +5,24 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 internal class EmbraceUrlTest {
+
+    @Test
+    fun `test endpoint()`() {
+        val embraceUrlSessions = EmbraceUrl.create("https://embrace.io/sessions")
+        val embraceUrlEvents = EmbraceUrl.create("https://embrace.io/events")
+        val embraceUrlBlobs = EmbraceUrl.create("https://embrace.io/blobs")
+        val embraceUrlLogging = EmbraceUrl.create("https://embrace.io/logging")
+        val embraceUrlNetwork = EmbraceUrl.create("https://embrace.io/network")
+        val embraceUrlOther = EmbraceUrl.create("https://embrace.io/other")
+
+        assertEquals(Endpoint.SESSIONS, embraceUrlSessions.endpoint())
+        assertEquals(Endpoint.EVENTS, embraceUrlEvents.endpoint())
+        assertEquals(Endpoint.BLOBS, embraceUrlBlobs.endpoint())
+        assertEquals(Endpoint.LOGGING, embraceUrlLogging.endpoint())
+        assertEquals(Endpoint.NETWORK, embraceUrlNetwork.endpoint())
+        assertEquals(Endpoint.UNKNOWN, embraceUrlOther.endpoint())
+    }
+
     @Test
     fun `test equality`() {
         val embraceUrl1 = EmbraceUrl.create("https://embrace.io")

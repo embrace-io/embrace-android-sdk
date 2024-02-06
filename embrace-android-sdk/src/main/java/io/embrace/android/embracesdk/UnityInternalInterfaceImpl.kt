@@ -93,7 +93,7 @@ internal class UnityInternalInterfaceImpl(
         if (embrace.isStarted) {
             logger.logError("message: $message -- stacktrace: $stacktrace")
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Unity exception",
                 null,
                 null,
@@ -157,5 +157,9 @@ internal class UnityInternalInterfaceImpl(
                 null
             )
         )
+    }
+
+    override fun installUnityThreadSampler() {
+        embrace.installUnityThreadSampler()
     }
 }

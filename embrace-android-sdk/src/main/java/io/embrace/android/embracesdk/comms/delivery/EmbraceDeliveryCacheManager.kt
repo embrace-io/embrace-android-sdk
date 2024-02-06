@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.SessionMessageSerializer
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.Callable
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
-    private val executorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
-    private val clock: Clock,
-    private val serializer: EmbraceSerializer
+    private val clock: Clock
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
@@ -38,38 +38,39 @@ internal class EmbraceDeliveryCacheManager(
         private const val CRASH_FILE_NAME = "crash.json"
 
         /**
-         * File names for failed api calls
+         * File name for pending api calls
          */
-        private const val FAILED_API_CALLS_FILE_NAME = "failed_api_calls.json"
+        private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"
 
         const val MAX_SESSIONS_CACHED = 64
 
         private const val TAG = "DeliveryCacheManager"
     }
 
-    private val sessionMessageSerializer by threadLocal {
-        SessionMessageSerializer(serializer)
-    }
-
     // The session id is used as key for this map
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
-    override fun saveSession(sessionMessage: SessionMessage): ByteArray? {
-        return saveSessionImpl(sessionMessage)
-    }
-
-    override fun saveSessionOnCrash(sessionMessage: SessionMessage) {
-        saveSessionImpl(sessionMessage, true)
-    }
-
-    private fun saveSessionImpl(sessionMessage: SessionMessage, writeSync: Boolean = false): ByteArray {
-        if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
-            deleteOldestSessions()
+    override fun saveSession(
+        sessionMessage: SessionMessage,
+        snapshotType: SessionSnapshotType
+    ) {
+        try {
+            if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
+                deleteOldestSessions()
+            }
+            val sessionId = sessionMessage.session.sessionId
+            val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
+            val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
+            saveBytes(sessionId, writeSync, snapshot) { filename: String ->
+                Systrace.trace("serialize-session") {
+                    cacheService.writeSession(filename, sessionMessage)
+                }
+            }
+        } catch (exc: Throwable) {
+            logger.logError("Save session failed", exc, true)
+            throw exc
         }
-        val sessionBytes: ByteArray = sessionMessageSerializer.serialize(sessionMessage).toByteArray()
-        saveBytes(sessionMessage.session.sessionId, sessionBytes, writeSync)
-        return sessionBytes
     }
 
     override fun loadSession(sessionId: String): SessionMessage? {
@@ -80,9 +81,9 @@ internal class EmbraceDeliveryCacheManager(
         return null
     }
 
-    override fun loadSessionBytes(sessionId: String): ByteArray? {
+    override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         cachedSessions[sessionId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
+            return loadPayloadAsAction(cachedSession.filename)
         }
         logger.logError("Session $sessionId is not in cache")
         return null
@@ -90,7 +91,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
-            executorService.submit {
+            backgroundWorker.submit {
                 try {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
@@ -103,7 +104,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun getAllCachedSessionIds(): List<String> {
         val allSessions = cacheService.listFilenamesByPrefix(SESSION_FILE_PREFIX)
-        allSessions?.forEach { filename ->
+        allSessions.forEach { filename ->
             if (filename == OLD_VERSION_FILE_NAME) {
                 // If a cached session from a previous version of the SDK is found,
                 // load and save it again using the new naming schema
@@ -111,10 +112,8 @@ internal class EmbraceDeliveryCacheManager(
                     cacheService.loadObject(filename, SessionMessage::class.java)
                 previousSdkSession?.also {
                     // When saved, the new session filename is also added to cachedSessions
-                    saveSession(it)
-                    executorService.submit {
-                        cacheService.deleteFile(filename)
-                    }
+                    saveSession(it, SessionSnapshotType.NORMAL_END)
+                    cacheService.deleteFile(filename)
                 }
             }
             val values = filename.split('.')
@@ -133,27 +132,6 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.keys.toList()
     }
 
-    override fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray? {
-        val baId = backgroundActivityMessage.backgroundActivity.sessionId
-        val baBytes = serializer.bytesFromPayload(
-            backgroundActivityMessage,
-            BackgroundActivityMessage::class.java
-        )
-        // Do not add background activities to disk if we are over the limit
-        if (cachedSessions.size < MAX_SESSIONS_CACHED || cachedSessions.containsKey(baId)) {
-            baBytes?.let { saveBytes(baId, it) }
-        }
-        return baBytes
-    }
-
-    override fun loadBackgroundActivity(backgroundActivityId: String): ByteArray? {
-        cachedSessions[backgroundActivityId]?.let { cachedSession ->
-            return executorService.submit<ByteArray?> { loadPayload(cachedSession.filename) }.get()
-        }
-        logger.logWarning("Background activity $backgroundActivityId is not in cache")
-        return null
-    }
-
     override fun saveCrash(crash: EventMessage) {
         cacheService.cacheObject(CRASH_FILE_NAME, crash, EventMessage::class.java)
     }
@@ -166,10 +144,10 @@ internal class EmbraceDeliveryCacheManager(
         cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
-    override fun savePayload(bytes: ByteArray): String {
+    override fun savePayload(action: SerializationAction): String {
         val name = "payload_" + Uuid.getEmbUuid()
-        executorService.submit {
-            cacheService.cacheBytes(name, bytes)
+        backgroundWorker.submit {
+            cacheService.cachePayload(name, action)
         }
         return name
     }
@@ -178,42 +156,74 @@ internal class EmbraceDeliveryCacheManager(
         return cacheService.loadBytes(name)
     }
 
+    override fun loadPayloadAsAction(name: String): SerializationAction {
+        return cacheService.loadPayload(name)
+    }
+
     override fun deletePayload(name: String) {
-        executorService.submit {
+        backgroundWorker.submit {
             cacheService.deleteFile(name)
         }
     }
 
-    override fun saveFailedApiCalls(failedApiCalls: DeliveryFailedApiCalls) {
-        logger.logDeveloper(TAG, "Saving failed api calls")
-        serializer.bytesFromPayload(
-            failedApiCalls,
-            DeliveryFailedApiCalls::class.java
-        )?.let {
-            executorService.submit {
-                cacheService.cacheBytes(FAILED_API_CALLS_FILE_NAME, it)
-            }
+    /**
+     * Saves the [PendingApiCalls] map to a file named [PENDING_API_CALLS_FILE_NAME].
+     */
+    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
+        logger.logDeveloper(TAG, "Saving pending api calls")
+        backgroundWorker.submit {
+            cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
         }
     }
 
-    override fun loadFailedApiCalls(): DeliveryFailedApiCalls {
-        logger.logDeveloper(TAG, "Loading failed api calls")
-        val cached = executorService.submit<DeliveryFailedApiCalls> {
-            cacheService.loadObject(FAILED_API_CALLS_FILE_NAME, DeliveryFailedApiCalls::class.java)
-        }.get()
+    /**
+     * Loads the [PendingApiCalls] map from a file named [PENDING_API_CALLS_FILE_NAME].
+     * If loadObject returns null, it tries to load the old version of the file which was storing
+     * a list of [PendingApiCall] instead of [PendingApiCalls].
+     */
+    override fun loadPendingApiCalls(): PendingApiCalls {
+        logger.logDeveloper(TAG, "Loading pending api calls")
+        val callable = Callable<PendingApiCalls?> {
+            val loadApiCallsResult = runCatching {
+                cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
+            }
+            loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
+        }
+        val cached = backgroundWorker.submit(callable = callable).get()
         return if (cached != null) {
             cached
         } else {
-            logger.logDeveloper(TAG, "No failed api calls cache found")
-            DeliveryFailedApiCalls()
+            logger.logDeveloper(TAG, "No pending api calls cache found")
+            PendingApiCalls()
         }
+    }
+
+    /**
+     * Loads the old version of the [PENDING_API_CALLS_FILE_NAME] file where
+     * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]
+     */
+    private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
+        logger.logDeveloper(TAG, "Loading old version of pending api calls")
+        var cachedApiCallsPerEndpoint: PendingApiCalls? = null
+        val loadPendingApiCallsQueue = runCatching {
+            cacheService.loadOldPendingApiCalls(PENDING_API_CALLS_FILE_NAME)
+        }
+
+        if (loadPendingApiCallsQueue.isSuccess) {
+            cachedApiCallsPerEndpoint = PendingApiCalls()
+            loadPendingApiCallsQueue.getOrNull()?.forEach { cachedApiCall ->
+                cachedApiCallsPerEndpoint.add(cachedApiCall)
+            }
+        }
+
+        return cachedApiCallsPerEndpoint
     }
 
     override fun close() {
     }
 
     private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        return executorService.submit<SessionMessage?> {
+        return backgroundWorker.submit<SessionMessage?>(TaskPriority.HIGH) {
             try {
                 val sessionMessage = cacheService.loadObject(
                     cachedSession.filename,
@@ -237,17 +247,31 @@ internal class EmbraceDeliveryCacheManager(
             .forEach { deleteSession(it.sessionId) }
     }
 
-    private fun saveBytes(sessionId: String, bytes: ByteArray, writeSync: Boolean = false) {
+    private fun saveBytes(
+        sessionId: String,
+        writeSync: Boolean = false,
+        snapshot: Boolean = false,
+        saveAction: (filename: String) -> Unit
+    ) {
         if (writeSync) {
-            saveBytesImpl(sessionId, bytes)
+            saveBytesImpl(sessionId, saveAction)
         } else {
-            executorService.submit {
-                saveBytesImpl(sessionId, bytes)
+            // snapshots are low priority compared to state ends + loading/unloading other payload
+            // types. State ends are critical as they contain the final information.
+            val priority = when {
+                snapshot -> TaskPriority.LOW
+                else -> TaskPriority.CRITICAL
+            }
+            backgroundWorker.submit(priority) {
+                saveBytesImpl(sessionId, saveAction)
             }
         }
     }
 
-    private fun saveBytesImpl(sessionId: String, bytes: ByteArray) {
+    private fun saveBytesImpl(
+        sessionId: String,
+        saveAction: (filename: String) -> Unit
+    ) {
         try {
             val cachedSession = cachedSessions.getOrElse(sessionId) {
                 CachedSession(
@@ -255,13 +279,13 @@ internal class EmbraceDeliveryCacheManager(
                     clock.now()
                 )
             }
-            cacheService.cacheBytes(cachedSession.filename, bytes)
+            saveAction(cachedSession.filename)
             if (!cachedSessions.containsKey(cachedSession.sessionId)) {
                 cachedSessions[cachedSession.sessionId] = cachedSession
             }
             logger.logDeveloper(TAG, "Session message successfully cached.")
-        } catch (ex: Exception) {
-            logger.logError("Failed to cache current active session", ex)
+        } catch (ex: Throwable) {
+            logger.logError("Failed to cache current active session", ex, true)
         }
     }
 

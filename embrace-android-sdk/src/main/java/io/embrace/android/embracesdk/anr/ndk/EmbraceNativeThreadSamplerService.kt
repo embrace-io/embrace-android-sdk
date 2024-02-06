@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.mapThreadState
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.Random
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
@@ -24,7 +24,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val random: Random = Random(),
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
-    private val executorService: ScheduledExecutorService,
+    private val scheduledWorker: ScheduledWorker,
     private val deviceArchitecture: DeviceArchitecture
 ) : NativeThreadSamplerService {
 
@@ -139,9 +139,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
                     intervalMs
                 )
 
-                executorService.schedule({
-                    fetchIntervals()
-                }, intervalMs * MAX_NATIVE_SAMPLES, TimeUnit.MILLISECONDS)
+                scheduledWorker.schedule<Unit>(::fetchIntervals, intervalMs * MAX_NATIVE_SAMPLES, TimeUnit.MILLISECONDS)
             }
         }
         count++
@@ -154,7 +152,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         )
 
         if (sampling) {
-            executorService.submit {
+            scheduledWorker.submit {
                 logger.logDeveloper(
                     "EmbraceNativeThreadSamplerService",
                     "Fetching samples on JVM bg thread"

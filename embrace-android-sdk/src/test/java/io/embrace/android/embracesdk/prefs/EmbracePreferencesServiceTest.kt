@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.prefs
 
 import android.content.Context
@@ -7,7 +9,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,7 +27,7 @@ internal class EmbracePreferencesServiceTest {
     private lateinit var service: EmbracePreferencesService
     private lateinit var fakeClock: FakeClock
 
-    private val executorService = BlockableExecutorService()
+    private val executorService = BackgroundWorker(BlockableExecutorService())
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before
@@ -209,6 +212,33 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
+    fun `test crash number is saved`() {
+        assertEquals(1, service.incrementAndGetCrashNumber())
+        assertEquals(2, service.incrementAndGetCrashNumber())
+        assertEquals(3, service.incrementAndGetCrashNumber())
+        assertEquals(4, service.incrementAndGetCrashNumber())
+    }
+
+    @Test
+    fun `test native crash number is saved`() {
+        assertEquals(1, service.incrementAndGetNativeCrashNumber())
+        assertEquals(2, service.incrementAndGetNativeCrashNumber())
+        assertEquals(3, service.incrementAndGetNativeCrashNumber())
+        assertEquals(4, service.incrementAndGetNativeCrashNumber())
+    }
+
+    @Test
+    fun `test incrementAndGet returns -1 on an exception`() {
+        service = EmbracePreferencesService(
+            executorService,
+            lazy { FakeSharedPreferences(throwExceptionOnGet = true) },
+            fakeClock,
+            EmbraceSerializer()
+        )
+        assertEquals(-1, service.incrementAndGetSessionNumber())
+    }
+
+    @Test
     fun `test java script bundle url is saved`() {
         assertNull(service.javaScriptBundleURL)
 
@@ -275,7 +305,7 @@ internal class EmbracePreferencesServiceTest {
     fun `test is jail broken is saved`() {
         assertNull(service.jailbroken)
         service.jailbroken = true
-        assertTrue(service.jailbroken!!)
+        assertTrue(checkNotNull(service.jailbroken))
     }
 
     @Test

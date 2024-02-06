@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.capture.aei.EmbraceApplicationExitInfoServi
 import io.embrace.android.embracesdk.capture.aei.NoOpApplicationExitInfoService
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -43,12 +43,13 @@ internal class DataContainerModuleImpl(
     override val applicationExitInfoService: ApplicationExitInfoService by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             EmbraceApplicationExitInfoService(
-                workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 essentialServiceModule.configService,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
                 deliveryModule.deliveryService,
                 essentialServiceModule.metadataService,
+                essentialServiceModule.sessionIdTracker,
                 essentialServiceModule.userService
             )
         } else {
@@ -66,8 +67,8 @@ internal class DataContainerModuleImpl(
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
             applicationExitInfoService,
-            dataCaptureServiceModule.strictModeService,
-            nativeModule.nativeThreadSamplerService
+            nativeModule.nativeThreadSamplerService,
+            anrModule.responsivenessMonitorService
         )
     }
 
@@ -77,6 +78,7 @@ internal class DataContainerModuleImpl(
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
             performanceInfoService,
             essentialServiceModule.userService,
             sessionProperties,

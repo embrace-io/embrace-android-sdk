@@ -3,7 +3,7 @@
     "id": "fakeSessionId",
     "st": 160000000000,
     "sn": 1,
-    "ty": "st",
+    "ty": "en",
     "as": "foreground",
     "cs": true,
     "sm": "s",
@@ -14,7 +14,7 @@
     "tb": [],
     "cb": [
       {
-        "m": "a breadcrumb",
+        "m": "breadcrumb",
         "ts": 1577836804000
       }
     ],

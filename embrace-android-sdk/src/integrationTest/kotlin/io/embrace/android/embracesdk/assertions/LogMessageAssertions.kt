@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
@@ -13,7 +13,7 @@ import org.junit.Assert.assertEquals
 internal fun assertLogMessageReceived(
     eventMessage: EventMessage,
     message: String,
-    eventType: EmbraceEvent.Type,
+    eventType: EventType,
     logType: LogExceptionType = LogExceptionType.NONE,
     timeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     properties: Map<String, Any>? = null,
@@ -27,7 +27,7 @@ internal fun assertLogMessageReceived(
         assertEquals(logType.value, logExceptionType)
         assertEquals(eventType, type)
         assertEquals(Embrace.AppFramework.NATIVE.value, framework)
-        assertEquals(properties, customPropertiesMap)
+        assertEquals(properties, customProperties)
         exception?.let {
             assertEquals(it.message, exceptionMessage)
             assertEquals(it.javaClass.simpleName, exceptionName)

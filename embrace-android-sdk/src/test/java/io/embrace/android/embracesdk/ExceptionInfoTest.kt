@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.ExceptionInfo
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -22,16 +20,12 @@ internal class ExceptionInfoTest {
 
     @Test
     fun testExceptionInfoSerialization() {
-        val data = ResourceReader.readResourceAsText("exception_info_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("exception_info_expected.json", info)
     }
 
     @Test
     fun testExceptionInfoDeserialization() {
-        val json = ResourceReader.readResourceAsText("exception_info_expected.json")
-        val obj = Gson().fromJson(json, ExceptionInfo::class.java)
+        val obj = deserializeJsonFromResource<ExceptionInfo>("exception_info_expected.json")
         assertEquals("java.lang.IllegalStateException", obj.name)
         assertEquals("Whoops!", obj.message)
         assertEquals("java.base/java.lang.Thread.getStackTrace(Thread.java:1602)", obj.lines[0])
@@ -41,27 +35,19 @@ internal class ExceptionInfoTest {
         )
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testExceptionInfoEmptyObject() {
-        val info = Gson().fromJson("{}", ExceptionInfo::class.java)
-        assertNotNull(info)
-        info.name
+        deserializeEmptyJsonString<ExceptionInfo>()
     }
 
     @Test
     fun testOfThrowable() {
-        val info = ExceptionInfo.ofThrowable(
-            mockk {
-                every { message } returns "UhOh."
-                every { stackTrace } returns arrayOf(
-                    StackTraceElement("Foo", "bar", "Foo.kt", 5)
-                )
-            }
-        )
+        val throwable = object : Throwable("UhOh.") {}
+        val info = ExceptionInfo.ofThrowable(throwable)
         assertNotNull(info)
         assertEquals("UhOh.", info.message)
-        assertEquals("java.lang.Throwable", info.name)
-        assertEquals("Foo.bar(Foo.kt:5)", info.lines.single())
+        assertEquals("io.embrace.android.embracesdk.ExceptionInfoTest\$testOfThrowable\$throwable\$1", info.name)
+        assertEquals("io.embrace.android.embracesdk.ExceptionInfoTest.testOfThrowable(ExceptionInfoTest.kt:45)", info.lines.first())
         assertNull(info.originalLength)
     }
 

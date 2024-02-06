@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -17,16 +16,12 @@ internal class JsExceptionTest {
 
     @Test
     fun testSerialization() {
-        val data = ResourceReader.readResourceAsText("js_exception_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("js_exception_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("js_exception_expected.json")
-        val obj = Gson().fromJson(json, JsException::class.java)
+        val obj = deserializeJsonFromResource<JsException>("js_exception_expected.json")
         assertEquals("java.lang.IllegalStateException", obj.name)
         assertEquals("Whoops!", obj.message)
         assertEquals("JsError", obj.type)
@@ -35,8 +30,7 @@ internal class JsExceptionTest {
 
     @Test
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", JsException::class.java)
-        assertNotNull(info)
-        info.name
+        val obj = deserializeEmptyJsonString<JsException>()
+        assertNotNull(obj)
     }
 }

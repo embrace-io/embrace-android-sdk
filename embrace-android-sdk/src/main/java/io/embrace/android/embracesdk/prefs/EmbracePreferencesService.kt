@@ -1,29 +1,26 @@
 package io.embrace.android.embracesdk.prefs
 
 import android.content.SharedPreferences
-import com.google.gson.reflect.TypeToken
-import io.embrace.android.embracesdk.internal.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 internal class EmbracePreferencesService(
-    registrationExecutorService: ExecutorService,
+    private val backgroundWorker: BackgroundWorker,
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: EmbraceSerializer
 ) : PreferencesService, ActivityLifecycleListener {
 
     private val preferences: Future<SharedPreferences>
-    private val registrationExecutorService: ExecutorService
     private val lazyPrefs: Lazy<SharedPreferences>
 
     init {
-        this.registrationExecutorService = registrationExecutorService
         this.lazyPrefs = lazyPrefs
 
         // We get SharedPreferences on a background thread because it loads data from disk
@@ -31,26 +28,23 @@ internal class EmbracePreferencesService(
         // block if necessary with Future.get(). Eagerly offloading buys us more time
         // for SharedPreferences to load the File and reduces the likelihood of blocking
         // when invoked by client code.
-        preferences = registrationExecutorService.submit(lazyPrefs::value)
+        preferences = backgroundWorker.submit(callable = lazyPrefs::value)
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 
     override fun applicationStartupComplete() = alterStartupStatus(SDK_STARTUP_COMPLETED)
 
     private fun alterStartupStatus(status: String) {
-        registrationExecutorService.submit(
-            Callable<Any?> {
-                logDeveloper("EmbracePreferencesService", "Startup key: $status")
-                prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
-                null
-            }
-        )
+        backgroundWorker.submit {
+            logDeveloper("EmbracePreferencesService", "Startup key: $status")
+            prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
+        }
     }
 
     // fallback from this very unlikely case by just loading on the main thread
     private val prefs: SharedPreferences
         get() = try {
-            preferences.get()
+            preferences.get(2, TimeUnit.SECONDS)
         } catch (exc: Throwable) {
             // fallback from this very unlikely case by just loading on the main thread
             lazyPrefs.value
@@ -141,18 +135,18 @@ internal class EmbracePreferencesService(
         val editor = edit()
         val mapString = when (value) {
             null -> null
-            else -> serializer.toJson(value)
+            else -> serializer.toJson(value, Map::class.java)
         }
         editor.putString(key, mapString)
         editor.apply()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun SharedPreferences.getMapPreference(
         key: String
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
-        val type = object : TypeToken<HashMap<String?, String?>?>() {}.type
-        return serializer.fromJson<HashMap<String, String>>(mapString, type)
+        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
     }
 
     override var appVersion: String?
@@ -234,10 +228,23 @@ internal class EmbracePreferencesService(
         return incrementAndGetOrdinal(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
     }
 
+    override fun incrementAndGetCrashNumber(): Int {
+        return incrementAndGetOrdinal(LAST_CRASH_NUMBER_KEY)
+    }
+
+    override fun incrementAndGetNativeCrashNumber(): Int {
+        return incrementAndGetOrdinal(LAST_NATIVE_CRASH_NUMBER_KEY)
+    }
+
     private fun incrementAndGetOrdinal(key: String): Int {
-        val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
-        prefs.setIntegerPreference(key, ordinal)
-        return ordinal
+        return try {
+            val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
+            prefs.setIntegerPreference(key, ordinal)
+            ordinal
+        } catch (tr: Throwable) {
+            logDeveloper("EmbracePreferencesService", "Error incrementing $key", tr)
+            -1
+        }
     }
 
     override var javaScriptBundleURL: String?
@@ -348,6 +355,8 @@ internal class EmbracePreferencesService(
         private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
+        private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
+        private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
         private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"

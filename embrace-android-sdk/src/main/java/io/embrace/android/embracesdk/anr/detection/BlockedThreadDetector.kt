@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -31,7 +32,7 @@ private const val SAMPLE_BACKOFF_FACTOR = 0.5
  * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
  * [LivenessCheckScheduler] whereas this class contains the business logic.
  */
-internal class BlockedThreadDetector constructor(
+internal class BlockedThreadDetector(
     var configService: ConfigService,
     private val clock: Clock,
     var listener: BlockedThreadListener? = null,
@@ -40,6 +41,7 @@ internal class BlockedThreadDetector constructor(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
     private val anrMonitorThread: AtomicReference<Thread>
 ) {
+    private val heartbeatResponseMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatResponse")
 
     /**
      * Called when the target thread process the message. This indicates that the target thread is
@@ -50,8 +52,8 @@ internal class BlockedThreadDetector constructor(
      */
     fun onTargetThreadResponse(timestamp: Long) {
         enforceThread(anrMonitorThread)
-
         state.lastTargetThreadResponseMs = timestamp
+        heartbeatResponseMonitor.ping()
 
         if (isDebuggerEnabled()) {
             return
@@ -96,6 +98,12 @@ internal class BlockedThreadDetector constructor(
         state.lastMonitorThreadResponseMs = clock.now()
     }
 
+    fun resetResponsivenessMonitor() {
+        heartbeatResponseMonitor.reset()
+    }
+
+    fun responsivenessMonitorSnapshot(): ResponsivenessSnapshot = heartbeatResponseMonitor.snapshot()
+
     /**
      * Decides whether we should attempt an ANR sample or not. In ordinary conditions this
      * function will always return true. If the thread has been unable run due to priority then
@@ -104,7 +112,6 @@ internal class BlockedThreadDetector constructor(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-
     internal fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check

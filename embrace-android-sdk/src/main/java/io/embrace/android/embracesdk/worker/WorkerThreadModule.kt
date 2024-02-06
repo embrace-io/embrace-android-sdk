@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.worker
 
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A set of shared executors to be used throughout the SDK
@@ -10,14 +9,19 @@ import java.util.concurrent.ScheduledExecutorService
 internal interface WorkerThreadModule : Closeable {
 
     /**
-     * Return the [ExecutorService] given the [executorName]
+     * Return a [BackgroundWorker] matching the [workerName]
      */
-    fun backgroundExecutor(executorName: ExecutorName): ExecutorService
+    fun backgroundWorker(workerName: WorkerName): BackgroundWorker
 
     /**
-     * Return the [ScheduledExecutorService] given the [executorName]
+     * Return the [ScheduledWorker] given the [workerName]
      */
-    fun scheduledExecutor(executorName: ExecutorName): ScheduledExecutorService
+    fun scheduledWorker(workerName: WorkerName): ScheduledWorker
+
+    /**
+     * Returns the thread that monitors the main thread for ANRs
+     */
+    val anrMonitorThread: AtomicReference<Thread>
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the
@@ -27,19 +31,39 @@ internal interface WorkerThreadModule : Closeable {
 }
 
 /**
- * The key used to reference a specific shared [ExecutorService] or the [ScheduledExecutorService] that uses it
+ * The key used to reference a specific shared [BackgroundWorker] or the [ScheduledWorker] that uses it
  */
-internal enum class ExecutorName(internal val threadName: String) {
+internal enum class WorkerName(internal val threadName: String) {
+
+    /**
+     * Used primarily to perform short-lived tasks that need to execute only once, or
+     * recurring tasks that don't use I/O or block for long periods of time.
+     */
     BACKGROUND_REGISTRATION("background-reg"),
-    SCHEDULED_REGISTRATION("scheduled-reg"),
-    CACHED_SESSIONS("cached-sessions"),
-    SEND_SESSIONS("send-sessions"),
+
+    /**
+     * Saves/loads request information from files cached on disk.
+     */
     DELIVERY_CACHE("delivery-cache"),
-    API_RETRY("api-retry"),
-    NATIVE_CRASH_CLEANER("native-crash-cleaner"),
-    NATIVE_STARTUP("native-startup"),
-    SESSION_CACHE_EXECUTOR("session-cache"),
+
+    /**
+     * All HTTP requests are performed on this executor.
+     */
+    NETWORK_REQUEST("network-request"),
+
+    /**
+     * Used for periodic writing of session/background activity payloads to disk.
+     */
+    PERIODIC_CACHE("periodic-cache"),
+
+    /**
+     * Used to construct log messages. Log messages are sent to the server on a separate thread -
+     * the intention behind this is to offload unnecessary CPU work from the main thread.
+     */
     REMOTE_LOGGING("remote-logging"),
-    SESSION_CLOSER("session-closer"),
-    SESSION_CACHING("session-caching"),
+
+    /**
+     * Monitor thread that checks the main thread for ANRs.
+     */
+    ANR_MONITOR("anr-monitor"),
 }

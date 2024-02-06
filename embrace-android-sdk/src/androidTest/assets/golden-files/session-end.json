@@ -22,7 +22,7 @@
     "tb": [],
     "vb": [
       {
-        "vn": "io.embrace.android.embracesdk.internal.MockActivity",
+        "vn": "io.embrace.android.embracesdk.TestActivity",
         "st": "__EMBRACE_TEST_IGNORE__"
       }
     ],
@@ -37,7 +37,6 @@
       }
     },
     "anr": [],
-    "anr_pe": [],
     "ds": {
       "as": "__EMBRACE_TEST_IGNORE__",
       "fs": "__EMBRACE_TEST_IGNORE__"
@@ -46,7 +45,8 @@
     "ga": [],
     "mw": [],
     "ns": "__EMBRACE_TEST_IGNORE__",
-    "lp": "__EMBRACE_TEST_IGNORE__"
+    "lp": "__EMBRACE_TEST_IGNORE__",
+    "rms": "__EMBRACE_TEST_IGNORE__"
   },
   "s": {
     "as": "__EMBRACE_TEST_IGNORE__",
@@ -63,7 +63,6 @@
     "lic": 0,
     "ht": "__EMBRACE_TEST_IGNORE__",
     "sn": "__EMBRACE_TEST_IGNORE__",
-
     "sp": {},
     "si": "__EMBRACE_TEST_IGNORE__",
     "id": "__EMBRACE_TEST_IGNORE__",
@@ -103,7 +102,9 @@
     "id": "some id",
     "em": "user@email.com",
     "un": "John Doe",
-    "per": ["first_day"]
+    "per": [
+      "first_day"
+    ]
   },
   "spans": [
     {
@@ -144,7 +145,13 @@
         "emb.type": "SESSION",
         "emb.okhttp3": "true",
         "emb.okhttp3_on_classpath": "4.9.3",
-        "emb.kotlin_on_classpath": "1.4.32"
+        "emb.kotlin_on_classpath": "1.4.32",
+        "emb.is_emulator": "__EMBRACE_TEST_IGNORE__",
+        "emb.usage.add_breadcrumb": "1",
+        "emb.usage.add_user_persona": "1",
+        "emb.usage.set_user_email": "1",
+        "emb.usage.set_user_identifier": "1",
+        "emb.usage.set_username": "1"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],

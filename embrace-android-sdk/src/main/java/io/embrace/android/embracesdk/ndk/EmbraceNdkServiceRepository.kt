@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.ndk
 
-import android.content.Context
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
+import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 
 private const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
 private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-private const val NATIVE_CRASH_FILE_FOLDER = "ndk"
 private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
 private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
 
@@ -16,37 +16,39 @@ private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
  * Encapsulates the logic of managing Files to get, sort and or delete them
  */
 internal class EmbraceNdkServiceRepository(
-    private val context: Context,
+    private val storageService: StorageService,
     private val logger: InternalEmbraceLogger
 ) {
 
     fun sortNativeCrashes(byOldest: Boolean): List<File> {
-        val nativeCrashFiles: Array<File>? = getNativeCrashFiles()
+        val nativeCrashFiles: Array<File> = getNativeCrashFiles()
         val nativeCrashList: MutableList<File> = mutableListOf()
 
-        nativeCrashFiles?.let {
-            nativeCrashList.addAll(nativeCrashFiles)
-            val sorted: MutableMap<File, Long> = HashMap()
-            try {
-                for (f in nativeCrashList) {
-                    sorted[f] = f.lastModified()
-                }
-
-                val comparator: Comparator<File> = if (byOldest) {
-                    Comparator { first: File, next: File -> sorted[first]?.compareTo(sorted[next]!!)!! }
-                } else {
-                    Comparator { first: File, next: File -> sorted[next]?.compareTo(sorted[first]!!)!! }
-                }
-                return nativeCrashList.sortedWith(comparator)
-            } catch (ex: Exception) {
-                logger.logError("Failed sorting native crashes.", ex)
+        nativeCrashList.addAll(nativeCrashFiles)
+        val sorted: MutableMap<File, Long> = HashMap()
+        try {
+            for (f in nativeCrashList) {
+                sorted[f] = f.lastModified()
             }
+
+            val comparator: Comparator<File> = if (byOldest) {
+                Comparator { first: File, next: File ->
+                    checkNotNull(sorted[first]?.compareTo(checkNotNull(sorted[next])))
+                }
+            } else {
+                Comparator { first: File, next: File ->
+                    checkNotNull(sorted[next]?.compareTo(checkNotNull(sorted[first])))
+                }
+            }
+            return nativeCrashList.sortedWith(comparator)
+        } catch (ex: Exception) {
+            logger.logError("Failed sorting native crashes.", ex)
         }
 
         return nativeCrashList
     }
 
-    private fun getNativeCrashFiles(): Array<File>? {
+    private fun getNativeCrashFiles(): Array<File> {
         val nativeCrashFilter =
             FilenameFilter { _: File?, name: String ->
                 name.startsWith(
@@ -56,15 +58,15 @@ internal class EmbraceNdkServiceRepository(
         return getNativeFiles(nativeCrashFilter)
     }
 
-    private fun getNativeFiles(filter: FilenameFilter): Array<File>? {
-        var matchingFiles: Array<File>? = null
-        val files: Array<File> = context.cacheDir.listFiles() ?: return null
-        for (cached in files) {
-            if (cached.isDirectory && cached.name == NATIVE_CRASH_FILE_FOLDER) {
-                matchingFiles = cached.listFiles(filter)
-                break
-            }
+    private fun getNativeFiles(filter: FilenameFilter): Array<File> {
+        val ndkDirs: List<File> = storageService.listFiles { file, name ->
+            file.isDirectory && name == NATIVE_CRASH_FILE_FOLDER
         }
+
+        val matchingFiles = ndkDirs.flatMap { dir ->
+            dir.listFiles(filter)?.toList() ?: emptyList()
+        }.toTypedArray()
+
         return matchingFiles
     }
 

@@ -1,24 +1,23 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal interface DeliveryCacheManager {
-    fun saveSession(sessionMessage: SessionMessage): ByteArray?
-    fun saveSessionOnCrash(sessionMessage: SessionMessage)
+    fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun loadSession(sessionId: String): SessionMessage?
-    fun loadSessionBytes(sessionId: String): ByteArray?
+    fun loadSessionAsAction(sessionId: String): SerializationAction?
     fun deleteSession(sessionId: String)
     fun getAllCachedSessionIds(): List<String>
-    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage): ByteArray?
-    fun loadBackgroundActivity(backgroundActivityId: String): ByteArray?
     fun saveCrash(crash: EventMessage)
     fun loadCrash(): EventMessage?
     fun deleteCrash()
-    fun savePayload(bytes: ByteArray): String
+    fun savePayload(action: SerializationAction): String
     fun loadPayload(name: String): ByteArray?
+    fun loadPayloadAsAction(name: String): SerializationAction
     fun deletePayload(name: String)
-    fun saveFailedApiCalls(failedApiCalls: DeliveryFailedApiCalls)
-    fun loadFailedApiCalls(): DeliveryFailedApiCalls
+    fun savePendingApiCalls(pendingApiCalls: PendingApiCalls)
+    fun loadPendingApiCalls(): PendingApiCalls
 }

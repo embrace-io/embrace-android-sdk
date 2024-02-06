@@ -13,8 +13,6 @@ import org.junit.Test
 internal class SessionBehaviorTest {
 
     private val local = SessionLocalConfig(
-        maxSessionSeconds = 120,
-        asyncEnd = true,
         sessionComponents = setOf("breadcrumbs"),
         fullSessionEvents = setOf("crash"),
         sessionEnableErrorLogStrictMode = true
@@ -23,18 +21,15 @@ internal class SessionBehaviorTest {
     private val remote = RemoteConfig(
         sessionConfig = SessionRemoteConfig(
             isEnabled = true,
-            endAsync = false,
             sessionComponents = setOf("test"),
             fullSessionEvents = setOf("test2")
         ),
-        maxSessionProperties = 57
+        maxSessionProperties = 57,
     )
 
     @Test
     fun testDefaults() {
         with(fakeSessionBehavior()) {
-            assertNull(getMaxSessionSecondsAllowed())
-            assertFalse(isAsyncEndEnabled())
             assertFalse(isSessionErrorLogStrictModeEnabled())
             assertEquals(emptySet<String>(), getFullSessionEvents())
             assertNull(getSessionComponents())
@@ -47,8 +42,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testLocalOnly() {
         with(fakeSessionBehavior(localCfg = { local })) {
-            assertEquals(120, getMaxSessionSecondsAllowed())
-            assertTrue(isAsyncEndEnabled())
             assertTrue(isSessionErrorLogStrictModeEnabled())
             assertEquals(setOf("breadcrumbs"), getSessionComponents())
             assertEquals(setOf("crash"), getFullSessionEvents())
@@ -59,7 +52,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testRemoteAndLocal() {
         with(fakeSessionBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isAsyncEndEnabled())
             assertTrue(isGatingFeatureEnabled())
             assertTrue(isSessionControlEnabled())
             assertEquals(setOf("test"), getSessionComponents())

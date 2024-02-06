@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class FakeCacheService : CacheService {
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
@@ -23,19 +26,23 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun deleteObject(name: String): Boolean {
+    override fun listFilenamesByPrefix(prefix: String): List<String> {
         TODO("Not yet implemented")
     }
 
-    override fun deleteObjectsByRegex(regex: String): Boolean {
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
         TODO("Not yet implemented")
     }
 
-    override fun moveObject(src: String, dst: String): Boolean {
+    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         TODO("Not yet implemented")
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String>? {
+    override fun cachePayload(name: String, action: SerializationAction) {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayload(name: String): SerializationAction {
         TODO("Not yet implemented")
     }
 }

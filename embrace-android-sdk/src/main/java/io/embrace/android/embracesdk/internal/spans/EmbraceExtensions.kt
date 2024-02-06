@@ -28,6 +28,11 @@ private const val EMBRACE_SPAN_NAME_PREFIX = "emb-"
 private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 
 /**
+ * Prefix added to all [Span] attribute keys for all usage attributes added by the SDK
+ */
+private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
+
+/**
  * Attribute name for the monotonically increasing sequence ID given to completed [Span] that expected to sent to the server
  */
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
@@ -53,6 +58,26 @@ internal fun Tracer.embraceSpanBuilder(name: String, internal: Boolean): SpanBui
         spanBuilder(name)
     }
 }
+
+/**
+ * Create a [SpanBuilder] that will create a [Span] with the appropriate custom Embrace attributes
+ */
+internal fun createEmbraceSpanBuilder(
+    tracer: Tracer,
+    name: String,
+    type: EmbraceAttributes.Type,
+    internal: Boolean = true
+): SpanBuilder = tracer.embraceSpanBuilder(name, internal).setType(type)
+
+/**
+ * Create a [SpanBuilder] that will create a root [Span] with the appropriate custom Embrace attributes
+ */
+internal fun createRootSpanBuilder(
+    tracer: Tracer,
+    name: String,
+    type: EmbraceAttributes.Type,
+    internal: Boolean
+): SpanBuilder = createEmbraceSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).setNoParent()
 
 /**
  * Sets and returns the [EmbraceAttributes.Type] attribute for the given [SpanBuilder]
@@ -122,35 +147,6 @@ internal fun Span.setSequenceId(id: Long): Span {
 }
 
 /**
- * Add in interesting attributes about the running app environment to the span as private Embrace attributes
- */
-internal fun Span.addAppAttributes(): Span {
-    var hasOkHttp3 = false
-    var okhttpVersion: String? = null
-    try {
-        Class.forName("okhttp3.OkHttpClient", false, javaClass.classLoader)
-        hasOkHttp3 = true
-        val okhttpObject = Class.forName("okhttp3.OkHttp", false, javaClass.classLoader)
-        okhttpVersion = okhttpObject.getField("VERSION").get(okhttpObject)?.toString()
-    } catch (t: Throwable) {
-        // only write the version if the call to obtain it doesn't throw
-    }
-    setAttribute("okhttp3".toEmbraceAttributeName(), hasOkHttp3.toString())
-    okhttpVersion?.let { setAttribute("okhttp3_on_classpath".toEmbraceAttributeName(), it) }
-
-    var kotlinStdLibVersion = "unknown"
-    try {
-        kotlinStdLibVersion = KotlinVersion.CURRENT.toString()
-    } catch (t: Throwable) {
-        // Use the default if this fails. Given that Embrace requires some version to be on the classpath, this might indicate a change
-        // in how Kotlin exposes its version at runtime, or something odd going on in general.
-    }
-    setAttribute("kotlin_on_classpath".toEmbraceAttributeName(), kotlinStdLibVersion)
-
-    return this
-}
-
-/**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
  */
@@ -200,6 +196,11 @@ internal fun String.toEmbraceSpanName(): String = EMBRACE_SPAN_NAME_PREFIX + thi
  * Return the appropriate internal Embrace attribute name given the current string
  */
 internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PREFIX + this
+
+/**
+ * Return the appropriate internal Embrace attribute usage name given the current string
+ */
+internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
 
 /**
  * Contains the set of attributes (i.e. implementers of the [Attribute] interface) set on a [Span] by the SDK that has special meaning

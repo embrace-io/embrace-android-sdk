@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.api
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -19,7 +19,6 @@ import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import kotlin.IllegalStateException
 
 /**
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
@@ -27,6 +26,7 @@ import kotlin.IllegalStateException
  */
 internal class ApiClientImplTest {
 
+    private val serializer = EmbraceSerializer()
     private lateinit var apiClient: ApiClientImpl
     private lateinit var server: MockWebServer
     private lateinit var baseUrl: String
@@ -48,7 +48,9 @@ internal class ApiClientImplTest {
     fun testUnreachableHost() {
         // attempt some unreachable port
         val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
-        val response = apiClient.executePost(request, "Hello world".toByteArray())
+        val response = apiClient.executePost(request) {
+            it.write("Hello world".toByteArray())
+        }
         check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is IllegalStateException)
     }
@@ -116,7 +118,9 @@ internal class ApiClientImplTest {
 
     @Test
     fun testPostConnectionThrows() {
-        val response = apiClient.executePost(createThrowingRequest(), DEFAULT_REQUEST_BODY.toByteArray())
+        val response = apiClient.executePost(createThrowingRequest()) {
+            it.write(DEFAULT_REQUEST_BODY.toByteArray())
+        }
         check(response is ApiResponse.Incomplete)
         assertTrue(response.exception is java.lang.IllegalStateException)
     }
@@ -175,7 +179,9 @@ internal class ApiClientImplTest {
             EmbraceUrl.create(baseUrl)
         )
         server.enqueue(response200)
-        apiClient.executePost(postRequest, DEFAULT_REQUEST_BODY.toByteArray())
+        apiClient.executePost(postRequest) {
+            it.write(DEFAULT_REQUEST_BODY.toByteArray())
+        }
 
         // assert all request headers were set
         val delivered = server.takeRequest()
@@ -214,9 +220,12 @@ internal class ApiClientImplTest {
             ApiRequest(
                 url = EmbraceUrl.create(baseUrl),
                 httpMethod = HttpMethod.POST
-            ),
-            payload
-        )
+            )
+        ) {
+            ConditionalGzipOutputStream(it).use { stream ->
+                stream.write(payload)
+            }
+        }
 
     private fun createThrowingRequest(): ApiRequest {
         val mockEmbraceUrl: EmbraceUrl = mockk(relaxed = true)
@@ -234,10 +243,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
@@ -251,10 +262,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("User-Agent")
+        val userAgent = delivered.headers.toMap()["User-Agent"]
+        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/${BuildConfig.VERSION_NAME}",
                 "Content-Type" to "application/json",
                 "Connection" to "keep-alive"
             ),
@@ -265,7 +278,7 @@ internal class ApiClientImplTest {
     private fun createLargeSessionPayload(): String {
         val props = (1..5000).associate { "my_big_key_$it" to "my_big_val_$it" }
         val session = fakeSession().copy(properties = props)
-        return Gson().toJson(session)
+        return serializer.toJson(session)
     }
 
     companion object {

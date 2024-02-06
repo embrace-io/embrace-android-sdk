@@ -1,20 +1,20 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.MessageType
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import java.util.concurrent.ScheduledExecutorService
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 
 /**
@@ -27,13 +27,14 @@ private const val DEFAULT_LATE_THRESHOLD_MILLIS = 5000L
  */
 internal class EventHandler(
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val configService: ConfigService,
     private val userService: UserService,
     private val performanceInfoService: PerformanceInfoService,
     private val deliveryService: DeliveryService,
     private val logger: InternalEmbraceLogger,
     private val clock: Clock,
-    private val scheduledExecutor: ScheduledExecutorService
+    private val scheduledWorker: ScheduledWorker
 ) {
     /**
      * Responsible for handling the start of an event.
@@ -56,7 +57,7 @@ internal class EventHandler(
             eventProperties
         )
 
-        val timer = scheduledExecutor.schedule(
+        val timer = scheduledWorker.schedule<Unit>(
             timeoutCallback,
             threshold - calculateOffset(startTime, threshold),
             TimeUnit.MILLISECONDS
@@ -64,7 +65,7 @@ internal class EventHandler(
 
         if (shouldSendMoment(eventName)) {
             val eventMessage = buildStartEventMessage(event)
-            deliveryService.sendEventAsync(eventMessage)
+            deliveryService.sendMoment(eventMessage)
         } else {
             logger.logDebug("$eventName start moment not sent based on gating config.")
         }
@@ -101,7 +102,7 @@ internal class EventHandler(
         val endEventMessage = buildEndEventMessage(endEvent, startTime, endTime)
 
         if (shouldSendMoment(event.name)) {
-            deliveryService.sendEventAsync(endEventMessage)
+            deliveryService.sendMoment(endEventMessage)
         } else {
             logger.logDebug("${event.name} end moment not sent based on gating config.")
         }
@@ -118,24 +119,6 @@ internal class EventHandler(
             false
         } else if (!configService.dataCaptureEventBehavior.isEventEnabled(eventName)) {
             logger.logWarning("Event disabled. Ignoring event with name $eventName")
-            false
-        } else if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.EVENT)) {
-            logger.logWarning("Event message disabled. Ignoring all Events.")
-            false
-        } else if (scheduledExecutor.isShutdown()) {
-            logger.logError("Cannot start event as service is shut down")
-            false
-        } else {
-            true
-        }
-    }
-
-    /**
-     * It determines the handler is allowed to end
-     */
-    fun isAllowedToEnd(): Boolean {
-        return if (!configService.dataCaptureEventBehavior.isMessageTypeEnabled(MessageType.EVENT)) {
-            logger.logWarning("Event message disabled. Ignoring all Events.")
             false
         } else {
             true
@@ -188,14 +171,14 @@ internal class EventHandler(
     ): Event {
         return Event(
             name = eventName,
-            sessionId = metadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             eventId = eventId,
-            type = EmbraceEvent.Type.START,
+            type = EventType.START,
             appState = metadataService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
-            sessionProperties = sessionProperties.get(),
-            customProperties = eventProperties
+            sessionProperties = sessionProperties.get().toMap(),
+            customProperties = eventProperties?.toMap()
         )
     }
 
@@ -210,13 +193,13 @@ internal class EventHandler(
         return Event(
             name = originEvent.name,
             eventId = originEvent.eventId,
-            sessionId = metadataService.activeSessionId,
+            sessionId = sessionIdTracker.getActiveSessionId(),
             timestamp = endTime,
             duration = duration,
             appState = metadataService.getAppState(),
-            type = if (late) EmbraceEvent.Type.LATE else EmbraceEvent.Type.END,
-            customProperties = eventProperties,
-            sessionProperties = sessionProperties.get()
+            type = if (late) EventType.LATE else EventType.END,
+            customProperties = eventProperties?.toMap(),
+            sessionProperties = sessionProperties.get().toMap()
         )
     }
 

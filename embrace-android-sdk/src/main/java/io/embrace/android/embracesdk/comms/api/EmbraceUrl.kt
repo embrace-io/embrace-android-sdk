@@ -11,6 +11,17 @@ internal class EmbraceUrl(val url: URL) {
         return EmbraceConnectionImpl(url.openConnection() as HttpURLConnection, this)
     }
 
+    fun endpoint(): Endpoint {
+        return when (url.path.substringAfterLast("/")) {
+            Endpoint.EVENTS.path -> Endpoint.EVENTS
+            Endpoint.BLOBS.path -> Endpoint.BLOBS
+            Endpoint.LOGGING.path -> Endpoint.LOGGING
+            Endpoint.NETWORK.path -> Endpoint.NETWORK
+            Endpoint.SESSIONS.path -> Endpoint.SESSIONS
+            else -> Endpoint.UNKNOWN
+        }
+    }
+
     override fun toString(): String {
         return url.toString()
     }

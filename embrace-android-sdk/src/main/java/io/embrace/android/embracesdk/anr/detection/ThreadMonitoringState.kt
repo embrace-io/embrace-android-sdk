@@ -46,7 +46,6 @@ internal class ThreadMonitoringState(
      */
     fun resetState() {
         anrInProgress = false
-        started.set(false)
         lastTargetThreadResponseMs = clock.now()
         lastMonitorThreadResponseMs = clock.now()
         lastSampleAttemptMs = 0

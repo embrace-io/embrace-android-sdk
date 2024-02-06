@@ -14,39 +14,34 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
-import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.DeliveryRetryManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryRetryManager
+import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
+import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
+import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import java.io.File
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in
@@ -62,16 +57,14 @@ internal interface EssentialServiceModule {
     val gatingService: GatingService
     val userService: UserService
     val urlBuilder: ApiUrlBuilder
-    val cache: ApiResponseCache
     val apiClient: ApiClient
     val apiService: ApiService
     val sharedObjectLoader: SharedObjectLoader
     val cpuInfoDelegate: CpuInfoDelegate
     val deviceArchitecture: DeviceArchitecture
     val networkConnectivityService: NetworkConnectivityService
-    val cacheService: CacheService
-    val deliveryCacheManager: DeliveryCacheManager
-    val deliveryRetryManager: DeliveryRetryManager
+    val pendingApiCallsSender: PendingApiCallsSender
+    val sessionIdTracker: SessionIdTracker
 }
 
 internal class EssentialServiceModuleImpl(
@@ -80,24 +73,22 @@ internal class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    buildInfo: BuildInfo,
+    storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    private val configStopAction: () -> Unit,
     private val configServiceProvider: () -> ConfigService? = { null },
-    override val deviceArchitecture: DeviceArchitecture = DeviceArchitectureImpl()
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
     // When possible, we should try to move them into a new service or module.
-    private val localConfig =
-        LocalConfig.fromResources(
-            coreModule.resources,
-            coreModule.context.packageName,
-            customAppId,
-            coreModule.jsonSerializer
-        )
+    private val localConfig = LocalConfigParser.fromResources(
+        coreModule.resources,
+        coreModule.context.packageName,
+        customAppId,
+        coreModule.jsonSerializer
+    )
 
+    @Suppress("DEPRECATION")
     private val lazyPackageInfo = lazy {
         coreModule.context.packageManager.getPackageInfo(coreModule.context.packageName, 0)
     }
@@ -112,6 +103,7 @@ internal class EssentialServiceModuleImpl(
         }
     }
 
+    @Suppress("DEPRECATION")
     private val lazyAppVersionCode: Lazy<String> = lazy {
         try {
             lazyPackageInfo.value.versionCode.toString()
@@ -128,14 +120,14 @@ internal class EssentialServiceModuleImpl(
     private val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck(androidServicesModule.preferencesService::deviceIdentifier)
 
-    private val backgroundExecutorService =
-        workerThreadModule.backgroundExecutor(ExecutorName.BACKGROUND_REGISTRATION)
+    private val backgroundWorker =
+        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
 
-    private val apiRetryExecutor =
-        workerThreadModule.scheduledExecutor(ExecutorName.API_RETRY)
+    private val networkRequestWorker =
+        workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST)
 
-    private val deliveryCacheExecutorService =
-        workerThreadModule.backgroundExecutor(ExecutorName.DELIVERY_CACHE)
+    private val pendingApiCallsWorker =
+        workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
         EmbraceMemoryCleanerService()
@@ -162,9 +154,8 @@ internal class EssentialServiceModuleImpl(
                 androidServicesModule.preferencesService,
                 initModule.clock,
                 coreModule.logger,
-                backgroundExecutorService,
+                backgroundWorker,
                 coreModule.isDebug,
-                configStopAction,
                 thresholdCheck
             )
     }
@@ -177,15 +168,19 @@ internal class EssentialServiceModuleImpl(
         EmbraceCpuInfoDelegate(sharedObjectLoader, coreModule.logger)
     }
 
+    override val deviceArchitecture: DeviceArchitecture by singleton {
+        DeviceArchitectureImpl()
+    }
+
     override val metadataService: MetadataService by singleton {
         EmbraceMetadataService.ofContext(
             coreModule.context,
-            buildInfo,
+            coreModule.buildInfo,
             configService,
             coreModule.appFramework,
             androidServicesModule.preferencesService,
             processStateService,
-            backgroundExecutorService,
+            backgroundWorker,
             systemServiceModule.storageManager,
             systemServiceModule.windowManager,
             systemServiceModule.activityManager,
@@ -226,13 +221,6 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    override val cache by singleton {
-        ApiResponseCache(
-            coreModule.jsonSerializer,
-            { File(coreModule.context.cacheDir, "emb_config_cache") }
-        )
-    }
-
     override val gatingService: GatingService by singleton {
         EmbraceGatingService(configService)
     }
@@ -253,32 +241,19 @@ internal class EssentialServiceModuleImpl(
         EmbraceNetworkConnectivityService(
             coreModule.context,
             initModule.clock,
-            backgroundExecutorService,
+            backgroundWorker,
             coreModule.logger,
             systemServiceModule.connectivityManager,
             autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
         )
     }
 
-    override val cacheService: CacheService by singleton {
-        EmbraceCacheService(coreModule.context, coreModule.jsonSerializer, coreModule.logger)
-    }
-
-    override val deliveryCacheManager: DeliveryCacheManager by singleton {
-        EmbraceDeliveryCacheManager(
-            cacheService,
-            deliveryCacheExecutorService,
-            coreModule.logger,
-            initModule.clock,
-            coreModule.jsonSerializer
-        )
-    }
-
-    override val deliveryRetryManager: DeliveryRetryManager by singleton {
-        EmbraceDeliveryRetryManager(
+    override val pendingApiCallsSender: PendingApiCallsSender by singleton {
+        EmbracePendingApiCallsSender(
             networkConnectivityService,
-            apiRetryExecutor,
-            deliveryCacheManager
+            pendingApiCallsWorker,
+            storageModule.deliveryCacheManager,
+            initModule.clock
         )
     }
 
@@ -286,11 +261,13 @@ internal class EssentialServiceModuleImpl(
         EmbraceApiService(
             apiClient = apiClient,
             serializer = coreModule.jsonSerializer,
-            cachedConfigProvider = { url: String, request: ApiRequest -> cache.retrieveCachedConfig(url, request) },
+            cachedConfigProvider = { url: String, request: ApiRequest ->
+                storageModule.cache.retrieveCachedConfig(url, request)
+            },
             logger = coreModule.logger,
-            scheduledExecutorService = apiRetryExecutor,
-            cacheManager = deliveryCacheManager,
-            deliveryRetryManager = deliveryRetryManager,
+            backgroundWorker = networkRequestWorker,
+            cacheManager = storageModule.deliveryCacheManager,
+            pendingApiCallsSender = pendingApiCallsSender,
             lazyDeviceId = lazyDeviceId,
             appId = appId,
             urlBuilder = urlBuilder,
@@ -302,6 +279,10 @@ internal class EssentialServiceModuleImpl(
         ApiClientImpl(
             coreModule.logger
         )
+    }
+
+    override val sessionIdTracker: SessionIdTracker by singleton {
+        SessionIdTrackerImpl()
     }
 }
 

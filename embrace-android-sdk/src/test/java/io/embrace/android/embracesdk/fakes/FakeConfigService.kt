@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 
@@ -25,23 +24,22 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
  */
 internal class FakeConfigService(
     var sdkDisabled: Boolean = false,
-    private val backgroundActivityCaptureEnabled: Boolean = false,
-    private val hasValidRemoteConfig: Boolean = false,
-    override val backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
-    override val autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),
-    override val breadcrumbBehavior: BreadcrumbBehavior = fakeBreadcrumbBehavior(),
-    override val logMessageBehavior: LogMessageBehavior = fakeLogMessageBehavior(),
-    override val anrBehavior: AnrBehavior = fakeAnrBehavior(),
-    override val sessionBehavior: SessionBehavior = fakeSessionBehavior(),
-    override val networkBehavior: NetworkBehavior = fakeNetworkBehavior(),
-    override val spansBehavior: SpansBehavior = fakeSpansBehavior(),
-    override val startupBehavior: StartupBehavior = fakeStartupBehavior(),
-    override val dataCaptureEventBehavior: DataCaptureEventBehavior = fakeDataCaptureEventBehavior(),
-    override val sdkModeBehavior: SdkModeBehavior = fakeSdkModeBehavior(),
-    override val sdkEndpointBehavior: SdkEndpointBehavior = fakeSdkEndpointBehavior(),
-    override val webViewVitalsBehavior: WebViewVitalsBehavior = fakeWebViewVitalsBehavior(),
-    override val appExitInfoBehavior: AppExitInfoBehavior = fakeAppExitInfoBehavior(),
-    override val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(),
+    var backgroundActivityCaptureEnabled: Boolean = false,
+    private var hasValidRemoteConfig: Boolean = false,
+    override var backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
+    override var autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),
+    override var breadcrumbBehavior: BreadcrumbBehavior = fakeBreadcrumbBehavior(),
+    override var logMessageBehavior: LogMessageBehavior = fakeLogMessageBehavior(),
+    override var anrBehavior: AnrBehavior = fakeAnrBehavior(),
+    override var sessionBehavior: SessionBehavior = fakeSessionBehavior(),
+    override var networkBehavior: NetworkBehavior = fakeNetworkBehavior(),
+    override var startupBehavior: StartupBehavior = fakeStartupBehavior(),
+    override var dataCaptureEventBehavior: DataCaptureEventBehavior = fakeDataCaptureEventBehavior(),
+    override var sdkModeBehavior: SdkModeBehavior = fakeSdkModeBehavior(),
+    override var sdkEndpointBehavior: SdkEndpointBehavior = fakeSdkEndpointBehavior(),
+    override var webViewVitalsBehavior: WebViewVitalsBehavior = fakeWebViewVitalsBehavior(),
+    override var appExitInfoBehavior: AppExitInfoBehavior = fakeAppExitInfoBehavior(),
+    override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(),
 ) : ConfigService {
 
     val listeners = mutableSetOf<ConfigListener>()

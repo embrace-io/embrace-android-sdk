@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.payload
 
-import com.google.gson.Gson
-import io.embrace.android.embracesdk.ResourceReader
+import com.squareup.moshi.JsonDataException
+import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
+import io.embrace.android.embracesdk.deserializeEmptyJsonString
+import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class RnActionBreadcrumbTest {
@@ -19,16 +20,12 @@ internal class RnActionBreadcrumbTest {
 
     @Test
     fun testSerialization() {
-        val expectedInfo = ResourceReader.readResourceAsText("rn_action_breadcrumb_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(info)
-        assertEquals(expectedInfo, observed)
+        assertJsonMatchesGoldenFile("rn_action_breadcrumb_expected.json", info)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("rn_action_breadcrumb_expected.json")
-        val obj = Gson().fromJson(json, RnActionBreadcrumb::class.java)
+        val obj = deserializeJsonFromResource<RnActionBreadcrumb>("rn_action_breadcrumb_expected.json")
         assertEquals("my_action", obj.name)
         assertEquals(1600000000, obj.getStartTime())
         assertEquals(1600000100, obj.endTime)
@@ -37,9 +34,8 @@ internal class RnActionBreadcrumbTest {
         assertEquals("test", obj.output)
     }
 
-    @Test
+    @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
-        val info = Gson().fromJson("{}", RnActionBreadcrumb::class.java)
-        assertNotNull(info)
+        deserializeEmptyJsonString<RnActionBreadcrumb>()
     }
 }

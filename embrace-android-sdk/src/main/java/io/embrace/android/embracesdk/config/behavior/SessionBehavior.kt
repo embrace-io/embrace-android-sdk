@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.EmbraceEvent.Type
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
@@ -23,40 +23,12 @@ internal class SessionBehavior(
     companion object {
 
         /**
-         * Default minimum allowed end session time.
-         */
-        const val MINIMUM_SESSION_SECONDS_DEFAULT = 60
-
-        /**
-         * Do not use async mode for session end messages by default.
-         */
-        const val ASYNC_END_DEFAULT = false
-
-        /**
          * By default, prevents to capture internal error logs as part of session payload
          */
         const val ERROR_LOG_STRICT_MODE_DEFAULT = false
 
         const val SESSION_PROPERTY_LIMIT = 10
     }
-
-    /**
-     * The maximum number of seconds a session is allowed to last for (in kiosk mode)
-     */
-    fun getMaxSessionSecondsAllowed(): Int? {
-        val seconds = local?.maxSessionSeconds
-        if (seconds != null && seconds >= MINIMUM_SESSION_SECONDS_DEFAULT) {
-            return seconds
-        }
-        return null
-    }
-
-    /**
-     * Whether sessions are allowed to be persisted async or not.
-     */
-    @Deprecated("This flag is obsolete and is no longer respected.")
-    fun isAsyncEndEnabled(): Boolean =
-        remote?.sessionConfig?.endAsync ?: local?.asyncEnd ?: ASYNC_END_DEFAULT
 
     /**
      * Whether the limit on the number of internal exceptions in the payload should be increased
@@ -126,8 +98,8 @@ internal class SessionBehavior(
      */
     fun shouldSendFullMessage(eventMessage: EventMessage): Boolean {
         val type = eventMessage.event.type
-        return (type == Type.ERROR_LOG && shouldSendFullForErrorLog()) ||
-            (type == Type.CRASH && shouldSendFullForCrash())
+        return (type == EventType.ERROR_LOG && shouldSendFullForErrorLog()) ||
+            (type == EventType.CRASH && shouldSendFullForCrash())
     }
 
     /**

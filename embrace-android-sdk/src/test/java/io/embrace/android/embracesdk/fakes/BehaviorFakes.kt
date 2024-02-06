@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavi
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.SpansBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.AnrLocalConfig
@@ -29,7 +28,6 @@ import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfi
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SpansRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
 private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() }
@@ -95,14 +93,6 @@ internal fun fakeLogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: () -> LogRemoteConfig? = { null }
 ) = LogMessageBehavior(thresholdCheck, remoteCfg)
-
-/**
- * A fake [SpanBehavior] that returns default values.
- */
-internal fun fakeSpansBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteConfig: () -> SpansRemoteConfig? = { null }
-) = SpansBehavior(thresholdCheck, remoteConfig)
 
 /**
  * A fake [StartupBehavior] that returns default values.

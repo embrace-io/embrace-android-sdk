@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.google.gson.Gson
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.payload.Event
 import org.junit.Assert.assertEquals
@@ -12,7 +11,7 @@ internal class EmbraceEventTest {
     private val event = Event(
         eventId = Uuid.getEmbUuid(),
         timestamp = 100L,
-        type = EmbraceEvent.Type.CRASH
+        type = EventType.CRASH
     )
 
     private val eventComplete = Event(
@@ -21,7 +20,7 @@ internal class EmbraceEventTest {
         messageId = "messageId",
         name = "test",
         timestamp = 1111L,
-        type = EmbraceEvent.Type.WARNING_LOG,
+        type = EventType.WARNING_LOG,
         logExceptionType = LogExceptionType.NONE.value,
         screenshotTaken = false,
         appState = "active",
@@ -38,26 +37,22 @@ internal class EmbraceEventTest {
 
     @Test
     fun testSerialization() {
-        val data = ResourceReader.readResourceAsText("event_expected.json")
-            .filter { !it.isWhitespace() }
-        val observed = Gson().toJson(eventComplete)
-        assertEquals(data, observed)
+        assertJsonMatchesGoldenFile("event_expected.json", eventComplete)
     }
 
     @Test
     fun testDeserialization() {
-        val json = ResourceReader.readResourceAsText("event_expected.json")
-        val obj = Gson().fromJson(json, Event::class.java)
+        val obj = deserializeJsonFromResource<Event>("event_expected.json")
         assertEquals("eventId", obj.eventId)
         assertEquals("sessionId", obj.sessionId)
         assertEquals("messageId", obj.messageId)
         assertEquals("test", obj.name)
         assertEquals(1111L, obj.timestamp)
-        assertEquals(EmbraceEvent.Type.WARNING_LOG, obj.type)
+        assertEquals(EventType.WARNING_LOG, obj.type)
         assertEquals(LogExceptionType.NONE.value, obj.logExceptionType)
         assertEquals(false, obj.screenshotTaken)
         assertEquals("active", obj.appState)
-        assertEquals(mapOf("Float" to 1.0, "String" to "TestString"), obj.customPropertiesMap)
-        assertEquals(mapOf<String, Any>(), obj.sessionPropertiesMap)
+        assertEquals(mapOf("Float" to 1.0, "String" to "TestString"), obj.customProperties)
+        assertEquals(mapOf<String, Any>(), obj.sessionProperties)
     }
 }

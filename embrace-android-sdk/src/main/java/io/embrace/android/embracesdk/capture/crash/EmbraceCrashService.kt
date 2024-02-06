@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.capture.crash
 
-import io.embrace.android.embracesdk.EmbraceEvent
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -15,12 +15,13 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.JsException
-import io.embrace.android.embracesdk.session.BackgroundActivityService
-import io.embrace.android.embracesdk.session.SessionService
+import io.embrace.android.embracesdk.payload.extensions.CrashFactory
+import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
@@ -28,16 +29,17 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
  */
 internal class EmbraceCrashService(
     configService: ConfigService,
-    private val sessionService: SessionService,
+    private val sessionOrchestrator: SessionOrchestrator,
     private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val deliveryService: DeliveryService,
     private val userService: UserService,
     private val eventService: EventService,
     private val anrService: AnrService?,
     private val ndkService: NdkService,
     private val gatingService: GatingService,
-    private val backgroundActivityService: BackgroundActivityService?,
+    private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
     private val clock: Clock
 ) : CrashService {
@@ -76,32 +78,26 @@ internal class EmbraceCrashService(
             // is enabled for an Unity build. When a native crash occurs and the NDK sends an
             // uncaught exception the SDK assign the unity crash id as the java crash id.
             val unityCrashId = ndkService.getUnityCrashId()
+            val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crash = if (unityCrashId != null) {
                 logDeveloper(
                     "EmbraceCrashService",
                     "unityCrashId is $unityCrashId"
                 )
-                Crash.ofThrowable(exception, jsException, unityCrashId)
+                CrashFactory.ofThrowable(exception, jsException, crashNumber, unityCrashId)
             } else {
-                Crash.ofThrowable(exception, jsException)
+                CrashFactory.ofThrowable(exception, jsException, crashNumber)
             }
             logDeveloper("EmbraceCrashService", "crashId = " + crash.crashId)
 
-            val optionalSessionId = metadataService.activeSessionId
-            val sessionId = if (optionalSessionId != null) {
-                logDeveloper("EmbraceCrashService", "Session id is present:$optionalSessionId")
-                optionalSessionId
-            } else {
-                logDeveloper("EmbraceCrashService", "Session id is not present:")
-                null
-            }
+            val sessionId = sessionIdTracker.getActiveSessionId()
 
             val event = Event(
                 CRASH_REPORT_EVENT_NAME,
                 null,
                 getEmbUuid(),
                 sessionId,
-                EmbraceEvent.Type.CRASH,
+                EventType.CRASH,
                 clock.now(),
                 null,
                 false,
@@ -131,17 +127,14 @@ internal class EmbraceCrashService(
             val crashEvent = gatingService.gateEventMessage(versionedEvent)
             logDeveloper("EmbraceCrashService", "Attempting to send event...")
 
-            // Save the crash to file
-            deliveryService.saveCrash(crashEvent)
-            // End, cache and send the session
-            sessionService.handleCrash(crash.crashId)
-            backgroundActivityService?.handleCrash(crash.crashId)
-
             // Send the crash. This is not guaranteed to succeed since the process is terminating
             // and the request is made on a background executor, but data analysis shows that
             // a surprising % of crashes make it through based on the receive time. Therefore we
             // attempt to send the crash and if it fails, we will send it again on the next launch.
-            deliveryService.sendCrash(crashEvent)
+            deliveryService.sendCrash(crashEvent, true)
+
+            // End, cache and send the session
+            sessionOrchestrator.endSessionWithCrash(crash.crashId)
 
             // Indicate that a crash happened so we can know that in the next launch
             crashMarker.mark()

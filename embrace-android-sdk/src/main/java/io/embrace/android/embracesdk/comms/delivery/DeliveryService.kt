@@ -1,27 +1,19 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BackgroundActivityMessage
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
-
-internal enum class SessionMessageState { START, END, END_WITH_CRASH }
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal interface DeliveryService {
-    fun saveSessionOnCrash(sessionMessage: SessionMessage)
-    fun saveSession(sessionMessage: SessionMessage)
-    fun sendSession(sessionMessage: SessionMessage, state: SessionMessageState)
-    fun sendCachedSessions(isNdkEnabled: Boolean, ndkService: NdkService, currentSession: String?)
-    fun saveCrash(crash: EventMessage)
-    fun saveBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
-    fun sendBackgroundActivity(backgroundActivityMessage: BackgroundActivityMessage)
-    fun sendBackgroundActivities()
+    fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
+    fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker)
     fun sendLog(eventMessage: EventMessage)
     fun sendNetworkCall(networkEvent: NetworkEvent)
-    fun sendCrash(crash: EventMessage)
+    fun sendCrash(crash: EventMessage, processTerminating: Boolean)
     fun sendAEIBlob(blobMessage: BlobMessage)
-    fun sendEventAsync(eventMessage: EventMessage)
-    fun sendEventAndWait(eventMessage: EventMessage)
+    fun sendMoment(eventMessage: EventMessage)
 }

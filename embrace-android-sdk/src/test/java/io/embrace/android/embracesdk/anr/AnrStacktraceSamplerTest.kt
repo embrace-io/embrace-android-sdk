@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.anr
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
+import io.embrace.android.embracesdk.payload.extensions.size
+import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -22,11 +24,11 @@ internal class AnrStacktraceSamplerTest {
     private val clock = FakeClock()
     private val configService = FakeConfigService()
     private val state = ThreadMonitoringState(clock)
-    private val executor = MoreExecutors.newDirectExecutorService()
+    private val worker = ScheduledWorker(BlockingScheduledExecutorService())
 
     @Test
     fun testLeastValuableInterval() {
-        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
+        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, worker)
         assertNull(sampler.findLeastValuableIntervalWithSamples())
         val interval1 = AnrInterval(
             startTime = BASELINE_MS,
@@ -77,7 +79,7 @@ internal class AnrStacktraceSamplerTest {
         clock.setCurrentTime(BASELINE_MS)
         val repeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
+        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, worker)
 
         // simulate one ANR with 100 intervals
         sampler.onThreadBlocked(thread, clock.now())
@@ -125,7 +127,7 @@ internal class AnrStacktraceSamplerTest {
         val anrRepeatCount = 15
         val intervalRepeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
+        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, worker)
 
         // simulate multiple ANRs with intervals
         repeat(anrRepeatCount) { index ->
@@ -168,10 +170,10 @@ internal class AnrStacktraceSamplerTest {
         clock.setCurrentTime(BASELINE_MS)
         val anrRepeatCount = 110
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, executor)
+        val sampler = AnrStacktraceSampler(configService, clock, thread, anrMonitorThread, worker)
 
         // simulate 110 ANRs with intervals
-        repeat(anrRepeatCount) { index ->
+        repeat(anrRepeatCount) {
             sampler.onThreadBlocked(thread, clock.now())
             sampler.onThreadBlockedInterval(thread, clock.now())
             clock.tick(intervalMs)

@@ -42,15 +42,15 @@ internal class FakeEventService : EventService {
     }
 
     override fun findEventIdsForSession(startTime: Long, endTime: Long): List<String> {
-        TODO("Not yet implemented")
+        return emptyList()
     }
 
     override fun getActiveEventIds(): List<String>? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun getStartupMomentInfo(): StartupEventInfo? {
-        TODO("Not yet implemented")
+        return StartupEventInfo(0, 0)
     }
 
     override fun sendStartupMoment() {

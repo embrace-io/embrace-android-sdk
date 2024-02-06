@@ -19,20 +19,21 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
-internal class EmbraceApplicationExitInfoService constructor(
-    private val executorService: ExecutorService,
+internal class EmbraceApplicationExitInfoService(
+    private val backgroundWorker: BackgroundWorker,
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
     private val deliveryService: DeliveryService,
     private val metadataService: MetadataService,
+    private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker
 ) : ApplicationExitInfoService, ConfigListener {
@@ -55,21 +56,16 @@ internal class EmbraceApplicationExitInfoService constructor(
     }
 
     private fun startService() {
-        backgroundExecution = try {
-            executorService.submit {
-                try {
-                    processApplicationExitInfo()
-                } catch (exc: Throwable) {
-                    logWarningWithException(
-                        "AEI - Failed to process AEIs due to unexpected error",
-                        exc,
-                        true
-                    )
-                }
+        backgroundExecution = backgroundWorker.submit {
+            try {
+                processApplicationExitInfo()
+            } catch (exc: Throwable) {
+                logWarningWithException(
+                    "AEI - Failed to process AEIs due to unexpected error",
+                    exc,
+                    true
+                )
             }
-        } catch (exc: RejectedExecutionException) {
-            logWarningWithException("AEI - Failed to schedule AEI processing", exc, true)
-            null
         }
     }
 
@@ -188,7 +184,7 @@ internal class EmbraceApplicationExitInfoService constructor(
                 metadataService.getAppInfo(),
                 appExitInfoWithTraces,
                 metadataService.getDeviceInfo(),
-                BlobSession(metadataService.activeSessionId),
+                BlobSession(sessionIdTracker.getActiveSessionId()),
                 userService.getUserInfo()
             )
             deliveryService.sendAEIBlob(blob)
@@ -247,7 +243,7 @@ internal class EmbraceApplicationExitInfoService constructor(
 
     /**
      * Converts a byte array to a UTF-8 string, escaping non-encodable bytes as
-     * 2-byte UTF-8 sequences, which will later be converted into \uXXXX by JSON marshalling.
+     * 2-byte UTF-8 sequences, which will later be converted into unicode by JSON marshalling.
      * This allows us to send arbitrary binary data from the NDK
      * protobuf file without needing to encode it as Base64 (which compresses poorly).
      */

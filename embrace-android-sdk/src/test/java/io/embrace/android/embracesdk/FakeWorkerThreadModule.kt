@@ -3,8 +3,11 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KFunction1
 import kotlin.reflect.KFunction2
 
@@ -22,22 +25,32 @@ internal class FakeWorkerThreadModule(
     private val blockingMode: Boolean = false
 ) : WorkerThreadModule {
     private val executorServices =
-        ExecutorName.values().associateWith {
+        WorkerName.values().associateWith {
             executorProvider(blockingMode)
         }
 
     private val scheduledExecutorServices =
-        ExecutorName.values().associateWith {
+        WorkerName.values().associateWith {
             scheduledExecutorProvider(clock, blockingMode)
         }
 
-    override fun backgroundExecutor(executorName: ExecutorName): BlockableExecutorService {
-        return checkNotNull(executorServices[executorName])
+    override fun backgroundWorker(workerName: WorkerName): BackgroundWorker {
+        return BackgroundWorker(checkNotNull(executorServices[workerName]))
     }
 
-    override fun scheduledExecutor(executorName: ExecutorName): BlockingScheduledExecutorService {
-        return checkNotNull(scheduledExecutorServices[executorName])
+    override fun scheduledWorker(workerName: WorkerName): ScheduledWorker {
+        return ScheduledWorker(checkNotNull(scheduledExecutorServices[workerName]))
     }
+
+    fun executor(workerName: WorkerName): BlockableExecutorService {
+        return checkNotNull(executorServices[workerName])
+    }
+
+    fun scheduledExecutor(workerName: WorkerName): BlockingScheduledExecutorService {
+        return checkNotNull(scheduledExecutorServices[workerName])
+    }
+
+    override val anrMonitorThread: AtomicReference<Thread> = AtomicReference(Thread.currentThread())
 
     override fun close() {
         executorServices.values.forEach { it.shutdown() }

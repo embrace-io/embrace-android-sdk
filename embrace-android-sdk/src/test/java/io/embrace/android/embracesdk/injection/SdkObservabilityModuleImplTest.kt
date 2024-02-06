@@ -12,7 +12,7 @@ internal class SdkObservabilityModuleImplTest {
             InitModuleImpl(),
             FakeEssentialServiceModule()
         )
-        assertNotNull(module.exceptionService)
+        assertNotNull(module.internalErrorService)
         assertNotNull(module.internalErrorLogger)
     }
 }

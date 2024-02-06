@@ -11,7 +11,8 @@ import org.junit.Test
 internal class SdkModeBehaviorTest {
 
     private val local = LocalConfig(
-        "", false,
+        "",
+        false,
         SdkLocalConfig(
             betaFeaturesEnabled = true
         )

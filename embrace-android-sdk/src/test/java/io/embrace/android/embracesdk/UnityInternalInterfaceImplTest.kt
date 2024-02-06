@@ -74,7 +74,7 @@ internal class UnityInternalInterfaceImplTest {
         impl.logUnhandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Unity exception",
                 null,
                 null,
@@ -94,7 +94,7 @@ internal class UnityInternalInterfaceImplTest {
         impl.logHandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                EmbraceEvent.Type.ERROR_LOG,
+                EventType.ERROR_LOG,
                 "Unity exception",
                 null,
                 null,

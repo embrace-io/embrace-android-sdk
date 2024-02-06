@@ -54,6 +54,7 @@ internal class SystemServiceModuleImplTest {
     @Test
     fun testSystemServiceModuleException() {
         val ctx = mockk<Context>()
+        every { ctx.packageName } returns ""
         val module = SystemServiceModuleImpl(FakeCoreModule(context = ctx))
 
         assertNull(module.activityManager)

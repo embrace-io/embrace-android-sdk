@@ -13,6 +13,10 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 internal class FakeBreadcrumbService : BreadcrumbService {
 
+    val logViewCalls = mutableListOf<String?>()
+    val pushNotifications = mutableListOf<PushNotificationBreadcrumb>()
+    var flushCount: Int = 0
+
     override fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?> =
         emptyList()
 
@@ -45,6 +49,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun flushBreadcrumbs(): Breadcrumbs {
+        flushCount++
         return Breadcrumbs()
     }
 
@@ -52,6 +57,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun forceLogView(screen: String?, timestamp: Long) {
+        logViewCalls.add(screen)
     }
 
     override fun replaceFirstSessionView(screen: String?, timestamp: Long) {
@@ -89,8 +95,10 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     override fun logWebView(url: String?, startTime: Long) {
     }
 
+    var viewBreadcrumbScreenName: String? = null
+
     override fun getLastViewBreadcrumbScreenName(): String? {
-        return null
+        return viewBreadcrumbScreenName
     }
 
     override fun logPushNotification(
@@ -102,5 +110,22 @@ internal class FakeBreadcrumbService : BreadcrumbService {
         messageDeliveredPriority: Int,
         type: PushNotificationBreadcrumb.NotificationType
     ) {
+        pushNotifications.add(
+            PushNotificationBreadcrumb(
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                type.type,
+                0L
+            )
+        )
+    }
+
+    val firstViewBreadcrumbCalls = mutableListOf<Long>()
+
+    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
+        firstViewBreadcrumbCalls.add(startTime)
     }
 }

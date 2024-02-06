@@ -4,13 +4,15 @@ import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.ExecutorName
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface NativeModule {
@@ -21,8 +23,10 @@ internal interface NativeModule {
 
 internal class NativeModuleImpl(
     coreModule: CoreModule,
+    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
+    androidServicesModule: AndroidServicesModule,
     sessionProperties: EmbraceSessionProperties,
     workerThreadModule: WorkerThreadModule
 ) : NativeModule {
@@ -30,20 +34,23 @@ internal class NativeModuleImpl(
     override val ndkService: NdkService by singleton {
         EmbraceNdkService(
             coreModule.context,
+            storageModule.storageService,
             essentialServiceModule.metadataService,
             essentialServiceModule.processStateService,
             essentialServiceModule.configService,
             deliveryModule.deliveryService,
             essentialServiceModule.userService,
+            androidServicesModule.preferencesService,
             sessionProperties,
             coreModule.appFramework,
             essentialServiceModule.sharedObjectLoader,
             coreModule.logger,
             embraceNdkServiceRepository,
             NdkDelegateImpl(),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_CRASH_CLEANER),
-            workerThreadModule.backgroundExecutor(ExecutorName.NATIVE_STARTUP),
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             essentialServiceModule.deviceArchitecture,
+            coreModule.jsonSerializer
         )
     }
 
@@ -52,7 +59,7 @@ internal class NativeModuleImpl(
             EmbraceNativeThreadSamplerService(
                 essentialServiceModule.configService,
                 lazy { ndkService.getSymbolsForCurrentArch() },
-                executorService = workerThreadModule.scheduledExecutor(ExecutorName.SCHEDULED_REGISTRATION),
+                scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                 deviceArchitecture = essentialServiceModule.deviceArchitecture
             )
         } else {
@@ -73,7 +80,7 @@ internal class NativeModuleImpl(
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(
-            coreModule.context,
+            storageModule.storageService,
             coreModule.logger
         )
     }

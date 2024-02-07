@@ -1461,6 +1461,14 @@ final class EmbraceImpl {
     }
 
     public void addSpanExporter(SpanExporter spanExporter) {
-        initModule.addSpanExporter(spanExporter);
+        initModule.getCompositeSpanExporter().add(spanExporter);
+    }
+
+    public void addSpanExporter(SpanExporter... spanExporters) {
+        initModule.getCompositeSpanExporter().addAll(spanExporters);
+    }
+
+    public void addSpanExporter(Iterable<SpanExporter> spanExporters) {
+        initModule.getCompositeSpanExporter().addAll(spanExporters);
     }
 }

@@ -11,6 +11,11 @@ import io.embrace.android.embracesdk.telemetry.TelemetryService
  */
 internal interface InitModule {
     /**
+     * Adds a [SpanExporter] to the list of exporters that will receive completed spans
+     */
+    fun addSpanExporter(spanExporter: SpanExporter)
+
+    /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */
     val clock: io.embrace.android.embracesdk.internal.clock.Clock

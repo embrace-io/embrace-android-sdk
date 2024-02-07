@@ -517,7 +517,7 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Adds one [SpanExporter] to the tracer.
+     * Adds a [SpanExporter] to the tracer.
      *
      * @param spanExporter the span exporter to add
      */

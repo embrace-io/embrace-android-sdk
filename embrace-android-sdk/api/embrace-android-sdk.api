@@ -277,6 +277,14 @@ public final class io/embrace/android/embracesdk/internal/network/http/NetworkCa
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/embrace/android/embracesdk/internal/spans/CompositeSpanExporter : io/opentelemetry/sdk/trace/export/SpanExporter {
+	public fun <init> ()V
+	public final fun add (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
+	public fun export (Ljava/util/Collection;)Lio/opentelemetry/sdk/common/CompletableResultCode;
+	public fun flush ()Lio/opentelemetry/sdk/common/CompletableResultCode;
+	public fun shutdown ()Lio/opentelemetry/sdk/common/CompletableResultCode;
+}
+
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;

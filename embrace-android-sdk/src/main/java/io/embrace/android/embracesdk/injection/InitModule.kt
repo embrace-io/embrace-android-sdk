@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
+import io.embrace.android.embracesdk.internal.spans.CompositeSpanExporter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
@@ -81,10 +82,13 @@ internal class InitModuleImpl(
         SpansSinkImpl()
     }
 
+    private val exporter = CompositeSpanExporter()
+
     private val openTelemetrySdk: OpenTelemetrySdk by singleton {
+        exporter.add(EmbraceSpanExporter(spansSink))
         OpenTelemetrySdk(
             openTelemetryClock = openTelemetryClock,
-            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            spanProcessor = EmbraceSpanProcessor(exporter)
         )
     }
 

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
+import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.SpanProcessor
 
@@ -16,11 +17,17 @@ internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     spanProcessor: SpanProcessor
 ) {
+    private var resource: Resource = Resource.getDefault().toBuilder()
+        .put("service.name", BuildConfig.LIBRARY_PACKAGE_NAME)
+        .put("service.version", BuildConfig.VERSION_NAME)
+        .build()
+
     private val sdk = OpenTelemetrySdk
         .builder()
         .setTracerProvider(
             SdkTracerProvider
                 .builder()
+                .addResource(resource)
                 .addSpanProcessor(spanProcessor)
                 .setClock(openTelemetryClock)
                 .build()

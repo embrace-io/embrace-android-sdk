@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.arch
 
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+
 /**
  * Holds the current state of the service. This class automatically handles changes in config
  * that enable/disable the service, and creates new instances of the service as required.
@@ -29,7 +32,9 @@ internal class DataSourceState(
      * A session type where data capture should be disabled. For example,
      * background activities capture a subset of sessions.
      */
-    private val disabledSessionType: SessionType? = null
+    private val disabledSessionType: SessionType? = null,
+
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) {
 
     private val enabledDataSource by lazy(factory)
@@ -60,10 +65,18 @@ internal class DataSourceState(
 
         if (enabled && dataSource == null) {
             dataSource = enabledDataSource.apply {
-                registerListeners()
+                try {
+                    registerListeners()
+                } catch (exc: Throwable) {
+                    logger.logError("Failed to register listener", exc)
+                }
             }
         } else if (!enabled && dataSource != null) {
-            dataSource?.unregisterListeners()
+            try {
+                dataSource?.unregisterListeners()
+            } catch (exc: Throwable) {
+                logger.logError("Failed to unregister listener", exc)
+            }
             dataSource = null
         }
     }

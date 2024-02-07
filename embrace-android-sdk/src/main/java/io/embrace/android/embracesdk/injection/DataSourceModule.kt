@@ -1,11 +1,16 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.arch.DataSinkMutator
 import io.embrace.android.embracesdk.arch.DataSource
 import io.embrace.android.embracesdk.arch.DataSourceState
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 internal class PlaceholderDataSource : DataSource {
+
+    override fun captureData(action: DataSinkMutator) {
+    }
+
     override fun registerListeners() {
     }
 

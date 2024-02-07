@@ -1459,4 +1459,8 @@ final class EmbraceImpl {
         }
         return isStarted;
     }
+
+    public void addSpanExporter(SpanExporter spanExporter) {
+        initModule.addSpanExporter(spanExporter);
+    }
 }

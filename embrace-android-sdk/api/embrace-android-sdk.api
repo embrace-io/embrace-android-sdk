@@ -10,6 +10,7 @@ public final class io/embrace/android/embracesdk/BuildConfig {
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/EmbraceAndroidApi {
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
+	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
 	public fun addUserPersona (Ljava/lang/String;)V
 	public fun clearAllUserPersonas ()V
 	public fun clearUserAsPayer ()V

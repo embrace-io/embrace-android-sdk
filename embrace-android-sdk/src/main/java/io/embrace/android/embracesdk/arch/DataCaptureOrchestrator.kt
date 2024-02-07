@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
  * place to coordinate everything in one place.
  */
 internal class DataCaptureOrchestrator(
-    private val dataSourceState: List<DataSourceState<*, *>>,
+    private val dataSourceState: List<DataSourceState>,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : ConfigListener {
 

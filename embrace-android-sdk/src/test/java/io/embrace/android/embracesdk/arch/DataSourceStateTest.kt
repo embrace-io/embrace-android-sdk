@@ -39,6 +39,19 @@ internal class DataSourceStateTest {
     }
 
     @Test
+    fun `test config gate defaults to enabled`() {
+        val source = FakeDataSource()
+        DataSourceState(
+            factory = { source },
+            currentSessionType = SessionType.FOREGROUND
+        )
+
+        // data capture is enabled by default.
+        assertEquals(1, source.registerCount)
+        assertEquals(0, source.unregisterCount)
+    }
+
+    @Test
     fun `test config gate enabled by default`() {
         val source = FakeDataSource()
         DataSourceState(

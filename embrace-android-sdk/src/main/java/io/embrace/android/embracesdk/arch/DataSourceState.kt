@@ -5,19 +5,20 @@ package io.embrace.android.embracesdk.arch
  * that enable/disable the service, and creates new instances of the service as required.
  * It also is capable of disabling the service if the [SessionType] is not supported.
  */
-internal class DataSourceState<T : DataSource<R>, R>(
+internal class DataSourceState(
 
     /**
      * Provides instances of services. A service must define an interface
      * that extends [DataSource] for orchestration. This helps enforce testability
      * by making it impossible to register data capture without defining a testable interface.
      */
-    factory: () -> DataSource<R>,
+    factory: () -> DataSource,
 
     /**
      * Predicate that determines if the service should be enabled or not, via a config value.
+     * Defaults to true if not provided.
      */
-    private val configGate: () -> Boolean,
+    private val configGate: () -> Boolean = { true },
 
     /**
      * The type of session that contains the data.
@@ -32,7 +33,7 @@ internal class DataSourceState<T : DataSource<R>, R>(
 ) {
 
     private val enabledDataSource by lazy(factory)
-    private var dataSource: DataSource<R>? = null
+    private var dataSource: DataSource? = null
 
     init {
         updateDataSource()

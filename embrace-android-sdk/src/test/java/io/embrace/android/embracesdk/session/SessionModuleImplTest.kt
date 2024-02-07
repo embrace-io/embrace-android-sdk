@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
+import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.injection.SessionModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -33,11 +34,13 @@ internal class SessionModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val essentialServiceModule = FakeEssentialServiceModule(configService = configService)
+        val dataSourceModule = DataSourceModuleImpl(essentialServiceModule)
         val module = SessionModuleImpl(
             fakeInitModule,
             fakeInitModule.openTelemetryModule,
             FakeAndroidServicesModule(),
-            FakeEssentialServiceModule(configService = configService),
+            essentialServiceModule,
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
@@ -45,7 +48,8 @@ internal class SessionModuleImplTest {
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             FakeSdkObservabilityModule(),
-            workerThreadModule
+            workerThreadModule,
+            dataSourceModule
         )
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)
@@ -58,11 +62,14 @@ internal class SessionModuleImplTest {
 
     @Test
     fun testEnabledBehaviors() {
+        val essentialServiceModule = createEnabledBehavior()
+        val dataSourceModule = DataSourceModuleImpl(essentialServiceModule)
+
         val module = SessionModuleImpl(
             fakeInitModule,
             fakeInitModule.openTelemetryModule,
             FakeAndroidServicesModule(),
-            createEnabledBehavior(),
+            essentialServiceModule,
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
@@ -70,7 +77,8 @@ internal class SessionModuleImplTest {
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             FakeSdkObservabilityModule(),
-            workerThreadModule
+            workerThreadModule,
+            dataSourceModule
         )
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.sessionPropertiesService)

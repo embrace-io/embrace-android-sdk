@@ -26,6 +26,7 @@ internal interface DataContainerModule {
 
 internal class DataContainerModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
@@ -85,7 +86,7 @@ internal class DataContainerModuleImpl(
             coreModule.logger,
             workerThreadModule,
             initModule.clock,
-            initModule.spansService
+            openTelemetryModule.spansService
         )
     }
 }

@@ -28,6 +28,7 @@ internal interface SessionModule {
 
 internal class SessionModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
@@ -54,8 +55,8 @@ internal class SessionModuleImpl(
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
-            initModule.spansSink,
-            initModule.currentSessionSpan,
+            openTelemetryModule.spansSink,
+            openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService
         )

@@ -132,8 +132,8 @@ internal class SessionHandlerTest {
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.spansSink
-        spansService = initModule.spansService
+        spansSink = initModule.openTelemetryModule.spansSink
+        spansService = initModule.openTelemetryModule.spansService
         val payloadMessageCollator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -147,8 +147,8 @@ internal class SessionHandlerTest {
             breadcrumbService,
             userService,
             preferencesService,
-            initModule.spansSink,
-            initModule.currentSessionSpan,
+            initModule.openTelemetryModule.spansSink,
+            initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService()
         )

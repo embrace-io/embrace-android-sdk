@@ -47,6 +47,7 @@ import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
 import io.embrace.android.embracesdk.injection.InitModule;
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
+import io.embrace.android.embracesdk.injection.OpenTelemetryModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
 import io.embrace.android.embracesdk.injection.SessionModule;
@@ -106,7 +107,7 @@ final class EmbraceImpl {
     final EmbraceTracer tracer;
 
     @NonNull
-    final Lazy<EmbraceInternalInterface> uninitializedSdkInternalInterface;
+    private final Lazy<EmbraceInternalInterface> uninitializedSdkInternalInterface;
 
     /**
      * Whether the Embrace SDK has been started yet.
@@ -242,10 +243,10 @@ final class EmbraceImpl {
         moduleInitBootstrapper = bs;
         initModule = moduleInitBootstrapper.getInitModule();
         sdkClock = initModule.getClock();
-        tracer = initModule.getEmbraceTracer();
+        tracer = moduleInitBootstrapper.getOpenTelemetryModule().getEmbraceTracer();
         uninitializedSdkInternalInterface =
             LazyKt.lazy(
-                () -> new UninitializedSdkInternalInterfaceImpl(initModule.getInternalTracer())
+                () -> new UninitializedSdkInternalInterfaceImpl(moduleInitBootstrapper.getOpenTelemetryModule().getInternalTracer())
             );
     }
 
@@ -299,14 +300,16 @@ final class EmbraceImpl {
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
         serviceRegistry = coreModule.getServiceRegistry();
-        serviceRegistry.registerService(initModule.getSpansService());
         application = coreModule.getApplication();
         appFramework = coreModule.getAppFramework();
+
+        final OpenTelemetryModule openTelemetryModule = moduleInitBootstrapper.getOpenTelemetryModule();
+        serviceRegistry.registerService(openTelemetryModule.getSpansService());
 
         workerThreadModule = moduleInitBootstrapper.getWorkerThreadModule();
         final Future<?> spansInitTask =
             workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL, () -> {
-                initModule.getSpansService().initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
+                openTelemetryModule.getSpansService().initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
                 return null;
             });
 
@@ -434,6 +437,7 @@ final class EmbraceImpl {
 
         final DataContainerModule dataContainerModule = new DataContainerModuleImpl(
             initModule,
+            openTelemetryModule,
             coreModule,
             workerThreadModule,
             systemServiceModule,
@@ -478,6 +482,7 @@ final class EmbraceImpl {
 
         final SessionModule sessionModule = new SessionModuleImpl(
             initModule,
+            openTelemetryModule,
             androidServicesModule,
             essentialServiceModule,
             nativeModule,
@@ -529,6 +534,7 @@ final class EmbraceImpl {
         // initialize internal interfaces
         final InternalInterfaceModuleImpl internalInterfaceModule = new InternalInterfaceModuleImpl(
             initModule,
+            openTelemetryModule,
             coreModule,
             androidServicesModule,
             essentialServiceModule,

@@ -34,12 +34,12 @@ internal class SpansServiceImplTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spansService = SpansServiceImpl(
-            spansRepository = initModule.spansRepository,
+            spansRepository = initModule.openTelemetryModule.spansRepository,
             currentSessionSpan = currentSessionSpan,
-            tracer = initModule.tracer
+            tracer = initModule.openTelemetryModule.tracer
         )
         spansService.initializeService(clock.nowInNanos())
     }
@@ -122,7 +122,7 @@ internal class SpansServiceImplTest {
 
     @Test
     fun `cannot create span before initialization`() {
-        assertNull(FakeInitModule(clock = clock).spansService.createSpan(name = "test"))
+        assertNull(FakeInitModule(clock = clock).openTelemetryModule.spansService.createSpan(name = "test"))
     }
 
     @Test

@@ -23,9 +23,9 @@ internal interface StorageModule {
 }
 
 internal class StorageModuleImpl(
-    workerThreadModule: WorkerThreadModule,
     initModule: InitModule,
     coreModule: CoreModule,
+    workerThreadModule: WorkerThreadModule,
 ) : StorageModule {
 
     override val storageService: StorageService by singleton {

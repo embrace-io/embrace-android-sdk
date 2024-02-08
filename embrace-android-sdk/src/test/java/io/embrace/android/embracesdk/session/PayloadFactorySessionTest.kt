@@ -50,7 +50,7 @@ internal class PayloadFactorySessionTest {
     fun before() {
         deliveryService = FakeDeliveryService()
         configService = FakeConfigService()
-        spansSink = FakeInitModule(clock = clock).spansSink
+        spansSink = FakeInitModule(clock = clock).openTelemetryModule.spansSink
     }
 
     @After

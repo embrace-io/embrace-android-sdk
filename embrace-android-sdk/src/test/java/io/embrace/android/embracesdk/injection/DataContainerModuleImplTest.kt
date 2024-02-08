@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import org.junit.Assert.assertNotNull
@@ -18,8 +19,10 @@ internal class DataContainerModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val initModule = FakeInitModule()
         val module = DataContainerModuleImpl(
-            InitModuleImpl(),
+            initModule,
+            initModule.openTelemetryModule,
             FakeCoreModule(),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),

@@ -20,8 +20,8 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
@@ -115,10 +115,10 @@ internal class EmbraceEventServiceTest {
         )
         gatingService = FakeGatingService(configService)
         fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
-        val initModule = InitModuleImpl(clock = fakeClock)
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
-        spansService = initModule.spansService
+        val initModule = FakeInitModule(clock = fakeClock)
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(fakeClock.nowInNanos())
         eventHandler = EventHandler(
             metadataService = metadataService,

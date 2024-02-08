@@ -17,7 +17,7 @@ internal class CurrentSessionSpanImpl(
     private val telemetryService: TelemetryService,
     private val spansRepository: SpansRepository,
     private val spansSink: SpansSink,
-    private val tracer: Tracer,
+    private val tracerSupplier: () -> Tracer,
 ) : CurrentSessionSpan {
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
@@ -127,7 +127,7 @@ internal class CurrentSessionSpanImpl(
      */
     private fun startSessionSpan(startTimeNanos: Long): Span {
         traceCount.set(0)
-        return createEmbraceSpanBuilder(tracer = tracer, name = "session-span", type = EmbraceAttributes.Type.SESSION)
+        return createEmbraceSpanBuilder(tracer = tracerSupplier(), name = "session-span", type = EmbraceAttributes.Type.SESSION)
             .setNoParent()
             .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
             .startSpan()

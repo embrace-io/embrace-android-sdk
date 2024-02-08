@@ -89,7 +89,7 @@ internal class TracingApiTest {
                 val backgroundActivitySpansCount = getSdkInitSpanFromBackgroundActivity().size
                 assertTrue(
                     returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) {
-                        checkNotNull(harness.initModule.spansSink.completedSpans()).size == (5 - backgroundActivitySpansCount)
+                        checkNotNull(harness.openTelemetryModule.spansSink.completedSpans()).size == (5 - backgroundActivitySpansCount)
                     }
                 )
             }

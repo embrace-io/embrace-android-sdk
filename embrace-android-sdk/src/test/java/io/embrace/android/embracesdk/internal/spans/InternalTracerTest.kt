@@ -23,14 +23,14 @@ internal class InternalTracerTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
-        spansService = initModule.spansService
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(clock.nowInNanos())
         internalTracer = InternalTracer(
             clock,
-            initModule.spansRepository,
-            initModule.embraceTracer,
+            initModule.openTelemetryModule.spansRepository,
+            initModule.openTelemetryModule.embraceTracer,
         )
         spansSink.flushSpans()
     }

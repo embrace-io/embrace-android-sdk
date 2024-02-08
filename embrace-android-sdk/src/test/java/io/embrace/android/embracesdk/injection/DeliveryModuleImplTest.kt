@@ -13,9 +13,9 @@ internal class DeliveryModuleImplTest {
     fun testDefaultImplementations() {
         val module = DeliveryModuleImpl(
             FakeCoreModule(),
+            FakeWorkerThreadModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
-            FakeWorkerThreadModule()
         )
 
         assertNotNull(module.deliveryService)

@@ -12,8 +12,10 @@ internal class InternalInterfaceModuleImplTest {
 
     @Test
     fun testModule() {
+        val initModule = FakeInitModule()
         val module: InternalInterfaceModule = InternalInterfaceModuleImpl(
-            FakeInitModule(),
+            initModule,
+            initModule.openTelemetryModule,
             FakeCoreModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),

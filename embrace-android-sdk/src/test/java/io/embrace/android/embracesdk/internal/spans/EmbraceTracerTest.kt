@@ -24,11 +24,11 @@ internal class EmbraceTracerTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansRepository = initModule.spansRepository
-        spansSink = initModule.spansSink
-        spansService = initModule.spansService
+        spansRepository = initModule.openTelemetryModule.spansRepository
+        spansSink = initModule.openTelemetryModule.spansSink
+        spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(clock.now().millisToNanos())
-        embraceTracer = initModule.embraceTracer
+        embraceTracer = initModule.openTelemetryModule.embraceTracer
         spansSink.flushSpans()
     }
 

@@ -517,22 +517,13 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * Adds one or many [SpanExporter] to the tracer.
+     * Adds a [SpanExporter] to the tracer.
      *
-     * @param spanExporter the span exporters to add
+     * @param spanExporter the span exporter to add
      */
     @Override
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
         impl.addSpanExporter(spanExporter);
-    }
-
-    /**
-     * Adds many [SpanExporter] to the tracer.
-     *
-     * @param spanExporters the span exporters to add
-     */
-    public void addSpanExporter(Iterable<SpanExporter> spanExporters) {
-        impl.addSpanExporter(spanExporters);
     }
 
     @Override

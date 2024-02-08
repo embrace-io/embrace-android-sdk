@@ -90,7 +90,7 @@ interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi,
     Embrace.LastRunEndState getLastRunEndState();
 
     /**
-     * Adds one [SpanExporter] to the tracer.
+     * Adds a [SpanExporter] to the tracer.
      *
      * @param spanExporter the span exporter to add
      */

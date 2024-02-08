@@ -13,11 +13,19 @@ import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
  * Module that instantiates various OpenTelemetry related components
  */
 internal interface OpenTelemetryModule {
+    /**
+     * Adds one [SpanExporter] to the tracer.
+     *
+     * @param spanExporter the span exporter to add
+     */
+    fun addSpanExporter(spanExporter: SpanExporter)
+
     /**
      * Caches [EmbraceSpan] instances that are in progress or completed in the current session
      */
@@ -57,7 +65,6 @@ internal interface OpenTelemetryModule {
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule
 ) : OpenTelemetryModule {
-
     override val spansRepository: SpansRepository by lazy {
         SpansRepository()
     }
@@ -66,10 +73,17 @@ internal class OpenTelemetryModuleImpl(
         SpansSinkImpl()
     }
 
+    private val exporters = mutableListOf<SpanExporter>()
+
+    override fun addSpanExporter(spanExporter: SpanExporter) {
+        exporters.add(spanExporter)
+    }
+
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {
+        exporters.add(EmbraceSpanExporter(spansSink))
         OpenTelemetrySdk(
             openTelemetryClock = initModule.openTelemetryClock,
-            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            spanProcessor = EmbraceSpanProcessor(SpanExporter.composite(exporters))
         )
     }
 

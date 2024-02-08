@@ -17,7 +17,7 @@ internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     spanProcessor: SpanProcessor
 ) {
-    private var resource: Resource = Resource.getDefault().toBuilder()
+    private val resource: Resource = Resource.getDefault().toBuilder()
         .put("service.name", BuildConfig.LIBRARY_PACKAGE_NAME)
         .put("service.version", BuildConfig.VERSION_NAME)
         .build()

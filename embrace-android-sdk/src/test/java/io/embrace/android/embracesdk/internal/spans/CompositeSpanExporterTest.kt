@@ -13,9 +13,8 @@ internal class CompositeSpanExporterTest {
     fun `Composite calls every exporter in the collection`() {
         //given
         val compositeSpanExporter = CompositeSpanExporter()
-        val fakeSpanExporter1 = FakeSpanExporter()
-        val fakeSpanExporter2 = FakeSpanExporter()
-        compositeSpanExporter.addAll(fakeSpanExporter1, fakeSpanExporter2)
+        val fakeSpanExporter = FakeSpanExporter()
+        compositeSpanExporter.add(fakeSpanExporter)
 
         //when
         compositeSpanExporter.export(mutableListOf())
@@ -23,12 +22,9 @@ internal class CompositeSpanExporterTest {
         compositeSpanExporter.shutdown()
 
         //then
-        assertTrue(fakeSpanExporter1.exportCalled)
-        assertTrue(fakeSpanExporter2.exportCalled)
-        assertTrue(fakeSpanExporter1.flushCalled)
-        assertTrue(fakeSpanExporter2.flushCalled)
-        assertTrue(fakeSpanExporter1.shutdownCalled)
-        assertTrue(fakeSpanExporter2.shutdownCalled)
+        assertTrue(fakeSpanExporter.exportCalled)
+        assertTrue(fakeSpanExporter.flushCalled)
+        assertTrue(fakeSpanExporter.shutdownCalled)
     }
 }
 

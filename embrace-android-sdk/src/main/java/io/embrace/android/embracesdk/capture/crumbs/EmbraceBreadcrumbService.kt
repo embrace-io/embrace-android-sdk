@@ -61,8 +61,8 @@ internal class EmbraceBreadcrumbService(
      */
     private val viewBreadcrumbs = LinkedBlockingDeque<ViewBreadcrumb?>()
     private val tapBreadcrumbs = LinkedBlockingDeque<TapBreadcrumb?>()
+    private val customBreadcrumbDataSource = CustomBreadcrumbDataSource(configService)
 
-    val customBreadcrumbs = LinkedBlockingDeque<CustomBreadcrumb?>()
     private val rnActionBreadcrumbs = LinkedBlockingDeque<RnActionBreadcrumb?>()
     val webViewBreadcrumbs = LinkedBlockingDeque<WebViewBreadcrumb?>()
     val fragmentBreadcrumbs = LinkedBlockingDeque<FragmentBreadcrumb?>()
@@ -70,7 +70,7 @@ internal class EmbraceBreadcrumbService(
     val pushNotifications = LinkedBlockingDeque<PushNotificationBreadcrumb?>()
     private val viewBreadcrumbsCache: CacheableValue<List<ViewBreadcrumb?>>
     private val tapBreadcrumbsCache: CacheableValue<List<TapBreadcrumb?>>
-    private val customBreadcrumbsCache: CacheableValue<List<CustomBreadcrumb?>>
+    private val customBreadcrumbsCache: CacheableValue<List<CustomBreadcrumb>>
     private val rnActionsCache: CacheableValue<List<RnActionBreadcrumb?>>
     private val webviewCache: CacheableValue<List<WebViewBreadcrumb?>>
     private val fragmentsCache: CacheableValue<List<FragmentBreadcrumb?>>
@@ -80,7 +80,7 @@ internal class EmbraceBreadcrumbService(
     init {
         viewBreadcrumbsCache = CacheableValue { isCacheValid(viewBreadcrumbs) }
         tapBreadcrumbsCache = CacheableValue { isCacheValid(tapBreadcrumbs) }
-        customBreadcrumbsCache = CacheableValue { isCacheValid(customBreadcrumbs) }
+        customBreadcrumbsCache = CacheableValue { isCacheValid(customBreadcrumbDataSource.getCapturedData()) }
         rnActionsCache = CacheableValue { isCacheValid(rnActionBreadcrumbs) }
         webviewCache = CacheableValue { isCacheValid(webViewBreadcrumbs) }
         fragmentsCache = CacheableValue { isCacheValid(fragmentBreadcrumbs) }
@@ -182,20 +182,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun logCustom(message: String, timestamp: Long) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "log custom breadcrumb")
-        if (TextUtils.isEmpty(message)) {
-            logger.logWarning("Breadcrumb message must not be blank")
-            return
-        }
-        try {
-            val limit = configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
-            tryAddBreadcrumb(customBreadcrumbs, CustomBreadcrumb(message, timestamp), limit)
-        } catch (ex: Exception) {
-            logger.logError("Failed to log custom breadcrumb with message $message", ex)
-        }
+        customBreadcrumbDataSource.logCustom(message, timestamp)
     }
 
     override fun logRnAction(
@@ -290,16 +277,9 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun getCustomBreadcrumbsForSession(
-        start: Long,
-        end: Long
-    ): List<CustomBreadcrumb?> {
+    override fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb> {
         return customBreadcrumbsCache.value {
-            filterBreadcrumbsForTimeWindow(
-                customBreadcrumbs,
-                start,
-                end
-            )
+            customBreadcrumbDataSource.getCapturedData()
         }
     }
 
@@ -357,7 +337,7 @@ internal class EmbraceBreadcrumbService(
 
     override fun getBreadcrumbs(start: Long, end: Long): Breadcrumbs {
         return Breadcrumbs(
-            customBreadcrumbs = getCustomBreadcrumbsForSession(start, end).filterNotNull(),
+            customBreadcrumbs = getCustomBreadcrumbsForSession().filterNotNull(),
             tapBreadcrumbs = getTapBreadcrumbsForSession(start, end).filterNotNull(),
             viewBreadcrumbs = getViewBreadcrumbsForSession(start, end).filterNotNull(),
             webViewBreadcrumbs = getWebViewBreadcrumbsForSession(start, end).filterNotNull(),
@@ -374,10 +354,10 @@ internal class EmbraceBreadcrumbService(
         return breadcrumbs
     }
 
-    private fun <T> isCacheValid(deque: Deque<T>): Int {
-        val last = deque.peekLast()
+    private fun <T> isCacheValid(collection: Collection<T>): Int {
+        val last = collection.lastOrNull()
         val code = last?.hashCode() ?: 0
-        return deque.size + code
+        return collection.size + code
     }
 
     override fun getLastViewBreadcrumbScreenName(): String? {
@@ -476,7 +456,7 @@ internal class EmbraceBreadcrumbService(
     override fun cleanCollections() {
         viewBreadcrumbs.clear()
         tapBreadcrumbs.clear()
-        customBreadcrumbs.clear()
+        customBreadcrumbDataSource.cleanCollections()
         webViewBreadcrumbs.clear()
         fragmentBreadcrumbs.clear()
         fragmentStack.clear()

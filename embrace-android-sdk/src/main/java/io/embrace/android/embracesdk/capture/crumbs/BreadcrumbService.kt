@@ -41,11 +41,9 @@ internal interface BreadcrumbService {
      * Gets the Custom breadcrumbs in the specified time window.
      * If the number of elements exceeds the limit, this will return the newest (latest) ones.
      *
-     * @param start the start time
-     * @param end   the end time
      * @return the list of Breadcrumbs
      */
-    fun getCustomBreadcrumbsForSession(start: Long, end: Long): List<CustomBreadcrumb?>
+    fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb>
 
     /**
      * Gets the WebView breadcrumbs in the specified time window.

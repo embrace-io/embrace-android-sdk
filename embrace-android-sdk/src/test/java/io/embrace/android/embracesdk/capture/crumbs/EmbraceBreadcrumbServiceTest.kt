@@ -120,7 +120,7 @@ internal class EmbraceBreadcrumbServiceTest {
     fun testBreadcrumbCreate() {
         val service = initializeBreadcrumbService()
         service.logCustom("breadcrumb", clock.now())
-        val breadcrumbs = service.customBreadcrumbs
+        val breadcrumbs = service.getCustomBreadcrumbsForSession()
         assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
         assertJsonMessage(service, "breadcrumb_custom.json")
     }
@@ -452,7 +452,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.startView("b")
         clock.tickSecond()
         service.logCustom("breadcrumb", clock.now())
-        val breadcrumbs = service.customBreadcrumbs
+        val breadcrumbs = service.getCustomBreadcrumbsForSession()
         assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
 
         service.onViewClose(activity)

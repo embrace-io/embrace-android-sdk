@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.spans.TracingApi;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 /**
  * Declares the functions that consist of Embrace's public API. You should not use
@@ -87,4 +88,11 @@ interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi,
      */
     @NonNull
     Embrace.LastRunEndState getLastRunEndState();
+
+    /**
+     * Adds one [SpanExporter] to the tracer.
+     *
+     * @param spanExporter the span exporter to add
+     */
+    void addSpanExporter(SpanExporter spanExporter);
 }

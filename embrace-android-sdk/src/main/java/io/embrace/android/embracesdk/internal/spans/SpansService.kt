@@ -47,4 +47,6 @@ internal interface SpansService : Initializable {
         events: List<EmbraceSpanEvent> = emptyList(),
         errorCode: ErrorCode? = null
     ): Boolean
+
+    fun getSpan(spanId: String): EmbraceSpan?
 }

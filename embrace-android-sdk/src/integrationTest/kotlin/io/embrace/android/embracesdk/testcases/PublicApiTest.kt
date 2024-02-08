@@ -33,11 +33,6 @@ internal class PublicApiTest {
         }
     )
 
-    @Before
-    fun before() {
-        ApkToolsConfig.IS_SDK_DISABLED = false
-    }
-
     @Test
     fun `SDK can start`() {
         with(testRule) {

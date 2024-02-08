@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every

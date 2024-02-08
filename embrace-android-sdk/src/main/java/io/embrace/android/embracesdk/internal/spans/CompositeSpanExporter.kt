@@ -4,7 +4,7 @@ import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.SpanExporter
 
-public class CompositeSpanExporter : SpanExporter {
+internal class CompositeSpanExporter : SpanExporter {
 
     private val exporters: MutableList<SpanExporter> = mutableListOf()
 

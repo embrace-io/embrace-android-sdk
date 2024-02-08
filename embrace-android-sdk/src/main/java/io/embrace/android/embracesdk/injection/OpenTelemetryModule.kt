@@ -62,7 +62,6 @@ internal interface OpenTelemetryModule {
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule
 ) : OpenTelemetryModule {
-
     override val spansRepository: SpansRepository by lazy {
         SpansRepository()
     }

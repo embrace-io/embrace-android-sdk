@@ -1462,6 +1462,6 @@ final class EmbraceImpl {
     }
 
     public void addSpanExporter(SpanExporter spanExporter) {
-        moduleInitBootstrapper.getOpenTelemetryModule().addSpanExporter(spanExporter);
+        moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addSpanExporter(spanExporter);
     }
 }

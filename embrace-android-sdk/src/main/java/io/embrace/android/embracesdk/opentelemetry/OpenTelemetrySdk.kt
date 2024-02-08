@@ -17,8 +17,8 @@ internal class OpenTelemetrySdk(
     configuration: OpenTelemetryConfiguration
 ) {
     private val resource: Resource = Resource.getDefault().toBuilder()
-        .put(ResourceAttributes.SERVICE_NAME, configuration.serviceName)
-        .put(ResourceAttributes.SERVICE_VERSION, configuration.serviceVersion)
+        .put("service.name", configuration.serviceName)
+        .put("service.version", configuration.serviceVersion)
         .build()
 
     private val sdk = OpenTelemetrySdk

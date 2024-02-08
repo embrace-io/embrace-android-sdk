@@ -62,6 +62,8 @@ internal class UninitializedSdkSpansService : SpansService {
         }
     }
 
+    override fun getSpan(spanId: String): EmbraceSpan? = null
+
     fun recordBufferedCalls(delegateSpansService: SpansService) {
         synchronized(bufferedCalls) {
             do {

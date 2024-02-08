@@ -72,4 +72,6 @@ internal class EmbraceSpansService(
         events = events,
         errorCode = errorCode
     )
+
+    override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId = spanId)
 }

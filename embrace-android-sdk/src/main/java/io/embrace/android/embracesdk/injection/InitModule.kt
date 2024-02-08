@@ -112,7 +112,6 @@ internal class InitModuleImpl(
 
     override val embraceTracer: EmbraceTracer by singleton {
         EmbraceTracer(
-            spansRepository = spansRepository,
             spansService = spansService
         )
     }

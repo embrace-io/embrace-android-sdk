@@ -43,4 +43,6 @@ internal class FakeSpansService : SpansService {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
     ): Boolean = true
+
+    override fun getSpan(spanId: String): EmbraceSpan? = null
 }

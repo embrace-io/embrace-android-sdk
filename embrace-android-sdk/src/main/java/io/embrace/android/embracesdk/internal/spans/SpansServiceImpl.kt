@@ -95,6 +95,8 @@ internal class SpansServiceImpl(
         }
     }
 
+    override fun getSpan(spanId: String): EmbraceSpan? = spansRepository.getSpan(spanId = spanId)
+
     companion object {
         const val MAX_TRACE_COUNT_PER_SESSION = 100
         const val MAX_SPAN_COUNT_PER_TRACE = 10

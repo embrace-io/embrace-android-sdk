@@ -78,7 +78,7 @@ internal class SessionOrchestratorTest {
                 DataSourceState(
                     factory = { fakeDataSource },
                     configGate = { true },
-                    currentEnvelope = null
+                    currentSessionType = null
                 )
             )
         )

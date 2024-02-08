@@ -20,7 +20,7 @@ internal class DataCaptureOrchestratorTest {
                 DataSourceState(
                     factory = { dataSource },
                     configGate = { enabled },
-                    currentEnvelope = null
+                    currentSessionType = null
                 )
             )
         )
@@ -29,7 +29,7 @@ internal class DataCaptureOrchestratorTest {
     @Test
     fun `config changes are propagated`() {
         assertEquals(0, dataSource.registerCount)
-        orchestrator.onEnvelopeChange(EnvelopeType.SESSION)
+        orchestrator.onSessionTypeChange(SessionType.FOREGROUND)
         assertEquals(1, dataSource.registerCount)
 
         enabled = false
@@ -38,9 +38,9 @@ internal class DataCaptureOrchestratorTest {
     }
 
     @Test
-    fun `envelope type change is propagated`() {
+    fun `session type change is propagated`() {
         assertEquals(0, dataSource.registerCount)
-        orchestrator.onEnvelopeChange(EnvelopeType.SESSION)
+        orchestrator.onSessionTypeChange(SessionType.FOREGROUND)
         assertEquals(1, dataSource.registerCount)
     }
 }

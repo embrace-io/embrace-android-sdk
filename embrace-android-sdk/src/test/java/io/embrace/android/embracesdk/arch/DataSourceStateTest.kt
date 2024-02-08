@@ -7,33 +7,33 @@ import org.junit.Test
 internal class DataSourceStateTest {
 
     @Test
-    fun `null envelope is never enabled`() {
+    fun `null session type is never enabled`() {
         val source = FakeDataSource()
         val state = DataSourceState(
             factory = { source },
             configGate = { true },
-            currentEnvelope = null
+            currentSessionType = null
         )
 
         // data capture is enabled by default.
         state.onConfigChange()
-        state.onEnvelopeTypeChange(null)
+        state.onSessionTypeChange(null)
         assertEquals(0, source.registerCount)
         assertEquals(0, source.unregisterCount)
 
-        // data capture enabled for an envelope
-        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
+        // data capture enabled for a session
+        state.onSessionTypeChange(SessionType.FOREGROUND)
         assertEquals(1, source.registerCount)
         assertEquals(0, source.unregisterCount)
 
-        // data capture disabled for no envelope
-        state.onEnvelopeTypeChange(null)
+        // data capture disabled for no session
+        state.onSessionTypeChange(null)
         assertEquals(1, source.registerCount)
         assertEquals(1, source.unregisterCount)
 
         // functions can be called multiple times without issue
-        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
-        state.onEnvelopeTypeChange(null)
+        state.onSessionTypeChange(SessionType.FOREGROUND)
+        state.onSessionTypeChange(null)
         assertEquals(2, source.registerCount)
         assertEquals(2, source.unregisterCount)
     }
@@ -44,7 +44,7 @@ internal class DataSourceStateTest {
         DataSourceState(
             factory = { source },
             configGate = { true },
-            currentEnvelope = EnvelopeType.SESSION
+            currentSessionType = SessionType.FOREGROUND
         )
 
         // data capture is enabled by default.
@@ -59,7 +59,7 @@ internal class DataSourceStateTest {
         val state = DataSourceState(
             factory = { source },
             configGate = { enabled },
-            currentEnvelope = EnvelopeType.SESSION
+            currentSessionType = SessionType.FOREGROUND
         )
 
         // data capture is disabled by default.
@@ -93,13 +93,13 @@ internal class DataSourceStateTest {
     }
 
     @Test
-    fun `test envelope type affects data capture`() {
+    fun `test session type affects data capture`() {
         val source = FakeDataSource()
         val state = DataSourceState(
             factory = { source },
             configGate = { true },
-            EnvelopeType.BACKGROUND_ACTIVITY,
-            disabledEnvelopeType = EnvelopeType.BACKGROUND_ACTIVITY
+            SessionType.BACKGROUND,
+            disabledSessionType = SessionType.BACKGROUND
         )
 
         // data capture is always disabled by default.
@@ -107,20 +107,20 @@ internal class DataSourceStateTest {
         assertEquals(0, source.unregisterCount)
 
         // new session should enable data capture
-        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
-        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
+        state.onSessionTypeChange(SessionType.FOREGROUND)
+        state.onSessionTypeChange(SessionType.FOREGROUND)
         assertEquals(1, source.registerCount)
         assertEquals(0, source.unregisterCount)
 
         // extra payload types should not re-register listeners
-        state.onEnvelopeTypeChange(EnvelopeType.BACKGROUND_ACTIVITY)
-        state.onEnvelopeTypeChange(EnvelopeType.BACKGROUND_ACTIVITY)
+        state.onSessionTypeChange(SessionType.BACKGROUND)
+        state.onSessionTypeChange(SessionType.BACKGROUND)
         assertEquals(1, source.registerCount)
         assertEquals(1, source.unregisterCount)
 
         // functions can be called multiple times without issue
-        state.onEnvelopeTypeChange(EnvelopeType.SESSION)
-        state.onEnvelopeTypeChange(EnvelopeType.BACKGROUND_ACTIVITY)
+        state.onSessionTypeChange(SessionType.FOREGROUND)
+        state.onSessionTypeChange(SessionType.BACKGROUND)
         assertEquals(2, source.registerCount)
         assertEquals(2, source.unregisterCount)
     }

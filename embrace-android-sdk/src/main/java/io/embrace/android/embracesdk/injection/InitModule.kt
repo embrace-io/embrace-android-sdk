@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
@@ -61,6 +62,11 @@ internal interface InitModule {
      * Implementation of public tracing API
      */
     val embraceTracer: EmbraceTracer
+
+    /**
+     * Implementation of internal tracing API
+     */
+    val internalTracer: InternalTracer
 }
 
 internal class InitModuleImpl(
@@ -114,5 +120,9 @@ internal class InitModuleImpl(
         EmbraceTracer(
             spansService = spansService
         )
+    }
+
+    override val internalTracer: InternalTracer by singleton {
+        InternalTracer(clock = clock, spansRepository = spansRepository, embraceTracer = embraceTracer)
     }
 }

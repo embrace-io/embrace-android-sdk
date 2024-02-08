@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -34,7 +34,7 @@ internal class EmbraceInternalInterfaceImplTest {
     private lateinit var internalImpl: EmbraceInternalInterfaceImpl
     private lateinit var embraceImpl: EmbraceImpl
     private lateinit var fakeClock: FakeClock
-    private lateinit var initModule: InitModule
+    private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
 
     @Before
@@ -43,7 +43,12 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock)
         fakeConfigService = FakeConfigService()
-        internalImpl = EmbraceInternalInterfaceImpl(embraceImpl, initModule, fakeConfigService)
+        internalImpl = EmbraceInternalInterfaceImpl(
+            embraceImpl,
+            initModule,
+            fakeConfigService,
+            InternalTracer(initModule.clock, initModule.spansRepository, initModule.embraceTracer)
+        )
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 

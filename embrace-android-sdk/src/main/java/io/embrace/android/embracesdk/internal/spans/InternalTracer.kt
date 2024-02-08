@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InternalTracer(
+    private val clock: Clock,
     private val spansRepository: SpansRepository,
     private val embraceTracer: EmbraceTracer,
-    private val clock: Clock
 ) : InternalTracingApi {
 
     override fun startSpan(name: String, parentSpanId: String?): String? {

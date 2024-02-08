@@ -28,9 +28,9 @@ internal class InternalTracerTest {
         spansService = initModule.spansService
         spansService.initializeService(clock.nowInNanos())
         internalTracer = InternalTracer(
+            clock,
             initModule.spansRepository,
             initModule.embraceTracer,
-            clock
         )
         spansSink.flushSpans()
     }

@@ -5,12 +5,11 @@ import android.util.Pair
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class UninitializedSdkInternalInterfaceImpl(
-    internalTracer: InternalTracer
+    internalTracer: InternalTracingApi
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {}

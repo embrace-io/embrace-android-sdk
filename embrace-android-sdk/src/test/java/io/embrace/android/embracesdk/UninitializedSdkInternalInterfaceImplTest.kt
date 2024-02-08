@@ -22,9 +22,9 @@ internal class UninitializedSdkInternalInterfaceImplTest {
         initModule = FakeInitModule(clock = FakeClock(currentTime = beforeObjectInitTime))
         impl = UninitializedSdkInternalInterfaceImpl(
             InternalTracer(
+                initModule.clock,
                 initModule.spansRepository,
-                initModule.embraceTracer,
-                initModule.clock
+                initModule.embraceTracer
             )
         )
     }

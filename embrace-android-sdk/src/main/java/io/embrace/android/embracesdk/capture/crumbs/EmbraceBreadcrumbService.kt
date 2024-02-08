@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
-import android.text.TextUtils
 import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
@@ -40,55 +39,29 @@ import java.util.concurrent.LinkedBlockingDeque
  * in server-side configuration. They are stored in an unbounded queue.
  */
 internal class EmbraceBreadcrumbService(
-    clock: Clock,
-    configService: ConfigService,
+    private val clock: Clock,
+    private val configService: ConfigService,
     private val activityTracker: ActivityTracker,
-    logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
-
-    /**
-     * Clock used by the service
-     */
-    private val clock: Clock
-
-    /**
-     * The config service, for retrieving the breadcrumb limit.
-     */
-    private val configService: ConfigService
 
     /**
      * A deque of breadcrumbs.
      */
     private val viewBreadcrumbs = LinkedBlockingDeque<ViewBreadcrumb?>()
-    private val tapBreadcrumbs = LinkedBlockingDeque<TapBreadcrumb?>()
     private val customBreadcrumbDataSource = CustomBreadcrumbDataSource(configService)
+    private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
+    private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
+    private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
+    private val pushNotificationBreadcrumbDataSource =
+        PushNotificationBreadcrumbDataSource(configService, clock)
 
-    private val rnActionBreadcrumbs = LinkedBlockingDeque<RnActionBreadcrumb?>()
-    val webViewBreadcrumbs = LinkedBlockingDeque<WebViewBreadcrumb?>()
     val fragmentBreadcrumbs = LinkedBlockingDeque<FragmentBreadcrumb?>()
     val fragmentStack = Collections.synchronizedList(ArrayList<FragmentBreadcrumb>())
-    val pushNotifications = LinkedBlockingDeque<PushNotificationBreadcrumb?>()
-    private val viewBreadcrumbsCache: CacheableValue<List<ViewBreadcrumb?>>
-    private val tapBreadcrumbsCache: CacheableValue<List<TapBreadcrumb?>>
-    private val customBreadcrumbsCache: CacheableValue<List<CustomBreadcrumb>>
-    private val rnActionsCache: CacheableValue<List<RnActionBreadcrumb?>>
-    private val webviewCache: CacheableValue<List<WebViewBreadcrumb?>>
-    private val fragmentsCache: CacheableValue<List<FragmentBreadcrumb?>>
-    private val pushNotificationsCache: CacheableValue<List<PushNotificationBreadcrumb?>>
-    private val logger: InternalEmbraceLogger
-
-    init {
-        viewBreadcrumbsCache = CacheableValue { isCacheValid(viewBreadcrumbs) }
-        tapBreadcrumbsCache = CacheableValue { isCacheValid(tapBreadcrumbs) }
-        customBreadcrumbsCache = CacheableValue { isCacheValid(customBreadcrumbDataSource.getCapturedData()) }
-        rnActionsCache = CacheableValue { isCacheValid(rnActionBreadcrumbs) }
-        webviewCache = CacheableValue { isCacheValid(webViewBreadcrumbs) }
-        fragmentsCache = CacheableValue { isCacheValid(fragmentBreadcrumbs) }
-        pushNotificationsCache = CacheableValue { isCacheValid(pushNotifications) }
-        this.clock = clock
-        this.configService = configService
-        this.logger = logger
-    }
+    private val viewBreadcrumbsCache: CacheableValue<List<ViewBreadcrumb?>> =
+        CacheableValue { isCacheValid(viewBreadcrumbs) }
+    private val fragmentsCache: CacheableValue<List<FragmentBreadcrumb?>> =
+        CacheableValue { isCacheValid(fragmentBreadcrumbs) }
 
     override fun logView(screen: String?, timestamp: Long) {
         if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
@@ -163,22 +136,7 @@ internal class EmbraceBreadcrumbService(
         timestamp: Long,
         type: TapBreadcrumbType
     ) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "log tap")
-        try {
-            val finalPoint = if (!configService.breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
-                Pair(0.0f, 0.0f)
-            } else {
-                logger.logDeveloper("EmbraceBreadcrumbsService", "Cannot capture tap coordinates")
-                point
-            }
-            val limit = configService.breadcrumbBehavior.getTapBreadcrumbLimit()
-            tryAddBreadcrumb(tapBreadcrumbs, TapBreadcrumb(finalPoint, element, timestamp, type), limit)
-        } catch (ex: Exception) {
-            logger.logError("Failed to log tap breadcrumb for element $element", ex)
-        }
+        tapBreadcrumbDataSource.logTap(point, element, timestamp, type)
     }
 
     override fun logCustom(message: String, timestamp: Long) {
@@ -193,65 +151,11 @@ internal class EmbraceBreadcrumbService(
         bytesSent: Int,
         output: String
     ) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        if (!RnActionBreadcrumb.validateRnBreadcrumbOutputName(output)) {
-            logger.logWarning(
-                "RN Action output is invalid, the valid values are ${RnActionBreadcrumb.getValidRnBreadcrumbOutputName()}"
-            )
-            return
-        }
-        if (TextUtils.isEmpty(name)) {
-            logger.logWarning("RN Action name must not be blank")
-            return
-        }
-        try {
-            val limit = configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
-            tryAddBreadcrumb(
-                rnActionBreadcrumbs,
-                RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output),
-                limit
-            )
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to log RN Action breadcrumb with name $name", ex)
-        }
+        rnBreadcrumbDataSource.logRnAction(name, startTime, endTime, properties, bytesSent, output)
     }
 
     override fun logWebView(url: String?, startTime: Long) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        if (!configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled()) {
-            logger.logDeveloper("EmbraceBreadcrumbsService", "Web capture not enabled")
-            return
-        }
-        if (url == null) {
-            logger.logDeveloper("EmbraceBreadcrumbsService", "Web url is NULL")
-            return
-        }
-        try {
-            // Check if web view query params should be captured.
-            var parsedUrl: String = url
-            if (!configService.breadcrumbBehavior.isQueryParamCaptureEnabled()) {
-                val queryOffset = url.indexOf(QUERY_PARAMETER_DELIMITER)
-                if (queryOffset > 0) {
-                    parsedUrl = url.substring(0, queryOffset)
-                    logger.logDeveloper("EmbraceBreadcrumbsService", "Parsed url is: $parsedUrl")
-                } else {
-                    logger.logDeveloper("EmbraceBreadcrumbsService", "no query parameters")
-                }
-            } else {
-                logger.logDeveloper(
-                    "EmbraceBreadcrumbsService",
-                    "query parameters capture not enabled"
-                )
-            }
-            val limit = configService.breadcrumbBehavior.getWebViewBreadcrumbLimit()
-            tryAddBreadcrumb(webViewBreadcrumbs, WebViewBreadcrumb(parsedUrl, startTime), limit)
-        } catch (ex: Exception) {
-            logger.logError("Failed to log WebView breadcrumb for url $url")
-        }
+        webViewBreadcrumbDataSource.logWebView(url, startTime)
     }
 
     override fun getViewBreadcrumbsForSession(
@@ -267,46 +171,20 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun getTapBreadcrumbsForSession(start: Long, end: Long): List<TapBreadcrumb?> {
-        return tapBreadcrumbsCache.value {
-            filterBreadcrumbsForTimeWindow(
-                tapBreadcrumbs,
-                start,
-                end
-            )
-        }
+    override fun getTapBreadcrumbsForSession(): List<TapBreadcrumb> {
+        return tapBreadcrumbDataSource.getCapturedData()
     }
 
     override fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb> {
-        return customBreadcrumbsCache.value {
-            customBreadcrumbDataSource.getCapturedData()
-        }
+        return customBreadcrumbDataSource.getCapturedData()
     }
 
-    override fun getRnActionBreadcrumbForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<RnActionBreadcrumb?> {
-        return rnActionsCache.value {
-            filterBreadcrumbsForTimeWindow(
-                rnActionBreadcrumbs,
-                startTime,
-                endTime
-            )
-        }
+    override fun getRnActionBreadcrumbForSession(): List<RnActionBreadcrumb> {
+        return rnBreadcrumbDataSource.getCapturedData()
     }
 
-    override fun getWebViewBreadcrumbsForSession(
-        start: Long,
-        end: Long
-    ): List<WebViewBreadcrumb?> {
-        return webviewCache.value {
-            filterBreadcrumbsForTimeWindow(
-                webViewBreadcrumbs,
-                start,
-                end
-            )
-        }
+    override fun getWebViewBreadcrumbsForSession(): List<WebViewBreadcrumb> {
+        return webViewBreadcrumbDataSource.getCapturedData()
     }
 
     override fun getFragmentBreadcrumbsForSession(
@@ -322,28 +200,19 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun getPushNotificationsBreadcrumbsForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<PushNotificationBreadcrumb?> {
-        return pushNotificationsCache.value {
-            filterBreadcrumbsForTimeWindow(
-                pushNotifications,
-                startTime,
-                endTime
-            )
-        }
+    override fun getPushNotificationsBreadcrumbsForSession(): List<PushNotificationBreadcrumb> {
+        return pushNotificationBreadcrumbDataSource.getCapturedData()
     }
 
     override fun getBreadcrumbs(start: Long, end: Long): Breadcrumbs {
         return Breadcrumbs(
-            customBreadcrumbs = getCustomBreadcrumbsForSession().filterNotNull(),
-            tapBreadcrumbs = getTapBreadcrumbsForSession(start, end).filterNotNull(),
+            customBreadcrumbs = getCustomBreadcrumbsForSession(),
+            tapBreadcrumbs = getTapBreadcrumbsForSession(),
             viewBreadcrumbs = getViewBreadcrumbsForSession(start, end).filterNotNull(),
-            webViewBreadcrumbs = getWebViewBreadcrumbsForSession(start, end).filterNotNull(),
+            webViewBreadcrumbs = getWebViewBreadcrumbsForSession(),
             fragmentBreadcrumbs = getFragmentBreadcrumbsForSession(start, end).filterNotNull(),
-            rnActionBreadcrumbs = getRnActionBreadcrumbForSession(start, end).filterNotNull(),
-            pushNotifications = getPushNotificationsBreadcrumbsForSession(start, end).filterNotNull()
+            rnActionBreadcrumbs = getRnActionBreadcrumbForSession(),
+            pushNotifications = getPushNotificationsBreadcrumbsForSession()
         )
     }
 
@@ -386,25 +255,14 @@ internal class EmbraceBreadcrumbService(
         messageDeliveredPriority: Int,
         type: NotificationType
     ) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        try {
-            val captureFcmPiiData = configService.breadcrumbBehavior.isCaptureFcmPiiDataEnabled()
-            val pn = PushNotificationBreadcrumb(
-                if (captureFcmPiiData) title else null,
-                if (captureFcmPiiData) body else null,
-                if (captureFcmPiiData) topic else null,
-                id,
-                notificationPriority,
-                type.type,
-                clock.now()
-            )
-            val limit = configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
-            tryAddBreadcrumb(pushNotifications, pn, limit)
-        } catch (ex: Exception) {
-            logger.logError("Failed to capture push notification", ex)
-        }
+        pushNotificationBreadcrumbDataSource.logPushNotification(
+            title,
+            body,
+            topic,
+            id,
+            notificationPriority,
+            type
+        )
     }
 
     override fun onView(activity: Activity) {
@@ -455,13 +313,13 @@ internal class EmbraceBreadcrumbService(
 
     override fun cleanCollections() {
         viewBreadcrumbs.clear()
-        tapBreadcrumbs.clear()
+        tapBreadcrumbDataSource.cleanCollections()
         customBreadcrumbDataSource.cleanCollections()
-        webViewBreadcrumbs.clear()
+        webViewBreadcrumbDataSource.cleanCollections()
         fragmentBreadcrumbs.clear()
         fragmentStack.clear()
-        pushNotifications.clear()
-        rnActionBreadcrumbs.clear()
+        pushNotificationBreadcrumbDataSource.cleanCollections()
+        rnBreadcrumbDataSource.cleanCollections()
         logger.logDeveloper("EmbraceBreadcrumbsService", "Collections cleaned")
     }
 
@@ -548,7 +406,6 @@ internal class EmbraceBreadcrumbService(
     }
 
     companion object {
-        private const val QUERY_PARAMETER_DELIMITER = "?"
 
         /**
          * The default limit for how many open tracked fragments are allowed, which can be overridden

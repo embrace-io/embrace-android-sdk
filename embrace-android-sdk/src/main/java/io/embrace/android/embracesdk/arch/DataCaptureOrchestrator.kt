@@ -25,13 +25,13 @@ internal class DataCaptureOrchestrator(
     }
 
     /**
-     * Callback that is invoked when the envelope type changes.
+     * Callback that is invoked when the session type changes.
      */
-    fun onEnvelopeChange(envelopeType: EnvelopeType) {
+    fun onSessionTypeChange(sessionType: SessionType) {
         dataSourceState.forEach { state ->
             try {
-                // alter the envelope type - some data sources don't capture for background activities.
-                state.onEnvelopeTypeChange(envelopeType)
+                // alter the session type - some data sources don't capture for background activities.
+                state.onSessionTypeChange(sessionType)
             } catch (exc: Throwable) {
                 logger.logError("Exception thrown starting data capture", exc)
             }

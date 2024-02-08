@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
-import io.embrace.android.embracesdk.arch.EnvelopeType
+import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -51,10 +51,10 @@ internal class SessionOrchestratorImpl(
     init {
         processStateService.addListener(this)
         configService.addListener(backgroundActivityGate)
-        createInitialEnvelope()
+        createInitialSession()
     }
 
-    private fun createInitialEnvelope() {
+    private fun createInitialSession() {
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.INITIAL,
@@ -192,7 +192,7 @@ internal class SessionOrchestratorImpl(
             }
 
             // next, clean up any previous session state
-            boundaryDelegate.prepareForNewEnvelope(timestamp, clearUserInfo)
+            boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
 
             // start the next session or background activity
             val newState = newSessionAction?.invoke()
@@ -217,11 +217,11 @@ internal class SessionOrchestratorImpl(
             state = endProcessState
 
             // update data capture orchestrator
-            val envelopeType = when (endProcessState) {
-                ProcessState.FOREGROUND -> EnvelopeType.SESSION
-                ProcessState.BACKGROUND -> EnvelopeType.BACKGROUND_ACTIVITY
+            val sessionType = when (endProcessState) {
+                ProcessState.FOREGROUND -> SessionType.FOREGROUND
+                ProcessState.BACKGROUND -> SessionType.BACKGROUND
             }
-            dataCaptureOrchestrator.onEnvelopeChange(envelopeType)
+            dataCaptureOrchestrator.onSessionTypeChange(sessionType)
 
             // log the state change
             logSessionStateChange(

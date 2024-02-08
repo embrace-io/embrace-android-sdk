@@ -98,7 +98,7 @@ internal class PayloadMessageCollatorTest {
         )
         startMsg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
 
-        // create envelope
+        // create session
         val payload = collator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 startMsg,
@@ -122,7 +122,7 @@ internal class PayloadMessageCollatorTest {
         )
         startMsg.verifyInitialFieldsPopulated(PayloadType.SESSION)
 
-        // create envelope
+        // create session
         val payload = collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 startMsg,

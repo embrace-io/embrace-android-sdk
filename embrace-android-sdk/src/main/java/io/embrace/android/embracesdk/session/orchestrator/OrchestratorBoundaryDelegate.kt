@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 /**
- * This class is responsible for orchestrating a clean boundary between session envelopes.
+ * This class is responsible for orchestrating a clean boundary between sessions.
  * I.e. if a session transitions to a background activity, previous data should be cleared
  * & the relevant services should be updated as necessary.
  *
@@ -27,10 +27,10 @@ internal class OrchestratorBoundaryDelegate(
 ) {
 
     /**
-     * Prepares all services/state for a new envelope. Practically this involves
+     * Prepares all services/state for a new session. Practically this involves
      * resetting collections in services etc.
      */
-    fun prepareForNewEnvelope(startTime: Long, clearUserInfo: Boolean = false) {
+    fun prepareForNewSession(startTime: Long, clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections(internalErrorService)
         sessionProperties.clearTemporary()
 

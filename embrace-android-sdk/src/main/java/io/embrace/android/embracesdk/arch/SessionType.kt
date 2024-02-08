@@ -1,18 +1,18 @@
 package io.embrace.android.embracesdk.arch
 
 /**
- * The type of envelope that contains the data. Currently this is either a session or a background
- * activity.
+ * The type of session that contains the data. Currently this is either a session (foreground)
+ * or a background activity (background).
  */
-internal enum class EnvelopeType {
+internal enum class SessionType {
 
     /**
      * A period of time where the app was in the foreground.
      */
-    SESSION,
+    FOREGROUND,
 
     /**
      * A period of time where the app was in the background.
      */
-    BACKGROUND_ACTIVITY
+    BACKGROUND
 }

@@ -46,8 +46,8 @@ internal class OrchestratorBoundaryDelegateTest {
     }
 
     @Test
-    fun `prepare new envelope clear user info true`() {
-        delegate.prepareForNewEnvelope(1000L, clearUserInfo = true)
+    fun `prepare new session clear user info true`() {
+        delegate.prepareForNewSession(1000L, clearUserInfo = true)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, sessionProperties.get().size)
         assertEquals(1, userService.clearedCount)
@@ -57,8 +57,8 @@ internal class OrchestratorBoundaryDelegateTest {
     }
 
     @Test
-    fun `prepare new envelope clear user info false`() {
-        delegate.prepareForNewEnvelope(1000L, clearUserInfo = false)
+    fun `prepare new session clear user info false`() {
+        delegate.prepareForNewSession(1000L, clearUserInfo = false)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, sessionProperties.get().size)
         assertEquals(0, userService.clearedCount)

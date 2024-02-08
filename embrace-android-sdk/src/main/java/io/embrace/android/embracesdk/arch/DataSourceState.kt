@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.arch
 /**
  * Holds the current state of the service. This class automatically handles changes in config
  * that enable/disable the service, and creates new instances of the service as required.
- * It also is capable of disabling the service if the [EnvelopeType] is not supported.
+ * It also is capable of disabling the service if the [SessionType] is not supported.
  */
 internal class DataSourceState<T : DataSource<R>, R>(
 
@@ -20,15 +20,15 @@ internal class DataSourceState<T : DataSource<R>, R>(
     private val configGate: () -> Boolean,
 
     /**
-     * The type of envelope that contains the data.
+     * The type of session that contains the data.
      */
-    private var currentEnvelope: EnvelopeType? = null,
+    private var currentSessionType: SessionType? = null,
 
     /**
-     * An envelope type where data capture should be disabled. For example,
+     * A session type where data capture should be disabled. For example,
      * background activities capture a subset of sessions.
      */
-    private val disabledEnvelopeType: EnvelopeType? = null
+    private val disabledSessionType: SessionType? = null
 ) {
 
     private val enabledDataSource by lazy(factory)
@@ -39,10 +39,10 @@ internal class DataSourceState<T : DataSource<R>, R>(
     }
 
     /**
-     * Callback that is invoked when the envelope type changes.
+     * Callback that is invoked when the session type changes.
      */
-    fun onEnvelopeTypeChange(envelopeType: EnvelopeType?) {
-        this.currentEnvelope = envelopeType
+    fun onSessionTypeChange(sessionType: SessionType?) {
+        this.currentSessionType = sessionType
         updateDataSource()
     }
 
@@ -54,7 +54,8 @@ internal class DataSourceState<T : DataSource<R>, R>(
     }
 
     private fun updateDataSource() {
-        val enabled = currentEnvelope != null && currentEnvelope != disabledEnvelopeType && configGate()
+        val enabled =
+            currentSessionType != null && currentSessionType != disabledSessionType && configGate()
 
         if (enabled && dataSource == null) {
             dataSource = enabledDataSource.apply {

@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.event.EventService;
 import io.embrace.android.embracesdk.event.LogMessageService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
 import io.embrace.android.embracesdk.injection.AnrModuleImpl;
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
 import io.embrace.android.embracesdk.injection.CoreModule;
 import io.embrace.android.embracesdk.injection.CrashModule;
 import io.embrace.android.embracesdk.injection.CrashModuleImpl;
@@ -47,6 +46,7 @@ import io.embrace.android.embracesdk.injection.DataContainerModuleImpl;
 import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
 import io.embrace.android.embracesdk.injection.InitModule;
+import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
 import io.embrace.android.embracesdk.injection.SessionModule;
@@ -61,7 +61,6 @@ import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
-import io.embrace.android.embracesdk.internal.spans.InternalTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
@@ -246,7 +245,7 @@ final class EmbraceImpl {
         tracer = initModule.getEmbraceTracer();
         uninitializedSdkInternalInterface =
             LazyKt.lazy(
-                () -> new UninitializedSdkInternalInterfaceImpl(new InternalTracer(initModule.getSpansRepository(), tracer, sdkClock))
+                () -> new UninitializedSdkInternalInterfaceImpl(initModule.getInternalTracer())
             );
     }
 

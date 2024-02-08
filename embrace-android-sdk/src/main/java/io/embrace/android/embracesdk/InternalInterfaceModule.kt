@@ -25,7 +25,7 @@ internal class InternalInterfaceModuleImpl(
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(embrace, initModule, essentialServiceModule.configService)
+        EmbraceInternalInterfaceImpl(embrace, initModule, essentialServiceModule.configService, initModule.internalTracer)
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {

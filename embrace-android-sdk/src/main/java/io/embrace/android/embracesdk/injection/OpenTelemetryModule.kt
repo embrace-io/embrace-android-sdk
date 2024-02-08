@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
  * Module that instantiates various OpenTelemetry related components
@@ -62,7 +63,6 @@ internal interface OpenTelemetryModule {
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule
 ) : OpenTelemetryModule {
-
     override val spansRepository: SpansRepository by lazy {
         SpansRepository()
     }

@@ -22,16 +22,16 @@ internal class CurrentSessionSpanImplTests {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansRepository = initModule.spansRepository
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
-        spansService = initModule.spansService
+        spansRepository = initModule.openTelemetryModule.spansRepository
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(clock.now())
     }
 
     @Test
     fun `cannot create span before session is created`() {
-        assertFalse(FakeInitModule(clock = clock).currentSessionSpan.canStartNewSpan(null, true))
+        assertFalse(FakeInitModule(clock = clock).openTelemetryModule.currentSessionSpan.canStartNewSpan(null, true))
     }
 
     @Test
@@ -129,8 +129,8 @@ internal class CurrentSessionSpanImplTests {
     fun `flushing with app termination and termination reason flushes session span with right termination type`() {
         EmbraceAttributes.AppTerminationCause.values().forEach {
             val module = FakeInitModule(clock = clock)
-            val sessionSpan = module.currentSessionSpan
-            module.spansService.initializeService(clock.now())
+            val sessionSpan = module.openTelemetryModule.currentSessionSpan
+            module.openTelemetryModule.spansService.initializeService(clock.now())
             val flushedSpans = sessionSpan.endSession(it)
             assertEquals(1, flushedSpans.size)
 
@@ -146,7 +146,7 @@ internal class CurrentSessionSpanImplTests {
                 assertEquals(it.name, attributes[it.keyName()])
             }
 
-            assertEquals(0, module.spansSink.completedSpans().size)
+            assertEquals(0, module.openTelemetryModule.spansSink.completedSpans().size)
         }
     }
 

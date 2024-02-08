@@ -75,6 +75,7 @@ internal interface DataCaptureServiceModule {
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
@@ -152,6 +153,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val startupService: StartupService by singleton {
-        StartupServiceImpl(initModule.spansService)
+        StartupServiceImpl(openTelemetryModule.spansService)
     }
 }

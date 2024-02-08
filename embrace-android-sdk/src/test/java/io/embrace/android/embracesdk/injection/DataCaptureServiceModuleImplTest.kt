@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -28,13 +29,16 @@ import org.junit.Test
 
 internal class DataCaptureServiceModuleImplTest {
 
+    private val initModule = FakeInitModule()
+    private val openTelemetryModule = initModule.openTelemetryModule
     private val coreModule = FakeCoreModule()
     private val systemServiceModule = FakeSystemServiceModule()
 
     @Test
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
-            InitModuleImpl(),
+            initModule,
+            openTelemetryModule,
             coreModule,
             systemServiceModule,
             createEnabledBehavior(),
@@ -55,7 +59,8 @@ internal class DataCaptureServiceModuleImplTest {
     @Test
     fun testOldVersionChecks() {
         val module = DataCaptureServiceModuleImpl(
-            InitModuleImpl(),
+            initModule,
+            openTelemetryModule,
             coreModule,
             systemServiceModule,
             FakeEssentialServiceModule(),
@@ -70,7 +75,8 @@ internal class DataCaptureServiceModuleImplTest {
     @Test
     fun testDisabledImplementations() {
         val module = DataCaptureServiceModuleImpl(
-            InitModuleImpl(),
+            initModule,
+            openTelemetryModule,
             coreModule,
             systemServiceModule,
             createDisabledBehavior(),
@@ -116,6 +122,7 @@ internal class DataCaptureServiceModuleImplTest {
                 sdkModeBehavior = fakeSdkModeBehavior(
                     remoteCfg = { RemoteConfig(pctBetaFeaturesEnabled = 0.0f) }
                 ),
+
             )
         )
     }

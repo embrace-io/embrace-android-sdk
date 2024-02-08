@@ -11,9 +11,9 @@ internal interface DeliveryModule {
 
 internal class DeliveryModuleImpl(
     coreModule: CoreModule,
+    workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    workerThreadModule: WorkerThreadModule
 ) : DeliveryModule {
 
     override val deliveryService: DeliveryService by singleton {

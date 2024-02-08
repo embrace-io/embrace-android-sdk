@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.payload.ExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -31,7 +30,7 @@ import org.junit.Test
 
 internal class PayloadMessageCollatorTest {
 
-    private lateinit var initModule: InitModule
+    private lateinit var initModule: FakeInitModule
     private lateinit var collator: PayloadMessageCollator
 
     private enum class PayloadType {
@@ -55,8 +54,8 @@ internal class PayloadMessageCollatorTest {
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
-            spansSink = initModule.spansSink,
-            currentSessionSpan = initModule.currentSessionSpan,
+            spansSink = initModule.openTelemetryModule.spansSink,
+            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService()
         )

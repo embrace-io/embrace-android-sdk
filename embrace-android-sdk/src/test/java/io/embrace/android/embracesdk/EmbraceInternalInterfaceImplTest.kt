@@ -47,7 +47,7 @@ internal class EmbraceInternalInterfaceImplTest {
             embraceImpl,
             initModule,
             fakeConfigService,
-            InternalTracer(initModule.clock, initModule.spansRepository, initModule.embraceTracer)
+            initModule.openTelemetryModule.internalTracer
         )
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }

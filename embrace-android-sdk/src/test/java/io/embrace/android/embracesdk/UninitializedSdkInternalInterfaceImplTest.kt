@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -15,16 +15,18 @@ import java.net.SocketException
 internal class UninitializedSdkInternalInterfaceImplTest {
 
     private lateinit var impl: UninitializedSdkInternalInterfaceImpl
-    private lateinit var initModule: InitModule
+    private lateinit var initModule: FakeInitModule
+    private lateinit var openTelemetryModule: OpenTelemetryModule
 
     @Before
     fun setUp() {
         initModule = FakeInitModule(clock = FakeClock(currentTime = beforeObjectInitTime))
+        openTelemetryModule = initModule.openTelemetryModule
         impl = UninitializedSdkInternalInterfaceImpl(
             InternalTracer(
                 initModule.clock,
-                initModule.spansRepository,
-                initModule.embraceTracer
+                openTelemetryModule.spansRepository,
+                openTelemetryModule.embraceTracer
             )
         )
     }

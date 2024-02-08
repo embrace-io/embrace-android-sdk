@@ -11,15 +11,17 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModul
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
-import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.injection.SessionModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionModuleImplTest {
+
+    private val fakeInitModule = FakeInitModule()
 
     private val workerThreadModule =
         FakeWorkerThreadModule(
@@ -32,7 +34,8 @@ internal class SessionModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val module = SessionModuleImpl(
-            InitModuleImpl(),
+            fakeInitModule,
+            fakeInitModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(configService = configService),
             FakeNativeModule(),
@@ -56,7 +59,8 @@ internal class SessionModuleImplTest {
     @Test
     fun testEnabledBehaviors() {
         val module = SessionModuleImpl(
-            InitModuleImpl(),
+            fakeInitModule,
+            fakeInitModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             createEnabledBehavior(),
             FakeNativeModule(),

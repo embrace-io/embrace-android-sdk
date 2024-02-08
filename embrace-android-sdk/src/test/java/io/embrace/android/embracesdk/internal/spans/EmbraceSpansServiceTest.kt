@@ -19,15 +19,15 @@ internal class EmbraceSpansServiceTest {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
-        spansService = initModule.spansService
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(clock.now())
     }
 
     @Test
     fun `verify default behaviour before initialization`() {
-        val uninitializedService = FakeInitModule(clock = clock).spansService
+        val uninitializedService = FakeInitModule(clock = clock).openTelemetryModule.spansService
         assertFalse(uninitializedService.initialized())
         assertNull(uninitializedService.createSpan("test-span"))
         assertTrue(uninitializedService.recordCompletedSpan("test-span", 10, 20))
@@ -170,17 +170,17 @@ internal class EmbraceSpansServiceTest {
     @Test
     fun `completed spans recorded before initialization will saved and recorded upon initialization`() {
         val module = FakeInitModule(clock = clock)
-        val service = module.spansService
+        val service = module.openTelemetryModule.spansService
         assertFalse(service.initialized())
         assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         assertTrue(service.recordCompletedSpan("test-span", 15, 25))
         service.initializeService(clock.now())
-        assertEquals(2, module.spansSink.completedSpans().size)
+        assertEquals(2, module.openTelemetryModule.spansSink.completedSpans().size)
     }
 
     @Test
     fun `verify ceiling to how many recordCompleteSpan calls can be buffered`() {
-        val service = FakeInitModule(clock = clock).spansService
+        val service = FakeInitModule(clock = clock).openTelemetryModule.spansService
         repeat(1000) {
             assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         }

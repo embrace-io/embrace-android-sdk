@@ -30,6 +30,7 @@ internal class ModuleInitBootstrapperTest {
         with(moduleInitBootstrapper) {
             assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE))
             assertTrue(initModule is InitModuleImpl)
+            assertTrue(openTelemetryModule is OpenTelemetryModuleImpl)
             assertTrue(workerThreadModule is WorkerThreadModuleImpl)
             assertTrue(systemServiceModule is SystemServiceModuleImpl)
             assertTrue(androidServicesModule is AndroidServicesModuleImpl)

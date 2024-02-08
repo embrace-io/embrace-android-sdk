@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 internal class ModuleInitBootstrapper(
     val initModule: InitModule = InitModuleImpl(),
+    val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule),
     private val coreModuleSupplier: CoreModuleSupplier = ::CoreModuleImpl,
     private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::SystemServiceModuleImpl,
     private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = ::AndroidServicesModuleImpl,
@@ -68,7 +69,7 @@ internal class ModuleInitBootstrapper(
                 workerThreadModule = workerThreadModuleSupplier(initModule)
                 systemServiceModule = systemServiceModuleSupplier(coreModule, versionChecker)
                 androidServicesModule = androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
-                storageModule = storageModuleSupplier(workerThreadModule, initModule, coreModule)
+                storageModule = storageModuleSupplier(initModule, coreModule, workerThreadModule)
                 essentialServiceModule =
                     essentialServiceModuleSupplier(
                         initModule,
@@ -84,13 +85,14 @@ internal class ModuleInitBootstrapper(
                 dataCaptureServiceModule =
                     dataCaptureServiceModuleSupplier(
                         initModule,
+                        openTelemetryModule,
                         coreModule,
                         systemServiceModule,
                         essentialServiceModule,
                         workerThreadModule,
                         versionChecker
                     )
-                deliveryModule = deliveryModuleSupplier(coreModule, storageModule, essentialServiceModule, workerThreadModule)
+                deliveryModule = deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
                 initialized.set(true)
                 true
             } else {
@@ -101,10 +103,10 @@ internal class ModuleInitBootstrapper(
 }
 
 internal typealias CoreModuleSupplier = Function2<Context, AppFramework, CoreModule>
+internal typealias WorkerThreadModuleSupplier = Function1<InitModule, WorkerThreadModule>
 internal typealias SystemServiceModuleSupplier = Function2<CoreModule, VersionChecker, SystemServiceModule>
 internal typealias AndroidServicesModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule>
-internal typealias WorkerThreadModuleSupplier = Function1<InitModule, WorkerThreadModule>
-internal typealias StorageModuleSupplier = Function3<WorkerThreadModule, InitModule, CoreModule, StorageModule>
+internal typealias StorageModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, StorageModule>
 internal typealias EssentialServiceModuleSupplier =
     Function9<
         InitModule,
@@ -119,8 +121,9 @@ internal typealias EssentialServiceModuleSupplier =
         EssentialServiceModule
         >
 
-internal typealias DataCaptureServiceModuleSupplier = Function6<
+internal typealias DataCaptureServiceModuleSupplier = Function7<
     InitModule,
+    OpenTelemetryModule,
     CoreModule,
     SystemServiceModule,
     EssentialServiceModule,
@@ -129,4 +132,4 @@ internal typealias DataCaptureServiceModuleSupplier = Function6<
     DataCaptureServiceModule
     >
 
-internal typealias DeliveryModuleSupplier = Function4<CoreModule, StorageModule, EssentialServiceModule, WorkerThreadModule, DeliveryModule>
+internal typealias DeliveryModuleSupplier = Function4<CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule, DeliveryModule>

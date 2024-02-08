@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
@@ -27,6 +26,8 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
@@ -100,13 +101,14 @@ internal class IntegrationTestRule(
             val embraceImpl = EmbraceImpl(
                 ModuleInitBootstrapper(
                     initModule = initModule,
+                    openTelemetryModule  = initModule.openTelemetryModule,
                     coreModuleSupplier = { _, _ -> fakeCoreModule },
                     workerThreadModuleSupplier = { workerThreadModule },
                     systemServiceModuleSupplier = { _, _ -> systemServiceModule },
                     androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
                     essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
-                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> dataCaptureServiceModule },
+                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
                     deliveryModuleSupplier = { _, _, _, _ -> fakeDeliveryModule }
                 )
             )
@@ -133,7 +135,8 @@ internal class IntegrationTestRule(
         val fakeClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val enableIntegrationTesting: Boolean = false,
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
-        val initModule: InitModule = FakeInitModule(clock = fakeClock),
+        val initModule: FakeInitModule = FakeInitModule(clock = fakeClock),
+        val openTelemetryModule: OpenTelemetryModule = initModule.openTelemetryModule,
         val fakeCoreModule: FakeCoreModule = FakeCoreModule(),
         val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
         val fakeConfigService: FakeConfigService = FakeConfigService(
@@ -187,6 +190,7 @@ internal class IntegrationTestRule(
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(
                 initModule = initModule,
+                openTelemetryModule = initModule.openTelemetryModule,
                 coreModule = fakeCoreModule,
                 systemServiceModule = systemServiceModule,
                 essentialServiceModule = essentialServiceModule,

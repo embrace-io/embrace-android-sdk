@@ -4,9 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
-import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -21,9 +18,6 @@ internal class InitModuleImplTest {
         val initModule = InitModuleImpl()
         assertTrue(initModule.clock is NormalizedIntervalClock)
         assertTrue(initModule.telemetryService is EmbraceTelemetryService)
-        assertTrue(initModule.spansSink is SpansSinkImpl)
-        assertTrue(initModule.spansService is EmbraceSpansService)
-        assertTrue(initModule.currentSessionSpan is CurrentSessionSpanImpl)
     }
 
     @Test

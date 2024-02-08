@@ -79,9 +79,9 @@ internal class PayloadFactoryBaTest {
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.spansSink
-        currentSessionSpan = initModule.currentSessionSpan
-        spansService = initModule.spansService
+        spansSink = initModule.openTelemetryModule.spansSink
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        spansService = initModule.openTelemetryModule.spansService
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true
         )

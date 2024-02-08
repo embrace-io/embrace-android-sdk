@@ -13,7 +13,7 @@ import io.opentelemetry.api.trace.Tracer
 internal class EmbraceSpansService(
     private val spansRepository: SpansRepository,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val tracer: Tracer,
+    private val tracerSupplier: () -> Tracer,
 ) : SpansService {
     private val uninitializedSdkSpansService: UninitializedSdkSpansService = UninitializedSdkSpansService()
 
@@ -27,7 +27,7 @@ internal class EmbraceSpansService(
                     currentDelegate = SpansServiceImpl(
                         spansRepository = spansRepository,
                         currentSessionSpan = currentSessionSpan,
-                        tracer = tracer,
+                        tracer = tracerSupplier(),
                     )
                     currentDelegate.initializeService(sdkInitStartTimeNanos)
                     if (currentDelegate.initialized()) {

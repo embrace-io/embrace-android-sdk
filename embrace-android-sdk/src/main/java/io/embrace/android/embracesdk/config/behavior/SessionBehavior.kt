@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.EventMessage
 import java.util.Locale
 
@@ -12,8 +13,8 @@ import java.util.Locale
  */
 internal class SessionBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> SessionLocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<SessionLocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<SessionLocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

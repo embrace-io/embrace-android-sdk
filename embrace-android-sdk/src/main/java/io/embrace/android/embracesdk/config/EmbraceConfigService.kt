@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
@@ -60,7 +61,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     @Volatile
     private var configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
 
-    private val remoteSupplier: () -> RemoteConfig? = { getConfig() }
+    private val remoteSupplier: Provider<RemoteConfig?> = { getConfig() }
 
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
         BackgroundActivityBehavior(

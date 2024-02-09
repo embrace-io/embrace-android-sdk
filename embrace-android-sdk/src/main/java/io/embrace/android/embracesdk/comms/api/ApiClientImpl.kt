@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.api
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.IOException
 import java.io.InputStream

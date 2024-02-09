@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
-    private val scheduledExecutorSupplier: () -> T
+    private val scheduledExecutorSupplier: Provider<T>
 ) : ExternalResource() {
     val logger = InternalEmbraceLogger()
     val mockSigquitDetectionService: SigquitDetectionService = mockk(relaxed = true)

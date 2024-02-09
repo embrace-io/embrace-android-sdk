@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.config.behavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that should be followed for select services that automatically
@@ -10,8 +11,8 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
  */
 internal class AutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> LocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<LocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<LocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

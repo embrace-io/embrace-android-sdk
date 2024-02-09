@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import kotlin.math.pow
 
@@ -7,7 +8,7 @@ import kotlin.math.pow
  * Checks whether a percent-based config value is over a threshold where it should be enabled.
  */
 internal class BehaviorThresholdCheck(
-    private val deviceIdProvider: () -> String
+    private val deviceIdProvider: Provider<String>
 ) {
 
     /**

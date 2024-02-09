@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.config.behavior
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.regex.Pattern
 import kotlin.math.min
 
@@ -11,8 +12,8 @@ import kotlin.math.min
  */
 internal class NetworkBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> SdkLocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<SdkLocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<SdkLocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

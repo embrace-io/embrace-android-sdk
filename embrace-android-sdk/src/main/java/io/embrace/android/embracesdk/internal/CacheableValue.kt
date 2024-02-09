@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
+import io.embrace.android.embracesdk.internal.utils.Provider
+
 /**
  * Holds a property whose value can be cached (if its inputs do not change).
  */
@@ -14,7 +16,7 @@ internal class CacheableValue<T>(
      * won't change if new objects are added, so you need to be wary of accidentally
      * returning stale values.
      */
-    private val input: () -> Any
+    private val input: Provider<Any>
 ) {
 
     private var initialized = false
@@ -29,7 +31,7 @@ internal class CacheableValue<T>(
      * If inputs are changed or no cached value is present, then [action] will be invoked
      * to calculate a value that is placed in the cache.
      */
-    fun value(action: () -> T): T {
+    fun value(action: Provider<T>): T {
         val hashCode = input().hashCode()
 
         if (prevHashCode != hashCode || !initialized) {

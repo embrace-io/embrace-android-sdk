@@ -108,7 +108,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logWebView("https://example.com/path1", clock.now())
         clock.tickSecond()
         service.logWebView("https://example.com/path2", clock.now())
-        val webViews = service.webViewBreadcrumbs
+        val webViews = service.getWebViewBreadcrumbsForSession()
         assertEquals("two webviews captured", 2, webViews.size)
         assertJsonMessage(service, "breadcrumb_webview.json")
     }
@@ -494,7 +494,7 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = initializeBreadcrumbService()
         service.logTap(android.util.Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
 
-        val crumbs = service.getTapBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getTapBreadcrumbsForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("MyView", breadcrumb.tappedElementName)
         assertEquals(TapBreadcrumb.TapBreadcrumbType.TAP, breadcrumb.type)
@@ -505,7 +505,7 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = initializeBreadcrumbService()
         service.logRnAction("MyAction", 0, 5, mapOf("key" to "value"), 100, "success")
 
-        val crumbs = service.getRnActionBreadcrumbForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getRnActionBreadcrumbForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("MyAction", breadcrumb.name)
         assertEquals("success", breadcrumb.output)
@@ -534,7 +534,7 @@ internal class EmbraceBreadcrumbServiceTest {
             PushNotificationBreadcrumb.NotificationType.NOTIFICATION
         )
 
-        val crumbs = service.getPushNotificationsBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getPushNotificationsBreadcrumbsForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertNull(breadcrumb.title)
         assertNull(breadcrumb.body)

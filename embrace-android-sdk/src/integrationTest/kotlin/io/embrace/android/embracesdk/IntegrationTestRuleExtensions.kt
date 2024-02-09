@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -106,7 +107,7 @@ internal fun internalErrorService(): InternalErrorService? = Embrace.getImpl().i
 /**
  * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs] elapses. Otherwise, throws [TimeoutException]
  */
-internal fun <T> returnIfConditionMet(desiredValueSupplier: () -> T, waitTimeMs: Int = 1000, condition: () -> Boolean): T {
+internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTimeMs: Int = 1000, condition: () -> Boolean): T {
     val tries: Int = waitTimeMs / CHECK_INTERVAL_MS
     val countDownLatch = CountDownLatch(1)
 

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
+import io.embrace.android.embracesdk.internal.utils.Provider
+
 /**
  * Merges multiple sources of config and tells the SDK how its functionality should behave. This
  * means the caller doesn't need to worry about whether the remote config has been fetched or its
@@ -24,12 +26,12 @@ internal open class MergedConfigBehavior<L, R>(
     /**
      * Supplier for local config, from the embrace-config.json file.
      */
-    private val localSupplier: () -> L? = { null },
+    private val localSupplier: Provider<L?> = { null },
 
     /**
      * Supplier for remote config, from the config endpoint.
      */
-    private val remoteSupplier: () -> R? = { null }
+    private val remoteSupplier: Provider<R?> = { null }
 ) {
 
     /**

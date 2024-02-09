@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 /**
  * Provides the behavior that the Background Activity feature should follow.
  */
 internal class SdkEndpointBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> BaseUrlLocalConfig?,
+    localSupplier: Provider<BaseUrlLocalConfig?>,
 ) : MergedConfigBehavior<BaseUrlLocalConfig, UnimplementedConfig>(
     thresholdCheck,
     localSupplier

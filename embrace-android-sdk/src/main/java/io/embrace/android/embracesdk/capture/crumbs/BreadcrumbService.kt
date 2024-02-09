@@ -31,11 +31,9 @@ internal interface BreadcrumbService {
      * Gets the Taps breadcrumbs in the specified time window.
      * If the number of elements exceeds the limit, this will return the newest (latest) ones.
      *
-     * @param start the start time
-     * @param end   the end time
      * @return the list of Breadcrumbs
      */
-    fun getTapBreadcrumbsForSession(start: Long, end: Long): List<TapBreadcrumb?>
+    fun getTapBreadcrumbsForSession(): List<TapBreadcrumb>
 
     /**
      * Gets the Custom breadcrumbs in the specified time window.
@@ -49,11 +47,9 @@ internal interface BreadcrumbService {
      * Gets the WebView breadcrumbs in the specified time window.
      * If the number of elements exceeds the limit, this will return the newest (latest) ones.
      *
-     * @param start the start time
-     * @param end   the end time
      * @return the list of Breadcrumbs
      */
-    fun getWebViewBreadcrumbsForSession(start: Long, end: Long): List<WebViewBreadcrumb?>
+    fun getWebViewBreadcrumbsForSession(): List<WebViewBreadcrumb>
 
     /**
      * Gets the WebView breadcrumbs in the specified time window.
@@ -69,11 +65,9 @@ internal interface BreadcrumbService {
      * Gets the RN Actions breadcrumbs in the specified time window.
      * If the number of elements exceeds the limit, this will return the newest (latest) ones.
      *
-     * @param startTime the start time
-     * @param endTime   the end time
      * @return the list of Breadcrumbs
      */
-    fun getRnActionBreadcrumbForSession(startTime: Long, endTime: Long): List<RnActionBreadcrumb?>
+    fun getRnActionBreadcrumbForSession(): List<RnActionBreadcrumb>
 
     /**
      * Gets the captured Push Notifications breadcrumbs in the specified time window.
@@ -83,10 +77,7 @@ internal interface BreadcrumbService {
      * @param endTime   the end time
      * @return the list of Breadcrumbs
      */
-    fun getPushNotificationsBreadcrumbsForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<PushNotificationBreadcrumb?>
+    fun getPushNotificationsBreadcrumbsForSession(): List<PushNotificationBreadcrumb>
 
     /**
      * Gets all breadcrumbs within the specified time window. If the number of elements exceeds the

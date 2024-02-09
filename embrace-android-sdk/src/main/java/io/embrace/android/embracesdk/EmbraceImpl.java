@@ -43,6 +43,8 @@ import io.embrace.android.embracesdk.injection.CustomerLogModuleImpl;
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule;
 import io.embrace.android.embracesdk.injection.DataContainerModule;
 import io.embrace.android.embracesdk.injection.DataContainerModuleImpl;
+import io.embrace.android.embracesdk.injection.DataSourceModule;
+import io.embrace.android.embracesdk.injection.DataSourceModuleImpl;
 import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
 import io.embrace.android.embracesdk.injection.InitModule;
@@ -481,6 +483,8 @@ final class EmbraceImpl {
             internalEmbraceLogger.logWarning("Failed to load SO file embrace-native");
         }
 
+        DataSourceModule dataSourceModule = new DataSourceModuleImpl(essentialServiceModule);
+
         final SessionModule sessionModule = new SessionModuleImpl(
             initModule,
             openTelemetryModule,
@@ -493,7 +497,8 @@ final class EmbraceImpl {
             dataCaptureServiceModule,
             customerLogModule,
             sdkObservabilityModule,
-            workerThreadModule
+            workerThreadModule,
+            dataSourceModule
         );
 
         sessionOrchestrator = sessionModule.getSessionOrchestrator();

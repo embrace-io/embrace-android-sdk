@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that should be followed for select services that automatically
@@ -9,8 +10,8 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
  */
 internal class AppExitInfoBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> AppExitInfoLocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<AppExitInfoLocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<AppExitInfoLocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

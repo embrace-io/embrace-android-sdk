@@ -3,8 +3,17 @@ package io.embrace.android.embracesdk.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,7 +65,7 @@ internal class ModuleInitBootstrapper(
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
         customAppId: String? = null,
-        configServiceProvider: () -> ConfigService? = { null },
+        configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         if (initialized.get()) {
@@ -101,35 +110,3 @@ internal class ModuleInitBootstrapper(
         }
     }
 }
-
-internal typealias CoreModuleSupplier = Function2<Context, AppFramework, CoreModule>
-internal typealias WorkerThreadModuleSupplier = Function1<InitModule, WorkerThreadModule>
-internal typealias SystemServiceModuleSupplier = Function2<CoreModule, VersionChecker, SystemServiceModule>
-internal typealias AndroidServicesModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule>
-internal typealias StorageModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, StorageModule>
-internal typealias EssentialServiceModuleSupplier =
-    Function9<
-        InitModule,
-        CoreModule,
-        WorkerThreadModule,
-        SystemServiceModule,
-        AndroidServicesModule,
-        StorageModule,
-        String?,
-        Boolean,
-        Function0<ConfigService?>,
-        EssentialServiceModule
-        >
-
-internal typealias DataCaptureServiceModuleSupplier = Function7<
-    InitModule,
-    OpenTelemetryModule,
-    CoreModule,
-    SystemServiceModule,
-    EssentialServiceModule,
-    WorkerThreadModule,
-    VersionChecker,
-    DataCaptureServiceModule
-    >
-
-internal typealias DeliveryModuleSupplier = Function4<CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule, DeliveryModule>

@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -80,7 +81,7 @@ import org.junit.rules.ExternalResource
  * production.
  */
 internal class IntegrationTestRule(
-    private val harnessSupplier: () -> Harness = { Harness() }
+    private val harnessSupplier: Provider<Harness> = { Harness() }
 ) : ExternalResource() {
     /**
      * The [Embrace] instance that can be used for testing

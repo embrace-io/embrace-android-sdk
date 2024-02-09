@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 /**
  * Provides the behavior that should be followed for remote log message functionality.
  */
 internal class LogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: () -> LogRemoteConfig?
+    remoteSupplier: Provider<LogRemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, LogRemoteConfig>(
     thresholdCheck,
     { null },

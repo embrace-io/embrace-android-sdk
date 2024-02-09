@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.Endpoint
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
@@ -170,7 +171,7 @@ internal class SessionOrchestratorImpl(
         transitionType: TransitionType,
         timestamp: Long,
         oldSessionAction: ((initial: Session) -> SessionMessage?)? = null,
-        newSessionAction: (() -> Session?)? = null,
+        newSessionAction: (Provider<Session?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
     ) {

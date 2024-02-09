@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 internal class WebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: () -> RemoteConfig?
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck,
     { null },

@@ -25,13 +25,6 @@ internal class SpanTest {
         }
     )
 
-    @Before
-    fun before() {
-        ApkToolsConfig.IS_SDK_DISABLED = false
-    }
-
-
-
     @Test
     fun `SDK can receive a SpanExporter`() {
         with(testRule) {

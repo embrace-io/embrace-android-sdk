@@ -12,11 +12,7 @@ internal class OpenTelemetryConfiguration(
 ) {
     val serviceName = BuildConfig.LIBRARY_PACKAGE_NAME
     val serviceVersion = BuildConfig.VERSION_NAME
-    private var exporters: MutableList<SpanExporter>
-
-    init {
-        exporters = mutableListOf(EmbraceSpanExporter(spansSink))
-    }
+    private val exporters = mutableListOf<SpanExporter>(EmbraceSpanExporter(spansSink))
 
     val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(SpanExporter.composite(exporters))

@@ -523,7 +523,9 @@ public final class Embrace implements EmbraceAndroidApi {
      */
     @Override
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
-        impl.addSpanExporter(spanExporter);
+        if (verifyNonNullParameters("addSpanExporter", spanExporter)) {
+            impl.addSpanExporter(spanExporter);
+        }
     }
 
     @Override

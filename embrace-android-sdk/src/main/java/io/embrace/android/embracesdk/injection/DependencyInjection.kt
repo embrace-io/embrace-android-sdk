@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -28,7 +29,7 @@ internal enum class LoadType {
  */
 internal inline fun <reified T> singleton(
     loadType: LoadType = LoadType.LAZY,
-    noinline provider: () -> T
+    noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = SingletonDelegate(loadType, provider)
 
 /**
@@ -36,17 +37,17 @@ internal inline fun <reified T> singleton(
  * new object will be created.
  */
 internal inline fun <reified T> factory(
-    noinline provider: () -> T
+    noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = FactoryDelegate(provider)
 
-internal class FactoryDelegate<T>(private inline val provider: () -> T) : ReadOnlyProperty<Any?, T> {
+internal class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = provider()
 }
 
 internal class SingletonDelegate<T>(
     loadType: LoadType,
-    provider: () -> T
+    provider: Provider<T>
 ) : ReadOnlyProperty<Any?, T> {
 
     // optimization: use atomic checks rather than synchronized in lazy.

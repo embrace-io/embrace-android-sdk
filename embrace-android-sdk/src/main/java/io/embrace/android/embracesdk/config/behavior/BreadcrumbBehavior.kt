@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that should be followed for select services that automatically
@@ -9,8 +10,8 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
  */
 internal class BreadcrumbBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> SdkLocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<SdkLocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<SdkLocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

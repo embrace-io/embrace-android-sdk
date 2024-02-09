@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 /**
@@ -8,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
  */
 internal class StartupBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> StartupMomentLocalConfig?
+    localSupplier: Provider<StartupMomentLocalConfig?>
 ) : MergedConfigBehavior<StartupMomentLocalConfig, UnimplementedConfig>(
     thresholdCheck,
     localSupplier,

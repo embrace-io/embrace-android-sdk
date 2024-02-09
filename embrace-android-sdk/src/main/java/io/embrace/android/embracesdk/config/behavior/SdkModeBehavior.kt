@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.max
 import kotlin.math.min
 
@@ -11,8 +12,8 @@ import kotlin.math.min
 internal class SdkModeBehavior(
     private val isDebug: Boolean,
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> LocalConfig?,
-    remoteSupplier: () -> RemoteConfig?
+    localSupplier: Provider<LocalConfig?>,
+    remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<LocalConfig, RemoteConfig>(
     thresholdCheck,
     localSupplier,

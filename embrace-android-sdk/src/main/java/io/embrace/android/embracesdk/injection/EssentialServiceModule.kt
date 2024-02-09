@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
@@ -76,7 +77,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    private val configServiceProvider: () -> ConfigService? = { null },
+    private val configServiceProvider: Provider<ConfigService?> = { null },
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.

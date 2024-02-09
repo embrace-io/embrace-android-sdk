@@ -2,14 +2,15 @@ package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.BackgroundActivityLocalConfig
 import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that the Background Activity feature should follow.
  */
 internal class BackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> BackgroundActivityLocalConfig?,
-    remoteSupplier: () -> BackgroundActivityRemoteConfig?
+    localSupplier: Provider<BackgroundActivityLocalConfig?>,
+    remoteSupplier: Provider<BackgroundActivityRemoteConfig?>
 ) : MergedConfigBehavior<BackgroundActivityLocalConfig, BackgroundActivityRemoteConfig>(
     thresholdCheck,
     localSupplier,

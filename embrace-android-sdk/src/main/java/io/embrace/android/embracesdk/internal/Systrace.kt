@@ -5,6 +5,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Trace
 import androidx.annotation.ChecksSdkIntAtLeast
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
+import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.random.Random
 
 /**
@@ -46,7 +47,7 @@ internal class Systrace private constructor() {
          * Note: rethrowing the same [Throwable] that was caught is appropriate here because use of this should not change the code path.
          */
         @Suppress("RethrowCaughtException")
-        inline fun <T> trace(sectionName: String, code: () -> T): T {
+        inline fun <T> trace(sectionName: String, code: Provider<T>): T {
             val returnValue: T
             var instance: Instance? = null
             try {

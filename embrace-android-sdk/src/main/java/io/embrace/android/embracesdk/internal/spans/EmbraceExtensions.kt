@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.AttributesBuilder
@@ -122,7 +123,7 @@ internal fun SpanBuilder.updateParent(parent: EmbraceSpan?): SpanBuilder {
 /**
  * Allow a [SpanBuilder] to take in a lambda around which a span will be created for its execution
  */
-internal fun <T> SpanBuilder.record(code: () -> T): T {
+internal fun <T> SpanBuilder.record(code: Provider<T>): T {
     val returnValue: T
     var span: Span? = null
 

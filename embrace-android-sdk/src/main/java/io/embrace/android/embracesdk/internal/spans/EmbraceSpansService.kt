@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -13,7 +14,7 @@ import io.opentelemetry.api.trace.Tracer
 internal class EmbraceSpansService(
     private val spansRepository: SpansRepository,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val tracerSupplier: () -> Tracer,
+    private val tracerSupplier: Provider<Tracer>,
 ) : SpansService {
     private val uninitializedSdkSpansService: UninitializedSdkSpansService = UninitializedSdkSpansService()
 

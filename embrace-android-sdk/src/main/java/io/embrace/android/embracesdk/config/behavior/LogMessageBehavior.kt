@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 /**
@@ -8,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
  */
 internal class LogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: () -> LogRemoteConfig?
+    remoteSupplier: Provider<LogRemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, LogRemoteConfig>(
     thresholdCheck,
     { null },

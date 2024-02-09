@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.returnIfConditionMet
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -86,11 +85,12 @@ internal class TracingApiTest {
                 )
                 harness.fakeClock.tick(300L)
                 embrace.endAppStartup()
-                val backgroundActivitySpansCount = getSdkInitSpanFromBackgroundActivity().size
-                assertTrue(
-                    returnIfConditionMet(desiredValueSupplier = { true }, waitTimeMs = 1000) {
-                        checkNotNull(harness.openTelemetryModule.spansSink.completedSpans()).size == (5 - backgroundActivitySpansCount)
-                    }
+                val baSpanCount = getSdkInitSpanFromBackgroundActivity().size
+                val completedSpansCount = harness.openTelemetryModule.spansSink.completedSpans().size
+                assertEquals(
+                    "Wrong number of spans. $baSpanCount found in background activity and $completedSpansCount found in session",
+                    5 - baSpanCount,
+                    completedSpansCount
                 )
             }
             val sessionEndTime = harness.fakeClock.now()

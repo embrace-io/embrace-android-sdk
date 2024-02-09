@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -64,7 +65,7 @@ internal class ModuleInitBootstrapper(
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
         customAppId: String? = null,
-        configServiceProvider: () -> ConfigService? = { null },
+        configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         if (initialized.get()) {

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.embrace.android.embracesdk.utils.lockAndRun
@@ -17,7 +18,7 @@ internal class CurrentSessionSpanImpl(
     private val telemetryService: TelemetryService,
     private val spansRepository: SpansRepository,
     private val spansSink: SpansSink,
-    private val tracerSupplier: () -> Tracer,
+    private val tracerSupplier: Provider<Tracer>,
 ) : CurrentSessionSpan {
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.

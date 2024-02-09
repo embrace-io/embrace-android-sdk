@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.config.behavior
 import io.embrace.android.embracesdk.config.local.AnrLocalConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig.Unwinder
+import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.regex.Pattern
 
 /**
@@ -10,8 +11,8 @@ import java.util.regex.Pattern
  */
 internal class AnrBehavior(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: () -> AnrLocalConfig?,
-    remoteSupplier: () -> AnrRemoteConfig?
+    localSupplier: Provider<AnrLocalConfig?>,
+    remoteSupplier: Provider<AnrRemoteConfig?>
 ) : MergedConfigBehavior<AnrLocalConfig, AnrRemoteConfig>(
     thresholdCheck,
     localSupplier,

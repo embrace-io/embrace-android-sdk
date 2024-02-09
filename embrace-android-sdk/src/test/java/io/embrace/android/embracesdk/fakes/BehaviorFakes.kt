@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfi
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
 private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() }
@@ -37,8 +38,8 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() 
  */
 internal fun fakeAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> AnrLocalConfig? = { null },
-    remoteCfg: () -> AnrRemoteConfig? = { null }
+    localCfg: Provider<AnrLocalConfig?> = { null },
+    remoteCfg: Provider<AnrRemoteConfig?> = { null }
 ) = AnrBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -46,8 +47,8 @@ internal fun fakeAnrBehavior(
  */
 internal fun fakeSessionBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> SessionLocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null }
+    localCfg: Provider<SessionLocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = SessionBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -55,8 +56,8 @@ internal fun fakeSessionBehavior(
  */
 internal fun fakeNetworkBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> SdkLocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null }
+    localCfg: Provider<SdkLocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = NetworkBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -64,8 +65,8 @@ internal fun fakeNetworkBehavior(
  */
 internal fun fakeBackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> BackgroundActivityLocalConfig? = { null },
-    remoteCfg: () -> BackgroundActivityRemoteConfig? = { null }
+    localCfg: Provider<BackgroundActivityLocalConfig?> = { null },
+    remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null }
 ) = BackgroundActivityBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -73,8 +74,8 @@ internal fun fakeBackgroundActivityBehavior(
  */
 internal fun fakeAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> LocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null }
+    localCfg: Provider<LocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = AutoDataCaptureBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -82,8 +83,8 @@ internal fun fakeAutoDataCaptureBehavior(
  */
 internal fun fakeBreadcrumbBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> SdkLocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null }
+    localCfg: Provider<SdkLocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = BreadcrumbBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -91,7 +92,7 @@ internal fun fakeBreadcrumbBehavior(
  */
 internal fun fakeLogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: () -> LogRemoteConfig? = { null }
+    remoteCfg: Provider<LogRemoteConfig?> = { null }
 ) = LogMessageBehavior(thresholdCheck, remoteCfg)
 
 /**
@@ -99,7 +100,7 @@ internal fun fakeLogMessageBehavior(
  */
 internal fun fakeStartupBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> StartupMomentLocalConfig? = { null }
+    localCfg: Provider<StartupMomentLocalConfig?> = { null }
 ) = StartupBehavior(thresholdCheck, localCfg)
 
 /**
@@ -107,7 +108,7 @@ internal fun fakeStartupBehavior(
  */
 internal fun fakeDataCaptureEventBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: () -> RemoteConfig? = { null }
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = DataCaptureEventBehavior(thresholdCheck, remoteCfg)
 
 /**
@@ -116,8 +117,8 @@ internal fun fakeDataCaptureEventBehavior(
 internal fun fakeSdkModeBehavior(
     isDebug: Boolean = false,
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> LocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null }
+    localCfg: Provider<LocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null }
 ) = SdkModeBehavior(isDebug, thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -125,7 +126,7 @@ internal fun fakeSdkModeBehavior(
  */
 internal fun fakeSdkEndpointBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> BaseUrlLocalConfig? = { null },
+    localCfg: Provider<BaseUrlLocalConfig?> = { null },
 ) = SdkEndpointBehavior(thresholdCheck, localCfg)
 
 /**
@@ -133,8 +134,8 @@ internal fun fakeSdkEndpointBehavior(
  */
 internal fun fakeAppExitInfoBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: () -> AppExitInfoLocalConfig? = { null },
-    remoteCfg: () -> RemoteConfig? = { null },
+    localCfg: Provider<AppExitInfoLocalConfig?> = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ) = AppExitInfoBehavior(thresholdCheck, localCfg, remoteCfg)
 
 /**
@@ -142,10 +143,10 @@ internal fun fakeAppExitInfoBehavior(
  */
 internal fun fakeNetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteConfig: () -> NetworkSpanForwardingRemoteConfig? = { null }
+    remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null }
 ) = NetworkSpanForwardingBehavior(thresholdCheck, remoteConfig)
 
 internal fun fakeWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: () -> RemoteConfig? = { null },
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ) = WebViewVitalsBehavior(thresholdCheck, remoteCfg)

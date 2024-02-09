@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.caching
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -29,7 +30,7 @@ internal class PeriodicBackgroundActivityCacher(
     /**
      * Save the background activity to disk
      */
-    fun scheduleSave(provider: () -> SessionMessage?) {
+    fun scheduleSave(provider: Provider<SessionMessage?>) {
         val delay = calculateDelay()
         val action: () -> Unit = {
             try {

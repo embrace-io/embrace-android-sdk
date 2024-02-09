@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -72,7 +73,7 @@ internal class EmbraceConfigServiceTest {
             )
         }
 
-        fun createLocalConfig(action: () -> SdkLocalConfig = { SdkLocalConfig() }): LocalConfig {
+        fun createLocalConfig(action: Provider<SdkLocalConfig> = { SdkLocalConfig() }): LocalConfig {
             return LocalConfig("abcde", false, action())
         }
 

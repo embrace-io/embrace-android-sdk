@@ -63,7 +63,7 @@ internal typealias EssentialServiceModuleSupplier = (
     StorageModule,
     String?,
     Boolean,
-    () -> ConfigService?
+    Provider<ConfigService?>
 ) -> EssentialServiceModule
 
 /**
@@ -83,3 +83,5 @@ internal typealias DataCaptureServiceModuleSupplier = (
  * Defines the constructor for [DeliveryModuleImpl]
  */
 internal typealias DeliveryModuleSupplier = (CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule) -> DeliveryModule
+
+internal typealias Provider<T> = () -> T

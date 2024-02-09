@@ -8,11 +8,11 @@ import kotlin.reflect.KProperty
  * a ThreadLocal.
  */
 internal inline fun <reified T> threadLocal(
-    noinline provider: () -> T
+    noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = ThreadLocalDelegate(provider)
 
 internal class ThreadLocalDelegate<T>(
-    provider: () -> T
+    provider: Provider<T>
 ) : ReadOnlyProperty<Any?, T> {
 
     private val threadLocal: ThreadLocal<T> = object : ThreadLocal<T>() {

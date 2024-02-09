@@ -8,14 +8,14 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
  * that enable/disable the service, and creates new instances of the service as required.
  * It also is capable of disabling the service if the [SessionType] is not supported.
  */
-internal class DataSourceState(
+internal class DataSourceState<T : SpanEventMapper, S>(
 
     /**
      * Provides instances of services. A service must define an interface
      * that extends [DataSource] for orchestration. This helps enforce testability
      * by making it impossible to register data capture without defining a testable interface.
      */
-    factory: () -> DataSource,
+    factory: () -> DataSource<T, S>,
 
     /**
      * Predicate that determines if the service should be enabled or not, via a config value.
@@ -38,7 +38,7 @@ internal class DataSourceState(
 ) {
 
     private val enabledDataSource by lazy(factory)
-    private var dataSource: DataSource? = null
+    private var dataSource: DataSource<T, S>? = null
 
     init {
         updateDataSource()

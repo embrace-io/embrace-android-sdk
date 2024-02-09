@@ -8,12 +8,12 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
  * This base class contains convenience functions for capturing data that makes the syntax nicer
  * in subclasses.
  */
-internal abstract class DataSourceImpl(
-    private val sink: DataSinkProvider,
+internal abstract class DataSourceImpl<T : SpanEventMapper, S>(
+    private val sink: DataSinkProvider<T, S>,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
-) : DataSource {
+) : DataSource<T, S> {
 
-    override fun captureData(action: DataSinkMutator) {
+    override fun captureData(action: DataSinkMutator<T, S>) {
         try {
             action(sink())
         } catch (exc: Throwable) {

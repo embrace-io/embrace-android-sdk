@@ -1,22 +1,9 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.arch.DataSinkMutator
-import io.embrace.android.embracesdk.arch.DataSource
 import io.embrace.android.embracesdk.arch.DataSourceState
+import io.embrace.android.embracesdk.arch.SpanEventMapper
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
-
-internal class PlaceholderDataSource : DataSource {
-
-    override fun captureData(action: DataSinkMutator) {
-    }
-
-    override fun registerListeners() {
-    }
-
-    override fun unregisterListeners() {
-    }
-}
 
 /**
  * Declares all the data sources that are used by the Embrace SDK.
@@ -32,37 +19,37 @@ internal interface DataSourceModule {
     /**
      * Returns a list of all the data sources that are defined in this module.
      */
-    fun getDataSources(): List<DataSourceState>
-
-    val placeholderDataSource: DataSourceState
+    fun getDataSources(): List<DataSourceState<*, *>>
 }
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
 ) : DataSourceModule {
-    private val values: MutableList<DataSourceState> = mutableListOf()
+    private val values: MutableList<DataSourceState<*, *>> = mutableListOf()
 
-    override val placeholderDataSource by dataSource {
-        DataSourceState(::PlaceholderDataSource)
-    }
+//    override val placeholderDataSource by dataSource {
+//        DataSourceState(::PlaceholderDataSource)
+//    }
 
     /* Implementation details */
 
     private val configService = essentialServiceModule.configService
-    override fun getDataSources(): List<DataSourceState> = values
+    override fun getDataSources(): List<DataSourceState<*, *>> = values
 
     /**
      * Property delegate that adds the value to a
      * list on its creation. That list is then used by the [DataCaptureOrchestrator] to control
      * the data sources.
      */
-    private fun dataSource(provider: () -> DataSourceState) = DataSourceDelegate(provider, values)
+    @Suppress("UnusedPrivateMember")
+    private fun <T : SpanEventMapper, R> dataSource(provider: () -> DataSourceState<T, R>) =
+        DataSourceDelegate(provider, values)
 }
 
-private class DataSourceDelegate(
-    provider: () -> DataSourceState,
-    values: MutableList<DataSourceState>,
-) : ReadOnlyProperty<Any?, DataSourceState> {
+private class DataSourceDelegate<T : SpanEventMapper, R>(
+    provider: () -> DataSourceState<T, R>,
+    values: MutableList<DataSourceState<*, *>>,
+) : ReadOnlyProperty<Any?, DataSourceState<T, R>> {
 
     private val value = provider()
 

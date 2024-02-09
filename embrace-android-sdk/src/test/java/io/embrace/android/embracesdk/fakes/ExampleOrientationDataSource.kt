@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.arch.DataSinkProvider
 import io.embrace.android.embracesdk.arch.DataSourceImpl
+import io.embrace.android.embracesdk.arch.SpanEventMapper
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
  * An example of a DataSource that captures the orientation of the device. It provides functions
@@ -12,8 +14,8 @@ import io.embrace.android.embracesdk.arch.DataSourceImpl
  */
 internal class ExampleOrientationDataSource(
     private val ctx: Context,
-    sink: DataSinkProvider
-) : DataSourceImpl(sink), ComponentCallbacks2 {
+    sink: DataSinkProvider<OrientationEvent, List<EmbraceSpanEvent>>
+) : DataSourceImpl<OrientationEvent, List<EmbraceSpanEvent>>(sink), ComponentCallbacks2 {
 
     override fun registerListeners() {
         ctx.registerComponentCallbacks(this)
@@ -25,7 +27,11 @@ internal class ExampleOrientationDataSource(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         captureData {
-            // TODO: add functions for capturing data here.
+            val orientation: String = when (newConfig.orientation) {
+                Configuration.ORIENTATION_PORTRAIT -> "portrait"
+                else -> "landscape"
+            }
+            addEvent(OrientationEvent(orientation))
         }
     }
 
@@ -34,4 +40,15 @@ internal class ExampleOrientationDataSource(
 
     override fun onLowMemory() {
     }
+}
+
+internal class OrientationEvent(
+    private val orientation: String
+) : SpanEventMapper {
+
+    override fun toSpanEvent(timestampNanos: Long) = EmbraceSpanEvent(
+        "orientation_change",
+        timestampNanos,
+        mapOf("orientation" to orientation),
+    )
 }

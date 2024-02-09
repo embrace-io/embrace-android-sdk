@@ -20,28 +20,20 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     override fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?> =
         emptyList()
 
-    override fun getTapBreadcrumbsForSession(start: Long, end: Long): List<TapBreadcrumb?> =
-        emptyList()
+    override fun getTapBreadcrumbsForSession(): List<TapBreadcrumb> = emptyList()
 
     override fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb> = emptyList()
 
-    override fun getWebViewBreadcrumbsForSession(start: Long, end: Long): List<WebViewBreadcrumb?> =
-        emptyList()
+    override fun getWebViewBreadcrumbsForSession(): List<WebViewBreadcrumb> = emptyList()
 
     override fun getFragmentBreadcrumbsForSession(
         startTime: Long,
         endTime: Long
     ): List<FragmentBreadcrumb?> = emptyList()
 
-    override fun getRnActionBreadcrumbForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<RnActionBreadcrumb?> = emptyList()
+    override fun getRnActionBreadcrumbForSession(): List<RnActionBreadcrumb> = emptyList()
 
-    override fun getPushNotificationsBreadcrumbsForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<PushNotificationBreadcrumb?> = emptyList()
+    override fun getPushNotificationsBreadcrumbsForSession(): List<PushNotificationBreadcrumb> = emptyList()
 
     override fun getBreadcrumbs(start: Long, end: Long): Breadcrumbs {
         return Breadcrumbs()

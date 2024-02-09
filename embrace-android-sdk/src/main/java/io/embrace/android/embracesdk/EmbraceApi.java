@@ -94,5 +94,5 @@ interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi,
      *
      * @param spanExporter the span exporter to add
      */
-    void addSpanExporter(SpanExporter spanExporter);
+    void addSpanExporter(@NonNull SpanExporter spanExporter);
 }

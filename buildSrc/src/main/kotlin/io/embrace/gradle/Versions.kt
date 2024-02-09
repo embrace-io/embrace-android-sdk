@@ -42,5 +42,8 @@ object Versions {
     val openTelemetry = "1.29.0"
 
     @JvmField
+    val openTelemetrySemconv = "1.23.1-alpha"
+
+    @JvmField
     val moshi = "1.12.0"
 }

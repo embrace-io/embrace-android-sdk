@@ -102,34 +102,31 @@ internal class ModuleInitBootstrapper(
     }
 }
 
-internal typealias CoreModuleSupplier = Function2<Context, AppFramework, CoreModule>
-internal typealias WorkerThreadModuleSupplier = Function1<InitModule, WorkerThreadModule>
-internal typealias SystemServiceModuleSupplier = Function2<CoreModule, VersionChecker, SystemServiceModule>
-internal typealias AndroidServicesModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, AndroidServicesModule>
-internal typealias StorageModuleSupplier = Function3<InitModule, CoreModule, WorkerThreadModule, StorageModule>
-internal typealias EssentialServiceModuleSupplier =
-    Function9<
-        InitModule,
-        CoreModule,
-        WorkerThreadModule,
-        SystemServiceModule,
-        AndroidServicesModule,
-        StorageModule,
-        String?,
-        Boolean,
-        Function0<ConfigService?>,
-        EssentialServiceModule
-        >
+internal typealias CoreModuleSupplier = (Context, AppFramework) -> CoreModule
+internal typealias WorkerThreadModuleSupplier = (InitModule) -> WorkerThreadModule
+internal typealias SystemServiceModuleSupplier = (CoreModule, VersionChecker) -> SystemServiceModule
+internal typealias AndroidServicesModuleSupplier = (InitModule, CoreModule, WorkerThreadModule) -> AndroidServicesModule
+internal typealias StorageModuleSupplier = (InitModule, CoreModule, WorkerThreadModule) -> StorageModule
+internal typealias EssentialServiceModuleSupplier = (
+    InitModule,
+    CoreModule,
+    WorkerThreadModule,
+    SystemServiceModule,
+    AndroidServicesModule,
+    StorageModule,
+    String?,
+    Boolean,
+    () -> ConfigService?
+) -> EssentialServiceModule
 
-internal typealias DataCaptureServiceModuleSupplier = Function7<
+internal typealias DataCaptureServiceModuleSupplier = (
     InitModule,
     OpenTelemetryModule,
     CoreModule,
     SystemServiceModule,
     EssentialServiceModule,
     WorkerThreadModule,
-    VersionChecker,
-    DataCaptureServiceModule
-    >
+    VersionChecker
+) -> DataCaptureServiceModule
 
-internal typealias DeliveryModuleSupplier = Function4<CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule, DeliveryModule>
+internal typealias DeliveryModuleSupplier = (CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule) -> DeliveryModule

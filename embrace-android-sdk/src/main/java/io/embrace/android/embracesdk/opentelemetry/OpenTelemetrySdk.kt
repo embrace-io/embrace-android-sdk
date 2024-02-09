@@ -7,7 +7,6 @@ import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.SpanProcessor
-import io.opentelemetry.semconv.ResourceAttributes
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so
@@ -19,8 +18,8 @@ internal class OpenTelemetrySdk(
     spanProcessor: SpanProcessor
 ) {
     private val resource: Resource = Resource.getDefault().toBuilder()
-        .put(ResourceAttributes.SERVICE_NAME, BuildConfig.LIBRARY_PACKAGE_NAME)
-        .put(ResourceAttributes.SERVICE_VERSION, BuildConfig.VERSION_NAME)
+        .put("service.name", BuildConfig.LIBRARY_PACKAGE_NAME)
+        .put("service.version", BuildConfig.VERSION_NAME)
         .build()
 
     private val sdk = OpenTelemetrySdk

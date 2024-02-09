@@ -31,6 +31,7 @@ internal class InitModuleImpl(
         NormalizedIntervalClock(systemClock = SystemClock()),
     override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(embraceClock = clock)
 ) : InitModule {
+
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService()
     }

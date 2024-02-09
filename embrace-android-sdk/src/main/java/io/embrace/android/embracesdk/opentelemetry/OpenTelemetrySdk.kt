@@ -5,7 +5,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.semconv.ResourceAttributes
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so

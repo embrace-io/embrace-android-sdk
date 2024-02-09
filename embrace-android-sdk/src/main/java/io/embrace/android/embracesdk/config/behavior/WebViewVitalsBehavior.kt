@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 internal class WebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck,

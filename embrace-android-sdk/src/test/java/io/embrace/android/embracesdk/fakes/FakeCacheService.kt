@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class FakeCacheService : CacheService {

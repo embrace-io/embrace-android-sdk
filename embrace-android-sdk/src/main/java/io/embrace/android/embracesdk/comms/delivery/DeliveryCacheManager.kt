@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType

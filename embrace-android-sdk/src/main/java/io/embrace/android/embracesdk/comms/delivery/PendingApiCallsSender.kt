@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.ApiResponse
-import io.embrace.android.embracesdk.comms.api.SerializationAction
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 
 /**
  * Manages the Pending API calls and schedules them to be sent later.

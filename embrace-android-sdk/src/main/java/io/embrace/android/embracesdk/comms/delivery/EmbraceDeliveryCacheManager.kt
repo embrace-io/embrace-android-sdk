@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage

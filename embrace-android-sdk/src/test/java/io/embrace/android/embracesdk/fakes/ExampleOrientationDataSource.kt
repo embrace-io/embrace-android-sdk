@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import io.embrace.android.embracesdk.arch.DataSinkProvider
 import io.embrace.android.embracesdk.arch.DataSourceImpl
 import io.embrace.android.embracesdk.arch.SpanEventMapper
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
@@ -35,7 +36,18 @@ internal class ExampleOrientationDataSource(
         }
     }
 
+    // TODO: do we want to encourage storing spans in DataSources?
+    private var previousMemorySpan: EmbraceSpan? = null
+
     override fun onTrimMemory(level: Int) {
+        captureData {
+
+            // TODO: do we want some utility function that performs this common pattern (stop & start a new one)?
+            previousMemorySpan?.stop()
+            previousMemorySpan = createSpan("memory_span") {
+                addAttribute("level", level.toString())
+            }
+        }
     }
 
     override fun onLowMemory() {

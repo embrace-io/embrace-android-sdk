@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch
 
 import androidx.annotation.CheckResult
+import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -34,6 +35,19 @@ internal interface DataSink<in T : SpanEventMapper, out S> {
      */
     @CheckResult
     fun flush(): S
+
+    /**
+     * Creates a span. This calls directly onto [SpansService#createSpan].
+     *
+     * A [SpanMutator] action is added for syntactic sugar.
+     */
+    fun createSpan(
+        name: String,
+        parent: EmbraceSpan? = null,
+        type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
+        internal: Boolean = true,
+        mutator: SpanMutator? = null
+    ): EmbraceSpan?
 }
 
 /**

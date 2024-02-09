@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 internal class NetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck,

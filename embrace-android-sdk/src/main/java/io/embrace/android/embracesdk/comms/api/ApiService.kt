@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent

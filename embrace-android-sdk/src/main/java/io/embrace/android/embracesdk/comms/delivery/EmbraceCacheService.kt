@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.storage.StorageService

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.comms.api.SerializationAction
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap

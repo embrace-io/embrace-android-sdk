@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.StartupMomentLocalConfig
+import io.embrace.android.embracesdk.internal.utils.UnimplementedConfig
 
 /**
  * Provides the behavior that the Startup moment feature should follow.

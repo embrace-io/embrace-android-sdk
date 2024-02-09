@@ -3,8 +3,16 @@ package io.embrace.android.embracesdk.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import java.util.concurrent.atomic.AtomicBoolean
@@ -101,32 +109,3 @@ internal class ModuleInitBootstrapper(
         }
     }
 }
-
-internal typealias CoreModuleSupplier = (Context, AppFramework) -> CoreModule
-internal typealias WorkerThreadModuleSupplier = (InitModule) -> WorkerThreadModule
-internal typealias SystemServiceModuleSupplier = (CoreModule, VersionChecker) -> SystemServiceModule
-internal typealias AndroidServicesModuleSupplier = (InitModule, CoreModule, WorkerThreadModule) -> AndroidServicesModule
-internal typealias StorageModuleSupplier = (InitModule, CoreModule, WorkerThreadModule) -> StorageModule
-internal typealias EssentialServiceModuleSupplier = (
-    InitModule,
-    CoreModule,
-    WorkerThreadModule,
-    SystemServiceModule,
-    AndroidServicesModule,
-    StorageModule,
-    String?,
-    Boolean,
-    () -> ConfigService?
-) -> EssentialServiceModule
-
-internal typealias DataCaptureServiceModuleSupplier = (
-    InitModule,
-    OpenTelemetryModule,
-    CoreModule,
-    SystemServiceModule,
-    EssentialServiceModule,
-    WorkerThreadModule,
-    VersionChecker
-) -> DataCaptureServiceModule
-
-internal typealias DeliveryModuleSupplier = (CoreModule, WorkerThreadModule, StorageModule, EssentialServiceModule) -> DeliveryModule

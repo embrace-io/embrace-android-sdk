@@ -38,7 +38,8 @@ internal class SessionModuleImpl(
     dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
     sdkObservabilityModule: SdkObservabilityModule,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    dataSourceModule: DataSourceModule
 ) : SessionModule {
 
     override val payloadMessageCollator: PayloadMessageCollator by singleton {
@@ -104,8 +105,8 @@ internal class SessionModuleImpl(
     }
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
-        // orchestrates data capture (an empty list of data sources is passed for now)
-        DataCaptureOrchestrator(emptyList()).apply {
+        val dataSources = dataSourceModule.getDataSources()
+        DataCaptureOrchestrator(dataSources).apply {
             essentialServiceModule.configService.addListener(this)
         }
     }

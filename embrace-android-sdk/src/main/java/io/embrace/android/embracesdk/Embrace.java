@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
 
 /**
@@ -513,6 +514,18 @@ public final class Embrace implements EmbraceAndroidApi {
         }
 
         return false;
+    }
+
+    /**
+     * Adds a [SpanExporter] to the tracer.
+     *
+     * @param spanExporter the span exporter to add
+     */
+    @Override
+    public void addSpanExporter(@NonNull SpanExporter spanExporter) {
+        if (verifyNonNullParameters("addSpanExporter", spanExporter)) {
+            impl.addSpanExporter(spanExporter);
+        }
     }
 
     @Override

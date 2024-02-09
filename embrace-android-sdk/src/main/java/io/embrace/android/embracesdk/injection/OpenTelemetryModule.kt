@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanExporter
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpansService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
@@ -11,6 +9,7 @@ import io.embrace.android.embracesdk.internal.spans.SpansRepository
 import io.embrace.android.embracesdk.internal.spans.SpansService
 import io.embrace.android.embracesdk.internal.spans.SpansSink
 import io.embrace.android.embracesdk.internal.spans.SpansSinkImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.opentelemetry.api.trace.Tracer
 
@@ -18,6 +17,12 @@ import io.opentelemetry.api.trace.Tracer
  * Module that instantiates various OpenTelemetry related components
  */
 internal interface OpenTelemetryModule {
+
+    /**
+     * Configuration for the OpenTelemetry SDK
+     */
+    val openTelemetryConfiguration: OpenTelemetryConfiguration
+
     /**
      * Caches [EmbraceSpan] instances that are in progress or completed in the current session
      */
@@ -66,10 +71,16 @@ internal class OpenTelemetryModuleImpl(
         SpansSinkImpl()
     }
 
+    override val openTelemetryConfiguration: OpenTelemetryConfiguration by lazy {
+        OpenTelemetryConfiguration(
+            spansSink
+        )
+    }
+
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {
         OpenTelemetrySdk(
             openTelemetryClock = initModule.openTelemetryClock,
-            spanProcessor = EmbraceSpanProcessor(EmbraceSpanExporter(spansSink))
+            configuration = openTelemetryConfiguration
         )
     }
 

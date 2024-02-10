@@ -516,6 +516,16 @@ public final class Embrace implements EmbraceAndroidApi {
         return false;
     }
 
+    @Nullable
+    @Override
+    public EmbraceSpan getSpan(@NonNull String spanId) {
+        if (verifyNonNullParameters("getSpan", spanId)) {
+            return impl.tracer.getSpan(spanId);
+        }
+
+        return null;
+    }
+
     /**
      * Adds a [SpanExporter] to the tracer.
      *

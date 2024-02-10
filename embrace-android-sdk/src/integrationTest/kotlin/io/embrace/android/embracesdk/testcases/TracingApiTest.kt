@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -43,6 +44,7 @@ internal class TracingApiTest {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start())
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
+                assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                 assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
                     harness.fakeClock.tick(100L)
                     parentSpan.addEvent("parent event")

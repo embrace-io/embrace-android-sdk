@@ -19,7 +19,6 @@ import org.junit.runner.RunWith;
 import java.net.SocketException;
 import java.util.Map;
 
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.ErrorCode;
 
@@ -120,8 +119,7 @@ public class NullParametersTest {
 
     @Test
     public void testRecordNetworkRequest() {
-        EmbraceNetworkRequest request = null;
-        embrace.recordNetworkRequest(request);
+        embrace.recordNetworkRequest(null);
         assertError("recordNetworkRequest");
     }
 
@@ -309,6 +307,18 @@ public class NullParametersTest {
     public void testRecordCompletedSpanWithEverything() {
         assertFalse(embrace.recordCompletedSpan(null, 0, 1, null, null, null, null));
         assertError("recordCompletedSpan");
+    }
+
+    @Test
+    public void testGetSpan() {
+        assertNull(embrace.getSpan(null));
+        assertError("getSpan");
+    }
+
+    @Test
+    public void testAddSpanExporter() {
+        embrace.addSpanExporter(null);
+        assertError("addSpanExporter");
     }
 
     private void assertError(@NonNull String functionName) {

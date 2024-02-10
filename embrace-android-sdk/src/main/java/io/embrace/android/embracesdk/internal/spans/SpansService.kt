@@ -48,5 +48,8 @@ internal interface SpansService : Initializable {
         errorCode: ErrorCode? = null
     ): Boolean
 
+    /**
+     * Return the [EmbraceSpan] corresponding to the given spanId if it is active or it has completed in the current session
+     */
     fun getSpan(spanId: String): EmbraceSpan?
 }

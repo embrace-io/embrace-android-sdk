@@ -113,7 +113,7 @@ internal class EmbraceTracer(
             errorCode = errorCode
         )
 
-    fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
+    override fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean = spansService.initialized()

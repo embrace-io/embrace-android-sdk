@@ -133,6 +133,12 @@ internal interface TracingApi {
     ): Boolean
 
     /**
+     * Return the [EmbraceSpan] corresponding to the given spanId if it is active or it has completed in the current session
+     */
+    @BetaApi
+    fun getSpan(spanId: String): EmbraceSpan?
+
+    /**
      * @see [Embrace.isStarted]
      */
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")

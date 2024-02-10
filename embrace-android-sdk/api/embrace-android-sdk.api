@@ -38,6 +38,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSessionProperties ()Ljava/util/Map;
+	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 	public fun isStarted ()Z

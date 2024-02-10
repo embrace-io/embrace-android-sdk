@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InternalTracer(
-    private val clock: Clock,
     private val spansRepository: SpansRepository,
     private val embraceTracer: EmbraceTracer,
 ) : InternalTracingApi {
@@ -77,7 +75,7 @@ internal class InternalTracer(
     override fun addSpanEvent(spanId: String, name: String, time: Long?, attributes: Map<String, String>?): Boolean =
         spansRepository.getSpan(spanId = spanId)?.addEvent(
             name = name,
-            time = time,
+            timeNanos = time,
             attributes = attributes
         ) ?: false
 
@@ -94,7 +92,7 @@ internal class InternalTracer(
         return if (name is String && timestampNanos is Long? && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampNanos = timestampNanos ?: clock.nowInNanos(),
+                timestampNanos = timestampNanos ?: embraceTracer.getSdkClockTimeNanos(),
                 attributes = attributes?.let { toStringMap(it) }
             )
         } else {

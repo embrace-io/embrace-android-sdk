@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
 internal class EmbraceTracer(
+    private val clock: Clock,
     private val spansService: SpansService,
 ) : TracingApi {
     override fun createSpan(name: String): EmbraceSpan? =
@@ -114,6 +116,8 @@ internal class EmbraceTracer(
         )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
+
+    override fun getSdkClockTimeNanos(): Long = clock.nowInNanos()
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean = spansService.initialized()

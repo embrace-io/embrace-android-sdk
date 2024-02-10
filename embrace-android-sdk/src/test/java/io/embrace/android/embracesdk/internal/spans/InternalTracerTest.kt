@@ -28,7 +28,6 @@ internal class InternalTracerTest {
         spansService = initModule.openTelemetryModule.spansService
         spansService.initializeService(clock.nowInNanos())
         internalTracer = InternalTracer(
-            clock,
             initModule.openTelemetryModule.spansRepository,
             initModule.openTelemetryModule.embraceTracer,
         )

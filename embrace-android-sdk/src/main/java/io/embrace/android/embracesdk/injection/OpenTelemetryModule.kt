@@ -108,13 +108,13 @@ internal class OpenTelemetryModuleImpl(
 
     override val embraceTracer: EmbraceTracer by singleton {
         EmbraceTracer(
+            clock = initModule.clock,
             spansService = spansService
         )
     }
 
     override val internalTracer: InternalTracer by lazy {
         InternalTracer(
-            clock = initModule.clock,
             spansRepository = spansRepository,
             embraceTracer = embraceTracer
         )

@@ -57,14 +57,14 @@ public interface EmbraceSpan {
     ): Boolean
 
     /**
-     * Add an [EmbraceSpanEvent] with the given [name]. If [time] is null, the current time will be used. Optionally, the specific
+     * Add an [EmbraceSpanEvent] with the given [name]. If [timeNanos] is null, the current time will be used. Optionally, the specific
      * time of the event and a set of attributes can be passed in associated with the event. Returns false if the Event was definitely not
      * successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the
      * OpenTelemetry level was successful.
      */
     public fun addEvent(
         name: String,
-        time: Long?,
+        timeNanos: Long?,
         attributes: Map<String, String>?
     ): Boolean
 

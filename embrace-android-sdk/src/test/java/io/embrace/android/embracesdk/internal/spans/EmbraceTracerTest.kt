@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -27,7 +26,7 @@ internal class EmbraceTracerTest {
         spansRepository = initModule.openTelemetryModule.spansRepository
         spansSink = initModule.openTelemetryModule.spansSink
         spansService = initModule.openTelemetryModule.spansService
-        spansService.initializeService(clock.now().millisToNanos())
+        spansService.initializeService(clock.nowInNanos())
         embraceTracer = initModule.openTelemetryModule.embraceTracer
         spansSink.flushSpans()
     }
@@ -202,6 +201,11 @@ internal class EmbraceTracerTest {
         val spanId = checkNotNull(embraceSpan.spanId)
         val spanFromTracer = checkNotNull(embraceTracer.getSpan(spanId))
         assertSame(spanFromTracer, embraceSpan)
+    }
+
+    @Test
+    fun `getSdkClockTimeNanos is the same as the internal clock time`() {
+        assertEquals(clock.nowInNanos(), embraceTracer.getSdkClockTimeNanos())
     }
 
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {

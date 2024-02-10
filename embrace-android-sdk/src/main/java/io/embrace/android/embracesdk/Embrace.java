@@ -526,6 +526,11 @@ public final class Embrace implements EmbraceAndroidApi {
         return null;
     }
 
+    @Override
+    public long getSdkClockTimeNanos() {
+        return impl.tracer.getSdkClockTimeNanos();
+    }
+
     /**
      * Adds a [SpanExporter] to the tracer.
      *

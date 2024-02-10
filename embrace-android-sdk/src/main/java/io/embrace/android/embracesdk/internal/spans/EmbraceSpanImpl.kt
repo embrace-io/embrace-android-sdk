@@ -68,17 +68,17 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String): Boolean = addEvent(name = name, time = null, attributes = null)
+    override fun addEvent(name: String): Boolean = addEvent(name = name, timeNanos = null, attributes = null)
 
-    override fun addEvent(name: String, time: Long?, attributes: Map<String, String>?): Boolean {
+    override fun addEvent(name: String, timeNanos: Long?, attributes: Map<String, String>?): Boolean {
         if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
             synchronized(eventCount) {
                 if (eventCount.get() < MAX_EVENT_COUNT) {
                     spanInProgress()?.let { span ->
-                        if (time != null && !attributes.isNullOrEmpty()) {
-                            span.addEvent(name, Attributes.builder().fromMap(attributes).build(), time, TimeUnit.MILLISECONDS)
-                        } else if (time != null) {
-                            span.addEvent(name, time, TimeUnit.MILLISECONDS)
+                        if (timeNanos != null && !attributes.isNullOrEmpty()) {
+                            span.addEvent(name, Attributes.builder().fromMap(attributes).build(), timeNanos, TimeUnit.NANOSECONDS)
+                        } else if (timeNanos != null) {
+                            span.addEvent(name, timeNanos, TimeUnit.NANOSECONDS)
                         } else if (!attributes.isNullOrEmpty()) {
                             span.addEvent(name, Attributes.builder().fromMap(attributes).build())
                         } else {

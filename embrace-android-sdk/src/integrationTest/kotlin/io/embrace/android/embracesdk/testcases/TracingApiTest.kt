@@ -50,10 +50,10 @@ internal class TracingApiTest {
                     parentSpan.addEvent("parent event")
                     true
                 })
-                val failedOpStartTime = harness.fakeClock.now()
+                val failedOpStartTime = embrace.getSdkClockTimeNanos()
                 harness.fakeClock.tick(200L)
-                parentSpan.addEvent(name = "delayed event", time = harness.fakeClock.now() - 50L, null)
-                val failedOpEndTime = harness.fakeClock.now()
+                parentSpan.addEvent(name = "delayed event", timeNanos = (harness.fakeClock.now() - 50L).millisToNanos(), null)
+                val failedOpEndTime = embrace.getSdkClockTimeNanos()
 
                 assertTrue(parentSpan.stop())
 
@@ -77,8 +77,8 @@ internal class TracingApiTest {
                 assertTrue(
                     embrace.recordCompletedSpan(
                         name = "completed-span",
-                        startTimeNanos = failedOpStartTime.millisToNanos(),
-                        endTimeNanos = failedOpEndTime.millisToNanos(),
+                        startTimeNanos = failedOpStartTime,
+                        endTimeNanos = failedOpEndTime,
                         errorCode = ErrorCode.FAILURE,
                         parent = parentSpan,
                         attributes = attributes,
@@ -86,20 +86,21 @@ internal class TracingApiTest {
                     )
                 )
                 harness.fakeClock.tick(300L)
-                embrace.endAppStartup()
-                val baSpanCount = getSdkInitSpanFromBackgroundActivity().size
-                val completedSpansCount = harness.openTelemetryModule.spansSink.completedSpans().size
+                assertEquals("Wrong number of background activity spans", 1, getSdkInitSpanFromBackgroundActivity().size)
                 assertEquals(
-                    "Wrong number of spans. $baSpanCount found in background activity and $completedSpansCount found in session",
-                    5 - baSpanCount,
-                    completedSpansCount
+                    "Wrong number of completed spans in the session",
+                    3,
+                    harness.openTelemetryModule.spansSink.completedSpans().size
                 )
+                embrace.endAppStartup()
             }
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1]
             assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
-            val allSpans = getSdkInitSpanFromBackgroundActivity() + checkNotNull(sessionMessage.first.spans)
+            val allSpans = getSdkInitSpanFromBackgroundActivity() +
+                checkNotNull(sessionMessage.first.spans) +
+                checkNotNull(harness.openTelemetryModule.spansSink.completedSpans())
             assertEquals(6, allSpans.size)
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session-span"])
@@ -163,7 +164,7 @@ internal class TracingApiTest {
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "failure time",
-                            timestampNanos = testStartTime + 400,
+                            timestampNanos = (testStartTime + 400).millisToNanos(),
                             attributes = mapOf(
                                 Pair("retry", "1")
                             )

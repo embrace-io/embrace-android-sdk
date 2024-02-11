@@ -35,20 +35,38 @@ internal class SystraceTest {
         }
     }
 
+    @Test
+    fun `check long name for synchronous trace does not throw`() {
+        try {
+            Systrace.startSynchronous(longName)
+        } finally {
+            Systrace.endSynchronous()
+        }
+    }
+
     @Config(sdk = [VERSION_CODES.Q])
     @Test
     fun `check supported API version does not throw`() {
         recordAndVerifyTrace()
+        recordAndVerifySynchronousTrace()
     }
 
     @Config(sdk = [VERSION_CODES.R])
     @Test
     fun `check unsupported API version does not throw`() {
         recordAndVerifyTrace()
+        recordAndVerifySynchronousTrace()
     }
 
     private fun recordAndVerifyTrace() {
         val returnValue = Systrace.trace("test") {
+            1 + 1
+        }
+        assertEquals(2, returnValue)
+    }
+
+    private fun recordAndVerifySynchronousTrace() {
+        val returnValue = Systrace.traceSynchronous("test") {
             1 + 1
         }
         assertEquals(2, returnValue)

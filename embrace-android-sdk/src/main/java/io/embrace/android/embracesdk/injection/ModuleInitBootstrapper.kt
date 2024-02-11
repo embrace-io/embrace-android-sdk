@@ -77,50 +77,65 @@ internal class ModuleInitBootstrapper(
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
-        if (asyncInitTask.get() != null) {
-            return false
-        }
-
-        synchronized(asyncInitTask) {
-            return if (asyncInitTask.get() == null) {
-                coreModule = coreModuleSupplier(context, appFramework)
-                workerThreadModule = workerThreadModuleSupplier(initModule)
-                val initTask = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
-                    Systrace.trace("spans-service-init") {
-                        openTelemetryModule.spansService.initializeService(sdkStartTimeNanos)
-                    }
-                }
-                systemServiceModule = systemServiceModuleSupplier(coreModule, versionChecker)
-                androidServicesModule = androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
-                storageModule = storageModuleSupplier(initModule, coreModule, workerThreadModule)
-                essentialServiceModule =
-                    essentialServiceModuleSupplier(
-                        initModule,
-                        coreModule,
-                        workerThreadModule,
-                        systemServiceModule,
-                        androidServicesModule,
-                        storageModule,
-                        customAppId,
-                        enableIntegrationTesting,
-                        configServiceProvider
-                    )
-                dataCaptureServiceModule =
-                    dataCaptureServiceModuleSupplier(
-                        initModule,
-                        openTelemetryModule,
-                        coreModule,
-                        systemServiceModule,
-                        essentialServiceModule,
-                        workerThreadModule,
-                        versionChecker
-                    )
-                deliveryModule = deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
-                asyncInitTask.set(initTask)
-                true
-            } else {
-                false
+        try {
+            Systrace.startSynchronous("modules-init")
+            if (asyncInitTask.get() != null) {
+                return false
             }
+
+            synchronized(asyncInitTask) {
+                return if (asyncInitTask.get() == null) {
+                    coreModule = Systrace.traceSynchronous("core-init") { coreModuleSupplier(context, appFramework) }
+                    workerThreadModule = Systrace.traceSynchronous("worker-init") { workerThreadModuleSupplier(initModule) }
+                    val initTask = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
+                        Systrace.trace("spans-service-init") {
+                            openTelemetryModule.spansService.initializeService(sdkStartTimeNanos)
+                        }
+                    }
+                    systemServiceModule = Systrace.traceSynchronous("system-service-init") {
+                        systemServiceModuleSupplier(coreModule, versionChecker)
+                    }
+                    androidServicesModule = Systrace.traceSynchronous("android-service-init") {
+                        androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
+                    }
+                    storageModule = Systrace.traceSynchronous("storage-init") {
+                        storageModuleSupplier(initModule, coreModule, workerThreadModule)
+                    }
+                    essentialServiceModule = Systrace.traceSynchronous("essential-init") {
+                        essentialServiceModuleSupplier(
+                            initModule,
+                            coreModule,
+                            workerThreadModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            storageModule,
+                            customAppId,
+                            enableIntegrationTesting,
+                            configServiceProvider
+                        )
+                    }
+                    dataCaptureServiceModule = Systrace.traceSynchronous("data-capture-init") {
+                        dataCaptureServiceModuleSupplier(
+                            initModule,
+                            openTelemetryModule,
+                            coreModule,
+                            systemServiceModule,
+                            essentialServiceModule,
+                            workerThreadModule,
+                            versionChecker
+                        )
+                    }
+                    deliveryModule = Systrace.traceSynchronous("delivery-init") {
+                        deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
+                    }
+                    asyncInitTask.set(initTask)
+                    true
+                } else {
+                    false
+                }
+            }
+        } finally {
+            Systrace.endSynchronous()
         }
     }
 
@@ -129,5 +144,8 @@ internal class ModuleInitBootstrapper(
      * [Future] if there is a timeout or if this failed for other reasons.
      */
     @JvmOverloads
-    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) = asyncInitTask.get()?.get(timeout, unit)
+    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) =
+        Systrace.trace("async-init-wait") {
+            asyncInitTask.get()?.get(timeout, unit)
+        }
 }

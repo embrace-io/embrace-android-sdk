@@ -14,6 +14,7 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -39,7 +40,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @NonNull
     private static final Embrace embrace = new Embrace();
 
-    private static EmbraceImpl impl = new EmbraceImpl();
+    private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-init", EmbraceImpl::new);
 
     @NonNull
     private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
@@ -88,9 +89,11 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @Override
     public void start(@NonNull Context context, boolean enableIntegrationTesting, @NonNull AppFramework appFramework) {
+        Systrace.startSynchronous("start-method");
         if (verifyNonNullParameters("start", context, appFramework)) {
             impl.start(context, enableIntegrationTesting, appFramework);
         }
+        Systrace.endSynchronous();
     }
 
     @Override
@@ -614,11 +617,8 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     *
-     * @hide
-     * Gets the {@link UnityInternalInterface} that should be used as the sole source of
+     * @hide Gets the {@link UnityInternalInterface} that should be used as the sole source of
      * communication with the Android SDK for Unity. Not part of the supported public API.
-     *
      * @hide
      */
     @Nullable

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -24,7 +24,7 @@ internal class DataContainerModuleImplTest {
             initModule,
             initModule.openTelemetryModule,
             FakeCoreModule(),
-            FakeWorkerThreadModule(),
+            WorkerThreadModuleImpl(initModule),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),

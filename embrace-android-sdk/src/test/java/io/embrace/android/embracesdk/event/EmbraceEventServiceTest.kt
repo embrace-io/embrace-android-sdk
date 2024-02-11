@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.event
 
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
@@ -21,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpansService
@@ -114,8 +114,8 @@ internal class EmbraceEventServiceTest {
             logger
         )
         gatingService = FakeGatingService(configService)
-        fakeWorkerThreadModule = FakeWorkerThreadModule(clock = fakeClock, blockingMode = true)
         val initModule = FakeInitModule(clock = fakeClock)
+        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, name = WorkerName.BACKGROUND_REGISTRATION)
         spansSink = initModule.openTelemetryModule.spansSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spansService = initModule.openTelemetryModule.spansService
@@ -344,7 +344,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `verify no active events if no event has been started`() {
-        assertTrue(eventService.getActiveEventIds().size == 0)
+        assertTrue(eventService.getActiveEventIds().isEmpty())
     }
 
     @Test
@@ -432,7 +432,7 @@ internal class EmbraceEventServiceTest {
         currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
-        val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
+        val executor = fakeWorkerThreadModule.executor
         executor.runCurrentlyBlocked()
         val completedSpans = spansSink.completedSpans()
         assertEquals(1, completedSpans.size)
@@ -453,7 +453,7 @@ internal class EmbraceEventServiceTest {
         currentSessionSpan.endSession()
         eventService.sendStartupMoment()
         eventService.applicationStartupComplete()
-        val executor = fakeWorkerThreadModule.executor(WorkerName.BACKGROUND_REGISTRATION)
+        val executor = fakeWorkerThreadModule.executor
         executor.runCurrentlyBlocked()
         val completedSpans = spansSink.completedSpans()
         assertEquals(0, completedSpans.size)
@@ -481,7 +481,7 @@ internal class EmbraceEventServiceTest {
         eventService.sendStartupMoment()
         assertNull(eventService.getStartupMomentInfo())
         fakeClock.tick(10000L)
-        fakeWorkerThreadModule.scheduledExecutor(WorkerName.BACKGROUND_REGISTRATION).runCurrentlyBlocked()
+        fakeWorkerThreadModule.executor.runCurrentlyBlocked()
         assertNotNull(eventService.getStartupMomentInfo())
         assertEquals(0, spansSink.completedSpans().size)
     }

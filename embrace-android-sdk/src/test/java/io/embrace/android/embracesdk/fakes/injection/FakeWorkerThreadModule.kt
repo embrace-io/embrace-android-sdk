@@ -1,8 +1,7 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.embrace.android.embracesdk.worker.WorkerName

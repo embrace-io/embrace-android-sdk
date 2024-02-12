@@ -2,19 +2,32 @@ package io.embrace.android.embracesdk.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.CrashModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.CustomerLogModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DataContainerModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.DataSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.SdkObservabilityModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.ndk.NativeModule
+import io.embrace.android.embracesdk.ndk.NativeModuleImpl
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.TaskPriority
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -37,6 +50,14 @@ internal class ModuleInitBootstrapper(
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::EssentialServiceModuleImpl,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::DataCaptureServiceModuleImpl,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::DeliveryModuleImpl,
+    private val anrModuleSupplier: AnrModuleSupplier = ::AnrModuleImpl,
+    private val sdkObservabilityModuleSupplier: SdkObservabilityModuleSupplier = ::SdkObservabilityModuleImpl,
+    private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::CustomerLogModuleImpl,
+    private val nativeModuleSupplier: NativeModuleSupplier = ::NativeModuleImpl,
+    private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::DataContainerModuleImpl,
+    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
+    private val sessionModuleSupplier: SessionModuleSupplier = ::SessionModuleImpl,
+    private val crashModuleSupplier: CrashModuleSupplier = ::CrashModuleImpl,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -60,6 +81,30 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var deliveryModule: DeliveryModule
+        private set
+
+    lateinit var anrModule: AnrModule
+        private set
+
+    lateinit var sdkObservabilityModule: SdkObservabilityModule
+        private set
+
+    lateinit var customerLogModule: CustomerLogModule
+        private set
+
+    lateinit var nativeModule: NativeModule
+        private set
+
+    lateinit var dataContainerModule: DataContainerModule
+        private set
+
+    lateinit var dataSourceModule: DataSourceModule
+        private set
+
+    lateinit var sessionModule: SessionModule
+        private set
+
+    lateinit var crashModule: CrashModule
         private set
 
     private val asyncInitTask = AtomicReference<Future<*>?>(null)
@@ -87,20 +132,25 @@ internal class ModuleInitBootstrapper(
                 return if (asyncInitTask.get() == null) {
                     coreModule = Systrace.traceSynchronous("core-init") { coreModuleSupplier(context, appFramework) }
                     workerThreadModule = Systrace.traceSynchronous("worker-init") { workerThreadModuleSupplier(initModule) }
+
                     val initTask = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
                         Systrace.trace("spans-service-init") {
                             openTelemetryModule.spansService.initializeService(sdkStartTimeNanos)
                         }
                     }
+
                     systemServiceModule = Systrace.traceSynchronous("system-service-init") {
                         systemServiceModuleSupplier(coreModule, versionChecker)
                     }
+
                     androidServicesModule = Systrace.traceSynchronous("android-service-init") {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
+
                     storageModule = Systrace.traceSynchronous("storage-init") {
                         storageModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
+
                     essentialServiceModule = Systrace.traceSynchronous("essential-init") {
                         essentialServiceModuleSupplier(
                             initModule,
@@ -114,6 +164,7 @@ internal class ModuleInitBootstrapper(
                             configServiceProvider
                         )
                     }
+
                     dataCaptureServiceModule = Systrace.traceSynchronous("data-capture-init") {
                         dataCaptureServiceModuleSupplier(
                             initModule,
@@ -125,9 +176,148 @@ internal class ModuleInitBootstrapper(
                             versionChecker
                         )
                     }
+
                     deliveryModule = Systrace.traceSynchronous("delivery-init") {
                         deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
                     }
+
+                    /** Since onForeground() is called sequential in the order that services registered for it,
+                     * it is important to initialize the `EmbraceAnrService`, and thus register the `onForeground()
+                     * listener for it, before the `EmbraceSessionService`.
+                     * The onForeground() call inside the EmbraceAnrService should be called before the
+                     * EmbraceSessionService call. This is necessary since the EmbraceAnrService should be able to
+                     * force a Main thread health check and close the pending ANR intervals that happened on the
+                     * background before the next session is created.
+                     * */
+                    anrModule = Systrace.traceSynchronous("anr-init") {
+                        anrModuleSupplier(initModule, coreModule, essentialServiceModule, workerThreadModule)
+                    }
+
+                    // set callbacks and pass in non-placeholder config.
+                    anrModule.anrService.finishInitialization(
+                        essentialServiceModule.configService
+                    )
+
+                    // initialize the logger early so that logged exceptions have a good chance of
+                    // being appended to the exceptions service rather than logcat
+                    sdkObservabilityModule = Systrace.traceSynchronous("sdk-observability-init") {
+                        sdkObservabilityModuleSupplier(initModule, essentialServiceModule)
+                    }
+
+                    val sessionProperties = EmbraceSessionProperties(
+                        androidServicesModule.preferencesService,
+                        essentialServiceModule.configService,
+                        coreModule.logger
+                    )
+
+                    customerLogModule = Systrace.traceSynchronous("customer-log-init") {
+                        customerLogModuleSupplier(
+                            initModule,
+                            coreModule,
+                            androidServicesModule,
+                            essentialServiceModule,
+                            deliveryModule,
+                            sessionProperties,
+                            workerThreadModule
+                        )
+                    }
+
+                    nativeModule = Systrace.traceSynchronous("native-crash-init") {
+                        nativeModuleSupplier(
+                            coreModule,
+                            storageModule,
+                            essentialServiceModule,
+                            deliveryModule,
+                            androidServicesModule,
+                            sessionProperties,
+                            workerThreadModule
+                        )
+                    }
+
+                    if (nativeModule.nativeThreadSamplerInstaller != null) {
+                        // install the native thread sampler
+                        nativeModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
+                            nativeThreadSamplerService.setupNativeSampler()
+
+                            // In Unity this should always run on the Unity thread.
+                            if (coreModule.appFramework == AppFramework.UNITY && isUnityMainThread()) {
+                                try {
+                                    if (nativeModule.nativeThreadSamplerInstaller != null) {
+                                        nativeModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
+                                            nativeThreadSamplerService,
+                                            essentialServiceModule.configService,
+                                            anrModule.anrService
+                                        )
+                                    } else {
+                                        InternalStaticEmbraceLogger.logger.logWarning(
+                                            "nativeThreadSamplerInstaller not started, cannot sample current thread"
+                                        )
+                                    }
+                                } catch (t: Throwable) {
+                                    InternalStaticEmbraceLogger.logger.logError("Failed to sample current thread during ANRs", t)
+                                }
+                            }
+                        }
+                    } else {
+                        InternalStaticEmbraceLogger.logger.logWarning("Failed to load SO file embrace-native")
+                    }
+
+                    dataContainerModule = Systrace.traceSynchronous("data-container-init") {
+                        dataContainerModuleSupplier(
+                            initModule,
+                            openTelemetryModule,
+                            coreModule,
+                            workerThreadModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            essentialServiceModule,
+                            dataCaptureServiceModule,
+                            anrModule,
+                            customerLogModule,
+                            deliveryModule,
+                            nativeModule,
+                            sessionProperties,
+                            TimeUnit.NANOSECONDS.toMillis(sdkStartTimeNanos)
+                        )
+                    }
+
+                    dataSourceModule = Systrace.traceSynchronous("data-source-init") {
+                        dataSourceModuleSupplier(essentialServiceModule)
+                    }
+
+                    sessionModule = Systrace.traceSynchronous("session-init") {
+                        sessionModuleSupplier(
+                            initModule,
+                            openTelemetryModule,
+                            androidServicesModule,
+                            essentialServiceModule,
+                            nativeModule,
+                            dataContainerModule,
+                            deliveryModule,
+                            sessionProperties,
+                            dataCaptureServiceModule,
+                            customerLogModule,
+                            sdkObservabilityModule,
+                            workerThreadModule,
+                            dataSourceModule
+                        )
+                    }
+
+                    crashModule = Systrace.traceSynchronous("crash-init") {
+                        crashModuleSupplier(
+                            initModule,
+                            storageModule,
+                            essentialServiceModule,
+                            deliveryModule,
+                            nativeModule,
+                            sessionModule,
+                            anrModule,
+                            dataContainerModule,
+                            androidServicesModule
+                        )
+                    }
+
+                    Thread.setDefaultUncaughtExceptionHandler(crashModule.automaticVerificationExceptionHandler)
                     asyncInitTask.set(initTask)
                     true
                 } else {

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -124,12 +125,12 @@ internal class ModuleInitBootstrapper(
     ): Boolean {
         try {
             Systrace.startSynchronous("modules-init")
-            if (asyncInitTask.get() != null) {
+            if (isInitialized()) {
                 return false
             }
 
             synchronized(asyncInitTask) {
-                return if (asyncInitTask.get() == null) {
+                return if (!isInitialized()) {
                     coreModule = Systrace.traceSynchronous("core-init") { coreModuleSupplier(context, appFramework) }
                     workerThreadModule = Systrace.traceSynchronous("worker-init") { workerThreadModuleSupplier(initModule) }
 
@@ -139,6 +140,10 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
+                    val serviceRegistry = coreModule.serviceRegistry
+                    serviceRegistry.registerService(initModule.telemetryService)
+                    serviceRegistry.registerService(openTelemetryModule.spansService)
+
                     systemServiceModule = Systrace.traceSynchronous("system-service-init") {
                         systemServiceModuleSupplier(coreModule, versionChecker)
                     }
@@ -146,6 +151,7 @@ internal class ModuleInitBootstrapper(
                     androidServicesModule = Systrace.traceSynchronous("android-service-init") {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
+                    serviceRegistry.registerService(androidServicesModule.preferencesService)
 
                     storageModule = Systrace.traceSynchronous("storage-init") {
                         storageModuleSupplier(initModule, coreModule, workerThreadModule)
@@ -165,6 +171,23 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    serviceRegistry.registerServices(
+                        essentialServiceModule.processStateService,
+                        essentialServiceModule.metadataService,
+                        essentialServiceModule.configService,
+                        essentialServiceModule.activityLifecycleTracker,
+                        essentialServiceModule.networkConnectivityService,
+                        essentialServiceModule.userService
+                    )
+
+                    val networkBehavior = essentialServiceModule.configService.networkBehavior
+                    if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
+                        registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                    }
+
+                    // only call after ConfigService has initialized.
+                    essentialServiceModule.metadataService.precomputeValues()
+
                     dataCaptureServiceModule = Systrace.traceSynchronous("data-capture-init") {
                         dataCaptureServiceModuleSupplier(
                             initModule,
@@ -177,9 +200,19 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    serviceRegistry.registerServices(
+                        dataCaptureServiceModule.webviewService,
+                        dataCaptureServiceModule.memoryService,
+                        dataCaptureServiceModule.componentCallbackService,
+                        dataCaptureServiceModule.powerSaveModeService,
+                        dataCaptureServiceModule.breadcrumbService,
+                        dataCaptureServiceModule.pushNotificationService,
+                        dataCaptureServiceModule.thermalStatusService
+                    )
                     deliveryModule = Systrace.traceSynchronous("delivery-init") {
                         deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
                     }
+                    serviceRegistry.registerService(deliveryModule.deliveryService)
 
                     /** Since onForeground() is called sequential in the order that services registered for it,
                      * it is important to initialize the `EmbraceAnrService`, and thus register the `onForeground()
@@ -193,6 +226,11 @@ internal class ModuleInitBootstrapper(
                         anrModuleSupplier(initModule, coreModule, essentialServiceModule, workerThreadModule)
                     }
 
+                    serviceRegistry.registerServices(
+                        anrModule.anrService,
+                        anrModule.responsivenessMonitorService
+                    )
+
                     // set callbacks and pass in non-placeholder config.
                     anrModule.anrService.finishInitialization(
                         essentialServiceModule.configService
@@ -203,6 +241,9 @@ internal class ModuleInitBootstrapper(
                     sdkObservabilityModule = Systrace.traceSynchronous("sdk-observability-init") {
                         sdkObservabilityModuleSupplier(initModule, essentialServiceModule)
                     }
+
+                    serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
+                    InternalStaticEmbraceLogger.logger.addLoggerAction(sdkObservabilityModule.internalErrorLogger)
 
                     val sessionProperties = EmbraceSessionProperties(
                         androidServicesModule.preferencesService,
@@ -222,6 +263,12 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    serviceRegistry.registerServices(
+                        customerLogModule.logMessageService,
+                        customerLogModule.networkCaptureService,
+                        customerLogModule.networkLoggingService
+                    )
+
                     nativeModule = Systrace.traceSynchronous("native-crash-init") {
                         nativeModuleSupplier(
                             coreModule,
@@ -232,6 +279,15 @@ internal class ModuleInitBootstrapper(
                             sessionProperties,
                             workerThreadModule
                         )
+                    }
+
+                    serviceRegistry.registerServices(
+                        nativeModule.ndkService,
+                        nativeModule.nativeThreadSamplerService
+                    )
+
+                    if (essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                        essentialServiceModule.sessionIdTracker.ndkService = nativeModule.ndkService
                     }
 
                     if (nativeModule.nativeThreadSamplerInstaller != null) {
@@ -281,6 +337,12 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    serviceRegistry.registerServices(
+                        dataContainerModule.performanceInfoService,
+                        dataContainerModule.eventService,
+                        dataContainerModule.applicationExitInfoService
+                    )
+
                     dataSourceModule = Systrace.traceSynchronous("data-source-init") {
                         dataSourceModuleSupplier(essentialServiceModule)
                     }
@@ -318,6 +380,16 @@ internal class ModuleInitBootstrapper(
                     }
 
                     Thread.setDefaultUncaughtExceptionHandler(crashModule.automaticVerificationExceptionHandler)
+                    serviceRegistry.registerService(crashModule.crashService)
+
+                    // Sets up the registered services. This method is called after the SDK has been started and no more services can
+                    // be added to the registry. It sets listeners for any services that were registered.
+                    serviceRegistry.closeRegistration()
+                    serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
+                    serviceRegistry.registerConfigListeners(essentialServiceModule.configService)
+                    serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.memoryCleanerService)
+                    serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+
                     asyncInitTask.set(initTask)
                     true
                 } else {
@@ -338,4 +410,24 @@ internal class ModuleInitBootstrapper(
         Systrace.trace("async-init-wait") {
             asyncInitTask.get()?.get(timeout, unit)
         }
+
+    fun stopServices() {
+        if (isInitialized()) {
+            return
+        }
+
+        synchronized(asyncInitTask) {
+            if (isInitialized()) {
+                InternalStaticEmbraceLogger.logger.logDeveloper("Embrace", "Attempting to close services...")
+                coreModule.serviceRegistry.close()
+                InternalStaticEmbraceLogger.logger.logDeveloper("Embrace", "Services closed")
+                workerThreadModule.close()
+                essentialServiceModule.processStateService.close()
+            } else {
+                asyncInitTask.set(null)
+            }
+        }
+    }
+
+    private fun isInitialized(): Boolean = asyncInitTask.get() != null
 }

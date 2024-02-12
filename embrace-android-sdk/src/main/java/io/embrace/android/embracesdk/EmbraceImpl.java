@@ -39,9 +39,7 @@ import io.embrace.android.embracesdk.injection.DataCaptureServiceModule;
 import io.embrace.android.embracesdk.injection.DataContainerModule;
 import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
-import io.embrace.android.embracesdk.injection.InitModule;
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
@@ -50,7 +48,6 @@ import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
-import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
@@ -66,7 +63,6 @@ import io.embrace.android.embracesdk.network.logging.NetworkLoggingService;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb;
 import io.embrace.android.embracesdk.prefs.PreferencesService;
-import io.embrace.android.embracesdk.registry.ServiceRegistry;
 import io.embrace.android.embracesdk.session.id.SessionIdTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
@@ -112,9 +108,6 @@ final class EmbraceImpl {
 
     @NonNull
     private final Clock sdkClock;
-
-    @NonNull
-    private final InitModule initModule;
 
     /**
      * Custom app ID that overrides the one specified at build time
@@ -214,12 +207,6 @@ final class EmbraceImpl {
     private PushNotificationCaptureService pushNotificationService;
 
     @Nullable
-    private WorkerThreadModule workerThreadModule;
-
-    @Nullable
-    private ServiceRegistry serviceRegistry;
-
-    @Nullable
     private LastRunCrashVerifier crashVerifier;
 
     /**
@@ -230,8 +217,7 @@ final class EmbraceImpl {
 
     EmbraceImpl(@NonNull ModuleInitBootstrapper bs) {
         moduleInitBootstrapper = bs;
-        initModule = moduleInitBootstrapper.getInitModule();
-        sdkClock = initModule.getClock();
+        sdkClock = moduleInitBootstrapper.getInitModule().getClock();
         tracer = moduleInitBootstrapper.getOpenTelemetryModule().getEmbraceTracer();
         uninitializedSdkInternalInterface =
             LazyKt.lazy(
@@ -288,115 +274,63 @@ final class EmbraceImpl {
         final long startTime = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
         moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, TimeUnit.MILLISECONDS.toNanos(startTime), customAppId);
+        telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
-        serviceRegistry = coreModule.getServiceRegistry();
         application = coreModule.getApplication();
         appFramework = coreModule.getAppFramework();
 
-        final OpenTelemetryModule openTelemetryModule = moduleInitBootstrapper.getOpenTelemetryModule();
-        serviceRegistry.registerService(openTelemetryModule.getSpansService());
-        workerThreadModule = moduleInitBootstrapper.getWorkerThreadModule();
-
         final AndroidServicesModule androidServicesModule = moduleInitBootstrapper.getAndroidServicesModule();
         preferencesService = androidServicesModule.getPreferencesService();
-        serviceRegistry.registerService(preferencesService);
 
         final EssentialServiceModule essentialServiceModule = moduleInitBootstrapper.getEssentialServiceModule();
+        if (essentialServiceModule.getConfigService().isSdkDisabled()) {
+            internalEmbraceLogger.logInfo("Interrupting SDK start because it is disabled");
+            stop();
+            return;
+        }
+
+        if (essentialServiceModule.getConfigService().getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
+            registerComposeActivityListener(coreModule);
+        }
+
         processStateService = essentialServiceModule.getProcessStateService();
         metadataService = essentialServiceModule.getMetadataService();
         sessionIdTracker = essentialServiceModule.getSessionIdTracker();
         configService = essentialServiceModule.getConfigService();
         activityTracker = essentialServiceModule.getActivityLifecycleTracker();
-
-        serviceRegistry.registerServices(
-            processStateService,
-            metadataService,
-            configService,
-            essentialServiceModule.getActivityLifecycleTracker()
-        );
-
-        // only call after ConfigService has initialized.
-        essentialServiceModule.getMetadataService().precomputeValues();
+        userService = essentialServiceModule.getUserService();
 
         final DataCaptureServiceModule dataCaptureServiceModule = moduleInitBootstrapper.getDataCaptureServiceModule();
         webViewService = dataCaptureServiceModule.getWebviewService();
-        serviceRegistry.registerServices(
-            webViewService,
-            dataCaptureServiceModule.getMemoryService(),
-            dataCaptureServiceModule.getComponentCallbackService()
-        );
+        breadcrumbService = dataCaptureServiceModule.getBreadcrumbService();
+        pushNotificationService = dataCaptureServiceModule.getPushNotificationService();
 
         final AnrModule anrModule = moduleInitBootstrapper.getAnrModule();
         anrService = anrModule.getAnrService();
-        serviceRegistry.registerServices(anrService, anrModule.getResponsivenessMonitorService());
-
-        serviceRegistry.registerService(dataCaptureServiceModule.getPowerSaveModeService());
 
         final SdkObservabilityModule sdkObservabilityModule = moduleInitBootstrapper.getSdkObservabilityModule();
         internalErrorService = sdkObservabilityModule.getInternalErrorService();
-        serviceRegistry.registerService(internalErrorService);
-        internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
-
-        telemetryService = initModule.getTelemetryService();
-        serviceRegistry.registerService(telemetryService);
-
-        serviceRegistry.registerService(essentialServiceModule.getNetworkConnectivityService());
+        sdkObservabilityModule.getInternalErrorService().setConfigService(configService);
 
         final DeliveryModule deliveryModule = moduleInitBootstrapper.getDeliveryModule();
-        serviceRegistry.registerService(deliveryModule.getDeliveryService());
-
-        if (essentialServiceModule.getConfigService().isSdkDisabled()) {
-            internalEmbraceLogger.logInfo("the SDK is disabled");
-            stop();
-            return;
-        }
-
-        sdkObservabilityModule.getInternalErrorService().setConfigService(configService);
-        breadcrumbService = dataCaptureServiceModule.getBreadcrumbService();
-        pushNotificationService = dataCaptureServiceModule.getPushNotificationService();
-        serviceRegistry.registerServices(breadcrumbService, pushNotificationService);
-
-        userService = essentialServiceModule.getUserService();
-        serviceRegistry.registerServices(userService);
 
         final CustomerLogModule customerLogModule = moduleInitBootstrapper.getCustomerLogModule();
         logMessageService = customerLogModule.getLogMessageService();
         networkCaptureService = customerLogModule.getNetworkCaptureService();
         networkLoggingService = customerLogModule.getNetworkLoggingService();
-        serviceRegistry.registerServices(
-            logMessageService,
-            networkCaptureService,
-            networkLoggingService
-        );
 
         final NativeModule nativeModule = moduleInitBootstrapper.getNativeModule();
-
-        final DataContainerModule dataContainerModule = moduleInitBootstrapper.getDataContainerModule();
-
-        eventService = dataContainerModule.getEventService();
-        serviceRegistry.registerServices(
-            dataContainerModule.getPerformanceInfoService(),
-            eventService,
-            dataContainerModule.getApplicationExitInfoService()
-        );
-
         ndkService = nativeModule.getNdkService();
         nativeThreadSampler = nativeModule.getNativeThreadSamplerService();
         nativeThreadSamplerInstaller = nativeModule.getNativeThreadSamplerInstaller();
 
-        serviceRegistry.registerServices(
-            ndkService,
-            nativeThreadSampler
-        );
+        final DataContainerModule dataContainerModule = moduleInitBootstrapper.getDataContainerModule();
+        eventService = dataContainerModule.getEventService();
 
         final SessionModule sessionModule = moduleInitBootstrapper.getSessionModule();
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
-
-        if (essentialServiceModule.getConfigService().getAutoDataCaptureBehavior().isNdkEnabled()) {
-            essentialServiceModule.getSessionIdTracker().setNdkService(nativeModule.getNdkService());
-        }
 
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
@@ -405,53 +339,32 @@ final class EmbraceImpl {
         );
 
         final CrashModule crashModule = moduleInitBootstrapper.getCrashModule();
-        loadCrashVerifier(crashModule, workerThreadModule);
+        loadCrashVerifier(crashModule, moduleInitBootstrapper.getWorkerThreadModule());
 
-        serviceRegistry.registerService(crashModule.getCrashService());
-
-        serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
-
-        if (essentialServiceModule.getConfigService().getAutoDataCaptureBehavior().isComposeOnClickEnabled()) {
-            registerComposeActivityListener(coreModule);
-        }
-
-        // initialize internal interfaces
+        Systrace.startSynchronous("internal-interface-init");
         final InternalInterfaceModule internalInterfaceModule = new InternalInterfaceModuleImpl(
-            initModule,
-            openTelemetryModule,
+            moduleInitBootstrapper.getInitModule(),
+            moduleInitBootstrapper.getOpenTelemetryModule(),
             coreModule,
             androidServicesModule,
             essentialServiceModule,
             this,
             crashModule
         );
+        Systrace.endSynchronous();
 
         embraceInternalInterface = internalInterfaceModule.getEmbraceInternalInterface();
         reactNativeInternalInterface = internalInterfaceModule.getReactNativeInternalInterface();
         unityInternalInterface = internalInterfaceModule.getUnityInternalInterface();
         flutterInternalInterface = internalInterfaceModule.getFlutterInternalInterface();
 
-        String startMsg = "Embrace SDK started. App ID: " + essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() +
-            " Version: " + BuildConfig.VERSION_NAME;
+        final String startMsg = "Embrace SDK started. App ID: " +
+            essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
         internalEmbraceLogger.logInfo(startMsg);
-
-        final NetworkBehavior networkBehavior = essentialServiceModule.getConfigService().getNetworkBehavior();
-        if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
-            HttpUrlConnectionTracker.registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled());
-        }
 
         final long endTime = sdkClock.now();
         started.set(true);
         dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
-
-        // Sets up the registered services. This method is called after the SDK has been started and
-        // no more services can be added to the registry. It sets listeners for any services that were
-        // registered.
-        serviceRegistry.closeRegistration();
-        serviceRegistry.registerActivityListeners(essentialServiceModule.getProcessStateService());
-        serviceRegistry.registerConfigListeners(essentialServiceModule.getConfigService());
-        serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.getMemoryCleanerService());
-        serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.getActivityLifecycleTracker());
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
@@ -550,16 +463,12 @@ final class EmbraceImpl {
         if (started.compareAndSet(true, false)) {
             internalEmbraceLogger.logInfo("Shutting down Embrace SDK.");
             try {
-                if (composeActivityListenerInstance != null) {
+                if (composeActivityListenerInstance != null && application != null) {
                     unregisterComposeActivityListener(application);
                 }
 
                 application = null;
-                internalEmbraceLogger.logDeveloper("Embrace", "Attempting to close services...");
-                serviceRegistry.close();
-                internalEmbraceLogger.logDeveloper("Embrace", "Services closed");
-                workerThreadModule.close();
-                processStateService.close();
+                moduleInitBootstrapper.stopServices();
             } catch (Exception ex) {
                 internalEmbraceLogger.logError("Error while shutting down Embrace SDK", ex);
             }

@@ -46,7 +46,7 @@ internal class FakeEmbraceSpan private constructor(
         TODO("Not yet implemented")
     }
 
-    override fun addEvent(name: String, time: Long?, attributes: Map<String, String>?): Boolean {
+    override fun addEvent(name: String, timeNanos: Long?, attributes: Map<String, String>?): Boolean {
         TODO("Not yet implemented")
     }
 

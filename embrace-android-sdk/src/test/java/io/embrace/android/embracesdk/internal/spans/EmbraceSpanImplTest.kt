@@ -100,12 +100,12 @@ internal class EmbraceSpanImplTest {
             assertTrue(
                 addEvent(
                     name = "second current event",
-                    time = null,
+                    timeNanos = null,
                     attributes = mapOf(Pair("key", "value"), Pair("key2", "value1"))
                 )
             )
-            assertTrue(addEvent(name = "past event", time = 1L, attributes = null))
-            assertTrue(addEvent(name = "future event", time = 2L, mapOf(Pair("key", "value"), Pair("key2", "value1"))))
+            assertTrue(addEvent(name = "past event", timeNanos = 1L, attributes = null))
+            assertTrue(addEvent(name = "future event", timeNanos = 2L, mapOf(Pair("key", "value"), Pair("key2", "value1"))))
         }
     }
 
@@ -125,11 +125,11 @@ internal class EmbraceSpanImplTest {
         with(embraceSpan) {
             assertTrue(start())
             assertFalse(addEvent(name = TOO_LONG_EVENT_NAME))
-            assertFalse(addEvent(name = TOO_LONG_EVENT_NAME, time = null, attributes = null))
-            assertFalse(addEvent(name = "yo", time = null, attributes = tooBigEventAttributes))
+            assertFalse(addEvent(name = TOO_LONG_EVENT_NAME, timeNanos = null, attributes = null))
+            assertFalse(addEvent(name = "yo", timeNanos = null, attributes = tooBigEventAttributes))
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME))
-            assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, time = null, attributes = null))
-            assertTrue(addEvent(name = "yo", time = null, attributes = maxSizeEventAttributes))
+            assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timeNanos = null, attributes = null))
+            assertTrue(addEvent(name = "yo", timeNanos = null, attributes = maxSizeEventAttributes))
             repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 4) {
                 assertTrue(addEvent(name = "event $it"))
             }
@@ -143,7 +143,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(
                 addEvent(
                     name = "yo",
-                    time = null,
+                    timeNanos = null,
                     attributes = eventAttributesAMap
                 )
             )

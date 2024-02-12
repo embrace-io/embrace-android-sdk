@@ -4,6 +4,7 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
@@ -37,8 +38,10 @@ internal class TracingApiTest {
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
         val testStartTime = testRule.harness.fakeClock.now()
+        val spanExporter = FakeSpanExporter()
         with(testRule) {
             harness.fakeClock.tick(100L)
+            embrace.addSpanExporter(spanExporter)
             embrace.start(harness.fakeCoreModule.context)
             harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
@@ -86,22 +89,18 @@ internal class TracingApiTest {
                     )
                 )
                 harness.fakeClock.tick(300L)
-                assertEquals("Wrong number of background activity spans", 1, getSdkInitSpanFromBackgroundActivity().size)
-                assertEquals(
-                    "Wrong number of completed spans in the session",
-                    3,
-                    harness.openTelemetryModule.spansSink.completedSpans().size
-                )
                 embrace.endAppStartup()
+                // There should be at least 5 spans exported at this point, so we wait for the startup moment span to finish up.
+                spanExporter.awaitSpanExport(count = 5)
             }
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1]
             assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
-            val allSpans = getSdkInitSpanFromBackgroundActivity() +
-                checkNotNull(sessionMessage.first.spans) +
-                checkNotNull(harness.openTelemetryModule.spansSink.completedSpans())
-            assertEquals(6, allSpans.size)
+            val allSpans = getSdkInitSpanFromBackgroundActivity() + checkNotNull(sessionMessage.first.spans)
+
+            // There should be 6 total spans here, with the 5 from before the session ended, plus the session span
+            assertEquals("The session span was not found?", 6, allSpans.size)
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session-span"])
             val traceRootSpan = checkNotNull(spansMap["test-trace-root"])

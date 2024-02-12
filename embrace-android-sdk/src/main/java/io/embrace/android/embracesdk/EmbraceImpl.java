@@ -13,9 +13,7 @@ import androidx.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -274,7 +272,9 @@ final class EmbraceImpl {
                boolean enableIntegrationTesting,
                @NonNull Embrace.AppFramework appFramework) {
         try {
+            Systrace.startSynchronous("sdk-init");
             startImpl(context, enableIntegrationTesting, appFramework);
+            Systrace.endSynchronous();
         } catch (Throwable t) {
             internalEmbraceLogger.logError(
                 "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t, true);
@@ -283,7 +283,7 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) throws ExecutionException, InterruptedException, TimeoutException {
+                           @NonNull Embrace.AppFramework framework) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             internalEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -298,11 +298,7 @@ final class EmbraceImpl {
 
         final long startTime = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
-        final Systrace.Instance initTrace = Systrace.Companion.start("modules-init");
         moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, TimeUnit.MILLISECONDS.toNanos(startTime), customAppId);
-        if (initTrace != null) {
-            Systrace.Companion.end(initTrace);
-        }
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
         serviceRegistry = coreModule.getServiceRegistry();

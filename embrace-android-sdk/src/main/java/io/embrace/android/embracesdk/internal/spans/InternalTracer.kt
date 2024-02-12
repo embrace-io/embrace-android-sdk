@@ -92,7 +92,7 @@ internal class InternalTracer(
         return if (name is String && timestampNanos is Long? && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampNanos = timestampNanos ?: embraceTracer.getSdkClockTimeNanos(),
+                timestampNanos = timestampNanos ?: embraceTracer.getSdkCurrentTimeNanos(),
                 attributes = attributes?.let { toStringMap(it) }
             )
         } else {

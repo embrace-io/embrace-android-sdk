@@ -117,7 +117,11 @@ internal class EmbraceTracer(
 
     override fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
 
-    override fun getSdkClockTimeNanos(): Long = clock.nowInNanos()
+    /**
+     * Return the current time in nanoseconds for the clock instance used by the Embrace SDK. This should be used to obtain the time
+     * in used for [recordCompletedSpan] so the timestamps will be in sync with those used by the SDK when a time is implicitly recorded.
+     */
+    fun getSdkCurrentTimeNanos(): Long = clock.nowInNanos()
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean = spansService.initialized()

@@ -292,7 +292,7 @@ internal class EmbraceInternalInterfaceTest {
                     recordCompletedSpan(
                         name = "tz-old-span",
                         startTimeNanos = (harness.fakeClock.now() - 1L).millisToNanos(),
-                        endTimeNanos = embrace.getSdkClockTimeNanos(),
+                        endTimeNanos = embrace.internalInterface.getSdkCurrentTime().millisToNanos(),
                     )
                     stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                     stopSpan(parentSpanId)

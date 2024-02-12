@@ -50,10 +50,10 @@ internal class TracingApiTest {
                     parentSpan.addEvent("parent event")
                     true
                 })
-                val failedOpStartTime = embrace.getSdkClockTimeNanos()
+                val failedOpStartTime = embrace.internalInterface.getSdkCurrentTime().millisToNanos()
                 harness.fakeClock.tick(200L)
                 parentSpan.addEvent(name = "delayed event", timeNanos = (harness.fakeClock.now() - 50L).millisToNanos(), null)
-                val failedOpEndTime = embrace.getSdkClockTimeNanos()
+                val failedOpEndTime = embrace.internalInterface.getSdkCurrentTime().millisToNanos()
 
                 assertTrue(parentSpan.stop())
 

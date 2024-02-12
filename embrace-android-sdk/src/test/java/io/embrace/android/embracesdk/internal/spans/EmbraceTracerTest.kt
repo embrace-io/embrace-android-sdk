@@ -205,7 +205,7 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `getSdkClockTimeNanos is the same as the internal clock time`() {
-        assertEquals(clock.nowInNanos(), embraceTracer.getSdkClockTimeNanos())
+        assertEquals(clock.nowInNanos(), embraceTracer.getSdkCurrentTimeNanos())
     }
 
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {

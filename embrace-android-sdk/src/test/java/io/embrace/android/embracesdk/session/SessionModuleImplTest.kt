@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -14,8 +11,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.injection.SessionModuleImpl
+import io.embrace.android.embracesdk.worker.WorkerName
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,11 +23,7 @@ internal class SessionModuleImplTest {
 
     private val fakeInitModule = FakeInitModule()
 
-    private val workerThreadModule =
-        FakeWorkerThreadModule(
-            scheduledExecutorProvider = ::BlockingScheduledExecutorService,
-            executorProvider = ::BlockableExecutorService
-        )
+    private val workerThreadModule = FakeWorkerThreadModule(fakeInitModule, WorkerName.BACKGROUND_REGISTRATION)
 
     private val configService = FakeConfigService()
 

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
@@ -23,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,7 +42,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             createEnabledBehavior(),
-            FakeWorkerThreadModule(),
+            WorkerThreadModuleImpl(initModule),
             FakeVersionChecker(true)
         )
 
@@ -64,7 +64,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             FakeEssentialServiceModule(),
-            FakeWorkerThreadModule(),
+            WorkerThreadModuleImpl(initModule),
             FakeVersionChecker(false)
         )
 
@@ -80,7 +80,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             createDisabledBehavior(),
-            FakeWorkerThreadModule(),
+            WorkerThreadModuleImpl(initModule),
             FakeVersionChecker(true)
         )
 

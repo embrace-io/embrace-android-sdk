@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
-import io.embrace.android.embracesdk.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.anr.NoOpAnrService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.config.local.AutomaticDataCaptureLocalConfig
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.system.mockLooper
+import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull
@@ -29,11 +29,12 @@ internal class AnrModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val initModule = InitModuleImpl()
         val module = AnrModuleImpl(
-            InitModuleImpl(),
+            initModule,
             FakeCoreModule(),
             FakeEssentialServiceModule(),
-            FakeWorkerThreadModule()
+            WorkerThreadModuleImpl(initModule)
         )
         assertNotNull(module.anrService)
         assertNotNull(module.googleAnrTimestampRepository)
@@ -42,13 +43,14 @@ internal class AnrModuleImplTest {
 
     @Test
     fun testBehaviorDisabled() {
+        val initModule = InitModuleImpl()
         val module = AnrModuleImpl(
-            InitModuleImpl(),
+            initModule,
             FakeCoreModule(),
             FakeEssentialServiceModule(
                 configService = createConfigServiceWithAnrDisabled()
             ),
-            FakeWorkerThreadModule()
+            WorkerThreadModuleImpl(initModule)
         )
         assertTrue(module.anrService is NoOpAnrService)
         assertTrue(module.responsivenessMonitorService is NoOpResponsivenessMonitorService)

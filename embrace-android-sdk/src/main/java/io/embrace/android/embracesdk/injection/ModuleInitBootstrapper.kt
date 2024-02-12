@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
@@ -14,9 +15,13 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
+import io.embrace.android.embracesdk.worker.TaskPriority
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
@@ -57,25 +62,34 @@ internal class ModuleInitBootstrapper(
     lateinit var deliveryModule: DeliveryModule
         private set
 
-    private val initialized = AtomicBoolean(false)
+    private val asyncInitTask = AtomicReference<Future<*>?>(null)
 
+    /**
+     * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
+     */
     @JvmOverloads
     fun init(
         context: Context,
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
+        sdkStartTimeNanos: Long,
         customAppId: String? = null,
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
-        if (initialized.get()) {
+        if (asyncInitTask.get() != null) {
             return false
         }
 
-        synchronized(initialized) {
-            return if (!initialized.get()) {
+        synchronized(asyncInitTask) {
+            return if (asyncInitTask.get() == null) {
                 coreModule = coreModuleSupplier(context, appFramework)
                 workerThreadModule = workerThreadModuleSupplier(initModule)
+                val initTask = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
+                    Systrace.trace("spans-service-init") {
+                        openTelemetryModule.spansService.initializeService(sdkStartTimeNanos)
+                    }
+                }
                 systemServiceModule = systemServiceModuleSupplier(coreModule, versionChecker)
                 androidServicesModule = androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                 storageModule = storageModuleSupplier(initModule, coreModule, workerThreadModule)
@@ -102,11 +116,18 @@ internal class ModuleInitBootstrapper(
                         versionChecker
                     )
                 deliveryModule = deliveryModuleSupplier(coreModule, workerThreadModule, storageModule, essentialServiceModule)
-                initialized.set(true)
+                asyncInitTask.set(initTask)
                 true
             } else {
                 false
             }
         }
     }
+
+    /**
+     * A blocking get that returns when the async portion of initialization is complete. An exception will be thrown by the underlying
+     * [Future] if there is a timeout or if this failed for other reasons.
+     */
+    @JvmOverloads
+    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) = asyncInitTask.get()?.get(timeout, unit)
 }

@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,6 +57,7 @@ import io.embrace.android.embracesdk.injection.StorageModule;
 import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
+import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
@@ -87,7 +87,6 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
-import io.embrace.android.embracesdk.worker.TaskPriority;
 import io.embrace.android.embracesdk.worker.WorkerName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
@@ -299,7 +298,11 @@ final class EmbraceImpl {
 
         final long startTime = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, customAppId);
+        final Systrace.Instance initTrace = Systrace.Companion.start("modules-init");
+        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, TimeUnit.MILLISECONDS.toNanos(startTime), customAppId);
+        if (initTrace != null) {
+            Systrace.Companion.end(initTrace);
+        }
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
         serviceRegistry = coreModule.getServiceRegistry();
@@ -308,13 +311,7 @@ final class EmbraceImpl {
 
         final OpenTelemetryModule openTelemetryModule = moduleInitBootstrapper.getOpenTelemetryModule();
         serviceRegistry.registerService(openTelemetryModule.getSpansService());
-
         workerThreadModule = moduleInitBootstrapper.getWorkerThreadModule();
-        final Future<?> spansInitTask =
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL, () -> {
-                openTelemetryModule.getSpansService().initializeService(TimeUnit.MILLISECONDS.toNanos(startTime));
-                return null;
-            });
 
         final SystemServiceModule systemServiceModule = moduleInitBootstrapper.getSystemServiceModule();
         final AndroidServicesModule androidServicesModule = moduleInitBootstrapper.getAndroidServicesModule();
@@ -585,7 +582,7 @@ final class EmbraceImpl {
 
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
-        spansInitTask.get(5, TimeUnit.SECONDS);
+        moduleInitBootstrapper.waitForAsyncInit();
     }
 
     /**

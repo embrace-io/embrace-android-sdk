@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
@@ -15,4 +16,6 @@ internal class FakeInitModule(
     initModule: InitModule = InitModuleImpl(clock = clock, openTelemetryClock = openTelemetryClock)
 ) : InitModule by initModule {
     val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule)
+
+    fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

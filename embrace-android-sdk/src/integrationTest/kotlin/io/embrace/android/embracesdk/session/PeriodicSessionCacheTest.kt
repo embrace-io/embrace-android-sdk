@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.getLastSavedSessionMessage
 import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.recordSession
@@ -24,9 +24,11 @@ internal class PeriodicSessionCacheTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
+        val fakeInitModule = FakeInitModule(clock = clock)
         IntegrationTestRule.Harness(
             fakeClock = clock,
-            workerThreadModule = FakeWorkerThreadModule(clock, PERIODIC_CACHE)
+            initModule = fakeInitModule,
+            workerThreadModule = FakeWorkerThreadModule(fakeInitModule, PERIODIC_CACHE)
         )
     }
 

@@ -89,11 +89,9 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @Override
     public void start(@NonNull Context context, boolean enableIntegrationTesting, @NonNull AppFramework appFramework) {
-        Systrace.startSynchronous("start-method");
         if (verifyNonNullParameters("start", context, appFramework)) {
             impl.start(context, enableIntegrationTesting, appFramework);
         }
-        Systrace.endSynchronous();
     }
 
     @Override

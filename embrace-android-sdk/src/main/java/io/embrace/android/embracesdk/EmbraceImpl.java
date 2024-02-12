@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.anr.AnrService;
-import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerServiceKt;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService;
@@ -32,27 +31,19 @@ import io.embrace.android.embracesdk.config.behavior.NetworkBehavior;
 import io.embrace.android.embracesdk.event.EventService;
 import io.embrace.android.embracesdk.event.LogMessageService;
 import io.embrace.android.embracesdk.injection.AndroidServicesModule;
-import io.embrace.android.embracesdk.injection.AnrModuleImpl;
+import io.embrace.android.embracesdk.injection.AnrModule;
 import io.embrace.android.embracesdk.injection.CoreModule;
 import io.embrace.android.embracesdk.injection.CrashModule;
-import io.embrace.android.embracesdk.injection.CrashModuleImpl;
-import io.embrace.android.embracesdk.injection.CustomerLogModuleImpl;
+import io.embrace.android.embracesdk.injection.CustomerLogModule;
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule;
 import io.embrace.android.embracesdk.injection.DataContainerModule;
-import io.embrace.android.embracesdk.injection.DataContainerModuleImpl;
-import io.embrace.android.embracesdk.injection.DataSourceModule;
-import io.embrace.android.embracesdk.injection.DataSourceModuleImpl;
 import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
 import io.embrace.android.embracesdk.injection.InitModule;
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule;
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
-import io.embrace.android.embracesdk.injection.SdkObservabilityModuleImpl;
 import io.embrace.android.embracesdk.injection.SessionModule;
-import io.embrace.android.embracesdk.injection.SessionModuleImpl;
-import io.embrace.android.embracesdk.injection.StorageModule;
-import io.embrace.android.embracesdk.injection.SystemServiceModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
@@ -68,7 +59,6 @@ import io.embrace.android.embracesdk.logging.InternalErrorLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.ndk.NativeModule;
-import io.embrace.android.embracesdk.ndk.NativeModuleImpl;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService;
@@ -81,7 +71,6 @@ import io.embrace.android.embracesdk.session.id.SessionIdTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker;
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService;
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator;
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties;
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService;
 import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
@@ -272,7 +261,7 @@ final class EmbraceImpl {
                boolean enableIntegrationTesting,
                @NonNull Embrace.AppFramework appFramework) {
         try {
-            Systrace.startSynchronous("sdk-init");
+            Systrace.startSynchronous("sdk-start");
             startImpl(context, enableIntegrationTesting, appFramework);
             Systrace.endSynchronous();
         } catch (Throwable t) {
@@ -309,12 +298,10 @@ final class EmbraceImpl {
         serviceRegistry.registerService(openTelemetryModule.getSpansService());
         workerThreadModule = moduleInitBootstrapper.getWorkerThreadModule();
 
-        final SystemServiceModule systemServiceModule = moduleInitBootstrapper.getSystemServiceModule();
         final AndroidServicesModule androidServicesModule = moduleInitBootstrapper.getAndroidServicesModule();
         preferencesService = androidServicesModule.getPreferencesService();
         serviceRegistry.registerService(preferencesService);
 
-        final StorageModule storageModule = moduleInitBootstrapper.getStorageModule();
         final EssentialServiceModule essentialServiceModule = moduleInitBootstrapper.getEssentialServiceModule();
         processStateService = essentialServiceModule.getProcessStateService();
         metadataService = essentialServiceModule.getMetadataService();
@@ -340,38 +327,13 @@ final class EmbraceImpl {
             dataCaptureServiceModule.getComponentCallbackService()
         );
 
-        /*
-         * Since onForeground() is called sequential in the order that services registered for it,
-         * it is important to initialize the `EmbraceAnrService`, and thus register the `onForeground()
-         * listener for it, before the `EmbraceSessionService`.
-         * The onForeground() call inside the EmbraceAnrService should be called before the
-         * EmbraceSessionService call. This is necessary since the EmbraceAnrService should be able to
-         * force a Main thread health check and close the pending ANR intervals that happened on the
-         * background before the next session is created.
-         */
-        AnrModuleImpl anrModule = new AnrModuleImpl(
-            initModule,
-            coreModule,
-            essentialServiceModule,
-            workerThreadModule
-        );
+        final AnrModule anrModule = moduleInitBootstrapper.getAnrModule();
         anrService = anrModule.getAnrService();
         serviceRegistry.registerServices(anrService, anrModule.getResponsivenessMonitorService());
 
-        // set callbacks and pass in non-placeholder config.
-        anrModule.getAnrService().finishInitialization(
-            essentialServiceModule.getConfigService()
-        );
-
         serviceRegistry.registerService(dataCaptureServiceModule.getPowerSaveModeService());
 
-        // initialize the logger early so that logged exceptions have a good chance of
-        // being appended to the exceptions service rather than logcat
-        final SdkObservabilityModule sdkObservabilityModule = new SdkObservabilityModuleImpl(
-            initModule,
-            essentialServiceModule
-        );
-
+        final SdkObservabilityModule sdkObservabilityModule = moduleInitBootstrapper.getSdkObservabilityModule();
         internalErrorService = sdkObservabilityModule.getInternalErrorService();
         serviceRegistry.registerService(internalErrorService);
         internalEmbraceLogger.addLoggerAction(sdkObservabilityModule.getInternalErrorLogger());
@@ -383,11 +345,6 @@ final class EmbraceImpl {
 
         final DeliveryModule deliveryModule = moduleInitBootstrapper.getDeliveryModule();
         serviceRegistry.registerService(deliveryModule.getDeliveryService());
-
-        final EmbraceSessionProperties sessionProperties = new EmbraceSessionProperties(
-            androidServicesModule.getPreferencesService(),
-            essentialServiceModule.getConfigService(), coreModule.getLogger()
-        );
 
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
             internalEmbraceLogger.logInfo("the SDK is disabled");
@@ -403,15 +360,7 @@ final class EmbraceImpl {
         userService = essentialServiceModule.getUserService();
         serviceRegistry.registerServices(userService);
 
-        final CustomerLogModuleImpl customerLogModule = new CustomerLogModuleImpl(
-            initModule,
-            coreModule,
-            androidServicesModule,
-            essentialServiceModule,
-            deliveryModule,
-            sessionProperties,
-            workerThreadModule
-        );
+        final CustomerLogModule customerLogModule = moduleInitBootstrapper.getCustomerLogModule();
         logMessageService = customerLogModule.getLogMessageService();
         networkCaptureService = customerLogModule.getNetworkCaptureService();
         networkLoggingService = customerLogModule.getNetworkLoggingService();
@@ -421,32 +370,9 @@ final class EmbraceImpl {
             networkLoggingService
         );
 
-        final NativeModule nativeModule = new NativeModuleImpl(
-            coreModule,
-            storageModule,
-            essentialServiceModule,
-            deliveryModule,
-            androidServicesModule,
-            sessionProperties,
-            workerThreadModule
-        );
+        final NativeModule nativeModule = moduleInitBootstrapper.getNativeModule();
 
-        final DataContainerModule dataContainerModule = new DataContainerModuleImpl(
-            initModule,
-            openTelemetryModule,
-            coreModule,
-            workerThreadModule,
-            systemServiceModule,
-            androidServicesModule,
-            essentialServiceModule,
-            dataCaptureServiceModule,
-            anrModule,
-            customerLogModule,
-            deliveryModule,
-            nativeModule,
-            sessionProperties,
-            startTime
-        );
+        final DataContainerModule dataContainerModule = moduleInitBootstrapper.getDataContainerModule();
 
         eventService = dataContainerModule.getEventService();
         serviceRegistry.registerServices(
@@ -464,36 +390,7 @@ final class EmbraceImpl {
             nativeThreadSampler
         );
 
-        if (nativeThreadSampler != null && nativeThreadSamplerInstaller != null) {
-            // install the native thread sampler
-            nativeThreadSampler.setupNativeSampler();
-
-            // In Unity this should always run on the Unity thread.
-            if (coreModule.getAppFramework() == Embrace.AppFramework.UNITY && EmbraceNativeThreadSamplerServiceKt.isUnityMainThread()) {
-                sampleCurrentThreadDuringAnrs();
-            }
-        } else {
-            internalEmbraceLogger.logWarning("Failed to load SO file embrace-native");
-        }
-
-        DataSourceModule dataSourceModule = new DataSourceModuleImpl(essentialServiceModule);
-
-        final SessionModule sessionModule = new SessionModuleImpl(
-            initModule,
-            openTelemetryModule,
-            androidServicesModule,
-            essentialServiceModule,
-            nativeModule,
-            dataContainerModule,
-            deliveryModule,
-            sessionProperties,
-            dataCaptureServiceModule,
-            customerLogModule,
-            sdkObservabilityModule,
-            workerThreadModule,
-            dataSourceModule
-        );
-
+        final SessionModule sessionModule = moduleInitBootstrapper.getSessionModule();
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
 
@@ -507,21 +404,9 @@ final class EmbraceImpl {
             essentialServiceModule.getSessionIdTracker()
         );
 
-        final CrashModule crashModule = new CrashModuleImpl(
-            initModule,
-            storageModule,
-            essentialServiceModule,
-            deliveryModule,
-            nativeModule,
-            sessionModule,
-            anrModule,
-            dataContainerModule,
-            androidServicesModule
-        );
-
+        final CrashModule crashModule = moduleInitBootstrapper.getCrashModule();
         loadCrashVerifier(crashModule, workerThreadModule);
 
-        Thread.setDefaultUncaughtExceptionHandler(crashModule.getAutomaticVerificationExceptionHandler());
         serviceRegistry.registerService(crashModule.getCrashService());
 
         serviceRegistry.registerService(dataCaptureServiceModule.getThermalStatusService());
@@ -531,7 +416,7 @@ final class EmbraceImpl {
         }
 
         // initialize internal interfaces
-        final InternalInterfaceModuleImpl internalInterfaceModule = new InternalInterfaceModuleImpl(
+        final InternalInterfaceModule internalInterfaceModule = new InternalInterfaceModuleImpl(
             initModule,
             openTelemetryModule,
             coreModule,

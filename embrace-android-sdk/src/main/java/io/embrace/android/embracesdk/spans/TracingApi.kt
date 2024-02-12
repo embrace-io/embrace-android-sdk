@@ -133,6 +133,14 @@ internal interface TracingApi {
     ): Boolean
 
     /**
+     * Return the [EmbraceSpan] corresponding to the given [spanId] if it is active or it has completed in the current session.
+     * Returns null if a span corresponding to the given [spanId] cannot be found, which can happen if this span never existed or
+     * if was completed in a prior session.
+     */
+    @BetaApi
+    fun getSpan(spanId: String): EmbraceSpan?
+
+    /**
      * @see [Embrace.isStarted]
      */
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")

@@ -55,7 +55,7 @@ jobs:
 
       - name: create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: embrace-io/android-emulator-runner@v2
+        uses: embrace-io/android-emulator-runner@ReactiveCircus:main
         with:
           api-level: ${{ matrix.api-level }}
           force-avd-creation: false
@@ -72,7 +72,7 @@ jobs:
         uses: gradle/wrapper-validation-action@v2
 
       - name: Run Functional Tests
-        uses: embrace-io/android-emulator-runner@v2
+        uses: embrace-io/android-emulator-runner@ReactiveCircus:main
         id: runFunctionalTests1
         continue-on-error: true
         with:
@@ -85,7 +85,7 @@ jobs:
           script: ./gradlew connectedCheck --stacktrace || (adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Retry Functional Tests
-        uses: embrace-io/android-emulator-runner@v2
+        uses: embrace-io/android-emulator-runner@ReactiveCircus:main
         id: runFunctionalTests2
         if: steps.runFunctionalTests1.outcome == 'failure'
         with:

@@ -22,7 +22,7 @@ jobs:
       matrix:
         jdk-version: ["17"]
         ndk-version: ["21.4.7075529"]
-        api-level: [29]
+        api-level: [33]
         target: [default]
 
     steps:
@@ -79,7 +79,7 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
           arch: x86_64
-          profile: Nexus 6
+          profile: Pixel 7
           # Grab the failures from the device so we can include them in results.
           # Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck --stacktrace || (adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
@@ -92,7 +92,7 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
           arch: x86_64
-          profile: Nexus 6
+          profile: Pixel 7
           # Grab the failures from the device so we can include them in results.
           # Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck --stacktrace || (adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)

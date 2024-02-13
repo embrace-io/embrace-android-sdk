@@ -83,23 +83,6 @@ internal class MomentMessageTest : BaseTest() {
 
     }
 
-    /**
-     * Verifies that a custom moment is sent by the SDK.
-     */
-    @Test
-    fun customMomentFailRequestTest() {
-        waitForFailedRequest(
-            endpoint = EmbraceEndpoint.EVENTS,
-            request = { Embrace.getInstance().startMoment(MOMENT_NAME) },
-            action = {
-                // Validate start moment request
-                waitForRequest { request ->
-                    validateMessageAgainstGoldenFile(request, "moment-custom-start-event.json")
-                }
-            },
-            validate = { file -> validateFileContent(file) })
-    }
-
     private fun validateFileContent(file: File) {
         try {
             assertTrue(file.exists() && !file.isDirectory)

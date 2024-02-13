@@ -82,7 +82,7 @@ jobs:
           profile: Nexus 6
           # Grab the failures from the device so we can include them in results.
           # Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck --stacktrace || (adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
+          script: ./gradlew connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Retry Functional Tests
         uses: embrace-io/android-emulator-runner@v2
@@ -95,7 +95,7 @@ jobs:
           profile: Nexus 6
           # Grab the failures from the device so we can include them in results.
           # Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck --stacktrace || (adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
+          script: ./gradlew connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -105,6 +105,7 @@ jobs:
           path: |
             embrace-android-sdk/build/reports/androidTests/connected
             test_failure
+            emulator_logcat.log
 
       - name: Post workflow result
         id: slack

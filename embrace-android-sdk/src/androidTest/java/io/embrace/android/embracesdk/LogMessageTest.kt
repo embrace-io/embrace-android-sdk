@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import java.io.File
 import java.io.IOException
+import logTestMessage
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -25,6 +26,7 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logInfoTest() {
+        logTestMessage("Adding info log to Embrace.")
         Embrace.getInstance().logInfo("Test log info")
 
         waitForRequest { request ->
@@ -34,9 +36,10 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logInfoWithPropertyTest() {
+        logTestMessage("Adding info log to Embrace.")
+
         val properties = HashMap<String, Any>()
         properties["info"] = "test property"
-
         Embrace.getInstance().logMessage("Test log info with property", Severity.INFO, properties)
 
         waitForRequest { request ->
@@ -56,12 +59,13 @@ internal class LogMessageTest : BaseTest() {
             assert(pendingApiCallFileName.isNotBlank())
             readFileContent("Test log info fail", pendingApiCallFileName)
         } catch (e: IOException) {
-            fail("IOException error: ${e.message}")
+            throw IllegalStateException("Failed to validate file context", e)
         }
     }
 
     @Test
     fun logErrorTest() {
+        logTestMessage("Adding error log to Embrace.")
         Embrace.getInstance().logError("Test log error")
 
         waitForRequest { request ->
@@ -71,6 +75,7 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logErrorWithPropertyTest() {
+        logTestMessage("Adding error log to Embrace.")
         val properties = HashMap<String, Any>()
         properties["error"] = "test property"
 
@@ -83,6 +88,7 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logExceptionTest() {
+        logTestMessage("Adding exception log to Embrace.")
         Embrace.getInstance().logException(Exception("Another log error"))
 
         waitForRequest { request ->
@@ -92,6 +98,7 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logErrorWithExceptionAndMessageTest() {
+        logTestMessage("Adding exception log to Embrace.")
         val exception = java.lang.NullPointerException("Exception message")
         Embrace.getInstance().logException(exception, Severity.ERROR, mapOf(), "log message")
 
@@ -105,6 +112,7 @@ internal class LogMessageTest : BaseTest() {
 
     @Test
     fun logWarningTest() {
+        logTestMessage("Adding warning log to Embrace.")
         Embrace.getInstance().logWarning("Test log warning")
 
         waitForRequest { request ->

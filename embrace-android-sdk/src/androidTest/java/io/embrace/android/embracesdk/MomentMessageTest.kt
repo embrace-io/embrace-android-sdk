@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import java.io.File
 import java.io.IOException
+import logTestMessage
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -30,6 +31,7 @@ internal class MomentMessageTest : BaseTest() {
     @Test
     fun customMomentTest() {
         // Send start moment
+        logTestMessage("Starting start moment to Embrace.")
         Embrace.getInstance().startMoment(MOMENT_NAME)
 
         // Validate start moment request
@@ -38,6 +40,7 @@ internal class MomentMessageTest : BaseTest() {
         }
 
         // Send end moment
+        logTestMessage("Ending start moment to Embrace.")
         Embrace.getInstance().endMoment(MOMENT_NAME)
 
         // Validate end moment request
@@ -52,9 +55,11 @@ internal class MomentMessageTest : BaseTest() {
     @Test
     fun startMomentWithPropertiesTest() {
         // ignore startup event
+        logTestMessage("Ending appStartup moment in Embrace.")
         Embrace.getInstance().endAppStartup()
         waitForRequest()
 
+        logTestMessage("Sending moment in Embrace.")
         val properties = HashMap<String, Any>()
         properties["key1"] = "value1"
         properties["key2"] = "value2"
@@ -71,6 +76,7 @@ internal class MomentMessageTest : BaseTest() {
         }
 
         // Send end moment
+        logTestMessage("Ending moment in Embrace.")
         Embrace.getInstance().endMoment(MOMENT_NAME)
 
         // Validate end moment request

@@ -28,7 +28,10 @@ internal class SpanTest {
             val fakeSpanExporter = FakeSpanExporter()
             embrace.addSpanExporter(fakeSpanExporter)
             embrace.start(harness.fakeCoreModule.context)
-            assertTrue("Timed out waiting for the span to be exported", fakeSpanExporter.awaitSpanExport(1))
+            assertTrue(
+                "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
+                fakeSpanExporter.awaitSpanExport(1)
+            )
             val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
             assertEquals(1, exportedSpans.size)
             assertEquals(1, exportedSpans[0].attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)

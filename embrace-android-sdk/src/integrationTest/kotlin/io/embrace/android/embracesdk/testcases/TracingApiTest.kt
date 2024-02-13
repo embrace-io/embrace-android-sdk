@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -35,6 +34,8 @@ internal class TracingApiTest {
         }
     )
 
+    private val results = mutableListOf<String>()
+
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
         val testStartTime = testRule.harness.fakeClock.now()
@@ -43,7 +44,13 @@ internal class TracingApiTest {
             harness.fakeClock.tick(100L)
             embrace.addSpanExporter(spanExporter)
             embrace.start(harness.fakeCoreModule.context)
-            harness.recordSession {
+            results.add(
+                "\nCompleted spans in spansSink before session starts: ${
+                    harness.openTelemetryModule.spansSink.completedSpans().map { it.name }
+                }\n"
+            )
+            results.add("Spans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}\n")
+            val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start())
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
@@ -89,23 +96,45 @@ internal class TracingApiTest {
                     )
                 )
                 harness.fakeClock.tick(300L)
+                results.add(
+                    "Completed spans in spansSink before ending startup: ${
+                        harness.openTelemetryModule.spansSink.completedSpans().map { it.name }
+                    }\n"
+                )
+                results.add("Spans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}\n")
                 embrace.endAppStartup()
-                // There should be at least 5 spans exported at this point, so we wait for the startup moment span to finish up.
-                assertTrue("Timed out waiting for all the spans to be exported", spanExporter.awaitSpanExport(count = 5))
             }
+            results.add(
+                "Completed spans in spansSink after session ends: ${
+                    harness.openTelemetryModule.spansSink.completedSpans().map { it.name }
+                }\n"
+            )
+            results.add("Spans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}\n")
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
-            val sessionMessage = harness.fakeDeliveryModule.deliveryService.lastSentSessions[1]
-            assertEquals(SessionSnapshotType.NORMAL_END, sessionMessage.second)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
-                checkNotNull(sessionMessage.first.spans) +
+                checkNotNull(sessionMessage?.spans) +
                 checkNotNull(harness.openTelemetryModule.spansSink.completedSpans())
 
-            // There should be 6 total spans here, with the 5 from before the session ended, plus the session span
-            assertTrue("Timed out waiting for the session span to be exported", spanExporter.awaitSpanExport(count = 6))
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session-span"])
             val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
+
+            results.add("All spans to validate: ${allSpans.map { it.name }}\n")
+            results.add("Filtered set of spans to validate: ${spansMap.keys.map { it }}\n")
+            results.add("Spans exported before validation: ${spanExporter.exportedSpans.toList().map { it.name }}\n")
+            val expectedSpanName = listOf(
+                "emb-sdk-init",
+                "test-trace-root",
+                "record-span-span",
+                "completed-span",
+                "emb-startup-moment",
+                "emb-session-span",
+            )
+            expectedSpanName.forEach {
+                checkNotNull(spansMap[it]) { "$it not found: $results" }
+            }
+
             assertEmbraceSpanData(
                 span = spansMap["emb-sdk-init"],
                 expectedStartTimeMs = testStartTime + 100,

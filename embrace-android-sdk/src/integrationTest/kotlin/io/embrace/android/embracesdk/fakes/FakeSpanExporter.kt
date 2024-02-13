@@ -16,13 +16,13 @@ internal class FakeSpanExporter : SpanExporter {
     override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
         synchronized(exportedSpans) {
             exportedSpans.addAll(spans)
-            totalExported += spans.size
             latches.forEach { latch ->
                 repeat(min(latch.count.toInt(), spans.size)) {
                     latch.countDown()
                 }
             }
             latches.removeIf { it.count == 0L }
+            totalExported += spans.size
         }
         return CompletableResultCode.ofSuccess()
     }
@@ -42,14 +42,16 @@ internal class FakeSpanExporter : SpanExporter {
      * Block the thread until the number of spans expected have been exported by this exporter since the last flush
      */
     fun awaitSpanExport(count: Int = 1, timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): Boolean {
-        return if (count <= totalExported) {
-            true
-        } else {
-            synchronized(exportedSpans) {
-                val latch = CountDownLatch(count)
-                latches.add(latch)
-                latch
-            }.await(timeout, unit)
+        val latch = synchronized(exportedSpans) {
+            return@synchronized if (count > totalExported) {
+                val newLatch = CountDownLatch(count)
+                latches.add(newLatch)
+                newLatch
+            } else {
+                null
+            }
         }
+
+        return latch?.await(timeout, unit) ?: true
     }
 }

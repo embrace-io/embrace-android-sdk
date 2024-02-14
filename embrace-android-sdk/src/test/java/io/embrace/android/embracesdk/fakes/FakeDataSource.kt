@@ -29,7 +29,9 @@ internal class FakeDataSource(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         captureData {
-            // TODO: interact with span here.
+            mutateSessionSpan {
+                setAttribute("orientation", newConfig.orientation.toString())
+            }
         }
     }
 

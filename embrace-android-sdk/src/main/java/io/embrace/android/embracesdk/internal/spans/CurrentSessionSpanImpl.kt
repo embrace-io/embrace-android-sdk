@@ -123,6 +123,8 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
+    override fun retrieveSessionSpan(): Span? = sessionSpan.get()
+
     /**
      * This method should always be used when starting a new session span
      */

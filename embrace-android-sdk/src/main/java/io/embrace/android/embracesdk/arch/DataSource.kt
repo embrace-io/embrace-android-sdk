@@ -21,14 +21,20 @@ internal interface DataSource<T> {
     fun captureData(action: T.() -> Unit)
 
     /**
-     * Register any listeners that are required for capturing data.
+     * Enables data capture. This should include registering any listeners, and resetting
+     * any state (if applicable).
+     *
+     * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun registerListeners()
+    fun enableDataCapture()
 
     /**
-     * Unregister any listeners that might be capturing data.
+     * Disables data capture. This should include unregistering any listeners, and resetting
+     * any state (if applicable).
+     *
+     * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun unregisterListeners()
+    fun disableDataCapture()
 }
 
 /**

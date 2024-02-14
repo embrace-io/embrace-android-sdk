@@ -62,10 +62,10 @@ internal class DataSourceState(
 
         if (enabled && dataSource == null) {
             dataSource = enabledDataSource.apply {
-                registerListeners()
+                enableDataCapture()
             }
         } else if (!enabled && dataSource != null) {
-            dataSource?.unregisterListeners()
+            dataSource?.disableDataCapture()
             dataSource = null
         }
     }

@@ -29,8 +29,10 @@ internal class DataSourceImplTest {
     private class FakeDataSourceImpl(dst: FakeCurrentSessionSpan) :
         DataSourceImpl<FakeCurrentSessionSpan>(dst) {
 
-        override fun registerListeners() {}
+        override fun enableDataCapture() {
+        }
 
-        override fun unregisterListeners() {}
+        override fun disableDataCapture() {
+        }
     }
 }

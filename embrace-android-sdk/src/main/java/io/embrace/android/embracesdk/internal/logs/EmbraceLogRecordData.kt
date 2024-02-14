@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.squareup.moshi.Json
-import io.opentelemetry.sdk.logs.data.Body
+import com.squareup.moshi.JsonClass
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
+/**
+ * Serializable representation of [EmbraceLogRecordData]
+ */
+@JsonClass(generateAdapter = true)
 internal data class EmbraceLogRecordData(
     @Json(name = "trace_id")
     val traceId: String,
@@ -21,7 +25,7 @@ internal data class EmbraceLogRecordData(
     val severityText: String?,
 
     @Json(name = "body")
-    val body: Body,
+    val body: EmbraceBody,
 
     @Json(name = "attributes")
     val attributes: Map<String, String> = emptyMap()
@@ -33,7 +37,7 @@ internal data class EmbraceLogRecordData(
         timeUnixNanos = logRecordData.observedTimestampEpochNanos,
         severityNumber = logRecordData.severity.severityNumber,
         severityText = logRecordData.severityText,
-        body = logRecordData.body,
+        body = EmbraceBody(logRecordData.body.asString()),
         attributes = logRecordData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
     )
 }

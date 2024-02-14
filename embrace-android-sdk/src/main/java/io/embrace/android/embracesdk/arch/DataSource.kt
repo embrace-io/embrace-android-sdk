@@ -41,17 +41,17 @@ internal interface DataSource<T> {
  * A [DataSource] that adds either a [EmbraceSpanEvent] or [EmbraceSpanAttribute]
  * to the current session span.
  */
-internal interface EventDataSource : DataSource<CurrentSessionSpan>
+internal typealias EventDataSource = DataSource<CurrentSessionSpan>
 
 /**
  * A [DataSource] that adds or alters a new span on the [SpansService]
  */
-internal interface SpanDataSource : DataSource<EmbraceTracer>
+internal typealias SpanDataSource = DataSource<EmbraceTracer>
 
 /**
  * A [DataSource] that adds a new log to the log service.
  */
-internal interface LogDataSource : DataSource<LogService>
+internal typealias LogDataSource = DataSource<LogService>
 
 /**
  * Placeholder type for the log service.

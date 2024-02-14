@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import logTestMessage
 import org.junit.Before
 import org.junit.Test
 
@@ -15,6 +16,7 @@ internal class SessionMessageTest : BaseTest() {
      */
     @Test
     fun sessionEndMessageTest() {
+        logTestMessage("Adding core web vitals")
         addCoreWebVitals()
         sendBackground()
 

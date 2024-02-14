@@ -5,7 +5,6 @@ import android.os.FileObserver
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import android.util.Log
 import androidx.lifecycle.ProcessLifecycleOwnerAccess
 import androidx.test.platform.app.InstrumentationRegistry
 import io.embrace.android.embracesdk.comms.api.ApiClient
@@ -34,6 +33,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import logTestMessage
 
 /**
  * The default Base test class, which all tests using TestServer should inherit from. This
@@ -56,6 +56,7 @@ internal open class BaseTest {
     @SuppressLint("VisibleForTests")
     @Before
     fun beforeEach() {
+        logTestMessage("Starting test server")
         testServer.start(getDefaultNetworkResponses())
 
         if (Looper.myLooper() == null) {
@@ -70,19 +71,24 @@ internal open class BaseTest {
         // attach our mock context to the ProcessLifecycleOwner, this will give us control over the
         // activity/application lifecycle for callbacks registered with the ProcessLifecycleOwner
         Handler(Looper.getMainLooper()).post {
+            logTestMessage("Attaching mock context to ProcessLifecycleOwner")
             ProcessLifecycleOwnerAccess.attach(mContext)
         }
+
+        logTestMessage("Clearing cache folder")
         clearCacheFolder()
 
+        logTestMessage("Setting new embrace instance")
         Embrace.setImpl(EmbraceImpl())
 
+        logTestMessage("Setting local config")
         setLocalConfig()
         refreshScreenshotBitmap()
     }
 
     @After
     fun afterEach() {
-        Log.e("TestServer", "Stop Embrace")
+        logTestMessage("Stop Embrace")
         Embrace.getImpl().stop()
         testServer.stop()
         fileObserver?.stopWatching()
@@ -137,6 +143,7 @@ internal open class BaseTest {
      * we will trigger ON_CREATE and then trigger ON_START when this method is invoked
      */
     private fun sendForeground() {
+        logTestMessage("Sending application to the foreground")
         mContext.sendForeground()
     }
 
@@ -146,6 +153,7 @@ internal open class BaseTest {
      * lifecycle state is ON_RESUME, we will trigger ON_PAUSE and then trigger ON_START when this method is invoked
      */
     fun sendBackground() {
+        logTestMessage("Sending application to the background")
         mContext.sendBackground()
     }
 
@@ -158,11 +166,11 @@ internal open class BaseTest {
      * starts a session).
      */
     fun startEmbraceInForeground() {
-        Log.e("TestServer", "Start Embrace")
+        logTestMessage("Starting Embrace in the foreground")
         Embrace.getInstance().start(mContext)
         assertTrue(Embrace.getInstance().isStarted)
-        Log.e("TestServer", "initialize lifecycle to start session")
         sendForeground()
+        logTestMessage("Adding some data to the session")
         Embrace.getInstance().addBreadcrumb("a message")
         Embrace.getInstance().setUserEmail("user@email.com")
         Embrace.getInstance().setUserIdentifier("some id")
@@ -185,6 +193,7 @@ internal open class BaseTest {
      * It needs to be done with a for because the order of the requests can be different between runs.
      */
     private fun validateInitializationRequests() {
+        logTestMessage("Starting validation of initialization requests")
         var isStartupStartEventValidated = false
 
         (0 until TOTAL_REQUESTS_AT_INIT).forEach { _ ->
@@ -212,7 +221,7 @@ internal open class BaseTest {
 
                     else -> fail("Unexpected Request call. ${request.path}")
                 }
-                println("REQUEST: ${request.path}")
+                logTestMessage("Validated initialization request at ${request.path}")
             }
         }
     }
@@ -227,6 +236,7 @@ internal open class BaseTest {
      * fail the test.
      */
     fun waitForRequest(action: (response: RecordedRequest) -> Unit = {}) {
+        logTestMessage("Waiting to assert that request was received by MockWebServer.")
         val request = testServer.takeRequest()
         request?.let(action) ?: fail(
             "Expected request not sent after configured timeout. " +
@@ -236,10 +246,12 @@ internal open class BaseTest {
 
     fun waitForFailedRequest(
         endpoint: EmbraceEndpoint,
-        request: () -> Unit,
-        action: () -> Unit,
+        embraceOperation: () -> Unit,
+        assertion: () -> Unit,
         validate: (file: File) -> Unit
     ) {
+        logTestMessage("Waiting to assert that failed request was written to disk.")
+
         val startSignal = CountDownLatch(1)
         val file = File(pendingApiCallsFilePath)
 
@@ -251,9 +263,14 @@ internal open class BaseTest {
             TestServerResponse(ApiClient.NO_HTTP_RESPONSE)
         )
 
-        request()
-        action()
-        startSignal.await(1000, TimeUnit.MILLISECONDS)
+        logTestMessage("Performing Embrace operation that will fail.")
+
+        embraceOperation()
+
+        logTestMessage("Performing assertion on Embrace action. that will fail.")
+
+        assertion()
+        startSignal.await(FAILED_REQUEST_WAIT_TIME_MS, TimeUnit.MILLISECONDS)
         validate(file)
     }
 
@@ -261,8 +278,11 @@ internal open class BaseTest {
         request: RecordedRequest,
         goldenFileName: String
     ) {
+        logTestMessage("Validating request against golden file $goldenFileName.")
+
         try {
             val requestBody = readCompressedRequestBody(request)
+            logTestMessage("Read request body.")
             val goldenFileIS = mContext.assets.open("golden-files/$goldenFileName")
 
             val msg by lazy {
@@ -278,15 +298,21 @@ internal open class BaseTest {
                     "adb pull ${observedOutput.absolutePath}\n" +
                     "observed: $requestBody"
             }
+            logTestMessage("Comparing expected versus observed JSON.")
             assertTrue(msg, JsonValidator.areEquals(goldenFileIS, requestBody))
         } catch (e: IOException) {
-            fail("Failed to validate request against golden file. ${e.stackTraceToString()}")
+            throw IllegalStateException("Failed to validate request against golden file.", e)
         }
     }
 
     private fun readCompressedRequestBody(request: RecordedRequest): String {
         return try {
-            val data = GZIPInputStream(request.body.inputStream())
+            val inputStream = request.body.inputStream()
+            logTestMessage("Opened input stream to request")
+
+            val data = GZIPInputStream(inputStream)
+            logTestMessage("Opened Gzip stream to request")
+
             data.use { String(it.readBytes()) }
         } catch (exc: IOException) {
             throw IllegalStateException(
@@ -302,6 +328,7 @@ internal open class BaseTest {
         goldenFilename: String,
         suffix: String
     ): File {
+        logTestMessage("Writing expected/observed output to disk.")
         val dir = File(mContext.externalCacheDir, "test_failure").apply { mkdir() }
         return File(dir, "${goldenFilename}$suffix").apply {
             writeText(requestBody)
@@ -317,7 +344,9 @@ internal open class BaseTest {
     fun readFileContent(failedApiContent: String, failedCallFileName: String) {
         val failedApiFilePath = storageDir.path + "/emb_" + failedCallFileName
         val failedApiFile = File(failedApiFilePath)
+        logTestMessage("Reading failed API call at $failedApiFilePath")
         GZIPInputStream(failedApiFile.inputStream()).use { stream ->
+            logTestMessage("Asserting failed API call contains expected content.")
             val jsonString = String(stream.readBytes())
             assertTrue(jsonString.contains(failedApiContent))
         }
@@ -337,6 +366,7 @@ internal open class BaseTest {
     }
 }
 
+public const val FAILED_REQUEST_WAIT_TIME_MS: Long = 10000
 public const val TOTAL_REQUESTS_AT_INIT: Int = 3
 public const val BITMAP_HEIGHT: Int = 100
 public const val BITMAP_WIDTH: Int = 100

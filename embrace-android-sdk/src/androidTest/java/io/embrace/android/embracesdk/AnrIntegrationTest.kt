@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -11,6 +10,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import logTestMessage
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -152,7 +152,7 @@ internal class AnrIntegrationTest : BaseTest() {
             }
 
             handler.post {
-                Log.i("Embrace", "Starting first ANR interval")
+                logTestMessage("Starting first ANR interval")
                 Thread.sleep(8000)
                 latch.countDown()
                 scheduleNextMainThreadWork { produceSecondAnrInterval() }
@@ -161,35 +161,35 @@ internal class AnrIntegrationTest : BaseTest() {
     }
 
     private fun produceSecondAnrInterval() {
-        Log.i("Embrace", "Starting second ANR interval")
+        logTestMessage("Starting second ANR interval")
         Thread.sleep(2000)
         latch.countDown()
         scheduleNextMainThreadWork { produceThirdAnrInterval() }
     }
 
     private fun produceThirdAnrInterval() {
-        Log.i("Embrace", "Starting third ANR interval")
+        logTestMessage("Starting third ANR interval")
         Thread.sleep(3000)
         latch.countDown()
         scheduleNextMainThreadWork { produceFourthAnrInterval() }
     }
 
     private fun produceFourthAnrInterval() {
-        Log.i("Embrace", "Starting fourth ANR interval")
+        logTestMessage("Starting fourth ANR interval")
         Thread.sleep(3000)
         latch.countDown()
         scheduleNextMainThreadWork { produceFifthAnrInterval() }
     }
 
     private fun produceFifthAnrInterval() {
-        Log.i("Embrace", "Starting fifth ANR interval")
+        logTestMessage("Starting fifth ANR interval")
         Thread.sleep(3000)
         latch.countDown()
         scheduleNextMainThreadWork { produceSixthAnrInterval() }
     }
 
     private fun produceSixthAnrInterval() {
-        Log.i("Embrace", "Starting sixth ANR interval")
+        logTestMessage("Starting sixth ANR interval")
         Thread.sleep(3000)
         latch.countDown()
     }

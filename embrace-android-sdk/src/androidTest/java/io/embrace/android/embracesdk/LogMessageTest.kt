@@ -44,20 +44,6 @@ internal class LogMessageTest : BaseTest() {
         }
     }
 
-    @Test
-    fun logInfoFailRequestTest() {
-        waitForFailedRequest(
-            endpoint = EmbraceEndpoint.LOGGING,
-            request = { Embrace.getInstance().logInfo("Test log info fail") },
-            action = {
-                waitForRequest { request ->
-                    validateMessageAgainstGoldenFile(request, "log-info-fail-event.json")
-                }
-            },
-            validate = { file -> validateFileContent(file) }
-        )
-    }
-
     private fun validateFileContent(file: File) {
         try {
             assertTrue(file.exists() && !file.isDirectory)

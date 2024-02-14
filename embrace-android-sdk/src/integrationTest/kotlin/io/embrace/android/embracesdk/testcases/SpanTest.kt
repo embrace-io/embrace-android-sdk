@@ -3,12 +3,9 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,32 +29,12 @@ internal class SpanTest {
             embrace.addSpanExporter(fakeSpanExporter)
             embrace.start(harness.fakeCoreModule.context)
             assertTrue(
-                fakeSpanExporter.exportedSpans.map { it.name }.containsAll(
-                    listOf("emb-sdk-init")
-                )
+                "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
+                fakeSpanExporter.awaitSpanExport(1)
             )
-            assertTrue(
-                fakeSpanExporter.exportedSpans.all { spanData ->
-                    spanData.attributes.asMap().map { it.key.key }.contains("emb.sequence_id")
-                }
-            )
+            val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
+            assertEquals(1, exportedSpans.size)
+            assertEquals(1, exportedSpans[0].attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
         }
-    }
-}
-
-internal class FakeSpanExporter : SpanExporter {
-    val exportedSpans = mutableListOf<SpanData>()
-
-    override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
-        exportedSpans.addAll(spans)
-        return CompletableResultCode.ofSuccess()
-    }
-
-    override fun flush(): CompletableResultCode {
-        return CompletableResultCode.ofSuccess()
-    }
-
-    override fun shutdown(): CompletableResultCode {
-        return CompletableResultCode.ofSuccess()
     }
 }

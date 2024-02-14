@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 /**
  * Defines a 'data source'. This should be responsible for capturing a specific type
@@ -46,7 +47,7 @@ internal typealias EventDataSource = DataSource<SessionSpanWriter>
 /**
  * A [DataSource] that adds or alters a new span on the [SpansService]
  */
-internal typealias SpanDataSource = DataSource<EmbraceTracer>
+internal typealias SpanDataSource = DataSource<TracingApi>
 
 /**
  * A [DataSource] that adds a new log to the log service.

@@ -16,12 +16,11 @@ env:
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 45
     strategy:
       matrix:
         jdk-version: ["17"]
-        ndk-version: ["21.4.7075529"]
         api-level: [29]
         target: [default]
 

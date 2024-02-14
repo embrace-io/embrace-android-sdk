@@ -47,6 +47,7 @@ internal class DataSourceState(
     fun onSessionTypeChange(sessionType: SessionType?) {
         this.currentSessionType = sessionType
         updateDataSource()
+        enabledDataSource.resetDataCaptureLimits()
     }
 
     /**

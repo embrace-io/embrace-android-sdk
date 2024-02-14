@@ -36,6 +36,11 @@ internal interface DataSource<T> {
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
     fun disableDataCapture()
+
+    /**
+     * Resets any data capture limits since the last time [enableDataCapture] was called.
+     */
+    fun resetDataCaptureLimits()
 }
 
 /**

@@ -19,6 +19,10 @@ internal abstract class DataSourceImpl<T>(
         // no-op
     }
 
+    override fun resetDataCaptureLimits() {
+        // no-op
+    }
+
     override fun captureData(action: T.() -> Unit) {
         try {
             destination.action()

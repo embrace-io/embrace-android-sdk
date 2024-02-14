@@ -1,17 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.arch.DataSource
 import io.embrace.android.embracesdk.arch.DataSourceState
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
-
-internal class PlaceholderDataSource : DataSource {
-    override fun registerListeners() {
-    }
-
-    override fun unregisterListeners() {
-    }
-}
 
 /**
  * Declares all the data sources that are used by the Embrace SDK.
@@ -28,18 +19,12 @@ internal interface DataSourceModule {
      * Returns a list of all the data sources that are defined in this module.
      */
     fun getDataSources(): List<DataSourceState>
-
-    val placeholderDataSource: DataSourceState
 }
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
 ) : DataSourceModule {
     private val values: MutableList<DataSourceState> = mutableListOf()
-
-    override val placeholderDataSource by dataSource {
-        DataSourceState(::PlaceholderDataSource)
-    }
 
     /* Implementation details */
 
@@ -51,6 +36,7 @@ internal class DataSourceModuleImpl(
      * list on its creation. That list is then used by the [DataCaptureOrchestrator] to control
      * the data sources.
      */
+    @Suppress("unused")
     private fun dataSource(provider: () -> DataSourceState) = DataSourceDelegate(provider, values)
 }
 

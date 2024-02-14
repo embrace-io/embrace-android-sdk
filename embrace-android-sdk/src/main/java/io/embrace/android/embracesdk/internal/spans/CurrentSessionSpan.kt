@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
  * Abstraction of the current session span
  */
-internal interface CurrentSessionSpan : Initializable {
+internal interface CurrentSessionSpan : Initializable, SessionSpanWriter {
     /**
      * End the current session span and start a new one if the app is not terminating
      */

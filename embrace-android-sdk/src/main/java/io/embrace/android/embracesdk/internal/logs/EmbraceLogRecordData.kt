@@ -1,0 +1,39 @@
+package io.embrace.android.embracesdk.internal.logs
+
+import com.squareup.moshi.Json
+import io.opentelemetry.sdk.logs.data.Body
+import io.opentelemetry.sdk.logs.data.LogRecordData
+
+internal data class EmbraceLogRecordData(
+    @Json(name = "trace_id")
+    val traceId: String,
+
+    @Json(name = "span_id")
+    val spanId: String,
+
+    @Json(name = "time_unix_nano")
+    val timeUnixNanos: Long,
+
+    @Json(name = "severity_number")
+    val severityNumber: Int,
+
+    @Json(name = "severity_text")
+    val severityText: String?,
+
+    @Json(name = "body")
+    val body: Body,
+
+    @Json(name = "attributes")
+    val attributes: Map<String, String> = emptyMap()
+) {
+
+    internal constructor(logRecordData: LogRecordData) : this(
+        traceId = logRecordData.spanContext.traceId,
+        spanId = logRecordData.spanContext.spanId,
+        timeUnixNanos = logRecordData.observedTimestampEpochNanos,
+        severityNumber = logRecordData.severity.severityNumber,
+        severityText = logRecordData.severityText,
+        body = logRecordData.body,
+        attributes = logRecordData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
+    )
+}

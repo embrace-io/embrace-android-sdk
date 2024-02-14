@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -86,6 +87,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
     /**
      * Asserts that a network connectivity broadcast receiver can be registered/unregistered
      */
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Test
     @Throws(InterruptedException::class)
     fun `test connectivity broadcast receiver can register and unregister`() {

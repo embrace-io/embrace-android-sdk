@@ -30,7 +30,7 @@ object Versions {
 
     // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     @JvmField
-    val agp = "7.4.2"
+    val agp = "8.2.2"
 
     @JvmField
     val lint = "30.1.0"

@@ -28,7 +28,7 @@ internal data class EmbraceLogRecordData(
     val body: EmbraceBody,
 
     @Json(name = "attributes")
-    val attributes: Map<String, Any> = emptyMap()
+    val attributes: List<Pair<String, Any>> = listOf()
 ) {
 
     internal constructor(logRecordData: LogRecordData) : this(
@@ -38,6 +38,6 @@ internal data class EmbraceLogRecordData(
         severityNumber = logRecordData.severity.severityNumber,
         severityText = logRecordData.severityText,
         body = EmbraceBody(logRecordData.body.asString()),
-        attributes = logRecordData.attributes.asMap().entries.associate { it.key.key to it.value }
+        attributes = logRecordData.attributes.asMap().entries.associate { it.key.key to it.value }.toList()
     )
 }

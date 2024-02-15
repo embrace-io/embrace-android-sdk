@@ -46,7 +46,7 @@ internal class EmbraceLogRecordDataTest {
             every { severity } returns Severity.INFO
             every { body } returns Body.string(testLog.body.message)
             val attrBuilder = Attributes.builder()
-            testLog.attributes.entries.forEach { (key, value) ->
+            testLog.attributes.forEach { (key, value) ->
                 attrBuilder.put(AttributeKey.stringKey(key), value as String)
             }
             every { attributes } returns attrBuilder.build()

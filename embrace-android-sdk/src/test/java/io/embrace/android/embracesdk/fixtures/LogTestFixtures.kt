@@ -10,5 +10,5 @@ internal val testLog = EmbraceLogRecordData(
     severityNumber = 9,
     severityText = "INFO",
     body = EmbraceLogBody(message = "test log message"),
-    attributes = listOf(Pair("test1", "value1"), Pair("test2", "value2"))
+    attributes = mapOf(Pair("test1", "value1"), Pair("test2", "value2"))
 )

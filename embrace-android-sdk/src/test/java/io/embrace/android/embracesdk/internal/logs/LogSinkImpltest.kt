@@ -24,7 +24,7 @@ internal class LogSinkImpltest {
 
     @Test
     fun `verify default state`() {
-        assertEquals(0, logSink.logs().size)
+        assertEquals(0, logSink.completedLogs().size)
         assertEquals(0, logSink.flushLogs().size)
         assertEquals(CompletableResultCode.ofSuccess(), logSink.storeLogs(listOf()))
     }
@@ -33,14 +33,14 @@ internal class LogSinkImpltest {
     fun `storing logs adds to stored logs`() {
         val resultCode = logSink.storeLogs(listOf(getLogRecordData()))
         assertEquals(CompletableResultCode.ofSuccess(), resultCode)
-        assertEquals(1, logSink.logs().size)
-        assertEquals(EmbraceLogRecordData(logRecordData = getLogRecordData()), logSink.logs().first())
+        assertEquals(1, logSink.completedLogs().size)
+        assertEquals(EmbraceLogRecordData(logRecordData = getLogRecordData()), logSink.completedLogs().first())
     }
 
     @Test
     fun `flushing clears stored logs`() {
         logSink.storeLogs(listOf(mockk(relaxed = true), mockk(relaxed = true)))
-        val snapshot = logSink.logs()
+        val snapshot = logSink.completedLogs()
         assertEquals(2, snapshot.size)
 
         val flushedLogs = logSink.flushLogs()
@@ -48,7 +48,7 @@ internal class LogSinkImpltest {
         repeat(2) {
             assertSame(snapshot[it], flushedLogs[it])
         }
-        assertEquals(0, logSink.logs().size)
+        assertEquals(0, logSink.completedLogs().size)
     }
 
     private fun getLogRecordData(): LogRecordData {

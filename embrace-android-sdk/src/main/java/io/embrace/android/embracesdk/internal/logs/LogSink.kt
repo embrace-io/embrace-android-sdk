@@ -17,7 +17,7 @@ internal interface LogSink {
     /**
      * Returns the list of currently stored Logs.
      */
-    fun logs(): List<EmbraceLogRecordData>
+    fun completedLogs(): List<EmbraceLogRecordData>
 
     /**
      * Returns and clears the currently stored Logs. Implementations of this method must make sure the clearing and returning is

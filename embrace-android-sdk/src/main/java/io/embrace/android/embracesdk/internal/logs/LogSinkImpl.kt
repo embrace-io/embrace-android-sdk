@@ -18,7 +18,7 @@ internal class LogSinkImpl : LogSink {
         return CompletableResultCode.ofSuccess()
     }
 
-    override fun logs(): List<EmbraceLogRecordData> {
+    override fun completedLogs(): List<EmbraceLogRecordData> {
         synchronized(storedLogs) {
             return storedLogs.toList()
         }

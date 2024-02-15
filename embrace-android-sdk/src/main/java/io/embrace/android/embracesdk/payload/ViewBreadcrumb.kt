@@ -18,7 +18,7 @@ internal class ViewBreadcrumb(
      * The timestamp at which the view started.
      */
     @Json(name = "st")
-    val start: Long?,
+    var start: Long?,
 
     /**
      * The timestamp at which the view ended.
@@ -28,7 +28,7 @@ internal class ViewBreadcrumb(
 ) : Breadcrumb {
 
     @Json(name = "vn")
-    val screen: String
+    var screen: String
 
     init {
         this.screen = screen ?: FALLBACK_SCREEN_NAME

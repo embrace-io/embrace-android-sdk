@@ -14,16 +14,29 @@ internal interface SessionSpanWriter {
      *
      * Returns true if the event was added, otherwise false.
      */
-    fun addEvent(
-        name: String,
-        timeNanos: Long? = null,
-        attributes: Map<String, String>? = null
-    ): Boolean
+    fun addEvent(event: SpanEventData): Boolean
 
     /**
      * Add the given key-value pair as an Attribute to the Event.
      *
      * Returns true if the attribute was added, otherwise false.
      */
-    fun addAttribute(key: String, value: String): Boolean
+    fun addAttribute(attribute: SpanAttributeData): Boolean
 }
+
+/**
+ * Represents a span event that can be added to the current session span.
+ */
+internal class SpanEventData(
+    val name: String,
+    val timeNanos: Long,
+    val attributes: Map<String, String>?
+)
+
+/**
+ * Represents a span attribute that can be added to the current session span.
+ */
+internal class SpanAttributeData(
+    val key: String,
+    val value: String
+)

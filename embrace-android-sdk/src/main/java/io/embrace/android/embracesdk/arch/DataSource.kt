@@ -19,7 +19,7 @@ internal interface DataSource<T> {
      * The DataSource should call this function when it wants to capture data
      * and send it to the destination.
      */
-    fun captureData(action: T.() -> Unit)
+    fun captureData(captureAction: T.() -> Unit)
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting

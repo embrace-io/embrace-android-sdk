@@ -26,6 +26,8 @@ internal class UninitializedSdkSpansService : SpansService {
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         code: () -> T
     ) = code()
 

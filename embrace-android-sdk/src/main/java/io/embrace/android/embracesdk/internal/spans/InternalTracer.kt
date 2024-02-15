@@ -40,6 +40,8 @@ internal class InternalTracer(
             embraceTracer.recordSpan(
                 name = name,
                 parent = parent.spanReference,
+                attributes = attributes,
+                events = events?.mapNotNull { mapToEvent(it) },
                 code = code
             )
         } else {

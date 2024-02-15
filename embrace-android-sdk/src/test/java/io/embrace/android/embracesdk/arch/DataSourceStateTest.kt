@@ -52,6 +52,7 @@ internal class DataSourceStateTest {
         // data capture is enabled by default.
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
+        assertEquals(0, source.resetCount)
     }
 
     @Test
@@ -121,23 +122,27 @@ internal class DataSourceStateTest {
         // data capture is always disabled by default.
         assertEquals(0, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
+        assertEquals(0, source.resetCount)
 
         // new session should enable data capture
         state.onSessionTypeChange(SessionType.FOREGROUND)
         state.onSessionTypeChange(SessionType.FOREGROUND)
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
+        assertEquals(2, source.resetCount)
 
         // extra payload types should not re-register listeners
         state.onSessionTypeChange(SessionType.BACKGROUND)
         state.onSessionTypeChange(SessionType.BACKGROUND)
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(1, source.disableDataCaptureCount)
+        assertEquals(4, source.resetCount)
 
         // functions can be called multiple times without issue
         state.onSessionTypeChange(SessionType.FOREGROUND)
         state.onSessionTypeChange(SessionType.BACKGROUND)
         assertEquals(2, source.enableDataCaptureCount)
         assertEquals(2, source.disableDataCaptureCount)
+        assertEquals(6, source.resetCount)
     }
 }

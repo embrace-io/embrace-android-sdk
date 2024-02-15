@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 /**
  * Defines a 'data source'. This should be responsible for capturing a specific type
@@ -35,18 +36,23 @@ internal interface DataSource<T> {
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
     fun disableDataCapture()
+
+    /**
+     * Resets any data capture limits since the last time [enableDataCapture] was called.
+     */
+    fun resetDataCaptureLimits()
 }
 
 /**
  * A [DataSource] that adds either a [EmbraceSpanEvent] or [EmbraceSpanAttribute]
  * to the current session span.
  */
-internal typealias EventDataSource = DataSource<CurrentSessionSpan>
+internal typealias EventDataSource = DataSource<SessionSpanWriter>
 
 /**
  * A [DataSource] that adds or alters a new span on the [SpansService]
  */
-internal typealias SpanDataSource = DataSource<EmbraceTracer>
+internal typealias SpanDataSource = DataSource<TracingApi>
 
 /**
  * A [DataSource] that adds a new log to the log service.

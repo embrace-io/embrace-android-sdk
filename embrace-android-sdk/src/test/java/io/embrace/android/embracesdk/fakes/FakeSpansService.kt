@@ -27,6 +27,8 @@ internal class FakeSpansService : SpansService {
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         code: () -> T
     ): T {
         return code()

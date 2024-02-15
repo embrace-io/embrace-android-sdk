@@ -11,6 +11,18 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     override fun initializeService(sdkInitStartTimeNanos: Long) {
     }
 
+    override fun addEvent(
+        name: String,
+        timeNanos: Long?,
+        attributes: Map<String, String>?
+    ): Boolean {
+        return true
+    }
+
+    override fun addAttribute(key: String, value: String): Boolean {
+        return true
+    }
+
     override fun initialized(): Boolean {
         initializedCallCount++
         return true

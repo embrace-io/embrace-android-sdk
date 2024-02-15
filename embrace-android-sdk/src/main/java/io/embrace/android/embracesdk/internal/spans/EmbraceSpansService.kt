@@ -49,8 +49,18 @@ internal class EmbraceSpansService(
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         code: () -> T
-    ): T = currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
+    ): T = currentDelegate.recordSpan(
+        name = name,
+        parent = parent,
+        type = type,
+        internal = internal,
+        attributes = attributes,
+        events = events,
+        code = code
+    )
 
     override fun recordCompletedSpan(
         name: String,

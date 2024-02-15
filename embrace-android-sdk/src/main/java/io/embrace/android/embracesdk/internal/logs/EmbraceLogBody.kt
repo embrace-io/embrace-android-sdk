@@ -4,10 +4,10 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 /**
- * Serializable representation of [EmbraceBody]
+ * Serializable representation of [EmbraceLogBody]
  */
 @JsonClass(generateAdapter = true)
-internal data class EmbraceBody(
+internal data class EmbraceLogBody(
     @Json(name = "message")
     val message: String?
 )

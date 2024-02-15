@@ -11,6 +11,14 @@ internal abstract class DataSourceImpl<T>(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataSource<T> {
 
+    override fun enableDataCapture() {
+        // no-op
+    }
+
+    override fun disableDataCapture() {
+        // no-op
+    }
+
     override fun captureData(action: T.() -> Unit) {
         try {
             destination.action()

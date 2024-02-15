@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal class CurrentSessionSpanImpl(
     private val clock: Clock,
     private val telemetryService: TelemetryService,
-    private val spansRepository: SpansRepository,
-    private val spansSink: SpansSink,
+    private val spanRepository: SpanRepository,
+    private val spanSink: SpanSink,
     private val tracerSupplier: Provider<Tracer>,
 ) : CurrentSessionSpan, SessionSpanWriter {
 
@@ -53,12 +53,12 @@ internal class CurrentSessionSpanImpl(
         // If a span can be created, always let internal spans be to be created
         return if (internal) {
             return true
-        } else if (traceCount.get() >= SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        } else if (traceCount.get() >= SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             // If we have already reached the maximum number of spans created for this session, don't allow another one
             false
         } else {
             synchronized(traceCount) {
-                traceCount.getAndIncrement() < SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION
+                traceCount.getAndIncrement() < SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION
             }
         }
     }
@@ -76,7 +76,7 @@ internal class CurrentSessionSpanImpl(
 
             if (appTerminationCause == null) {
                 endingSessionSpan.stop()
-                spansRepository.clearCompletedSpans()
+                spanRepository.clearCompletedSpans()
                 sessionSpan.set(startSessionSpan(clock.now()))
             } else {
                 endingSessionSpan.addAttribute(
@@ -85,7 +85,7 @@ internal class CurrentSessionSpanImpl(
                 )
                 endingSessionSpan.stop()
             }
-            return spansSink.flushSpans()
+            return spanSink.flushSpans()
         }
     }
 

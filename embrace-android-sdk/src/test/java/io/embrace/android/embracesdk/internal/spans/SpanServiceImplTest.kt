@@ -25,19 +25,19 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class SpansServiceImplTest {
-    private lateinit var spansSink: SpansSink
+internal class SpanServiceImplTest {
+    private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
-    private lateinit var spansService: SpansServiceImpl
+    private lateinit var spansService: SpanServiceImpl
     private val clock = FakeClock(1000L)
 
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.openTelemetryModule.spansSink
+        spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        spansService = SpansServiceImpl(
-            spansRepository = initModule.openTelemetryModule.spansRepository,
+        spansService = SpanServiceImpl(
+            spanRepository = initModule.openTelemetryModule.spanRepository,
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.openTelemetryModule.tracer
         )
@@ -91,7 +91,7 @@ internal class SpansServiceImplTest {
         assertTrue(childSpan.stop())
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansSink.completedSpans()
+        val currentSpans = spanSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
 
@@ -122,7 +122,7 @@ internal class SpansServiceImplTest {
 
     @Test
     fun `cannot create span before initialization`() {
-        assertNull(FakeInitModule(clock = clock).openTelemetryModule.spansService.createSpan(name = "test"))
+        assertNull(FakeInitModule(clock = clock).openTelemetryModule.spanService.createSpan(name = "test"))
     }
 
     @Test
@@ -209,7 +209,7 @@ internal class SpansServiceImplTest {
         }
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansSink.completedSpans()
+        val currentSpans = spanSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -262,7 +262,7 @@ internal class SpansServiceImplTest {
             with(verifyAndReturnSoleCompletedSpan("emb-test${it.name}")) {
                 assertEquals(it.name, attributes[it.keyName()])
             }
-            spansSink.flushSpans()
+            spanSink.flushSpans()
         }
     }
 
@@ -320,7 +320,7 @@ internal class SpansServiceImplTest {
 
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spansSink.completedSpans()
+        val currentSpans = spanSink.completedSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -341,7 +341,7 @@ internal class SpansServiceImplTest {
         }
 
         assertEquals(2, returnValue)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
@@ -355,7 +355,7 @@ internal class SpansServiceImplTest {
         }
 
         assertEquals(2, returnValue)
-        assertEquals(2, spansSink.completedSpans().size)
+        assertEquals(2, spanSink.completedSpans().size)
     }
 
     @Test
@@ -385,7 +385,7 @@ internal class SpansServiceImplTest {
         }
 
         assertTrue(executed)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
@@ -395,7 +395,7 @@ internal class SpansServiceImplTest {
             // do thing
         }
         assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeNanos = 0, endTimeNanos = 1))
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
@@ -403,11 +403,11 @@ internal class SpansServiceImplTest {
         assertNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME))
         assertFalse(spansService.recordCompletedSpan(name = TOO_LONG_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME) { 1 })
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME) { 2 })
         assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
-        assertEquals(2, spansSink.completedSpans().size)
+        assertEquals(2, spanSink.completedSpans().size)
     }
 
     @Test
@@ -429,7 +429,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        spansSink.flushSpans()
+        spanSink.flushSpans()
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -452,7 +452,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        val completedSpans = spansSink.completedSpans()
+        val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(10, completedSpans[0].events.size)
         assertEquals(8, completedSpans[0].events[0].attributes.size)
@@ -477,7 +477,7 @@ internal class SpansServiceImplTest {
             )
         )
 
-        spansSink.flushSpans()
+        spanSink.flushSpans()
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -496,13 +496,13 @@ internal class SpansServiceImplTest {
             )
         )
 
-        val completedSpans = spansSink.completedSpans()
+        val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(48, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): EmbraceSpanData {
-        val currentSpans = spansSink.completedSpans()
+        val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         assertEquals(name, currentSpans[0].name)
         return currentSpans[0]

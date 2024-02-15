@@ -7,15 +7,15 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
- * Exports the given completed [Span] to the given [SpansService]
+ * Exports the given completed [Span] to the given [SpanService]
  *
- * Note: no explicit tests exist for this as its functionality is tested via the tests for [SpansServiceImpl]
+ * Note: no explicit tests exist for this as its functionality is tested via the tests for [SpanServiceImpl]
  */
 @InternalApi
-internal class EmbraceSpanExporter(private val spansSink: SpansSink) : SpanExporter {
+internal class EmbraceSpanExporter(private val spanSink: SpanSink) : SpanExporter {
     @Synchronized
     override fun export(spans: MutableCollection<SpanData>): CompletableResultCode =
-        spansSink.storeCompletedSpans(spans.toList())
+        spanSink.storeCompletedSpans(spans.toList())
 
     override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
 

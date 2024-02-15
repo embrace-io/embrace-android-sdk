@@ -9,13 +9,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Implementation of the core logic for [SpansService]
+ * Implementation of the core logic for [SpanService]
  */
-internal class SpansServiceImpl(
-    private val spansRepository: SpansRepository,
+internal class SpanServiceImpl(
+    private val spanRepository: SpanRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
-) : SpansService {
+) : SpanService {
     private val initialized = AtomicBoolean(false)
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
@@ -32,7 +32,7 @@ internal class SpansServiceImpl(
             EmbraceSpanImpl(
                 spanBuilder = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal),
                 parent = parent,
-                spansRepository = spansRepository
+                spanRepository = spanRepository
             )
         } else {
             null
@@ -88,7 +88,7 @@ internal class SpansServiceImpl(
         }
     }
 
-    override fun getSpan(spanId: String): EmbraceSpan? = spansRepository.getSpan(spanId = spanId)
+    override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
 
     companion object {
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500

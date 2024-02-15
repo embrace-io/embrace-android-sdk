@@ -153,6 +153,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val startupService: StartupService by singleton {
-        StartupServiceImpl(openTelemetryModule.spansService)
+        StartupServiceImpl(openTelemetryModule.spanService)
     }
 }

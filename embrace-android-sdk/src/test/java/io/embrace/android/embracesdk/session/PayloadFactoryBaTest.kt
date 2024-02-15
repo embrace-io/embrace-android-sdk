@@ -29,8 +29,8 @@ import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.SpansService
-import io.embrace.android.embracesdk.internal.spans.SpansSink
+import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
@@ -57,9 +57,9 @@ internal class PayloadFactoryBaTest {
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
     private lateinit var localConfig: LocalConfig
-    private lateinit var spansSink: SpansSink
+    private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
-    private lateinit var spansService: SpansService
+    private lateinit var spanService: SpanService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
@@ -79,9 +79,9 @@ internal class PayloadFactoryBaTest {
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.openTelemetryModule.spansSink
+        spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        spansService = initModule.openTelemetryModule.spansService
+        spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true
         )
@@ -109,35 +109,35 @@ internal class PayloadFactoryBaTest {
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
         service = createService()
         val now = clock.nowInNanos()
-        spansService.initializeService(now)
+        spanService.initializeService(now)
         val msg = service.endBackgroundActivityWithCrash(initial, now, "crashId")
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        spansService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.nowInNanos())
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        spansService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.nowInNanos())
         clock.tick(1000L)
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 
         // there should be 1 completed span: the session span
         assertEquals(1, msg.spans?.size)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
@@ -162,7 +162,7 @@ internal class PayloadFactoryBaTest {
             breadcrumbService,
             userService,
             preferencesService,
-            spansSink,
+            spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService()

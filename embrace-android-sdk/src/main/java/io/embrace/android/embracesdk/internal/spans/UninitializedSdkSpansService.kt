@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * An implementation of [SpansService] used when the SDK has not been started.
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class UninitializedSdkSpansService : SpansService {
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)
+    private val realSpansService: AtomicReference<SpansService?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {}
 
@@ -42,22 +44,34 @@ internal class UninitializedSdkSpansService : SpansService {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
     ): Boolean {
-        return if (bufferedCallsCount.getAndIncrement() < MAX_BUFFERED_CALLS) {
+        return realSpansService.get()?.recordCompletedSpan(
+            name = name,
+            startTimeNanos = startTimeNanos,
+            endTimeNanos = endTimeNanos,
+            parent = parent,
+            type = type,
+            internal = internal,
+            attributes = attributes,
+            events = events,
+            errorCode = errorCode
+        ) ?: if (bufferedCallsCount.getAndIncrement() < MAX_BUFFERED_CALLS) {
             // Note: there's no public way to create an [EmbraceSpan] before the service is initialized, so while we buffer
             // the passed in [parent], we should never get a valid non-null value for it here.
-            bufferedCalls.add(
-                BufferedRecordCompletedSpan(
-                    name = name,
-                    startTimeNanos = startTimeNanos,
-                    endTimeNanos = endTimeNanos,
-                    parent = parent,
-                    type = type,
-                    internal = internal,
-                    attributes = attributes,
-                    events = events,
-                    errorCode = errorCode
+            synchronized(bufferedCalls) {
+                bufferedCalls.add(
+                    BufferedRecordCompletedSpan(
+                        name = name,
+                        startTimeNanos = startTimeNanos,
+                        endTimeNanos = endTimeNanos,
+                        parent = parent,
+                        type = type,
+                        internal = internal,
+                        attributes = attributes,
+                        events = events,
+                        errorCode = errorCode
+                    )
                 )
-            )
+            }
             true
         } else {
             false
@@ -66,8 +80,12 @@ internal class UninitializedSdkSpansService : SpansService {
 
     override fun getSpan(spanId: String): EmbraceSpan? = null
 
-    fun recordBufferedCalls(delegateSpansService: SpansService) {
+    /**
+     * Set the real [SpansService] to record completed spans and record the buffered instances
+     */
+    fun triggerBufferedSpanRecording(delegateSpansService: SpansService) {
         synchronized(bufferedCalls) {
+            realSpansService.set(delegateSpansService)
             do {
                 bufferedCalls.poll()?.let {
                     delegateSpansService.recordCompletedSpan(

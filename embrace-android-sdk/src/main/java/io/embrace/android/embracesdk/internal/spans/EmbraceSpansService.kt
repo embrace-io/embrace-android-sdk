@@ -25,15 +25,16 @@ internal class EmbraceSpansService(
         if (!initialized()) {
             synchronized(currentDelegate) {
                 if (!initialized()) {
-                    currentDelegate = SpansServiceImpl(
+                    val realSpansService = SpansServiceImpl(
                         spansRepository = spansRepository,
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracerSupplier(),
                     )
-                    currentDelegate.initializeService(sdkInitStartTimeNanos)
-                    if (currentDelegate.initialized()) {
-                        uninitializedSdkSpansService.recordBufferedCalls(this)
+                    realSpansService.initializeService(sdkInitStartTimeNanos)
+                    if (realSpansService.initialized()) {
+                        uninitializedSdkSpansService.triggerBufferedSpanRecording(realSpansService)
                     }
+                    currentDelegate = realSpansService
                 }
             }
         }

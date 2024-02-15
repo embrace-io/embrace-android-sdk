@@ -44,7 +44,7 @@ internal class FakeSpanExporter : SpanExporter {
     fun awaitSpanExport(count: Int = 1, timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): Boolean {
         val latch = synchronized(exportedSpans) {
             return@synchronized if (count > totalExported) {
-                val newLatch = CountDownLatch(count)
+                val newLatch = CountDownLatch(count - totalExported)
                 latches.add(newLatch)
                 newLatch
             } else {

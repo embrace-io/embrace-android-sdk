@@ -12,6 +12,7 @@ internal class FakeDataSource(
 
     var enableDataCaptureCount = 0
     var disableDataCaptureCount = 0
+    var resetCount = 0
 
     override fun captureData(action: SessionSpanWriter.() -> Unit) {
     }
@@ -24,6 +25,10 @@ internal class FakeDataSource(
     override fun disableDataCapture() {
         ctx.unregisterComponentCallbacks(this)
         disableDataCaptureCount++
+    }
+
+    override fun resetDataCaptureLimits() {
+        resetCount++
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

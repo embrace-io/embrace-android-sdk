@@ -41,7 +41,7 @@ internal interface DataSource<T> {
  * A [DataSource] that adds either a [EmbraceSpanEvent] or [EmbraceSpanAttribute]
  * to the current session span.
  */
-internal typealias EventDataSource = DataSource<CurrentSessionSpan>
+internal typealias EventDataSource = DataSource<SessionSpanWriter>
 
 /**
  * A [DataSource] that adds or alters a new span on the [SpansService]

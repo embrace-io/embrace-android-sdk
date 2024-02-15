@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
@@ -15,7 +16,8 @@ internal class CurrentSessionSpanImpl(
     private val spansRepository: SpansRepository,
     private val spansSink: SpansSink,
     private val tracerSupplier: Provider<Tracer>,
-) : CurrentSessionSpan {
+) : CurrentSessionSpan, SessionSpanWriter {
+
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
      */
@@ -83,6 +85,20 @@ internal class CurrentSessionSpanImpl(
             }
             return spansSink.flushSpans()
         }
+    }
+
+    override fun addEvent(
+        name: String,
+        timeNanos: Long?,
+        attributes: Map<String, String>?
+    ): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.addEvent(name, timeNanos, attributes)
+    }
+
+    override fun addAttribute(key: String, value: String): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.addAttribute(key, value)
     }
 
     /**

@@ -4,7 +4,7 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.arch.EventDataSource
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.arch.SessionSpanWriter
 
 internal class FakeDataSource(
     private val ctx: Context
@@ -13,8 +13,7 @@ internal class FakeDataSource(
     var enableDataCaptureCount = 0
     var disableDataCaptureCount = 0
 
-    override fun captureData(action: CurrentSessionSpan.() -> Unit) {
-        action(FakeCurrentSessionSpan())
+    override fun captureData(action: SessionSpanWriter.() -> Unit) {
     }
 
     override fun enableDataCapture() {

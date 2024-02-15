@@ -443,17 +443,25 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @Override
     public <T> T recordSpan(@NonNull String name, @NonNull Function0<? extends T> code) {
-        if (verifyNonNullParameters("recordSpan", name, code)) {
-            return impl.tracer.recordSpan(name, code);
-        }
-
-        return code != null ? code.invoke() : null;
+        return recordSpan(name, null, null, null, code);
     }
 
     @Override
     public <T> T recordSpan(@NonNull String name, @Nullable EmbraceSpan parent, @NonNull Function0<? extends T> code) {
+        return recordSpan(name, parent, null, null, code);
+    }
+
+    @Override
+    public <T> T recordSpan(@NonNull String name, @Nullable Map<String, String> attributes,
+                            @Nullable List<EmbraceSpanEvent> events, @NonNull Function0<? extends T> code) {
+        return recordSpan(name, null, attributes, events, code);
+    }
+
+    @Override
+    public <T> T recordSpan(@NonNull String name, @Nullable EmbraceSpan parent, @Nullable Map<String, String> attributes,
+                            @Nullable List<EmbraceSpanEvent> events, @NonNull Function0<? extends T> code) {
         if (verifyNonNullParameters("recordSpan", name, code)) {
-            return impl.tracer.recordSpan(name, parent, code);
+            return impl.tracer.recordSpan(name, parent, attributes, events, code);
         }
 
         return code != null ? code.invoke() : null;
@@ -472,49 +480,29 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos);
-        }
-
-        return false;
+        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, null, null, null);
     }
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode);
-        }
-
-        return false;
+        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, null, null, null);
     }
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable EmbraceSpan parent) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, parent);
-        }
-
-        return false;
+        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, parent, null, null);
     }
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode,
                                        @Nullable EmbraceSpan parent) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent);
-        }
-
-        return false;
+        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent, null, null);
     }
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos,
                                        @Nullable Map<String, String> attributes, @Nullable List<EmbraceSpanEvent> events) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, attributes, events);
-        }
-
-        return false;
+        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, null, attributes, events);
     }
 
     @Nullable

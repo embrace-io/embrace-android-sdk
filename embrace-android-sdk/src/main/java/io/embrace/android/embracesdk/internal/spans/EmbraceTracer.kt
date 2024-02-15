@@ -20,15 +20,38 @@ internal class EmbraceTracer(
             internal = false
         )
 
-    override fun <T> recordSpan(name: String, code: () -> T): T = recordSpan(name = name, parent = null, code = code)
+    override fun <T> recordSpan(
+        name: String,
+        code: () -> T
+    ): T = recordSpan(name = name, parent = null, attributes = null, events = null, code = code)
 
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, code: () -> T): T =
-        spansService.recordSpan(
-            name = name,
-            parent = parent,
-            internal = false,
-            code = code
-        )
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        code: () -> T
+    ): T = recordSpan(name = name, parent = parent, attributes = null, events = null, code = code)
+
+    override fun <T> recordSpan(
+        name: String,
+        attributes: Map<String, String>?,
+        events: List<EmbraceSpanEvent>?,
+        code: () -> T
+    ): T = recordSpan(name = name, parent = null, attributes = attributes, events = events, code = code)
+
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        attributes: Map<String, String>?,
+        events: List<EmbraceSpanEvent>?,
+        code: () -> T
+    ): T = spansService.recordSpan(
+        name = name,
+        parent = parent,
+        attributes = attributes ?: emptyMap(),
+        events = events ?: emptyList(),
+        internal = false,
+        code = code
+    )
 
     override fun recordCompletedSpan(name: String, startTimeNanos: Long, endTimeNanos: Long): Boolean =
         recordCompletedSpan(

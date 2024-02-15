@@ -174,4 +174,27 @@ internal class CurrentSessionSpanImplTests {
         assertEquals(1, currentSpans.size)
         assertEquals("emb-test-span", currentSpans[0].name)
     }
+
+    @Test
+    fun `add event forwarded to span`() {
+        currentSessionSpan.addEvent("test-event", 1000L, mapOf("key" to "value"))
+        val span = currentSessionSpan.endSession(null).single()
+        assertEquals("emb-session-span", span.name)
+
+        // verify event was added to the span
+        val testEvent = span.events.single()
+        assertEquals("test-event", testEvent.name)
+        assertEquals(1000, testEvent.timestampNanos)
+        assertEquals(mapOf("key" to "value"), testEvent.attributes)
+    }
+
+    @Test
+    fun `add attribute forwarded to span`() {
+        currentSessionSpan.addAttribute("my_key", "my_value")
+        val span = currentSessionSpan.endSession(null).single()
+        assertEquals("emb-session-span", span.name)
+
+        // verify attribute was added to the span
+        assertEquals("my_value", span.attributes["my_key"])
+    }
 }

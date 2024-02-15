@@ -53,6 +53,35 @@ internal interface TracingApi {
     ): T
 
     /**
+     * Execute the given block of code and record a new trace around it with optional attributes and list of [EmbraceSpanEvent]. If the span
+     * cannot be created, the block of code will still run and return correctly. If an exception or error is thrown inside the block,
+     * the span will end at the point of the throw and the [Throwable] will be rethrown.
+     */
+    @BetaApi
+    fun <T> recordSpan(
+        name: String,
+        attributes: Map<String, String>?,
+        events: List<EmbraceSpanEvent>?,
+        code: () -> T
+    ): T
+
+    /**
+     * Execute the given block of code and record a new span around it with the given parent with optional attributes and list
+     * of [EmbraceSpanEvent]. Passing in a parent that is null will result in a new trace with the new span as its root. If the span
+     * cannot be created, the block of code will still run and return correctly. If an exception or error is thrown inside the block,
+     * the span will end at the point of the throw and the
+     * [Throwable] will be rethrown.
+     */
+    @BetaApi
+    fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        attributes: Map<String, String>?,
+        events: List<EmbraceSpanEvent>?,
+        code: () -> T
+    ): T
+
+    /**
      * Record a span with the given name as well as start and end times, which will be the root span of a new trace.
      */
     @BetaApi

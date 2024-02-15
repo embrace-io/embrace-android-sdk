@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fixtures
 
-import io.embrace.android.embracesdk.internal.logs.EmbraceBody
+import io.embrace.android.embracesdk.internal.logs.EmbraceLogBody
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
 
 internal val testLog = EmbraceLogRecordData(
@@ -9,6 +9,6 @@ internal val testLog = EmbraceLogRecordData(
     timeUnixNanos = 1681972471806000000L,
     severityNumber = 9,
     severityText = "INFO",
-    body = EmbraceBody(message = "test log message"),
+    body = EmbraceLogBody(message = "test log message"),
     attributes = mapOf(Pair("test1", "value1"), Pair("test2", "value2"))
 )

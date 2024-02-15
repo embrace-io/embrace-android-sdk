@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
@@ -17,7 +16,8 @@ internal class CurrentSessionSpanImpl(
     private val spansRepository: SpansRepository,
     private val spansSink: SpansSink,
     private val tracerSupplier: Provider<Tracer>,
-) : CurrentSessionSpan {
+) : CurrentSessionSpan, SessionSpanWriter {
+
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
      */
@@ -26,7 +26,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val sessionSpan: AtomicReference<Span?> = AtomicReference(null)
+    private val sessionSpan: AtomicReference<EmbraceSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
         synchronized(sessionSpan) {
@@ -67,28 +67,56 @@ internal class CurrentSessionSpanImpl(
             // Right now, session spans don't survive native crashes and sudden process terminations,
             // so telemetry will not be recorded in those cases, for now.
             val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
-            endingSessionSpan.setAllAttributes(Attributes.builder().fromMap(telemetryAttributes).build())
+
+            telemetryAttributes.forEach {
+                endingSessionSpan.addAttribute(it.key, it.value)
+            }
 
             if (appTerminationCause == null) {
-                endingSessionSpan.endSpan()
+                endingSessionSpan.stop()
                 spansRepository.clearCompletedSpans()
                 sessionSpan.set(startSessionSpan(clock.now()))
             } else {
-                endingSessionSpan.setAttribute(appTerminationCause.keyName(), appTerminationCause.name)
-                endingSessionSpan.endSpan()
+                endingSessionSpan.addAttribute(
+                    appTerminationCause.keyName(),
+                    appTerminationCause.name
+                )
+                endingSessionSpan.stop()
             }
             return spansSink.flushSpans()
         }
     }
 
+    override fun addEvent(
+        name: String,
+        timeNanos: Long?,
+        attributes: Map<String, String>?
+    ): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.addEvent(name, timeNanos, attributes)
+    }
+
+    override fun addAttribute(key: String, value: String): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.addAttribute(key, value)
+    }
+
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeNanos: Long): Span {
+    private fun startSessionSpan(startTimeNanos: Long): EmbraceSpan {
         traceCount.set(0)
-        return createEmbraceSpanBuilder(tracer = tracerSupplier(), name = "session-span", type = EmbraceAttributes.Type.SESSION)
+
+        val spanBuilder = createEmbraceSpanBuilder(
+            tracer = tracerSupplier(),
+            name = "session-span",
+            type = EmbraceAttributes.Type.SESSION
+        )
             .setNoParent()
             .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
-            .startSpan()
+
+        return EmbraceSpanImpl(spanBuilder, sessionSpan = true).apply {
+            start()
+        }
     }
 }

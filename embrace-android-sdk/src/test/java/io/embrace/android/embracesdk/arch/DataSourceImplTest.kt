@@ -13,7 +13,7 @@ internal class DataSourceImplTest {
     fun `capture data successfully`() {
         val dst = FakeCurrentSessionSpan()
         val source = FakeDataSourceImpl(dst)
-        source.captureData {
+        source.captureData(inputValidation = { true }) {
             initialized()
         }
         assertEquals(1, dst.initializedCallCount)
@@ -23,7 +23,7 @@ internal class DataSourceImplTest {
     fun `capture data threw exception`() {
         val dst = FakeCurrentSessionSpan()
         val source = FakeDataSourceImpl(dst)
-        source.captureData {
+        source.captureData(inputValidation = { true }) {
             error("Whoops!")
         }
         assertEquals(0, dst.initializedCallCount)
@@ -36,11 +36,25 @@ internal class DataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.captureData {
+            source.captureData(inputValidation = { true }) {
                 count++
             }
         }
         assertEquals(2, count)
+    }
+
+    @Test
+    fun `capture data respects validation`() {
+        val dst = FakeCurrentSessionSpan()
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy({ 2 }))
+
+        var count = 0
+        repeat(4) {
+            source.captureData(inputValidation = { false }) {
+                count++
+            }
+        }
+        assertEquals(0, count)
     }
 
     private class FakeDataSourceImpl(

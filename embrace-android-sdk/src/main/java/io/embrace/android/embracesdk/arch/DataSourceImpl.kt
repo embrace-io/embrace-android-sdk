@@ -25,11 +25,17 @@ internal abstract class DataSourceImpl<T>(
         limitStrategy.resetDataCaptureLimits()
     }
 
-    override fun captureData(captureAction: T.() -> Unit) {
+    override fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit) {
         try {
-            if (limitStrategy.shouldCapture()) {
-                destination.captureAction()
+            if (!limitStrategy.shouldCapture()) {
+                logger.logWarning("Data capture limit reached.")
+                return
             }
+            if (!inputValidation()) {
+                logger.logWarning("Input validation failed.")
+                return
+            }
+            destination.captureAction()
         } catch (exc: Throwable) {
             logger.logError("Error capturing data", exc)
         }

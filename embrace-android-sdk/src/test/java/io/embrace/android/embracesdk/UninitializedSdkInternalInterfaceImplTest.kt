@@ -24,7 +24,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
         openTelemetryModule = initModule.openTelemetryModule
         impl = UninitializedSdkInternalInterfaceImpl(
             InternalTracer(
-                openTelemetryModule.spansRepository,
+                openTelemetryModule.spanRepository,
                 openTelemetryModule.embraceTracer
             )
         )

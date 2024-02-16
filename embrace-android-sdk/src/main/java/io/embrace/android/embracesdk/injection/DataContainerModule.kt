@@ -86,7 +86,7 @@ internal class DataContainerModuleImpl(
             coreModule.logger,
             workerThreadModule,
             initModule.clock,
-            openTelemetryModule.spansService
+            openTelemetryModule.spanService
         )
     }
 }

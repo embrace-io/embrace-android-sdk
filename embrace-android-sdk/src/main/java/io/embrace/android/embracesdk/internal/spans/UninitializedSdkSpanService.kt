@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * An implementation of [SpansService] used when the SDK has not been started.
+ * An implementation of [SpanService] used when the SDK has not been started.
  */
 @InternalApi
-internal class UninitializedSdkSpansService : SpansService {
+internal class UninitializedSdkSpanService : SpanService {
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)
-    private val realSpansService: AtomicReference<SpansService?> = AtomicReference(null)
+    private val realSpanService: AtomicReference<SpanService?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {}
 
@@ -44,7 +44,7 @@ internal class UninitializedSdkSpansService : SpansService {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
     ): Boolean {
-        return realSpansService.get()?.recordCompletedSpan(
+        return realSpanService.get()?.recordCompletedSpan(
             name = name,
             startTimeNanos = startTimeNanos,
             endTimeNanos = endTimeNanos,
@@ -81,14 +81,14 @@ internal class UninitializedSdkSpansService : SpansService {
     override fun getSpan(spanId: String): EmbraceSpan? = null
 
     /**
-     * Set the real [SpansService] to record completed spans and record the buffered instances
+     * Set the real [SpanService] to record completed spans and record the buffered instances
      */
-    fun triggerBufferedSpanRecording(delegateSpansService: SpansService) {
+    fun triggerBufferedSpanRecording(delegateSpanService: SpanService) {
         synchronized(bufferedCalls) {
-            realSpansService.set(delegateSpansService)
+            realSpanService.set(delegateSpanService)
             do {
                 bufferedCalls.poll()?.let {
-                    delegateSpansService.recordCompletedSpan(
+                    delegateSpanService.recordCompletedSpan(
                         name = it.name,
                         startTimeNanos = it.startTimeNanos,
                         endTimeNanos = it.endTimeNanos,
@@ -109,7 +109,7 @@ internal class UninitializedSdkSpansService : SpansService {
     }
 
     /**
-     * Represents a call to [SpansService.recordCompletedSpan] that can be saved and replayed later when the SDK is initialized.
+     * Represents a call to [SpanService.recordCompletedSpan] that can be saved and replayed later when the SDK is initialized.
      */
     data class BufferedRecordCompletedSpan(
         val name: String,

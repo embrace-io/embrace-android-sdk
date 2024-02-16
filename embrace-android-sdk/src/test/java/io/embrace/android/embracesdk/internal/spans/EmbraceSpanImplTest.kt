@@ -22,17 +22,17 @@ import org.junit.Test
 
 internal class EmbraceSpanImplTest {
     private lateinit var embraceSpan: EmbraceSpanImpl
-    private lateinit var spansRepository: SpansRepository
+    private lateinit var spanRepository: SpanRepository
     private val tracer = OpenTelemetrySdk.builder()
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
     @Before
     fun setup() {
-        spansRepository = SpansRepository()
+        spanRepository = SpanRepository()
         embraceSpan = EmbraceSpanImpl(
             spanBuilder = tracer.spanBuilder("test-span"),
-            spansRepository = spansRepository
+            spanRepository = spanRepository
         )
     }
 
@@ -44,8 +44,8 @@ internal class EmbraceSpanImplTest {
             assertFalse(isRecording)
             assertFalse(addEvent("eventName"))
             assertFalse(addAttribute("first", "value"))
-            assertEquals(0, spansRepository.getActiveSpans().size)
-            assertEquals(0, spansRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveSpans().size)
+            assertEquals(0, spanRepository.getCompletedSpans().size)
         }
     }
 
@@ -59,8 +59,8 @@ internal class EmbraceSpanImplTest {
             assertTrue(isRecording)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
-            assertEquals(1, spansRepository.getActiveSpans().size)
-            assertEquals(0, spansRepository.getCompletedSpans().size)
+            assertEquals(1, spanRepository.getActiveSpans().size)
+            assertEquals(0, spanRepository.getCompletedSpans().size)
         }
     }
 
@@ -75,8 +75,8 @@ internal class EmbraceSpanImplTest {
             assertFalse(isRecording)
             assertFalse(addEvent("eventName"))
             assertFalse(addAttribute("first", "value"))
-            assertEquals(0, spansRepository.getActiveSpans().size)
-            assertEquals(1, spansRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveSpans().size)
+            assertEquals(1, spanRepository.getCompletedSpans().size)
         }
     }
 
@@ -115,8 +115,8 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             assertTrue(stop(ErrorCode.FAILURE))
             assertFalse(stop())
-            assertEquals(0, spansRepository.getActiveSpans().size)
-            assertEquals(1, spansRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveSpans().size)
+            assertEquals(1, spanRepository.getCompletedSpans().size)
         }
     }
 

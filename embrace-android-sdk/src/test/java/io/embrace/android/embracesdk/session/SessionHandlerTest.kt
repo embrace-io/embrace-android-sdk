@@ -34,8 +34,8 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.SpansService
-import io.embrace.android.embracesdk.internal.spans.SpansSink
+import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -76,8 +76,8 @@ internal class SessionHandlerTest {
     private val webViewService: WebViewService = FakeWebViewService()
     private var activeSession: Session = fakeSession()
 
-    private lateinit var spansSink: SpansSink
-    private lateinit var spansService: SpansService
+    private lateinit var spanSink: SpanSink
+    private lateinit var spanService: SpanService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
@@ -132,8 +132,8 @@ internal class SessionHandlerTest {
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
         val initModule = FakeInitModule(clock = clock)
-        spansSink = initModule.openTelemetryModule.spansSink
-        spansService = initModule.openTelemetryModule.spansService
+        spanSink = initModule.openTelemetryModule.spanSink
+        spanService = initModule.openTelemetryModule.spanService
         val payloadMessageCollator = PayloadMessageCollator(
             configService,
             metadataService,
@@ -147,7 +147,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             userService,
             preferencesService,
-            initModule.openTelemetryModule.spansSink,
+            initModule.openTelemetryModule.spanSink,
             initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService()
@@ -221,7 +221,7 @@ internal class SessionHandlerTest {
     fun `endSession includes completed spans in message`() {
         startFakeSession()
         initializeServices()
-        spansService.recordSpan("test-span") {
+        spanService.recordSpan("test-span") {
             // do nothing
         }
         clock.tick(30000)
@@ -241,7 +241,7 @@ internal class SessionHandlerTest {
     fun `crashes includes completed spans in message`() {
         startFakeSession()
         initializeServices()
-        spansService.recordSpan("test-span") {
+        spanService.recordSpan("test-span") {
             // do nothing
         }
         val msg = payloadFactory.endSessionWithCrash(initial, clock.now(), "fakeCrashId")
@@ -257,25 +257,25 @@ internal class SessionHandlerTest {
     fun `backgrounding flushes completed spans`() {
         startFakeSession()
         initializeServices()
-        spansService.recordSpan("test-span") {}
-        assertEquals(1, spansSink.completedSpans().size)
+        spanService.recordSpan("test-span") {}
+        assertEquals(1, spanSink.completedSpans().size)
 
         clock.tick(15000L)
         val sessionMessage = payloadFactory.endSessionWithState(initial, clock.now())
         val spans = checkNotNull(sessionMessage.spans)
         assertEquals(2, spans.size)
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
     fun `crash ending flushes completed spans`() {
         startFakeSession()
         initializeServices()
-        spansService.recordSpan("test-span") {}
-        assertEquals(1, spansSink.completedSpans().size)
+        spanService.recordSpan("test-span") {}
+        assertEquals(1, spanSink.completedSpans().size)
 
         payloadFactory.endSessionWithCrash(initial, clock.now(), "crashId")
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     private fun startFakeSession(): Session {
@@ -283,7 +283,7 @@ internal class SessionHandlerTest {
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {
-        spansService.initializeService(startTimeMillis)
+        spanService.initializeService(startTimeMillis)
     }
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {

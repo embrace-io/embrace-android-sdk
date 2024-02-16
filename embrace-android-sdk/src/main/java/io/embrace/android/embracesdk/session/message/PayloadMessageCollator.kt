@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.SpansSink
+import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
@@ -37,7 +37,7 @@ internal class PayloadMessageCollator(
     private val breadcrumbService: BreadcrumbService,
     private val userService: UserService,
     private val preferencesService: PreferencesService,
-    private val spansSink: SpansSink,
+    private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService
@@ -165,7 +165,7 @@ internal class PayloadMessageCollator(
                     }
                     currentSessionSpan.endSession(appTerminationCause)
                 }
-                else -> spansSink.completedSpans()
+                else -> spanSink.completedSpans()
             }
         }
         val breadcrumbs = captureDataSafely {

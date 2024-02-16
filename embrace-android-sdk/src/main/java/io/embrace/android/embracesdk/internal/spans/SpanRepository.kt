@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Allows the tracking of [EmbraceSpan] instances so that their references can be retrieved with its associated spanId
  */
-internal class SpansRepository {
+internal class SpanRepository {
     private val activeSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
     private val completedSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()

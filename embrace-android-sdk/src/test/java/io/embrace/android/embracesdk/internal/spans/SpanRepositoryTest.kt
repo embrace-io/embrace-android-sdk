@@ -10,12 +10,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class SpansRepositoryTest {
-    private lateinit var repository: SpansRepository
+internal class SpanRepositoryTest {
+    private lateinit var repository: SpanRepository
 
     @Before
     fun setup() {
-        repository = SpansRepository()
+        repository = SpanRepository()
     }
 
     @Test

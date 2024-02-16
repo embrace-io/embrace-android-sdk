@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 
-internal class SpansSinkImpl : SpansSink {
+internal class SpanSinkImpl : SpanSink {
     private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode {

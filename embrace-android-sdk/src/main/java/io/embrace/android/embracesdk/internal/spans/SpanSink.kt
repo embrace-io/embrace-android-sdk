@@ -7,7 +7,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
  * A service that stores all the spans that are completed and exported via [EmbraceSpanExporter], and provides access to them so they
  * can be sent off-device at the appropriate cadence.
  */
-internal interface SpansSink {
+internal interface SpanSink {
     /**
      * Stores spans that have been completed. Implementations must support concurrent invocations.
      */

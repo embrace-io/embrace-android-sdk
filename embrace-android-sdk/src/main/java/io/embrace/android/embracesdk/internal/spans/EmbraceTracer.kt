@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.spans.TracingApi
 
 internal class EmbraceTracer(
     private val clock: Clock,
-    private val spansService: SpansService,
+    private val spanService: SpanService,
 ) : TracingApi {
     override fun createSpan(name: String): EmbraceSpan? =
         createSpan(name = name, parent = null)
 
     override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
-        spansService.createSpan(
+        spanService.createSpan(
             name = name,
             parent = parent,
             internal = false
@@ -44,7 +44,7 @@ internal class EmbraceTracer(
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
         code: () -> T
-    ): T = spansService.recordSpan(
+    ): T = spanService.recordSpan(
         name = name,
         parent = parent,
         attributes = attributes ?: emptyMap(),
@@ -127,7 +127,7 @@ internal class EmbraceTracer(
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean =
-        spansService.recordCompletedSpan(
+        spanService.recordCompletedSpan(
             name = name,
             startTimeNanos = startTimeNanos,
             endTimeNanos = endTimeNanos,
@@ -138,7 +138,7 @@ internal class EmbraceTracer(
             errorCode = errorCode
         )
 
-    override fun getSpan(spanId: String): EmbraceSpan? = spansService.getSpan(spanId = spanId)
+    override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)
 
     /**
      * Return the current time in nanoseconds for the clock instance used by the Embrace SDK. This should be used to obtain the time
@@ -147,5 +147,5 @@ internal class EmbraceTracer(
     fun getSdkCurrentTimeNanos(): Long = clock.nowInNanos()
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
-    override fun isTracingAvailable(): Boolean = spansService.initialized()
+    override fun isTracingAvailable(): Boolean = spanService.initialized()
 }

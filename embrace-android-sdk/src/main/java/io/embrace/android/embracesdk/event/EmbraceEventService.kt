@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -48,7 +48,7 @@ internal class EmbraceEventService(
     private val logger: InternalEmbraceLogger,
     workerThreadModule: WorkerThreadModule,
     private val clock: Clock,
-    private val spansService: SpansService
+    private val spanService: SpanService
 ) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
     private val backgroundWorker: BackgroundWorker
 
@@ -288,7 +288,7 @@ internal class EmbraceEventService(
     private fun logStartupSpan() {
         val startupEndTimeMillis = clock.now()
         backgroundWorker.submit {
-            spansService.recordCompletedSpan(
+            spanService.recordCompletedSpan(
                 name = STARTUP_SPAN_NAME,
                 startTimeNanos = startupStartTime.millisToNanos(),
                 endTimeNanos = startupEndTimeMillis.millisToNanos(),

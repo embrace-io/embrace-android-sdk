@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
-import io.embrace.android.embracesdk.internal.spans.SpansService
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
-internal class FakeSpansService : SpansService {
+internal class FakeSpanService : SpanService {
 
     override fun initializeService(sdkInitStartTimeNanos: Long) {
     }

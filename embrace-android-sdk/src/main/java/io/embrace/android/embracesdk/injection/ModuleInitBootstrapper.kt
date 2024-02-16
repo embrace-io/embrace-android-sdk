@@ -136,13 +136,13 @@ internal class ModuleInitBootstrapper(
 
                     val initTask = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
                         Systrace.trace("spans-service-init") {
-                            openTelemetryModule.spansService.initializeService(sdkStartTimeNanos)
+                            openTelemetryModule.spanService.initializeService(sdkStartTimeNanos)
                         }
                     }
 
                     val serviceRegistry = coreModule.serviceRegistry
                     serviceRegistry.registerService(initModule.telemetryService)
-                    serviceRegistry.registerService(openTelemetryModule.spansService)
+                    serviceRegistry.registerService(openTelemetryModule.spanService)
 
                     systemServiceModule = Systrace.traceSynchronous("system-service-init") {
                         systemServiceModuleSupplier(coreModule, versionChecker)

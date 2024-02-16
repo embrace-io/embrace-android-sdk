@@ -1,15 +1,8 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.fixtures.testLog
-import io.mockk.every
 import io.mockk.mockk
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.logs.data.Body
-import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before

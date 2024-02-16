@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.anr.AnrService;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller;
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService;
@@ -195,13 +194,7 @@ final class EmbraceImpl {
     private EmbraceInternalInterface embraceInternalInterface;
 
     @Nullable
-    private ReactNativeInternalInterface reactNativeInternalInterface;
-
-    @Nullable
-    private UnityInternalInterface unityInternalInterface;
-
-    @Nullable
-    private FlutterInternalInterface flutterInternalInterface;
+    private InternalInterfaceModule internalInterfaceModule;
 
     @Nullable
     private PushNotificationCaptureService pushNotificationService;
@@ -342,7 +335,7 @@ final class EmbraceImpl {
         loadCrashVerifier(crashModule, moduleInitBootstrapper.getWorkerThreadModule());
 
         Systrace.startSynchronous("internal-interface-init");
-        final InternalInterfaceModule internalInterfaceModule = new InternalInterfaceModuleImpl(
+        internalInterfaceModule = new InternalInterfaceModuleImpl(
             moduleInitBootstrapper.getInitModule(),
             moduleInitBootstrapper.getOpenTelemetryModule(),
             coreModule,
@@ -351,12 +344,24 @@ final class EmbraceImpl {
             this,
             crashModule
         );
-        Systrace.endSynchronous();
 
         embraceInternalInterface = internalInterfaceModule.getEmbraceInternalInterface();
-        reactNativeInternalInterface = internalInterfaceModule.getReactNativeInternalInterface();
-        unityInternalInterface = internalInterfaceModule.getUnityInternalInterface();
-        flutterInternalInterface = internalInterfaceModule.getFlutterInternalInterface();
+
+        // Only preemptively initialize internal dependencies service for the current framework being used
+        switch (framework) {
+            case NATIVE:
+                break;
+            case REACT_NATIVE:
+                internalInterfaceModule.getReactNativeInternalInterface();
+                break;
+            case UNITY:
+                internalInterfaceModule.getUnityInternalInterface();
+                break;
+            case FLUTTER:
+                internalInterfaceModule.getFlutterInternalInterface();
+                break;
+        }
+        Systrace.endSynchronous();
 
         final String startMsg = "Embrace SDK started. App ID: " +
             essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
@@ -364,8 +369,11 @@ final class EmbraceImpl {
 
         final long endTime = sdkClock.now();
         started.set(true);
+        Systrace.startSynchronous("startup-tracking");
         dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
+        Systrace.endSynchronous();
 
+        Systrace.startSynchronous("startup-moment");
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
@@ -373,6 +381,7 @@ final class EmbraceImpl {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             dataContainerModule.getEventService().sendStartupMoment();
         }
+        Systrace.endSynchronous();
 
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
@@ -1074,12 +1083,6 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    @InternalApi
-    ConfigService getConfigService() {
-        return configService;
-    }
-
-    @Nullable
     ProcessStateService getActivityService() {
         return processStateService;
     }
@@ -1136,7 +1139,7 @@ final class EmbraceImpl {
      */
     @Nullable
     ReactNativeInternalInterface getReactNativeInternalInterface() {
-        return reactNativeInternalInterface;
+        return internalInterfaceModule != null ? internalInterfaceModule.getReactNativeInternalInterface() : null;
     }
 
     /**
@@ -1175,7 +1178,7 @@ final class EmbraceImpl {
      */
     @Nullable
     UnityInternalInterface getUnityInternalInterface() {
-        return unityInternalInterface;
+        return internalInterfaceModule != null ? internalInterfaceModule.getUnityInternalInterface() : null;
     }
 
     void installUnityThreadSampler() {
@@ -1190,7 +1193,7 @@ final class EmbraceImpl {
      */
     @Nullable
     FlutterInternalInterface getFlutterInternalInterface() {
-        return flutterInternalInterface;
+        return internalInterfaceModule != null ? internalInterfaceModule.getFlutterInternalInterface() : null;
     }
 
     private void onActivityReported() {

@@ -8,55 +8,73 @@ import com.google.gson.JsonPrimitive
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import logTestMessage
 
 /**
  * Performs a comparison between two Json sources.
  */
 internal object JsonValidator {
 
+    internal class Result(
+        val success: Boolean,
+        val message: String
+    )
+
     /**
      * Compares a Json obtained from an InputStream and another one from a String.
      */
-    fun areEquals(expected: InputStream?, observed: String): Boolean {
+    fun areEquals(expected: InputStream?, observed: String): Result {
         val expectedText = InputStreamReader(expected, StandardCharsets.UTF_8).readText()
-        return areJsonStringEquals(expectedText, observed)
+        val sb = StringBuilder()
+        return Result(
+            success = areJsonStringEquals(expectedText, observed, sb),
+            message = sb.toString()
+        )
     }
 
     /**
      * Compares two json strings.
      */
-    private fun areJsonStringEquals(expected: String, observed: String): Boolean {
+    private fun areJsonStringEquals(
+        expected: String,
+        observed: String,
+        sb: StringBuilder
+    ): Boolean {
         val expectedJson = JsonParser.parseString(expected)
         val observedJson = JsonParser.parseString(observed)
-        logTestMessage(
-            "Expected JSON: $expectedJson. \n Actual JSON: $observedJson"
-        )
-
-        return areJsonElementsEquals(expectedJson, observedJson)
+        return areJsonElementsEquals(expectedJson, observedJson, sb)
     }
 
     private fun areJsonElementsEquals(
         jsonElement1: JsonElement,
-        jsonElement2: JsonElement
+        jsonElement2: JsonElement,
+        sb: StringBuilder
     ): Boolean {
         when {
             jsonElement1.isIgnored() || jsonElement2.isIgnored() -> return true
             jsonElement1.isJsonObject && jsonElement2.isJsonObject -> {
-                return areJsonObjectsEquals(jsonElement1.asJsonObject, jsonElement2.asJsonObject)
+                return areJsonObjectsEquals(
+                    jsonElement1.asJsonObject,
+                    jsonElement2.asJsonObject,
+                    sb
+                )
             }
+
             jsonElement1.isJsonArray && jsonElement2.isJsonArray -> {
-                return areJsonArraysEquals(jsonElement1.asJsonArray, jsonElement2.asJsonArray)
+                return areJsonArraysEquals(jsonElement1.asJsonArray, jsonElement2.asJsonArray, sb)
             }
+
             jsonElement1.isJsonPrimitive && jsonElement2.isJsonPrimitive -> {
                 return areJsonPrimitiveEquals(
                     jsonElement1.asJsonPrimitive,
-                    jsonElement2.asJsonPrimitive
+                    jsonElement2.asJsonPrimitive,
+                    sb
                 )
             }
+
             jsonElement1.isJsonNull && jsonElement2.isJsonNull -> {
                 return true
             }
+
             else -> return false
         }
     }
@@ -65,33 +83,36 @@ internal object JsonValidator {
      * Two JsonObjects are equals if each element in the EntrySet is equal to the one
      * in the other JsonObject.
      */
-    private fun areJsonObjectsEquals(jsonObject1: JsonObject, jsonObject2: JsonObject): Boolean {
+    private fun areJsonObjectsEquals(
+        jsonObject1: JsonObject,
+        jsonObject2: JsonObject,
+        sb: StringBuilder
+    ): Boolean {
         val entrySet1 = jsonObject1.entrySet()
         val entrySet2 = jsonObject2.entrySet()
 
         if (entrySet1 != null && entrySet2 != null && entrySet2.size == entrySet1.size) {
             entrySet1.forEachIndexed { _, entry ->
                 try {
-                    logTestMessage("entry.key " + entry.key)
                     jsonObject2.get(entry.key)
                 } catch (ex: Exception) {
-                    logTestMessage("entry.key " + entry.key)
+                    sb.append("JsonValidator exception reading entry.key ${entry.key}. ")
                 }
                 try {
-                    if (!areJsonElementsEquals(entry.value, jsonObject2.get(entry.key))) {
-                        logTestMessage("Match failed for key: ${entry.key}")
+                    if (!areJsonElementsEquals(entry.value, jsonObject2.get(entry.key), sb)) {
+                        sb.append("Match failed for key: ${entry.key}. ")
                         return false
                     }
                 } catch (ex: Exception) {
-                    logTestMessage("entry.key " + entry.key)
+                    sb.append("JsonValidator exception reading entry.key ${entry.key}. ")
                     return false
                 }
             }
             return true
         } else {
-            logTestMessage("Different entry set size.")
-            logTestMessage("expected jsonObject1: " + jsonObject1.size() + " " + jsonObject1)
-            logTestMessage("observed jsonObject2: " + jsonObject2.size() + " " + jsonObject2)
+            sb.append("Different entry set size. ")
+            sb.append("expected jsonObject1: ${jsonObject1.size()} $jsonObject1. ")
+            sb.append("observed jsonObject2: ${jsonObject2.size()} $jsonObject2. ")
             return false
         }
     }
@@ -100,15 +121,19 @@ internal object JsonValidator {
      * Two JsonArrays are equal if each element in the array is equal to the one in the other array.
      * Arrays ordered in a different way are considered different.
      */
-    private fun areJsonArraysEquals(jsonArray1: JsonArray, jsonArray2: JsonArray): Boolean {
+    private fun areJsonArraysEquals(
+        jsonArray1: JsonArray,
+        jsonArray2: JsonArray,
+        sb: StringBuilder
+    ): Boolean {
         if (jsonArray1.size() != jsonArray2.size()) {
-            logTestMessage("Different arrays size.")
+            sb.append("Different arrays size. ")
             return false
         }
 
         jsonArray1.forEachIndexed { index, entry ->
-            if (!areJsonElementsEquals(entry, jsonArray2.get(index))) {
-                logTestMessage("Different array value at position: $index.")
+            if (!areJsonElementsEquals(entry, jsonArray2.get(index), sb)) {
+                sb.append("Different array value at position: $index. ")
                 return false
             }
         }
@@ -120,13 +145,14 @@ internal object JsonValidator {
      */
     private fun areJsonPrimitiveEquals(
         jsonPrimitive1: JsonPrimitive,
-        jsonPrimitive2: JsonPrimitive
+        jsonPrimitive2: JsonPrimitive,
+        sb: StringBuilder
     ): Boolean {
         val arePrimitiveEquals = jsonPrimitive1 == jsonPrimitive2
         if (!arePrimitiveEquals) {
-            logTestMessage(
+            sb.append(
                 "Different values. Expected: ${jsonPrimitive1.asJsonPrimitive} " +
-                    "Actual: ${jsonPrimitive2.asJsonPrimitive}"
+                    "Actual: ${jsonPrimitive2.asJsonPrimitive}. "
             )
         }
         return arePrimitiveEquals

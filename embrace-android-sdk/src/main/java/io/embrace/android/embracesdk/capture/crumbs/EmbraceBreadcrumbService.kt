@@ -223,6 +223,9 @@ internal class EmbraceBreadcrumbService(
      * Close all open fragments when the activity closes
      */
     override fun onViewClose(activity: Activity) {
+        if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
+            return
+        }
         viewBreadcrumbDataSource.onViewClose()
         if (fragmentStack.size == 0) {
             return

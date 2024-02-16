@@ -19,8 +19,6 @@ internal class ViewBreadcrumbDataSource(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataCaptureService<List<ViewBreadcrumb>> by store {
 
-    private var lastBreadcrumb: ViewBreadcrumb? = null
-
     /**
      * Adds the view breadcrumb to the queue.
      *
@@ -30,11 +28,15 @@ internal class ViewBreadcrumbDataSource(
      */
     fun addToViewLogsQueue(screen: String?, timestamp: Long, force: Boolean) {
         try {
-            val lastCrumb = lastBreadcrumb
+            val lastCrumb = store.peek()
             val lastScreen = lastCrumb?.screen ?: ""
-            if (force || lastCrumb == null || !lastScreen.equals(screen, ignoreCase = true)) {
+            if (force || lastCrumb == null || !lastScreen.equals(
+                    screen.toString(),
+                    ignoreCase = true
+                )
+            ) {
                 lastCrumb?.end = timestamp
-                lastBreadcrumb = store.tryAddBreadcrumb(ViewBreadcrumb(screen, timestamp))
+                store.tryAddBreadcrumb(ViewBreadcrumb(screen, timestamp))
             }
         } catch (ex: Exception) {
             logger.logError("Failed to add view breadcrumb for $screen", ex)
@@ -42,13 +44,13 @@ internal class ViewBreadcrumbDataSource(
     }
 
     fun replaceFirstSessionView(screen: String, timestamp: Long) {
-        lastBreadcrumb?.apply {
+        store.peek()?.apply {
             this.start = timestamp
             this.screen = screen
         }
     }
 
-    fun getLastViewBreadcrumbScreenName(): String? = lastBreadcrumb?.screen
+    fun getLastViewBreadcrumbScreenName(): String? = store.peek()?.screen
 
     /**
      * Close all open fragments when the activity closes
@@ -57,6 +59,6 @@ internal class ViewBreadcrumbDataSource(
         if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             return
         }
-        lastBreadcrumb?.end = clock.now()
+        store.peek()?.end = clock.now()
     }
 }

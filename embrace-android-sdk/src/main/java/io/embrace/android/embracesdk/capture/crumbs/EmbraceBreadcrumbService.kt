@@ -129,10 +129,7 @@ internal class EmbraceBreadcrumbService(
         webViewBreadcrumbDataSource.logWebView(url, startTime)
     }
 
-    override fun getViewBreadcrumbsForSession(
-        start: Long,
-        end: Long
-    ): List<ViewBreadcrumb?> {
+    override fun getViewBreadcrumbsForSession(): List<ViewBreadcrumb> {
         return viewBreadcrumbDataSource.getCapturedData()
     }
 
@@ -173,7 +170,7 @@ internal class EmbraceBreadcrumbService(
         return Breadcrumbs(
             customBreadcrumbs = getCustomBreadcrumbsForSession(),
             tapBreadcrumbs = getTapBreadcrumbsForSession(),
-            viewBreadcrumbs = getViewBreadcrumbsForSession(start, end).filterNotNull(),
+            viewBreadcrumbs = getViewBreadcrumbsForSession(),
             webViewBreadcrumbs = getWebViewBreadcrumbsForSession(),
             fragmentBreadcrumbs = getFragmentBreadcrumbsForSession(start, end).filterNotNull(),
             rnActionBreadcrumbs = getRnActionBreadcrumbForSession(),

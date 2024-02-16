@@ -15,7 +15,7 @@ internal class FakeDataSource(
     var disableDataCaptureCount = 0
     var resetCount = 0
 
-    override fun captureData(action: SessionSpanWriter.() -> Unit) {
+    override fun captureData(captureAction: SessionSpanWriter.() -> Unit) {
     }
 
     override fun enableDataCapture() {

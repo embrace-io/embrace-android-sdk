@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch
 
+import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
  */
 internal abstract class DataSourceImpl<T>(
     private val destination: T,
+    private val limitStrategy: LimitStrategy,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataSource<T> {
 
@@ -20,12 +22,14 @@ internal abstract class DataSourceImpl<T>(
     }
 
     override fun resetDataCaptureLimits() {
-        // no-op
+        limitStrategy.resetDataCaptureLimits()
     }
 
-    override fun captureData(action: T.() -> Unit) {
+    override fun captureData(captureAction: T.() -> Unit) {
         try {
-            destination.action()
+            if (limitStrategy.shouldCapture()) {
+                destination.captureAction()
+            }
         } catch (exc: Throwable) {
             logger.logError("Error capturing data", exc)
         }

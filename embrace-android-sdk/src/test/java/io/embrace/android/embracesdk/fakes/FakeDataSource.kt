@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.arch.EventDataSource
 import io.embrace.android.embracesdk.arch.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.SpanAttributeData
 
 internal class FakeDataSource(
     private val ctx: Context
@@ -14,7 +15,10 @@ internal class FakeDataSource(
     var disableDataCaptureCount = 0
     var resetCount = 0
 
-    override fun captureData(action: SessionSpanWriter.() -> Unit) {
+    override fun captureData(
+        inputValidation: () -> Boolean,
+        captureAction: SessionSpanWriter.() -> Unit
+    ) {
     }
 
     override fun enableDataCapture() {
@@ -32,8 +36,8 @@ internal class FakeDataSource(
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        captureData {
-            // TODO: interact with span here.
+        captureData(inputValidation = { true }) {
+            addAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
         }
     }
 

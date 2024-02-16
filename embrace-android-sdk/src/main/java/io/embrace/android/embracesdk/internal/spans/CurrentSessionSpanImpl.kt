@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.SpanAttributeData
+import io.embrace.android.embracesdk.arch.SpanEventData
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
@@ -87,18 +89,14 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun addEvent(
-        name: String,
-        timeNanos: Long?,
-        attributes: Map<String, String>?
-    ): Boolean {
+    override fun addEvent(event: SpanEventData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addEvent(name, timeNanos, attributes)
+        return currentSession.addEvent(event.name, event.timeNanos, event.attributes)
     }
 
-    override fun addAttribute(key: String, value: String): Boolean {
+    override fun addAttribute(attribute: SpanAttributeData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addAttribute(key, value)
+        return currentSession.addAttribute(attribute.key, attribute.value)
     }
 
     /**

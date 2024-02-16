@@ -18,8 +18,15 @@ internal interface DataSource<T> {
     /**
      * The DataSource should call this function when it wants to capture data
      * and send it to the destination.
+     *
+     * The [inputValidation] parameter returns true if the user inputs are valid. (e.g. an empty
+     * string is not valid for a breadcrumb message).
+     *
+     * The [captureAction] parameter is a lambda that captures the data and sends it to the
+     * destination. It will be called only if [inputValidation] returns true & no data capture
+     * limits have been exceeded.
      */
-    fun captureData(action: T.() -> Unit)
+    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit)
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting

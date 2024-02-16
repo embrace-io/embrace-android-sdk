@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
-internal class LogSinkImpl : LogSink {
+internal class LogSinkImpl(private val logOrchestrator: LogOrchestrator) : LogSink {
     private val storedLogs: MutableList<EmbraceLogRecordData> = mutableListOf()
 
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
@@ -11,6 +11,7 @@ internal class LogSinkImpl : LogSink {
             synchronized(storedLogs) {
                 storedLogs += logs.map { EmbraceLogRecordData(logRecordData = it) }
             }
+            logOrchestrator.onLogsAdded()
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
         }

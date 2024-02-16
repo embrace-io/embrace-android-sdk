@@ -2,15 +2,8 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import android.util.Pair
 import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.CustomBreadcrumb
-import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
-import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
-import io.embrace.android.embracesdk.payload.ViewBreadcrumb
-import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 /**
  * Service which stores breadcrumbs for the application.
@@ -18,72 +11,12 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 internal interface BreadcrumbService {
 
     /**
-     * Gets the view breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     */
-    fun getViewBreadcrumbsForSession(): List<ViewBreadcrumb>
-
-    /**
-     * Gets the Taps breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @return the list of Breadcrumbs
-     */
-    fun getTapBreadcrumbsForSession(): List<TapBreadcrumb>
-
-    /**
-     * Gets the Custom breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @return the list of Breadcrumbs
-     */
-    fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb>
-
-    /**
-     * Gets the WebView breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @return the list of Breadcrumbs
-     */
-    fun getWebViewBreadcrumbsForSession(): List<WebViewBreadcrumb>
-
-    /**
-     * Gets the WebView breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @param startTime the start time
-     * @param endTime   the end time
-     * @return the list of Breadcrumbs
-     */
-    fun getFragmentBreadcrumbsForSession(startTime: Long, endTime: Long): List<FragmentBreadcrumb?>
-
-    /**
-     * Gets the RN Actions breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @return the list of Breadcrumbs
-     */
-    fun getRnActionBreadcrumbForSession(): List<RnActionBreadcrumb>
-
-    /**
-     * Gets the captured Push Notifications breadcrumbs in the specified time window.
-     * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @param startTime the start time
-     * @param endTime   the end time
-     * @return the list of Breadcrumbs
-     */
-    fun getPushNotificationsBreadcrumbsForSession(): List<PushNotificationBreadcrumb>
-
-    /**
      * Gets all breadcrumbs within the specified time window. If the number of elements exceeds the
      * limit for each breadcrumb type, only the latest will be returned.
      *
-     * @param start the start time
-     * @param end   the end time
      * @return the breadcrumbs
      */
-    fun getBreadcrumbs(start: Long, end: Long): Breadcrumbs
+    fun getBreadcrumbs(): Breadcrumbs
 
     /**
      * Gets all breacrumbs and clear the lists

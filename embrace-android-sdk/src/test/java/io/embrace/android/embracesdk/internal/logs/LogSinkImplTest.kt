@@ -14,7 +14,7 @@ import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
-internal class LogSinkImpltest {
+internal class LogSinkImplTest {
     private lateinit var logSink: LogSink
 
     @Before

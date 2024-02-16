@@ -16,6 +16,7 @@ internal class EmbraceUrl(val url: URL) {
             Endpoint.EVENTS.path -> Endpoint.EVENTS
             Endpoint.BLOBS.path -> Endpoint.BLOBS
             Endpoint.LOGGING.path -> Endpoint.LOGGING
+            Endpoint.LOGS.path -> Endpoint.LOGS
             Endpoint.NETWORK.path -> Endpoint.NETWORK
             Endpoint.SESSIONS.path -> Endpoint.SESSIONS
             else -> Endpoint.UNKNOWN

@@ -12,6 +12,7 @@ internal class EmbraceUrlTest {
         val embraceUrlEvents = EmbraceUrl.create("https://embrace.io/events")
         val embraceUrlBlobs = EmbraceUrl.create("https://embrace.io/blobs")
         val embraceUrlLogging = EmbraceUrl.create("https://embrace.io/logging")
+        val embraceUrlLogs = EmbraceUrl.create("https://embrace.io/logs")
         val embraceUrlNetwork = EmbraceUrl.create("https://embrace.io/network")
         val embraceUrlOther = EmbraceUrl.create("https://embrace.io/other")
 
@@ -19,6 +20,7 @@ internal class EmbraceUrlTest {
         assertEquals(Endpoint.EVENTS, embraceUrlEvents.endpoint())
         assertEquals(Endpoint.BLOBS, embraceUrlBlobs.endpoint())
         assertEquals(Endpoint.LOGGING, embraceUrlLogging.endpoint())
+        assertEquals(Endpoint.LOGS, embraceUrlLogs.endpoint())
         assertEquals(Endpoint.NETWORK, embraceUrlNetwork.endpoint())
         assertEquals(Endpoint.UNKNOWN, embraceUrlOther.endpoint())
     }

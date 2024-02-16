@@ -178,6 +178,7 @@ internal class PendingApiCallsTest {
             Endpoint.EVENTS -> 100
             Endpoint.BLOBS -> 50
             Endpoint.LOGGING -> 100
+            Endpoint.LOGS -> 10
             Endpoint.NETWORK -> 50
             Endpoint.SESSIONS -> 100
             Endpoint.UNKNOWN -> 50

@@ -5,13 +5,14 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
 
-internal enum class Endpoint(val path: String) {
-    EVENTS("events"),
-    BLOBS("blobs"),
-    LOGGING("logging"),
-    NETWORK("network"),
-    SESSIONS("sessions"),
-    UNKNOWN("unknown");
+internal enum class Endpoint(val path: String, val version: String) {
+    EVENTS("events", "v1"),
+    BLOBS("blobs", "v1"),
+    LOGGING("logging", "v1"),
+    LOGS("logs", "v2"),
+    NETWORK("network", "v1"),
+    SESSIONS("sessions", "v1"),
+    UNKNOWN("unknown", "v1");
 
     private var rateLimitRetryCount = AtomicInteger(0)
 

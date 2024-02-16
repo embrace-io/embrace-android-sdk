@@ -14,7 +14,7 @@ internal class DataSourceState(
      * that extends [DataSource] for orchestration. This helps enforce testability
      * by making it impossible to register data capture without defining a testable interface.
      */
-    factory: Provider<DataSource>,
+    factory: Provider<DataSource<*>>,
 
     /**
      * Predicate that determines if the service should be enabled or not, via a config value.
@@ -35,7 +35,7 @@ internal class DataSourceState(
 ) {
 
     private val enabledDataSource by lazy(factory)
-    private var dataSource: DataSource? = null
+    private var dataSource: DataSource<*>? = null
 
     init {
         updateDataSource()
@@ -47,6 +47,7 @@ internal class DataSourceState(
     fun onSessionTypeChange(sessionType: SessionType?) {
         this.currentSessionType = sessionType
         updateDataSource()
+        enabledDataSource.resetDataCaptureLimits()
     }
 
     /**
@@ -62,10 +63,10 @@ internal class DataSourceState(
 
         if (enabled && dataSource == null) {
             dataSource = enabledDataSource.apply {
-                registerListeners()
+                enableDataCapture()
             }
         } else if (!enabled && dataSource != null) {
-            dataSource?.unregisterListeners()
+            dataSource?.disableDataCapture()
             dataSource = null
         }
     }

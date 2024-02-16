@@ -3,7 +3,9 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -121,14 +123,37 @@ internal fun SpanBuilder.updateParent(parent: EmbraceSpan?): SpanBuilder {
 }
 
 /**
+ * Add the given list of [EmbraceSpanEvent] if they are valid
+ */
+internal fun Span.addEvents(events: List<EmbraceSpanEvent>): Span {
+    events.forEach { event ->
+        if (EmbraceSpanEvent.inputsValid(event.name, event.attributes)) {
+            addEvent(
+                event.name,
+                Attributes.builder().fromMap(event.attributes).build(),
+                event.timestampNanos,
+                TimeUnit.NANOSECONDS
+            )
+        }
+    }
+    return this
+}
+
+/**
  * Allow a [SpanBuilder] to take in a lambda around which a span will be created for its execution
  */
-internal fun <T> SpanBuilder.record(code: Provider<T>): T {
+internal fun <T> SpanBuilder.record(
+    attributes: Map<String, String>,
+    events: List<EmbraceSpanEvent>,
+    code: Provider<T>
+): T {
     val returnValue: T
     var span: Span? = null
 
     try {
         span = startSpan()
+            .setAllAttributes(Attributes.builder().fromMap(attributes).build())
+            .addEvents(events)
         returnValue = code()
         span.endSpan()
     } catch (t: Throwable) {

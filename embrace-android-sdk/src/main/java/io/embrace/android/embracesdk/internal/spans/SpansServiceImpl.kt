@@ -44,10 +44,14 @@ internal class SpansServiceImpl(
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         code: () -> T
     ): T {
         return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).updateParent(parent).record(code)
+            createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
+                .updateParent(parent)
+                .record(attributes, events, code)
         } else {
             code()
         }
@@ -71,24 +75,13 @@ internal class SpansServiceImpl(
         return if (EmbraceSpanImpl.inputsValid(name, events, attributes) &&
             currentSessionSpan.canStartNewSpan(parent, internal)
         ) {
-            val span = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
+            createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
                 .updateParent(parent)
                 .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
                 .startSpan()
                 .setAllAttributes(Attributes.builder().fromMap(attributes).build())
-
-            events.forEach { event ->
-                if (EmbraceSpanEvent.inputsValid(event.name, event.attributes)) {
-                    span.addEvent(
-                        event.name,
-                        Attributes.builder().fromMap(event.attributes).build(),
-                        event.timestampNanos,
-                        TimeUnit.NANOSECONDS
-                    )
-                }
-            }
-
-            span.endSpan(errorCode, endTimeNanos)
+                .addEvents(events)
+                .endSpan(errorCode, endTimeNanos)
             true
         } else {
             false
@@ -98,7 +91,6 @@ internal class SpansServiceImpl(
     override fun getSpan(spanId: String): EmbraceSpan? = spansRepository.getSpan(spanId = spanId)
 
     companion object {
-        const val MAX_TRACE_COUNT_PER_SESSION = 100
-        const val MAX_SPAN_COUNT_PER_TRACE = 10
+        const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500
     }
 }

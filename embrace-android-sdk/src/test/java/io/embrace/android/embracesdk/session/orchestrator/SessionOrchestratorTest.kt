@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -72,7 +73,7 @@ internal class SessionOrchestratorTest {
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor))
         periodicBackgroundActivityCacher =
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor))
-        fakeDataSource = FakeDataSource()
+        fakeDataSource = FakeDataSource(mockContext())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             listOf(
                 DataSourceState(
@@ -115,7 +116,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startBaTimestamps.size)
         assertEquals("fake-activity", sessionIdTracker.sessionId)
         assertEquals(0, deliveryService.lastSentSessions.size)
-        assertEquals(1, fakeDataSource.registerCount)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
     @Test
@@ -126,7 +127,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadFactory.startBaTimestamps.size)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
         assertEquals(0, deliveryService.lastSentSessions.size)
-        assertEquals(1, fakeDataSource.registerCount)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
     @Test
@@ -138,7 +139,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
         assertEquals(1, deliveryService.lastSentSessions.size)
-        assertEquals(1, fakeDataSource.registerCount)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
     @Test

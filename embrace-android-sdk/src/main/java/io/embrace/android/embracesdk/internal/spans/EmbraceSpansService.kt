@@ -25,15 +25,16 @@ internal class EmbraceSpansService(
         if (!initialized()) {
             synchronized(currentDelegate) {
                 if (!initialized()) {
-                    currentDelegate = SpansServiceImpl(
+                    val realSpansService = SpansServiceImpl(
                         spansRepository = spansRepository,
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracerSupplier(),
                     )
-                    currentDelegate.initializeService(sdkInitStartTimeNanos)
-                    if (currentDelegate.initialized()) {
-                        uninitializedSdkSpansService.recordBufferedCalls(this)
+                    realSpansService.initializeService(sdkInitStartTimeNanos)
+                    if (realSpansService.initialized()) {
+                        uninitializedSdkSpansService.triggerBufferedSpanRecording(realSpansService)
                     }
+                    currentDelegate = realSpansService
                 }
             }
         }
@@ -49,8 +50,18 @@ internal class EmbraceSpansService(
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         code: () -> T
-    ): T = currentDelegate.recordSpan(name = name, parent = parent, type = type, internal = internal, code = code)
+    ): T = currentDelegate.recordSpan(
+        name = name,
+        parent = parent,
+        type = type,
+        internal = internal,
+        attributes = attributes,
+        events = events,
+        code = code
+    )
 
     override fun recordCompletedSpan(
         name: String,

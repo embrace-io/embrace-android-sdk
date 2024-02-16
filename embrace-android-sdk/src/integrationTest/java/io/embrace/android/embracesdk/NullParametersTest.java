@@ -266,10 +266,26 @@ public class NullParametersTest {
     }
 
     @Test
-    public void testRecordSpan3Parameters() {
+    public void testRecordSpanWithAttributesAndEvents() {
+        assertTrue(embrace.recordSpan(null, null, null, () -> true));
+        assertError("recordSpan");
+        assertNull(embrace.recordSpan("test-span", null, null, null));
+        assertError("recordSpan");
+    }
+
+    @Test
+    public void testRecordSpanWithParent() {
         assertTrue(embrace.recordSpan(null, null, () -> true));
         assertError("recordSpan");
         assertNull(embrace.recordSpan("test-span", null, null));
+        assertError("recordSpan");
+    }
+
+    @Test
+    public void testRecordSpanWithParentAttributesAndEvents() {
+        assertTrue(embrace.recordSpan(null, null, null, null, () -> true));
+        assertError("recordSpan");
+        assertNull(embrace.recordSpan("test-span", null, null, null, null));
         assertError("recordSpan");
     }
 

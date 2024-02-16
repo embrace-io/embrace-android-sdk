@@ -169,7 +169,7 @@ class InternalEmbracePlugin : Plugin<Project> {
     }
 
     private fun configureKotlinOptions(project: Project) {
-        project.tasks.withType(KotlinCompile::class.java).all {
+        project.tasks.withType(KotlinCompile::class.java).configureEach {
             kotlinOptions {
                 apiVersion = "1.4"
                 languageVersion = "1.4"
@@ -179,12 +179,13 @@ class InternalEmbracePlugin : Plugin<Project> {
                 // FIXME: targeting Kotlin 1.4 emits a warning that I can't find a way to suppress.
                 //  Disabling this check for now.
                 allWarningsAsErrors = false
+
             }
         }
     }
 
     private fun configureJavaOptions(project: Project) {
-        project.tasks.withType(JavaCompile::class.java).all {
+        project.tasks.withType(JavaCompile::class.java).configureEach {
             val args = listOf("-Xlint:unchecked", "-Xlint:deprecation")
             options.compilerArgs.addAll(args)
         }

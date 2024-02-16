@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.SpanAttributeData
+import io.embrace.android.embracesdk.arch.SpanEventData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -36,7 +38,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum not started traces`() {
-        repeat(SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(spansService.createSpan(name = "spanzzz$it", internal = false))
         }
         assertNull(spansService.createSpan(name = "failed-span", internal = false))
@@ -44,7 +46,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum traces recorded around a lambda`() {
-        repeat(SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertEquals("derp", spansService.recordSpan(name = "record$it", internal = false) { "derp" })
         }
         assertNull(spansService.createSpan(name = "failed-span", internal = false))
@@ -52,7 +54,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum completed traces`() {
-        repeat(SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION) {
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertTrue(
                 spansService.recordCompletedSpan(
                     name = "complete$it",
@@ -69,20 +71,19 @@ internal class CurrentSessionSpanImplTests {
     fun `check internal traces and child spans don't count towards limit`() {
         val parent = checkNotNull(spansService.createSpan(name = "test-span", internal = false))
         assertTrue(parent.start())
-        assertNotNull(spansService.createSpan(name = "child-span", parent = parent, internal = false))
-        assertNotNull(spansService.createSpan(name = "internal-span", parent = parent, internal = true))
-        repeat(SpansServiceImpl.MAX_TRACE_COUNT_PER_SESSION - 1) {
-            assertNotNull(spansService.createSpan(name = "spanzzz$it", internal = false))
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
+            assertNotNull("Adding span $it failed", spansService.createSpan(name = "spanzzz$it", internal = false))
         }
         assertNull(spansService.createSpan(name = "failed-span", internal = false))
-        assertNotNull(spansService.createSpan(name = "child-span", parent = parent, internal = false))
+        assertNull(spansService.createSpan(name = "child-span", parent = parent, internal = false))
         assertNotNull(spansService.createSpan(name = "internal-again", internal = true))
+        assertNotNull(spansService.createSpan(name = "internal-child-span", parent = parent, internal = true))
     }
 
     @Test
-    fun `check child span per trace limit`() {
+    fun `check total limit can be reached with descendant spans`() {
         var parentSpan: EmbraceSpan? = null
-        repeat(SpansServiceImpl.MAX_SPAN_COUNT_PER_TRACE) {
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             val span = spansService.createSpan(name = "spanzzz$it", parent = parentSpan, internal = false)
             assertTrue(checkNotNull(span).start())
             parentSpan = span
@@ -118,7 +119,7 @@ internal class CurrentSessionSpanImplTests {
             )
         )
 
-        repeat(SpansServiceImpl.MAX_SPAN_COUNT_PER_TRACE - 1) {
+        repeat(SpansServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(spansService.createSpan(name = "spanzzz$it", parent = parentSpan, internal = false))
         }
         assertNull(spansService.createSpan(name = "failed-span", parent = parentSpan, internal = false))
@@ -174,5 +175,28 @@ internal class CurrentSessionSpanImplTests {
         val currentSpans = spansSink.completedSpans()
         assertEquals(1, currentSpans.size)
         assertEquals("emb-test-span", currentSpans[0].name)
+    }
+
+    @Test
+    fun `add event forwarded to span`() {
+        currentSessionSpan.addEvent(SpanEventData("test-event", 1000L, mapOf("key" to "value")))
+        val span = currentSessionSpan.endSession(null).single()
+        assertEquals("emb-session-span", span.name)
+
+        // verify event was added to the span
+        val testEvent = span.events.single()
+        assertEquals("test-event", testEvent.name)
+        assertEquals(1000, testEvent.timestampNanos)
+        assertEquals(mapOf("key" to "value"), testEvent.attributes)
+    }
+
+    @Test
+    fun `add attribute forwarded to span`() {
+        currentSessionSpan.addAttribute(SpanAttributeData("my_key", "my_value"))
+        val span = currentSessionSpan.endSession(null).single()
+        assertEquals("emb-session-span", span.name)
+
+        // verify attribute was added to the span
+        assertEquals("my_value", span.attributes["my_key"])
     }
 }

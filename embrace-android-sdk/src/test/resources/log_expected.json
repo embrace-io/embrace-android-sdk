@@ -1,0 +1,14 @@
+{
+  "trace_id":"ceadd56622414a06ae382e4e5a70bcf7",
+  "span_id":"50fbbe95362a430ba87ebd0132262ff1",
+  "time_unix_nano":1681972471806000000,
+  "severity_number":9,
+  "severity_text":"INFO",
+  "body":{
+    "message":"test log message"
+  },
+  "attributes":{
+    "test1":"value1",
+    "test2":"value2"
+  }
+}

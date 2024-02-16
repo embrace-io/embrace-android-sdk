@@ -29,6 +29,8 @@ internal interface SpansService : Initializable {
         parent: EmbraceSpan? = null,
         type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
         internal: Boolean = true,
+        attributes: Map<String, String> = emptyMap(),
+        events: List<EmbraceSpanEvent> = emptyList(),
         code: () -> T
     ): T
 

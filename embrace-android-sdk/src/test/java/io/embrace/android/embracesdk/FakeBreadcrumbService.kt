@@ -51,7 +51,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
         logViewCalls.add(screen)
     }
 
-    override fun replaceFirstSessionView(screen: String?, timestamp: Long) {
+    override fun replaceFirstSessionView(screen: String, timestamp: Long) {
     }
 
     override fun startView(name: String?): Boolean {

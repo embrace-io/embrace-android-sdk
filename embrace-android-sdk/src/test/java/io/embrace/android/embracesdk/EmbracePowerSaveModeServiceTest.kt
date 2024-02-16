@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
@@ -150,6 +151,7 @@ internal class EmbracePowerSaveModeServiceTest {
         assertThrows(Exception::class.java) { service.onReceive(context, intent) }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Test
     @Throws(InterruptedException::class)
     fun `test receiver can be registered and unregistered`() {

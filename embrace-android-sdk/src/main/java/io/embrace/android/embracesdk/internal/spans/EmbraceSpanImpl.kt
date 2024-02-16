@@ -14,11 +14,14 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSpanImpl(
     private val spanBuilder: SpanBuilder,
     override val parent: EmbraceSpan? = null,
-    private val spansRepository: SpansRepository? = null
+    private val spansRepository: SpansRepository? = null,
+    sessionSpan: Boolean = false
 ) : EmbraceSpan {
 
     init {
-        spanBuilder.updateParent(parent)
+        if (!sessionSpan) {
+            spanBuilder.updateParent(parent)
+        }
     }
 
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)

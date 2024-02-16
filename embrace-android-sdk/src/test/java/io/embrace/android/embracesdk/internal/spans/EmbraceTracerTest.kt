@@ -54,11 +54,39 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `record lambda running as span`() {
+        val expectedAttributes = mapOf(
+            Pair("attribute1", "value1"),
+            Pair("attribute2", "value2")
+        )
+
+        val expectedEvents: List<EmbraceSpanEvent> =
+            listOf(
+                EmbraceSpanEvent(name = "event1", timestampNanos = 0L, expectedAttributes),
+                EmbraceSpanEvent(name = "event2", timestampNanos = 5L, expectedAttributes),
+            )
+
+        val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
+        parentSpan.start()
         val returnThis = 1881L
-        val lambdaReturn = embraceTracer.recordSpan(name = "lambda-test-span") {
+        val expectedStartTime = clock.nowInNanos()
+        val lambdaReturn = embraceTracer.recordSpan(
+            name = "lambda-test-span",
+            parent = parentSpan,
+            attributes = expectedAttributes,
+            events = expectedEvents
+        ) {
+            clock.tick(10)
             returnThis
         }
-        verifyPublicSpan("lambda-test-span")
+        val expectedEndTime = clock.nowInNanos()
+        with(verifyPublicSpan(name = "lambda-test-span", traceRoot = false)) {
+            assertEquals(expectedStartTime, startTimeNanos)
+            assertEquals(expectedEndTime, endTimeNanos)
+            expectedAttributes.forEach {
+                assertEquals(it.value, attributes[it.key])
+            }
+            assertEquals(expectedEvents, events)
+        }
         assertEquals(returnThis, lambdaReturn)
     }
 
@@ -79,7 +107,6 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName)) {
             assertEquals(expectedStartTime, startTimeNanos)
             assertEquals(expectedEndTime, endTimeNanos)
-            assertEquals("true", attributes["emb.key"])
         }
     }
 
@@ -158,7 +185,6 @@ internal class EmbraceTracerTest {
         val expectedName = "test-span"
         val expectedStartTime = clock.now()
         val expectedEndTime = expectedStartTime + 100L
-        val expectedType = EmbraceAttributes.Type.PERFORMANCE
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -182,11 +208,6 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName)) {
             assertEquals(expectedStartTime, startTimeNanos)
             assertEquals(expectedEndTime, endTimeNanos)
-            assertEquals(
-                expectedType.name,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
-            )
-            assertEquals("true", attributes["emb.key"])
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }

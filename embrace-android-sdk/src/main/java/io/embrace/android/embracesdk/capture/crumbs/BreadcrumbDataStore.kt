@@ -9,11 +9,12 @@ internal class BreadcrumbDataStore<T>(
 
     private val breadcrumbs = LinkedBlockingDeque<T>()
 
-    fun tryAddBreadcrumb(breadcrumb: T) {
+    fun tryAddBreadcrumb(breadcrumb: T): T {
         if (!breadcrumbs.isEmpty() && breadcrumbs.size >= limit()) {
             breadcrumbs.removeLast()
         }
         breadcrumbs.push(breadcrumb)
+        return breadcrumb
     }
 
     override fun getCapturedData(): List<T> = breadcrumbs.toList()

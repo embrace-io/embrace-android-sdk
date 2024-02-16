@@ -121,7 +121,7 @@ internal interface BreadcrumbService {
      *
      * @param timestamp time to set as beginning of the view.
      */
-    fun replaceFirstSessionView(screen: String?, timestamp: Long)
+    fun replaceFirstSessionView(screen: String, timestamp: Long)
 
     /**
      * Logs the start of a view. Must be matched by a call to

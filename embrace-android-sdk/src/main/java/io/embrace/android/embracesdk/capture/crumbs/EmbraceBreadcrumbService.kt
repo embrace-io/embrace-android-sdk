@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -53,78 +52,50 @@ internal class EmbraceBreadcrumbService(
     private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
     private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
+    private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock)
     private val pushNotificationBreadcrumbDataSource =
         PushNotificationBreadcrumbDataSource(configService, clock)
 
     val fragmentBreadcrumbs = LinkedBlockingDeque<FragmentBreadcrumb?>()
     val fragmentStack = Collections.synchronizedList(ArrayList<FragmentBreadcrumb>())
-    private val viewBreadcrumbsCache: CacheableValue<List<ViewBreadcrumb?>> =
-        CacheableValue { isCacheValid(viewBreadcrumbs) }
     private val fragmentsCache: CacheableValue<List<FragmentBreadcrumb?>> =
         CacheableValue { isCacheValid(fragmentBreadcrumbs) }
 
     override fun logView(screen: String?, timestamp: Long) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "logView")
-        addToViewLogsQueue(screen, timestamp, false)
+        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)
     }
 
     override fun forceLogView(screen: String?, timestamp: Long) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "forceLogView")
-        addToViewLogsQueue(screen, timestamp, true)
-    }
-
-    @Synchronized
-    override fun replaceFirstSessionView(screen: String?, timestamp: Long) {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED) {
-            return
-        }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "replaceFirstSessionView")
-        viewBreadcrumbs.removeLast()
-        val limit = configService.breadcrumbBehavior.getViewBreadcrumbLimit()
-        tryAddBreadcrumb(viewBreadcrumbs, ViewBreadcrumb(screen, timestamp), limit)
+        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, true)
     }
 
     override fun startView(name: String?): Boolean {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED || name == null) {
+        if (name == null) {
             return false
         }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "Starting view: $name")
         synchronized(this) {
             if (fragmentStack.size >= DEFAULT_VIEW_STACK_SIZE) {
-                val msg =
-                    "Cannot add view, view stack exceed the limit of " + DEFAULT_VIEW_STACK_SIZE
-                logger.logDeveloper("EmbraceBreadcrumbsService", msg)
                 return false
             }
-            logger.logDeveloper("EmbraceBreadcrumbsService", "View added: $name")
             return fragmentStack.add(FragmentBreadcrumb(name, clock.now(), 0))
         }
     }
 
     override fun endView(name: String?): Boolean {
-        if (ApkToolsConfig.IS_BREADCRUMB_TRACKING_DISABLED || name == null) {
+        if (name == null) {
             return false
         }
-        logger.logDeveloper("EmbraceBreadcrumbsService", "Ending view: $name")
         var start: FragmentBreadcrumb
         val end = FragmentBreadcrumb(name, 0, clock.now())
         synchronized(this) {
             val crumbs = filter(fragmentStack) { crumb: FragmentBreadcrumb -> crumb.name == name }
             if (crumbs.isEmpty()) {
-                logger.logDeveloper("EmbraceBreadcrumbsService", "Cannot end view")
                 return false
             }
             start = crumbs[0]
             fragmentStack.remove(start)
         }
         end.setStartTime(start.getStartTime())
-        logger.logDeveloper("EmbraceBreadcrumbsService", "View ended")
         val limit = configService.breadcrumbBehavior.getFragmentBreadcrumbLimit()
         tryAddBreadcrumb(fragmentBreadcrumbs, end, limit)
         return true
@@ -162,13 +133,7 @@ internal class EmbraceBreadcrumbService(
         start: Long,
         end: Long
     ): List<ViewBreadcrumb?> {
-        return viewBreadcrumbsCache.value {
-            filterBreadcrumbsForTimeWindow(
-                viewBreadcrumbs,
-                start,
-                end
-            )
-        }
+        return viewBreadcrumbDataSource.getCapturedData()
     }
 
     override fun getTapBreadcrumbsForSession(): List<TapBreadcrumb> {
@@ -229,23 +194,6 @@ internal class EmbraceBreadcrumbService(
         return collection.size + code
     }
 
-    override fun getLastViewBreadcrumbScreenName(): String? {
-        if (viewBreadcrumbs.isEmpty()) {
-            logger.logDeveloper("EmbraceBreadcrumbsService", "View breadcrumb stack is empty")
-        } else {
-            val crumb = viewBreadcrumbs.peek()
-            if (crumb != null) {
-                val lastViewBreadcrumb = crumb.screen
-                logger.logDeveloper(
-                    "EmbraceBreadcrumbsService",
-                    "Last  view breadcrumb is: $lastViewBreadcrumb"
-                )
-                return lastViewBreadcrumb
-            }
-        }
-        return null
-    }
-
     override fun logPushNotification(
         title: String?,
         body: String?,
@@ -275,33 +223,12 @@ internal class EmbraceBreadcrumbService(
      * Close all open fragments when the activity closes
      */
     override fun onViewClose(activity: Activity) {
-        if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
-            return
-        }
-        try {
-            val lastViewBreadcrumb = viewBreadcrumbs.peek()
-            if (lastViewBreadcrumb != null) {
-                lastViewBreadcrumb.end = clock.now()
-                logger.logDeveloper(
-                    "EmbraceBreadcrumbsService",
-                    "End set for breadcrumb $lastViewBreadcrumb"
-                )
-            } else {
-                logger.logDeveloper("EmbraceBreadcrumbsService", "There are no breadcrumbs to end")
-            }
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to add set end time for breadcrumb", ex)
-        }
+        viewBreadcrumbDataSource.onViewClose()
         if (fragmentStack.size == 0) {
-            logger.logDeveloper(
-                "EmbraceBreadcrumbsService",
-                "There are no breadcrumbs fragments to clear"
-            )
             return
         }
         val ts = clock.now()
         synchronized(fragmentStack) {
-            logger.logDeveloper("EmbraceBreadcrumbsService", "Ending breadcrumb fragments")
             for (fragment in fragmentStack) {
                 fragment.endTime = ts
                 val limit = configService.breadcrumbBehavior.getFragmentBreadcrumbLimit()
@@ -312,7 +239,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun cleanCollections() {
-        viewBreadcrumbs.clear()
+        viewBreadcrumbDataSource.cleanCollections()
         tapBreadcrumbDataSource.cleanCollections()
         customBreadcrumbDataSource.cleanCollections()
         webViewBreadcrumbDataSource.cleanCollections()
@@ -320,40 +247,6 @@ internal class EmbraceBreadcrumbService(
         fragmentStack.clear()
         pushNotificationBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
-        logger.logDeveloper("EmbraceBreadcrumbsService", "Collections cleaned")
-    }
-
-    /**
-     * Adds the view breadcrumb to the queue.
-     *
-     * @param screen    name of the screen.
-     * @param timestamp time of occurrence of the tap event.
-     * @param force     will run no duplication checks on the previous view breadcrumb registry.
-     */
-    @Synchronized
-    private fun addToViewLogsQueue(screen: String?, timestamp: Long, force: Boolean) {
-        try {
-            val lastViewBreadcrumb = viewBreadcrumbs.peek()
-            val lastScreen = lastViewBreadcrumb?.screen ?: ""
-            if (force || lastViewBreadcrumb == null || !lastScreen.equals(
-                    screen.toString(),
-                    ignoreCase = true
-                )
-            ) {
-                // TODO: is `lastViewBreadcrumb` a copy or the actual object in the queue?
-                if (lastViewBreadcrumb != null) {
-                    logger.logDeveloper(
-                        "EmbraceBreadcrumbsService",
-                        "Ending lastViewBreadcrumb to add another"
-                    )
-                    lastViewBreadcrumb.end = timestamp
-                }
-                val limit = configService.breadcrumbBehavior.getViewBreadcrumbLimit()
-                tryAddBreadcrumb(viewBreadcrumbs, ViewBreadcrumb(screen, timestamp), limit)
-            }
-        } catch (ex: Exception) {
-            logger.logError("Failed to add view breadcrumb for $screen", ex)
-        }
     }
 
     /**
@@ -370,7 +263,6 @@ internal class EmbraceBreadcrumbService(
         startTime: Long,
         endTime: Long
     ): List<T> {
-        logger.logDeveloper("EmbraceBreadcrumbsService", "Filtering breadcrumbs for time window")
         return filter(breadcrumbs) { crumb: T ->
             checkNotNull(crumb)
             crumb.getStartTime() >= startTime && (endTime <= 0L || crumb.getStartTime() <= endTime)
@@ -384,10 +276,8 @@ internal class EmbraceBreadcrumbService(
     ) {
         if (!breadcrumbs.isEmpty() && breadcrumbs.size >= limit) {
             breadcrumbs.removeLast()
-            logger.logDeveloper("EmbraceBreadcrumbsService", "removed last breadcrumb from stack")
         }
         breadcrumbs.push(breadcrumb)
-        logger.logDeveloper("EmbraceBreadcrumbsService", "added breadcrumb")
     }
 
     override fun addFirstViewBreadcrumbForSession(startTime: Long) {
@@ -404,6 +294,13 @@ internal class EmbraceBreadcrumbService(
             }
         }
     }
+
+    override fun replaceFirstSessionView(screen: String, timestamp: Long) {
+        viewBreadcrumbDataSource.replaceFirstSessionView(screen, timestamp)
+    }
+
+    override fun getLastViewBreadcrumbScreenName(): String? =
+        viewBreadcrumbDataSource.getLastViewBreadcrumbScreenName()
 
     companion object {
 

@@ -15,7 +15,10 @@ internal class FakeDataSource(
     var disableDataCaptureCount = 0
     var resetCount = 0
 
-    override fun captureData(captureAction: SessionSpanWriter.() -> Unit) {
+    override fun captureData(
+        inputValidation: () -> Boolean,
+        captureAction: SessionSpanWriter.() -> Unit
+    ) {
     }
 
     override fun enableDataCapture() {
@@ -33,7 +36,7 @@ internal class FakeDataSource(
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        captureData {
+        captureData(inputValidation = { true }) {
             addAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
         }
     }

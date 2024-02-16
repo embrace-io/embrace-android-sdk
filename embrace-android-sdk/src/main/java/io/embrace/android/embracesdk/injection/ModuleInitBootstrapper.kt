@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.worker.TaskPriority
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -460,33 +461,15 @@ internal class ModuleInitBootstrapper(
         }
     }
 
-    private fun isInitialized(): Boolean = asyncInitTask.get() != null
+    private fun isInitialized(): Boolean = Systrace.traceSynchronous("check-init") { asyncInitTask.get() != null }
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
-        Systrace.traceSynchronous("${moduleNames[module] ?: "module"}-init") { provider() }
+        Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }
 
     private fun <T> postInit(module: KClass<*>, code: () -> T): T =
-        Systrace.traceSynchronous("${moduleNames[module] ?: "module"}-post-init") { code() }
+        Systrace.traceSynchronous("${toSectionName(module)}-post-init") { code() }
 
-    companion object {
-        private val moduleNames: Map<KClass<*>, String> = mapOf(
-            CoreModule::class to "core",
-            OpenTelemetryModule::class to "opentelemetry",
-            WorkerThreadModule::class to "worker",
-            SystemServiceModule::class to "system-service",
-            AndroidServicesModule::class to "android-service",
-            StorageModule::class to "storage",
-            EssentialServiceModule::class to "essential-service",
-            DataCaptureServiceModule::class to "data-capture-service",
-            DeliveryModule::class to "delivery",
-            AnrModule::class to "anr",
-            SdkObservabilityModule::class to "sdk-observability",
-            CustomerLogModule::class to "customer-log",
-            NativeModule::class to "native",
-            DataContainerModule::class to "data-container",
-            DataSourceModule::class to "data-source",
-            SessionModule::class to "session",
-            CrashModule::class to "crash",
-        )
-    }
+    // This is called twice for each input - memoizing/caching is not worth the hassle
+    private fun toSectionName(klass: KClass<*>): String =
+        klass.simpleName?.removeSuffix("Module")?.toLowerCase(Locale.ENGLISH) ?: "module"
 }

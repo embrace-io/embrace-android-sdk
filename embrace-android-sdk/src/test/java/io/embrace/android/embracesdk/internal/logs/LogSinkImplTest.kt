@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.mockk.every
 import io.mockk.mockk
@@ -31,10 +32,10 @@ internal class LogSinkImplTest {
 
     @Test
     fun `storing logs adds to stored logs`() {
-        val resultCode = logSink.storeLogs(listOf(getLogRecordData()))
+        val resultCode = logSink.storeLogs(listOf(FakeLogRecordData()))
         assertEquals(CompletableResultCode.ofSuccess(), resultCode)
         assertEquals(1, logSink.completedLogs().size)
-        assertEquals(EmbraceLogRecordData(logRecordData = getLogRecordData()), logSink.completedLogs().first())
+        assertEquals(EmbraceLogRecordData(logRecordData = FakeLogRecordData()), logSink.completedLogs().first())
     }
 
     @Test
@@ -49,23 +50,5 @@ internal class LogSinkImplTest {
             assertSame(snapshot[it], flushedLogs[it])
         }
         assertEquals(0, logSink.completedLogs().size)
-    }
-
-    private fun getLogRecordData(): LogRecordData {
-        return mockk {
-            every { severityText } returns testLog.severityText
-            every { severity } returns Severity.INFO
-            every { body } returns Body.string(testLog.body.message)
-            val attrBuilder = Attributes.builder()
-            testLog.attributes.forEach { (key, value) ->
-                attrBuilder.put(AttributeKey.stringKey(key), value as String)
-            }
-            every { attributes } returns attrBuilder.build()
-            every { spanContext } returns mockk {
-                every { traceId } returns testLog.traceId
-                every { spanId } returns testLog.spanId
-            }
-            every { observedTimestampEpochNanos } returns testLog.timeUnixNanos
-        }
     }
 }

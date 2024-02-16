@@ -9,13 +9,16 @@ import java.util.concurrent.TimeUnit
 internal class LogOrchestrator(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
-    private val sink: LogSink
+    private val sink: LogSinkImpl
 ) {
     private var lastLogTime: Long = 0
     private var inactivityFuture: ScheduledFuture<*>? = null
     private var batchTimeFuture: ScheduledFuture<*>? = null
 
-    fun onLogsAdded() {
+    init {
+        sink.callOnLogsStored(::onLogsAdded)
+    }
+    private fun onLogsAdded() {
         lastLogTime = clock.now()
         if (sink.completedLogs().size >= MAX_LOGS_PER_BATCH) {
             sendLogs()
@@ -29,14 +32,14 @@ internal class LogOrchestrator(
 
     @VisibleForTesting
     fun sendLogs() {
-        print("Sending logs...")
-        sink.flushLogs()
-        print("Logs sent...")
-
         inactivityFuture?.cancel(false)
         batchTimeFuture?.cancel(false)
 
-        // TBD: Send logs to DeliveryService
+        val storedLogs = sink.flushLogs()
+
+        if (storedLogs.isNotEmpty()) {
+            // TBD: Send logs to DeliveryService
+        }
     }
 
     private fun scheduleInactivityCheck() {
@@ -55,11 +58,7 @@ internal class LogOrchestrator(
     private fun scheduleBatchTimeCheck() {
         batchTimeFuture?.cancel(false)
         batchTimeFuture = logOrchestratorScheduledWorker.schedule<Unit>(
-            {
-                print("Sending logs from scheduled runnable...")
-                sendLogs()
-
-            },
+            ::sendLogs,
             MAX_BATCH_TIME,
             TimeUnit.MILLISECONDS
         )

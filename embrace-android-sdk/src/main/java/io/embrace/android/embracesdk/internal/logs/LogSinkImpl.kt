@@ -3,15 +3,16 @@ package io.embrace.android.embracesdk.internal.logs
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
-internal class LogSinkImpl(private val logOrchestrator: LogOrchestrator) : LogSink {
+internal class LogSinkImpl : LogSink {
     private val storedLogs: MutableList<EmbraceLogRecordData> = mutableListOf()
+    private var onLogsStored: (() -> Unit)? = null
 
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
         try {
             synchronized(storedLogs) {
                 storedLogs += logs.map { EmbraceLogRecordData(logRecordData = it) }
             }
-            logOrchestrator.onLogsAdded()
+            onLogsStored?.let { it() }
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
         }
@@ -31,5 +32,9 @@ internal class LogSinkImpl(private val logOrchestrator: LogOrchestrator) : LogSi
             storedLogs.clear()
             return flushedLogs
         }
+    }
+
+    fun callOnLogsStored(onLogsStored: () -> Unit) {
+        this.onLogsStored = onLogsStored
     }
 }

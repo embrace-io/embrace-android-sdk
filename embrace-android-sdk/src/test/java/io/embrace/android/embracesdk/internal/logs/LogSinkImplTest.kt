@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.mockk.mockk
-import io.mockk.verify
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -11,11 +10,10 @@ import org.junit.Test
 
 internal class LogSinkImplTest {
     private lateinit var logSink: LogSink
-    private val logOrchestrator: LogOrchestrator = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        logSink = LogSinkImpl(logOrchestrator)
+        logSink = LogSinkImpl()
     }
 
     @Test
@@ -28,7 +26,6 @@ internal class LogSinkImplTest {
     @Test
     fun `storing logs adds to stored logs`() {
         val resultCode = logSink.storeLogs(listOf(FakeLogRecordData()))
-        verify { logOrchestrator.onLogsAdded() }
         assertEquals(CompletableResultCode.ofSuccess(), resultCode)
         assertEquals(1, logSink.completedLogs().size)
         assertEquals(EmbraceLogRecordData(logRecordData = FakeLogRecordData()), logSink.completedLogs().first())
@@ -46,5 +43,13 @@ internal class LogSinkImplTest {
             assertSame(snapshot[it], flushedLogs[it])
         }
         assertEquals(0, logSink.completedLogs().size)
+    }
+
+    @Test
+    fun `onStore is called when logs are stored`() {
+        var onStoreCalled = false
+        (logSink as LogSinkImpl).callOnLogsStored { onStoreCalled = true }
+        logSink.storeLogs(listOf(FakeLogRecordData()))
+        assertEquals(true, onStoreCalled)
     }
 }

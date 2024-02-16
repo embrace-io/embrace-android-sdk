@@ -20,12 +20,8 @@ internal interface BreadcrumbService {
     /**
      * Gets the view breadcrumbs in the specified time window.
      * If the number of elements exceeds the limit, this will return the newest (latest) ones.
-     *
-     * @param start the start time
-     * @param end   the end time
-     * @return the list of Breadcrumbs
      */
-    fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?>
+    fun getViewBreadcrumbsForSession(): List<ViewBreadcrumb>
 
     /**
      * Gets the Taps breadcrumbs in the specified time window.

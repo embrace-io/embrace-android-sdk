@@ -13,13 +13,10 @@ internal class InternalTracer(
     override fun startSpan(name: String, parentSpanId: String?): String? {
         val parent = validateParent(parentSpanId)
         return if (parent.isValid) {
-            embraceTracer.createSpan(
+            embraceTracer.startSpan(
                 name = name,
                 parent = parent.spanReference
-            )?.run {
-                start()
-                spanId
-            }
+            )?.spanId
         } else {
             null
         }

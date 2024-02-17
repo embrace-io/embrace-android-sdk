@@ -148,6 +148,28 @@ internal class SpanServiceImplTest {
     }
 
     @Test
+    fun `start a span directly`() {
+        spanSink.flushSpans()
+        val parent = checkNotNull(spansService.startSpan(name = "test-span"))
+        val child = checkNotNull(
+            spansService.startSpan(
+                name = "child-span",
+                parent = parent,
+                type = EmbraceAttributes.Type.SESSION,
+                internal = true
+            )
+        )
+        assertTrue(child.stop())
+        val completedSpans = spanSink.flushSpans()
+        assertEquals(1, completedSpans.size)
+        with(completedSpans[0]) {
+            assertTrue(isPrivate())
+            assertFalse(isKey())
+            assertEquals(EmbraceAttributes.Type.SESSION.name, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+        }
+    }
+
+    @Test
     fun `record internal completed span with all the fixings`() {
         val expectedName = "test-span"
         val expectedStartTime = clock.now()

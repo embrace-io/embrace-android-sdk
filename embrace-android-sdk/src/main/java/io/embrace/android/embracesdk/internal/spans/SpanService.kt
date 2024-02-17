@@ -21,6 +21,29 @@ internal interface SpanService : Initializable {
     ): EmbraceSpan?
 
     /**
+     * Create, start, and return a new [EmbraceSpan] with the given parameters
+     */
+    fun startSpan(
+        name: String,
+        parent: EmbraceSpan? = null,
+        type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
+        internal: Boolean = true
+    ): EmbraceSpan? {
+        createSpan(
+            name = name,
+            parent = parent,
+            type = type,
+            internal = internal
+        )?.let { newSpan ->
+            if (newSpan.start()) {
+                return newSpan
+            }
+        }
+
+        return null
+    }
+
+    /**
      * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a
      * [ErrorCode.FAILURE]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal] is true.
      */

@@ -80,6 +80,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun startMoment (Ljava/lang/String;)V
 	public fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
 	public fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun startSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
 	public fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
 	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V

@@ -258,6 +258,18 @@ public class NullParametersTest {
     }
 
     @Test
+    public void testStartSpan() {
+        assertNull(embrace.startSpan(null));
+        assertError("startSpan");
+    }
+
+    @Test
+    public void testStartSpanWithParent() {
+        assertNull(embrace.startSpan(null, null));
+        assertError("startSpan");
+    }
+
+    @Test
     public void testRecordSpan() {
         assertTrue(embrace.recordSpan(null, () -> true));
         assertError("recordSpan");

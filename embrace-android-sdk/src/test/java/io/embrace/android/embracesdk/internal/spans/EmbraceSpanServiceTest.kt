@@ -30,6 +30,7 @@ internal class EmbraceSpanServiceTest {
         val uninitializedService = FakeInitModule(clock = clock).openTelemetryModule.spanService
         assertFalse(uninitializedService.initialized())
         assertNull(uninitializedService.createSpan("test-span"))
+        assertNull(uninitializedService.startSpan("test-span"))
         assertTrue(uninitializedService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
         uninitializedService.recordSpan("test-span") { lambdaRan = true }

@@ -35,6 +35,7 @@ internal class SpanTest {
             val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
             assertEquals(1, exportedSpans.size)
             assertEquals(1, exportedSpans[0].attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
+            assertEquals(1, exportedSpans[0].attributes.asMap().keys.filter { it.key == "emb.app_instance_id" }.size)
         }
     }
 }

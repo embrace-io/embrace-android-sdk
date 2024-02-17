@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
@@ -24,6 +25,11 @@ internal interface InitModule {
      * Service to track usage of public APIs and other internal metrics
      */
     val telemetryService: TelemetryService
+
+    /**
+     * Unique ID of a specific instance of the app
+     */
+    val appInstanceId: String
 }
 
 internal class InitModuleImpl(
@@ -35,4 +41,6 @@ internal class InitModuleImpl(
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService()
     }
+
+    override val appInstanceId: String = IdGenerator.generateLaunchInstanceId()
 }

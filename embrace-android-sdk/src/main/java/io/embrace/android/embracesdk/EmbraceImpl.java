@@ -42,7 +42,7 @@ import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
-import io.embrace.android.embracesdk.internal.TraceparentGenerator;
+import io.embrace.android.embracesdk.internal.IdGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
@@ -703,7 +703,7 @@ final class EmbraceImpl {
 
     @NonNull
     String generateW3cTraceparent() {
-        return TraceparentGenerator.generateW3CTraceparent();
+        return IdGenerator.generateW3CTraceparent();
     }
 
     void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {

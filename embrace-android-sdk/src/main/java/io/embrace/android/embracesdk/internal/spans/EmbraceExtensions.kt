@@ -40,6 +40,11 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
 
 /**
+ * Attribute name for the unique ID assigned to each app instance
+ */
+private const val PROCESS_IDENTIFIER_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "process_identifier"
+
+/**
  * Creates a new [SpanBuilder] that marks the resulting span as private if [internal] is true
  */
 internal fun Tracer.embraceSpanBuilder(
@@ -78,6 +83,14 @@ internal fun Span.addEvents(events: List<EmbraceSpanEvent>): Span {
  */
 internal fun Span.setSequenceId(id: Long): Span {
     setAttribute(SEQUENCE_ID_ATTRIBUTE_NAME, id)
+    return this
+}
+
+/**
+ * Set the unique ID for this app launch
+ */
+internal fun Span.setProcessIdentifier(id: String): Span {
+    setAttribute(PROCESS_IDENTIFIER_ATTRIBUTE_NAME, id)
     return this
 }
 

@@ -7,27 +7,27 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
 
-internal class TraceparentGeneratorTest {
+internal class IdGeneratorTest {
 
     @Test
     fun `check format conforms to expected standard`() {
         // Can't exhaustively verify that the generated traceparents will always fit, so lets just do a bunch to verify the unlikeliness
-        val generator = TraceparentGenerator()
+        val generator = IdGenerator()
         repeat(1000) {
-            assertTrue(validPattern.matches(generator.generate()))
+            assertTrue(validPattern.matches(generator.generateTraceparent()))
         }
     }
 
     @Test
     fun `check exact traceparent generated with Random with a known seed`() {
-        val knownGenerator = TraceparentGenerator(random = Random(1881))
-        assertEquals("00-f3805483a79dec663e81467524fc2f7d-9001c43540253a1a-01", knownGenerator.generate())
+        val knownGenerator = IdGenerator(random = Random(1881))
+        assertEquals("00-f3805483a79dec663e81467524fc2f7d-9001c43540253a1a-01", knownGenerator.generateTraceparent())
     }
 
     @Test
     fun `check random returning 0s won't generate invalid traceheader`() {
-        val zeroGenerator = TraceparentGenerator(random = TestRandom())
-        assertNotEquals("00-00000000000000000000000000000000-0000000000000000-01", zeroGenerator.generate())
+        val zeroGenerator = IdGenerator(random = TestRandom())
+        assertNotEquals("00-00000000000000000000000000000000-0000000000000000-01", zeroGenerator.generateTraceparent())
     }
 
     @Test

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.network
 
-import io.embrace.android.embracesdk.internal.TraceparentGenerator
+import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
@@ -16,7 +16,7 @@ private const val TRACE_ID = "trace-id"
 private const val ERR_TYPE = "err_type"
 private const val ERR_MSG = "err_msg"
 private val httpMethod = HttpMethod.GET
-private val traceParent = TraceparentGenerator.generateW3CTraceparent()
+private val traceParent = IdGenerator.generateW3CTraceparent()
 
 @Suppress("DEPRECATION")
 internal class EmbraceNetworkRequestTest {

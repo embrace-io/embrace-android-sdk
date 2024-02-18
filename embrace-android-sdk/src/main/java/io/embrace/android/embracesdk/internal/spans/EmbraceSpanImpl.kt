@@ -37,11 +37,16 @@ internal class EmbraceSpanImpl(
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording == true
 
-    override fun start(): Boolean {
+    override fun start(): Boolean = start(startTimeNanos = null)
+
+    override fun start(startTimeNanos: Long?): Boolean {
         return if (startedSpan.get() != null) {
             false
         } else {
             var successful: Boolean
+            if (startTimeNanos != null) {
+                spanBuilder.setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
+            }
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan())
                 successful = startedSpan.get() != null

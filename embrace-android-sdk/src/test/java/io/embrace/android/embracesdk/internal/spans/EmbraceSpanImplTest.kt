@@ -69,14 +69,16 @@ internal class EmbraceSpanImplTest {
         with(embraceSpan) {
             assertTrue(start())
             assertTrue(stop())
-            assertFalse(stop())
-            assertNotNull(traceId)
-            assertNotNull(spanId)
-            assertFalse(isRecording)
-            assertFalse(addEvent("eventName"))
-            assertFalse(addAttribute("first", "value"))
-            assertEquals(0, spanRepository.getActiveSpans().size)
-            assertEquals(1, spanRepository.getCompletedSpans().size)
+            validateStoppedSpan()
+        }
+    }
+
+    @Test
+    fun `validate starting span with specific time `() {
+        with(embraceSpan) {
+            assertTrue(start(startTimeNanos = 5L))
+            assertTrue(stop())
+            validateStoppedSpan()
         }
     }
 
@@ -166,5 +168,16 @@ internal class EmbraceSpanImplTest {
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
         }
+    }
+
+    private fun EmbraceSpanImpl.validateStoppedSpan() {
+        assertFalse(stop())
+        assertNotNull(traceId)
+        assertNotNull(spanId)
+        assertFalse(isRecording)
+        assertFalse(addEvent("eventName"))
+        assertFalse(addAttribute("first", "value"))
+        assertEquals(0, spanRepository.getActiveSpans().size)
+        assertEquals(1, spanRepository.getCompletedSpans().size)
     }
 }

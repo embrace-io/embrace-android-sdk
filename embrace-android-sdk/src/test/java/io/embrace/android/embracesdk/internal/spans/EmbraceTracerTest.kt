@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -40,6 +41,20 @@ internal class EmbraceTracerTest {
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
         verifyPublicSpan("test-span")
+    }
+
+    @Test
+    fun `start EmbraceSpan with a specific timestamp`() {
+        val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
+        assertNotNull(embraceSpan)
+        val expectedStartTime = (clock.now() - 1L).millisToNanos()
+        val expectedEndTime = clock.nowInNanos()
+        assertTrue(embraceSpan.start(startTimeNanos = (clock.now() - 1L).millisToNanos()))
+        assertTrue(embraceSpan.stop())
+        with(verifyPublicSpan("test-span")) {
+            assertEquals(expectedStartTime, startTimeNanos)
+            assertEquals(expectedEndTime, endTimeNanos)
+        }
     }
 
     @Test

@@ -9,20 +9,18 @@ internal class FakeTracingApi : TracingApi {
 
     val createdSpans = mutableListOf<String>()
 
+    override fun createSpan(name: String): EmbraceSpan? = createSpan(name = name, parent = null)
+
+    override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
+        createdSpans.add(name)
+        return null
+    }
+
     override fun startSpan(name: String): EmbraceSpan? {
         TODO("Not yet implemented")
     }
 
     override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
-        TODO("Not yet implemented")
-    }
-
-    override fun createSpan(name: String): EmbraceSpan? {
-        createdSpans.add(name)
-        return null
-    }
-
-    override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
         TODO("Not yet implemented")
     }
 

@@ -2,9 +2,11 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,6 +42,7 @@ internal class EmbraceSpanServiceTest {
     @Test
     fun `service works once initialized`() {
         assertTrue(spanService.initialized())
+        assertNotNull(spanService.createSpan("test-span"))
         assertTrue(spanService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
         spanService.recordSpan("test-span") { lambdaRan = true }
@@ -96,7 +99,7 @@ internal class EmbraceSpanServiceTest {
         val parent = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(parent.start())
         val child = checkNotNull(spanService.createSpan(name = "test-span", parent = parent))
-        assertTrue(child.start())
+        assertTrue(child.start(startTimeNanos = (clock.now() + 10).millisToNanos()))
         assertTrue(parent.traceId == child.traceId)
         assertTrue(parent.spanId == checkNotNull(child.parent).spanId)
     }

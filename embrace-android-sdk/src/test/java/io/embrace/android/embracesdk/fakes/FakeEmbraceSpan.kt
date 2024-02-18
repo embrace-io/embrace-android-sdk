@@ -18,7 +18,9 @@ internal class FakeEmbraceSpan private constructor(
     override val isRecording: Boolean
         get() = started && !stopped
 
-    override fun start(): Boolean {
+    override fun start(): Boolean = start(startTimeNanos = null)
+
+    override fun start(startTimeNanos: Long?): Boolean {
         if (!started) {
             spanId = IdGenerator.random().generateSpanId()
             if (parent == null) {

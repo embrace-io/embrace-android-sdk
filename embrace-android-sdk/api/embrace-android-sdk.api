@@ -337,6 +337,8 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun start (Ljava/lang/Long;)Z
 	public abstract fun stop ()Z
 	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public abstract fun stop (Ljava/lang/Long;)Z
+	public abstract fun stop (Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
 }
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {

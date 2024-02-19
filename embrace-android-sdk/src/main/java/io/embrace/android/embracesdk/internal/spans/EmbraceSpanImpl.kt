@@ -58,15 +58,19 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun stop(): Boolean = stop(errorCode = null)
+    override fun stop(): Boolean = stop(endTimeNanos = null, errorCode = null)
 
-    override fun stop(errorCode: ErrorCode?): Boolean {
+    override fun stop(endTimeNanos: Long?): Boolean = stop(endTimeNanos = endTimeNanos, errorCode = null)
+
+    override fun stop(errorCode: ErrorCode?): Boolean = stop(endTimeNanos = null, errorCode = errorCode)
+
+    override fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean {
         return if (startedSpan.get()?.isRecording == false) {
             false
         } else {
             var successful: Boolean
             synchronized(startedSpan) {
-                startedSpan.get()?.endSpan(errorCode)
+                startedSpan.get()?.endSpan(errorCode, endTimeNanos)
                 successful = startedSpan.get()?.isRecording == false
             }
             if (successful) {

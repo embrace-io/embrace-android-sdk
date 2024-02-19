@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -116,6 +117,16 @@ internal class EmbraceApiService(
      */
     override fun sendLog(eventMessage: EventMessage) {
         post(eventMessage, mapper::logRequest)
+    }
+
+    /**
+     * Sends a list of OTel Logs to the API.
+     *
+     * @param logPayload the list of OTel logs
+     * @return a future containing the response body from the server
+     */
+    override fun sendLogs(logPayload: LogPayload) {
+        post(logPayload, mapper::logsRequest)
     }
 
     /**

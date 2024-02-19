@@ -13,5 +13,5 @@ internal interface ApiUrlBuilder {
     /**
      * Returns the url used to send data to Embrace.
      */
-    fun getEmbraceUrlWithSuffix(suffix: String): String
+    fun getEmbraceUrlWithSuffix(apiVersion: String, suffix: String): String
 }

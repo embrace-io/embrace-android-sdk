@@ -5,7 +5,7 @@ import io.opentelemetry.sdk.logs.data.LogRecordData
 
 internal class LogSinkImpl : LogSink {
     private val storedLogs: MutableList<EmbraceLogRecordData> = mutableListOf()
-    private var onLogsStored: (() -> Unit)? = null
+    private val onLogsStored: (() -> Unit)? = null
 
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
         try {

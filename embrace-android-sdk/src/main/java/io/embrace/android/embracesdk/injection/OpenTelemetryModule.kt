@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.logs.LogSink
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
@@ -11,6 +13,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
+import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 
 /**
@@ -57,6 +60,16 @@ internal interface OpenTelemetryModule {
      * Implementation of internal tracing API
      */
     val internalTracer: InternalTracer
+
+    /**
+     * An instance of the OpenTelemetry component obtained from the wrapped SDK to create log records
+     */
+    val logger: Logger
+
+    /**
+     * Provides storage for completed logs that have not been forwarded yet to the delivery service
+     */
+    val logSink: LogSink
 }
 
 internal class OpenTelemetryModuleImpl(
@@ -73,7 +86,8 @@ internal class OpenTelemetryModuleImpl(
 
     override val openTelemetryConfiguration: OpenTelemetryConfiguration by lazy {
         OpenTelemetryConfiguration(
-            spanSink
+            spanSink,
+            logSink
         )
     }
 
@@ -118,5 +132,13 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             embraceTracer = embraceTracer
         )
+    }
+
+    override val logger: Logger by lazy {
+        openTelemetrySdk.getOpenTelemetryLogger()
+    }
+
+    override val logSink: LogSink by lazy {
+        LogSinkImpl()
     }
 }

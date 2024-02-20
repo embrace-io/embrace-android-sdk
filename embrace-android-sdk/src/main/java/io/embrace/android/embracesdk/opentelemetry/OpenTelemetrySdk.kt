@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.opentelemetry
 
+import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
+import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 
@@ -29,9 +31,22 @@ internal class OpenTelemetrySdk(
                 .addSpanProcessor(configuration.spanProcessor)
                 .setClock(openTelemetryClock)
                 .build()
-        ).build()
+        )
+        .setLoggerProvider(
+            SdkLoggerProvider
+                .builder()
+                .addResource(resource)
+                .addLogRecordProcessor(configuration.logProcessor)
+                .setClock(openTelemetryClock)
+                .build()
+        )
+        .build()
 
     private val tracer = sdk.getTracer(configuration.serviceName, configuration.serviceVersion)
 
+    private val logger = sdk.logsBridge.loggerBuilder(configuration.serviceName).build()
+
     fun getOpenTelemetryTracer(): Tracer = tracer
+
+    fun getOpenTelemetryLogger(): Logger = logger
 }

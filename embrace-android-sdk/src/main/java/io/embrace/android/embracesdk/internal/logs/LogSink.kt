@@ -21,7 +21,7 @@ internal interface LogSink {
 
     /**
      * Returns and clears the currently stored Logs. Implementations of this method must make sure the clearing and returning is
-     * atomic, i.e. spans cannot be added during this operation.
+     * atomic, i.e. logs cannot be added during this operation.
      */
     fun flushLogs(): List<EmbraceLogRecordData>
 }

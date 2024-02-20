@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -11,6 +12,7 @@ internal interface ApiService {
     fun getConfig(): RemoteConfig?
     fun getCachedConfig(): CachedConfig
     fun sendLog(eventMessage: EventMessage)
+    fun sendLogs(logPayload: LogPayload)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendEvent(eventMessage: EventMessage)
     fun sendCrash(crash: EventMessage): Future<*>

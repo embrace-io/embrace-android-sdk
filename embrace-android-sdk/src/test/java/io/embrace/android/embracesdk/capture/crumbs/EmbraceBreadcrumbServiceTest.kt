@@ -473,7 +473,7 @@ internal class EmbraceBreadcrumbServiceTest {
     fun testForceLogView() {
         val service = initializeBreadcrumbService()
         service.forceLogView("a", 0)
-        val crumbs = service.getViewBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getViewBreadcrumbsForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("a", breadcrumb.screen)
     }
@@ -484,7 +484,7 @@ internal class EmbraceBreadcrumbServiceTest {
         service.logView("a", 0)
         service.replaceFirstSessionView("b", 2)
 
-        val crumbs = service.getViewBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getViewBreadcrumbsForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("b", breadcrumb.screen)
     }
@@ -548,7 +548,7 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = initializeBreadcrumbService()
         service.onView(mockActivity())
 
-        val crumbs = service.getViewBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getViewBreadcrumbsForSession()
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("android.app.Activity", breadcrumb.screen)
     }
@@ -560,7 +560,7 @@ internal class EmbraceBreadcrumbServiceTest {
             service.logView("a$count", count.toLong())
         }
 
-        val crumbs = service.getViewBreadcrumbsForSession(0, Long.MAX_VALUE)
+        val crumbs = service.getViewBreadcrumbsForSession()
         assertEquals(100, crumbs.size)
         assertEquals("a109", crumbs.first()?.screen)
         assertEquals("a10", crumbs.last()?.screen)
@@ -570,7 +570,7 @@ internal class EmbraceBreadcrumbServiceTest {
     fun `addFirstViewBreadcrumbForSession empty`() {
         val service = initializeBreadcrumbService()
         service.addFirstViewBreadcrumbForSession(0)
-        assertTrue(service.getViewBreadcrumbsForSession(0, 10).isEmpty())
+        assertTrue(service.getViewBreadcrumbsForSession().isEmpty())
     }
 
     @Test
@@ -578,7 +578,7 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = initializeBreadcrumbService()
         service.logView("MyView", 0)
         service.addFirstViewBreadcrumbForSession(5)
-        val crumb = checkNotNull(service.getViewBreadcrumbsForSession(0, 10).single())
+        val crumb = checkNotNull(service.getViewBreadcrumbsForSession().single())
         assertEquals("MyView", crumb.screen)
         assertEquals(5L, crumb.start)
     }
@@ -594,7 +594,7 @@ internal class EmbraceBreadcrumbServiceTest {
             activityTracker
         )
         service.addFirstViewBreadcrumbForSession(5)
-        val crumb = checkNotNull(service.getViewBreadcrumbsForSession(0, 10).single())
+        val crumb = checkNotNull(service.getViewBreadcrumbsForSession().single())
         assertEquals("MyMockActivity", crumb.screen)
         assertEquals(5L, crumb.start)
     }

@@ -254,7 +254,7 @@ internal class EmbraceApiServiceTest {
         Endpoint.values().forEach {
             assertEquals(
                 "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
-                apiUrlBuilder.getEmbraceUrlWithSuffix(it.path)
+                apiUrlBuilder.getEmbraceUrlWithSuffix("v1", it.path)
             )
         }
     }

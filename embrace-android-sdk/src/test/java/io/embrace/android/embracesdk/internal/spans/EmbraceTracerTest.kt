@@ -14,21 +14,21 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceTracerTest {
-    private lateinit var spansRepository: SpansRepository
-    private lateinit var spansSink: SpansSink
-    private lateinit var spansService: SpansService
+    private lateinit var spanRepository: SpanRepository
+    private lateinit var spanSink: SpanSink
+    private lateinit var spanService: SpanService
     private lateinit var embraceTracer: EmbraceTracer
     private val clock = FakeClock(10000L)
 
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
-        spansRepository = initModule.openTelemetryModule.spansRepository
-        spansSink = initModule.openTelemetryModule.spansSink
-        spansService = initModule.openTelemetryModule.spansService
-        spansService.initializeService(clock.nowInNanos())
+        spanRepository = initModule.openTelemetryModule.spanRepository
+        spanSink = initModule.openTelemetryModule.spanSink
+        spanService = initModule.openTelemetryModule.spanService
+        spanService.initializeService(clock.nowInNanos())
         embraceTracer = initModule.openTelemetryModule.embraceTracer
-        spansSink.flushSpans()
+        spanSink.flushSpans()
     }
 
     @Test
@@ -48,7 +48,7 @@ internal class EmbraceTracerTest {
             assertTrue(embraceSpan.start())
             assertTrue(embraceSpan.stop(errorCode))
             verifyPublicSpan("test-span")
-            spansSink.flushSpans()
+            spanSink.flushSpans()
         }
     }
 
@@ -217,7 +217,7 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `get same EmbraceSpan using spanId`() {
-        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
+        val embraceSpan = checkNotNull(spanService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
         val spanId = checkNotNull(embraceSpan.spanId)
         val spanFromTracer = checkNotNull(embraceTracer.getSpan(spanId))
@@ -230,7 +230,7 @@ internal class EmbraceTracerTest {
     }
 
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {
-        val currentSpans = spansSink.completedSpans()
+        val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)

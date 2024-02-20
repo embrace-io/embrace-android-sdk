@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSpanImpl(
     private val spanBuilder: SpanBuilder,
     override val parent: EmbraceSpan? = null,
-    private val spansRepository: SpansRepository? = null,
+    private val spanRepository: SpanRepository? = null,
     sessionSpan: Boolean = false
 ) : EmbraceSpan {
 
@@ -47,7 +47,7 @@ internal class EmbraceSpanImpl(
                 successful = startedSpan.get() != null
             }
             if (successful) {
-                spansRepository?.trackStartedSpan(this)
+                spanRepository?.trackStartedSpan(this)
             }
             return successful
         }
@@ -65,7 +65,7 @@ internal class EmbraceSpanImpl(
                 successful = startedSpan.get()?.isRecording == false
             }
             if (successful) {
-                spanId?.let { spansRepository?.trackedSpanStopped(it) }
+                spanId?.let { spanRepository?.trackedSpanStopped(it) }
             }
             return successful
         }

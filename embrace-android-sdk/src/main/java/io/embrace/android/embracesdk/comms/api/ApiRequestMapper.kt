@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -14,7 +15,7 @@ internal class ApiRequestMapper(
 ) {
 
     private val apiUrlBuilders = Endpoint.values().associateWith {
-        urlBuilder.getEmbraceUrlWithSuffix(it.path)
+        urlBuilder.getEmbraceUrlWithSuffix(it.version, it.path)
     }
 
     private fun Endpoint.asEmbraceUrl(): EmbraceUrl {
@@ -51,6 +52,14 @@ internal class ApiRequestMapper(
         val abbreviation = type.abbreviation
         val logIdentifier = abbreviation + ":" + event.messageId
         return requestBuilder(url).copy(logId = logIdentifier)
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun logsRequest(
+        logPayload: LogPayload
+    ): ApiRequest {
+        val url = Endpoint.LOGS.asEmbraceUrl()
+        return requestBuilder(url)
     }
 
     fun sessionRequest(): ApiRequest {

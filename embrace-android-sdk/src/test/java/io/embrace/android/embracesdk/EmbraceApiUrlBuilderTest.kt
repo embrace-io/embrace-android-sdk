@@ -40,7 +40,7 @@ internal class EmbraceApiUrlBuilderTest {
         )
         assertEquals(
             "https://a-$APP_ID.data.emb-api.com/v1/log/suffix",
-            apiUrlBuilder.getEmbraceUrlWithSuffix("suffix")
+            apiUrlBuilder.getEmbraceUrlWithSuffix("v1", "suffix")
         )
     }
 }

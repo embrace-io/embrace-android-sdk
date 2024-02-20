@@ -11,7 +11,6 @@ internal class EmbraceApiUrlBuilder(
     private val lazyAppVersionName: Lazy<String>
 ) : ApiUrlBuilder {
     companion object {
-        private const val API_VERSION = 1
         private const val CONFIG_API_VERSION = 2
     }
 
@@ -24,11 +23,11 @@ internal class EmbraceApiUrlBuilder(
             "&appVersion=${lazyAppVersionName.value}&deviceId=${lazyDeviceId.value}"
     }
 
-    override fun getEmbraceUrlWithSuffix(suffix: String): String {
+    override fun getEmbraceUrlWithSuffix(apiVersion: String, suffix: String): String {
         InternalStaticEmbraceLogger.logDeveloper(
             "ApiUrlBuilder",
-            "getEmbraceUrlWithSuffix - suffix: $suffix"
+            "getEmbraceUrlWithSuffix - apiVersion: $apiVersion - suffix: $suffix"
         )
-        return "$coreBaseUrl/v$API_VERSION/log/$suffix"
+        return "$coreBaseUrl/$apiVersion/log/$suffix"
     }
 }

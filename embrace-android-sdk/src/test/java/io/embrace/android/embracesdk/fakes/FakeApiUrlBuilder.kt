@@ -7,7 +7,7 @@ internal class FakeApiUrlBuilder : ApiUrlBuilder {
         return ""
     }
 
-    override fun getEmbraceUrlWithSuffix(suffix: String): String {
+    override fun getEmbraceUrlWithSuffix(apiVersion: String, suffix: String): String {
         return ""
     }
 }

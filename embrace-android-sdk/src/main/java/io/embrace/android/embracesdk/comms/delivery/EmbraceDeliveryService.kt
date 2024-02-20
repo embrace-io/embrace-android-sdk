@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -68,6 +69,10 @@ internal class EmbraceDeliveryService(
 
     override fun sendLog(eventMessage: EventMessage) {
         apiService.sendLog(eventMessage)
+    }
+
+    override fun sendLogs(logPayload: LogPayload) {
+        apiService.sendLogs(logPayload)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

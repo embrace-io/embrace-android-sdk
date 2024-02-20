@@ -106,7 +106,7 @@ internal class TracingApiTest {
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(sessionMessage?.spans) +
-                checkNotNull(harness.openTelemetryModule.spansSink.completedSpans())
+                checkNotNull(harness.openTelemetryModule.spanSink.completedSpans())
 
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session-span"])

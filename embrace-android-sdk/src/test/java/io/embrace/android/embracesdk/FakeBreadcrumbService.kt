@@ -17,8 +17,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     val pushNotifications = mutableListOf<PushNotificationBreadcrumb>()
     var flushCount: Int = 0
 
-    override fun getViewBreadcrumbsForSession(start: Long, end: Long): List<ViewBreadcrumb?> =
-        emptyList()
+    override fun getViewBreadcrumbsForSession(): List<ViewBreadcrumb> = emptyList()
 
     override fun getTapBreadcrumbsForSession(): List<TapBreadcrumb> = emptyList()
 

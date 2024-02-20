@@ -285,21 +285,30 @@ internal open class BaseTest {
             logTestMessage("Read request body.")
             val goldenFileIS = mContext.assets.open("golden-files/$goldenFileName")
 
-            val msg by lazy {
-                val observedOutput = writeOutputToDisk(requestBody, goldenFileName, ".observed")
-                val expected =
-                    mContext.assets.open("golden-files/$goldenFileName").bufferedReader().readText()
-                val expectedOutput = writeOutputToDisk(expected, goldenFileName, ".expected")
-
-                "Request ${request.path} differs from golden-files/$goldenFileName. Please check " +
-                    "logcat for further details. You can also compare the difference" +
-                    " on https://www.jsondiff.com/ by pulling the expected/observed files with adb:\n" +
-                    "adb pull ${expectedOutput.absolutePath}\n" +
-                    "adb pull ${observedOutput.absolutePath}\n" +
-                    "observed: $requestBody"
-            }
             logTestMessage("Comparing expected versus observed JSON.")
-            assertTrue(msg, JsonValidator.areEquals(goldenFileIS, requestBody))
+            val result = JsonValidator.areEquals(goldenFileIS, requestBody)
+
+            if (!result.success) {
+                val msg by lazy {
+                    val observedOutput = writeOutputToDisk(requestBody, goldenFileName, ".observed")
+                    val expected =
+                        mContext.assets.open("golden-files/$goldenFileName").bufferedReader().readText()
+                    val expectedOutput = writeOutputToDisk(expected, goldenFileName, ".expected")
+
+                    "Request ${request.path} differs from golden-files/$goldenFileName.\n" +
+                        "JSON validation failure reason: ${result.message}" +
+                        " Please check logcat output for further information. Logcat output and" +
+                        " the expected/observed output is saved as an" +
+                        " upload artefact if this ran on CI. You can compare the difference" +
+                        " on https://www.jsondiff.com/ by pulling the expected/observed files with " +
+                        "adb (if running locally. " +
+                        "adb pull ${expectedOutput.absolutePath} " +
+                        "adb pull ${observedOutput.absolutePath} " +
+                        "Full observed JSON: ${observedOutput.readText()}"
+                }
+                logTestMessage(msg)
+                fail(msg)
+            }
         } catch (e: IOException) {
             throw IllegalStateException("Failed to validate request against golden file.", e)
         }

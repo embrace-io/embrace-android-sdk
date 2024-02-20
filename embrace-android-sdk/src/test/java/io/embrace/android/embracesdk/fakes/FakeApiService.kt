@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -20,6 +21,7 @@ internal class FakeApiService : ApiService {
     var throwExceptionSendSession: Boolean = false
     private val serializer = EmbraceSerializer()
     val logRequests = mutableListOf<EventMessage>()
+    val logPayloads = mutableListOf<LogPayload>()
     val networkCallRequests = mutableListOf<NetworkEvent>()
     val eventRequests = mutableListOf<EventMessage>()
     val crashRequests = mutableListOf<EventMessage>()
@@ -37,6 +39,10 @@ internal class FakeApiService : ApiService {
 
     override fun sendLog(eventMessage: EventMessage) {
         logRequests.add(eventMessage)
+    }
+
+    override fun sendLogs(logPayload: LogPayload) {
+        logPayloads.add(logPayload)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

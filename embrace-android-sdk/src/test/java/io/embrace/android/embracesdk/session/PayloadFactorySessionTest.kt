@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.spans.SpansSink
+import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.mockk.clearAllMocks
@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService
 
 internal class PayloadFactorySessionTest {
 
-    private lateinit var spansSink: SpansSink
+    private lateinit var spanSink: SpanSink
     private lateinit var service: PayloadFactory
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
@@ -50,7 +50,7 @@ internal class PayloadFactorySessionTest {
     fun before() {
         deliveryService = FakeDeliveryService()
         configService = FakeConfigService()
-        spansSink = FakeInitModule(clock = clock).openTelemetryModule.spansSink
+        spanSink = FakeInitModule(clock = clock).openTelemetryModule.spanSink
     }
 
     @After
@@ -76,7 +76,7 @@ internal class PayloadFactorySessionTest {
     @Test
     fun `spanService that is not initialized will not result in any complete spans`() {
         initializeSessionService()
-        assertEquals(0, spansSink.completedSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
     }
 
     private fun initializeSessionService(

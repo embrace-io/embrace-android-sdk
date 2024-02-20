@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
  */
-internal interface SpansService : Initializable {
+internal interface SpanService : Initializable {
     /**
      * Return an [EmbraceSpan] instance that can be used to record spans. Returns null if at least one input parameter is not valid or if
      * the SDK or session is not in a state where a new span can be recorded.

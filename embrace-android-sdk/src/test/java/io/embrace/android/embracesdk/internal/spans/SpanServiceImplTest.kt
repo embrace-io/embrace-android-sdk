@@ -62,11 +62,11 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `create trace with custom start time`() {
+    fun `create trace with custom start and end times`() {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start((clock.now() - 1).millisToNanos()))
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.stop((clock.now() + 10).millisToNanos()))
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 

@@ -31,12 +31,13 @@ internal class FakeEmbraceSpan private constructor(
         return true
     }
 
-    override fun stop(): Boolean {
-        stop(errorCode = null)
-        return true
-    }
+    override fun stop(): Boolean = stop(errorCode = null, endTimeNanos = null)
 
-    override fun stop(errorCode: ErrorCode?): Boolean {
+    override fun stop(endTimeNanos: Long?): Boolean = stop(errorCode = null, endTimeNanos = endTimeNanos)
+
+    override fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeNanos = null)
+
+    override fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean {
         if (!stopped) {
             this.errorCode = errorCode
             stopped = true

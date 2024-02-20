@@ -74,10 +74,10 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
-    fun `validate starting span with specific time `() {
+    fun `validate starting and stopping span with specific times`() {
         with(embraceSpan) {
             assertTrue(start(startTimeNanos = 5L))
-            assertTrue(stop())
+            assertTrue(stop(endTimeNanos = 10L))
             validateStoppedSpan()
         }
     }

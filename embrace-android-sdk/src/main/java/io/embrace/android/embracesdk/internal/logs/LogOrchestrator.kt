@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.ScheduledWorker
@@ -14,30 +13,36 @@ internal class LogOrchestrator(
     private val deliveryService: DeliveryService
 ) {
     private var lastLogTime: Long = 0
-    private var inactivityFuture: ScheduledFuture<*>? = null
-    private var batchTimeFuture: ScheduledFuture<*>? = null
+    private var firstLogInBatchTime: Long = 0
+    private var scheduledCheckFuture: ScheduledFuture<*>? = null
 
     init {
         sink.callOnLogsStored(::onLogsAdded)
     }
     private fun onLogsAdded() {
         lastLogTime = clock.now()
-        if (sink.completedLogs().size >= MAX_LOGS_PER_BATCH) {
+        if (firstLogInBatchTime == 0L) {
+            firstLogInBatchTime = lastLogTime
+        }
+        if (logsShouldBeSent()) {
             sendLogs()
         } else {
-            scheduleInactivityCheck()
-            if (batchTimeFuture == null) {
-                scheduleBatchTimeCheck()
-            }
+            scheduleCheck()
         }
     }
 
-    @VisibleForTesting
-    fun sendLogs() {
-        inactivityFuture?.cancel(false)
-        inactivityFuture = null
-        batchTimeFuture?.cancel(false)
-        batchTimeFuture = null
+    private fun logsShouldBeSent(): Boolean {
+        return (
+            (sink.completedLogs().size >= MAX_LOGS_PER_BATCH) ||
+                (clock.now() - lastLogTime > MAX_INACTIVITY_TIME) ||
+                (clock.now() - firstLogInBatchTime > MAX_BATCH_TIME)
+            )
+    }
+
+    private fun sendLogs() {
+        scheduledCheckFuture?.cancel(false)
+        scheduledCheckFuture = null
+        firstLogInBatchTime = 0
 
         // Sink is synchronized, so even if sendLogs is called concurrently, the logs
         // will be sent only once.
@@ -48,24 +53,15 @@ internal class LogOrchestrator(
         }
     }
 
-    private fun scheduleInactivityCheck() {
-        inactivityFuture?.cancel(false)
-        inactivityFuture = logOrchestratorScheduledWorker.schedule<Unit>(
+    private fun scheduleCheck() {
+        scheduledCheckFuture?.cancel(false)
+        scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
             {
-                if (clock.now() - lastLogTime > MAX_INACTIVITY_TIME) {
+                if (logsShouldBeSent()) {
                     sendLogs()
                 }
             },
             MAX_INACTIVITY_TIME,
-            TimeUnit.MILLISECONDS
-        )
-    }
-
-    private fun scheduleBatchTimeCheck() {
-        batchTimeFuture?.cancel(false)
-        batchTimeFuture = logOrchestratorScheduledWorker.schedule<Unit>(
-            ::sendLogs,
-            MAX_BATCH_TIME,
             TimeUnit.MILLISECONDS
         )
     }

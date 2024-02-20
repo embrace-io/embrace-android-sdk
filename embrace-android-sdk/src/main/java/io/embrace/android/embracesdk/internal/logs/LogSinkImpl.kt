@@ -34,7 +34,7 @@ internal class LogSinkImpl : LogSink {
         }
     }
 
-    fun callOnLogsStored(onLogsStored: () -> Unit) {
+    override fun callOnLogsStored(onLogsStored: () -> Unit) {
         this.onLogsStored = onLogsStored
     }
 }

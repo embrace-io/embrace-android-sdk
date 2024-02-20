@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class DataSourceImplTest {
@@ -13,9 +15,10 @@ internal class DataSourceImplTest {
     fun `capture data successfully`() {
         val dst = FakeCurrentSessionSpan()
         val source = FakeDataSourceImpl(dst)
-        source.captureData(inputValidation = { true }) {
+        val success = source.captureData(inputValidation = { true }) {
             initialized()
         }
+        assertTrue(success)
         assertEquals(1, dst.initializedCallCount)
     }
 
@@ -23,9 +26,10 @@ internal class DataSourceImplTest {
     fun `capture data threw exception`() {
         val dst = FakeCurrentSessionSpan()
         val source = FakeDataSourceImpl(dst)
-        source.captureData(inputValidation = { true }) {
+        val success = source.captureData(inputValidation = { true }) {
             error("Whoops!")
         }
+        assertFalse(success)
         assertEquals(0, dst.initializedCallCount)
     }
 

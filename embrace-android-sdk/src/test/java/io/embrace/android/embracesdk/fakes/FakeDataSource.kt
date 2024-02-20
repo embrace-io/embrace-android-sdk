@@ -18,8 +18,7 @@ internal class FakeDataSource(
     override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: SessionSpanWriter.() -> Unit
-    ) {
-    }
+    ): Boolean = true
 
     override fun enableDataCapture() {
         ctx.registerComponentCallbacks(this)

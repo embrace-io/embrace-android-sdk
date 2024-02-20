@@ -28,8 +28,8 @@ internal interface SessionSpanWriter {
  * Represents a span event that can be added to the current session span.
  */
 internal class SpanEventData(
-    val name: String,
-    val timeNanos: Long,
+    val spanName: String,
+    val spanStartTimeNanos: Long,
     val attributes: Map<String, String>?
 )
 

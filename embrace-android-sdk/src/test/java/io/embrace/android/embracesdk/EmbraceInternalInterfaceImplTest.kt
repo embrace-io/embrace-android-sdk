@@ -58,7 +58,7 @@ internal class EmbraceInternalInterfaceImplTest {
             embraceImpl.logMessage(
                 EventType.INFO_LOG,
                 "",
-                emptyMap(),
+                emptyMap<String, String>(),
                 null,
                 null,
                 LogExceptionType.NONE,
@@ -75,7 +75,7 @@ internal class EmbraceInternalInterfaceImplTest {
             embraceImpl.logMessage(
                 EventType.WARNING_LOG,
                 "",
-                emptyMap(),
+                emptyMap<String, String>(),
                 null,
                 null,
                 LogExceptionType.NONE,
@@ -92,7 +92,7 @@ internal class EmbraceInternalInterfaceImplTest {
             embraceImpl.logMessage(
                 EventType.ERROR_LOG,
                 "",
-                emptyMap(),
+                emptyMap<String, String>(),
                 null,
                 null,
                 LogExceptionType.NONE,
@@ -111,7 +111,7 @@ internal class EmbraceInternalInterfaceImplTest {
             embraceImpl.logMessage(
                 EventType.ERROR_LOG,
                 "handled exception",
-                emptyMap(),
+                emptyMap<String, String>(),
                 exception.stackTrace,
                 null,
                 LogExceptionType.NONE,

@@ -783,7 +783,7 @@ final class EmbraceImpl {
 
     void logMessage(@NonNull String message,
                     @NonNull Severity severity,
-                    @Nullable Map<String, Object> properties) {
+                    @Nullable Map<String, ?> properties) {
         logMessage(
             EventType.Companion.fromSeverity(severity),
             message,
@@ -798,7 +798,7 @@ final class EmbraceImpl {
 
     void logException(@NonNull Throwable throwable,
                       @NonNull Severity severity,
-                      @Nullable Map<String, Object> properties,
+                      @Nullable Map<String, ?> properties,
                       @Nullable String message) {
         String exceptionMessage = throwable.getMessage() != null ? throwable.getMessage() : "";
         logMessage(
@@ -816,7 +816,7 @@ final class EmbraceImpl {
 
     void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
                              @NonNull Severity severity,
-                             @Nullable Map<String, Object> properties,
+                             @Nullable Map<String, ?> properties,
                              @Nullable String message) {
         logMessage(
             EventType.Companion.fromSeverity(severity),
@@ -834,7 +834,7 @@ final class EmbraceImpl {
     void logMessage(
         @NonNull EventType type,
         @NonNull String message,
-        @Nullable Map<String, Object> properties,
+        @Nullable Map<String, ?> properties,
         @Nullable StackTraceElement[] stackTraceElements,
         @Nullable String customStackTrace,
         @NonNull LogExceptionType logExceptionType,
@@ -855,7 +855,7 @@ final class EmbraceImpl {
     void logMessage(
         @NonNull EventType type,
         @NonNull String message,
-        @Nullable Map<String, Object> properties,
+        @Nullable Map<String, ?> properties,
         @Nullable StackTraceElement[] stackTraceElements,
         @Nullable String customStackTrace,
         @NonNull LogExceptionType logExceptionType,
@@ -1221,7 +1221,7 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    private Map<String, Object> normalizeProperties(@Nullable Map<String, Object> properties) {
+    private Map<String, Object> normalizeProperties(@Nullable Map<String, ?> properties) {
         Map<String, Object> normalizedProperties = new HashMap<>();
         if (properties != null) {
             try {

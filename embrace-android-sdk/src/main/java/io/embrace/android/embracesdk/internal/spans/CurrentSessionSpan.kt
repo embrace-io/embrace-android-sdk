@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 

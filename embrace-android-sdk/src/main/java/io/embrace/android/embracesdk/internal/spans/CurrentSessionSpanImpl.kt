@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.SpanAttributeData
-import io.embrace.android.embracesdk.arch.SpanEventData
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService

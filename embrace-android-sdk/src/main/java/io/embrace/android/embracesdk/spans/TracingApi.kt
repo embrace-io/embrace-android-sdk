@@ -11,6 +11,8 @@ internal interface TracingApi {
     /**
      * Create an [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the [EmbraceSpan] cannot
      * be created given the current conditions of the SDK or an invalid name.
+     *
+     * Note: the [EmbraceSpan] created will not be started. For a method that creates and starts the span, use [startSpan]
      */
     @BetaApi
     fun createSpan(
@@ -21,9 +23,30 @@ internal interface TracingApi {
      * Create an [EmbraceSpan] with the given name and parent. Passing in a parent that is null result in a new trace with this
      * [EmbraceSpan] as its root. Returns null if the [EmbraceSpan] cannot be created, e.g if the parent has not been started,
      * the name is invalid, or some other factor due to the current conditions of the SDK.
+     *
+     * * Note: the [EmbraceSpan] created will not be started. For a method that creates and starts the span, use [startSpan]
      */
     @BetaApi
     fun createSpan(
+        name: String,
+        parent: EmbraceSpan?
+    ): EmbraceSpan?
+
+    /**
+     * Create, start, and return a new [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the
+     * [EmbraceSpan] cannot be created or started.
+     */
+    @BetaApi
+    fun startSpan(
+        name: String
+    ): EmbraceSpan?
+
+    /**
+     * Create, start, and return a new [EmbraceSpan] with the given name and parent. Returns null if the [EmbraceSpan] cannot be created
+     * or started, like if the parent has been started.
+     */
+    @BetaApi
+    fun startSpan(
         name: String,
         parent: EmbraceSpan?
     ): EmbraceSpan?

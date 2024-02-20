@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.arch.destination
 
 /**
  * Converts an object of type T to a [SpanEventData]

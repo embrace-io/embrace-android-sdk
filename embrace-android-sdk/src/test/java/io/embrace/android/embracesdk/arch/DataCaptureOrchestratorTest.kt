@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch
 
+import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext

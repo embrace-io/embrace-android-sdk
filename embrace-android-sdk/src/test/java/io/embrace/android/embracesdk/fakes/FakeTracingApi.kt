@@ -9,6 +9,14 @@ internal class FakeTracingApi : TracingApi {
 
     val createdSpans = mutableListOf<String>()
 
+    override fun startSpan(name: String): EmbraceSpan? {
+        TODO("Not yet implemented")
+    }
+
+    override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
+        TODO("Not yet implemented")
+    }
+
     override fun createSpan(name: String): EmbraceSpan? {
         createdSpans.add(name)
         return null
@@ -107,6 +115,7 @@ internal class FakeTracingApi : TracingApi {
         TODO("Not yet implemented")
     }
 
+    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean {
         TODO("Not yet implemented")
     }

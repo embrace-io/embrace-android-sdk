@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -51,3 +51,9 @@ internal abstract class DataSourceImpl<T>(
         }
     }
 }
+
+/**
+ * Syntactic sugar for when no input validation is required. Developers must explicitly state
+ * this is the case.
+ */
+internal val NoInputValidation = { true }

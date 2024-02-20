@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.arch.destination
 
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
@@ -23,20 +23,3 @@ internal interface SessionSpanWriter {
      */
     fun addAttribute(attribute: SpanAttributeData): Boolean
 }
-
-/**
- * Represents a span event that can be added to the current session span.
- */
-internal class SpanEventData(
-    val spanName: String,
-    val spanStartTimeNanos: Long,
-    val attributes: Map<String, String>?
-)
-
-/**
- * Represents a span attribute that can be added to the current session span.
- */
-internal class SpanAttributeData(
-    val key: String,
-    val value: String
-)

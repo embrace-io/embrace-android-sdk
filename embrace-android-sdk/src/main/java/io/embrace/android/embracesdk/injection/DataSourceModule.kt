@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.arch.DataSourceState
+import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 

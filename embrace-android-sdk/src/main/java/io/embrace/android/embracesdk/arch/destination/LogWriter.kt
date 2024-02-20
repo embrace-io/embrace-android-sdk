@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.arch.destination
 
 /**
- * Placeholder type for the log service.
+ * Declares functions for writing a [LogEventData] to the current session span.
  */
-internal interface LogWriter
+internal interface LogWriter {
+    fun addLog(log: LogEventData)
+}

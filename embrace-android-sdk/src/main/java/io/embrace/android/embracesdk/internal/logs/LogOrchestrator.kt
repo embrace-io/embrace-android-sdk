@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import androidx.annotation.VisibleForTesting
+import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -9,7 +10,8 @@ import java.util.concurrent.TimeUnit
 internal class LogOrchestrator(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
-    private val sink: LogSinkImpl
+    private val sink: LogSinkImpl,
+    private val deliveryService: DeliveryService
 ) {
     private var lastLogTime: Long = 0
     private var inactivityFuture: ScheduledFuture<*>? = null
@@ -33,12 +35,16 @@ internal class LogOrchestrator(
     @VisibleForTesting
     fun sendLogs() {
         inactivityFuture?.cancel(false)
+        inactivityFuture = null
         batchTimeFuture?.cancel(false)
+        batchTimeFuture = null
 
+        // Sink is synchronized, so even if sendLogs is called concurrently, the logs
+        // will be sent only once.
         val storedLogs = sink.flushLogs()
 
         if (storedLogs.isNotEmpty()) {
-            // TBD: Send logs to DeliveryService
+            deliveryService.sendLogs(LogPayload(logs = storedLogs))
         }
     }
 

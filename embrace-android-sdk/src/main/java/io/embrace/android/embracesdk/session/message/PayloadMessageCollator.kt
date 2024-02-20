@@ -171,7 +171,7 @@ internal class PayloadMessageCollator(
         val breadcrumbs = captureDataSafely {
             when {
                 !params.isCacheAttempt -> breadcrumbService.flushBreadcrumbs()
-                else -> breadcrumbService.getBreadcrumbs(startTime, endTime)
+                else -> breadcrumbService.getBreadcrumbs()
             }
         }
 

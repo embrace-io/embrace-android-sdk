@@ -24,7 +24,7 @@ internal class FragmentBreadcrumbTest {
         val obj = deserializeJsonFromResource<FragmentBreadcrumb>("fragment_breadcrumb_expected.json")
         assertEquals("test", obj.name)
         assertEquals(1600000000, obj.getStartTime())
-        assertEquals(1600001000, obj.endTime)
+        assertEquals(1600001000L, obj.endTime)
     }
 
     @Test(expected = JsonDataException::class)

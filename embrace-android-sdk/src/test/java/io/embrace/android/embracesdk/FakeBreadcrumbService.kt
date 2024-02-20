@@ -3,13 +3,8 @@ package io.embrace.android.embracesdk
 import android.util.Pair
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.CustomBreadcrumb
-import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
-import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
-import io.embrace.android.embracesdk.payload.ViewBreadcrumb
-import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 internal class FakeBreadcrumbService : BreadcrumbService {
 
@@ -17,24 +12,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     val pushNotifications = mutableListOf<PushNotificationBreadcrumb>()
     var flushCount: Int = 0
 
-    override fun getViewBreadcrumbsForSession(): List<ViewBreadcrumb> = emptyList()
-
-    override fun getTapBreadcrumbsForSession(): List<TapBreadcrumb> = emptyList()
-
-    override fun getCustomBreadcrumbsForSession(): List<CustomBreadcrumb> = emptyList()
-
-    override fun getWebViewBreadcrumbsForSession(): List<WebViewBreadcrumb> = emptyList()
-
-    override fun getFragmentBreadcrumbsForSession(
-        startTime: Long,
-        endTime: Long
-    ): List<FragmentBreadcrumb?> = emptyList()
-
-    override fun getRnActionBreadcrumbForSession(): List<RnActionBreadcrumb> = emptyList()
-
-    override fun getPushNotificationsBreadcrumbsForSession(): List<PushNotificationBreadcrumb> = emptyList()
-
-    override fun getBreadcrumbs(start: Long, end: Long): Breadcrumbs {
+    override fun getBreadcrumbs(): Breadcrumbs {
         return Breadcrumbs()
     }
 

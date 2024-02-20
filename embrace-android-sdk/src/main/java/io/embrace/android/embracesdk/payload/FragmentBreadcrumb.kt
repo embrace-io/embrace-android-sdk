@@ -16,7 +16,7 @@ internal class FragmentBreadcrumb(
     var start: Long,
 
     @Json(name = "en")
-    var endTime: Long
+    var endTime: Long? = null
 ) : Breadcrumb {
     override fun getStartTime(): Long = start
 

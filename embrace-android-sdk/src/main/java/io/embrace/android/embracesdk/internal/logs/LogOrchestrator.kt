@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 internal class LogOrchestrator(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
-    private val sink: LogSinkImpl,
+    private val sink: LogSink,
     private val deliveryService: DeliveryService
 ) {
     private var lastLogTime: Long = 0

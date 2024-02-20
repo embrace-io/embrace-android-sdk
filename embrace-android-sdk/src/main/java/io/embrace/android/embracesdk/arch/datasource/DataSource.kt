@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
@@ -52,21 +52,3 @@ internal interface DataSource<T> {
      */
     fun resetDataCaptureLimits()
 }
-
-/**
- * A [DataSource] that adds either a [EmbraceSpanEvent] or [EmbraceSpanAttribute]
- * to the current session span.
- */
-internal typealias EventDataSource = DataSource<SessionSpanWriter>
-internal typealias EventDataSourceImpl = DataSourceImpl<SessionSpanWriter>
-
-/**
- * A [DataSource] that adds a new log to the log service.
- */
-internal typealias LogDataSource = DataSource<LogWriter>
-internal typealias LogDataSourceImpl = DataSourceImpl<LogWriter>
-
-/**
- * Placeholder type for the log service.
- */
-internal interface LogWriter

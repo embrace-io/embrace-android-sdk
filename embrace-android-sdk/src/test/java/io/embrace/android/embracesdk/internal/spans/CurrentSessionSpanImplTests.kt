@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.SpanAttributeData
-import io.embrace.android.embracesdk.arch.SpanEventData
+import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.spans.EmbraceSpan

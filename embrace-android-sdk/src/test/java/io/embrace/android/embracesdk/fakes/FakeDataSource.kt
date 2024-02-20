@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.fakes
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.arch.EventDataSource
-import io.embrace.android.embracesdk.arch.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.SpanAttributeData
+import io.embrace.android.embracesdk.arch.datasource.EventDataSource
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 
 internal class FakeDataSource(
     private val ctx: Context

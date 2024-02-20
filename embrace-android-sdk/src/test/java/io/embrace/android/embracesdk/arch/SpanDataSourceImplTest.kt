@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch
 
+import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy

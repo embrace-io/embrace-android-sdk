@@ -1,5 +1,6 @@
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.arch.datasource
 
+import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**

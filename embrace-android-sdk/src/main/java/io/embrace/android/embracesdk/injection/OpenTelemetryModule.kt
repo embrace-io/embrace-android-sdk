@@ -73,7 +73,8 @@ internal class OpenTelemetryModuleImpl(
 
     override val openTelemetryConfiguration: OpenTelemetryConfiguration by lazy {
         OpenTelemetryConfiguration(
-            spanSink
+            spanSink,
+            initModule.appInstanceId
         )
     }
 

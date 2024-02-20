@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,6 +19,7 @@ internal class InitModuleImplTest {
         val initModule = InitModuleImpl()
         assertTrue(initModule.clock is NormalizedIntervalClock)
         assertTrue(initModule.telemetryService is EmbraceTelemetryService)
+        assertEquals(initModule.appInstanceId.length, 16)
     }
 
     @Test

@@ -41,6 +41,11 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
 
 /**
+ * Attribute name for the unique ID assigned to each app instance
+ */
+private const val APP_INSTANCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "app_instance_id"
+
+/**
  * Denotes an important span to be listed in the Spans listing page in the UI. Currently defined as any spans that are the root of a trace
  */
 private const val KEY_SPAN_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "key"
@@ -169,6 +174,14 @@ internal fun <T> SpanBuilder.record(
  */
 internal fun Span.setSequenceId(id: Long): Span {
     setAttribute(SEQUENCE_ID_ATTRIBUTE_NAME, id)
+    return this
+}
+
+/**
+ * Set the unique ID for this app launch
+ */
+internal fun Span.setAppInstanceId(id: String): Span {
+    setAttribute(APP_INSTANCE_ID_ATTRIBUTE_NAME, id)
     return this
 }
 

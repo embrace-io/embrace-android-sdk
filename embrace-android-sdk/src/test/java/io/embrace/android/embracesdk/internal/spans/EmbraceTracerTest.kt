@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -50,6 +52,27 @@ internal class EmbraceTracerTest {
             verifyPublicSpan("test-span")
             spanSink.flushSpans()
         }
+    }
+
+    @Test
+    fun `start a span directly`() {
+        spanSink.flushSpans()
+        val parent = checkNotNull(embraceTracer.startSpan(name = "test-span"))
+        val child = checkNotNull(embraceTracer.startSpan(name = "child-span", parent))
+        assertTrue(parent.stop())
+        assertTrue(child.stop())
+        assertEquals(2, spanSink.flushSpans().size)
+    }
+
+    @Test
+    fun `cannot start a span if it was not created`() {
+        assertNull(embraceTracer.startSpan(name = TOO_LONG_SPAN_NAME))
+    }
+
+    @Test
+    fun `cannot start a span if given parent has not started`() {
+        val notStartedParent = checkNotNull(embraceTracer.createSpan(name = "test-span"))
+        assertNull(embraceTracer.startSpan(name = "child-span", notStartedParent))
     }
 
     @Test

@@ -96,12 +96,14 @@ internal class TracingApiTest {
                         events = events
                     )
                 )
+                val bonusSpan = checkNotNull(embrace.startSpan(name = "bonus-span", parent = parentSpan))
+                assertTrue(bonusSpan.stop())
                 harness.fakeClock.tick(300L)
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            assertTrue("Timed out waiting for the expected spans: $results", spanExporter.awaitSpanExport(7))
+            assertTrue("Timed out waiting for the expected spans: $results", spanExporter.awaitSpanExport(8))
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
@@ -121,6 +123,7 @@ internal class TracingApiTest {
                 "completed-span",
                 "emb-startup-moment",
                 "emb-session-span",
+                "bonus-span"
             )
             expectedSpanName.forEach {
                 checkNotNull(spansMap[it]) { "$it not found: $results" }

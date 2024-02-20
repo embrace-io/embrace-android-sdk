@@ -10,11 +10,19 @@ internal class EmbraceTracer(
     private val clock: Clock,
     private val spanService: SpanService,
 ) : TracingApi {
-    override fun createSpan(name: String): EmbraceSpan? =
-        createSpan(name = name, parent = null)
+    override fun createSpan(name: String): EmbraceSpan? = createSpan(name = name, parent = null)
 
     override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
         spanService.createSpan(
+            name = name,
+            parent = parent,
+            internal = false
+        )
+
+    override fun startSpan(name: String): EmbraceSpan? = startSpan(name = name, parent = null)
+
+    override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
+        spanService.startSpan(
             name = name,
             parent = parent,
             internal = false

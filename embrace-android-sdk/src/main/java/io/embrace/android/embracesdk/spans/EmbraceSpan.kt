@@ -47,11 +47,19 @@ public interface EmbraceSpan {
     public fun stop(): Boolean
 
     /**
+     * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
+     * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
+     */
+    public fun stop(endTimeNanos: Long?): Boolean
+
+    /**
      * Stop the recording of the Span with an [ErrorCode], a non-null value indicating an unsuccessful completion of the underlying
      * operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has
      * not been started or if has already been stopped.
      */
     public fun stop(errorCode: ErrorCode?): Boolean
+
+    public fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name] at the current time. Returns false if the Event was definitely not successfully

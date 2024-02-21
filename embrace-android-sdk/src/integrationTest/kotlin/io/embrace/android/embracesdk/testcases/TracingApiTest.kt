@@ -53,7 +53,7 @@ internal class TracingApiTest {
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
-                assertTrue(parentSpan.start())
+                assertTrue(parentSpan.start(startTimeNanos = (harness.fakeClock.now() - 1L).millisToNanos()))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
                 assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                 assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
@@ -97,7 +97,7 @@ internal class TracingApiTest {
                     )
                 )
                 val bonusSpan = checkNotNull(embrace.startSpan(name = "bonus-span", parent = parentSpan))
-                assertTrue(bonusSpan.stop())
+                assertTrue(bonusSpan.stop(endTimeNanos = (harness.fakeClock.now() + 1).millisToNanos()))
                 harness.fakeClock.tick(300L)
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
@@ -146,7 +146,7 @@ internal class TracingApiTest {
             )
             assertEmbraceSpanData(
                 span = traceRootSpan,
-                expectedStartTimeMs = testStartTime + 100,
+                expectedStartTimeMs = testStartTime + 99,
                 expectedEndTimeMs = testStartTime + 400,
                 expectedParentId = SpanId.getInvalid(),
                 expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
@@ -196,6 +196,15 @@ internal class TracingApiTest {
                     )
                 )
             )
+
+            assertEmbraceSpanData(
+                span = spansMap["bonus-span"],
+                expectedStartTimeMs = testStartTime + 400,
+                expectedEndTimeMs = testStartTime + 401,
+                expectedParentId = traceRootSpan.spanId,
+                expectedTraceId = traceRootSpan.traceId
+            )
+
             assertEmbraceSpanData(
                 span = sessionSpan,
                 expectedStartTimeMs = testStartTime + 100,

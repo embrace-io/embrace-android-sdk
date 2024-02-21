@@ -44,13 +44,13 @@ internal class EmbraceTracerTest {
     }
 
     @Test
-    fun `start EmbraceSpan with a specific timestamp`() {
+    fun `start and stop EmbraceSpan with specific timestamps`() {
         val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
         assertNotNull(embraceSpan)
         val expectedStartTime = (clock.now() - 1L).millisToNanos()
-        val expectedEndTime = clock.nowInNanos()
-        assertTrue(embraceSpan.start(startTimeNanos = (clock.now() - 1L).millisToNanos()))
-        assertTrue(embraceSpan.stop())
+        val expectedEndTime = (clock.now() + 2L).millisToNanos()
+        assertTrue(embraceSpan.start(startTimeNanos = expectedStartTime))
+        assertTrue(embraceSpan.stop(endTimeNanos = expectedEndTime))
         with(verifyPublicSpan("test-span")) {
             assertEquals(expectedStartTime, startTimeNanos)
             assertEquals(expectedEndTime, endTimeNanos)

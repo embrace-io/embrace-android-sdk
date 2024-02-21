@@ -98,8 +98,10 @@ internal class EmbraceSpanServiceTest {
         spanSink.flushSpans()
         val parent = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(parent.start())
-        val child = checkNotNull(spanService.createSpan(name = "test-span", parent = parent))
-        assertTrue(child.start(startTimeNanos = (clock.now() + 10).millisToNanos()))
+        val child = checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
+        assertTrue(child.start(startTimeNanos = (clock.now() - 10).millisToNanos()))
+        assertTrue(child.stop())
+        assertTrue(parent.stop(endTimeNanos = (clock.now() + 50).millisToNanos()))
         assertTrue(parent.traceId == child.traceId)
         assertTrue(parent.spanId == checkNotNull(child.parent).spanId)
     }

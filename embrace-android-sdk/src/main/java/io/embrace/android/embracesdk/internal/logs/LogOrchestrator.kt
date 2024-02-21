@@ -25,39 +25,43 @@ internal class LogOrchestrator(
     init {
         sink.callOnLogsStored(::onLogsAdded)
     }
+
     private fun onLogsAdded() {
         lastLogTime = clock.now()
         if (firstLogInBatchTime == 0L) {
             firstLogInBatchTime = lastLogTime
         }
-        if (logsShouldBeSent()) {
-            sendLogs()
-        } else {
+        if (!sendLogsIfNeeded()) {
             scheduleCheck()
         }
     }
 
-    private fun logsShouldBeSent(): Boolean {
+    /**
+     * Returns true if logs were sent, false otherwise
+     */
+    @Synchronized
+    private fun sendLogsIfNeeded(): Boolean {
         val now = clock.now()
-        return (
-            (sink.completedLogs().size >= MAX_LOGS_PER_BATCH) ||
-                (now - lastLogTime > MAX_INACTIVITY_TIME) ||
-                (now - firstLogInBatchTime > MAX_BATCH_TIME)
-            )
-    }
+        val shouldSendLogs = sink.completedLogs().size >= MAX_LOGS_PER_BATCH ||
+            now - lastLogTime > MAX_INACTIVITY_TIME ||
+            now - firstLogInBatchTime > MAX_BATCH_TIME
 
-    private fun sendLogs() {
+        if (!shouldSendLogs) {
+            // None of the conditions to send the logs is met
+            return false
+        }
+
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
         firstLogInBatchTime = 0
 
-        // Sink is synchronized, so even if sendLogs is called concurrently, the logs
-        // will be sent only once.
         val storedLogs = sink.flushLogs()
 
         if (storedLogs.isNotEmpty()) {
             deliveryService.sendLogs(LogPayload(logs = storedLogs))
         }
+
+        return true
     }
 
     private fun scheduleCheck() {
@@ -66,11 +70,7 @@ internal class LogOrchestrator(
         val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime)
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
-            {
-                if (logsShouldBeSent()) {
-                    sendLogs()
-                }
-            },
+            ::sendLogsIfNeeded,
             min(nextBatchCheck, nextInactivityCheck),
             TimeUnit.MILLISECONDS
         )

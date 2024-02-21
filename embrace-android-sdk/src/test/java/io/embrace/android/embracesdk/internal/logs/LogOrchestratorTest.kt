@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.worker.ScheduledWorker
-import io.mockk.mockk
-import io.mockk.verify
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -21,17 +20,18 @@ internal class LogOrchestratorTest {
     }
 
     private lateinit var logOrchestrator: LogOrchestrator
-
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var scheduledWorker: ScheduledWorker
+    private lateinit var logSink: LogSink
+    private lateinit var deliveryService: FakeDeliveryService
     private val clock = FakeClock()
-    private val logSink: LogSinkImpl = LogSinkImpl()
-    private val deliveryService: DeliveryService = mockk(relaxed = true)
 
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService()
         scheduledWorker = ScheduledWorker(executorService)
+        logSink = LogSinkImpl()
+        deliveryService = FakeDeliveryService()
         clock.setCurrentTime(now)
         logOrchestrator = LogOrchestrator(scheduledWorker, clock, logSink, deliveryService)
     }
@@ -48,14 +48,14 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are not sent
         assertEquals(49, logSink.completedLogs().size)
-        verify(exactly = 0) { deliveryService.sendLogs(any()) }
+        verifyPayloadNotSent()
 
         // Add one more log to reach max batch size
         logSink.storeLogs(listOf(FakeLogRecordData()))
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verify { deliveryService.sendLogs(any()) }
+        verifyPayload(50)
     }
 
     @Test
@@ -66,7 +66,7 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verify { deliveryService.sendLogs(any()) }
+        verifyPayload(1)
     }
 
     @Test
@@ -80,13 +80,23 @@ internal class LogOrchestratorTest {
 
         // Verify no logs have been sent
         assertFalse(logSink.completedLogs().isEmpty())
-        verify(exactly = 0) { deliveryService.sendLogs(any()) }
+        verifyPayloadNotSent()
 
         moveTimeAhead(700)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verify { deliveryService.sendLogs(any()) }
+        verifyPayload(4)
+    }
+
+    private fun verifyPayload(numberOfLogs: Int) {
+        assertNotNull(deliveryService.lastSentLogPayloads)
+        assertEquals(1, deliveryService.lastSentLogPayloads.size)
+        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].logs.size)
+    }
+
+    private fun verifyPayloadNotSent() {
+        assertEquals(0, deliveryService.lastSentLogPayloads.size)
     }
 
     private fun moveTimeAhead(timeStep: Long) {

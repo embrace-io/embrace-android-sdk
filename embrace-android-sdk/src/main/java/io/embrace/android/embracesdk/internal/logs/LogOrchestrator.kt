@@ -32,6 +32,11 @@ internal class LogOrchestrator(
             firstLogInBatchTime = lastLogTime
         }
         if (!sendLogsIfNeeded()) {
+            // If [firstLogInBatchTime] was cleared by a concurrent call to [sendLogsIfNeeded]
+            // then update it to the time of this log
+            if (firstLogInBatchTime == 0L) {
+                firstLogInBatchTime = lastLogTime
+            }
             scheduleCheck()
         }
     }

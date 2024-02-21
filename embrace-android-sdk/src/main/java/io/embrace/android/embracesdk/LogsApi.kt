@@ -115,7 +115,7 @@ internal interface LogsApi {
      *
      * @param stacktraceElements the stacktrace to remotely log
      */
-    fun logCustomStacktrace(stacktraceElements: Array<StackTraceElement?>)
+    fun logCustomStacktrace(stacktraceElements: Array<StackTraceElement>)
 
     /**
      * Remotely logs a custom stacktrace at given severity level. These log messages and stacktraces
@@ -126,7 +126,7 @@ internal interface LogsApi {
      * @param severity           the severity level of the log message
      */
     fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement?>,
+        stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
     )
 
@@ -140,7 +140,7 @@ internal interface LogsApi {
      * @param properties         custom key-value pairs to include with the log message
      */
     fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement?>,
+        stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
     )
@@ -156,7 +156,7 @@ internal interface LogsApi {
      * @param message            the message to remotely log instead of the throwable message
      */
     fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement?>,
+        stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
         message: String?,

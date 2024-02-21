@@ -24,4 +24,9 @@ internal interface LogSink {
      * atomic, i.e. logs cannot be added during this operation.
      */
     fun flushLogs(): List<EmbraceLogRecordData>
+
+    /**
+     * Registers a callback to be called when logs are stored.
+     */
+    fun callOnLogsStored(onLogsStored: () -> Unit)
 }

@@ -44,4 +44,12 @@ internal class LogSinkImplTest {
         }
         assertEquals(0, logSink.completedLogs().size)
     }
+
+    @Test
+    fun `onStore is called when logs are stored`() {
+        var onStoreCalled = false
+        (logSink as LogSinkImpl).callOnLogsStored { onStoreCalled = true }
+        logSink.storeLogs(listOf(FakeLogRecordData()))
+        assertEquals(true, onStoreCalled)
+    }
 }

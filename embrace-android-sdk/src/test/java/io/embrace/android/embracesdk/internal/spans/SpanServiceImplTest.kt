@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
 import io.embrace.android.embracesdk.fixtures.tooBigAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEvents
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -58,6 +59,15 @@ internal class SpanServiceImplTest {
             )
             assertTrue(isKey())
         }
+    }
+
+    @Test
+    fun `create trace with custom start time`() {
+        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
+        assertNull(embraceSpan.parent)
+        assertTrue(embraceSpan.start((clock.now() - 1).millisToNanos()))
+        assertTrue(embraceSpan.stop())
+        verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
     @Test

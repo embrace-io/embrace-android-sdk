@@ -35,6 +35,12 @@ public interface EmbraceSpan {
     public fun start(): Boolean
 
     /**
+     * Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording.
+     * Returns false if the Span has already been started or has been stopped.
+     */
+    public fun start(startTimeNanos: Long?): Boolean
+
+    /**
      * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
      * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
      */

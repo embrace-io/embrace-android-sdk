@@ -82,7 +82,7 @@ internal class LogOrchestratorTest {
         assertFalse(logSink.completedLogs().isEmpty())
         verify(exactly = 0) { deliveryService.sendLogs(any()) }
 
-        moveTimeAhead(timeStep)
+        moveTimeAhead(700)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())

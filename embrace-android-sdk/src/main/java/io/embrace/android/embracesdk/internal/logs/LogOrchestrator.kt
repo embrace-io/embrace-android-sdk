@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.ScheduledWorker
+import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -12,8 +13,13 @@ internal class LogOrchestrator(
     private val sink: LogSink,
     private val deliveryService: DeliveryService
 ) {
+    @Volatile
     private var lastLogTime: Long = 0
+
+    @Volatile
     private var firstLogInBatchTime: Long = 0
+
+    @Volatile
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
 
     init {
@@ -32,10 +38,11 @@ internal class LogOrchestrator(
     }
 
     private fun logsShouldBeSent(): Boolean {
+        val now = clock.now()
         return (
             (sink.completedLogs().size >= MAX_LOGS_PER_BATCH) ||
-                (clock.now() - lastLogTime > MAX_INACTIVITY_TIME) ||
-                (clock.now() - firstLogInBatchTime > MAX_BATCH_TIME)
+                (now - lastLogTime > MAX_INACTIVITY_TIME) ||
+                (now - firstLogInBatchTime > MAX_BATCH_TIME)
             )
     }
 
@@ -54,6 +61,9 @@ internal class LogOrchestrator(
     }
 
     private fun scheduleCheck() {
+        val now = clock.now()
+        val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime)
+        val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime)
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
             {
@@ -61,7 +71,7 @@ internal class LogOrchestrator(
                     sendLogs()
                 }
             },
-            MAX_INACTIVITY_TIME,
+            min(nextBatchCheck, nextInactivityCheck),
             TimeUnit.MILLISECONDS
         )
     }

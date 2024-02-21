@@ -311,7 +311,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logMessage(@NonNull String message,
                            @NonNull Severity severity,
-                           @Nullable Map<String, Object> properties) {
+                           @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("logMessage", message, severity)) {
             impl.logMessage(message, severity, properties);
         }
@@ -334,7 +334,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logException(@NonNull Throwable throwable,
                              @NonNull Severity severity,
-                             @Nullable Map<String, Object> properties) {
+                             @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("logException", throwable, severity)) {
             logException(throwable, severity, properties, null);
         }
@@ -343,7 +343,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logException(@NonNull Throwable throwable,
                              @NonNull Severity severity,
-                             @Nullable Map<String, Object> properties,
+                             @Nullable Map<String, ?> properties,
                              @Nullable String message) {
         if (verifyNonNullParameters("logException", throwable, severity)) {
             impl.logException(throwable, severity, properties, message);
@@ -367,7 +367,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
                                     @NonNull Severity severity,
-                                    @Nullable Map<String, Object> properties) {
+                                    @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
             logCustomStacktrace(stacktraceElements, severity, properties, null);
         }
@@ -376,7 +376,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
                                     @NonNull Severity severity,
-                                    @Nullable Map<String, Object> properties,
+                                    @Nullable Map<String, ?> properties,
                                     @Nullable String message) {
         if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
             impl.logCustomStacktrace(stacktraceElements, severity, properties, message);

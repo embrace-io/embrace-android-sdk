@@ -49,7 +49,7 @@ internal class LogOrchestrator(
         val now = clock.now()
         val shouldSendLogs = sink.completedLogs().size >= MAX_LOGS_PER_BATCH ||
             now - lastLogTime > MAX_INACTIVITY_TIME ||
-            now - firstLogInBatchTime > MAX_BATCH_TIME
+            (firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME)
 
         if (!shouldSendLogs) {
             // None of the conditions to send the logs is met

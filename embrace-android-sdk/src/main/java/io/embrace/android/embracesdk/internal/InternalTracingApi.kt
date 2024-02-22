@@ -32,7 +32,7 @@ public interface InternalTracingApi {
     public fun addSpanEvent(
         spanId: String,
         name: String,
-        time: Long? = null,
+        timestampMs: Long? = null,
         attributes: Map<String, String>? = null
     ): Boolean
 

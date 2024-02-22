@@ -18,7 +18,7 @@ internal class InternalTracerTest {
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spanService: SpanService
     private lateinit var internalTracer: InternalTracer
-    private val clock = FakeClock(10000L)
+    private val clock = FakeClock()
 
     @Before
     fun setup() {
@@ -26,7 +26,7 @@ internal class InternalTracerTest {
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.now())
         internalTracer = InternalTracer(
             initModule.openTelemetryModule.spanRepository,
             initModule.openTelemetryModule.embraceTracer,
@@ -47,12 +47,32 @@ internal class InternalTracerTest {
             assertEquals("valuez", attributes["keyz"])
         }
         spanSink.flushSpans()
-        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, "first event"))
+        val firstEventTime = clock.now()
+        clock.tick(10L)
+        val secondEventTime = clock.now()
+        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "first event", timestampMs = firstEventTime))
+        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "second event"))
         assertTrue(internalTracer.stopSpan(parentSpanId))
-        assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "second event"))
+        assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "failed event"))
         with(verifyPublicSpan("parent-span")) {
-            assertEquals(1, events.size)
+            assertEquals(2, events.size)
             assertEquals("first event", events[0].name)
+            assertEquals(firstEventTime, events[0].timestampNanos.nanosToMillis())
+            assertEquals(secondEventTime, events[1].timestampNanos.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `verify event timestamp fallback`() {
+        spanSink.flushSpans()
+        val spanId = checkNotNull(internalTracer.startSpan(name = "my-span"))
+        val eventTimeNanos = clock.nowInNanos()
+        clock.tick(10L)
+        assertTrue(internalTracer.addSpanEvent(spanId = spanId, name = "first event", timestampMs = eventTimeNanos))
+        assertTrue(internalTracer.stopSpan(spanId))
+        with(verifyPublicSpan("my-span")) {
+            assertEquals(1, events.size)
+            assertEquals(eventTimeNanos, events[0].timestampNanos)
         }
     }
 

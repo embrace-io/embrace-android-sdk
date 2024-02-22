@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -137,8 +138,8 @@ internal class EmbraceTracer(
     ): Boolean =
         spanService.recordCompletedSpan(
             name = name,
-            startTimeMs = startTimeMs,
-            endTimeMs = endTimeMs,
+            startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
+            endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
             parent = parent,
             internal = false,
             attributes = attributes ?: emptyMap(),

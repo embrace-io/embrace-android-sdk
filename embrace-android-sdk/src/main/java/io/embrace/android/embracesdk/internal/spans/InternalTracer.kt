@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -71,10 +72,10 @@ internal class InternalTracer(
         }
     }
 
-    override fun addSpanEvent(spanId: String, name: String, time: Long?, attributes: Map<String, String>?): Boolean =
+    override fun addSpanEvent(spanId: String, name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         spanRepository.getSpan(spanId = spanId)?.addEvent(
             name = name,
-            timestampMs = time,
+            timestampMs = timestampMs?.normalizeTimestampAsMillis(),
             attributes = attributes
         ) ?: false
 

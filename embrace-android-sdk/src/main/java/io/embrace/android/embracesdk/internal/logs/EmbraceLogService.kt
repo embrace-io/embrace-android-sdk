@@ -64,9 +64,6 @@ internal class EmbraceLogService(
             // TBD: Check if log should be gated
             // TBD: Count log and enforce limits
 
-            val attributes = mutableMapOf<String, Any>()
-            properties?.let { attributes.putAll(it) }
-
             emitLog(
                 message,
                 Severity.ERROR,

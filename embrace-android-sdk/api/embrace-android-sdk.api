@@ -244,6 +244,7 @@ public final class io/embrace/android/embracesdk/internal/clock/Clock$DefaultImp
 
 public final class io/embrace/android/embracesdk/internal/clock/ClockKt {
 	public static final fun millisToNanos (J)J
+	public static final fun nanosToMillis (J)J
 }
 
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {

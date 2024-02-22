@@ -53,7 +53,8 @@ public interface InternalTracingApi {
      *
      * {
      *  "name": [String],
-     *  "timestampNanos": [Long] (optional),
+     *  "timestampMs": [Long] (optional),
+     *  "timestampNanos": [Long] (deprecated and optional),
      *  "attributes": [Map<String, String>] (optional)
      * }
      *
@@ -73,8 +74,8 @@ public interface InternalTracingApi {
      */
     public fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode? = null,
         parentSpanId: String? = null,
         attributes: Map<String, String>? = null,

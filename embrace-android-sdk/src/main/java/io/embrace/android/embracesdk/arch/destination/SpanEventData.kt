@@ -5,6 +5,6 @@ package io.embrace.android.embracesdk.arch.destination
  */
 internal class SpanEventData(
     val spanName: String,
-    val spanStartTimeNanos: Long,
+    val spanStartTimeMs: Long,
     val attributes: Map<String, String>?
 )

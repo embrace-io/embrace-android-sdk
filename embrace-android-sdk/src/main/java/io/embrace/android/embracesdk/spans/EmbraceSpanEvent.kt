@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.spans
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.annotation.BetaApi
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 
 /**
  * Represents an Event in an [EmbraceSpan]
@@ -32,9 +33,9 @@ public data class EmbraceSpanEvent internal constructor(
         internal const val MAX_EVENT_NAME_LENGTH = 100
         internal const val MAX_EVENT_ATTRIBUTE_COUNT = 10
 
-        public fun create(name: String, timestampNanos: Long, attributes: Map<String, String>?): EmbraceSpanEvent? {
+        public fun create(name: String, timestampMs: Long, attributes: Map<String, String>?): EmbraceSpanEvent? {
             if (inputsValid(name, attributes)) {
-                return EmbraceSpanEvent(name = name, timestampNanos = timestampNanos, attributes = attributes ?: emptyMap())
+                return EmbraceSpanEvent(name = name, timestampNanos = timestampMs.millisToNanos(), attributes = attributes ?: emptyMap())
             }
 
             return null

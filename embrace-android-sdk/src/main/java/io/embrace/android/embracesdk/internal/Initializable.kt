@@ -9,7 +9,7 @@ internal interface Initializable {
     /**
      * Explicitly initialize the service post instance creation
      */
-    fun initializeService(sdkInitStartTimeNanos: Long)
+    fun initializeService(sdkInitStartTimeMs: Long)
 
     /**
      * Returns true if this service is initialized

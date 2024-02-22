@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
@@ -26,7 +25,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.net.SocketException
-import java.util.concurrent.TimeUnit
 
 /**
  * Validation of the internal API
@@ -291,8 +289,8 @@ internal class EmbraceInternalInterfaceTest {
                     recordSpan(name = "tz-another-span", parentSpanId = parentSpanId) { }
                     recordCompletedSpan(
                         name = "tz-old-span",
-                        startTimeNanos = (harness.fakeClock.now() - 1L).millisToNanos(),
-                        endTimeNanos = embrace.internalInterface.getSdkCurrentTime().millisToNanos(),
+                        startTimeMs = harness.fakeClock.now() - 1L,
+                        endTimeMs = embrace.internalInterface.getSdkCurrentTime(),
                     )
                     stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                     stopSpan(parentSpanId)

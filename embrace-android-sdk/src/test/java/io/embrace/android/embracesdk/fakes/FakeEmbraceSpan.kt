@@ -18,9 +18,9 @@ internal class FakeEmbraceSpan private constructor(
     override val isRecording: Boolean
         get() = started && !stopped
 
-    override fun start(): Boolean = start(startTimeNanos = null)
+    override fun start(): Boolean = start(startTimeMs = null)
 
-    override fun start(startTimeNanos: Long?): Boolean {
+    override fun start(startTimeMs: Long?): Boolean {
         if (!started) {
             spanId = IdGenerator.random().generateSpanId()
             if (parent == null) {
@@ -31,13 +31,13 @@ internal class FakeEmbraceSpan private constructor(
         return true
     }
 
-    override fun stop(): Boolean = stop(errorCode = null, endTimeNanos = null)
+    override fun stop(): Boolean = stop(errorCode = null, endTimeMs = null)
 
-    override fun stop(endTimeNanos: Long?): Boolean = stop(errorCode = null, endTimeNanos = endTimeNanos)
+    override fun stop(endTimeMs: Long?): Boolean = stop(errorCode = null, endTimeMs = endTimeMs)
 
-    override fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeNanos = null)
+    override fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeMs = null)
 
-    override fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean {
+    override fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean {
         if (!stopped) {
             this.errorCode = errorCode
             stopped = true
@@ -49,7 +49,7 @@ internal class FakeEmbraceSpan private constructor(
         TODO("Not yet implemented")
     }
 
-    override fun addEvent(name: String, timeNanos: Long?, attributes: Map<String, String>?): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         TODO("Not yet implemented")
     }
 

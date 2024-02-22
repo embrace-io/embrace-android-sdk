@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.EventData
@@ -57,7 +58,7 @@ internal data class EmbraceSpanData(
             eventDataList?.forEach { eventData ->
                 val event = EmbraceSpanEvent.create(
                     name = eventData.name,
-                    timestampNanos = eventData.epochNanos,
+                    timestampMs = eventData.epochNanos.nanosToMillis(),
                     attributes = eventData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
                 )
                 if (event != null) {

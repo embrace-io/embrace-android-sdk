@@ -22,3 +22,9 @@ public fun interface Clock {
  */
 @InternalApi
 public fun Long.millisToNanos(): Long = TimeUnit.MILLISECONDS.toNanos(this)
+
+/**
+ * Turns a number that specifies a nanosecond value to milliseconds
+ */
+@InternalApi
+public fun Long.nanosToMillis(): Long = TimeUnit.NANOSECONDS.toMillis(this)

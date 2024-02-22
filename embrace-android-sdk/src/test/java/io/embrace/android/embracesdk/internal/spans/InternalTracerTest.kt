@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -107,18 +108,23 @@ internal class InternalTracerTest {
     }
 
     @Test
-    fun `record completed span with bad event data`() {
+    fun `record completed span with various event add attempts`() {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
+        clock.tick(10)
+        val expectedEventStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
         val eventsInput: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "correct event", "timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
-                mapOf("name" to "correct event2"),
+                mapOf("name" to "correct event", "timestampMs" to expectedStartTimeMs, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to "correct event 2"),
+                mapOf("name" to "correct fallback event", "timestampNanos" to expectedEndTimeMs.millisToNanos()),
                 mapOf("timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
                 mapOf("name" to 1234),
                 mapOf("name" to "failed event", "timestampMs" to 123),
                 mapOf("name" to "failed event", "timestampMs" to "123"),
+                mapOf("name" to "failed event", "timestampNanos" to 123),
+                mapOf("name" to "failed event", "timestampNanos" to "123"),
                 mapOf("name" to "partial event", "attributes" to mapOf("key" to 123)),
                 mapOf("name" to "partial event2", "attributes" to mapOf(123 to "123")),
             )
@@ -133,15 +139,17 @@ internal class InternalTracerTest {
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(4, events.size)
+            assertEquals(5, events.size)
             assertEquals("correct event", events[0].name)
-            assertEquals(0L, events[0].timestampNanos.nanosToMillis())
-            assertEquals("correct event2", events[1].name)
-            assertEquals(expectedStartTimeMs, events[1].timestampNanos.nanosToMillis())
-            assertEquals("partial event", events[2].name)
-            assertEquals(0, events[2].attributes.size)
-            assertEquals("partial event2", events[3].name)
+            assertEquals(expectedStartTimeMs, events[0].timestampNanos.nanosToMillis())
+            assertEquals("correct event 2", events[1].name)
+            assertEquals(expectedEventStartTimeMs, events[1].timestampNanos.nanosToMillis())
+            assertEquals("correct fallback event", events[2].name)
+            assertEquals(expectedEndTimeMs, events[2].timestampNanos.nanosToMillis())
+            assertEquals("partial event", events[3].name)
             assertEquals(0, events[3].attributes.size)
+            assertEquals("partial event2", events[4].name)
+            assertEquals(0, events[4].attributes.size)
         }
     }
 

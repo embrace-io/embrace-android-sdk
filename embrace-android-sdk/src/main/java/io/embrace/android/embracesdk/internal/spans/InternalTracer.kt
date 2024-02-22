@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -87,13 +88,29 @@ internal class InternalTracer(
 
     private fun mapToEvent(map: Map<String, Any>): EmbraceSpanEvent? {
         val name = map["name"]
-        val timestampMs = map["timestampMs"]
+        val timestampMs = map["timestampMs"] as? Long?
+        val timestampNanos = (map["timestampNanos"] as? Long?)?.nanosToMillis()
         val attributes = map["attributes"]
 
-        return if (name is String && timestampMs is Long? && attributes is Map<*, *>?) {
+        // If timestampMs is specified but isn't the right type, return and don't create the event
+        if (timestampMs == null && map["timestampMs"] != null) {
+            return null
+        }
+
+        // If timestampMs is valid, use it
+        // else if timestampNanos is valid, use it
+        // else if timestampNanos isn't specified, use the current time in millis
+        // Otherwise, it means we have an invalid type of timestampNanos so we don't create the event
+        val validatedTimeMs = timestampMs ?: timestampNanos ?: if (map["timestampNanos"] == null) {
+            embraceTracer.getSdkCurrentTimeMs()
+        } else {
+            return null
+        }
+
+        return if (name is String && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampMs = timestampMs ?: embraceTracer.getSdkCurrentTimeMs(),
+                timestampMs = validatedTimeMs,
                 attributes = attributes?.let { toStringMap(it) }
             )
         } else {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class EmbraceLogService(
     private val logger: Logger,
+    private val clock: Clock,
     private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
     private val backgroundWorker: BackgroundWorker
@@ -98,7 +100,7 @@ internal class EmbraceLogService(
             .setBody(message)
             .setSeverity(otelSeverity)
             .setSeverityText(otelSeverity.name)
-            .setTimestamp(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+            .setTimestamp(clock.now(), TimeUnit.MILLISECONDS)
 
         properties?.forEach {
             builder.setAttribute(AttributeKey.stringKey(it.key), it.value.toString())

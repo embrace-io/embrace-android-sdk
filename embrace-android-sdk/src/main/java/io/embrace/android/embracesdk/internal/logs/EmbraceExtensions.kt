@@ -21,7 +21,7 @@ private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 private const val APP_STATE_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "state"
 
 /**
- * Attribute name for the id of the session in progress ]at the time the log was recorded
+ * Attribute name for the id of the session in progress at the time the log was recorded
  */
 private const val SESSION_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "session_id"
 

@@ -3,9 +3,11 @@ package io.embrace.android.embracesdk.internal.logs
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
@@ -23,6 +25,7 @@ internal class EmbraceLogServiceTest {
         private lateinit var logger: FakeOpenTelemetryLogger
         private lateinit var metadataService: FakeMetadataService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
+        private lateinit var clock: Clock
 
         @BeforeClass
         @JvmStatic
@@ -38,6 +41,7 @@ internal class EmbraceLogServiceTest {
     fun setUp() {
         logger = FakeOpenTelemetryLogger()
         sessionIdTracker.setActiveSessionId("session-123", true)
+        clock = FakeClock(123456789L)
     }
 
     @Test
@@ -111,6 +115,7 @@ internal class EmbraceLogServiceTest {
     private fun getLogMessageService(): EmbraceLogService {
         return EmbraceLogService(
             logger,
+            clock,
             metadataService,
             sessionIdTracker,
             BackgroundWorker(MoreExecutors.newDirectExecutorService())

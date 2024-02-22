@@ -38,7 +38,7 @@ public interface EmbraceSpan {
      * Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording.
      * Returns false if the Span has already been started or has been stopped.
      */
-    public fun start(startTimeNanos: Long?): Boolean
+    public fun start(startTimeMs: Long?): Boolean
 
     /**
      * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
@@ -50,7 +50,7 @@ public interface EmbraceSpan {
      * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
      * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
      */
-    public fun stop(endTimeNanos: Long?): Boolean
+    public fun stop(endTimeMs: Long?): Boolean
 
     /**
      * Stop the recording of the Span with an [ErrorCode], a non-null value indicating an unsuccessful completion of the underlying
@@ -59,7 +59,7 @@ public interface EmbraceSpan {
      */
     public fun stop(errorCode: ErrorCode?): Boolean
 
-    public fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean
+    public fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name] at the current time. Returns false if the Event was definitely not successfully
@@ -71,14 +71,14 @@ public interface EmbraceSpan {
     ): Boolean
 
     /**
-     * Add an [EmbraceSpanEvent] with the given [name]. If [timeNanos] is null, the current time will be used. Optionally, the specific
+     * Add an [EmbraceSpanEvent] with the given [name]. If [timestampMs] is null, the current time will be used. Optionally, the specific
      * time of the event and a set of attributes can be passed in associated with the event. Returns false if the Event was definitely not
      * successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the
      * OpenTelemetry level was successful.
      */
     public fun addEvent(
         name: String,
-        timeNanos: Long?,
+        timestampMs: Long?,
         attributes: Map<String, String>?
     ): Boolean
 

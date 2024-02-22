@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -47,13 +47,13 @@ internal class EmbraceTracerTest {
     fun `start and stop EmbraceSpan with specific timestamps`() {
         val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
         assertNotNull(embraceSpan)
-        val expectedStartTime = (clock.now() - 1L).millisToNanos()
-        val expectedEndTime = (clock.now() + 2L).millisToNanos()
-        assertTrue(embraceSpan.start(startTimeNanos = expectedStartTime))
-        assertTrue(embraceSpan.stop(endTimeNanos = expectedEndTime))
+        val expectedStartTimeMs = clock.now() - 1L
+        val expectedEndTimeMs = clock.now() + 2L
+        assertTrue(embraceSpan.start(startTimeMs = expectedStartTimeMs))
+        assertTrue(embraceSpan.stop(endTimeMs = expectedEndTimeMs))
         with(verifyPublicSpan("test-span")) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
@@ -99,14 +99,14 @@ internal class EmbraceTracerTest {
 
         val expectedEvents: List<EmbraceSpanEvent> =
             listOf(
-                EmbraceSpanEvent(name = "event1", timestampNanos = 0L, expectedAttributes),
-                EmbraceSpanEvent(name = "event2", timestampNanos = 5L, expectedAttributes),
+                EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
+                EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
             )
 
         val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val returnThis = 1881L
-        val expectedStartTime = clock.nowInNanos()
+        val expectedStartTimeNanos = clock.nowInNanos()
         val lambdaReturn = embraceTracer.recordSpan(
             name = "lambda-test-span",
             parent = parentSpan,
@@ -116,10 +116,10 @@ internal class EmbraceTracerTest {
             clock.tick(10)
             returnThis
         }
-        val expectedEndTime = clock.nowInNanos()
+        val expectedEndTimeNanos = clock.nowInNanos()
         with(verifyPublicSpan(name = "lambda-test-span", traceRoot = false)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeNanos, startTimeNanos)
+            assertEquals(expectedEndTimeNanos, endTimeNanos)
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -131,41 +131,41 @@ internal class EmbraceTracerTest {
     @Test
     fun `record basic completed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             embraceTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
     fun `record basic failed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             embraceTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 errorCode = ErrorCode.FAILURE
             )
         )
 
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(StatusCode.ERROR, status)
         }
     }
@@ -175,21 +175,21 @@ internal class EmbraceTracerTest {
         val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             embraceTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 parent = parentSpan
             )
         )
 
         with(verifyPublicSpan(expectedName, false)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
@@ -198,22 +198,22 @@ internal class EmbraceTracerTest {
         val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             embraceTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 parent = parentSpan,
                 errorCode = ErrorCode.USER_ABANDON
             )
         )
 
         with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(StatusCode.ERROR, status)
         }
     }
@@ -221,31 +221,31 @@ internal class EmbraceTracerTest {
     @Test
     fun `record completed span with all the fixings`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
         )
         val expectedEvents: List<EmbraceSpanEvent> =
             listOf(
-                EmbraceSpanEvent(name = "event1", timestampNanos = 0L, expectedAttributes),
-                EmbraceSpanEvent(name = "event2", timestampNanos = 5L, expectedAttributes),
+                EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
+                EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
             )
 
         assertTrue(
             embraceTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 attributes = expectedAttributes,
                 events = expectedEvents
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -263,8 +263,8 @@ internal class EmbraceTracerTest {
     }
 
     @Test
-    fun `getSdkClockTimeNanos is the same as the internal clock time`() {
-        assertEquals(clock.nowInNanos(), embraceTracer.getSdkCurrentTimeNanos())
+    fun `getSdkClockTimeMs is the same as the internal clock time`() {
+        assertEquals(clock.now(), embraceTracer.getSdkCurrentTimeMs())
     }
 
     private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {

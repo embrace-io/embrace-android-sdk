@@ -484,41 +484,41 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode,
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs, @Nullable ErrorCode errorCode,
                                        @Nullable EmbraceSpan parent, @Nullable Map<String, String> attributes,
                                        @Nullable List<EmbraceSpanEvent> events) {
         if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.tracer.recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent, attributes, events);
+            return impl.tracer.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events);
         }
 
         return false;
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos) {
-        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, null, null, null);
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs) {
+        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, null, null, null);
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode) {
-        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, null, null, null);
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs, @Nullable ErrorCode errorCode) {
+        return recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, null, null, null);
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable EmbraceSpan parent) {
-        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, parent, null, null);
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs, @Nullable EmbraceSpan parent) {
+        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, parent, null, null);
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos, @Nullable ErrorCode errorCode,
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs, @Nullable ErrorCode errorCode,
                                        @Nullable EmbraceSpan parent) {
-        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, errorCode, parent, null, null);
+        return recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, null, null);
     }
 
     @Override
-    public boolean recordCompletedSpan(@NonNull String name, long startTimeNanos, long endTimeNanos,
+    public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs,
                                        @Nullable Map<String, String> attributes, @Nullable List<EmbraceSpanEvent> events) {
-        return recordCompletedSpan(name, startTimeNanos, endTimeNanos, null, null, attributes, events);
+        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, null, attributes, events);
     }
 
     @Nullable

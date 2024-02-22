@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 internal interface SessionSpanWriter {
 
     /**
-     * Add an [EmbraceSpanEvent] with the given [name]. If [timeNanos] is null, the
+     * Add an [EmbraceSpanEvent] with the given [name]. If [spanStartTimeMs] is null, the
      * current time will be used. Optionally, the specific
      * time of the event and a set of attributes can be passed in associated with the event.
      *

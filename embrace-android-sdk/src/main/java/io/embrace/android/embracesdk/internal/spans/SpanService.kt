@@ -63,8 +63,8 @@ internal interface SpanService : Initializable {
      */
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan? = null,
         type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
         internal: Boolean = true,

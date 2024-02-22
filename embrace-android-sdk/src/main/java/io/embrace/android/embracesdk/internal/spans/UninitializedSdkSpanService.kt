@@ -17,7 +17,7 @@ internal class UninitializedSdkSpanService : SpanService {
     private val bufferedCallsCount = AtomicInteger(0)
     private val realSpanService: AtomicReference<SpanService?> = AtomicReference(null)
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {}
+    override fun initializeService(sdkInitStartTimeMs: Long) {}
 
     override fun initialized(): Boolean = true
 
@@ -35,8 +35,8 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
@@ -46,8 +46,8 @@ internal class UninitializedSdkSpanService : SpanService {
     ): Boolean {
         return realSpanService.get()?.recordCompletedSpan(
             name = name,
-            startTimeNanos = startTimeNanos,
-            endTimeNanos = endTimeNanos,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
             parent = parent,
             type = type,
             internal = internal,
@@ -61,8 +61,8 @@ internal class UninitializedSdkSpanService : SpanService {
                 bufferedCalls.add(
                     BufferedRecordCompletedSpan(
                         name = name,
-                        startTimeNanos = startTimeNanos,
-                        endTimeNanos = endTimeNanos,
+                        startTimeMs = startTimeMs,
+                        endTimeMs = endTimeMs,
                         parent = parent,
                         type = type,
                         internal = internal,
@@ -90,8 +90,8 @@ internal class UninitializedSdkSpanService : SpanService {
                 bufferedCalls.poll()?.let {
                     delegateSpanService.recordCompletedSpan(
                         name = it.name,
-                        startTimeNanos = it.startTimeNanos,
-                        endTimeNanos = it.endTimeNanos,
+                        startTimeMs = it.startTimeMs,
+                        endTimeMs = it.endTimeMs,
                         parent = it.parent,
                         type = it.type,
                         internal = it.internal,
@@ -113,8 +113,8 @@ internal class UninitializedSdkSpanService : SpanService {
      */
     data class BufferedRecordCompletedSpan(
         val name: String,
-        val startTimeNanos: Long,
-        val endTimeNanos: Long,
+        val startTimeMs: Long,
+        val endTimeMs: Long,
         val parent: EmbraceSpan?,
         val type: EmbraceAttributes.Type,
         val internal: Boolean,

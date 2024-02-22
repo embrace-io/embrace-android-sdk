@@ -110,8 +110,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long
+        startTimeMs: Long,
+        endTimeMs: Long
     ): Boolean
 
     /**
@@ -122,8 +122,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?
     ): Boolean
 
@@ -134,8 +134,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?
     ): Boolean
 
@@ -147,8 +147,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
     ): Boolean
@@ -161,8 +161,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean
@@ -176,8 +176,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,

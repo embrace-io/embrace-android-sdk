@@ -264,9 +264,9 @@ final class EmbraceImpl {
             return;
         }
 
-        final long startTime = sdkClock.now();
+        final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, TimeUnit.MILLISECONDS.toNanos(startTime), customAppId);
+        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId);
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
@@ -367,10 +367,10 @@ final class EmbraceImpl {
             essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
         internalEmbraceLogger.logInfo(startMsg);
 
-        final long endTime = sdkClock.now();
+        final long endTimeMs = sdkClock.now();
         started.set(true);
         Systrace.startSynchronous("startup-tracking");
-        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
+        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTimeMs, endTimeMs);
         Systrace.endSynchronous();
 
         Systrace.startSynchronous("startup-moment");

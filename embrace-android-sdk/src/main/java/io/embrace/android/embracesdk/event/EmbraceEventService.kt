@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -37,7 +36,7 @@ import java.util.concurrent.ConcurrentSkipListMap
  * time, then the event is considered late.
  */
 internal class EmbraceEventService(
-    private val startupStartTime: Long,
+    private val startupStartTimeMs: Long,
     deliveryService: DeliveryService,
     private val configService: ConfigService,
     metadataService: MetadataService,
@@ -123,7 +122,7 @@ internal class EmbraceEventService(
             STARTUP_EVENT_NAME,
             null,
             null,
-            startupStartTime
+            startupStartTimeMs
         )
     }
 
@@ -290,8 +289,8 @@ internal class EmbraceEventService(
         backgroundWorker.submit {
             spanService.recordCompletedSpan(
                 name = STARTUP_SPAN_NAME,
-                startTimeNanos = startupStartTime.millisToNanos(),
-                endTimeNanos = startupEndTimeMillis.millisToNanos(),
+                startTimeMs = startupStartTimeMs,
+                endTimeMs = startupEndTimeMillis,
                 internal = false
             )
         }

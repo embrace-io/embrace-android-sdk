@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -69,36 +69,36 @@ internal class InternalTracerTest {
     @Test
     fun `record basic completed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
     fun `record completed span with bad event data`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val eventsInput: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "correct event", "timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to "correct event", "timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
                 mapOf("name" to "correct event2"),
-                mapOf("timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
                 mapOf("name" to 1234),
-                mapOf("name" to "failed event", "timestampNanos" to 123),
-                mapOf("name" to "failed event", "timestampNanos" to "123"),
+                mapOf("name" to "failed event", "timestampMs" to 123),
+                mapOf("name" to "failed event", "timestampMs" to "123"),
                 mapOf("name" to "partial event", "attributes" to mapOf("key" to 123)),
                 mapOf("name" to "partial event2", "attributes" to mapOf(123 to "123")),
             )
@@ -106,8 +106,8 @@ internal class InternalTracerTest {
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 events = eventsInput
             )
         )
@@ -115,9 +115,9 @@ internal class InternalTracerTest {
         with(verifyPublicSpan(expectedName)) {
             assertEquals(4, events.size)
             assertEquals("correct event", events[0].name)
-            assertEquals(0L, events[0].timestampNanos)
+            assertEquals(0L, events[0].timestampNanos.nanosToMillis())
             assertEquals("correct event2", events[1].name)
-            assertEquals(expectedStartTime.millisToNanos(), events[1].timestampNanos)
+            assertEquals(expectedStartTimeMs, events[1].timestampNanos.nanosToMillis())
             assertEquals("partial event", events[2].name)
             assertEquals(0, events[2].attributes.size)
             assertEquals("partial event2", events[3].name)
@@ -128,21 +128,21 @@ internal class InternalTracerTest {
     @Test
     fun `record completed failed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 errorCode = ErrorCode.FAILURE
             )
         )
 
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(StatusCode.ERROR, status)
         }
     }
@@ -151,29 +151,29 @@ internal class InternalTracerTest {
     fun `record completed child span`() {
         val parentSpanId = checkNotNull(internalTracer.startSpan(name = "parent-span"))
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 parentSpanId = parentSpanId
             )
         )
 
         with(verifyPublicSpan(expectedName, false)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
     fun `record completed span with all the fixings`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedType = EmbraceAttributes.Type.PERFORMANCE
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
@@ -181,23 +181,23 @@ internal class InternalTracerTest {
         )
         val expectedEvents: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "event1", "timestampNanos" to 0L, "attributes" to expectedAttributes),
-                mapOf("name" to "event2", "timestampNanos" to 5L, "attributes" to expectedAttributes),
+                mapOf("name" to "event1", "timestampMs" to 0L, "attributes" to expectedAttributes),
+                mapOf("name" to "event2", "timestampMs" to 5L, "attributes" to expectedAttributes),
             )
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 attributes = expectedAttributes,
                 events = expectedEvents
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
                 expectedType.name,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
@@ -208,12 +208,12 @@ internal class InternalTracerTest {
             }
             with(events[0]) {
                 assertEquals(expectedEvents[0]["name"], name)
-                assertEquals(expectedEvents[0]["timestampNanos"], timestampNanos)
+                assertEquals(expectedEvents[0]["timestampMs"], timestampNanos.nanosToMillis())
                 assertEquals(2, attributes.size)
             }
             with(events[1]) {
                 assertEquals(expectedEvents[1]["name"], name)
-                assertEquals(expectedEvents[1]["timestampNanos"], timestampNanos)
+                assertEquals(expectedEvents[1]["timestampMs"], timestampNanos.nanosToMillis())
                 assertEquals(2, attributes.size)
             }
         }
@@ -230,8 +230,8 @@ internal class InternalTracerTest {
             internalTracer.recordCompletedSpan(
                 name = "test-span",
                 parentSpanId = NON_EXISTENT_SPAN_ID,
-                startTimeNanos = 0L,
-                endTimeNanos = 10L
+                startTimeMs = 0L,
+                endTimeMs = 10L
             )
         )
     }

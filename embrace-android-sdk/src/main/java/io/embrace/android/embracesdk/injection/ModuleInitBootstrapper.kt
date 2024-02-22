@@ -120,7 +120,7 @@ internal class ModuleInitBootstrapper(
         context: Context,
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
-        sdkStartTimeNanos: Long,
+        sdkStartTimeMs: Long,
         customAppId: String? = null,
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
@@ -139,7 +139,7 @@ internal class ModuleInitBootstrapper(
                     val initTask = postInit(OpenTelemetryModule::class) {
                         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
                             Systrace.traceSynchronous("span-service-init") {
-                                openTelemetryModule.spanService.initializeService(sdkStartTimeNanos)
+                                openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }
                         }
                     }
@@ -358,7 +358,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             nativeModule,
                             sessionProperties,
-                            TimeUnit.NANOSECONDS.toMillis(sdkStartTimeNanos)
+                            sdkStartTimeMs
                         )
                     }
 

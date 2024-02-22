@@ -83,6 +83,11 @@ emb_crash *emb_read_crash_from_file(const char *path) {
     size_t crash_size = sizeof(emb_crash);
     emb_crash *crash = calloc(1, crash_size);
 
+    if (crash == NULL) {
+        close(fd);
+        return NULL;
+    }
+
     ssize_t len = read(fd, crash, crash_size);
 
     if (len == -1) { // log the error code for more debug info.
@@ -108,6 +113,10 @@ emb_error *emb_read_errors_from_file(const char *path) {
 
     size_t error_size = sizeof(emb_error);
     emb_error *errors = calloc(EMB_MAX_ERRORS, error_size);
+    if (errors == NULL) {
+        close(fd);
+        return NULL;
+    }
     emb_error *wp = errors;
     int count = 0;
 

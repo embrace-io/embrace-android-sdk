@@ -59,7 +59,7 @@ internal class EmbraceLogServiceTest {
         assertEquals("bar", first.attributes["foo"])
         assertEquals("id", first.attributes["emb.event_id"])
         assertEquals("session-123", first.attributes["emb.session_id"])
-        assertNull(first.attributes["emb.log_exception_type"])
+        assertNull(first.attributes["emb.exception_type"])
 
         val second = logs[1]
         assertEquals("Warning world", second.body)
@@ -68,7 +68,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, second.severityText)
         assertEquals("id", second.attributes["emb.event_id"])
         assertEquals("session-123", second.attributes["emb.session_id"])
-        assertNull(second.attributes["emb.log_exception_type"])
+        assertNull(second.attributes["emb.exception_type"])
 
         val third = logs[2]
         assertEquals("Hello errors", third.body)
@@ -77,7 +77,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(io.opentelemetry.api.logs.Severity.ERROR.name, third.severityText)
         assertEquals("id", third.attributes["emb.event_id"])
         assertEquals("session-123", third.attributes["emb.session_id"])
-        assertNull(third.attributes["emb.log_exception_type"])
+        assertNull(third.attributes["emb.exception_type"])
     }
 
     @Test
@@ -105,7 +105,7 @@ internal class EmbraceLogServiceTest {
         assertEquals("exception message", log.attributes["emb.exception_message"])
         assertEquals("id", log.attributes["emb.event_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
-        assertNull(log.attributes["emb.log_exception_type"])
+        assertEquals("none", log.attributes["emb.exception_type"])
     }
 
     private fun getLogMessageService(): EmbraceLogService {

@@ -23,6 +23,8 @@ internal interface DataSourceModule {
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
+    @Suppress("UNUSED_PARAMETER") initModule: InitModule,
+    @Suppress("UNUSED_PARAMETER") otelModule: OpenTelemetryModule
 ) : DataSourceModule {
     private val values: MutableList<DataSourceState> = mutableListOf()
 

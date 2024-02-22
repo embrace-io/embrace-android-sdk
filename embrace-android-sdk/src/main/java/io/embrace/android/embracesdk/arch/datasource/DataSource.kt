@@ -29,7 +29,7 @@ internal interface DataSource<T> {
      * This function returns true if data was successfully captured & false if not.
      * This is assumed to be the case if [captureAction] completed without throwing.
      */
-    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
+    fun alterSessionSpan(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting

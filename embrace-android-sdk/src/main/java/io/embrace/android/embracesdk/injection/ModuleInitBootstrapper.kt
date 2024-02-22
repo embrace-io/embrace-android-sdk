@@ -371,7 +371,11 @@ internal class ModuleInitBootstrapper(
                     }
 
                     dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(essentialServiceModule)
+                        dataSourceModuleSupplier(
+                            essentialServiceModule,
+                            initModule,
+                            openTelemetryModule
+                        )
                     }
 
                     sessionModule = init(SessionModule::class) {

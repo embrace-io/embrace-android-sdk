@@ -180,7 +180,9 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add event forwarded to span`() {
-        currentSessionSpan.addEvent(SpanEventData("test-event", 1000L, mapOf("key" to "value")))
+        currentSessionSpan.addEvent("test-event") {
+            SpanEventData(this, 1000L, mapOf("key" to "value"))
+        }
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session-span", span.name)
 

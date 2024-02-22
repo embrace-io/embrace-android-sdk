@@ -61,6 +61,19 @@ static const char *kDefaultNULLFallbackString = "";
 static const char *kCurrentPayloadVersion = "1";
 
 
+void emb_add_metadata_to_json(const emb_crash *crash, JSON_Object *root_object);
+
+void emb_add_basic_info_to_json(const emb_crash *crash, JSON_Object *root_object);
+
+void emb_add_exc_info_to_json(const emb_crash *crash, JSON_Object *crash_object,
+                              const emb_exception *exception);
+
+void emb_add_frame_dbg_to_json(JSON_Object *frame_object, emb_sframe *frame);
+
+void emb_add_frame_info_to_json(JSON_Object *frame_object, emb_sframe *frame);
+
+void emb_add_exc_to_json(const emb_exception *exception, JSON_Array *frames_object);
+
 bool emb_write_crash_to_file(emb_env *env) {
     int fd = open(env->report_path, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
@@ -144,50 +157,14 @@ emb_error *emb_read_errors_from_file(const char *path) {
     return errors;
 }
 
-void emb_log_frame_dbg_info(int i, emb_sframe *frame) {
-    EMB_LOGDEV("Logging out debug info for stackframe %d", i);
-    EMB_LOGDEV("filename: %s", frame->filename);
-    EMB_LOGDEV("method: %s", frame->method);
-    EMB_LOGDEV("frame_addr: 0x%lx", (unsigned long) frame->frame_addr);
-    EMB_LOGDEV("offset_addr: 0x%lx", (unsigned long) frame->offset_addr);
-    EMB_LOGDEV("module_addr: 0x%lx", (unsigned long) frame->module_addr);
-    EMB_LOGDEV("line_num: 0x%lx", (unsigned long) frame->line_num);
-    EMB_LOGDEV("build_id: %s", frame->build_id);
-    EMB_LOGDEV("full_name: %s", frame->full_name);
-    EMB_LOGDEV("function_name: %s", frame->function_name);
-    EMB_LOGDEV("rel_pc: 0x%lx", (unsigned long) frame->rel_pc);
-    EMB_LOGDEV("pc: 0x%lx", (unsigned long) frame->pc);
-    EMB_LOGDEV("sp: 0x%lx", (unsigned long) frame->sp);
-    EMB_LOGDEV("lr: 0x%lx", (unsigned long) frame->lr);
-    EMB_LOGDEV("start: 0x%lx", (unsigned long) frame->start);
-    EMB_LOGDEV("end: 0x%lx", (unsigned long) frame->end);
-    EMB_LOGDEV("offset: 0x%lx", (unsigned long) frame->offset);
-    EMB_LOGDEV("function_offset: 0x%lx", (unsigned long) frame->function_offset);
-    EMB_LOGDEV("flags: 0x%lx", (unsigned long) frame->flags);
-    EMB_LOGDEV("flags: %d", frame->elf_file_not_readable);
-}
-
 char *emb_crash_to_json(emb_crash *crash) {
     EMB_LOGDEV("Starting serialization of emb_crash struct to JSON string.");
     JSON_Value *root_value = json_value_init_object();
     JSON_Object *root_object = json_value_get_object(root_value);
     char *serialized_string = NULL;
 
-    JSON_Value *meta_value = json_parse_string(crash->meta_data);
-
-    if (meta_value != NULL) {
-        EMB_LOGDEV("Successfully parsed crash JSON metadata");
-        json_object_set_value(root_object, kDeviceMetaKey, meta_value);
-    } else {
-        EMB_LOGERROR("Could not JSON decode metadata: %s", crash->meta_data);
-    }
-
-    EMB_LOGDEV("Serializing IDs + payload version.");
-    json_object_set_string(root_object, kReportIDKey, crash->report_id);
-    json_object_set_string(root_object, kVersionKey, kCurrentPayloadVersion);
-    json_object_set_number(root_object, kCrashTSKey, crash->crash_ts);
-    json_object_set_string(root_object, kSessionIDKey, crash->session_id);
-    json_object_set_string(root_object, kAppStateKey, crash->app_state);
+    emb_add_metadata_to_json(crash, root_object);
+    emb_add_basic_info_to_json(crash, root_object);
 
     // crash data
     EMB_LOGDEV("Serializing crash data.");
@@ -197,7 +174,56 @@ char *emb_crash_to_json(emb_crash *crash) {
     json_object_set_number(root_object, kUnwinderErrorCode, crash->unwinder_error);
 
     emb_exception *exception = &crash->capture;
-    // exception name
+    emb_add_exc_info_to_json(crash, crash_object, exception);
+
+    JSON_Value *frames_value = json_value_init_array();
+    JSON_Array *frames_object = json_value_get_array(frames_value);
+    emb_add_exc_to_json(exception, frames_object);
+
+    json_object_set_value(crash_object, kFramesKey, frames_value);
+
+    EMB_LOGDEV("Converting tree to JSON string.");
+    char *serialized_crash = json_serialize_to_string_pretty(crash_value);
+
+    EMB_LOGDEV("Starting Base64 encoding.");
+    char *base64_crash = b64_encode(serialized_crash, strlen(serialized_crash));
+    json_free_serialized_string(serialized_crash);
+
+    EMB_LOGDEV("Altering JSON tree root.");
+    json_object_set_string(root_object, kCrashKey, base64_crash);
+    free(base64_crash);
+
+    // final result
+    EMB_LOGDEV("Serializing final JSON string");
+    serialized_string = json_serialize_to_string_pretty(root_value);
+//    json_free_serialized_string(serialized_string);
+    json_value_free(root_value);
+    json_value_free(crash_value);
+    return serialized_string;
+}
+
+void emb_add_metadata_to_json(const emb_crash *crash, JSON_Object *root_object) {
+    JSON_Value *meta_value = json_parse_string(crash->meta_data);
+
+    if (meta_value != NULL) {
+        EMB_LOGDEV("Successfully parsed crash JSON metadata");
+        json_object_set_value(root_object, kDeviceMetaKey, meta_value);
+    } else {
+        EMB_LOGERROR("Could not JSON decode metadata: %s", crash->meta_data);
+    }
+}
+
+void emb_add_basic_info_to_json(const emb_crash *crash, JSON_Object *root_object) {
+    EMB_LOGDEV("Serializing IDs + payload version.");
+    json_object_set_string(root_object, kReportIDKey, crash->report_id);
+    json_object_set_string(root_object, kVersionKey, kCurrentPayloadVersion);
+    json_object_set_number(root_object, kCrashTSKey, crash->crash_ts);
+    json_object_set_string(root_object, kSessionIDKey, crash->session_id);
+    json_object_set_string(root_object, kAppStateKey, crash->app_state);
+}
+
+void emb_add_exc_info_to_json(const emb_crash *crash, JSON_Object *crash_object,
+                              const emb_exception *exception) {// exception name
     if (strlen(exception->name) == 0) {
         EMB_LOGDEV("Defaulting to NULL exception name.");
         json_object_set_string(crash_object, kExceptionNameKey, kDefaultNULLFallbackString);
@@ -220,9 +246,9 @@ char *emb_crash_to_json(emb_crash *crash) {
     json_object_set_number(crash_object, kExceptionErrnoKey, crash->sig_errno);
     json_object_set_number(crash_object, kExceptionSignoKey, crash->sig_no);
     json_object_set_number(crash_object, kExceptionFaultAddr, crash->fault_addr);
+}
 
-    JSON_Value *frames_value = json_value_init_array();
-    JSON_Array *frames_object = json_value_get_array(frames_value);
+void emb_add_exc_to_json(const emb_exception *exception, JSON_Array *frames_object) {
     EMB_LOGDEV("About to serialize %d stack frames.", (int) exception->num_sframes);
 
     for (int i = 0; i < exception->num_sframes; ++i) {
@@ -230,67 +256,49 @@ char *emb_crash_to_json(emb_crash *crash) {
         JSON_Object *frame_object = json_value_get_object(frame_value);
 
         emb_sframe frame = exception->stacktrace[i];
-
-        // module name
-        if (strlen(frame.filename) == 0) {
-            json_object_set_string(frame_object, kFilenameKey, kDefaultNULLFallbackString);
-        } else {
-            json_object_set_string(frame_object, kFilenameKey, frame.filename);
-        }
-        // symbol name
-        if (strlen(frame.method) == 0) {
-            json_object_set_string(frame_object, kMethodKey, kDefaultNULLFallbackString);
-        } else {
-            json_object_set_string(frame_object, kMethodKey, frame.method);
-        }
-        // TODO: lu vs u?
-        json_object_set_number(frame_object, kFrameAddrKey, frame.frame_addr);
-        json_object_set_number(frame_object, kOffsetAddrKey, frame.offset_addr);
-        json_object_set_number(frame_object, kModuleAddrKey, frame.module_addr);
-        json_object_set_number(frame_object, kLineNumKey, frame.line_num);
-        json_object_set_string(frame_object, kBuildIdKey, frame.build_id);
+        emb_add_frame_info_to_json(frame_object, &frame);
 
         // extra debug info
-        json_object_set_string(frame_object, kFullNameKey, frame.full_name);
-        json_object_set_string(frame_object, kFunctionNameKey, frame.function_name);
-        json_object_set_number(frame_object, kRelPcKey, (unsigned long) frame.rel_pc);
-        json_object_set_number(frame_object, kPcKey, (unsigned long) frame.pc);
-        json_object_set_number(frame_object, kSpKey, (unsigned long) frame.sp);
-        json_object_set_number(frame_object, kLrKey, (unsigned long) frame.lr);
-        json_object_set_number(frame_object, kStartKey, (unsigned long) frame.start);
-        json_object_set_number(frame_object, kEndKey, (unsigned long) frame.end);
-        json_object_set_number(frame_object, kOffsetKey, (unsigned long) frame.offset);
-        json_object_set_number(frame_object, kFunctionOffsetKey,(unsigned long) frame.function_offset);
-        json_object_set_number(frame_object, kFlagsKey, frame.flags);
-        json_object_set_number(frame_object, kElfFileNotReadableKey, frame.elf_file_not_readable);
+        emb_add_frame_dbg_to_json(frame_object, &frame);
 
         json_array_append_value(frames_object, frame_value);
-        emb_log_frame_dbg_info(i, &frame);
     }
-    EMB_LOGDEV("Signal handler was invoked %d times", crash->unhandled_count);
-
     EMB_LOGDEV("Finished serializing stackframes.");
+}
 
-    json_object_set_value(crash_object, kFramesKey, frames_value);
+void emb_add_frame_info_to_json(JSON_Object *frame_object, emb_sframe *frame) {// module name
+    if (strlen((*frame).filename) == 0) {
+        json_object_set_string(frame_object, kFilenameKey, kDefaultNULLFallbackString);
+    } else {
+        json_object_set_string(frame_object, kFilenameKey, (*frame).filename);
+    }
+    // symbol name
+    if (strlen((*frame).method) == 0) {
+        json_object_set_string(frame_object, kMethodKey, kDefaultNULLFallbackString);
+    } else {
+        json_object_set_string(frame_object, kMethodKey, (*frame).method);
+    }
+    // TODO: lu vs u?
+    json_object_set_number(frame_object, kFrameAddrKey, (*frame).frame_addr);
+    json_object_set_number(frame_object, kOffsetAddrKey, (*frame).offset_addr);
+    json_object_set_number(frame_object, kModuleAddrKey, (*frame).module_addr);
+    json_object_set_number(frame_object, kLineNumKey, (*frame).line_num);
+    json_object_set_string(frame_object, kBuildIdKey, (*frame).build_id);
+}
 
-    EMB_LOGDEV("Converting tree to JSON string.");
-    char *serialized_crash = json_serialize_to_string_pretty(crash_value);
-
-    EMB_LOGDEV("Starting Base64 encoding.");
-    char *base64_crash = b64_encode(serialized_crash, strlen(serialized_crash));
-    json_free_serialized_string(serialized_crash);
-
-    EMB_LOGDEV("Altering JSON tree root.");
-    json_object_set_string(root_object, kCrashKey, base64_crash);
-    free(base64_crash);
-
-    // final result
-    EMB_LOGDEV("Serializing final JSON string");
-    serialized_string = json_serialize_to_string_pretty(root_value);
-//    json_free_serialized_string(serialized_string);
-    json_value_free(root_value);
-    json_value_free(crash_value);
-    return serialized_string;
+void emb_add_frame_dbg_to_json(JSON_Object *frame_object, emb_sframe *frame) {
+    json_object_set_string(frame_object, kFullNameKey, (*frame).full_name);
+    json_object_set_string(frame_object, kFunctionNameKey, (*frame).function_name);
+    json_object_set_number(frame_object, kRelPcKey, (unsigned long) (*frame).rel_pc);
+    json_object_set_number(frame_object, kPcKey, (unsigned long) (*frame).pc);
+    json_object_set_number(frame_object, kSpKey, (unsigned long) (*frame).sp);
+    json_object_set_number(frame_object, kLrKey, (unsigned long) (*frame).lr);
+    json_object_set_number(frame_object, kStartKey, (unsigned long) (*frame).start);
+    json_object_set_number(frame_object, kEndKey, (unsigned long) (*frame).end);
+    json_object_set_number(frame_object, kOffsetKey, (unsigned long) (*frame).offset);
+    json_object_set_number(frame_object, kFunctionOffsetKey,(unsigned long) (*frame).function_offset);
+    json_object_set_number(frame_object, kFlagsKey, (*frame).flags);
+    json_object_set_number(frame_object, kElfFileNotReadableKey, (*frame).elf_file_not_readable);
 }
 
 char *emb_errors_to_json(emb_error *errors) {

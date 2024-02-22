@@ -31,7 +31,6 @@ internal class EmbraceLogService(
         val appState = metadataService.getAppState()
 
         backgroundWorker.submit {
-            // TBD: Check if config enabled
             // TBD: Check if log should be gated
             // TBD: Count log and enforce limits
 
@@ -60,7 +59,6 @@ internal class EmbraceLogService(
         val appState = metadataService.getAppState()
 
         backgroundWorker.submit {
-            // TBD: Check if config enabled
             // TBD: Check if log should be gated
             // TBD: Count log and enforce limits
 

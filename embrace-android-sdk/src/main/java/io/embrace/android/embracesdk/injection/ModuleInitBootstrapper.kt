@@ -138,7 +138,7 @@ internal class ModuleInitBootstrapper(
 
                     val initTask = postInit(OpenTelemetryModule::class) {
                         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
-                            Systrace.trace("span-service-init") {
+                            Systrace.traceSynchronous("span-service-init") {
                                 openTelemetryModule.spanService.initializeService(sdkStartTimeNanos)
                             }
                         }
@@ -439,7 +439,7 @@ internal class ModuleInitBootstrapper(
      */
     @JvmOverloads
     fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) =
-        Systrace.trace("async-init-wait") {
+        Systrace.traceSynchronous("async-init-wait") {
             asyncInitTask.get()?.get(timeout, unit)
         }
 

@@ -108,6 +108,20 @@ internal class EmbraceLogServiceTest {
         assertEquals("none", log.attributes["emb.exception_type"])
     }
 
+    @Test
+    fun `Embrace pproperties can not be overriden by custom properties`() {
+        val logService = getLogMessageService()
+        val props = mapOf("emb.event_id" to "123", "emb.session_id" to "456")
+        logService.log("Hello world", Severity.INFO, props)
+
+        val log = logger.builders.single()
+        assertEquals("Hello world", log.body)
+        assertEquals(io.opentelemetry.api.logs.Severity.INFO, log.severity)
+        assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, log.severityText)
+        assertNotEquals("123", log.attributes["emb.event_id"])
+        assertEquals("session-123", log.attributes["emb.session_id"])
+    }
+
     private fun getLogMessageService(): EmbraceLogService {
         return EmbraceLogService(
             logger,

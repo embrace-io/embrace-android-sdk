@@ -6,10 +6,13 @@ import io.opentelemetry.sdk.logs.data.LogRecordData
 
 internal class FakeReadWriteLogRecord : ReadWriteLogRecord {
 
+    val attributes: MutableMap<String, String> = mutableMapOf()
+
     private val logRecordData = FakeLogRecordData()
 
     override fun <T : Any?> setAttribute(key: AttributeKey<T>, value: T): ReadWriteLogRecord {
-        TODO("Not yet implemented")
+        attributes[key.key] = value.toString()
+        return this
     }
 
     override fun toLogRecordData(): LogRecordData {

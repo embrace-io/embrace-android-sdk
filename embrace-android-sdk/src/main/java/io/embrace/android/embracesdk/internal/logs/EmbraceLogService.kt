@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.common.AttributeKey
@@ -87,9 +86,8 @@ internal class EmbraceLogService(
     }
 
     private fun emitLog(logRecordBuilder: LogRecordBuilder) {
-        logRecordBuilder
-            .setEventId(Uuid.getEmbUuid())
-            .emit()
+        // TODO Use LogWriter instead
+        logRecordBuilder.emit()
     }
 
     private fun mapSeverity(embraceSeverity: Severity): io.opentelemetry.api.logs.Severity {

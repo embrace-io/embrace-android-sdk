@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.LogExceptionType
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.LogRecordBuilder
+import io.opentelemetry.sdk.logs.ReadWriteLogRecord
 
 /**
  * Extension functions and constants to augment the core OpenTelemetry SDK and provide Embrace-specific customizations
@@ -74,9 +75,8 @@ internal fun LogRecordBuilder.setSessionId(sessionId: String): LogRecordBuilder 
 /**
  * Set an id for the log
  */
-internal fun LogRecordBuilder.setEventId(eventId: String): LogRecordBuilder {
+internal fun ReadWriteLogRecord.setEventId(eventId: String) {
     setAttribute(AttributeKey.stringKey(EVENT_ID_ATTRIBUTE_NAME), eventId)
-    return this
 }
 
 /**

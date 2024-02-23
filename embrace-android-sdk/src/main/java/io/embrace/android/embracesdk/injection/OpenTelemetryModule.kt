@@ -142,7 +142,7 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val logWriter: LogWriter by singleton {
-        LogWriterImpl()
+        LogWriterImpl(logger)
     }
 
     override val logger: Logger by lazy {

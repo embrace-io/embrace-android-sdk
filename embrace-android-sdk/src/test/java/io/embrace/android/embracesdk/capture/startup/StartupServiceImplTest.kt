@@ -26,7 +26,7 @@ internal class StartupServiceImplTest {
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.now())
         startupService = StartupServiceImpl(spanService)
     }
 

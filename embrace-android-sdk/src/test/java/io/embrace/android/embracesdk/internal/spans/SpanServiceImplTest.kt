@@ -42,7 +42,7 @@ internal class SpanServiceImplTest {
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.openTelemetryModule.tracer
         )
-        spansService.initializeService(clock.nowInNanos())
+        spansService.initializeService(clock.now())
     }
 
     @Test

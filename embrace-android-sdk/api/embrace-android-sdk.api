@@ -242,11 +242,6 @@ public final class io/embrace/android/embracesdk/internal/clock/Clock$DefaultImp
 	public static fun nowInNanos (Lio/embrace/android/embracesdk/internal/clock/Clock;)J
 }
 
-public final class io/embrace/android/embracesdk/internal/clock/ClockKt {
-	public static final fun millisToNanos (J)J
-	public static final fun nanosToMillis (J)J
-}
-
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {
 	protected static final field PATH_OVERRIDE Ljava/lang/String;
 	public fun <init> ()V

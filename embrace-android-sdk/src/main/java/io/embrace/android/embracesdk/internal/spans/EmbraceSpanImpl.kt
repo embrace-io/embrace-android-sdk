@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
@@ -88,9 +89,14 @@ internal class EmbraceSpanImpl(
                 if (eventCount.get() < MAX_EVENT_COUNT) {
                     spanInProgress()?.let { span ->
                         if (timestampMs != null && !attributes.isNullOrEmpty()) {
-                            span.addEvent(name, Attributes.builder().fromMap(attributes).build(), timestampMs, TimeUnit.MILLISECONDS)
+                            span.addEvent(
+                                name,
+                                Attributes.builder().fromMap(attributes).build(),
+                                timestampMs.normalizeTimestampAsMillis(),
+                                TimeUnit.MILLISECONDS
+                            )
                         } else if (timestampMs != null) {
-                            span.addEvent(name, timestampMs, TimeUnit.MILLISECONDS)
+                            span.addEvent(name, timestampMs.normalizeTimestampAsMillis(), TimeUnit.MILLISECONDS)
                         } else if (!attributes.isNullOrEmpty()) {
                             span.addEvent(name, Attributes.builder().fromMap(attributes).build())
                         } else {

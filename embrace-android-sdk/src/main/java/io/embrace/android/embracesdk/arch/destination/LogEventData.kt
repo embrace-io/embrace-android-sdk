@@ -10,5 +10,5 @@ internal class LogEventData(
     val severity: Severity,
     val severityText: String? = null,
     val message: String,
-    val attributes: MutableMap<String, String>?
+    val attributes: Map<String, String>?
 )

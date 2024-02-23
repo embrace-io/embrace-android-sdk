@@ -374,7 +374,10 @@ internal class ModuleInitBootstrapper(
                         dataSourceModuleSupplier(
                             essentialServiceModule,
                             initModule,
-                            openTelemetryModule
+                            openTelemetryModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            workerThreadModule
                         )
                     }
 

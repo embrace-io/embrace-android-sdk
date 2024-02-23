@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.arch.destination
 
 internal class LogWriterImpl : LogWriter {
 
-    override fun addLog(log: LogEventData) {
+    override fun <T> addLog(log: T, mapper: T.() -> LogEventData) {
         // no-op
     }
 }

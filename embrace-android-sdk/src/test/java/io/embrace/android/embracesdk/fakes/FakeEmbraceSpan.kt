@@ -39,13 +39,7 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    override fun stop(): Boolean = stop(errorCode = null, endTimeMs = null)
-
-    override fun stop(endTimeMs: Long?): Boolean = stop(errorCode = null, endTimeMs = endTimeMs)
-
-    override fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeMs = null)
-
-    override fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
         if (!stopped) {
             this.errorCode = errorCode
             stopped = true

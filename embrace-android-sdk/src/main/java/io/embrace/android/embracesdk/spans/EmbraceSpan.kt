@@ -32,7 +32,7 @@ public interface EmbraceSpan {
      * Start recording of the Span. Returns true if this call triggered the start of the recording. Returns false if the Span has already
      * been started or has been stopped.
      */
-    public fun start(): Boolean
+    public fun start(): Boolean = start(startTimeMs = null)
 
     /**
      * Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording.
@@ -41,25 +41,30 @@ public interface EmbraceSpan {
     public fun start(startTimeMs: Long?): Boolean
 
     /**
-     * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
-     * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
+     * Stop the recording of the Span to mark a successful completion of the underlying operation. Returns true if this call triggered
+     * the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
      */
-    public fun stop(): Boolean
-
-    /**
-     * Stop the recording of the Span with no [ErrorCode], indicating a successful completion of the underlying operation. Returns true
-     * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
-     */
-    public fun stop(endTimeMs: Long?): Boolean
+    public fun stop(): Boolean = stop(errorCode = null, endTimeMs = null)
 
     /**
      * Stop the recording of the Span with an [ErrorCode], a non-null value indicating an unsuccessful completion of the underlying
      * operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has
      * not been started or if has already been stopped.
      */
-    public fun stop(errorCode: ErrorCode?): Boolean
+    public fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeMs = null)
 
-    public fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean
+    /**
+     * Stop the recording of the Span at the given time to mark the successful completion of the underlying operation. Returns true
+     * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
+     */
+    public fun stop(endTimeMs: Long?): Boolean = stop(errorCode = null, endTimeMs = endTimeMs)
+
+    /**
+     * Stop the recording of the Span with an [ErrorCode] the the specific time, a non-null value indicating an unsuccessful completion of
+     * the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if
+     * the Span has not been started or if has already been stopped.
+     */
+    public fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name] at the current time. Returns false if the Event was definitely not successfully

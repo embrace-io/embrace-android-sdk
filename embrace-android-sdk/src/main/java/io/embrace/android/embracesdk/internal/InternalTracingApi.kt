@@ -23,7 +23,8 @@ public interface InternalTracingApi {
      */
     public fun stopSpan(
         spanId: String,
-        errorCode: ErrorCode? = null
+        errorCode: ErrorCode? = null,
+        endTimeMs: Long? = null
     ): Boolean
 
     /**

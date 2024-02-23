@@ -22,19 +22,21 @@ size_t b64_encoded_size(size_t inlen)
     return ret;
 }
 
-char *b64_encode(const char *in, size_t len)
-{
-    char   *out;
-    size_t  elen;
-    size_t  i;
-    size_t  j;
-    size_t  v;
+char *b64_encode(const char *in, size_t len) {
+    char *out;
+    size_t elen;
+    size_t i;
+    size_t j;
+    size_t v;
 
     if (in == NULL || len == 0)
         return NULL;
 
     elen = b64_encoded_size(len);
-    out  = malloc(elen+1);
+    out = malloc(elen + 1);
+    if (out == NULL) {
+        return NULL;
+    }
     out[elen] = '\0';
 
     for (i=0, j=0; i<len; i+=3, j+=4) {

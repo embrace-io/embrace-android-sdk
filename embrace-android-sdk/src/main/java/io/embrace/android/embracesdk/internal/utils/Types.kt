@@ -184,6 +184,8 @@ internal typealias DataContainerModuleSupplier = (
 
 internal typealias DataSourceModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
+    initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule
 ) -> DataSourceModule
 
 /**

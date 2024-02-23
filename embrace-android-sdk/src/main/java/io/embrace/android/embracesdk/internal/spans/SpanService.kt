@@ -26,6 +26,7 @@ internal interface SpanService : Initializable {
     fun startSpan(
         name: String,
         parent: EmbraceSpan? = null,
+        startTimeMs: Long? = null,
         type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
         internal: Boolean = true
     ): EmbraceSpan? {
@@ -35,7 +36,7 @@ internal interface SpanService : Initializable {
             type = type,
             internal = internal
         )?.let { newSpan ->
-            if (newSpan.start()) {
+            if (newSpan.start(startTimeMs)) {
                 return newSpan
             }
         }

@@ -39,13 +39,17 @@ internal class InternalTracerTest {
     fun `start and stop trace with child span`() {
         val parentSpanId = checkNotNull(internalTracer.startSpan(name = "parent-span"))
         assertNotNull(parentSpanId)
-        val spanId = checkNotNull(internalTracer.startSpan(name = "test-span", parentSpanId = parentSpanId))
+        clock.tick(1L)
+        val childStartTimeMs = clock.now()
+        val spanId =
+            checkNotNull(internalTracer.startSpan(name = "test-span", parentSpanId = parentSpanId, startTimeMs = childStartTimeMs))
         assertNotNull(spanId)
         assertTrue(internalTracer.addSpanAttribute(spanId = spanId, key = "keyz", value = "valuez"))
         assertTrue(internalTracer.stopSpan(spanId))
         assertFalse(internalTracer.addSpanAttribute(spanId = spanId, key = "fail", value = "value"))
         with(verifyPublicSpan(name = "test-span", traceRoot = false)) {
             assertEquals("valuez", attributes["keyz"])
+            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
         }
         spanSink.flushSpans()
         val firstEventTime = clock.now()

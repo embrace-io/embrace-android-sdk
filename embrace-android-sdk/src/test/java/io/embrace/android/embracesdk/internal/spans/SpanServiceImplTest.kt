@@ -161,14 +161,18 @@ internal class SpanServiceImplTest {
     fun `start a span directly`() {
         spanSink.flushSpans()
         val parent = checkNotNull(spansService.startSpan(name = "test-span"))
+        val childStartTimeMs = clock.now() + 10L
         val child = checkNotNull(
             spansService.startSpan(
                 name = "child-span",
                 parent = parent,
+                startTimeMs = childStartTimeMs,
                 type = EmbraceAttributes.Type.SESSION,
                 internal = true
             )
         )
+        clock.tick(40L)
+        val childSpanEndTimeMs = clock.now()
         assertTrue(child.stop())
         val completedSpans = spanSink.flushSpans()
         assertEquals(1, completedSpans.size)
@@ -176,6 +180,8 @@ internal class SpanServiceImplTest {
             assertTrue(isPrivate())
             assertFalse(isKey())
             assertEquals(EmbraceAttributes.Type.SESSION.name, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 

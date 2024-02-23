@@ -52,6 +52,17 @@ internal interface TracingApi {
     ): EmbraceSpan?
 
     /**
+     * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time. Returns null if the [EmbraceSpan] cannot
+     * be created or started, like if the parent has been started.
+     */
+    @BetaApi
+    fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?
+    ): EmbraceSpan?
+
+    /**
      * Execute the given block of code and record a new trace around it. If the span cannot be created, the block of code will still run and
      * return correctly. If an exception or error is thrown inside the block, the span will end at the point of the throw and the
      * [Throwable] will be rethrown.

@@ -24,6 +24,10 @@ internal class FakeTracingApi : TracingApi {
         TODO("Not yet implemented")
     }
 
+    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? {
+        TODO("Not yet implemented")
+    }
+
     override fun <T> recordSpan(name: String, code: () -> T): T {
         TODO("Not yet implemented")
     }

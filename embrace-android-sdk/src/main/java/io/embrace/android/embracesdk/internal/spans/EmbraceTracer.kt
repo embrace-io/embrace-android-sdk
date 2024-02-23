@@ -23,9 +23,17 @@ internal class EmbraceTracer(
     override fun startSpan(name: String): EmbraceSpan? = startSpan(name = name, parent = null)
 
     override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
+        startSpan(
+            name = name,
+            parent = parent,
+            startTimeMs = null
+        )
+
+    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? =
         spanService.startSpan(
             name = name,
             parent = parent,
+            startTimeMs = startTimeMs,
             internal = false
         )
 

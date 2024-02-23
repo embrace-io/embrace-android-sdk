@@ -444,14 +444,20 @@ public final class Embrace implements EmbraceAndroidApi {
     @Nullable
     @Override
     public EmbraceSpan startSpan(@NonNull String name) {
-        return startSpan(name, null);
+        return startSpan(name, null, null);
     }
 
     @Nullable
     @Override
     public EmbraceSpan startSpan(@NonNull String name, @Nullable EmbraceSpan parent) {
+        return startSpan(name, parent, null);
+    }
+
+    @Nullable
+    @Override
+    public EmbraceSpan startSpan(@NonNull String name, @Nullable EmbraceSpan parent, @Nullable Long startTimeMs) {
         if (verifyNonNullParameters("startSpan", name)) {
-            return impl.tracer.startSpan(name, parent);
+            return impl.tracer.startSpan(name, parent, startTimeMs);
         }
 
         return null;

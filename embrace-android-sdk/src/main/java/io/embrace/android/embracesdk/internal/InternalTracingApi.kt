@@ -14,7 +14,8 @@ public interface InternalTracingApi {
      */
     public fun startSpan(
         name: String,
-        parentSpanId: String? = null
+        parentSpanId: String? = null,
+        startTimeMs: Long? = null
     ): String?
 
     /**

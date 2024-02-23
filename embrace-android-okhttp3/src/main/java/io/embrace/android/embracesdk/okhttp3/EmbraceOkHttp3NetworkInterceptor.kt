@@ -66,7 +66,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
 
         if (contentLength == null) {
             // If we get the body for a server-sent events stream, then we will wait forever
-            contentLength = getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME, null))
+            contentLength = getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME))
         }
 
         if (contentLength == null) {
@@ -80,7 +80,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
 
         // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
-            if (ENCODING_GZIP.equals(networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null), ignoreCase = true) &&
+            if (ENCODING_GZIP.equals(networkResponse.header(CONTENT_ENCODING_HEADER_NAME), ignoreCase = true) &&
                 networkResponse.promisesBody()
             ) {
                 val body = networkResponse.body
@@ -90,7 +90,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
                         .removeAll(CONTENT_LENGTH_HEADER_NAME)
                         .build()
                     val realResponseBody = RealResponseBody(
-                        networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
+                        networkResponse.header(CONTENT_TYPE_HEADER_NAME),
                         -1L,
                         GzipSource(body.source()).buffer()
                     )
@@ -123,7 +123,7 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
 
     private fun getContentLengthFromHeader(networkResponse: Response): Long? {
         var contentLength: Long? = null
-        val contentLengthHeaderValue = networkResponse.header(CONTENT_LENGTH_HEADER_NAME, null)
+        val contentLengthHeaderValue = networkResponse.header(CONTENT_LENGTH_HEADER_NAME)
         if (contentLengthHeaderValue != null) {
             try {
                 contentLength = contentLengthHeaderValue.toLong()

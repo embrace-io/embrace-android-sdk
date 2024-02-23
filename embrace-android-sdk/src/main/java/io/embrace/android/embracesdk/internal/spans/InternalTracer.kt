@@ -12,12 +12,13 @@ internal class InternalTracer(
     private val embraceTracer: EmbraceTracer,
 ) : InternalTracingApi {
 
-    override fun startSpan(name: String, parentSpanId: String?): String? {
+    override fun startSpan(name: String, parentSpanId: String?, startTimeMs: Long?): String? {
         val parent = validateParent(parentSpanId)
         return if (parent.isValid) {
             embraceTracer.startSpan(
                 name = name,
-                parent = parent.spanReference
+                parent = parent.spanReference,
+                startTimeMs = startTimeMs
             )?.spanId
         } else {
             null

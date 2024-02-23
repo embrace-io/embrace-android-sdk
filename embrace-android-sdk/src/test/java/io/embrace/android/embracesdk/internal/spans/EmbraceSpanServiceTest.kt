@@ -43,6 +43,7 @@ internal class EmbraceSpanServiceTest {
     fun `service works once initialized`() {
         assertTrue(spanService.initialized())
         assertNotNull(spanService.createSpan("test-span"))
+        assertNotNull(spanService.startSpan("test-span"))
         assertTrue(spanService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
         spanService.recordSpan("test-span") { lambdaRan = true }
@@ -100,6 +101,9 @@ internal class EmbraceSpanServiceTest {
         assertTrue(parent.start())
         val child = checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
         assertTrue(child.start(startTimeMs = clock.now() - 10))
+        val grandchild =
+            checkNotNull(spanService.startSpan(name = "grand-child-span", parent = child, startTimeMs = clock.now() + 1L))
+        assertTrue(grandchild.stop())
         assertTrue(child.stop())
         assertTrue(parent.stop(endTimeMs = clock.now() + 50))
         assertTrue(parent.traceId == child.traceId)

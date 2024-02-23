@@ -74,10 +74,15 @@ internal class EmbraceTracerTest {
     fun `start a span directly`() {
         spanSink.flushSpans()
         val parent = checkNotNull(embraceTracer.startSpan(name = "test-span"))
-        val child = checkNotNull(embraceTracer.startSpan(name = "child-span", parent))
+        clock.tick(20L)
+        val childStartTimeMs = clock.now() - 10L
+        val child =
+            checkNotNull(embraceTracer.startSpan(name = "child-span", parent = parent, startTimeMs = childStartTimeMs))
         assertTrue(parent.stop())
         assertTrue(child.stop())
-        assertEquals(2, spanSink.flushSpans().size)
+        val spans = spanSink.flushSpans()
+        assertEquals(2, spans.size)
+        assertEquals(childStartTimeMs, spans[1].startTimeNanos.nanosToMillis())
     }
 
     @Test

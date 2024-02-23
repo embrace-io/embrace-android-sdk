@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.api.logs.Logger
 import java.util.concurrent.TimeUnit
 
@@ -27,20 +28,12 @@ internal class EmbraceLogService(
         severity: Severity,
         properties: Map<String, Any>?
     ) {
-        val sessionId = sessionIdTracker.getActiveSessionId()
-        val appState = metadataService.getAppState()
-
         backgroundWorker.submit {
             // TBD: Check if log should be gated
             // TBD: Count log and enforce limits
 
-            emitLog(
-                message,
-                severity,
-                sessionId,
-                appState,
-                properties
-            )
+            val builder = getLogBuilder(message, severity, properties)
+            emitLog(builder)
         }
     }
 
@@ -55,40 +48,25 @@ internal class EmbraceLogService(
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        val sessionId = sessionIdTracker.getActiveSessionId()
-        val appState = metadataService.getAppState()
-
         backgroundWorker.submit {
             // TBD: Check if log should be gated
             // TBD: Count log and enforce limits
 
-            emitLog(
-                message,
-                Severity.ERROR,
-                sessionId,
-                appState,
-                properties,
-                logExceptionType,
-                exceptionName,
-                exceptionMessage,
-                context,
-                library
-            )
+            val builder = getLogBuilder(message, Severity.ERROR, properties)
+            builder.setExceptionType(logExceptionType)
+            exceptionName?.let { builder.setExceptionName(it) }
+            exceptionMessage?.let { builder.setExceptionMessage(it) }
+            context?.let { builder.setExceptionContext(it) }
+            library?.let { builder.setExceptionLibrary(it) }
+            emitLog(builder)
         }
     }
 
-    private fun emitLog(
+    private fun getLogBuilder(
         message: String,
         severity: Severity,
-        sessionId: String?,
-        appState: String?,
-        properties: Map<String, Any>?,
-        exceptionType: LogExceptionType? = null,
-        exceptionName: String? = null,
-        exceptionMessage: String? = null,
-        context: String? = null,
-        library: String? = null
-    ) {
+        properties: Map<String, Any>?
+    ): LogRecordBuilder {
         val otelSeverity = mapSeverity(severity)
 
         val builder = logger.logRecordBuilder()
@@ -102,15 +80,14 @@ internal class EmbraceLogService(
         }
 
         // Set these after the custom properties so they can't be overridden
-        appState?.let { builder.setAppState(it) }
-        sessionId?.let { builder.setSessionId(it) }
-        exceptionType?.let { builder.setExceptionType(it) }
-        exceptionName?.let { builder.setExceptionName(it) }
-        exceptionMessage?.let { builder.setExceptionMessage(it) }
-        context?.let { builder.setExceptionContext(it) }
-        library?.let { builder.setExceptionLibrary(it) }
+        sessionIdTracker.getActiveSessionId()?.let { builder.setSessionId(it) }
+        metadataService.getAppState()?.let { builder.setAppState(it) }
 
-        builder
+        return builder
+    }
+
+    private fun emitLog(logRecordBuilder: LogRecordBuilder) {
+        logRecordBuilder
             .setEventId(Uuid.getEmbUuid())
             .emit()
     }

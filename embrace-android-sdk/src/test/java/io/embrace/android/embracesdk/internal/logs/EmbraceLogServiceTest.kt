@@ -109,7 +109,7 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
-    fun `Embrace pproperties can not be overriden by custom properties`() {
+    fun `Embrace properties can not be overriden by custom properties`() {
         val logService = getLogMessageService()
         val props = mapOf("emb.event_id" to "123", "emb.session_id" to "456")
         logService.log("Hello world", Severity.INFO, props)

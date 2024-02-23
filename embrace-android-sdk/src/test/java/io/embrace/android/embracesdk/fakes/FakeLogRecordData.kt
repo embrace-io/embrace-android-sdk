@@ -44,7 +44,7 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getBody(): Body {
-        return Body.string(testLog.body.message)
+        return Body.string(testLog.body.message ?: "")
     }
 
     override fun getAttributes(): Attributes {

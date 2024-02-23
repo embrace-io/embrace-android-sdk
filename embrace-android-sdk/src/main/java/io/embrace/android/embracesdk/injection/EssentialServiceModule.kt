@@ -283,7 +283,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {
-        SessionIdTrackerImpl()
+        SessionIdTrackerImpl(systemServiceModule.activityManager)
     }
 }
 

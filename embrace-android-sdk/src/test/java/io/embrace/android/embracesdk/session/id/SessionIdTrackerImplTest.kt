@@ -13,7 +13,7 @@ internal class SessionIdTrackerImplTest {
 
     @Before
     fun setUp() {
-        tracker = SessionIdTrackerImpl()
+        tracker = SessionIdTrackerImpl(null)
         ndkService = FakeNdkService()
     }
 

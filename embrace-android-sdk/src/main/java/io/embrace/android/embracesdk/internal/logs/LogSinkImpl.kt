@@ -11,8 +11,9 @@ internal class LogSinkImpl : LogSink {
         try {
             synchronized(storedLogs) {
                 storedLogs += logs.map { EmbraceLogRecordData(logRecordData = it) }
+                onLogsStored?.invoke()
             }
-            onLogsStored?.invoke()
+
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
         }

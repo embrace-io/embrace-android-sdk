@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
@@ -41,23 +42,25 @@ internal data class UserInfo(
          */
         @JvmStatic
         fun ofStored(preferencesService: PreferencesService): UserInfo {
-            val id = preferencesService.userIdentifier
-            val name = preferencesService.username
-            val email = preferencesService.userEmailAddress
-            val personas: MutableSet<String> = HashSet()
-            preferencesService.userPersonas?.let(personas::addAll)
-            @Suppress("DEPRECATION") // still need to store it, event thought it's deprecated..
-            preferencesService.customPersonas?.let(personas::addAll)
+            Systrace.traceSynchronous("load-user-info-from-pref") {
+                val id = preferencesService.userIdentifier
+                val name = preferencesService.username
+                val email = preferencesService.userEmailAddress
+                val personas: MutableSet<String> = HashSet()
+                preferencesService.userPersonas?.let(personas::addAll)
+                @Suppress("DEPRECATION") // still need to store it, event thought it's deprecated..
+                preferencesService.customPersonas?.let(personas::addAll)
 
-            personas.remove(PERSONA_PAYER)
-            if (preferencesService.userPayer) {
-                personas.add(PERSONA_PAYER)
+                personas.remove(PERSONA_PAYER)
+                if (preferencesService.userPayer) {
+                    personas.add(PERSONA_PAYER)
+                }
+                personas.remove(PERSONA_FIRST_DAY_USER)
+                if (preferencesService.isUsersFirstDay()) {
+                    personas.add(PERSONA_FIRST_DAY_USER)
+                }
+                return UserInfo(id, email, name, personas)
             }
-            personas.remove(PERSONA_FIRST_DAY_USER)
-            if (preferencesService.isUsersFirstDay()) {
-                personas.add(PERSONA_FIRST_DAY_USER)
-            }
-            return UserInfo(id, email, name, personas)
         }
     }
 }

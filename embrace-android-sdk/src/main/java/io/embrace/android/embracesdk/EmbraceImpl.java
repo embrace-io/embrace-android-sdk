@@ -66,6 +66,7 @@ import io.embrace.android.embracesdk.telemetry.TelemetryService;
 import io.embrace.android.embracesdk.utils.PropertyUtils;
 import io.embrace.android.embracesdk.worker.WorkerName;
 import io.embrace.android.embracesdk.worker.WorkerThreadModule;
+import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.Lazy;
 import kotlin.LazyKt;
@@ -1204,5 +1205,9 @@ final class EmbraceImpl {
 
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
         moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addSpanExporter(spanExporter);
+    }
+
+    public void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter) {
+        moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addLogExporter(logRecordExporter);
     }
 }

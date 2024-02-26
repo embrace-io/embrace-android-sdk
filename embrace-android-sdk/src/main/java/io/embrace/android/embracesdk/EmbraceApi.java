@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.spans.TracingApi;
+import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 /**
@@ -95,4 +96,11 @@ interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi,
      * @param spanExporter the span exporter to add
      */
     void addSpanExporter(@NonNull SpanExporter spanExporter);
+
+    /**
+     * Adds a [LogRecordExporter] to the open telemetry logger.
+     *
+     * @param logRecordExporter the LogRecord exporter to add
+     */
+    void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter);
 }

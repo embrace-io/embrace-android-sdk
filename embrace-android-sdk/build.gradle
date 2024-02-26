@@ -144,5 +144,33 @@ dokkaHtml {
     suppressObviousFunctions.set(true)
 }
 
+openApiGenerate {
+    // Set the OpenAPI specification file path
+    inputSpec = "envelope.yaml"
+
+    // Set the desired output directory for generated code
+    outputDir = "$buildDir/generated"
+
+    // Set the generator to use (e.g., java, kotlin, etc.)
+    generatorName = 'kotlin'
+
+    packageName = 'io.embrace.android.embracesdk.internal.generated'
+
+    globalProperties.set([
+            modelDocs: "false",
+            apis: "false",
+            models: ""
+    ])
+
+    // see further options for configuring kotlin codegen here:
+    // https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/kotlin.md
+    additionalProperties = [
+            "enumPropertyNaming": "UPPERCASE",
+            "supportAndroidApiLevel25AndBelow": true,
+            "nonPublicApi": true, // mark classes as internal
+            "omitGradleWrapper": "true"
+    ]
+}
+
 task publishLocal { dependsOn("publishMavenPublicationToMavenLocal") }
 task publishQa { dependsOn("publishMavenPublicationToQaRepository") }

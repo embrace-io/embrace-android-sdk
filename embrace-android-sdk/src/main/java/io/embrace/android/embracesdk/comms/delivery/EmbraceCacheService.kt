@@ -11,6 +11,9 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.lang.RuntimeException
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 /**
  * Handles the reading and writing of objects from the app's cache.
@@ -21,24 +24,35 @@ internal class EmbraceCacheService(
     private val logger: InternalEmbraceLogger
 ) : CacheService {
 
+    /**
+     * Holds read-write locks for each filename.
+     *
+     * If a file is being written then nothing else should read/write it. Otherwise, it's safe
+     * to read a file using multiple threads at the same time.
+     */
+    private val fileLocks = mutableMapOf<String, ReentrantReadWriteLock>()
+
     override fun cacheBytes(name: String, bytes: ByteArray?) {
-        logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-        if (bytes != null) {
-            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-            try {
-                if (name == "testfile-truncate") {
-                    file.writeHalfTheBytes(bytes)
-                } else if (name == "testfile-pause") {
-                    file.writeBytesWithPause(bytes)
-                }  else {
-                    file.writeBytes(bytes)
+        findLock(name).write {
+            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
+            if (bytes != null) {
+                val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+                try {
+                    if (name == "testfile-truncate") {
+                        file.writeHalfTheBytes(bytes)
+                    } else if (name == "testfile-pause") {
+                        file.writeBytesWithPause(bytes)
+                    } else {
+                        file.writeBytes(bytes)
+                    }
+                    logger.logDeveloper(TAG, "Bytes cached")
+                } catch (ex: Exception) {
+                    logger.logWarning("Failed to store cache object " + file.path, ex)
+                    deleteFile(name)
                 }
-                logger.logDeveloper(TAG, "Bytes cached")
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to store cache object " + file.path, ex)
+            } else {
+                logger.logWarning("No bytes to save to file $name")
             }
-        } else {
-            logger.logWarning("No bytes to save to file $name")
         }
     }
 
@@ -56,27 +70,31 @@ internal class EmbraceCacheService(
     }
 
     override fun loadBytes(name: String): ByteArray? {
-        logger.logDeveloper(TAG, "Attempting to read bytes from $name")
-        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-        try {
-            return file.readBytes()
-        } catch (ex: FileNotFoundException) {
-            logger.logWarning("Cache file cannot be found " + file.path)
-        } catch (ex: Exception) {
-            logger.logWarning("Failed to read cache object " + file.path, ex)
+        findLock(name).read {
+            logger.logDeveloper(TAG, "Attempting to read bytes from $name")
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+            try {
+                return file.readBytes()
+            } catch (ex: FileNotFoundException) {
+                logger.logWarning("Cache file cannot be found " + file.path)
+            } catch (ex: Exception) {
+                logger.logWarning("Failed to read cache object " + file.path, ex)
+            }
+            return null
         }
-        return null
     }
 
     override fun cachePayload(name: String, action: SerializationAction) {
-        logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-        val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-        try {
-            file.outputStream().buffered().use(action)
-            logger.logDeveloper(TAG, "Bytes cached")
-        } catch (ex: Exception) {
-            runCatching { file.delete() }
-            logger.logWarning("Failed to store cache object " + file.path, ex)
+        findLock(name).write {
+            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
+            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+            try {
+                file.outputStream().buffered().use(action)
+                logger.logDeveloper(TAG, "Bytes cached")
+            } catch (ex: Exception) {
+                logger.logWarning("Failed to store cache object " + file.path, ex)
+                deleteFile(name)
+            }
         }
     }
 
@@ -89,19 +107,21 @@ internal class EmbraceCacheService(
      * before 6.3.0 didn't compress the data.
      */
     override fun loadPayload(name: String): SerializationAction {
-        logger.logDeveloper(TAG, "Attempting to read bytes from $name")
         return { stream ->
-            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
-                ConditionalGzipOutputStream(stream).use {
-                    file.inputStream().buffered().use { input ->
-                        input.copyTo(it)
+            logger.logDeveloper(TAG, "Attempting to read bytes from $name")
+            findLock(name).read {
+                val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+                try {
+                    ConditionalGzipOutputStream(stream).use {
+                        file.inputStream().buffered().use { input ->
+                            input.copyTo(it)
+                        }
                     }
+                } catch (ex: FileNotFoundException) {
+                    logger.logWarning("Cache file cannot be found " + file.path)
+                } catch (ex: Exception) {
+                    logger.logWarning("Failed to read cache object " + file.path, ex)
                 }
-            } catch (ex: FileNotFoundException) {
-                logger.logWarning("Cache file cannot be found " + file.path)
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to read cache object " + file.path, ex)
             }
         }
     }
@@ -118,67 +138,103 @@ internal class EmbraceCacheService(
      * @param <T>    the type of the object to write
      */
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
-        logger.logDeveloper(TAG, "Attempting to cache object: $name")
-        val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-        try {
-            serializer.toJson(objectToCache, clazz, file.outputStream())
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to store cache object " + file.path, ex)
+        findLock(name).write {
+            logger.logDeveloper(TAG, "Attempting to cache object: $name")
+            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+            try {
+                serializer.toJson(objectToCache, clazz, file.outputStream())
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to store cache object " + file.path, ex)
+                deleteFile(name)
+            }
         }
     }
 
     override fun <T> loadObject(name: String, clazz: Class<T>): T? {
-        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-        try {
-            return serializer.fromJson(file.inputStream(), clazz)
-        } catch (ex: FileNotFoundException) {
-            logger.logDebug("Cache file cannot be found " + file.path)
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to read cache object " + file.path, ex)
+        findLock(name).read {
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+            try {
+                return serializer.fromJson(file.inputStream(), clazz)
+            } catch (ex: FileNotFoundException) {
+                logger.logDebug("Cache file cannot be found " + file.path)
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to read cache object " + file.path, ex)
+            }
+            return null
         }
-        return null
     }
 
     override fun deleteFile(name: String): Boolean {
-        logger.logDeveloper("EmbraceCacheService", "Attempting to delete file from cache: $name")
-        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-        try {
-            return file.delete()
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to delete cache object " + file.path)
+        val success = findLock(name).write {
+            logger.logDeveloper(
+                "EmbraceCacheService",
+                "Attempting to delete file from cache: $name"
+            )
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+            try {
+                file.delete()
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to delete cache object " + file.path)
+            }
+            false
         }
-        return false
+
+        // allow lock object to be garbage collected
+        fileLocks.remove(name)
+        return success
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String> {
+    override fun listFilenamesByPrefix(prefix: String): List<String> { // TODO: locking?
         return storageService.listFiles { _, name ->
             name.startsWith(EMBRACE_PREFIX + prefix)
         }.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        try {
-            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-            serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
-            logger.logDeveloper(TAG, "Bytes cached")
-        } catch (ex: Throwable) {
-            logger.logWarning("Failed to write session with buffered writer", ex)
+        findLock(name).write {
+            try {
+                logger.logDeveloper(TAG, "Attempting to write bytes to $name")
+                val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+                serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
+                logger.logDeveloper(TAG, "Bytes cached")
+            } catch (ex: Throwable) {
+                logger.logWarning("Failed to write session with buffered writer", ex)
+                deleteFile(name)
+            }
         }
     }
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
-        val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-        try {
-            val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
-            return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>? ?: emptyList()
-        } catch (ex: FileNotFoundException) {
-            logger.logDebug("Cache file cannot be found " + file.path)
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to read cache object " + file.path, ex)
+        findLock(name).read {
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+            try {
+                val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
+                return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>?
+                    ?: emptyList()
+            } catch (ex: FileNotFoundException) {
+                logger.logDebug("Cache file cannot be found " + file.path)
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to read cache object " + file.path, ex)
+            }
+            return null
         }
-        return null
     }
+
+    override fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+        findLock(name).write {
+            try {
+                val sessionMessage = loadObject(name, SessionMessage::class.java) ?: return@write
+                val newMessage = transformer(sessionMessage)
+                cacheObject(name, newMessage, SessionMessage::class.java)
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to replace session object ", ex)
+                deleteFile(name)
+            }
+        }
+    }
+
+    private fun findLock(name: String) =
+        fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
 
     companion object {
         private const val EMBRACE_PREFIX = "emb_"

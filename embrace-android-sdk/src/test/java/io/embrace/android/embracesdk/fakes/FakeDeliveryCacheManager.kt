@@ -79,6 +79,10 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
+    override fun replaceSession(sessionId: String, mutator: (SessionMessage) -> SessionMessage) {
+        TODO("Not yet implemented")
+    }
+
     fun addCachedSessions(vararg sessionMessages: SessionMessage) {
         cachedSessions.addAll(sessionMessages)
     }

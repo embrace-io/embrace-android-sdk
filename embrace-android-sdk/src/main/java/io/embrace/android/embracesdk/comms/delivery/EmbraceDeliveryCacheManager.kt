@@ -198,6 +198,11 @@ internal class EmbraceDeliveryCacheManager(
         }
     }
 
+    override fun replaceSession(sessionId: String, mutator: (SessionMessage) -> SessionMessage) {
+        val filename = cachedSessions[sessionId]?.filename ?: return
+        cacheService.replaceSession(filename, mutator)
+    }
+
     /**
      * Loads the old version of the [PENDING_API_CALLS_FILE_NAME] file where
      * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]

@@ -85,4 +85,6 @@ internal interface CacheService {
      * Loads the old format of pending API calls.
      */
     fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
+
+    fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage)
 }

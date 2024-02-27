@@ -74,9 +74,7 @@ internal class EmbraceCacheServiceTest {
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
 
         val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNotNull(loadedBytes)
-        assertArrayEquals("locked file".toByteArray(), loadedBytes)
-        cacheFile.delete()
+        assertNull(loadedBytes)
     }
 
     @Test

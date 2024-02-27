@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -190,6 +192,56 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
+    fun testDefaultMaxMessageLength() {
+        val logMessageService = getLogMessageService()
+        logMessageService.log("Hi".repeat(65), Severity.INFO, null)
+
+        val log = logWriter.logEvents.single()
+        Assert.assertTrue(log.message == "Hi".repeat(62) + "H...")
+    }
+
+    @Test
+    fun testCustomMaxMessageLength() {
+        cfg = cfg.copy(
+            logConfig = LogRemoteConfig(
+                logMessageMaximumAllowedLength = 50,
+                logInfoLimit = 50
+            )
+        )
+
+        val logMessageService = getLogMessageService()
+        logMessageService.log("Hi".repeat(50), Severity.INFO, null)
+
+        val log = logWriter.logEvents.single()
+        Assert.assertTrue(log.message == "Hi".repeat(23) + "H...")
+    }
+
+    @Test
+    fun testLoggingUnityMessage() {
+        val logMessageService = getLogMessageService(appFramework = AppFramework.UNITY)
+
+        logMessageService.logException(
+            "Unity".repeat(1000),
+            Severity.INFO,
+            LogExceptionType.HANDLED,
+            null,
+            null,
+            "my stacktrace",
+            null,
+            null,
+            null,
+            null
+        )
+
+        val log = logWriter.logEvents.single()
+        assertEquals("Unity".repeat(1000), log.message) // log limit higher on unity
+        // TBD: Assert stacktrace
+        assertEquals(LogExceptionType.HANDLED.value, log.attributes?.get("emb.exception_type"))
+        // TBD: Assert unhandled exceptions
+        // assertEquals(0, logMessageService.getUnhandledExceptionsSent())
+    }
+
+    @Test
     fun testCleanCollections() {
         val logService = getLogMessageService()
         repeat(10) { k ->
@@ -214,12 +266,13 @@ internal class EmbraceLogServiceTest {
         assertEquals(0, logService.getErrorLogsAttemptedToSend())
     }
 
-    private fun getLogMessageService(): EmbraceLogService {
+    private fun getLogMessageService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
         return EmbraceLogService(
             logWriter,
             clock,
             metadataService,
             configService,
+            appFramework,
             sessionIdTracker,
             BackgroundWorker(MoreExecutors.newDirectExecutorService())
         )

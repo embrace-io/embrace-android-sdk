@@ -7,7 +7,10 @@ import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.storage.StorageService
+import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.lang.RuntimeException
 
 /**
  * Handles the reading and writing of objects from the app's cache.
@@ -23,7 +26,13 @@ internal class EmbraceCacheService(
         if (bytes != null) {
             val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
             try {
-                file.writeBytes(bytes)
+                if (name == "testfile-truncate") {
+                    file.writeHalfTheBytes(bytes)
+                } else if (name == "testfile-pause") {
+                    file.writeBytesWithPause(bytes)
+                }  else {
+                    file.writeBytes(bytes)
+                }
                 logger.logDeveloper(TAG, "Bytes cached")
             } catch (ex: Exception) {
                 logger.logWarning("Failed to store cache object " + file.path, ex)
@@ -31,6 +40,19 @@ internal class EmbraceCacheService(
         } else {
             logger.logWarning("No bytes to save to file $name")
         }
+    }
+
+    private fun File.writeBytesWithPause(array: ByteArray): Unit = FileOutputStream(this).use {
+        val partOne = array.take(7).toByteArray()
+        val partTwo = array.takeLast(array.size - 7).toByteArray()
+        it.write(partOne)
+        Thread.sleep(400)
+        it.write(partTwo)
+    }
+
+    private fun File.writeHalfTheBytes(array: ByteArray): Unit = FileOutputStream(this).use {
+        it.write(array.dropLast(array.size / 2).toByteArray())
+        throw RuntimeException("yooooo")
     }
 
     override fun loadBytes(name: String): ByteArray? {

@@ -23,7 +23,7 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
         /**
          * Attribute name for a unique id identifying the log
          */
-        const val EVENT_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "event_id"
+        const val LOG_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "log_id"
 
         /**
          * Attribute name for the exception type in a log representing an exception

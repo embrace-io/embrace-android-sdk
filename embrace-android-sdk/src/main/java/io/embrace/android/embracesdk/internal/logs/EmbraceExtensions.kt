@@ -12,6 +12,6 @@ import io.opentelemetry.sdk.logs.ReadWriteLogRecord
 /**
  * Set an id for the log
  */
-internal fun ReadWriteLogRecord.setEventId(eventId: String) {
-    setAttribute(AttributeKey.stringKey(EmbraceLogAttributes.EVENT_ID_ATTRIBUTE_NAME), eventId)
+internal fun ReadWriteLogRecord.setLogId(logId: String) {
+    setAttribute(AttributeKey.stringKey(EmbraceLogAttributes.LOG_ID_ATTRIBUTE_NAME), logId)
 }

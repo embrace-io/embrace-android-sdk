@@ -23,7 +23,7 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
         /**
          * Attribute name for a unique id identifying the log
          */
-        public const val EVENT_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "event_id"
+        const val EVENT_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "event_id"
 
         /**
          * Attribute name for the exception type in a log representing an exception
@@ -60,6 +60,8 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
 
     init {
         // TODO Validate attribute names?
+        // TODO There is an implicit conversion from Any to String here. Should the attributes
+        // in LogEventData be <String, Any> instead of <String, String> ?
         properties?.forEach {
             attributes[it.key] = it.value.toString()
         }
@@ -77,13 +79,6 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
      */
     fun setSessionId(sessionId: String) {
         attributes[SESSION_ID_ATTRIBUTE_NAME] = sessionId
-    }
-
-    /**
-     * Set an id for the log
-     */
-    fun setEventId(eventId: String) {
-        attributes[EVENT_ID_ATTRIBUTE_NAME] = eventId
     }
 
     /**

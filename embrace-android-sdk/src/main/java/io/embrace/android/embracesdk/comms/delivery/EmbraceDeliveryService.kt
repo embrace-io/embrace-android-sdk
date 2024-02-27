@@ -117,18 +117,8 @@ internal class EmbraceDeliveryService(
     }
 
     private fun addCrashDataToCachedSession(nativeCrashData: NativeCrashData) {
-        cacheManager.loadSession(nativeCrashData.sessionId)
-            ?.also { sessionMessage ->
-                // Create a new session message with the specified crash id
-                val newSessionMessage =
-                    attachCrashToSession(nativeCrashData, sessionMessage)
-                // Replace the cached file for the corresponding session
-                cacheManager.saveSession(newSessionMessage, SessionSnapshotType.NORMAL_END)
-            } ?: run {
-            logger.logError(
-                "Could not find session with id ${nativeCrashData.sessionId} to " +
-                    "add native crash"
-            )
+        cacheManager.replaceSession(nativeCrashData.sessionId) { sessionMessage ->
+            attachCrashToSession(nativeCrashData, sessionMessage)
         }
     }
 

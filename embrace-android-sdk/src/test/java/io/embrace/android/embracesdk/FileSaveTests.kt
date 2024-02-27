@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.nio.charset.StandardCharsets
@@ -57,7 +57,6 @@ internal class FileSaveTests {
             numbersBytes,
             loadedObject
         )
-
     }
 
     @Test
@@ -68,7 +67,7 @@ internal class FileSaveTests {
         val loadedObject = service.loadBytes(filename)
 
         // Failure - whatever gets written is read
-        assertEquals("", loadedObject?.toString(Charsets.UTF_8))
+        assertNull(loadedObject?.toString(Charsets.UTF_8))
     }
 
     @Test
@@ -121,11 +120,7 @@ internal class FileSaveTests {
         val loadedObject = service.loadBytes(filename)
 
         // Failed: what was written already is read
-        assertArrayEquals(
-            "error! actual: ${loadedObject?.toString(StandardCharsets.UTF_8)}\n expected: $lettersString",
-            lettersBytes,
-            loadedObject
-        )
+        assertNull(loadedObject)
     }
 
     @Test

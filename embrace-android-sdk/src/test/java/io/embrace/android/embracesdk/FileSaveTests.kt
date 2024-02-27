@@ -103,6 +103,48 @@ internal class FileSaveTests {
     }
 
     @Test
+    fun `reading a file that is being rewritten should block and succeed`() {
+        val filename = "testfile-pause"
+        val loadedObject = AtomicReference<ByteArray?>()
+        val thread1 = SingleThreadTestScheduledExecutor()
+        val thread2 = SingleThreadTestScheduledExecutor()
+
+        val initialLatch = CountDownLatch(1)
+        val latch = CountDownLatch(2)
+
+        thread1.submit {
+            service.cacheBytes(filename, lettersBytes)
+            initialLatch.countDown()
+        }
+        initialLatch.await(1, TimeUnit.SECONDS)
+        assertArrayEquals(
+            "error! actual: ${loadedObject.get()?.toString(StandardCharsets.UTF_8)}\n expected: $lettersString",
+            lettersBytes,
+            service.loadBytes(filename)
+        )
+        thread1.submit {
+            service.cacheBytes(filename, numbersBytes)
+            latch.countDown()
+        }
+
+        thread2.submit {
+            Thread.sleep(50)
+            val loadedBytes = service.loadBytes(filename)
+            loadedObject.set(loadedBytes)
+            latch.countDown()
+        }
+
+        latch.await(5, TimeUnit.SECONDS)
+
+        // Failure - first chunk of the second write read
+        assertArrayEquals(
+            "error! actual: ${loadedObject.get()?.toString(StandardCharsets.UTF_8)}\n expected: $numbersString",
+            numbersBytes,
+            loadedObject.get()
+        )
+    }
+
+    @Test
     fun `interrupting a write should not leave partially written files`() {
         val filename = "testfile-pause"
         val thread1 = SingleThreadTestScheduledExecutor()

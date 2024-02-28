@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
@@ -11,7 +12,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.Closeable
-import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
@@ -50,6 +51,7 @@ internal class EmbraceDeliveryCacheManager(
     // The session id is used as key for this map
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
+    private val allowPeriodicSessionCaching = AtomicBoolean(true)
 
     override fun saveSession(
         sessionMessage: SessionMessage,
@@ -62,9 +64,21 @@ internal class EmbraceDeliveryCacheManager(
             val sessionId = sessionMessage.session.sessionId
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
-            saveBytes(sessionId, writeSync, snapshot) { filename: String ->
-                Systrace.traceSynchronous("serialize-session") {
-                    cacheService.writeSession(filename, sessionMessage)
+
+            synchronized(allowPeriodicSessionCaching) {
+                // If we are creating a snapshot to handle a JVM crash, we will stop any further snapshotting to prevent
+                // concurrent writes on the same file, as all other writes will be happening on the same background thread.
+                // There's no need to reset this since this process is about to crash
+                if (snapshotType == SessionSnapshotType.JVM_CRASH) {
+                    allowPeriodicSessionCaching.set(false)
+                }
+            }
+
+            if (!snapshot || allowPeriodicSessionCaching.get()) {
+                saveBytes(sessionId, writeSync, snapshot) { filename: String ->
+                    Systrace.traceSynchronous("serialize-session") {
+                        cacheService.writeSession(filename, sessionMessage)
+                    }
                 }
             }
         } catch (exc: Throwable) {
@@ -102,33 +116,49 @@ internal class EmbraceDeliveryCacheManager(
         }
     }
 
+    /**
+     * This method will do disk reads so do not run it on the main thread
+     */
     override fun getAllCachedSessionIds(): List<String> {
         val allSessions = cacheService.listFilenamesByPrefix(SESSION_FILE_PREFIX)
         allSessions.forEach { filename ->
             if (filename == OLD_VERSION_FILE_NAME) {
                 // If a cached session from a previous version of the SDK is found,
-                // load and save it again using the new naming schema
-                val previousSdkSession =
-                    cacheService.loadObject(filename, SessionMessage::class.java)
-                previousSdkSession?.also {
-                    // When saved, the new session filename is also added to cachedSessions
-                    saveSession(it, SessionSnapshotType.NORMAL_END)
-                    cacheService.deleteFile(filename)
+                // synchronously rename the file before adding it to the in memory sessionId to file name cache
+                val previousSdkSession = cacheService.loadObject(filename, SessionMessage::class.java)
+                previousSdkSession?.also { oldSessionMessage ->
+                    runCatching {
+                        val session = oldSessionMessage.session
+                        val newOldCachedSession = CachedSession(session.sessionId, session.startTime)
+                        if (!allSessions.contains(newOldCachedSession.filename)) {
+                            // Since we are creating a file based on a old session, no other threads should be trying
+                            // to write this or delete the old file name, so it's safe to do it on the current thread
+                            if (runCatching {
+                                    saveSession(oldSessionMessage, SessionSnapshotType.NORMAL_END)
+                                    cachedSessions[session.sessionId] = newOldCachedSession
+                                }.isSuccess
+                            ) {
+                                cacheService.deleteFile(OLD_VERSION_FILE_NAME)
+                            }
+                        }
+                    }
+                }
+            } else {
+                val values = filename.split('.')
+                if (values.size != 4) {
+                    logger.logError("Unrecognized cached file: $filename")
+                    return@forEach
+                }
+                val timestamp = values[1].toLongOrNull()
+                timestamp?.also { ts ->
+                    val sessionId = values[2]
+                    cachedSessions[sessionId] = CachedSession(sessionId, ts)
+                } ?: run {
+                    logger.logError("Could not parse timestamp ${values[2]}")
                 }
             }
-            val values = filename.split('.')
-            if (values.size != 4) {
-                logger.logError("Unrecognized cached file: $filename")
-                return@forEach
-            }
-            val timestamp = values[1].toLongOrNull()
-            timestamp?.also {
-                val sessionId = values[2]
-                cachedSessions[sessionId] = CachedSession(sessionId, it)
-            } ?: run {
-                logger.logError("Could not parse timestamp ${values[2]}")
-            }
         }
+
         return cachedSessions.keys.toList()
     }
 
@@ -181,26 +211,16 @@ internal class EmbraceDeliveryCacheManager(
      * If loadObject returns null, it tries to load the old version of the file which was storing
      * a list of [PendingApiCall] instead of [PendingApiCalls].
      */
-    override fun loadPendingApiCalls(): PendingApiCalls {
-        logger.logDeveloper(TAG, "Loading pending api calls")
-        val callable = Callable<PendingApiCalls?> {
-            val loadApiCallsResult = runCatching {
-                cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
-            }
-            loadApiCallsResult.getOrNull() ?: loadPendingApiCallsOldVersion()
-        }
-        val cached = backgroundWorker.submit(callable = callable).get()
-        return if (cached != null) {
-            cached
-        } else {
-            logger.logDeveloper(TAG, "No pending api calls cache found")
-            PendingApiCalls()
-        }
-    }
+    override fun loadPendingApiCalls(): PendingApiCalls =
+        runCatching { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) }.getOrNull()
+            ?: loadPendingApiCallsOldVersion()
+            ?: PendingApiCalls()
 
     override fun replaceSession(sessionId: String, mutator: (SessionMessage) -> SessionMessage) {
         val filename = cachedSessions[sessionId]?.filename ?: return
-        cacheService.replaceSession(filename, mutator)
+        backgroundWorker.submit {
+            cacheService.replaceSession(filename, mutator)
+        }
     }
 
     /**
@@ -228,21 +248,19 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        return backgroundWorker.submit<SessionMessage?>(TaskPriority.HIGH) {
-            try {
-                val sessionMessage = cacheService.loadObject(
-                    cachedSession.filename,
-                    SessionMessage::class.java
-                )
-                if (sessionMessage != null) {
-                    logger.logDeveloper(TAG, "Successfully fetched previous session message.")
-                    return@submit sessionMessage
-                }
-            } catch (ex: Exception) {
-                logger.logError("Failed to load previous cached session message", ex)
+        try {
+            val sessionMessage = cacheService.loadObject(
+                cachedSession.filename,
+                SessionMessage::class.java
+            )
+            if (sessionMessage != null) {
+                logger.logDeveloper(TAG, "Successfully fetched previous session message.")
+                return sessionMessage
             }
-            null
-        }.get()
+        } catch (ex: Exception) {
+            logger.logError("Failed to load previous cached session message", ex)
+        }
+        return null
     }
 
     private fun deleteOldestSessions() {
@@ -279,10 +297,7 @@ internal class EmbraceDeliveryCacheManager(
     ) {
         try {
             val cachedSession = cachedSessions.getOrElse(sessionId) {
-                CachedSession(
-                    sessionId,
-                    clock.now()
-                )
+                CachedSession(sessionId, clock.now())
             }
             saveAction(cachedSession.filename)
             if (!cachedSessions.containsKey(cachedSession.sessionId)) {
@@ -295,17 +310,9 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     data class CachedSession(
-        val filename: String,
         val sessionId: String,
         val timestamp: Long?
     ) {
-        constructor(
-            sessionId: String,
-            timestamp: Long
-        ) : this(
-            "$SESSION_FILE_PREFIX.$timestamp.$sessionId.json",
-            sessionId,
-            timestamp
-        )
+        val filename = "$SESSION_FILE_PREFIX.$timestamp.$sessionId.json"
     }
 }

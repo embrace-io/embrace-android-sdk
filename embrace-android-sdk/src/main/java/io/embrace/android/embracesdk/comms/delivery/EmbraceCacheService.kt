@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.lang.RuntimeException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -66,7 +65,7 @@ internal class EmbraceCacheService(
 
     private fun File.writeHalfTheBytes(array: ByteArray): Unit = FileOutputStream(this).use {
         it.write(array.dropLast(array.size / 2).toByteArray())
-        throw RuntimeException("yooooo")
+        throw IllegalAccessException("yooooo")
     }
 
     override fun loadBytes(name: String): ByteArray? {

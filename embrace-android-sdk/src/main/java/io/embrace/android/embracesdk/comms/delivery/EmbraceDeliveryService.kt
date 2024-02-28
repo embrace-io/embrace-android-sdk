@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.SessionPayload
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -72,7 +74,13 @@ internal class EmbraceDeliveryService(
     }
 
     override fun sendLogs(logPayload: LogPayload) {
-        apiService.sendLogs(logPayload)
+        val logsEnvelope = Envelope(data = logPayload)
+        apiService.sendLogsEnvelope(logsEnvelope)
+    }
+
+    override fun sendSessionV2(sessionPayload: SessionPayload) {
+        val sessionEnvelope = Envelope(data = sessionPayload)
+        apiService.sendSessionEnvelope(sessionEnvelope)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

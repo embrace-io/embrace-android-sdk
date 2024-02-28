@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -122,11 +124,19 @@ internal class EmbraceApiService(
     /**
      * Sends a list of OTel Logs to the API.
      *
-     * @param logPayload the list of OTel logs
-     * @return a future containing the response body from the server
+     * @param logsEnvelope containing the logs
      */
-    override fun sendLogs(logPayload: LogPayload) {
-        post(logPayload, mapper::logsRequest)
+    override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
+        post(logsEnvelope, mapper::logsEnvelopeRequest)
+    }
+
+    /**
+     * Sends a session to the API.
+     *
+     * @param envelope containing the session
+     */
+    override fun sendSessionEnvelope(envelope: Envelope<SessionPayload>) {
+        post(envelope, mapper::sessionEnvelopeRequest)
     }
 
     /**

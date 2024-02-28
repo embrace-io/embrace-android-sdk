@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -41,8 +43,12 @@ internal class FakeApiService : ApiService {
         logRequests.add(eventMessage)
     }
 
-    override fun sendLogs(logPayload: LogPayload) {
-        logPayloads.add(logPayload)
+    override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
+        logPayloads.add(logsEnvelope.data)
+    }
+
+    override fun sendSessionEnvelope(envelope: Envelope<SessionPayload>) {
+        TODO("Not yet implemented")
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

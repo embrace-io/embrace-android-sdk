@@ -22,10 +22,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         saveSessionRequests.add(Pair(sessionMessage, snapshotType))
     }
 
-    override fun loadSession(sessionId: String): SessionMessage? {
-        TODO("Not yet implemented")
-    }
-
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
         val message = cachedSessions.singleOrNull { it.session.sessionId == sessionId } ?: return null
         return { stream ->

@@ -108,7 +108,7 @@ internal class FakeEmbraceCacheService(
         val partOne = array.take(7).toByteArray()
         val partTwo = array.takeLast(array.size - 7).toByteArray()
         it.write(partOne)
-        Thread.sleep(100)
+        Thread.sleep(200)
         it.write(partTwo)
     }
 

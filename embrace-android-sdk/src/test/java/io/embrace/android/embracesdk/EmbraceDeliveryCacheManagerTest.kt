@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -32,6 +33,8 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryCacheManagerTest {
 
@@ -105,6 +108,28 @@ internal class EmbraceDeliveryCacheManagerTest {
         }
 
         assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
+    }
+
+    @Test
+    fun `session always replaced after the first write`() {
+        val sessionMessage = createSessionMessage("test_cache")
+        val iterations = 10
+        val latch = CountDownLatch(iterations)
+        val savesDoneLatch = CountDownLatch(iterations)
+
+        repeat(iterations) {
+            SingleThreadTestScheduledExecutor().submit {
+                latch.countDown()
+                // Running with a snapshot type that will do the save on the current thread
+                // Any other type would serially run the writes on the same thread so we can never get into the race condition being tested
+                deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
+                savesDoneLatch.countDown()
+            }
+        }
+        savesDoneLatch.await(1, TimeUnit.SECONDS)
+
+        verify(exactly = 1) { cacheService.writeSession(any(), any()) }
+        verify(exactly = iterations - 1) { cacheService.replaceSession(any(), any()) }
     }
 
     @Test

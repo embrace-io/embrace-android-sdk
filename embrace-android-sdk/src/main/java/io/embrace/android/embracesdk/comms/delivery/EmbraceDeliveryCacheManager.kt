@@ -63,12 +63,12 @@ internal class EmbraceDeliveryCacheManager(
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 
-            saveBytes(sessionId, writeSync, snapshot) { filename: String ->
+            saveSessionBytes(sessionId, writeSync, snapshot) { filename: String ->
                 Systrace.traceSynchronous("serialize-session") {
-                    if (cachedSessions.containsKey(sessionId)) {
-                        cacheService.replaceSession(filename) { sessionMessage }
-                    } else {
+                    if (!cachedSessions.containsKey(sessionId)) {
                         cacheService.writeSession(filename, sessionMessage)
+                    } else {
+                        cacheService.replaceSession(filename) { sessionMessage }
                     }
                 }
             }
@@ -238,14 +238,14 @@ internal class EmbraceDeliveryCacheManager(
             .forEach { deleteSession(it.sessionId) }
     }
 
-    private fun saveBytes(
+    private fun saveSessionBytes(
         sessionId: String,
         writeSync: Boolean = false,
         snapshot: Boolean = false,
         saveAction: (filename: String) -> Unit
     ) {
         if (writeSync) {
-            saveBytesImpl(sessionId, saveAction)
+            saveSessionBytesImpl(sessionId, saveAction)
         } else {
             // snapshots are low priority compared to state ends + loading/unloading other payload
             // types. State ends are critical as they contain the final information.
@@ -254,24 +254,26 @@ internal class EmbraceDeliveryCacheManager(
                 else -> TaskPriority.CRITICAL
             }
             backgroundWorker.submit(priority) {
-                saveBytesImpl(sessionId, saveAction)
+                saveSessionBytesImpl(sessionId, saveAction)
             }
         }
     }
 
-    private fun saveBytesImpl(
+    private fun saveSessionBytesImpl(
         sessionId: String,
         saveAction: (filename: String) -> Unit
     ) {
         try {
-            val cachedSession = cachedSessions.getOrElse(sessionId) {
-                CachedSession(sessionId, clock.now())
+            synchronized(cachedSessions) {
+                val cachedSession = cachedSessions.getOrElse(sessionId) {
+                    CachedSession(sessionId, clock.now())
+                }
+                saveAction(cachedSession.filename)
+                if (!cachedSessions.containsKey(cachedSession.sessionId)) {
+                    cachedSessions[cachedSession.sessionId] = cachedSession
+                }
+                logger.logDeveloper(TAG, "Session message successfully cached.")
             }
-            saveAction(cachedSession.filename)
-            if (!cachedSessions.containsKey(cachedSession.sessionId)) {
-                cachedSessions[cachedSession.sessionId] = cachedSession
-            }
-            logger.logDeveloper(TAG, "Session message successfully cached.")
         } catch (ex: Throwable) {
             logger.logError("Failed to cache current active session", ex, true)
         }

@@ -188,7 +188,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
             testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
             latch.countDown()
         }
-        Thread.sleep(20)
+        Thread.sleep(10)
         thread2.submit {
             thread1.shutdownNow()
             latch.countDown()

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.Closeable
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
@@ -51,7 +50,6 @@ internal class EmbraceDeliveryCacheManager(
     // The session id is used as key for this map
     // This list is initialized when getAllCachedSessions() is called.
     private val cachedSessions = mutableMapOf<String, CachedSession>()
-    private val allowPeriodicSessionCaching = AtomicBoolean(true)
 
     override fun saveSession(
         sessionMessage: SessionMessage,
@@ -65,18 +63,11 @@ internal class EmbraceDeliveryCacheManager(
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 
-            synchronized(allowPeriodicSessionCaching) {
-                // If we are creating a snapshot to handle a JVM crash, we will stop any further snapshotting to prevent
-                // concurrent writes on the same file, as all other writes will be happening on the same background thread.
-                // There's no need to reset this since this process is about to crash
-                if (snapshotType == SessionSnapshotType.JVM_CRASH) {
-                    allowPeriodicSessionCaching.set(false)
-                }
-            }
-
-            if (!snapshot || allowPeriodicSessionCaching.get()) {
-                saveBytes(sessionId, writeSync, snapshot) { filename: String ->
-                    Systrace.traceSynchronous("serialize-session") {
+            saveBytes(sessionId, writeSync, snapshot) { filename: String ->
+                Systrace.traceSynchronous("serialize-session") {
+                    if (cachedSessions.containsKey(sessionId)) {
+                        cacheService.replaceSession(filename) { sessionMessage }
+                    } else {
                         cacheService.writeSession(filename, sessionMessage)
                     }
                 }
@@ -85,14 +76,6 @@ internal class EmbraceDeliveryCacheManager(
             logger.logError("Save session failed", exc, true)
             throw exc
         }
-    }
-
-    override fun loadSession(sessionId: String): SessionMessage? {
-        cachedSessions[sessionId]?.let { cachedSession ->
-            return loadSession(cachedSession)
-        }
-        logger.logError("Session $sessionId is not in cache")
-        return null
     }
 
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
@@ -216,11 +199,12 @@ internal class EmbraceDeliveryCacheManager(
             ?: loadPendingApiCallsOldVersion()
             ?: PendingApiCalls()
 
+    /**
+     * The caller of this method needs to be run in the [WorkerName.DELIVERY_CACHE] thread so all session writes are done serially
+     */
     override fun replaceSession(sessionId: String, mutator: (SessionMessage) -> SessionMessage) {
         val filename = cachedSessions[sessionId]?.filename ?: return
-        backgroundWorker.submit {
-            cacheService.replaceSession(filename, mutator)
-        }
+        cacheService.replaceSession(filename, mutator)
     }
 
     /**
@@ -245,22 +229,6 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     override fun close() {
-    }
-
-    private fun loadSession(cachedSession: CachedSession): SessionMessage? {
-        try {
-            val sessionMessage = cacheService.loadObject(
-                cachedSession.filename,
-                SessionMessage::class.java
-            )
-            if (sessionMessage != null) {
-                logger.logDeveloper(TAG, "Successfully fetched previous session message.")
-                return sessionMessage
-            }
-        } catch (ex: Exception) {
-            logger.logError("Failed to load previous cached session message", ex)
-        }
-        return null
     }
 
     private fun deleteOldestSessions() {

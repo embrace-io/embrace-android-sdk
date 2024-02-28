@@ -24,6 +24,7 @@ import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -87,7 +88,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             )
         }
 
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
@@ -103,7 +104,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             )
         }
 
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
@@ -119,28 +120,20 @@ internal class EmbraceDeliveryCacheManagerTest {
                 expectedByteArray
             )
         }
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `session not found in cache`() {
-        assertNull(deliveryCacheManager.loadSession("not_found_session"))
         assertNull(deliveryCacheManager.loadSessionAsAction("not_found_session"))
     }
 
     @Test
     fun `manager returns null if cache service throws an exception`() {
-        every { cacheService.loadObject(any(), SessionMessage::class.java) } throws Exception()
+        every { cacheService.writeSession(any(), any()) } throws Exception()
 
         deliveryCacheManager.saveSession(createSessionMessage("exception_session"), NORMAL_END)
-        assertNull(deliveryCacheManager.loadSession("exception_session"))
-
-        every {
-            cacheService.loadObject(
-                any(),
-                SessionMessage::class.java
-            )
-        } answers { callOriginal() }
+        assertNull(deliveryCacheManager.loadSessionAsAction("exception_session"))
     }
 
     @Test
@@ -156,14 +149,13 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `remove cached session successfully`() {
-        assertNull(deliveryCacheManager.loadSession("test_remove"))
+        assertNull(deliveryCacheManager.loadSessionAsAction("test_remove"))
 
         val session = createSessionMessage("test_remove")
         deliveryCacheManager.saveSession(session, NORMAL_END)
 
-        val cachedSession = deliveryCacheManager.loadSession("test_remove")
+        val cachedSession = deliveryCacheManager.loadSessionAsAction("test_remove")
         checkNotNull(cachedSession)
-        assertSessionsMatch(session, cachedSession)
 
         deliveryCacheManager.deleteSession("test_remove")
 
@@ -262,7 +254,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
-        assertSessionsMatch(session, checkNotNull(deliveryCacheManager.loadSession(allSessions[0])))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0]))
 
         verify { cacheService.deleteFile("last_session.json") }
     }
@@ -386,14 +378,6 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `load empty set of delivery calls if non cached`() {
         val pendingApiCalls = deliveryCacheManager.loadPendingApiCalls()
         assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
-    }
-
-    private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
-        // SessionMessage does not implement equals, so we have to serialize to compare
-        assertEquals(
-            serializer.toJson(session1),
-            serializer.toJson(session2)
-        )
     }
 
     private fun createSessionMessage(sessionId: String): SessionMessage {

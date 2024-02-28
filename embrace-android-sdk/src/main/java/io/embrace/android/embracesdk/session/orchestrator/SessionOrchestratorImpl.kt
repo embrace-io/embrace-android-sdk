@@ -195,19 +195,19 @@ internal class SessionOrchestratorImpl(
             // next, clean up any previous session state
             boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
 
-            // start the next session or background activity
-            val newState = newSessionAction?.invoke()
-            activeSession = newState
-            val sessionId = newState?.sessionId
+            // disable any previous periodic caching so the job doesn't overwrite the previously saved session
             val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
-            sessionIdTracker.setActiveSessionId(sessionId, inForeground)
-
-            // disable any previous periodic caching.
             when (endProcessState) {
                 ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
                 ProcessState.BACKGROUND -> periodicSessionCacher.stop()
             }
+
+            // start the next session or background activity
+            val newState = newSessionAction?.invoke()
+            activeSession = newState
+            val sessionId = newState?.sessionId
+            sessionIdTracker.setActiveSessionId(sessionId, inForeground)
 
             // initiate periodic caching of the payload if required
             if (transitionType != TransitionType.CRASH && newState != null) {

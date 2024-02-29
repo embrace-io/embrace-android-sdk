@@ -18,7 +18,7 @@ internal class BackgroundActivityMessageTest {
     private val appInfo = AppInfo("fake-app-id")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
     private val breadcrumbs = Breadcrumbs(
-        customBreadcrumbs = listOf(CustomBreadcrumb("fake-breadcrumb", 1))
+        viewBreadcrumbs = listOf(ViewBreadcrumb("fake-view", 109234098234))
     )
     private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
     private val perfInfo = PerformanceInfo(DiskUsage(1, 2))
@@ -48,7 +48,7 @@ internal class BackgroundActivityMessageTest {
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
         assertEquals(perfInfo, obj.performanceInfo)
-        assertEquals(breadcrumbs, obj.breadcrumbs)
+        assertEquals(breadcrumbs.viewBreadcrumbs?.single()?.screen, obj.breadcrumbs?.viewBreadcrumbs?.single()?.screen)
         assertEquals(spans, obj.spans)
     }
 

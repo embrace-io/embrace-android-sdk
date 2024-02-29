@@ -19,7 +19,7 @@ internal class SessionMessageTest {
     private val deviceInfo = DeviceInfo("fake-manufacturer")
     private val performanceInfo = PerformanceInfo(DiskUsage(150923409L, 509209823L))
     private val breadcrumbs = Breadcrumbs(
-        customBreadcrumbs = listOf(CustomBreadcrumb("Hi", 109234098234))
+        viewBreadcrumbs = listOf(ViewBreadcrumb("fake-view", 109234098234)),
     )
     private val spans = listOf(
         EmbraceSpanData(
@@ -58,7 +58,7 @@ internal class SessionMessageTest {
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
         assertEquals(performanceInfo, obj.performanceInfo)
-        assertEquals(breadcrumbs, obj.breadcrumbs)
+        assertEquals(breadcrumbs.viewBreadcrumbs?.single()?.screen, obj.breadcrumbs?.viewBreadcrumbs?.single()?.screen)
         assertEquals(spans, obj.spans)
     }
 

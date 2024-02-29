@@ -16,7 +16,7 @@ internal class SpanDataSourceImplTest {
     fun `capture data successfully`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.captureData(inputValidation = { true }) {
+        val success = source.alterSessionSpan(inputValidation = { true }) {
             createSpan("test")
         }
         assertTrue(success)
@@ -27,7 +27,7 @@ internal class SpanDataSourceImplTest {
     fun `capture data threw exception`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.captureData(inputValidation = { true }) {
+        val success = source.alterSessionSpan(inputValidation = { true }) {
             error("Whoops!")
         }
         assertFalse(success)
@@ -41,7 +41,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.captureData(inputValidation = { true }) {
+            source.alterSessionSpan(inputValidation = { true }) {
                 count++
             }
         }
@@ -55,7 +55,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.captureData(inputValidation = { false }) {
+            source.alterSessionSpan(inputValidation = { false }) {
                 count++
             }
         }
@@ -66,7 +66,7 @@ internal class SpanDataSourceImplTest {
     fun `start span succeeds`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.startSpan(inputValidation = { true }) {
+        val success = source.captureSpanData(true, inputValidation = { true }) {
             createSpan("test")
         }
         assertTrue(success)
@@ -77,7 +77,7 @@ internal class SpanDataSourceImplTest {
     fun `start span data threw exception`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.startSpan(inputValidation = { true }) {
+        val success = source.captureSpanData(true, inputValidation = { true }) {
             error("Whoops!")
         }
         assertFalse(success)
@@ -91,7 +91,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.startSpan(inputValidation = { true }) {
+            source.captureSpanData(true, inputValidation = { true }) {
                 count++
             }
         }
@@ -105,7 +105,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.startSpan(inputValidation = { false }) {
+            source.captureSpanData(true, inputValidation = { false }) {
                 count++
             }
         }
@@ -116,7 +116,7 @@ internal class SpanDataSourceImplTest {
     fun `stop span succeeeds`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.stopSpan(inputValidation = { true }) {
+        val success = source.captureSpanData(false, inputValidation = { true }) {
             createSpan("test")
         }
         assertTrue(success)
@@ -127,7 +127,7 @@ internal class SpanDataSourceImplTest {
     fun `stop span data threw exception`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.stopSpan(inputValidation = { true }) {
+        val success = source.captureSpanData(false, inputValidation = { true }) {
             error("Whoops!")
         }
         assertFalse(success)
@@ -141,7 +141,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.stopSpan(inputValidation = { true }) {
+            source.captureSpanData(false, inputValidation = { true }) {
                 count++
             }
         }
@@ -155,7 +155,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.stopSpan(inputValidation = { false }) {
+            source.captureSpanData(false, inputValidation = { false }) {
                 count++
             }
         }

@@ -37,7 +37,7 @@ internal class PeriodicSessionCacher(
     }
 
     private fun onPeriodicCache(provider: Provider<SessionMessage?>) = Runnable {
-        Systrace.trace("snapshot-session") {
+        Systrace.traceSynchronous("snapshot-session") {
             try {
                 provider()
             } catch (ex: Exception) {

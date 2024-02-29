@@ -78,7 +78,7 @@ internal class ApiRequestMapperTest {
                 )
             )
         )
-        request.assertCoreFieldsPopulated("/v2/log/logs")
+        request.assertCoreFieldsPopulated("/v2/logs")
     }
 
     @Test

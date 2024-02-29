@@ -38,7 +38,7 @@ internal class DataContainerModuleImpl(
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     sessionProperties: EmbraceSessionProperties,
-    startTime: Long
+    sdkStartTimeMs: Long
 ) : DataContainerModule {
 
     override val applicationExitInfoService: ApplicationExitInfoService by singleton {
@@ -75,7 +75,7 @@ internal class DataContainerModuleImpl(
 
     override val eventService: EventService by singleton {
         EmbraceEventService(
-            startTime,
+            sdkStartTimeMs,
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,

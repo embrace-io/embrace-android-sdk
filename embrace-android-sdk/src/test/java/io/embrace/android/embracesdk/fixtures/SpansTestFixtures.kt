@@ -18,14 +18,14 @@ internal val testSpan = EmbraceSpanData(
         checkNotNull(
             EmbraceSpanEvent.create(
                 name = "start-time",
-                timestampNanos = 1681972471807000000L,
+                timestampMs = 1681972471807L,
                 attributes = mapOf(Pair("test1", "value1"), Pair("test2", "value2"))
             )
         ),
         checkNotNull(
             EmbraceSpanEvent.create(
                 name = "end-span-event",
-                timestampNanos = 1681972471871000000L,
+                timestampMs = 1681972471871L,
                 attributes = null
             )
         )

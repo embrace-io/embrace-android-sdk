@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
@@ -30,9 +31,9 @@ internal class CurrentSessionSpanImpl(
      */
     private val sessionSpan: AtomicReference<EmbraceSpan?> = AtomicReference(null)
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(sessionSpan) {
-            sessionSpan.set(startSessionSpan(sdkInitStartTimeNanos))
+            sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
         }
     }
 
@@ -77,7 +78,7 @@ internal class CurrentSessionSpanImpl(
             if (appTerminationCause == null) {
                 endingSessionSpan.stop()
                 spanRepository.clearCompletedSpans()
-                sessionSpan.set(startSessionSpan(clock.now()))
+                sessionSpan.set(startSessionSpan(clock.now().nanosToMillis()))
             } else {
                 endingSessionSpan.addAttribute(
                     appTerminationCause.keyName(),
@@ -89,9 +90,10 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun addEvent(event: SpanEventData): Boolean {
+    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addEvent(event.spanName, event.spanStartTimeNanos, event.attributes)
+        val event = obj.mapper()
+        return currentSession.addEvent(event.spanName, event.spanStartTimeMs, event.attributes)
     }
 
     override fun addAttribute(attribute: SpanAttributeData): Boolean {
@@ -102,7 +104,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeNanos: Long): EmbraceSpan {
+    private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
         traceCount.set(0)
 
         val spanBuilder = createEmbraceSpanBuilder(
@@ -111,7 +113,7 @@ internal class CurrentSessionSpanImpl(
             type = EmbraceAttributes.Type.SESSION
         )
             .setNoParent()
-            .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
+            .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
 
         return EmbraceSpanImpl(spanBuilder, sessionSpan = true).apply {
             start()

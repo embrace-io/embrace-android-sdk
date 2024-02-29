@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -10,12 +12,13 @@ internal class InternalTracer(
     private val embraceTracer: EmbraceTracer,
 ) : InternalTracingApi {
 
-    override fun startSpan(name: String, parentSpanId: String?): String? {
+    override fun startSpan(name: String, parentSpanId: String?, startTimeMs: Long?): String? {
         val parent = validateParent(parentSpanId)
         return if (parent.isValid) {
             embraceTracer.startSpan(
                 name = name,
-                parent = parent.spanReference
+                parent = parent.spanReference,
+                startTimeMs = startTimeMs
             )?.spanId
         } else {
             null
@@ -48,8 +51,8 @@ internal class InternalTracer(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parentSpanId: String?,
         attributes: Map<String, String>?,
@@ -59,8 +62,8 @@ internal class InternalTracer(
         return if (parent.isValid) {
             embraceTracer.recordCompletedSpan(
                 name = name,
-                startTimeNanos = startTimeNanos,
-                endTimeNanos = endTimeNanos,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
                 errorCode = errorCode,
                 parent = parent.spanReference,
                 attributes = attributes,
@@ -71,10 +74,10 @@ internal class InternalTracer(
         }
     }
 
-    override fun addSpanEvent(spanId: String, name: String, time: Long?, attributes: Map<String, String>?): Boolean =
+    override fun addSpanEvent(spanId: String, name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         spanRepository.getSpan(spanId = spanId)?.addEvent(
             name = name,
-            timeNanos = time,
+            timestampMs = timestampMs?.normalizeTimestampAsMillis(),
             attributes = attributes
         ) ?: false
 
@@ -86,12 +89,29 @@ internal class InternalTracer(
 
     private fun mapToEvent(map: Map<String, Any>): EmbraceSpanEvent? {
         val name = map["name"]
-        val timestampNanos = map["timestampNanos"]
+        val timestampMs = map["timestampMs"] as? Long?
+        val timestampNanos = (map["timestampNanos"] as? Long?)?.nanosToMillis()
         val attributes = map["attributes"]
-        return if (name is String && timestampNanos is Long? && attributes is Map<*, *>?) {
+
+        // If timestampMs is specified but isn't the right type, return and don't create the event
+        if (timestampMs == null && map["timestampMs"] != null) {
+            return null
+        }
+
+        // If timestampMs is valid, use it
+        // else if timestampNanos is valid, use it
+        // else if timestampNanos isn't specified, use the current time in millis
+        // Otherwise, it means we have an invalid type of timestampNanos so we don't create the event
+        val validatedTimeMs = timestampMs ?: timestampNanos ?: if (map["timestampNanos"] == null) {
+            embraceTracer.getSdkCurrentTimeMs()
+        } else {
+            return null
+        }
+
+        return if (name is String && attributes is Map<*, *>?) {
             EmbraceSpanEvent.create(
                 name = name,
-                timestampNanos = timestampNanos ?: embraceTracer.getSdkCurrentTimeNanos(),
+                timestampMs = validatedTimeMs,
                 attributes = attributes?.let { toStringMap(it) }
             )
         } else {

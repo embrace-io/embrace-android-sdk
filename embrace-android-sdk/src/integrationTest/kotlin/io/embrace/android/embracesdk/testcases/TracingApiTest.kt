@@ -44,7 +44,7 @@ internal class TracingApiTest {
 
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
-        val testStartTime = testRule.harness.fakeClock.now()
+        val testStartTimeMs = testRule.harness.fakeClock.now()
         val spanExporter = FakeSpanExporter()
         with(testRule) {
             harness.fakeClock.tick(100L)
@@ -53,18 +53,23 @@ internal class TracingApiTest {
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
-                assertTrue(parentSpan.start(startTimeNanos = (harness.fakeClock.now() - 1L).millisToNanos()))
+                assertTrue(parentSpan.start(startTimeMs = harness.fakeClock.now() - 1L))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
                 assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                 assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
                     harness.fakeClock.tick(100L)
                     parentSpan.addEvent("parent event")
+                    parentSpan.addEvent(
+                        name = "parent event with attributes and bad input time",
+                        timestampMs = harness.fakeClock.now().millisToNanos(),
+                        attributes = mapOf("key" to "value")
+                    )
                     true
                 })
-                val failedOpStartTime = embrace.internalInterface.getSdkCurrentTime().millisToNanos()
+                val failedOpStartTimeMs = embrace.internalInterface.getSdkCurrentTime()
                 harness.fakeClock.tick(200L)
-                parentSpan.addEvent(name = "delayed event", timeNanos = (harness.fakeClock.now() - 50L).millisToNanos(), null)
-                val failedOpEndTime = embrace.internalInterface.getSdkCurrentTime().millisToNanos()
+                parentSpan.addEvent(name = "delayed event", timestampMs = harness.fakeClock.now() - 50L, null)
+                val failedOpEndTimeMs = embrace.internalInterface.getSdkCurrentTime()
 
                 assertTrue(parentSpan.stop())
 
@@ -78,7 +83,7 @@ internal class TracingApiTest {
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "failure time",
-                            timestampNanos = failedOpEndTime,
+                            timestampMs = failedOpEndTimeMs,
                             attributes = mapOf(
                                 Pair("retry", "1")
                             )
@@ -88,8 +93,8 @@ internal class TracingApiTest {
                 assertTrue(
                     embrace.recordCompletedSpan(
                         name = "completed-span",
-                        startTimeNanos = failedOpStartTime,
-                        endTimeNanos = failedOpEndTime,
+                        startTimeMs = failedOpStartTimeMs.millisToNanos(),
+                        endTimeMs = failedOpEndTimeMs.millisToNanos(),
                         errorCode = ErrorCode.FAILURE,
                         parent = parentSpan,
                         attributes = attributes,
@@ -97,13 +102,21 @@ internal class TracingApiTest {
                     )
                 )
                 val bonusSpan = checkNotNull(embrace.startSpan(name = "bonus-span", parent = parentSpan))
-                assertTrue(bonusSpan.stop(endTimeNanos = (harness.fakeClock.now() + 1).millisToNanos()))
+                val bonusSpan2 = checkNotNull(
+                    embrace.startSpan(
+                        name = "bonus-span-2",
+                        parent = parentSpan,
+                        startTimeMs = harness.fakeClock.now() + 10L
+                    )
+                )
+                assertTrue(bonusSpan.stop(endTimeMs = harness.fakeClock.now() + 1))
                 harness.fakeClock.tick(300L)
+                assertTrue(bonusSpan2.stop())
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            assertTrue("Timed out waiting for the expected spans: $results", spanExporter.awaitSpanExport(8))
+            assertTrue("Timed out waiting for the expected spans: $results", spanExporter.awaitSpanExport(9))
             val sessionEndTime = harness.fakeClock.now()
             assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
@@ -123,7 +136,8 @@ internal class TracingApiTest {
                 "completed-span",
                 "emb-startup-moment",
                 "emb-session-span",
-                "bonus-span"
+                "bonus-span",
+                "bonus-span-2",
             )
             expectedSpanName.forEach {
                 checkNotNull(spansMap[it]) { "$it not found: $results" }
@@ -131,37 +145,44 @@ internal class TracingApiTest {
 
             assertEmbraceSpanData(
                 span = spansMap["emb-sdk-init"],
-                expectedStartTimeMs = testStartTime + 100,
-                expectedEndTimeMs = testStartTime + 100,
+                expectedStartTimeMs = testStartTimeMs + 100,
+                expectedEndTimeMs = testStartTimeMs + 100,
                 expectedParentId = SpanId.getInvalid(),
                 private = true,
                 key = true
             )
             assertEmbraceSpanData(
                 span = spansMap["emb-startup-moment"],
-                expectedStartTimeMs = testStartTime + 100,
-                expectedEndTimeMs = testStartTime + 700,
+                expectedStartTimeMs = testStartTimeMs + 100,
+                expectedEndTimeMs = testStartTimeMs + 700,
                 expectedParentId = SpanId.getInvalid(),
                 key = true
             )
             assertEmbraceSpanData(
                 span = traceRootSpan,
-                expectedStartTimeMs = testStartTime + 99,
-                expectedEndTimeMs = testStartTime + 400,
+                expectedStartTimeMs = testStartTimeMs + 99,
+                expectedEndTimeMs = testStartTimeMs + 400,
                 expectedParentId = SpanId.getInvalid(),
                 expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
                 expectedEvents = listOf(
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "parent event",
-                            timestampNanos = (testStartTime + 200).millisToNanos(),
+                            timestampMs = testStartTimeMs + 200,
                             attributes = null
                         )
                     ),
                     checkNotNull(
                         EmbraceSpanEvent.create(
+                            name = "parent event with attributes and bad input time",
+                            timestampMs = testStartTimeMs + 200,
+                            attributes = mapOf("key" to "value")
+                        )
+                    ),
+                    checkNotNull(
+                        EmbraceSpanEvent.create(
                             name = "delayed event",
-                            timestampNanos = (testStartTime + 350).millisToNanos(),
+                            timestampMs = testStartTimeMs + 350,
                             attributes = null
                         ),
                     )
@@ -170,16 +191,16 @@ internal class TracingApiTest {
             )
             assertEmbraceSpanData(
                 span = spansMap["record-span-span"],
-                expectedStartTimeMs = testStartTime + 100,
-                expectedEndTimeMs = testStartTime + 200,
+                expectedStartTimeMs = testStartTimeMs + 100,
+                expectedEndTimeMs = testStartTimeMs + 200,
                 expectedParentId = traceRootSpan.spanId,
                 expectedTraceId = traceRootSpan.traceId
             )
 
             assertEmbraceSpanData(
                 span = spansMap["completed-span"],
-                expectedStartTimeMs = testStartTime + 200,
-                expectedEndTimeMs = testStartTime + 400,
+                expectedStartTimeMs = testStartTimeMs + 200,
+                expectedEndTimeMs = testStartTimeMs + 400,
                 expectedParentId = traceRootSpan.spanId,
                 expectedTraceId = traceRootSpan.traceId,
                 expectedStatus = StatusCode.ERROR,
@@ -188,7 +209,7 @@ internal class TracingApiTest {
                     checkNotNull(
                         EmbraceSpanEvent.create(
                             name = "failure time",
-                            timestampNanos = (testStartTime + 400).millisToNanos(),
+                            timestampMs = testStartTimeMs + 400,
                             attributes = mapOf(
                                 Pair("retry", "1")
                             )
@@ -199,15 +220,23 @@ internal class TracingApiTest {
 
             assertEmbraceSpanData(
                 span = spansMap["bonus-span"],
-                expectedStartTimeMs = testStartTime + 400,
-                expectedEndTimeMs = testStartTime + 401,
+                expectedStartTimeMs = testStartTimeMs + 400,
+                expectedEndTimeMs = testStartTimeMs + 401,
+                expectedParentId = traceRootSpan.spanId,
+                expectedTraceId = traceRootSpan.traceId
+            )
+
+            assertEmbraceSpanData(
+                span = spansMap["bonus-span-2"],
+                expectedStartTimeMs = testStartTimeMs + 410,
+                expectedEndTimeMs = testStartTimeMs + 700,
                 expectedParentId = traceRootSpan.spanId,
                 expectedTraceId = traceRootSpan.traceId
             )
 
             assertEmbraceSpanData(
                 span = sessionSpan,
-                expectedStartTimeMs = testStartTime + 100,
+                expectedStartTimeMs = testStartTimeMs + 100,
                 expectedEndTimeMs = sessionEndTime,
                 expectedParentId = SpanId.getInvalid(),
                 private = true

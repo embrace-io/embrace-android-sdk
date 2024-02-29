@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -23,7 +24,13 @@ internal interface DataSourceModule {
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
+    @Suppress("UNUSED_PARAMETER") initModule: InitModule,
+    @Suppress("UNUSED_PARAMETER") otelModule: OpenTelemetryModule,
+    @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
+    @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
+    @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
+
     private val values: MutableList<DataSourceState> = mutableListOf()
 
     /* Implementation details */

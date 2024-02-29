@@ -108,7 +108,7 @@ internal class PayloadFactoryBaTest {
         // Prevent background thread from overwriting deliveryService.lastSavedBackgroundActivity
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
         service = createService()
-        val now = clock.nowInNanos()
+        val now = clock.now()
         spanService.initializeService(now)
         val msg = service.endBackgroundActivityWithCrash(initial, now, "crashId")
 
@@ -120,7 +120,7 @@ internal class PayloadFactoryBaTest {
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        spanService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.now())
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 
         // there should be 1 completed span: the session span
@@ -131,7 +131,7 @@ internal class PayloadFactoryBaTest {
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        spanService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.now())
         clock.tick(1000L)
         val msg = service.endBackgroundActivityWithState(initial, clock.now())
 

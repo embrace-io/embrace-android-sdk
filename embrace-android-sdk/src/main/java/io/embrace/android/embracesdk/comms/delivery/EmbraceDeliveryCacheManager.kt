@@ -63,7 +63,7 @@ internal class EmbraceDeliveryCacheManager(
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
             saveBytes(sessionId, writeSync, snapshot) { filename: String ->
-                Systrace.trace("serialize-session") {
+                Systrace.traceSynchronous("serialize-session") {
                     cacheService.writeSession(filename, sessionMessage)
                 }
             }

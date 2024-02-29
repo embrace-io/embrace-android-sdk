@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -22,9 +23,17 @@ internal class EmbraceTracer(
     override fun startSpan(name: String): EmbraceSpan? = startSpan(name = name, parent = null)
 
     override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
+        startSpan(
+            name = name,
+            parent = parent,
+            startTimeMs = null
+        )
+
+    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? =
         spanService.startSpan(
             name = name,
             parent = parent,
+            startTimeMs = startTimeMs,
             internal = false
         )
 
@@ -61,33 +70,33 @@ internal class EmbraceTracer(
         code = code
     )
 
-    override fun recordCompletedSpan(name: String, startTimeNanos: Long, endTimeNanos: Long): Boolean =
+    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long): Boolean =
         recordCompletedSpan(
             name = name,
-            startTimeNanos = startTimeNanos,
-            endTimeNanos = endTimeNanos,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
             errorCode = null,
             parent = null,
             attributes = null,
             events = null
         )
 
-    override fun recordCompletedSpan(name: String, startTimeNanos: Long, endTimeNanos: Long, errorCode: ErrorCode?): Boolean =
+    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long, errorCode: ErrorCode?): Boolean =
         recordCompletedSpan(
             name = name,
-            startTimeNanos = startTimeNanos,
-            endTimeNanos = endTimeNanos,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
             errorCode = errorCode,
             parent = null,
             attributes = null,
             events = null
         )
 
-    override fun recordCompletedSpan(name: String, startTimeNanos: Long, endTimeNanos: Long, parent: EmbraceSpan?): Boolean =
+    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long, parent: EmbraceSpan?): Boolean =
         recordCompletedSpan(
             name = name,
-            startTimeNanos = startTimeNanos,
-            endTimeNanos = endTimeNanos,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
             errorCode = null,
             parent = parent,
             attributes = null,
@@ -96,14 +105,14 @@ internal class EmbraceTracer(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?
     ): Boolean = recordCompletedSpan(
         name = name,
-        startTimeNanos = startTimeNanos,
-        endTimeNanos = endTimeNanos,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
         errorCode = errorCode,
         parent = parent,
         attributes = null,
@@ -112,14 +121,14 @@ internal class EmbraceTracer(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean = recordCompletedSpan(
         name = name,
-        startTimeNanos = startTimeNanos,
-        endTimeNanos = endTimeNanos,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
         errorCode = null,
         parent = null,
         attributes = attributes,
@@ -128,8 +137,8 @@ internal class EmbraceTracer(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
@@ -137,8 +146,8 @@ internal class EmbraceTracer(
     ): Boolean =
         spanService.recordCompletedSpan(
             name = name,
-            startTimeNanos = startTimeNanos,
-            endTimeNanos = endTimeNanos,
+            startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
+            endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
             parent = parent,
             internal = false,
             attributes = attributes ?: emptyMap(),
@@ -149,10 +158,10 @@ internal class EmbraceTracer(
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)
 
     /**
-     * Return the current time in nanoseconds for the clock instance used by the Embrace SDK. This should be used to obtain the time
+     * Return the current time in millis for the clock instance used by the Embrace SDK. This should be used to obtain the time
      * in used for [recordCompletedSpan] so the timestamps will be in sync with those used by the SDK when a time is implicitly recorded.
      */
-    fun getSdkCurrentTimeNanos(): Long = clock.nowInNanos()
+    fun getSdkCurrentTimeMs(): Long = clock.now()
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean = spanService.initialized()

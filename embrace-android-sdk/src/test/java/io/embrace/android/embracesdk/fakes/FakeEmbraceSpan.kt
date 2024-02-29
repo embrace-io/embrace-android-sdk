@@ -1,12 +1,20 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.trace.IdGenerator
 
-internal class FakeEmbraceSpan private constructor(
-    override val parent: EmbraceSpan?
+internal class FakeEmbraceSpan(
+    override val parent: EmbraceSpan?,
+    val name: String? = null,
+    val type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
+    val internal: Boolean = true
 ) : EmbraceSpan {
+
+    val attributes = mutableMapOf<String, String>()
+    val events = mutableListOf<SpanEventData>()
 
     private var started = false
     private var stopped = false
@@ -46,15 +54,18 @@ internal class FakeEmbraceSpan private constructor(
     }
 
     override fun addEvent(name: String): Boolean {
-        TODO("Not yet implemented")
+        events.add(SpanEventData(name, 0, null))
+        return true
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
-        TODO("Not yet implemented")
+        events.add(SpanEventData(name, checkNotNull(timestampMs), attributes))
+        return true
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        TODO("Not yet implemented")
+        attributes[key] = value
+        return true
     }
 
     companion object {

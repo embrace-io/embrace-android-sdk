@@ -276,6 +276,7 @@ internal class ModuleInitBootstrapper(
                         customerLogModuleSupplier(
                             initModule,
                             coreModule,
+                            openTelemetryModule,
                             androidServicesModule,
                             essentialServiceModule,
                             deliveryModule,
@@ -287,9 +288,12 @@ internal class ModuleInitBootstrapper(
                     postInit(CustomerLogModule::class) {
                         serviceRegistry.registerServices(
                             customerLogModule.logMessageService,
+                            customerLogModule.logService,
                             customerLogModule.networkCaptureService,
                             customerLogModule.networkLoggingService
                         )
+                        // Start the log orchestrator
+                        customerLogModule.logOrchestrator
                     }
 
                     nativeModule = init(NativeModule::class) {

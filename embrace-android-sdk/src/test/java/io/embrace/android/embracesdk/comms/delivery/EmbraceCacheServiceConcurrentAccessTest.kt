@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
-import io.embrace.android.embracesdk.fakes.FakeEmbraceCacheService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -17,22 +16,18 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceCacheServiceConcurrentAccessTest {
-    private lateinit var testableEmbraceCacheService: FakeEmbraceCacheService
+    private lateinit var embraceCacheService: EmbraceCacheService
     private lateinit var storageService: FakeStorageService
     private lateinit var thread1: ExecutorService
     private lateinit var thread2: ExecutorService
-    private val serializer = EmbraceSerializer()
 
     @Before
     fun setUp() {
         storageService = FakeStorageService()
-        testableEmbraceCacheService = FakeEmbraceCacheService(
-            EmbraceCacheService(
-                storageService,
-                serializer,
-                InternalEmbraceLogger()
-            ),
-            storageService
+        embraceCacheService = EmbraceCacheService(
+            storageService,
+            EmbraceSerializer(),
+            InternalEmbraceLogger()
         )
         thread1 = SingleThreadTestScheduledExecutor()
         thread2 = SingleThreadTestScheduledExecutor()
@@ -44,17 +39,17 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val latch = CountDownLatch(2)
 
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+            embraceCacheService.cacheBytes(filename, lettersBytes)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            testableEmbraceCacheService.cacheBytes(filename, numbersBytes)
+            embraceCacheService.cacheBytes(filename, numbersBytes)
             latch.countDown()
         }
 
         latch.await(1, TimeUnit.SECONDS)
-        assertIsNumbersBytes(testableEmbraceCacheService.loadBytes(filename))
+        assertIsNumbersBytes(embraceCacheService.loadBytes(filename))
     }
 
     @Test
@@ -65,14 +60,14 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val finishOrder = CopyOnWriteArrayList<Int>()
 
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename1, lettersBytes)
+            embraceCacheService.cacheBytes(filename1, lettersBytes)
             finishOrder.add(1)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            testableEmbraceCacheService.cacheBytes(filename2, numbersBytes)
-            checkNotNull(testableEmbraceCacheService.loadBytes(filename2))
+            embraceCacheService.cacheBytes(filename2, numbersBytes)
+            checkNotNull(embraceCacheService.loadBytes(filename2))
             finishOrder.add(2)
             latch.countDown()
         }
@@ -88,15 +83,15 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val latch = CountDownLatch(2)
         val finishOrder = CopyOnWriteArrayList<Int>()
 
-        testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+        embraceCacheService.cacheBytes(filename, lettersBytes)
         thread1.submit {
-            testableEmbraceCacheService.loadBytes(filename)
+            embraceCacheService.loadBytes(filename)
             finishOrder.add(1)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            testableEmbraceCacheService.loadBytes(filename)
+            embraceCacheService.loadBytes(filename)
             finishOrder.add(2)
             latch.countDown()
         }
@@ -113,16 +108,16 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val loadedObject = AtomicReference<ByteArray?>()
         val finishOrder = CopyOnWriteArrayList<Int>()
 
-        testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+        embraceCacheService.cacheBytes(filename, lettersBytes)
         thread1.submit {
-            val content = testableEmbraceCacheService.loadBytes(filename)
+            val content = embraceCacheService.loadBytes(filename)
             finishOrder.add(1)
             loadedObject.set(content)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            testableEmbraceCacheService.cacheBytes(filename, numbersBytes)
+            embraceCacheService.cacheBytes(filename, numbersBytes)
             finishOrder.add(2)
             latch.countDown()
         }
@@ -130,7 +125,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         latch.await(1, TimeUnit.SECONDS)
         assertEquals(listOf(1, 2), finishOrder)
         assertIsLettersBytes(loadedObject.get())
-        assertIsNumbersBytes(testableEmbraceCacheService.loadBytes(filename))
+        assertIsNumbersBytes(embraceCacheService.loadBytes(filename))
     }
 
     @Test
@@ -140,12 +135,12 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val latch = CountDownLatch(2)
 
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+            embraceCacheService.cacheBytes(filename, lettersBytes)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            loadedObject.set(testableEmbraceCacheService.loadBytes(filename))
+            loadedObject.set(embraceCacheService.loadBytes(filename))
             latch.countDown()
         }
 
@@ -161,18 +156,18 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val latch = CountDownLatch(2)
 
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+            embraceCacheService.cacheBytes(filename, lettersBytes)
             initialLatch.countDown()
         }
         initialLatch.await(1, TimeUnit.SECONDS)
 
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, numbersBytes)
+            embraceCacheService.cacheBytes(filename, numbersBytes)
             latch.countDown()
         }
         Thread.sleep(10)
         thread2.submit {
-            loadedObject.set(testableEmbraceCacheService.loadBytes(filename))
+            loadedObject.set(embraceCacheService.loadBytes(filename))
             latch.countDown()
         }
         latch.await(1, TimeUnit.SECONDS)
@@ -185,7 +180,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val filename = "testfile-pause"
         val latch = CountDownLatch(2)
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+            embraceCacheService.cacheBytes(filename, lettersBytes)
             latch.countDown()
         }
         Thread.sleep(10)
@@ -195,7 +190,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         }
 
         latch.await(1, TimeUnit.SECONDS)
-        val loadedObject = testableEmbraceCacheService.loadBytes(filename)
+        val loadedObject = embraceCacheService.loadBytes(filename)
 
         assertNull(loadedObject)
     }
@@ -203,9 +198,9 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
     @Test
     fun `partial writes aborted due to exception does not leave partially written files`() {
         val filename = "testfile-truncate"
-        testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+        embraceCacheService.cacheBytes(filename, lettersBytes)
 
-        val loadedObject = testableEmbraceCacheService.loadBytes(filename)
+        val loadedObject = embraceCacheService.loadBytes(filename)
         assertNull(loadedObject)
     }
 
@@ -214,22 +209,22 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         val filename = "testfile-pause"
         val latch = CountDownLatch(1)
         thread1.submit {
-            testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+            embraceCacheService.cacheBytes(filename, lettersBytes)
             latch.countDown()
         }
 
         latch.await(1, TimeUnit.SECONDS)
-        assertIsLettersBytes(testableEmbraceCacheService.loadBytes(filename))
+        assertIsLettersBytes(embraceCacheService.loadBytes(filename))
     }
 
     @Test
     fun `paused read eventually succeeds`() {
         val filename = "testfile-read-alternating-pause"
         val loadedObject = AtomicReference<ByteArray?>()
-        testableEmbraceCacheService.cacheBytes(filename, lettersBytes)
+        embraceCacheService.cacheBytes(filename, lettersBytes)
         val latch = CountDownLatch(1)
         thread1.submit {
-            loadedObject.set(testableEmbraceCacheService.loadBytes(filename))
+            loadedObject.set(embraceCacheService.loadBytes(filename))
             latch.countDown()
         }
 

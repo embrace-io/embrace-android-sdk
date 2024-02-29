@@ -35,7 +35,7 @@ internal class EmbraceCacheService(
             if (bytes != null) {
                 val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
                 try {
-                    file.writeBytes(bytes)
+                    storageService.writeBytesToFile(file, bytes)
                     logger.logDeveloper(TAG, "Bytes cached")
                 } catch (ex: Exception) {
                     logger.logWarning("Failed to store cache object " + file.path, ex)
@@ -52,7 +52,7 @@ internal class EmbraceCacheService(
             logger.logDeveloper(TAG, "Attempting to read bytes from $name")
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
-                return file.readBytes()
+                return storageService.readBytesFromFile(file)
             } catch (ex: FileNotFoundException) {
                 logger.logWarning("Cache file cannot be found " + file.path)
             } catch (ex: Exception) {

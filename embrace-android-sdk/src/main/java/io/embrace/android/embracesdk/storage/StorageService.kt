@@ -21,6 +21,16 @@ internal interface StorageService {
     fun getFileForWrite(name: String): File
 
     /**
+     * Read from the given file and return the retrieved [ByteArray]
+     */
+    fun readBytesFromFile(file: File): ByteArray
+
+    /**
+     * Write the given [ByteArray] to the file and replace its existing content if applicable
+     */
+    fun writeBytesToFile(file: File, bytes: ByteArray)
+
+    /**
      * Returns a [File] instance referencing the directory where the config cache is stored.
      */
     fun getConfigCacheDir(): File

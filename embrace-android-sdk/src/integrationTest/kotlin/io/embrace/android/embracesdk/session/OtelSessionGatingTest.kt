@@ -102,11 +102,14 @@ internal class OtelSessionGatingTest {
         val sessionSpan = payload.findSessionSpan()
         assertNotNull(sessionSpan)
         assertEquals(gated, sessionSpan.findEvent("custom_breadcrumb") == null)
+        assertEquals(gated, payload.findSpan("emb-screen-view") == null)
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
         harness.recordSession {
             embrace.addBreadcrumb("Hello, world!")
+            embrace.startView("MyActivity")
+            embrace.endView("MyActivity")
             harness.fakeClock.tick(10000) // enough to trigger new session
             action()
         }

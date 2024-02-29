@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.opentelemetry.api.logs.Logger
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,6 +18,6 @@ internal class OpenTelemetryModuleImplTest {
         assertTrue(openTelemetryModule.currentSessionSpan is CurrentSessionSpanImpl)
         assertTrue(openTelemetryModule.logWriter is LogWriterImpl)
         assertTrue(openTelemetryModule.logSink is LogSinkImpl)
-        assertTrue(openTelemetryModule.logger is Logger)
+        assertNotNull(openTelemetryModule.logger)
     }
 }

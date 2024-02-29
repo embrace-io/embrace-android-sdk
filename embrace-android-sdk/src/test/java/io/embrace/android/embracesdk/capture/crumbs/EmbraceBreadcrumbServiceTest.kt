@@ -562,8 +562,8 @@ internal class EmbraceBreadcrumbServiceTest {
 
         val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
         assertEquals(100, crumbs.size)
-        assertEquals("a109", crumbs.first()?.screen)
-        assertEquals("a10", crumbs.last()?.screen)
+        assertEquals("a109", crumbs.first().screen)
+        assertEquals("a10", crumbs.last().screen)
     }
 
     @Test

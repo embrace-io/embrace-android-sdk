@@ -1,90 +1,88 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import io.embrace.android.embracesdk.arch.DataCaptureService
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
+import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
+import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
+import io.embrace.android.embracesdk.arch.destination.StartSpanData
+import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
+import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
-import io.embrace.android.embracesdk.utils.filter
-import java.util.Collections
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
  * Captures fragment breadcrumbs.
  */
 internal class FragmentBreadcrumbDataSource(
-    private val configService: ConfigService,
+    configService: ConfigService,
     private val clock: Clock,
-    private val store: BreadcrumbDataStore<FragmentBreadcrumb> = BreadcrumbDataStore {
-        configService.breadcrumbBehavior.getFragmentBreadcrumbLimit()
-    },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
-) : DataCaptureService<List<FragmentBreadcrumb>> by store {
+    spanService: SpanService
+) : SpanDataSourceImpl(
+    spanService,
+    UpToLimitStrategy({ configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() })
+),
+    StartSpanMapper<FragmentBreadcrumb> {
 
     companion object {
-
-        /**
-         * The default limit for how many open tracked fragments are allowed, which can be overridden
-         * by [RemoteConfig].
-         */
-        private const val DEFAULT_VIEW_STACK_SIZE = 20
+        internal const val SPAN_NAME = "screen-view"
     }
 
-    internal val fragmentStack: MutableList<FragmentBreadcrumb> = Collections.synchronizedList(ArrayList<FragmentBreadcrumb>())
-
-    fun startFragment(name: String?): Boolean {
-        if (name == null) {
-            return false
-        }
-        synchronized(this) {
-            if (fragmentStack.size >= DEFAULT_VIEW_STACK_SIZE) {
-                return false
-            }
-            return fragmentStack.add(FragmentBreadcrumb(name, clock.now(), 0))
-        }
-    }
-
-    fun endFragment(name: String?): Boolean {
-        if (name == null) {
-            return false
-        }
-        var start: FragmentBreadcrumb
-        val end = FragmentBreadcrumb(name, 0, clock.now())
-        synchronized(this) {
-            val crumbs = filter(fragmentStack) { crumb: FragmentBreadcrumb -> crumb.name == name }
-            if (crumbs.isEmpty()) {
-                return false
-            }
-            start = crumbs[0]
-            fragmentStack.remove(start)
-        }
-        end.setStartTime(start.getStartTime())
-        store.tryAddBreadcrumb(end)
-        return true
-    }
+    private val fragmentSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
 
     /**
-     * Close all open fragments when the activity closes
+     * Called when a fragment is started.
+     */
+    fun startFragment(name: String?): Boolean = captureSpanData(
+        countsTowardsLimits = true,
+        inputValidation = { !name.isNullOrEmpty() },
+        captureAction = {
+            val crumb = FragmentBreadcrumb(checkNotNull(name), clock.now())
+            startSpanCapture(crumb, ::toStartSpanData)?.apply {
+                fragmentSpans[name] = this
+            }
+        }
+    )
+
+    /**
+     * Called when a fragment is ended.
+     */
+    fun endFragment(name: String?): Boolean = captureSpanData(
+        countsTowardsLimits = false,
+        inputValidation = { !name.isNullOrEmpty() },
+        captureAction = {
+            val span = fragmentSpans.remove(name)
+            span?.endFragmentSpan(clock.now())
+        }
+    )
+
+    /**
+     * Called when the activity is closed (and therefore all fragments are assumed to close).
      */
     fun onViewClose() {
-        if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
-            return
-        }
-        if (fragmentStack.size == 0) {
-            return
-        }
-        val ts = clock.now()
-        synchronized(fragmentStack) {
-            for (fragment in fragmentStack) {
-                fragment.endTime = ts
-                store.tryAddBreadcrumb(fragment)
-            }
-            fragmentStack.clear()
+        fragmentSpans.forEach { (_, span) ->
+            captureSpanData(
+                countsTowardsLimits = false,
+                inputValidation = NoInputValidation,
+                captureAction = { span.endFragmentSpan(clock.now()) }
+            )
         }
     }
 
-    override fun cleanCollections() {
-        store.cleanCollections()
-        fragmentStack.clear()
+    override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
+        StartSpanData(
+            spanName = SPAN_NAME,
+            spanStartTimeMs = start,
+            attributes = mapOf(
+                "start_time" to start.toString(),
+                "fragment_name" to name
+            )
+        )
+    }
+
+    private fun EmbraceSpan.endFragmentSpan(now: Long) {
+        addAttribute("end_time", now.toString())
+        stop()
     }
 }

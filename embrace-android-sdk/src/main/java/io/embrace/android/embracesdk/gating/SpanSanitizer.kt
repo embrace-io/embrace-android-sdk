@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
+import io.embrace.android.embracesdk.capture.crumbs.FragmentBreadcrumbDataSource
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -37,8 +38,10 @@ internal class SpanSanitizer(
         return sanitizedSpans
     }
 
-    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
+        if (span.name == "emb-${FragmentBreadcrumbDataSource.SPAN_NAME}" && !shouldAddViewBreadcrumbs()) {
+            return false
+        }
         return true
     }
 
@@ -50,4 +53,6 @@ internal class SpanSanitizer(
     }
 
     private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)
+    private fun shouldAddViewBreadcrumbs() =
+        enabledComponents.contains(SessionGatingKeys.BREADCRUMBS_VIEWS)
 }

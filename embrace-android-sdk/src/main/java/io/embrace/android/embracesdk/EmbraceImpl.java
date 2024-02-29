@@ -47,6 +47,7 @@ import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.TraceparentGenerator;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
+import io.embrace.android.embracesdk.internal.logs.LogService;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
@@ -156,6 +157,9 @@ final class EmbraceImpl {
 
     @Nullable
     private volatile LogMessageService logMessageService;
+
+    @Nullable
+    private volatile LogService logService;
 
     @Nullable
     private volatile ConfigService configService;
@@ -310,6 +314,7 @@ final class EmbraceImpl {
 
         final CustomerLogModule customerLogModule = moduleInitBootstrapper.getCustomerLogModule();
         logMessageService = customerLogModule.getLogMessageService();
+        logService = customerLogModule.getLogService();
         networkCaptureService = customerLogModule.getNetworkCaptureService();
         networkLoggingService = customerLogModule.getNetworkLoggingService();
 
@@ -784,15 +789,10 @@ final class EmbraceImpl {
     void logMessage(@NonNull String message,
                     @NonNull Severity severity,
                     @Nullable Map<String, ?> properties) {
-        logMessage(
-            EventType.Companion.fromSeverity(severity),
-            message,
-            properties,
-            null,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
+        logService.log(
+                message,
+                severity,
+                properties
         );
     }
 

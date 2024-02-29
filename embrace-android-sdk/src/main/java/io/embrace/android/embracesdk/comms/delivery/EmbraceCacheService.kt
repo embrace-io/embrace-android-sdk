@@ -168,19 +168,7 @@ internal class EmbraceCacheService(
         }.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
     }
 
-    override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        findLock(name).write {
-            try {
-                logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-                val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                serializer.toJson(sessionMessage, SessionMessage::class.java, file.outputStream())
-                logger.logDeveloper(TAG, "Bytes cached")
-            } catch (ex: Throwable) {
-                logger.logWarning("Failed to write session with buffered writer", ex)
-                deleteFile(name)
-            }
-        }
-    }
+    override fun writeSession(name: String, sessionMessage: SessionMessage) = cacheObject(name, sessionMessage, SessionMessage::class.java)
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         findLock(name).read {
@@ -202,10 +190,29 @@ internal class EmbraceCacheService(
         findLock(name).write {
             try {
                 val sessionMessage = loadObject(name, SessionMessage::class.java) ?: return@write
+                val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+                val oldSessionFile = storageService.getFileForWrite("${sessionFile.name}-old")
+                val newSessionFile = storageService.getFileForWrite("${sessionFile.name}-new")
                 val newMessage = transformer(sessionMessage)
-                cacheObject(name, newMessage, SessionMessage::class.java)
+                serializer.toJson(newMessage, SessionMessage::class.java, newSessionFile.outputStream())
+                val oldSessionRenamed = sessionFile.renameTo(oldSessionFile)
+                val newSessionRenamed = newSessionFile.renameTo(sessionFile)
+                val oldSessionDeleted = oldSessionFile.delete()
+                if (!oldSessionRenamed || !newSessionRenamed || !oldSessionDeleted) {
+                    val failures = mutableListOf<String>()
+                    if (!oldSessionRenamed) {
+                        failures.add("old session file not renamed")
+                    }
+                    if (!newSessionRenamed) {
+                        failures.add("new session file not renamed")
+                    }
+                    if (!oldSessionDeleted) {
+                        failures.add("old session file not deleted")
+                    }
+                    logger.logError("Operation to replace the session failed: $failures")
+                }
             } catch (ex: Exception) {
-                logger.logDebug("Failed to replace session object ", ex)
+                logger.logError("Failed to replace session object ", ex)
                 deleteFile(name)
             }
         }

@@ -95,13 +95,13 @@ internal class OtelSessionGatingTest {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun assertSessionGating(
         payload: SessionMessage,
         gated: Boolean
     ) {
         val sessionSpan = payload.findSessionSpan()
         assertNotNull(sessionSpan)
+        assertEquals(gated, sessionSpan.findEvent("custom_breadcrumb") == null)
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {

@@ -14,8 +14,7 @@ internal class BreadcrumbsSanitizerTest {
         emptyList(),
         emptyList(),
         emptyList(),
-        emptyList(),
-        emptyList(),
+        emptyList()
     )
 
     @Test
@@ -33,9 +32,7 @@ internal class BreadcrumbsSanitizerTest {
 
         assertNotNull(result?.tapBreadcrumbs)
         assertNotNull(result?.viewBreadcrumbs)
-        assertNotNull(result?.customBreadcrumbs)
         assertNotNull(result?.webViewBreadcrumbs)
-        assertNotNull(result?.customBreadcrumbs)
     }
 
     @Test
@@ -47,8 +44,6 @@ internal class BreadcrumbsSanitizerTest {
 
         assertNull(result?.tapBreadcrumbs)
         assertNull(result?.viewBreadcrumbs)
-        assertNull(result?.customBreadcrumbs)
         assertNull(result?.webViewBreadcrumbs)
-        assertNull(result?.customBreadcrumbs)
     }
 }

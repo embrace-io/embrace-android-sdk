@@ -15,7 +15,6 @@
     "sdk": "__EMBRACE_TEST_IGNORE__"
   },
   "br": {
-    "cb": "__EMBRACE_TEST_IGNORE__",
     "cv": [],
     "rna": [],
     "pn": [],
@@ -154,7 +153,15 @@
         "emb.usage.set_username": "1"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "events": [],
+      "events": [
+        {
+          "name": "custom_breadcrumb",
+          "time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+          "attributes": {
+            "message": "a message"
+          }
+        }
+      ],
       "name": "emb-session-span",
       "parent_span_id": "0000000000000000",
       "span_id": "__EMBRACE_TEST_IGNORE__",

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
@@ -85,7 +86,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = EmbraceBreadcrumbService(
             clock,
             configService,
-            FakeActivityTracker()
+            FakeActivityTracker(),
+            FakeCurrentSessionSpan()
         )
         service.logView("viewA", clock.now())
         clock.tickSecond()
@@ -108,18 +110,6 @@ internal class EmbraceBreadcrumbServiceTest {
         val webViews = checkNotNull(service.getBreadcrumbs().webViewBreadcrumbs)
         assertEquals("two webviews captured", 2, webViews.size)
         assertJsonMessage(service, "breadcrumb_webview.json")
-    }
-
-    /*
-     * Custom breadcrumbs
-     */
-    @Test
-    fun testBreadcrumbCreate() {
-        val service = initializeBreadcrumbService()
-        service.logCustom("breadcrumb", clock.now())
-        val breadcrumbs = checkNotNull(service.getBreadcrumbs().customBreadcrumbs)
-        assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
-        assertJsonMessage(service, "breadcrumb_custom.json")
     }
 
     /*
@@ -401,7 +391,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(1, breadcrumbs.pushNotifications?.size)
         assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.webViewBreadcrumbs?.size)
-        assertEquals(1, breadcrumbs.customBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.fragmentBreadcrumbs?.size)
 
         service.cleanCollections()
@@ -412,7 +401,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.webViewBreadcrumbs?.size)
-        assertEquals(0, breadcrumbsAfterClean.customBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.fragmentBreadcrumbs?.size)
     }
 
@@ -440,33 +428,6 @@ internal class EmbraceBreadcrumbServiceTest {
             breadcrumbs = service.getBreadcrumbs()
         )
         assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)
-    }
-
-    @Test
-    fun testFlushBreadcrumbs() {
-        val service = initializeBreadcrumbService()
-        service.startView("a")
-        clock.tickSecond()
-        service.endView("a")
-        clock.tickSecond()
-        service.startView("b")
-        clock.tickSecond()
-        service.logCustom("breadcrumb", clock.now())
-        val breadcrumbs = checkNotNull(service.getBreadcrumbs().customBreadcrumbs)
-        assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
-
-        service.onViewClose(activity)
-        val message = SessionMessage(
-            session = fakeSession(),
-            breadcrumbs = service.flushBreadcrumbs()
-        )
-        assertJsonMatchesGoldenFile("breadcrumb_view_custom.json", message)
-
-        val secondMessage = SessionMessage(
-            session = fakeSession(),
-            breadcrumbs = service.flushBreadcrumbs()
-        )
-        assertJsonMatchesGoldenFile("breadcrumb_empty.json", secondMessage)
     }
 
     @Test
@@ -592,7 +553,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = EmbraceBreadcrumbService(
             clock,
             configService,
-            activityTracker
+            activityTracker,
+            FakeCurrentSessionSpan()
         )
         service.addFirstViewBreadcrumbForSession(5)
         val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
@@ -603,7 +565,8 @@ internal class EmbraceBreadcrumbServiceTest {
     private fun initializeBreadcrumbService() = EmbraceBreadcrumbService(
         clock,
         configService,
-        FakeActivityTracker()
+        FakeActivityTracker(),
+        FakeCurrentSessionSpan()
     )
 
     companion object {

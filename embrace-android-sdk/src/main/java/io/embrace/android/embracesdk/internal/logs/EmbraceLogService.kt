@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 
@@ -62,6 +63,7 @@ internal class EmbraceLogService(
             // Set these after the custom properties so they can't be overridden
             sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
             metadataService.getAppState()?.let { attributes.setAppState(it) }
+            attributes.setLogId(Uuid.getEmbUuid())
 
             val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(

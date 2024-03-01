@@ -185,17 +185,7 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
-            // first, end the current session or background activity, if either exist.
-            val initial = activeSession
-            if (initial != null) {
-                val endMessage = oldSessionAction?.invoke(initial)
-                processEndMessage(endMessage, transitionType)
-            }
-
-            // next, clean up any previous session state
-            boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
-
-            // disable any previous periodic caching so the job doesn't overwrite the previously saved session
+            // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
             when (endProcessState) {
@@ -203,7 +193,17 @@ internal class SessionOrchestratorImpl(
                 ProcessState.BACKGROUND -> periodicSessionCacher.stop()
             }
 
-            // start the next session or background activity
+            // second, end the current session or background activity, if either exist.
+            val initial = activeSession
+            if (initial != null) {
+                val endMessage = oldSessionAction?.invoke(initial)
+                processEndMessage(endMessage, transitionType)
+            }
+
+            // third, clean up any previous session state
+            boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
+
+            // now, we can start the next session or background activity
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
@@ -231,6 +231,8 @@ internal class SessionOrchestratorImpl(
                 !inForeground,
                 transitionType.name
             )
+
+            // et voila! a new session is born
         }
     }
 

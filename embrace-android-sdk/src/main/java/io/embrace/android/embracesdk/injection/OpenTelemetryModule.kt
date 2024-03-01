@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -99,10 +100,12 @@ internal class OpenTelemetryModuleImpl(
     }
 
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {
-        OpenTelemetrySdk(
-            openTelemetryClock = initModule.openTelemetryClock,
-            configuration = openTelemetryConfiguration
-        )
+        Systrace.traceSynchronous("otel-sdk-wrapper-init") {
+            OpenTelemetrySdk(
+                openTelemetryClock = initModule.openTelemetryClock,
+                configuration = openTelemetryConfiguration
+            )
+        }
     }
 
     override val tracer: Tracer by lazy {

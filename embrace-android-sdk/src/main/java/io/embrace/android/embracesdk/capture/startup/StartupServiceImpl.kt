@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.startup
 
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.SpanService
 
 internal class StartupServiceImpl(
@@ -11,21 +10,21 @@ internal class StartupServiceImpl(
      * SDK startup time. Only set for cold start sessions.
      */
     @Volatile
-    private var sdkStartupDuration: Long? = null
+    private var sdkStartupDurationMs: Long? = null
 
     override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
-        if (sdkStartupDuration == null) {
+        if (sdkStartupDurationMs == null) {
             spanService.recordCompletedSpan(
                 name = "sdk-init",
-                startTimeNanos = startTimeMs.millisToNanos(),
-                endTimeNanos = endTimeMs.millisToNanos()
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs
             )
         }
-        sdkStartupDuration = endTimeMs - startTimeMs
+        sdkStartupDurationMs = endTimeMs - startTimeMs
     }
 
     override fun getSdkStartupInfo(coldStart: Boolean): Long? = when (coldStart) {
-        true -> sdkStartupDuration
+        true -> sdkStartupDurationMs
         false -> null
     }
 }

@@ -25,9 +25,10 @@ internal abstract class DataSourceImpl<T>(
         limitStrategy.resetDataCaptureLimits()
     }
 
-    override fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean {
-        return captureDataImpl(inputValidation, captureAction)
-    }
+    override fun alterSessionSpan(
+        inputValidation: () -> Boolean,
+        captureAction: T.() -> Unit
+    ): Boolean = captureDataImpl(inputValidation, captureAction, true)
 
     protected fun captureDataImpl(
         inputValidation: () -> Boolean,

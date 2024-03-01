@@ -7,7 +7,8 @@ internal class FakeOpenTelemetryLogWriter : LogWriter {
 
     val logEvents = mutableListOf<LogEventData>()
 
-    override fun addLog(log: LogEventData) {
-        logEvents.add(log)
+    override fun <T> addLog(log: T, mapper: T.() -> LogEventData) {
+        val logEvent = log.mapper()
+        logEvents.add(logEvent)
     }
 }

@@ -10,7 +10,7 @@ internal class FakeSpanService : SpanService {
 
     val createdSpans = mutableListOf<String>()
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeMs: Long) {
     }
 
     override fun initialized(): Boolean = true
@@ -39,8 +39,8 @@ internal class FakeSpanService : SpanService {
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,

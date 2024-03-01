@@ -18,9 +18,9 @@ internal class SpanServiceImpl(
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(initialized) {
-            currentSessionSpan.initializeService(sdkInitStartTimeNanos)
+            currentSessionSpan.initializeService(sdkInitStartTimeMs)
             initialized.set(true)
         }
     }
@@ -59,8 +59,8 @@ internal class SpanServiceImpl(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
@@ -68,7 +68,7 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
     ): Boolean {
-        if (startTimeNanos > endTimeNanos) {
+        if (startTimeMs > endTimeMs) {
             return false
         }
 
@@ -77,11 +77,11 @@ internal class SpanServiceImpl(
         ) {
             createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
                 .updateParent(parent)
-                .setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
+                .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
                 .startSpan()
                 .setAllAttributes(Attributes.builder().fromMap(attributes).build())
                 .addEvents(events)
-                .endSpan(errorCode, endTimeNanos)
+                .endSpan(errorCode, endTimeMs)
             true
         } else {
             false

@@ -65,14 +65,14 @@ internal class EmbraceLogService(
 
             val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(
-                timestampNanos = clock.nowInNanos(),
+                startTimeMs = clock.nowInNanos(),
                 message = message,
                 severity = otelSeverity,
                 severityText = otelSeverity.name,
                 attributes = attributes.toMap()
             )
 
-            logWriter.addLog(logEventData)
+            logWriter.addLog(logEventData) { logEventData }
         }
     }
 

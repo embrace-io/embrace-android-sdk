@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
 import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.SessionPayload
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -276,9 +277,30 @@ internal class EmbraceApiServiceTest {
         fakeApiClient.queueResponse(successfulPostResponse)
         apiService.sendLogsEnvelope(logsEnvelope)
 
+        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
-            expectedPayload = getGenericsExpectedPayloadSerialized(logsEnvelope)
+            expectedPayload = getGenericsExpectedPayloadSerialized(logsEnvelope, type)
+        )
+    }
+
+    @Test
+    fun `send session envelope is as expected`() {
+        val sessionEnvelope = Envelope(
+            data = SessionPayload(
+                sharedLibSymbolMapping = mapOf("key" to "value")
+            )
+        )
+
+        fakeApiClient.queueResponse(successfulPostResponse)
+        apiService.sendSessionEnvelope(sessionEnvelope)
+
+        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/sessions",
+            expectedPayload = getGenericsExpectedPayloadSerialized(sessionEnvelope, type)
         )
     }
 
@@ -521,11 +543,10 @@ internal class EmbraceApiServiceTest {
         return os.toByteArray()
     }
 
-    private inline fun <reified T> getGenericsExpectedPayloadSerialized(payload: T): ByteArray {
+    private inline fun <reified T> getGenericsExpectedPayloadSerialized(payload: T, parameterizedType: ParameterizedType): ByteArray {
         val os = ByteArrayOutputStream()
-        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
         ConditionalGzipOutputStream(os).use {
-            serializer.toJson(payload, type, it)
+            serializer.toJson(payload, parameterizedType, it)
         }
         return os.toByteArray()
     }

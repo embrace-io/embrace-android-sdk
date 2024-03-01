@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.session
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 internal data class SessionPayload(
     /**
      * A map of symbols that are associated with the session.

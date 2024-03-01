@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.storage.StorageService
+import java.io.File
 import java.io.FileNotFoundException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -164,7 +165,7 @@ internal class EmbraceCacheService(
 
     override fun normalizeCacheAndGetSessionFileIds(): List<String> {
         val sessionFileNames = storageService
-            .listFiles { _, name -> name.startsWith(EMBRACE_PREFIX + EmbraceDeliveryCacheManager.SESSION_FILE_PREFIX) }
+            .listFiles { _, name -> name.startsWith(EMBRACE_PREFIX + SESSION_FILE_PREFIX) }
             .map { file -> file.name.substring(EMBRACE_PREFIX.length) }
 
         // Need to sweep the files directory to clear the temp files left over due to the app process crashing at an inopportune time
@@ -175,21 +176,21 @@ internal class EmbraceCacheService(
         // Since we are dealing with old sessions files, the current process will not modify them outside of this thread.
         // As such, it is safe to do it on this thread.
 
-        val properSessionFileIds = mutableListOf<String>()
+        val properSessionFileIds = mutableSetOf<String>()
         sessionFileNames.forEach { filename ->
-            if (filename.endsWith(OLD_COPY_SUFFIX)) {
-                if (!deleteFile(filename + OLD_COPY_SUFFIX)) {
-                    logger.logWarning("Old session for session file for $filename not deleted on startup")
+            if (filename.endsWith(OLD_COPY_SUFFIX) || filename.endsWith(TEMP_COPY_SUFFIX)) {
+                if (!deleteFile(filename)) {
+                    logger.logWarning("Temporary session file for $filename not deleted on startup")
                 }
             } else if (filename == OLD_VERSION_FILE_NAME) {
                 val previousSdkSession = loadObject(filename, SessionMessage::class.java)
                 previousSdkSession?.also { sessionMessage ->
                     runCatching {
                         val session = sessionMessage.session
-                        val cachedSession = EmbraceDeliveryCacheManager.CachedSession(session.sessionId, session.startTime)
-                        if (!sessionFileNames.contains(cachedSession.filename)) {
-                            replaceSessionFile(cachedSession.filename, filename)
-                            properSessionFileIds.add(cachedSession.filename)
+                        val properSessionFilename = getFileNameForSession(session.sessionId, session.startTime)
+                        if (!sessionFileNames.contains(properSessionFilename)) {
+                            replaceSessionFile(properSessionFilename, filename)
+                            properSessionFileIds.add(properSessionFilename)
                         }
                     }
                 }
@@ -205,22 +206,40 @@ internal class EmbraceCacheService(
             }
         }
 
-        return properSessionFileIds
+        return properSessionFileIds.toList()
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         findLock(name).write {
+            var isOverwrite = false
+            var sessionWriteTempFile: File? = null
             try {
+                // First write session to a temp file, then renaming it to the proper session file if it didn't exist before.
+                // If it's an overwrite, rename it to denote that serialization was complete, then swap it with the proper session file.
+                // That way, if we see a file suffix with "-tmp", we'll know the operation terminated before completing,
+                // and thus is likely an incomplete file.
                 val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                if (sessionFile.exists()) {
+                isOverwrite = sessionFile.exists()
+                sessionWriteTempFile = storageService.getFileForWrite(sessionFile.name + TEMP_COPY_SUFFIX)
+                // Write new session file to a temporary location
+                serializer.toJson(sessionMessage, SessionMessage::class.java, sessionWriteTempFile.outputStream())
+
+                val suffix = if (isOverwrite) {
                     val newSessionFile = storageService.getFileForWrite(sessionFile.name + NEW_COPY_SUFFIX)
-                    serializer.toJson(sessionMessage, SessionMessage::class.java, newSessionFile.outputStream())
-                    replaceSessionFile(name, name + NEW_COPY_SUFFIX)
+                    sessionWriteTempFile.renameTo(newSessionFile)
+                    NEW_COPY_SUFFIX
                 } else {
-                    serializer.toJson(sessionMessage, SessionMessage::class.java, sessionFile.outputStream())
+                    TEMP_COPY_SUFFIX
                 }
+                replaceSessionFile(name, name + suffix)
             } catch (ex: Exception) {
-                logger.logError("Failed to write session object ", ex)
+                sessionWriteTempFile?.delete()
+                val action = if (isOverwrite) {
+                    "overwrite"
+                } else {
+                    "write new"
+                }
+                logger.logError("Failed to $action session object ", ex)
             }
         }
     }
@@ -248,7 +267,7 @@ internal class EmbraceCacheService(
                 val newMessage = transformer(sessionMessage)
                 writeSession(name, newMessage)
             } catch (ex: Exception) {
-                logger.logError("Failed to replace session object ", ex)
+                logger.logError("Failed to transform session object ", ex)
             }
         }
     }
@@ -276,15 +295,23 @@ internal class EmbraceCacheService(
         fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
 
     companion object {
-        private const val EMBRACE_PREFIX = "emb_"
-        private const val OLD_COPY_SUFFIX = "-old"
-        private const val NEW_COPY_SUFFIX = "-new"
-        private const val TAG = "EmbraceCacheService"
+        /**
+         * File names for all cached sessions start with this prefix
+         */
+        private const val SESSION_FILE_PREFIX = "last_session"
 
         /**
          * Full file name for a session saved with a previous version of the SDK. Note that to
          * preserve backward compatibility, SESSION_FILE_PREFIX must be the start of OLD_VERSION_FILE_NAME
          */
         private const val OLD_VERSION_FILE_NAME = "last_session.json"
+        private const val TAG = "EmbraceCacheService"
+
+        const val EMBRACE_PREFIX = "emb_"
+        const val OLD_COPY_SUFFIX = "-old"
+        const val TEMP_COPY_SUFFIX = "-tmp"
+        const val NEW_COPY_SUFFIX = "-new"
+
+        fun getFileNameForSession(sessionId: String, timestampMs: Long): String = "$SESSION_FILE_PREFIX.$timestampMs.$sessionId.json"
     }
 }

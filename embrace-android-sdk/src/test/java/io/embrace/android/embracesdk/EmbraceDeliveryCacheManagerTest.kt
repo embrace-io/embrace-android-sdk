@@ -147,15 +147,15 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `read cached sessions`() {
         cacheService.writeSession(
-            getCachedSessionName("session1", clockInit - 300000),
+            EmbraceCacheService.getFileNameForSession("session1", clockInit - 300000),
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session1", startTime = clockInit - 300000))
         )
         cacheService.writeSession(
-            getCachedSessionName("session2", clockInit - 360000),
+            EmbraceCacheService.getFileNameForSession("session2", clockInit - 360000),
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session2", startTime = clockInit - 360000))
         )
         cacheService.writeSession(
-            getCachedSessionName("session3", clockInit - 420000),
+            EmbraceCacheService.getFileNameForSession("session3", clockInit - 420000),
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session3", startTime = clockInit - 420000))
         )
         assertEquals(
@@ -349,9 +349,5 @@ internal class EmbraceDeliveryCacheManagerTest {
             startTime = fakeClock.now()
         )
         return SessionMessage(session)
-    }
-
-    private fun getCachedSessionName(sessionId: String, timestamp: Long): String {
-        return EmbraceDeliveryCacheManager.CachedSession(sessionId, timestamp).filename
     }
 }

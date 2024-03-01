@@ -256,16 +256,14 @@ internal class EmbraceCacheService(
     private fun replaceSessionFile(filenameToReplace: String, filenameOfReplacement: String): Boolean {
         try {
             val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameToReplace)
-            val newSessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
             val oldSessionFile = storageService.getFileForWrite(sessionFile.name + OLD_COPY_SUFFIX)
             if (sessionFile.exists()) {
                 sessionFile.renameTo(oldSessionFile)
-                oldSessionFile.deleteOnExit()
-            }
-            newSessionFile.renameTo(sessionFile)
-            if (oldSessionFile.exists()) {
                 oldSessionFile.delete()
             }
+
+            val newSessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
+            newSessionFile.renameTo(sessionFile)
         } catch (e: Exception) {
             logger.logError("Failed to replace session file ", e)
             return false

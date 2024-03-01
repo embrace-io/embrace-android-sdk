@@ -59,8 +59,8 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
     private val attributes: MutableMap<String, String> = mutableMapOf()
 
     init {
-        // TODO There is an implicit conversion from Any to String here. Should the attributes
-        // in LogEventData be <String, Any> instead of <String, String> ?
+        // Note that there is an implicit conversion from Any to String here
+        // Currently the backend only supports string attributes for logs
         properties?.forEach {
             attributes[it.key] = it.value.toString()
         }

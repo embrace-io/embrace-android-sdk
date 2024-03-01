@@ -19,6 +19,6 @@ internal class EmbraceLogRecordProcessorTest {
 
         val logRecordData = logRecordExporter.exportedLogs?.first()
         assertEquals(readWriteLogRecord.toLogRecordData(), logRecordData)
-        assertNotNull(readWriteLogRecord.attributes["emb.event_id"])
+        assertNotNull(readWriteLogRecord.attributes["emb.log_id"])
     }
 }

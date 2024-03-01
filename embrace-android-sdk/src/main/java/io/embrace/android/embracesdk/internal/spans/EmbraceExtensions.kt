@@ -176,7 +176,7 @@ internal fun Span.setSequenceId(id: Long): Span {
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
  */
-internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeNanos: Long? = null): Span {
+internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null): Span {
     if (errorCode == null) {
         setStatus(StatusCode.OK)
     } else {
@@ -184,8 +184,8 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeNanos: Long? = nu
         setAttribute(errorCode.keyName(), errorCode.toString())
     }
 
-    if (endTimeNanos != null) {
-        end(endTimeNanos, TimeUnit.NANOSECONDS)
+    if (endTimeMs != null) {
+        end(endTimeMs, TimeUnit.MILLISECONDS)
     } else {
         end()
     }

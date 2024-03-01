@@ -120,7 +120,7 @@ internal class ModuleInitBootstrapper(
         context: Context,
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
-        sdkStartTimeNanos: Long,
+        sdkStartTimeMs: Long,
         customAppId: String? = null,
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
@@ -138,8 +138,8 @@ internal class ModuleInitBootstrapper(
 
                     val initTask = postInit(OpenTelemetryModule::class) {
                         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
-                            Systrace.trace("span-service-init") {
-                                openTelemetryModule.spanService.initializeService(sdkStartTimeNanos)
+                            Systrace.traceSynchronous("span-service-init") {
+                                openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }
                         }
                     }
@@ -358,7 +358,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             nativeModule,
                             sessionProperties,
-                            TimeUnit.NANOSECONDS.toMillis(sdkStartTimeNanos)
+                            sdkStartTimeMs
                         )
                     }
 
@@ -371,7 +371,14 @@ internal class ModuleInitBootstrapper(
                     }
 
                     dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(essentialServiceModule)
+                        dataSourceModuleSupplier(
+                            essentialServiceModule,
+                            initModule,
+                            openTelemetryModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            workerThreadModule
+                        )
                     }
 
                     sessionModule = init(SessionModule::class) {
@@ -439,7 +446,7 @@ internal class ModuleInitBootstrapper(
      */
     @JvmOverloads
     fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) =
-        Systrace.trace("async-init-wait") {
+        Systrace.traceSynchronous("async-init-wait") {
             asyncInitTask.get()?.get(timeout, unit)
         }
 

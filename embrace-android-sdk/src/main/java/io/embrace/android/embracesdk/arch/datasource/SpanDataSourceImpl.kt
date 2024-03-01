@@ -18,13 +18,9 @@ internal abstract class SpanDataSourceImpl(
     logger
 ) {
 
-    override fun startSpan(
+    override fun captureSpanData(
+        countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
         captureAction: SpanService.() -> Unit
-    ): Boolean = captureDataImpl(inputValidation, captureAction)
-
-    override fun stopSpan(
-        inputValidation: () -> Boolean,
-        captureAction: SpanService.() -> Unit
-    ): Boolean = captureDataImpl(inputValidation, captureAction, false)
+    ): Boolean = captureDataImpl(inputValidation, captureAction, countsTowardsLimits)
 }

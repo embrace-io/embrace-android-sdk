@@ -80,7 +80,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(3, logs.size)
         val first = logs[0]
         assertEquals("Hello world", first.message)
-        assertNotEquals(0, first.timestampNanos)
+        assertNotEquals(0, first.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO, first.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, first.severityText)
         assertEquals("bar", first.attributes?.get("foo"))
@@ -89,7 +89,7 @@ internal class EmbraceLogServiceTest {
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
-        assertNotEquals(0, second.timestampNanos)
+        assertNotEquals(0, second.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.WARN, second.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, second.severityText)
         assertEquals("session-123", second.attributes?.get("emb.session_id"))
@@ -97,7 +97,7 @@ internal class EmbraceLogServiceTest {
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
-        assertNotEquals(0, third.timestampNanos)
+        assertNotEquals(0, third.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.ERROR, third.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.ERROR.name, third.severityText)
         assertEquals("session-123", third.attributes?.get("emb.session_id"))

@@ -15,7 +15,7 @@ internal class EmbraceLogRecordProcessor(
 
     override fun onEmit(context: Context, logRecord: ReadWriteLogRecord) {
         // TODO Add session id and app state here?
-        logRecord.setEventId(Uuid.getEmbUuid())
+        logRecord.setLogId(Uuid.getEmbUuid())
         logRecordExporter.export(mutableListOf(logRecord.toLogRecordData()))
     }
 }

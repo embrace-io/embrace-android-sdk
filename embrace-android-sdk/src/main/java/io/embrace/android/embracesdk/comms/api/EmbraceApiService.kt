@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
+import java.lang.reflect.ParameterizedType
 import java.util.concurrent.Future
 
 internal class EmbraceApiService(
@@ -46,14 +48,6 @@ internal class EmbraceApiService(
         pendingApiCallsSender.setSendMethod(this::executePost)
     }
 
-    /**
-     * Asynchronously gets the app's SDK configuration.
-     *
-     * These settings define app-specific settings, such as disabled log patterns, whether
-     * screenshots are enabled, as well as limits and thresholds.
-     *
-     * @return a future containing the configuration.
-     */
     @Throws(IllegalStateException::class)
     @Suppress("UseCheckOrError")
     override fun getConfig(): RemoteConfig? {
@@ -111,67 +105,32 @@ internal class EmbraceApiService(
         lastNetworkStatus = status
     }
 
-    /**
-     * Sends a log message to the API.
-     *
-     * @param eventMessage the event message containing the log entry
-     * @return a future containing the response body from the server
-     */
     override fun sendLog(eventMessage: EventMessage) {
         post(eventMessage, mapper::logRequest)
     }
 
-    /**
-     * Sends a list of OTel Logs to the API.
-     *
-     * @param logsEnvelope containing the logs
-     */
     override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
-        post(logsEnvelope, mapper::logsEnvelopeRequest)
+        val parameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+        post(logsEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
     }
 
-    /**
-     * Sends a session to the API.
-     *
-     * @param envelope containing the session
-     */
-    override fun sendSessionEnvelope(envelope: Envelope<SessionPayload>) {
-        post(envelope, mapper::sessionEnvelopeRequest)
+    override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
+        val parameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+        post(sessionEnvelope, mapper::sessionEnvelopeRequest, parameterizedType)
     }
 
-    /**
-     * Sends an Application Exit Info (AEI) blob message to the API.
-     *
-     * @param blobMessage the blob message containing the AEI data
-     * @return a future containing the response body from the server
-     */
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         post(blobMessage, mapper::aeiBlobRequest)
     }
 
-    /**
-     * Sends a network event to the API.
-     *
-     * @param networkEvent the event containing the network call information
-     */
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         post(networkEvent, mapper::networkEventRequest)
     }
 
-    /**
-     * Sends an event to the API.
-     *
-     * @param eventMessage the event message containing the event
-     */
     override fun sendEvent(eventMessage: EventMessage) {
         post(eventMessage, mapper::eventMessageRequest)
     }
 
-    /**
-     * Sends a crash event to the API and reschedules it if the request times out
-     *
-     * @param crash the event message containing the crash
-     */
     override fun sendCrash(crash: EventMessage): Future<*> {
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
@@ -183,6 +142,7 @@ internal class EmbraceApiService(
     private inline fun <reified T> post(
         payload: T,
         mapper: (T) -> ApiRequest,
+        type: ParameterizedType? = null,
         noinline onComplete: (() -> Unit)? = null,
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
@@ -190,7 +150,11 @@ internal class EmbraceApiService(
 
         val action: SerializationAction = { stream ->
             ConditionalGzipOutputStream(stream).use {
-                serializer.toJson(payload, T::class.java, it)
+                if (type != null) {
+                    serializer.toJson(payload, type, it)
+                } else {
+                    serializer.toJson(payload, T::class.java, it)
+                }
             }
         }
 

@@ -26,7 +26,7 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String> {
+    override fun normalizeCacheAndGetSessionFileIds(): List<String> {
         TODO("Not yet implemented")
     }
 
@@ -46,7 +46,7 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+    override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
         TODO("Not yet implemented")
     }
 }

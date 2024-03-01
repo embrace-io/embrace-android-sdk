@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.SESSION_FILE_PREFIX
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
@@ -227,16 +228,13 @@ internal class EmbraceCacheServiceTest {
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
         service.cacheBytes(CUSTOM_OBJECT_2_FILE_NAME, myBytes)
         service.cacheBytes(CUSTOM_OBJECT_3_FILE_NAME, myBytes)
+        service.cacheBytes("not-match.json", myBytes)
 
-        var filenames = service.listFilenamesByPrefix("custom_object_")
+        val filenames = service.normalizeCacheAndGetSessionFileIds()
         assertEquals(3, filenames.size)
-        assertTrue(filenames.contains("custom_object_1.json"))
-        assertTrue(filenames.contains("custom_object_2.json"))
-        assertTrue(filenames.contains("custom_object_3.json"))
-
-        filenames = service.listFilenamesByPrefix("custom_object_1")
-        assertEquals(1, filenames.size)
-        assertTrue(filenames.contains("custom_object_1.json"))
+        assertTrue(filenames.contains("last_session_1.json"))
+        assertTrue(filenames.contains("last_session_2.json"))
+        assertTrue(filenames.contains("last_session_3.json"))
     }
 
     @Test
@@ -297,7 +295,7 @@ internal class EmbraceCacheServiceTest {
         assertEquals(1, files.size)
         assertEquals(service.loadObject(filename, SessionMessage::class.java), original)
 
-        service.replaceSession(filename) { replacement }
+        service.transformSession(filename) { replacement }
         assertEquals(service.loadObject(filename, SessionMessage::class.java), replacement)
 
         val filesAgain = storageManager.listFiles { _, _ -> true }
@@ -309,6 +307,6 @@ internal class EmbraceCacheServiceTest {
     }
 }
 
-internal const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"
-internal const val CUSTOM_OBJECT_2_FILE_NAME = "custom_object_2.json"
-internal const val CUSTOM_OBJECT_3_FILE_NAME = "custom_object_3.json"
+internal const val CUSTOM_OBJECT_1_FILE_NAME = "${SESSION_FILE_PREFIX}_1.json"
+internal const val CUSTOM_OBJECT_2_FILE_NAME = "${SESSION_FILE_PREFIX}_2.json"
+internal const val CUSTOM_OBJECT_3_FILE_NAME = "${SESSION_FILE_PREFIX}_3.json"

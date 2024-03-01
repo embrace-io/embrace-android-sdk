@@ -63,4 +63,7 @@ internal class TestCacheService : CacheService {
             it.write(cache[name])
         }
     }
+
+    override fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+    }
 }

@@ -185,29 +185,29 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
-            // first, end the current session or background activity, if either exist.
+            // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
+            val endProcessState = transitionType.endState(state)
+            val inForeground = endProcessState == ProcessState.FOREGROUND
+            when (endProcessState) {
+                ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
+                ProcessState.BACKGROUND -> periodicSessionCacher.stop()
+            }
+
+            // second, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
 
-            // next, clean up any previous session state
+            // third, clean up any previous session state
             boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
 
-            // start the next session or background activity
+            // now, we can start the next session or background activity
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            val endProcessState = transitionType.endState(state)
-            val inForeground = endProcessState == ProcessState.FOREGROUND
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
-
-            // disable any previous periodic caching.
-            when (endProcessState) {
-                ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
-                ProcessState.BACKGROUND -> periodicSessionCacher.stop()
-            }
 
             // initiate periodic caching of the payload if required
             if (transitionType != TransitionType.CRASH && newState != null) {
@@ -231,6 +231,8 @@ internal class SessionOrchestratorImpl(
                 !inForeground,
                 transitionType.name
             )
+
+            // et voila! a new session is born
         }
     }
 

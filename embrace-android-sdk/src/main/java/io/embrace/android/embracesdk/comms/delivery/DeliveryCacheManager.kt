@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal interface DeliveryCacheManager {
     fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
-    fun loadSession(sessionId: String): SessionMessage?
+    fun replaceSession(sessionId: String, mutator: (SessionMessage) -> SessionMessage)
     fun loadSessionAsAction(sessionId: String): SerializationAction?
     fun deleteSession(sessionId: String)
     fun getAllCachedSessionIds(): List<String>

@@ -4,12 +4,17 @@ import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fixtures.testSessionMessage
+import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -29,16 +34,19 @@ internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
     private lateinit var storageManager: FakeStorageService
-
+    private lateinit var loggerAction: FakeLoggerAction
+    private lateinit var logger: InternalEmbraceLogger
     private val serializer = EmbraceSerializer()
 
     @Before
     fun setUp() {
         storageManager = FakeStorageService()
+        loggerAction = FakeLoggerAction()
+        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
         service = EmbraceCacheService(
             storageManager,
             serializer,
-            InternalEmbraceLogger()
+            logger
         )
 
         // always assert that nothing is in the dir
@@ -74,9 +82,7 @@ internal class EmbraceCacheServiceTest {
         service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
 
         val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNotNull(loadedBytes)
-        assertArrayEquals("locked file".toByteArray(), loadedBytes)
-        cacheFile.delete()
+        assertNull(loadedBytes)
     }
 
     @Test
@@ -265,7 +271,7 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test loadOldPendingApiCalls with no elements`() {
-        val myObject = emptyList<PendingApiCall> ()
+        val myObject = emptyList<PendingApiCall>()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject, List::class.java)
         val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
@@ -274,6 +280,32 @@ internal class EmbraceCacheServiceTest {
         val loadedObject = service.loadOldPendingApiCalls(CUSTOM_OBJECT_1_FILE_NAME)
         assertEquals(myObject, checkNotNull(loadedObject))
         assertEquals(0, loadedObject.size)
+    }
+
+    @Test
+    fun `session replacement does not create duplicate files`() {
+        val original = testSessionMessage
+        val filename = EmbraceDeliveryCacheManager.CachedSession(
+            sessionId = original.session.sessionId,
+            timestamp = original.session.startTime
+        ).filename
+        val replacement = testSessionMessageOneMinuteLater
+
+        service.writeSession(filename, original)
+
+        val files = storageManager.listFiles { _, _ -> true }
+        assertEquals(1, files.size)
+        assertEquals(service.loadObject(filename, SessionMessage::class.java), original)
+
+        service.replaceSession(filename) { replacement }
+        assertEquals(service.loadObject(filename, SessionMessage::class.java), replacement)
+
+        val filesAgain = storageManager.listFiles { _, _ -> true }
+        assertEquals(1, filesAgain.size)
+        assertEquals(files[0], filesAgain[0])
+
+        val errors = loggerAction.msgQueue.filter { it.severity == InternalStaticEmbraceLogger.Severity.ERROR }
+        assertEquals("The following errors were logged: $errors", 0, errors.size)
     }
 }
 

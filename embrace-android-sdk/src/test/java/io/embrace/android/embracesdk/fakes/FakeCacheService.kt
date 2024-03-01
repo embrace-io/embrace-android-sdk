@@ -45,4 +45,8 @@ internal class FakeCacheService : CacheService {
     override fun loadPayload(name: String): SerializationAction {
         TODO("Not yet implemented")
     }
+
+    override fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+        TODO("Not yet implemented")
+    }
 }

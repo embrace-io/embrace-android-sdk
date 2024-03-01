@@ -162,13 +162,68 @@ internal class EmbraceCacheService(
         return success
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String> { // TODO: locking?
-        return storageService.listFiles { _, name ->
-            name.startsWith(EMBRACE_PREFIX + prefix)
-        }.map { file -> file.name.substring(EMBRACE_PREFIX.length) }
+    override fun normalizeCacheAndGetSessionFileIds(): List<String> {
+        val sessionFileNames = storageService
+            .listFiles { _, name -> name.startsWith(EMBRACE_PREFIX + EmbraceDeliveryCacheManager.SESSION_FILE_PREFIX) }
+            .map { file -> file.name.substring(EMBRACE_PREFIX.length) }
+
+        // Need to sweep the files directory to clear the temp files left over due to the app process crashing at an inopportune time
+        // - Files that contain the latest version of a session (i.e. suffixed of "-new") will be renamed to the proper expected name
+        // - Files that were to be deleted in anticipation of a new version but weren't will be delete now (i.e. suffix "-old")
+        // - A file named "last_session.json" used by older versions of the SDK that need to be renamed in the new format
+        //
+        // Since we are dealing with old sessions files, the current process will not modify them outside of this thread.
+        // As such, it is safe to do it on this thread.
+
+        val properSessionFileIds = mutableListOf<String>()
+        sessionFileNames.forEach { filename ->
+            if (filename.endsWith(OLD_COPY_SUFFIX)) {
+                if (!deleteFile(filename + OLD_COPY_SUFFIX)) {
+                    logger.logWarning("Old session for session file for $filename not deleted on startup")
+                }
+            } else if (filename == OLD_VERSION_FILE_NAME) {
+                val previousSdkSession = loadObject(filename, SessionMessage::class.java)
+                previousSdkSession?.also { sessionMessage ->
+                    runCatching {
+                        val session = sessionMessage.session
+                        val cachedSession = EmbraceDeliveryCacheManager.CachedSession(session.sessionId, session.startTime)
+                        if (!sessionFileNames.contains(cachedSession.filename)) {
+                            replaceSessionFile(cachedSession.filename, filename)
+                            properSessionFileIds.add(cachedSession.filename)
+                        }
+                    }
+                }
+            } else {
+                val isTempFile = filename.endsWith(NEW_COPY_SUFFIX)
+                val properFilename = if (isTempFile) filename.removeSuffix(NEW_COPY_SUFFIX) else filename
+                if (isTempFile) {
+                    if (!replaceSessionFile(filenameToReplace = properFilename, filenameOfReplacement = filename)) {
+                        return@forEach
+                    }
+                }
+                properSessionFileIds.add(properFilename)
+            }
+        }
+
+        return properSessionFileIds
     }
 
-    override fun writeSession(name: String, sessionMessage: SessionMessage) = cacheObject(name, sessionMessage, SessionMessage::class.java)
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
+        findLock(name).write {
+            try {
+                val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+                if (sessionFile.exists()) {
+                    val newSessionFile = storageService.getFileForWrite(sessionFile.name + NEW_COPY_SUFFIX)
+                    serializer.toJson(sessionMessage, SessionMessage::class.java, newSessionFile.outputStream())
+                    replaceSessionFile(name, name + NEW_COPY_SUFFIX)
+                } else {
+                    serializer.toJson(sessionMessage, SessionMessage::class.java, sessionFile.outputStream())
+                }
+            } catch (ex: Exception) {
+                logger.logError("Failed to write session object ", ex)
+            }
+        }
+    }
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         findLock(name).read {
@@ -186,36 +241,37 @@ internal class EmbraceCacheService(
         }
     }
 
-    override fun replaceSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+    override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
         findLock(name).write {
             try {
                 val sessionMessage = loadObject(name, SessionMessage::class.java) ?: return@write
-                val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                val oldSessionFile = storageService.getFileForWrite("${sessionFile.name}-old")
-                val newSessionFile = storageService.getFileForWrite("${sessionFile.name}-new")
                 val newMessage = transformer(sessionMessage)
-                serializer.toJson(newMessage, SessionMessage::class.java, newSessionFile.outputStream())
-                val oldSessionRenamed = sessionFile.renameTo(oldSessionFile)
-                val newSessionRenamed = newSessionFile.renameTo(sessionFile)
-                val oldSessionDeleted = oldSessionFile.delete()
-                if (!oldSessionRenamed || !newSessionRenamed || !oldSessionDeleted) {
-                    val failures = mutableListOf<String>()
-                    if (!oldSessionRenamed) {
-                        failures.add("old session file not renamed")
-                    }
-                    if (!newSessionRenamed) {
-                        failures.add("new session file not renamed")
-                    }
-                    if (!oldSessionDeleted) {
-                        failures.add("old session file not deleted")
-                    }
-                    logger.logError("Operation to replace the session failed: $failures")
-                }
+                writeSession(name, newMessage)
             } catch (ex: Exception) {
                 logger.logError("Failed to replace session object ", ex)
-                deleteFile(name)
             }
         }
+    }
+
+    private fun replaceSessionFile(filenameToReplace: String, filenameOfReplacement: String): Boolean {
+        try {
+            val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameToReplace)
+            val newSessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
+            val oldSessionFile = storageService.getFileForWrite(sessionFile.name + OLD_COPY_SUFFIX)
+            if (sessionFile.exists()) {
+                sessionFile.renameTo(oldSessionFile)
+                oldSessionFile.deleteOnExit()
+            }
+            newSessionFile.renameTo(sessionFile)
+            if (oldSessionFile.exists()) {
+                oldSessionFile.delete()
+            }
+        } catch (e: Exception) {
+            logger.logError("Failed to replace session file ", e)
+            return false
+        }
+
+        return true
     }
 
     private fun findLock(name: String) =
@@ -223,6 +279,14 @@ internal class EmbraceCacheService(
 
     companion object {
         private const val EMBRACE_PREFIX = "emb_"
+        private const val OLD_COPY_SUFFIX = "-old"
+        private const val NEW_COPY_SUFFIX = "-new"
         private const val TAG = "EmbraceCacheService"
+
+        /**
+         * Full file name for a session saved with a previous version of the SDK. Note that to
+         * preserve backward compatibility, SESSION_FILE_PREFIX must be the start of OLD_VERSION_FILE_NAME
+         */
+        private const val OLD_VERSION_FILE_NAME = "last_session.json"
     }
 }

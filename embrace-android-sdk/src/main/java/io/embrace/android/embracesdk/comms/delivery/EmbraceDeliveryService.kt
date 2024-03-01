@@ -116,7 +116,7 @@ internal class EmbraceDeliveryService(
     }
 
     private fun addCrashDataToCachedSession(nativeCrashData: NativeCrashData) {
-        cacheManager.replaceSession(nativeCrashData.sessionId) { sessionMessage ->
+        cacheManager.transformSession(nativeCrashData.sessionId) { sessionMessage ->
             attachCrashToSession(nativeCrashData, sessionMessage)
         }
     }

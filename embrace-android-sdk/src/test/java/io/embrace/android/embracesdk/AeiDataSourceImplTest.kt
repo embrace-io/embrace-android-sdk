@@ -3,10 +3,12 @@ package io.embrace.android.embracesdk
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.capture.aei.EmbraceApplicationExitInfoService
+import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -18,7 +20,6 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -35,9 +36,10 @@ private const val DESCRIPTION = "testDescription"
 private const val TRACE = "testInputStream"
 private const val SESSION_ID = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
 
-internal class EmbraceApplicationExitInfoServiceTest {
+internal class AeiDataSourceImplTest {
 
-    private lateinit var applicationExitInfoService: EmbraceApplicationExitInfoService
+    private lateinit var applicationExitInfoService: AeiDataSourceImpl
+    private lateinit var logWriter: FakeLogWriter
 
     private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
 
@@ -48,11 +50,11 @@ internal class EmbraceApplicationExitInfoServiceTest {
         }
     )
 
-    private val deliveryService = FakeDeliveryService()
     private val preferenceService = FakePreferenceService()
     private val metadataService = FakeMetadataService()
     private val sessionIdTracker = FakeSessionIdTracker()
     private val userService = FakeUserService()
+    private val clock = FakeClock()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
@@ -80,16 +82,18 @@ internal class EmbraceApplicationExitInfoServiceTest {
     }
 
     private fun startApplicationExitInfoService() {
-        applicationExitInfoService = EmbraceApplicationExitInfoService(
+        logWriter = FakeLogWriter()
+        applicationExitInfoService = AeiDataSourceImpl(
             worker,
             configService,
             mockActivityManager,
             preferenceService,
-            deliveryService,
             metadataService,
             sessionIdTracker,
-            userService
-        )
+            userService,
+            logWriter,
+            clock
+        ).apply(AeiDataSourceImpl::enableDataCapture)
     }
 
     @Test
@@ -105,46 +109,17 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // when getCapturedData is called
-        with(getLastAeiRequest()) {
-            assertEquals(TIMESTAMP, timestamp)
-            assertEquals(SESSION_ID, sessionId)
-            assertEquals(IMPORTANCE, importance)
-            assertEquals(PSS, pss)
-            assertEquals(RSS, rss)
-            assertEquals(STATUS, status)
-            assertEquals(DESCRIPTION, description)
-            assertEquals(TRACE, trace)
-            assertEquals("", sessionIdError)
-            assertNull(traceStatus)
-        }
-    }
-
-    @Test
-    fun `service should stop execution if remote config changed to disabled`() {
-        // given a service starts with config enabled
-        appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f)
-        startApplicationExitInfoService()
-
-        // when config changes to disabled
-        appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 0.0f)
-        applicationExitInfoService.onConfigChange(configService)
-
-        // then background execution should stop
-        assertNull(applicationExitInfoService.backgroundExecution)
-    }
-
-    @Test
-    fun `service should start execution if remote config changed to enabled`() {
-        // given a service starts with config disabled
-        appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 0.0f)
-        startApplicationExitInfoService()
-
-        // when config changes to enabled
-        appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f)
-        applicationExitInfoService.onConfigChange(configService)
-
-        // then background execution should start
-        assertNotNull(applicationExitInfoService.backgroundExecution)
+        val attrs = getAeiLogAttrs()
+        assertEquals(TIMESTAMP.toString(), attrs["ts"])
+        assertEquals(SESSION_ID, attrs["sid"])
+        assertEquals(IMPORTANCE.toString(), attrs["im"])
+        assertEquals(PSS.toString(), attrs["pss"])
+        assertEquals(RSS.toString(), attrs["rss"])
+        assertEquals(STATUS.toString(), attrs["st"])
+        assertEquals(DESCRIPTION, attrs["ds"])
+        assertEquals(TRACE, attrs["blob"])
+        assertEquals("", attrs["side"])
+        assertNull(attrs["trs"])
     }
 
     @Test
@@ -159,11 +134,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
         } returns emptyList()
         startApplicationExitInfoService()
 
-        // when getCapturedData is called
-        val capturedData = applicationExitInfoService.getCapturedData()
-
-        // then an empty list should be returned
-        assertTrue(capturedData.isEmpty())
+        // no logs delivered
+        assertTrue(logWriter.logs.isEmpty())
     }
 
     @Test
@@ -183,11 +155,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
         startApplicationExitInfoService()
 
-        // when getCapturedData is called
-        val capturedData = applicationExitInfoService.getCapturedData()
-
         // then captured data should only have 32 entries
-        assertEquals(32, capturedData.size)
+        assertEquals(32, logWriter.logs.size)
     }
 
     @Test
@@ -219,35 +188,11 @@ internal class EmbraceApplicationExitInfoServiceTest {
 
         startApplicationExitInfoService()
 
-        // when getCapturedData is called
-        val capturedData = applicationExitInfoService.getCapturedData()
+        // when AEI is delivered
+        val attrs = getAeiLogAttrs()
 
         // then captured data should only have applicationExitInfo3
-        assertEquals(3L, capturedData[0].timestamp)
-        assertEquals(STATUS, capturedData.size)
-    }
-
-    @Test
-    fun `getCapturedData gets AEI without traces`() {
-        // given an AEI with a trace
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any()
-            )
-        } returns listOf(mockAppExitInfo)
-        startApplicationExitInfoService()
-
-        // when getCapturedData is called
-        val capturedData = applicationExitInfoService.getCapturedData()
-
-        // then it shouldn't have a trace, and should retrieve the correct data
-        assertEquals(SESSION_ID, capturedData[0].sessionId)
-        assertEquals(null, capturedData[0].trace)
-        assertEquals(null, capturedData[0].traceStatus)
-        assertEquals("", capturedData[0].sessionIdError)
-        assertEquals(STATUS, capturedData.size)
+        assertEquals("3", attrs["ts"])
     }
 
     @Test
@@ -264,12 +209,12 @@ internal class EmbraceApplicationExitInfoServiceTest {
         } returns listOf(mockAppExitInfo)
         startApplicationExitInfoService()
 
-        // when getCapturedData is called
-        val capturedData = applicationExitInfoService.getCapturedData()
+        // when AEI is delivered
+        val attrs = getAeiLogAttrs()
 
         // then the invalid session ID message should be added to the sessionIdError
-        assertEquals("invalid session ID: $invalidSessionId", capturedData[0].sessionIdError)
-        assertEquals(invalidSessionId, capturedData[0].sessionId)
+        assertEquals("invalid session ID: $invalidSessionId", attrs["side"])
+        assertEquals(invalidSessionId, attrs["sid"])
     }
 
     @Test
@@ -287,8 +232,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
         // when the service is started
         startApplicationExitInfoService()
 
-        // then no null traces should be sent
-        assertTrue(deliveryService.blobMessages.isEmpty())
+        // then no logs should be sent
+        assertTrue(logWriter.logs.isEmpty())
     }
 
     @Test
@@ -307,9 +252,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then a null trace should be sent
-        val payload = checkNotNull(getLastAeiRequest())
-        assertNull(payload.trace)
-        assertEquals("oom: Ouch", payload.traceStatus)
+        val attrs = getAeiLogAttrs()
+        assertNull("", attrs["blob"])
+        assertEquals("oom: Ouch", attrs["trs"])
     }
 
     @Test
@@ -328,9 +273,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then a null trace should be sent
-        val payload = getLastAeiRequest()
-        assertNull(payload.trace)
-        assertEquals("ioexception: Ouch", payload.traceStatus)
+        val attrs = getAeiLogAttrs()
+        assertNull(attrs["blob"])
+        assertEquals("ioexception: Ouch", attrs["trs"])
     }
 
     @Test
@@ -350,9 +295,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // then a null trace should be sent
-        val payload = getLastAeiRequest()
-        assertNull(payload.trace)
-        assertEquals("error: $errorMessage", payload.traceStatus)
+        val attrs = getAeiLogAttrs()
+        assertNull(attrs["blob"])
+        assertEquals("error: $errorMessage", attrs["trs"])
     }
 
     @Test
@@ -373,9 +318,9 @@ internal class EmbraceApplicationExitInfoServiceTest {
         // when the service is started
         startApplicationExitInfoService()
 
-        // then a null trace should be sent
-        val payload = getLastAeiRequest()
-        assertEquals("a".repeat(100), payload.trace)
+        // then a truncated trace should be sent
+        val attrs = getAeiLogAttrs()
+        assertEquals("a".repeat(100), attrs["blob"])
     }
 
     @Test
@@ -391,8 +336,8 @@ internal class EmbraceApplicationExitInfoServiceTest {
         // when the service is started
         startApplicationExitInfoService()
 
-        // then a null trace should be sent
-        assertTrue(deliveryService.blobMessages.isEmpty())
+        // no logs were sent
+        assertTrue(logWriter.logs.isEmpty())
     }
 
     @Test
@@ -409,9 +354,14 @@ internal class EmbraceApplicationExitInfoServiceTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        val payloads = checkNotNull(deliveryService.blobMessages)
-        assertEquals(32, payloads.size)
+        assertEquals(32, logWriter.logs.size)
     }
 
-    private fun getLastAeiRequest() = deliveryService.blobMessages.single().applicationExits.single()
+    private fun getAeiLogAttrs(): Map<String, String> {
+        val logEventData = logWriter.logs.single()
+        assertEquals("aei_record", logEventData.message)
+        assertEquals(Severity.INFO, logEventData.severity)
+        assertEquals(clock.now(), logEventData.startTimeMs)
+        return checkNotNull(logEventData.attributes)
+    }
 }

@@ -4,14 +4,20 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.arch.destination.LogEventData
+import io.embrace.android.embracesdk.arch.destination.LogEventMapper
+import io.embrace.android.embracesdk.arch.destination.LogWriter
+import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
@@ -26,36 +32,35 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
-internal class EmbraceApplicationExitInfoService(
+internal class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
     private val configService: ConfigService,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
-    private val deliveryService: DeliveryService,
     private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
-    private val buildVersionChecker: VersionChecker = BuildVersionChecker
-) : ApplicationExitInfoService, ConfigListener {
+    logWriter: LogWriter,
+    private val clock: Clock,
+    private val buildVersionChecker: VersionChecker = BuildVersionChecker,
+) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
+    logWriter,
+    limitStrategy = UpToLimitStrategy({ SDK_AEI_SEND_LIMIT })
+) {
 
     companion object {
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 
     @Volatile
-    var backgroundExecution: Future<*>? = null
-
+    private var backgroundExecution: Future<*>? = null
     private val sessionApplicationExitInfoData: MutableList<AppExitInfoData> = mutableListOf()
-    private var isSessionApplicationExitInfoDataReady = AtomicBoolean(false)
+    private val isSessionApplicationExitInfoDataReady = AtomicBoolean(false)
 
-    init {
-        configService.addListener(this)
-        if (configService.isAppExitInfoCaptureEnabled()) {
-            startService()
+    override fun enableDataCapture() {
+        if (backgroundExecution != null) {
+            return
         }
-    }
-
-    private fun startService() {
         backgroundExecution = backgroundWorker.submit {
             try {
                 processApplicationExitInfo()
@@ -69,9 +74,20 @@ internal class EmbraceApplicationExitInfoService(
         }
     }
 
+    override fun disableDataCapture() {
+        try {
+            backgroundExecution?.cancel(true)
+            backgroundExecution = null
+        } catch (t: Throwable) {
+            logWarningWithException(
+                "AEI - Failed to disable EmbraceApplicationExitInfoService work",
+                t
+            )
+        }
+    }
+
     private fun processApplicationExitInfo() {
         val historicalProcessExitReasons = getHistoricalProcessExitReasons()
-
         val unsentExitReasons = getUnsentExitReasons(historicalProcessExitReasons)
 
         unsentExitReasons.forEach {
@@ -79,8 +95,6 @@ internal class EmbraceApplicationExitInfoService(
         }
 
         isSessionApplicationExitInfoDataReady.set(true)
-
-        // now send AEIs with blobs.
         processApplicationExitInfoBlobs(unsentExitReasons)
     }
 
@@ -140,7 +154,7 @@ internal class EmbraceApplicationExitInfoService(
         return unsentAeiObjects
     }
 
-    fun buildSessionAppExitInfoData(
+    private fun buildSessionAppExitInfoData(
         appExitInfo: ApplicationExitInfo,
         trace: String?,
         traceStatus: String?
@@ -162,33 +176,59 @@ internal class EmbraceApplicationExitInfoService(
         )
     }
 
-    private fun getTrace(traceResult: AppExitInfoBehavior.CollectTracesResult): String? {
-        return when (traceResult) {
+    private fun getTrace(traceResult: AppExitInfoBehavior.CollectTracesResult): String? =
+        when (traceResult) {
             is AppExitInfoBehavior.CollectTracesResult.Success -> traceResult.result
             is AppExitInfoBehavior.CollectTracesResult.TooLarge -> traceResult.result
             else -> null
         }
-    }
 
-    private fun getTraceStatus(traceResult: AppExitInfoBehavior.CollectTracesResult): String? {
-        return when (traceResult) {
+    private fun getTraceStatus(traceResult: AppExitInfoBehavior.CollectTracesResult): String? =
+        when (traceResult) {
             is AppExitInfoBehavior.CollectTracesResult.Success -> null
             is AppExitInfoBehavior.CollectTracesResult.TooLarge -> "Trace was too large, sending truncated trace"
             else -> traceResult.result
         }
-    }
 
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
-        if (appExitInfoWithTraces.isNotEmpty()) {
-            val blob = BlobMessage(
-                metadataService.getAppInfo(),
-                appExitInfoWithTraces,
-                metadataService.getDeviceInfo(),
-                BlobSession(sessionIdTracker.getActiveSessionId()),
-                userService.getUserInfo()
+        appExitInfoWithTraces.forEach { data ->
+            alterSessionSpan(
+                inputValidation = { true },
+                captureAction = {
+                    val blob = BlobMessage(
+                        metadataService.getAppInfo(),
+                        listOf(data),
+                        metadataService.getDeviceInfo(),
+                        BlobSession(sessionIdTracker.getActiveSessionId()),
+                        userService.getUserInfo()
+                    )
+                    addLog(blob, ::toLogEventData)
+                }
             )
-            deliveryService.sendAEIBlob(blob)
         }
+    }
+
+    override fun toLogEventData(obj: BlobMessage): LogEventData {
+        val message: AppExitInfoData = obj.applicationExits.single()
+        val attrs = mapOf(
+            "sid" to message.sessionId,
+            "side" to message.sessionIdError,
+            "im" to message.importance.toString(),
+            "pss" to message.pss.toString(),
+            "rs" to message.reason.toString(),
+            "rss" to message.rss.toString(),
+            "st" to message.status.toString(),
+            "ts" to message.timestamp.toString(),
+            "blob" to message.trace,
+            "ds" to message.description,
+            "trs" to message.traceStatus
+        )
+        return LogEventData(
+            startTimeMs = clock.now(),
+            severity = Severity.INFO,
+            message = "aei_record",
+            attributes = attrs.toNonNullMap()
+        )
     }
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {
@@ -272,32 +312,5 @@ internal class EmbraceApplicationExitInfoService(
 
     private fun generateUniqueHash(appExitInfo: ApplicationExitInfo): String {
         return "${appExitInfo.timestamp}_${appExitInfo.pid}"
-    }
-
-    override fun cleanCollections() {
-    }
-
-    override fun getCapturedData() =
-        sessionApplicationExitInfoData.takeIf { isSessionApplicationExitInfoDataReady.get() }
-            ?: emptyList()
-
-    override fun onConfigChange(configService: ConfigService) {
-        if (backgroundExecution == null && configService.isAppExitInfoCaptureEnabled()) {
-            startService()
-        } else if (!configService.isAppExitInfoCaptureEnabled()) {
-            endService()
-        }
-    }
-
-    private fun endService() {
-        try {
-            backgroundExecution?.cancel(true)
-            backgroundExecution = null
-        } catch (t: Throwable) {
-            logWarningWithException(
-                "AEI - Failed to disable EmbraceApplicationExitInfoService work",
-                t
-            )
-        }
     }
 }

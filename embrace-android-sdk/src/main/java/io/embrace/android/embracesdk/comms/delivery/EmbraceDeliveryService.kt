@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
@@ -88,10 +87,6 @@ internal class EmbraceDeliveryService(
                 future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
             }
         }
-    }
-
-    override fun sendAEIBlob(blobMessage: BlobMessage) {
-        apiService.sendAEIBlob(blobMessage)
     }
 
     override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {

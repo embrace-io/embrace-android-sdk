@@ -4,10 +4,12 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.FakeDeliveryService
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -15,7 +17,6 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -49,41 +50,44 @@ internal class AeiNdkCrashProtobufSendTest {
      */
     @Test
     fun testReadProtobufFromPayload() {
-        val deliveryService = FakeDeliveryService()
-        createAeiService(deliveryService, true)
+        val logWriter = createAeiService(true)
 
         // sending through the delivery service does not corrupt the protobuf
-        val obj = deliveryService.getAeiObject()
-        assertProtobufIsReadable(obj.asStream())
+        val obj = logWriter.logs.single()
+        val trace = checkNotNull(obj.attributes)["blob"]
+        assertProtobufIsReadable(checkNotNull(trace).decodeBlob())
 
         // JSON serialization does not corrupt the protobuf
+        val input = HashMap<String, String>()
+        input["serialization_test"] = trace
         val serializer = EmbraceSerializer()
-        val json = serializer.toJson(obj)
-        val aei = serializer.fromJson(json, AppExitInfoData::class.java)
-        val byteStream = aei.asStream()
+        val type =
+            Types.newParameterizedType(Map::class.java, String::class.java, String::class.java)
+        val json = serializer.toJson(input, type)
+
+        val output: Map<String, String> = serializer.fromJson(json, type)
+        val outputTrace = checkNotNull(output["serialization_test"])
+        val byteStream = outputTrace.decodeBlob()
         assertProtobufIsReadable(byteStream)
     }
 
     @Test
     fun testSendAeiObj() {
-        val deliveryService = FakeDeliveryService()
-        createAeiService(deliveryService, false)
+        val logWriter = createAeiService(false)
 
         // sending through the delivery service does not corrupt the protobuf
-        val obj = deliveryService.getAeiObject()
+        val obj = logWriter.logs.single()
+        val trace = checkNotNull(obj.attributes)["blob"]
 
         // JSON serialization does not corrupt the protobuf
         val expected = ResourceReader.readResourceAsText(ANR_FILE_NAME)
-        assertEquals(expected, obj.trace)
+        assertEquals(expected, trace)
     }
 
     /**
      * Gets an inputstream of the protobuf file that was encoded in the AEI object
      */
-    private fun AppExitInfoData.asStream(): InputStream {
-        val contents = trace ?: error("No trace found")
-        return utf8StringToBytes(contents).inputStream()
-    }
+    private fun String.decodeBlob(): InputStream = utf8StringToBytes(this).inputStream()
 
     /**
      * Decodes a UTF-8 string with arbitrary binary data encoded in \Uxxxx characters.
@@ -113,14 +117,6 @@ internal class AeiNdkCrashProtobufSendTest {
         return decoded.copyOf(decodedIndex)
     }
 
-    /**
-     * Gets the AEI object that was sent to the delivery service
-     */
-    private fun FakeDeliveryService.getAeiObject(): AppExitInfoData {
-        val requests: List<AppExitInfoData> = blobMessages.single().applicationExits
-        return requests.single()
-    }
-
     private fun assertProtobufIsReadable(stream: InputStream) {
         val tombstone = TombstoneProtos.Tombstone.parseFrom(stream)
         checkNotNull(tombstone)
@@ -128,7 +124,7 @@ internal class AeiNdkCrashProtobufSendTest {
         assertEquals("SIGSEGV", tombstone.signalInfo.name)
     }
 
-    private fun createAeiService(deliveryService: FakeDeliveryService, ndkTraceFile: Boolean) {
+    private fun createAeiService(ndkTraceFile: Boolean): FakeLogWriter {
         val resName = when {
             ndkTraceFile -> NDK_FILE_NAME
             else -> ANR_FILE_NAME
@@ -144,7 +140,8 @@ internal class AeiNdkCrashProtobufSendTest {
         )
         val metadataService = FakeMetadataService()
         val sessionIdTracker = FakeSessionIdTracker()
-        EmbraceApplicationExitInfoService(
+        val logWriter = FakeLogWriter()
+        AeiDataSourceImpl(
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             FakeConfigService(
                 appExitInfoBehavior = fakeAppExitInfoBehavior(localCfg = {
@@ -155,12 +152,14 @@ internal class AeiNdkCrashProtobufSendTest {
             ),
             activityManager,
             FakePreferenceService(),
-            deliveryService,
             metadataService,
             sessionIdTracker,
             FakeUserService(),
+            logWriter,
+            FakeClock(),
             VersionChecker { ndkTraceFile }
-        )
+        ).enableDataCapture()
+        return logWriter
     }
 
     private fun createMockActivityManager(stream: InputStream, code: Int): ActivityManager {

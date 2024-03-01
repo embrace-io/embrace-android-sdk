@@ -166,8 +166,6 @@ internal typealias DataContainerModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     anrModule: AnrModule,

@@ -86,7 +86,7 @@ internal class EmbraceSpanServiceTest {
             assertEquals(name, name)
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(expectedType.name, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }

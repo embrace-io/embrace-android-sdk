@@ -290,7 +290,7 @@ internal class SessionHandlerTest {
         assertNotNull(sessionMessage)
         val spans = checkNotNull(sessionMessage?.spans)
         assertEquals(2, spans.size)
-        val expectedSpans = listOf("emb-test-span", "emb-session-span")
+        val expectedSpans = listOf("emb-test-span", "emb-session")
         assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
     }
 }

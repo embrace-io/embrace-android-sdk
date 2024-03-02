@@ -30,7 +30,7 @@ internal val testSpan = EmbraceSpanData(
             )
         )
     ),
-    attributes = mapOf(Pair("emb.sequence_id", "3"), Pair("emb.type", "PERFORMANCE"))
+    attributes = mapOf(Pair("emb.sequence_id", "3"), Pair("emb.type", "performance"))
 )
 
 private fun createMapOfSize(size: Int): Map<String, String> {

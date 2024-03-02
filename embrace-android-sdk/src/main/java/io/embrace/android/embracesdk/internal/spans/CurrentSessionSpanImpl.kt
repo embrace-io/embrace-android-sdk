@@ -109,7 +109,7 @@ internal class CurrentSessionSpanImpl(
 
         val spanBuilder = createEmbraceSpanBuilder(
             tracer = tracerSupplier(),
-            name = "session-span",
+            name = "session",
             type = EmbraceAttributes.Type.SESSION
         )
             .setNoParent()

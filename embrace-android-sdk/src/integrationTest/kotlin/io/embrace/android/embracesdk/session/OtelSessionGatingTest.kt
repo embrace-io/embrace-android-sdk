@@ -113,7 +113,7 @@ internal class OtelSessionGatingTest {
     }
 
     private fun SessionMessage.findSessionSpan(): EmbraceSpanData =
-        checkNotNull(findSpan("emb-session-span")) {
+        checkNotNull(findSpan("emb-session")) {
             "Session span not found"
         }
 

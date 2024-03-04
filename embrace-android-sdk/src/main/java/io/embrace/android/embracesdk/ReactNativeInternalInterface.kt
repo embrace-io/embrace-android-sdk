@@ -33,7 +33,7 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
 
     public fun setJavaScriptBundleUrl(context: Context, url: String)
 
-    public fun setJavaScriptBundleUrlForCodePush(context: Context, url: String, didUpdate: Boolean)
+    public fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean)
 
     /**
      * Logs a React Native Redux Action - this is not intended for public use.

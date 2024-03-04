@@ -99,7 +99,7 @@ internal class ReactNativeInternalInterfaceImpl(
         setJavaScriptBundleUrl(context, url, null)
     }
 
-    override fun setJavaScriptBundleUrlForCodePush(context: Context, url: String, didUpdate: Boolean) {
+    override fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean) {
         setJavaScriptBundleUrl(context, url, didUpdate)
     }
 

@@ -159,7 +159,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetJavaScriptBundleURLForCodePush() {
+    fun testSetCacheableJavaScriptBundleUrl() {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
@@ -171,7 +171,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         )
 
         every { embrace.isStarted } returns true
-        impl.setJavaScriptBundleUrlForCodePush(context, "index.android.bundle", true)
+        impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
         assertEquals(true, metadataService.didCodePushBundleUpdate)

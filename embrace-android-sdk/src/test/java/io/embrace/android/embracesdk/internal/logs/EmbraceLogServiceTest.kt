@@ -274,8 +274,41 @@ internal class EmbraceLogServiceTest {
         assertEquals(0, logService.getErrorLogsAttemptedToSend())
     }
 
+    // If the session components are null, no gating should be applied
     @Test
-    fun testIfShouldNotGateInfoLog() {
+    fun testGatingWithNullSessionComponents() {
+        cfg = buildCustomRemoteConfig(null)
+        val logService = getLogService()
+
+        logService.log("Test info log", Severity.INFO, null)
+        logService.log("Test warning log", Severity.WARNING, null)
+
+        assertEquals(2, logWriter.logEvents.size)
+        assertEquals(1, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getInfoLogsAttemptedToSend())
+        assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getWarnLogsAttemptedToSend())
+    }
+
+    // If the session components exists, only keys present should be allowed to be sent
+    @Test
+    fun testGatingWithEmptySessionComponents() {
+        cfg = buildCustomRemoteConfig(
+            setOf()
+        )
+        val logService = getLogService()
+
+        logService.log("Test info log", Severity.INFO, null)
+        logService.log("Test warning log", Severity.WARNING, null)
+
+        assertEquals(0, logWriter.logEvents.size)
+        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.getInfoLogsAttemptedToSend())
+    }
+
+    // If the session components exists, only keys present should be allowed to be sent
+    @Test
+    fun testGatingWithLogKeysInSessionComponents() {
         cfg = buildCustomRemoteConfig(
             setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN)
         )
@@ -289,21 +322,6 @@ internal class EmbraceLogServiceTest {
         assertEquals(1, logService.getInfoLogsAttemptedToSend())
         assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
         assertEquals(1, logService.getWarnLogsAttemptedToSend())
-    }
-
-    @Test
-    fun testIfShouldGateInfoLog() {
-        cfg = buildCustomRemoteConfig(
-            setOf()
-        )
-        val logService = getLogService()
-
-        logService.log("Test info log", Severity.INFO, null)
-        logService.log("Test warning log", Severity.WARNING, null)
-
-        assertEquals(0, logWriter.logEvents.size)
-        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(0, logService.getInfoLogsAttemptedToSend())
     }
 
     private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {

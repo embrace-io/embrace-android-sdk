@@ -11,22 +11,11 @@ internal class EmbraceTracer(
     private val clock: Clock,
     private val spanService: SpanService,
 ) : TracingApi {
-    override fun createSpan(name: String): EmbraceSpan? = createSpan(name = name, parent = null)
-
     override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
         spanService.createSpan(
             name = name,
             parent = parent,
             internal = false
-        )
-
-    override fun startSpan(name: String): EmbraceSpan? = startSpan(name = name, parent = null)
-
-    override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
-        startSpan(
-            name = name,
-            parent = parent,
-            startTimeMs = null
         )
 
     override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? =
@@ -36,24 +25,6 @@ internal class EmbraceTracer(
             startTimeMs = startTimeMs,
             internal = false
         )
-
-    override fun <T> recordSpan(
-        name: String,
-        code: () -> T
-    ): T = recordSpan(name = name, parent = null, attributes = null, events = null, code = code)
-
-    override fun <T> recordSpan(
-        name: String,
-        parent: EmbraceSpan?,
-        code: () -> T
-    ): T = recordSpan(name = name, parent = parent, attributes = null, events = null, code = code)
-
-    override fun <T> recordSpan(
-        name: String,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?,
-        code: () -> T
-    ): T = recordSpan(name = name, parent = null, attributes = attributes, events = events, code = code)
 
     override fun <T> recordSpan(
         name: String,
@@ -70,71 +41,6 @@ internal class EmbraceTracer(
         code = code
     )
 
-    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long): Boolean =
-        recordCompletedSpan(
-            name = name,
-            startTimeMs = startTimeMs,
-            endTimeMs = endTimeMs,
-            errorCode = null,
-            parent = null,
-            attributes = null,
-            events = null
-        )
-
-    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long, errorCode: ErrorCode?): Boolean =
-        recordCompletedSpan(
-            name = name,
-            startTimeMs = startTimeMs,
-            endTimeMs = endTimeMs,
-            errorCode = errorCode,
-            parent = null,
-            attributes = null,
-            events = null
-        )
-
-    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long, parent: EmbraceSpan?): Boolean =
-        recordCompletedSpan(
-            name = name,
-            startTimeMs = startTimeMs,
-            endTimeMs = endTimeMs,
-            errorCode = null,
-            parent = parent,
-            attributes = null,
-            events = null
-        )
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeMs: Long,
-        endTimeMs: Long,
-        errorCode: ErrorCode?,
-        parent: EmbraceSpan?
-    ): Boolean = recordCompletedSpan(
-        name = name,
-        startTimeMs = startTimeMs,
-        endTimeMs = endTimeMs,
-        errorCode = errorCode,
-        parent = parent,
-        attributes = null,
-        events = null
-    )
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeMs: Long,
-        endTimeMs: Long,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
-    ): Boolean = recordCompletedSpan(
-        name = name,
-        startTimeMs = startTimeMs,
-        endTimeMs = endTimeMs,
-        errorCode = null,
-        parent = null,
-        attributes = attributes,
-        events = events
-    )
-
     override fun recordCompletedSpan(
         name: String,
         startTimeMs: Long,
@@ -143,17 +49,16 @@ internal class EmbraceTracer(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
-    ): Boolean =
-        spanService.recordCompletedSpan(
-            name = name,
-            startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
-            endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
-            parent = parent,
-            internal = false,
-            attributes = attributes ?: emptyMap(),
-            events = events ?: emptyList(),
-            errorCode = errorCode
-        )
+    ): Boolean = spanService.recordCompletedSpan(
+        name = name,
+        startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
+        endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
+        parent = parent,
+        internal = false,
+        attributes = attributes ?: emptyMap(),
+        events = events ?: emptyList(),
+        errorCode = errorCode
+    )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)
 

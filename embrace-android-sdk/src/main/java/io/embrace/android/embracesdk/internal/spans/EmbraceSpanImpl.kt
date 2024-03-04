@@ -73,8 +73,6 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
-
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
             synchronized(eventCount) {

@@ -73,7 +73,7 @@ public interface EmbraceSpan {
      */
     public fun addEvent(
         name: String
-    ): Boolean
+    ): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name]. If [timestampMs] is null, the current time will be used. Optionally, the specific

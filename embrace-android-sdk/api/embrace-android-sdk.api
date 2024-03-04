@@ -339,6 +339,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 }
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls {
+	public static fun addEvent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;)Z
 	public static fun start (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;)Z

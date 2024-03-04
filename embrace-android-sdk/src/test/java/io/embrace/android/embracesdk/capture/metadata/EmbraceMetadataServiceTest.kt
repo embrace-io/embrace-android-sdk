@@ -217,6 +217,8 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.unityBuildIdNumber }.returns(null)
         every { preferencesService.rnSdkVersion }.returns(null)
         every { preferencesService.javaScriptPatchNumber }.returns(null)
+        every { preferencesService.javaScriptBundleURL }.returns(null)
+        every { preferencesService.codePushJsBundleId }.returns(null)
         every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
 
         val metadataService = getReactNativeMetadataService()

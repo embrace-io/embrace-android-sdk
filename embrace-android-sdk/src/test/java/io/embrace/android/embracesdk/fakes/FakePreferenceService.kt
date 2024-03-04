@@ -27,6 +27,7 @@ internal class FakePreferenceService(
     override var backgroundActivityEnabled: Boolean = false,
     override var dartSdkVersion: String? = null,
     override var javaScriptBundleURL: String? = null,
+    override var codePushJsBundleId: String? = null,
     override var rnSdkVersion: String? = null,
     override var javaScriptPatchNumber: String? = null,
     override var embraceFlutterSdkVersion: String? = null,

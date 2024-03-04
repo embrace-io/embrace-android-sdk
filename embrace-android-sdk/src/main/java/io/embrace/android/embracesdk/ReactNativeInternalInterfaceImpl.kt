@@ -96,18 +96,11 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setJavaScriptBundleUrl(context: Context, url: String) {
-        if (embrace.isStarted) {
-            if (framework != AppFramework.REACT_NATIVE) {
-                logger.logError(
-                    "Failed to set Java Script bundle ID URL. Current framework: " +
-                        framework.name + " is not React Native."
-                )
-                return
-            }
-            metadataService.setReactNativeBundleId(context, url)
-        } else {
-            logger.logSDKNotInitialized("set JavaScript bundle URL")
-        }
+        setJavaScriptBundleUrl(context, url, null)
+    }
+
+    override fun setJavaScriptBundleUrlForCodePush(context: Context, url: String, didUpdate: Boolean) {
+        setJavaScriptBundleUrl(context, url, didUpdate)
     }
 
     override fun logRnAction(
@@ -123,5 +116,20 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun logRnView(screen: String) {
         embrace.logRnView(screen)
+    }
+
+    private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
+        if (embrace.isStarted) {
+            if (framework != AppFramework.REACT_NATIVE) {
+                logger.logError(
+                    "Failed to set Java Script bundle ID URL. Current framework: " +
+                        framework.name + " is not React Native."
+                )
+                return
+            }
+            metadataService.setReactNativeBundleId(context, url, didUpdate)
+        } else {
+            logger.logSDKNotInitialized("set JavaScript bundle URL")
+        }
     }
 }

@@ -265,6 +265,10 @@ internal class EmbracePreferencesService(
         get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY)
         set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY, value)
 
+    override var codePushJsBundleId: String?
+        get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY)
+        set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY, value)
+
     override var rnSdkVersion: String?
         get() = prefs.getStringPreference(REACT_NATIVE_SDK_VERSION_KEY)
         set(value) = prefs.setStringPreference(REACT_NATIVE_SDK_VERSION_KEY, value)
@@ -372,6 +376,7 @@ internal class EmbracePreferencesService(
         private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
         private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
+        private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
         private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"
         private const val REACT_NATIVE_SDK_VERSION_KEY = "io.embrace.reactnative.sdk.version"

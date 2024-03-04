@@ -248,6 +248,15 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
+    fun `test code push JS bundle id is saved`() {
+        assertNull(service.codePushJsBundleId)
+
+        val id = "0d48510589c0426b43f01a5fa060a333"
+        service.codePushJsBundleId = id
+        assertEquals(id, service.codePushJsBundleId)
+    }
+
+    @Test
     fun `test java script patch number is saved`() {
         assertNull(service.javaScriptPatchNumber)
 

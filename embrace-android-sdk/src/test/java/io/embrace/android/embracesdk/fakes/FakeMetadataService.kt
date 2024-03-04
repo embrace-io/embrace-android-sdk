@@ -44,6 +44,7 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     var fakeAppId: String = "o0o0o"
     var fakeDeviceId: String = "07D85B44E4E245F4A30E559BFC0D07FF"
     var fakeReactNativeBundleId: String? = "fakeReactNativeBundleId"
+    var didCodePushBundleUpdate: Boolean? = null
     var fakeFlutterSdkVersion: String? = "fakeFlutterSdkVersion"
     var fakeDartVersion: String? = "fakeDartVersion"
     var fakeRnSdkVersion: String? = "fakeRnSdkVersion"
@@ -96,8 +97,9 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
 
     override fun getAppState(): String = appState
 
-    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?) {
+    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, didCodePushBundleUpdate: Boolean?) {
         fakeReactNativeBundleId = jsBundleUrl
+        this.didCodePushBundleUpdate = didCodePushBundleUpdate
     }
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {

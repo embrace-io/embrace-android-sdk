@@ -145,6 +145,7 @@ public abstract interface class io/embrace/android/embracesdk/ReactNativeInterna
 	public abstract fun logRnView (Ljava/lang/String;)V
 	public abstract fun logUnhandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun setJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;)V
+	public abstract fun setJavaScriptBundleUrlFromCodePush (Landroid/content/Context;Ljava/lang/String;Z)V
 	public abstract fun setJavaScriptPatchNumber (Ljava/lang/String;)V
 	public abstract fun setReactNativeSdkVersion (Ljava/lang/String;)V
 	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V

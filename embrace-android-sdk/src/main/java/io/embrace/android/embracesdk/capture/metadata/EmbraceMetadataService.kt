@@ -383,20 +383,25 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getEgl(): String? = egl
 
-    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?) {
+    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, didCodePushBundleUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL
 
-        if (currentUrl != jsBundleUrl) {
+        if (currentUrl != jsBundleUrl || didCodePushBundleUpdate == true) {
             // It`s a new JS bundle URL, save the new value in preferences.
             preferencesService.javaScriptBundleURL = jsBundleUrl
 
             // Calculate the bundle ID for the new bundle URL
             reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
-                computeReactNativeBundleId(
+                val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
                     buildInfo.buildId
                 )
+                if (didCodePushBundleUpdate != null) {
+                    // If this was originated by Code Push, we should update the codePushJsBundleId in preferences.
+                    preferencesService.codePushJsBundleId = bundleId
+                }
+                bundleId
             }
         }
     }
@@ -501,11 +506,23 @@ internal class EmbraceMetadataService private constructor(
             if (appFramework == AppFramework.REACT_NATIVE) {
                 reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
                     val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-                    computeReactNativeBundleId(
-                        context,
-                        lastKnownJsBundleUrl,
-                        buildInfo.buildId
-                    )
+                    val lastKnownCodePushJsBundleId = preferencesService.codePushJsBundleId
+                    if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownCodePushJsBundleId.isNullOrEmpty()) {
+                        // If we have a lastKnownCodePushJsBundleId, we use that as the last known bundle ID.
+                        // This is because for CodePush, we'll be notified if the bundle is updated, and we can
+                        // update the bundle ID at that moment.
+                        return@submit lastKnownCodePushJsBundleId
+                    } else {
+                        // For other OTAs like Expo, we should calculate the bundle ID on each startup,
+                        // as we don't have a way to know if the bundle was updated.
+                        // If lastKnownJsBundleUrl is null, it means that neither CodePush nor any other OTA
+                        // is being used, so the function will return the default buildId.
+                        return@submit computeReactNativeBundleId(
+                            context,
+                            lastKnownJsBundleUrl,
+                            buildInfo.buildId
+                        )
+                    }
                 }
                 javaScriptPatchNumber = preferencesService.javaScriptPatchNumber
                 if (javaScriptPatchNumber != null) {

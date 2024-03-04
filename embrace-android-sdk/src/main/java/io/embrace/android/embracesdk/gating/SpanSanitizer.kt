@@ -15,7 +15,7 @@ internal class SpanSanitizer(
 
         val sanitizedSpans = spans.filter(::sanitizeSpans).toMutableList()
         val sessionSpan =
-            sanitizedSpans.singleOrNull { it.name == "emb-session-span" } ?: return spans
+            sanitizedSpans.singleOrNull { it.name == "emb-session" } ?: return spans
         sanitizedSpans.remove(sessionSpan)
 
         val sanitizedEvents = sessionSpan.events.filter(::sanitizeEvents)

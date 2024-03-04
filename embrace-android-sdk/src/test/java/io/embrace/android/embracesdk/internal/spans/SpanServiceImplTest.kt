@@ -54,7 +54,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())
@@ -83,7 +83,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())
@@ -179,7 +179,7 @@ internal class SpanServiceImplTest {
         with(completedSpans[0]) {
             assertTrue(isPrivate())
             assertFalse(isKey())
-            assertEquals(EmbraceAttributes.Type.SESSION.name, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+            assertEquals(EmbraceAttributes.Type.SESSION.typeName, attributes[EmbraceAttributes.Type.SESSION.keyName()])
             assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
         }
@@ -212,7 +212,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(expectedType.name, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertTrue(isKey())
             assertTrue(isPrivate())
@@ -340,7 +340,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())

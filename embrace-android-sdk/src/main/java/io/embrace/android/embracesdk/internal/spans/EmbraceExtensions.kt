@@ -86,7 +86,7 @@ internal fun createRootSpanBuilder(
  * Sets and returns the [EmbraceAttributes.Type] attribute for the given [SpanBuilder]
  */
 internal fun SpanBuilder.setType(value: EmbraceAttributes.Type): SpanBuilder {
-    setAttribute(value.keyName(), value.toString())
+    setAttribute(value.keyName(), value.typeName)
     return this
 }
 
@@ -238,16 +238,16 @@ internal object EmbraceAttributes {
      * Attribute to categorize a [Span] and give it a distinct semantic meaning. Spans of each [Type] may be treated differently by the
      * backend and can be expected to contain a set of attributes to further flesh out the given semantic meanings.
      */
-    internal enum class Type : Attribute {
+    internal enum class Type(val typeName: String) : Attribute {
         /**
          * Spans that model an Embrace session or background activity.
          */
-        SESSION,
+        SESSION("ux.session"),
 
         /**
          * A [Span] created by an SDK user to measure the performance of an operation
          */
-        PERFORMANCE;
+        PERFORMANCE("performance");
 
         override val canonicalName = "type"
     }

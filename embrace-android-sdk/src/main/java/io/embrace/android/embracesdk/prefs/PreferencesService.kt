@@ -117,6 +117,11 @@ internal interface PreferencesService {
     var javaScriptBundleURL: String?
 
     /**
+     * Last javaScript bundle ID.
+     */
+    var javaScriptBundleId: String?
+
+    /**
      * Embrace sdk version.
      */
     var rnSdkVersion: String?

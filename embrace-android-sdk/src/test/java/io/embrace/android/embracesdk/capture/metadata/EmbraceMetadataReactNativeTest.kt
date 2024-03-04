@@ -105,6 +105,15 @@ internal class EmbraceMetadataReactNativeTest {
     }
 
     @Test
+    fun `test React Native bundle ID from preference if jsBundleIdUrl is a new value`() {
+        preferencesService.javaScriptBundleURL = "oldJavaScriptBundleURL"
+        val metadataService = getMetadataService()
+
+        metadataService.setReactNativeBundleId(context, "newJavaScriptBundleURL")
+        assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+    }
+
+    @Test
     fun `test React Native bundle ID url as Asset`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
@@ -115,13 +124,67 @@ internal class EmbraceMetadataReactNativeTest {
 
         val metadataService = getMetadataService()
         metadataService.setReactNativeBundleId(context, "assets://index.android.bundle")
-        // get the react native Bundle ID once to call the lazy property
-        metadataService.getReactNativeBundleId()
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
+    }
+
+    @Test
+    fun `test React Native bundle ID url as Asset with forceUpdate param in true`() {
+        val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
+        val inputStream = FileInputStream(bundleIdFile)
+        preferencesService.javaScriptBundleURL = null
+        preferencesService.javaScriptBundleId = null
+
+        every { context.assets } returns assetManager
+        every { assetManager.open(any()) } returns inputStream
+
+        val metadataService = getMetadataService()
+        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", true)
+
+        verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
+
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", preferencesService.javaScriptBundleId)
+    }
+
+    @Test
+    fun `test React Native bundle ID url as Asset with forceUpdate param in false`() {
+        val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
+        val inputStream = FileInputStream(bundleIdFile)
+        preferencesService.javaScriptBundleURL = "assets://index.android.bundle"
+        preferencesService.javaScriptBundleId = "persistedBundleId"
+
+        every { context.assets } returns assetManager
+        every { assetManager.open(any()) } returns inputStream
+
+        val metadataService = getMetadataService()
+        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", false)
+
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
+        assertEquals("persistedBundleId", preferencesService.javaScriptBundleId)
+    }
+
+    @Test
+    fun `test React Native bundle ID url as Asset with forceUpdate param being null`() {
+        val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
+        val inputStream = FileInputStream(bundleIdFile)
+        preferencesService.javaScriptBundleURL = null
+        preferencesService.javaScriptBundleId = null
+
+        every { context.assets } returns assetManager
+        every { assetManager.open(any()) } returns inputStream
+
+        val metadataService = getMetadataService()
+        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", null)
+
+        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
+        assertEquals(null, preferencesService.javaScriptBundleId)
     }
 
     @Test
@@ -132,9 +195,6 @@ internal class EmbraceMetadataReactNativeTest {
             context,
             bundleIdFile.absolutePath
         )
-        // get the react native Bundle ID once to call the lazy property
-        metadataService.getReactNativeBundleId()
-
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }

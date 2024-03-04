@@ -383,20 +383,25 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getEgl(): String? = egl
 
-    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?) {
+    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL
 
-        if (currentUrl != jsBundleUrl) {
+        if (currentUrl != jsBundleUrl || forceUpdate == true) {
             // It`s a new JS bundle URL, save the new value in preferences.
             preferencesService.javaScriptBundleURL = jsBundleUrl
 
             // Calculate the bundle ID for the new bundle URL
             reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
-                computeReactNativeBundleId(
+                val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
                     buildInfo.buildId
                 )
+                if (forceUpdate != null) {
+                    // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.
+                    preferencesService.javaScriptBundleId = bundleId
+                }
+                bundleId
             }
         }
     }
@@ -501,11 +506,19 @@ internal class EmbraceMetadataService private constructor(
             if (appFramework == AppFramework.REACT_NATIVE) {
                 reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
                     val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-                    computeReactNativeBundleId(
-                        context,
-                        lastKnownJsBundleUrl,
-                        buildInfo.buildId
-                    )
+                    val lastKnownJsBundleId = preferencesService.javaScriptBundleId
+                    if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
+                        // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
+                        return@submit lastKnownJsBundleId
+                    } else {
+                        // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
+                        // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
+                        return@submit computeReactNativeBundleId(
+                            context,
+                            lastKnownJsBundleUrl,
+                            buildInfo.buildId
+                        )
+                    }
                 }
                 javaScriptPatchNumber = preferencesService.javaScriptPatchNumber
                 if (javaScriptPatchNumber != null) {

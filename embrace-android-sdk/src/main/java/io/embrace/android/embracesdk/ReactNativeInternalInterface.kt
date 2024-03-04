@@ -31,8 +31,21 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
 
     public fun setReactNativeVersionNumber(version: String?)
 
+    /**
+     * Sets the React Native Bundle URL.
+     * @param context the context
+     * @param url the JavaScript bundle URL
+     */
     public fun setJavaScriptBundleUrl(context: Context, url: String)
 
+    /**
+     * Sets the React Native Bundle URL, indicating if the bundle was updated or not.
+     * If it was updated, the bundle ID will be recomputed.
+     * If not, the bundle ID will be retrieved from cache.
+     * @param context the context
+     * @param url the JavaScript bundle URL
+     * @param didUpdate if the bundle was updated
+     */
     public fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean)
 
     /**

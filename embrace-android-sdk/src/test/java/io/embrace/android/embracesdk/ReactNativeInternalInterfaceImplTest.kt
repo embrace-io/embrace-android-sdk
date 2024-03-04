@@ -174,7 +174,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
-        assertEquals(true, metadataService.didCodePushBundleUpdate)
+        assertEquals(true, metadataService.forceUpdate)
     }
 
     @Test
@@ -193,7 +193,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
-        assertEquals(null, metadataService.didCodePushBundleUpdate)
+        assertEquals(null, metadataService.forceUpdate)
     }
 
     @Test

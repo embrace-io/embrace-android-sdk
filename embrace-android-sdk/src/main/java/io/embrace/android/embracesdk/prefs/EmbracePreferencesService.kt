@@ -265,7 +265,7 @@ internal class EmbracePreferencesService(
         get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY)
         set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY, value)
 
-    override var codePushJsBundleId: String?
+    override var javaScriptBundleId: String?
         get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY)
         set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY, value)
 

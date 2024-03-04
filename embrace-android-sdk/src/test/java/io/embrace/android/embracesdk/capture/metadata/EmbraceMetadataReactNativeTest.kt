@@ -132,11 +132,11 @@ internal class EmbraceMetadataReactNativeTest {
     }
 
     @Test
-    fun `test React Native bundle ID url as Asset with CodePush didUpdate param in true`() {
+    fun `test React Native bundle ID url as Asset with forceUpdate param in true`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
         preferencesService.javaScriptBundleURL = null
-        preferencesService.codePushJsBundleId = null
+        preferencesService.javaScriptBundleId = null
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -148,15 +148,15 @@ internal class EmbraceMetadataReactNativeTest {
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals("D41D8CD98F00B204E9800998ECF8427E", preferencesService.codePushJsBundleId)
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", preferencesService.javaScriptBundleId)
     }
 
     @Test
-    fun `test React Native bundle ID url as Asset with CodePush didUpdate param in false`() {
+    fun `test React Native bundle ID url as Asset with forceUpdate param in false`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
         preferencesService.javaScriptBundleURL = "assets://index.android.bundle"
-        preferencesService.codePushJsBundleId = "persistedBundleId"
+        preferencesService.javaScriptBundleId = "persistedBundleId"
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -166,15 +166,15 @@ internal class EmbraceMetadataReactNativeTest {
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
-        assertEquals("persistedBundleId", preferencesService.codePushJsBundleId)
+        assertEquals("persistedBundleId", preferencesService.javaScriptBundleId)
     }
 
     @Test
-    fun `test React Native bundle ID url as Asset with CodePush didUpdate param being null`() {
+    fun `test React Native bundle ID url as Asset with forceUpdate param being null`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
         preferencesService.javaScriptBundleURL = null
-        preferencesService.codePushJsBundleId = null
+        preferencesService.javaScriptBundleId = null
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -184,7 +184,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals(null, preferencesService.codePushJsBundleId)
+        assertEquals(null, preferencesService.javaScriptBundleId)
     }
 
     @Test

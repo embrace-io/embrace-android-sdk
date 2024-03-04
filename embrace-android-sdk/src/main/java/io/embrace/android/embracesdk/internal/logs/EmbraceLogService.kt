@@ -5,10 +5,16 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import java.util.NavigableMap
+import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
@@ -17,9 +23,28 @@ internal class EmbraceLogService(
     private val logWriter: LogWriter,
     private val clock: Clock,
     private val metadataService: MetadataService,
+    configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val backgroundWorker: BackgroundWorker
 ) : LogService {
+
+    private val logCounters = mapOf(
+        Severity.INFO to LogCounter(
+            Severity.INFO.name,
+            clock,
+            configService.logMessageBehavior::getInfoLogLimit
+        ),
+        Severity.WARNING to LogCounter(
+            Severity.WARNING.name,
+            clock,
+            configService.logMessageBehavior::getWarnLogLimit
+        ),
+        Severity.ERROR to LogCounter(
+            Severity.ERROR.name,
+            clock,
+            configService.logMessageBehavior::getErrorLogLimit
+        )
+    )
 
     override fun log(
         message: String,
@@ -51,6 +76,34 @@ internal class EmbraceLogService(
         addLogEventData(message, severity, attributes)
     }
 
+    override fun getInfoLogsAttemptedToSend(): Int {
+        return logCounters.getValue(Severity.INFO).getCount()
+    }
+
+    override fun getWarnLogsAttemptedToSend(): Int {
+        return logCounters.getValue(Severity.WARNING).getCount()
+    }
+
+    override fun getErrorLogsAttemptedToSend(): Int {
+        return logCounters.getValue(Severity.ERROR).getCount()
+    }
+
+    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
+        return logCounters.getValue(Severity.INFO).findLogIds(startTime, endTime)
+    }
+
+    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
+        return logCounters.getValue(Severity.WARNING).findLogIds(startTime, endTime)
+    }
+
+    override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
+        return logCounters.getValue(Severity.ERROR).findLogIds(startTime, endTime)
+    }
+
+    override fun cleanCollections() {
+        logCounters.forEach { it.value.clear() }
+    }
+
     private fun addLogEventData(
         message: String,
         severity: Severity,
@@ -58,7 +111,11 @@ internal class EmbraceLogService(
     ) {
         backgroundWorker.submit {
             // TBD: Check if log should be gated
-            // TBD: Count log and enforce limits
+
+            val messageId = Uuid.getEmbUuid()
+            if (!logCounters.getValue(severity).addIfAllowed(messageId)) {
+                return@submit
+            }
 
             // Set these after the custom properties so they can't be overridden
             sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
@@ -84,5 +141,42 @@ internal class EmbraceLogService(
             Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
             Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
         }
+    }
+}
+
+internal class LogCounter(
+    private val name: String,
+    private val clock: Clock,
+    private val getConfigLogLimit: (() -> Int)
+) {
+    private val count = AtomicInteger(0)
+    private val logIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
+    private val cache = CacheableValue<List<String>> { logIds.size }
+
+    fun addIfAllowed(messageId: String): Boolean {
+        val timestamp = clock.now()
+        count.incrementAndGet()
+
+        if (logIds.size < getConfigLogLimit.invoke()) {
+            logIds[timestamp] = messageId
+        } else {
+            logWarning("$name log limit has been reached.")
+            return false
+        }
+        return true
+    }
+
+    fun findLogIds(
+        startTime: Long,
+        endTime: Long,
+    ): List<String> {
+        return cache.value { ArrayList(logIds.subMap(startTime, endTime).values) }
+    }
+
+    fun getCount(): Int = count.get()
+
+    fun clear() {
+        count.set(0)
+        logIds.clear()
     }
 }

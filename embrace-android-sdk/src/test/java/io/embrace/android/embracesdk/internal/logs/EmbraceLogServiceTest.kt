@@ -3,10 +3,16 @@ package io.embrace.android.embracesdk.internal.logs
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -16,13 +22,19 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicLong
 
 internal class EmbraceLogServiceTest {
 
     companion object {
         private lateinit var logWriter: FakeOpenTelemetryLogWriter
         private lateinit var metadataService: FakeMetadataService
+        private lateinit var configService: ConfigService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
+        private lateinit var executor: ExecutorService
+        private lateinit var tick: AtomicLong
         private lateinit var clock: Clock
 
         @BeforeClass
@@ -30,14 +42,30 @@ internal class EmbraceLogServiceTest {
         fun beforeClass() {
             metadataService = FakeMetadataService()
             sessionIdTracker = FakeSessionIdTracker()
+            executor = Executors.newSingleThreadExecutor()
+            tick = AtomicLong(1609823408L)
+            clock = Clock { tick.incrementAndGet() }
         }
     }
+
+    private lateinit var cfg: RemoteConfig
 
     @Before
     fun setUp() {
         logWriter = FakeOpenTelemetryLogWriter()
         sessionIdTracker.setActiveSessionId("session-123", true)
-        clock = FakeClock(123456789L)
+        cfg = RemoteConfig()
+        configService = FakeConfigService(
+            sessionBehavior = fakeSessionBehavior {
+                cfg
+            },
+            logMessageBehavior = fakeLogMessageBehavior {
+                cfg.logConfig
+            },
+            dataCaptureEventBehavior = fakeDataCaptureEventBehavior {
+                cfg
+            }
+        )
     }
 
     @Test
@@ -123,11 +151,81 @@ internal class EmbraceLogServiceTest {
         assertEquals("session-123", log.attributes?.get("emb.session_id"))
     }
 
+    @Test
+    fun testDefaultMaxMessageCountLimits() {
+        val logService = getLogMessageService()
+
+        repeat(500) { k ->
+            logService.log("Test info $k", Severity.INFO, null)
+            logService.log("Test warning $k", Severity.WARNING, null)
+            logService.log("Test error $k", Severity.ERROR, null)
+        }
+
+        assertEquals(100, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getInfoLogsAttemptedToSend())
+        assertEquals(100, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getWarnLogsAttemptedToSend())
+        assertEquals(250, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getErrorLogsAttemptedToSend())
+    }
+
+    @Test
+    fun testCustomMaxMessageCountLimits() {
+        cfg = cfg.copy(
+            logConfig = LogRemoteConfig(
+                logInfoLimit = 50,
+                logWarnLimit = 110,
+                logErrorLimit = 150
+            )
+        )
+
+        val logService = getLogMessageService()
+
+        repeat(500) { k ->
+            logService.log("Test info $k", Severity.INFO, null)
+            logService.log("Test warning $k", Severity.WARNING, null)
+            logService.log("Test error $k", Severity.ERROR, null)
+        }
+
+        assertEquals(50, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getInfoLogsAttemptedToSend())
+        assertEquals(110, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getWarnLogsAttemptedToSend())
+        assertEquals(150, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(500, logService.getErrorLogsAttemptedToSend())
+    }
+
+    @Test
+    fun testCleanCollections() {
+        val logService = getLogMessageService()
+        repeat(10) { k ->
+            logService.log("Test info $k", Severity.INFO, null)
+            logService.log("Test warning $k", Severity.WARNING, null)
+            logService.log("Test error $k", Severity.ERROR, null)
+        }
+        assertEquals(10, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(10, logService.getInfoLogsAttemptedToSend())
+        assertEquals(10, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(10, logService.getWarnLogsAttemptedToSend())
+        assertEquals(10, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(10, logService.getErrorLogsAttemptedToSend())
+
+        logService.cleanCollections()
+
+        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.getInfoLogsAttemptedToSend())
+        assertEquals(0, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.getWarnLogsAttemptedToSend())
+        assertEquals(0, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.getErrorLogsAttemptedToSend())
+    }
+
     private fun getLogMessageService(): EmbraceLogService {
         return EmbraceLogService(
             logWriter,
             clock,
             metadataService,
+            configService,
             sessionIdTracker,
             BackgroundWorker(MoreExecutors.newDirectExecutorService())
         )

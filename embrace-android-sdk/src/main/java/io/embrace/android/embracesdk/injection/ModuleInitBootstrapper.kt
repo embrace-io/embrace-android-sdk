@@ -389,8 +389,6 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             coreModule,
                             workerThreadModule,
-                            systemServiceModule,
-                            androidServicesModule,
                             essentialServiceModule,
                             dataCaptureServiceModule,
                             anrModule,
@@ -406,7 +404,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
-                            dataContainerModule.applicationExitInfoService
                         )
                     }
 

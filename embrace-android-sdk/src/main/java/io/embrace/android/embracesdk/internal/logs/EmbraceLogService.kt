@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -23,7 +25,8 @@ internal class EmbraceLogService(
     private val logWriter: LogWriter,
     private val clock: Clock,
     private val metadataService: MetadataService,
-    configService: ConfigService,
+    private val configService: ConfigService,
+    private val appFramework: AppFramework,
     private val sessionIdTracker: SessionIdTracker,
     private val backgroundWorker: BackgroundWorker
 ) : LogService {
@@ -125,7 +128,7 @@ internal class EmbraceLogService(
             val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(
                 startTimeMs = clock.nowInNanos(),
-                message = message,
+                message = trimToMaxLength(message),
                 severity = otelSeverity,
                 severityText = otelSeverity.name,
                 attributes = attributes.toMap()
@@ -135,12 +138,43 @@ internal class EmbraceLogService(
         }
     }
 
+    private fun trimToMaxLength(message: String): String {
+        val maxLength =
+            if (appFramework == AppFramework.UNITY) {
+                LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
+            } else {
+                configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
+            }
+
+        return if (message.length > maxLength) {
+            val endChars = "..."
+
+            // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
+            val allowedLength = when {
+                maxLength >= endChars.length -> maxLength - endChars.length
+                else -> LogMessageBehavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
+            }
+            logWarning("Truncating message to ${message.length} characters")
+            message.substring(0, allowedLength) + endChars
+        } else {
+            message
+        }
+    }
+
     private fun mapSeverity(embraceSeverity: Severity): io.opentelemetry.api.logs.Severity {
         return when (embraceSeverity) {
             Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
             Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
             Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
         }
+    }
+
+    companion object {
+
+        /**
+         * The default limit of Unity log messages that can be sent.
+         */
+        private const val LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH = 16384
     }
 }
 

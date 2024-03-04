@@ -43,7 +43,7 @@ internal interface StorageService {
     /**
      * Returns a list of files from the files and cache directories that match the [filter].
      */
-    fun listFiles(filter: FilenameFilter): List<File>
+    fun listFiles(filter: FilenameFilter = FilenameFilter { _, _ -> true }): List<File>
 
     /**
      * Logs storage telemetry such as the currently used size.

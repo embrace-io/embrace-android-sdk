@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.getFileNameForSession
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -21,11 +22,6 @@ internal class EmbraceDeliveryCacheManager(
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
-        /**
-         * File names for all cached sessions start with this prefix
-         */
-        const val SESSION_FILE_PREFIX = "last_session"
-
         /**
          * File name to cache JVM crash information
          */
@@ -200,7 +196,7 @@ internal class EmbraceDeliveryCacheManager(
 
     private fun deleteOldestSessions() {
         cachedSessions.values
-            .sortedBy { it.timestamp }
+            .sortedBy { it.timestampMs }
             .take(cachedSessions.size - MAX_SESSIONS_CACHED + 1)
             .forEach { deleteSession(it.sessionId) }
     }
@@ -248,8 +244,8 @@ internal class EmbraceDeliveryCacheManager(
 
     data class CachedSession(
         val sessionId: String,
-        val timestamp: Long?
+        val timestampMs: Long
     ) {
-        val filename = "$SESSION_FILE_PREFIX.$timestamp.$sessionId.json"
+        val filename = getFileNameForSession(sessionId, timestampMs)
     }
 }

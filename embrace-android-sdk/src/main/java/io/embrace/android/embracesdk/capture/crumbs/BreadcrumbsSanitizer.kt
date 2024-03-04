@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.gating.Sanitizable
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM_VIEWS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_TAPS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_VIEWS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_WEB_VIEWS
@@ -12,8 +11,7 @@ import io.embrace.android.embracesdk.payload.Breadcrumbs
 internal class BreadcrumbsSanitizer(
     private val breadcrumbs: Breadcrumbs?,
     private val enabledComponents: Set<String>
-) :
-    Sanitizable<Breadcrumbs> {
+) : Sanitizable<Breadcrumbs> {
 
     override fun sanitize(): Breadcrumbs? {
         InternalStaticEmbraceLogger.logger.logDeveloper(
@@ -41,16 +39,6 @@ internal class BreadcrumbsSanitizer(
                 null
             }
 
-            val fragmentBreadcrumbs = if (shouldAddCustomViewBreadcrumbs()) {
-                InternalStaticEmbraceLogger.logger.logDeveloper(
-                    "BreadcrumbsSanitizer",
-                    "shouldAddCustomViewBreadcrumbs"
-                )
-                breadcrumbs.fragmentBreadcrumbs
-            } else {
-                null
-            }
-
             val tapBreadcrumbs = if (shouldAddTapBreadcrumbs()) {
                 InternalStaticEmbraceLogger.logger.logDeveloper(
                     "BreadcrumbsSanitizer",
@@ -73,7 +61,6 @@ internal class BreadcrumbsSanitizer(
             return Breadcrumbs(
                 customBreadcrumbs = customBreadcrumbs,
                 viewBreadcrumbs = viewBreadcrumbs,
-                fragmentBreadcrumbs = fragmentBreadcrumbs,
                 tapBreadcrumbs = tapBreadcrumbs,
                 webViewBreadcrumbs = webViewBreadcrumbs
             )
@@ -85,9 +72,6 @@ internal class BreadcrumbsSanitizer(
 
     private fun shouldAddViewBreadcrumbs() =
         enabledComponents.contains(BREADCRUMBS_VIEWS)
-
-    private fun shouldAddCustomViewBreadcrumbs() =
-        enabledComponents.contains(BREADCRUMBS_CUSTOM_VIEWS)
 
     private fun shouldAddWebViewBreadcrumbs() =
         enabledComponents.contains(BREADCRUMBS_WEB_VIEWS)

@@ -21,7 +21,6 @@ internal class BreadcrumbsTest {
         ),
         customBreadcrumbs = listOf(CustomBreadcrumb("Custom", 1600000000)),
         webViewBreadcrumbs = listOf(WebViewBreadcrumb("WebView", 1600000000)),
-        fragmentBreadcrumbs = listOf(FragmentBreadcrumb("Fragment", 1600000000, 1600005000)),
         rnActionBreadcrumbs = listOf(
             RnActionBreadcrumb(
                 "RnAction",
@@ -56,7 +55,6 @@ internal class BreadcrumbsTest {
         assertNotNull(obj)
         assertNotNull(obj.viewBreadcrumbs?.single())
         assertNotNull(obj.customBreadcrumbs?.single())
-        assertNotNull(obj.fragmentBreadcrumbs?.single())
         assertNotNull(obj.tapBreadcrumbs?.single())
         assertNotNull(obj.rnActionBreadcrumbs?.single())
         assertNotNull(obj.pushNotifications?.single())

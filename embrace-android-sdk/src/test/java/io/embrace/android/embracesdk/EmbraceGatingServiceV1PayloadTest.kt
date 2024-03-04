@@ -42,7 +42,6 @@ import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.Orientation
@@ -217,13 +216,11 @@ internal class EmbraceGatingServiceV1PayloadTest {
         )
         val webViewBreadcrumb = WebViewBreadcrumb("web url", 0)
         val customBreadcrumb = CustomBreadcrumb("custom breadcrumb", 0)
-        val fragmentBreadcrumb = FragmentBreadcrumb("custom breadcrumb", 0, 1)
 
         val breadcrumbs = Breadcrumbs(
             tapBreadcrumbs = listOf(tapBreadcrumb),
             customBreadcrumbs = listOf(customBreadcrumb),
             webViewBreadcrumbs = listOf(webViewBreadcrumb),
-            fragmentBreadcrumbs = listOf(fragmentBreadcrumb)
         )
 
         val message = SessionMessage(
@@ -241,7 +238,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
         assertNotNull(crumbs.tapBreadcrumbs)
         assertNotNull(crumbs.webViewBreadcrumbs)
-        assertNull(crumbs.fragmentBreadcrumbs)
         assertNull(crumbs.customBreadcrumbs)
     }
 

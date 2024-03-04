@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys
+import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findSpans
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -19,7 +22,7 @@ internal class FragmentBreadcrumbFeatureTest {
     fun `fragment breadcrumb feature`() {
         with(testRule) {
             var startTime: Long = 0
-            val message = harness.recordSession {
+            val message = checkNotNull(harness.recordSession {
                 startTime = harness.fakeClock.now()
                 embrace.startView("MyView")
                 harness.fakeClock.tick(1000L)
@@ -27,19 +30,16 @@ internal class FragmentBreadcrumbFeatureTest {
                 harness.fakeClock.tick(2000L)
                 embrace.endView("MyView")
                 embrace.endView("AnotherView")
-            }
-            val fragmentBreadcrumbs = checkNotNull(message?.breadcrumbs?.fragmentBreadcrumbs).sortedBy { it.name }
+            })
+
+            val fragmentBreadcrumbs = message.findSpans("emb-${SchemaKeys.VIEW_BREADCRUMB}")
             assertEquals(2, fragmentBreadcrumbs.size)
 
             val breadcrumb1 = fragmentBreadcrumbs[0]
-            assertEquals("AnotherView", breadcrumb1.name)
-            assertEquals(startTime + 1000, breadcrumb1.start)
-            assertEquals(startTime + 3000, breadcrumb1.endTime)
+            assertEquals("MyView", breadcrumb1.findSpanAttribute("view.name"))
 
             val breadcrumb2 = fragmentBreadcrumbs[1]
-            assertEquals("MyView", breadcrumb2.name)
-            assertEquals(startTime, breadcrumb2.start)
-            assertEquals(startTime + 3000, breadcrumb2.endTime)
+            assertEquals("AnotherView", breadcrumb2.findSpanAttribute("view.name"))
         }
     }
 }

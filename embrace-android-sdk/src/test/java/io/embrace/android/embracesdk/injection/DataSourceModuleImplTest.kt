@@ -24,6 +24,7 @@ internal class DataSourceModuleImplTest {
             FakeWorkerThreadModule(FakeInitModule(), WorkerName.BACKGROUND_REGISTRATION)
         )
         assertNotNull(module.getDataSources())
-        assertEquals(0, module.getDataSources().size)
+        assertNotNull(module.applicationExitInfoDataSource)
+        assertEquals(1, module.getDataSources().size)
     }
 }

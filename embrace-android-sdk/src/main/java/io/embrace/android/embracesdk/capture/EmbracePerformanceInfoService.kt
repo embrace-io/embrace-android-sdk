@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
-import io.embrace.android.embracesdk.capture.aei.ApplicationExitInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -11,7 +10,6 @@ import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorServic
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.session.captureDataSafely
@@ -24,7 +22,6 @@ internal class EmbracePerformanceInfoService(
     private val memoryService: MemoryService,
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
-    private val applicationExitInfoService: ApplicationExitInfoService?,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val responsivenessMonitorService: ResponsivenessMonitorService?
 ) : PerformanceInfoService {
@@ -42,9 +39,6 @@ internal class EmbracePerformanceInfoService(
         val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
 
         return info.copy(
-            appExitInfoData = captureDataSafely {
-                captureAppExitInfoData(coldStart, applicationExitInfoService)
-            },
             networkRequests = captureDataSafely { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
             anrIntervals = captureDataSafely { anrService?.getCapturedData()?.toList() },
             googleAnrTimestamps = captureDataSafely {
@@ -63,18 +57,6 @@ internal class EmbracePerformanceInfoService(
             },
             responsivenessMonitorSnapshots = captureDataSafely { responsivenessMonitorService?.getCapturedData() }
         )
-    }
-
-    private fun captureAppExitInfoData(
-        coldStart: Boolean,
-        applicationExitInfoService: ApplicationExitInfoService?
-    ): ArrayList<AppExitInfoData>? {
-        return when {
-            applicationExitInfoService != null &&
-                coldStart -> ArrayList(applicationExitInfoService.getCapturedData())
-
-            else -> null
-        }
     }
 
     override fun getPerformanceInfo(

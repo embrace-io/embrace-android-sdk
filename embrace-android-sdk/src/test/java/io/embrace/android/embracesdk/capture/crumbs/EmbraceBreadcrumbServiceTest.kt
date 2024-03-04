@@ -150,7 +150,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(1, breadcrumbs.pushNotifications?.size)
         assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.webViewBreadcrumbs?.size)
-        assertEquals(1, breadcrumbs.customBreadcrumbs?.size)
 
         service.cleanCollections()
 
@@ -160,7 +159,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.webViewBreadcrumbs?.size)
-        assertEquals(0, breadcrumbsAfterClean.customBreadcrumbs?.size)
     }
 
     @Test
@@ -187,33 +185,6 @@ internal class EmbraceBreadcrumbServiceTest {
             breadcrumbs = service.getBreadcrumbs()
         )
         assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)
-    }
-
-    @Test
-    fun testFlushBreadcrumbs() {
-        val service = initializeBreadcrumbService()
-        service.startView("a")
-        clock.tickSecond()
-        service.endView("a")
-        clock.tickSecond()
-        service.startView("b")
-        clock.tickSecond()
-        service.logCustom("breadcrumb", clock.now())
-        val breadcrumbs = checkNotNull(service.getBreadcrumbs().customBreadcrumbs)
-        assertEquals("one breadcrumb captured", 1, breadcrumbs.size)
-
-        service.onViewClose(activity)
-        val message = SessionMessage(
-            session = fakeSession(),
-            breadcrumbs = service.flushBreadcrumbs()
-        )
-        assertJsonMatchesGoldenFile("breadcrumb_view_custom.json", message)
-
-        val secondMessage = SessionMessage(
-            session = fakeSession(),
-            breadcrumbs = service.flushBreadcrumbs()
-        )
-        assertJsonMatchesGoldenFile("breadcrumb_empty.json", secondMessage)
     }
 
     @Test

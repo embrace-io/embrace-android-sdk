@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.gating.Sanitizable
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_TAPS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_VIEWS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_WEB_VIEWS
@@ -19,16 +18,6 @@ internal class BreadcrumbsSanitizer(
             "sanitize: " + (breadcrumbs != null).toString()
         )
         return breadcrumbs?.let {
-            val customBreadcrumbs = if (shouldAddCustomBreadcrumbs()) {
-                InternalStaticEmbraceLogger.logger.logDeveloper(
-                    "BreadcrumbsSanitizer",
-                    "shouldAddCustomBreadcrumbs"
-                )
-                breadcrumbs.customBreadcrumbs
-            } else {
-                null
-            }
-
             val viewBreadcrumbs = if (shouldAddViewBreadcrumbs()) {
                 InternalStaticEmbraceLogger.logger.logDeveloper(
                     "BreadcrumbsSanitizer",
@@ -59,7 +48,6 @@ internal class BreadcrumbsSanitizer(
                 null
             }
             return Breadcrumbs(
-                customBreadcrumbs = customBreadcrumbs,
                 viewBreadcrumbs = viewBreadcrumbs,
                 tapBreadcrumbs = tapBreadcrumbs,
                 webViewBreadcrumbs = webViewBreadcrumbs
@@ -75,7 +63,4 @@ internal class BreadcrumbsSanitizer(
 
     private fun shouldAddWebViewBreadcrumbs() =
         enabledComponents.contains(BREADCRUMBS_WEB_VIEWS)
-
-    private fun shouldAddCustomBreadcrumbs() =
-        enabledComponents.contains(BREADCRUMBS_CUSTOM)
 }

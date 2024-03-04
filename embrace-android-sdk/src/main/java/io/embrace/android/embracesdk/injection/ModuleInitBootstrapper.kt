@@ -338,8 +338,6 @@ internal class ModuleInitBootstrapper(
                                     }
                                 }
                             }
-                        } else {
-                            InternalStaticEmbraceLogger.logger.logWarning("Failed to load SO file embrace-native")
                         }
                     }
 
@@ -418,8 +416,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerService(crashModule.crashService)
                     }
 
-                    Systrace.startSynchronous("modules-post-init")
-
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
                     serviceRegistry.closeRegistration()
@@ -429,7 +425,6 @@ internal class ModuleInitBootstrapper(
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
 
                     asyncInitTask.set(initTask)
-                    Systrace.endSynchronous()
                     true
                 } else {
                     false
@@ -468,7 +463,7 @@ internal class ModuleInitBootstrapper(
         }
     }
 
-    private fun isInitialized(): Boolean = Systrace.traceSynchronous("check-init") { asyncInitTask.get() != null }
+    private fun isInitialized(): Boolean = asyncInitTask.get() != null
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
         Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusServi
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -95,19 +96,23 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val componentCallbackService: ComponentCallbackService by singleton {
-        ComponentCallbackService(coreModule.application, memoryService)
+        Systrace.traceSynchronous("component-callback-service-init") {
+            ComponentCallbackService(coreModule.application, memoryService)
+        }
     }
 
     override val powerSaveModeService: PowerSaveModeService by singleton {
-        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
-            EmbracePowerSaveModeService(
-                coreModule.context,
-                backgroundWorker,
-                initModule.clock,
-                systemServiceModule.powerManager
-            )
-        } else {
-            NoOpPowerSaveModeService()
+        Systrace.traceSynchronous("power-service-init") {
+            if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
+                EmbracePowerSaveModeService(
+                    coreModule.context,
+                    backgroundWorker,
+                    initModule.clock,
+                    systemServiceModule.powerManager
+                )
+            } else {
+                NoOpPowerSaveModeService()
+            }
         }
     }
 
@@ -116,12 +121,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val breadcrumbService: BreadcrumbService by singleton {
-        EmbraceBreadcrumbService(
-            initModule.clock,
-            configService,
-            essentialServiceModule.activityLifecycleTracker,
-            coreModule.logger
-        )
+        Systrace.traceSynchronous("breadcrumb-service-init") {
+            EmbraceBreadcrumbService(
+                initModule.clock,
+                configService,
+                essentialServiceModule.activityLifecycleTracker,
+                coreModule.logger
+            )
+        }
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
@@ -132,23 +139,25 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val thermalStatusService: ThermalStatusService by singleton {
-        if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            // Android API only accepts an executor. We don't want to directly expose those
-            // to everything in the codebase so we decorate the BackgroundWorker here as an
-            // alternative
-            val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-            val executor = Executor {
-                backgroundWorker.submit(runnable = it)
-            }
+        Systrace.traceSynchronous("thermal-service-init") {
+            if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+                // Android API only accepts an executor. We don't want to directly expose those
+                // to everything in the codebase so we decorate the BackgroundWorker here as an
+                // alternative
+                val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+                val executor = Executor {
+                    backgroundWorker.submit(runnable = it)
+                }
 
-            EmbraceThermalStatusService(
-                executor,
-                initModule.clock,
-                coreModule.logger,
-                systemServiceModule.powerManager
-            )
-        } else {
-            NoOpThermalStatusService()
+                EmbraceThermalStatusService(
+                    executor,
+                    initModule.clock,
+                    coreModule.logger,
+                    systemServiceModule.powerManager
+                )
+            } else {
+                NoOpThermalStatusService()
+            }
         }
     }
 

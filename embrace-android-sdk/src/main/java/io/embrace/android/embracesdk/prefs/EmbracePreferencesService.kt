@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.prefs
 
 import android.content.SharedPreferences
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +30,15 @@ internal class EmbracePreferencesService(
         // block if necessary with Future.get(). Eagerly offloading buys us more time
         // for SharedPreferences to load the File and reduces the likelihood of blocking
         // when invoked by client code.
-        preferences = backgroundWorker.submit(callable = lazyPrefs::value)
+        preferences = Systrace.traceSynchronous("trigger-load-prefs") {
+            backgroundWorker.submit(
+                callable = Callable {
+                    Systrace.traceSynchronous("load-prefs") {
+                        lazyPrefs.value
+                    }
+                }
+            )
+        }
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 
@@ -36,15 +46,19 @@ internal class EmbracePreferencesService(
 
     private fun alterStartupStatus(status: String) {
         backgroundWorker.submit {
-            logDeveloper("EmbracePreferencesService", "Startup key: $status")
-            prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
+            Systrace.traceSynchronous("set-startup-status") {
+                logDeveloper("EmbracePreferencesService", "Startup key: $status")
+                prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
+            }
         }
     }
 
     // fallback from this very unlikely case by just loading on the main thread
     private val prefs: SharedPreferences
         get() = try {
-            preferences.get(2, TimeUnit.SECONDS)
+            Systrace.traceSynchronous("get-prefs") {
+                preferences.get(2, TimeUnit.SECONDS)
+            }
         } catch (exc: Throwable) {
             // fallback from this very unlikely case by just loading on the main thread
             lazyPrefs.value

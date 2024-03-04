@@ -252,10 +252,17 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `validate all API endpoint URLs`() {
         Endpoint.values().forEach {
-            assertEquals(
-                "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
-                apiUrlBuilder.getEmbraceUrlWithSuffix("v1", it.path)
-            )
+            if (it.version == "v1") {
+                assertEquals(
+                    "https://a-$fakeAppId.data.emb-api.com/v1/log/${it.path}",
+                    apiUrlBuilder.getEmbraceUrlWithSuffix("v1", it.path)
+                )
+            } else {
+                assertEquals(
+                    "https://a-$fakeAppId.data.emb-api.com/v2/${it.path}",
+                    apiUrlBuilder.getEmbraceUrlWithSuffix("v2", it.path)
+                )
+            }
         }
     }
 

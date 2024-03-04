@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
@@ -37,15 +38,15 @@ internal class EmbraceSpanImpl(
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording == true
 
-    override fun start(): Boolean = start(startTimeNanos = null)
+    override fun start(): Boolean = start(startTimeMs = null)
 
-    override fun start(startTimeNanos: Long?): Boolean {
+    override fun start(startTimeMs: Long?): Boolean {
         return if (startedSpan.get() != null) {
             false
         } else {
             var successful: Boolean
-            if (startTimeNanos != null) {
-                spanBuilder.setStartTimestamp(startTimeNanos, TimeUnit.NANOSECONDS)
+            if (startTimeMs != null) {
+                spanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
             }
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan())
@@ -58,19 +59,19 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun stop(): Boolean = stop(endTimeNanos = null, errorCode = null)
+    override fun stop(): Boolean = stop(endTimeMs = null, errorCode = null)
 
-    override fun stop(endTimeNanos: Long?): Boolean = stop(endTimeNanos = endTimeNanos, errorCode = null)
+    override fun stop(endTimeMs: Long?): Boolean = stop(endTimeMs = endTimeMs, errorCode = null)
 
-    override fun stop(errorCode: ErrorCode?): Boolean = stop(endTimeNanos = null, errorCode = errorCode)
+    override fun stop(errorCode: ErrorCode?): Boolean = stop(endTimeMs = null, errorCode = errorCode)
 
-    override fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean {
+    override fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean {
         return if (startedSpan.get()?.isRecording == false) {
             false
         } else {
             var successful: Boolean
             synchronized(startedSpan) {
-                startedSpan.get()?.endSpan(errorCode, endTimeNanos)
+                startedSpan.get()?.endSpan(errorCode, endTimeMs)
                 successful = startedSpan.get()?.isRecording == false
             }
             if (successful) {
@@ -80,17 +81,22 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String): Boolean = addEvent(name = name, timeNanos = null, attributes = null)
+    override fun addEvent(name: String): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
 
-    override fun addEvent(name: String, timeNanos: Long?, attributes: Map<String, String>?): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
             synchronized(eventCount) {
                 if (eventCount.get() < MAX_EVENT_COUNT) {
                     spanInProgress()?.let { span ->
-                        if (timeNanos != null && !attributes.isNullOrEmpty()) {
-                            span.addEvent(name, Attributes.builder().fromMap(attributes).build(), timeNanos, TimeUnit.NANOSECONDS)
-                        } else if (timeNanos != null) {
-                            span.addEvent(name, timeNanos, TimeUnit.NANOSECONDS)
+                        if (timestampMs != null && !attributes.isNullOrEmpty()) {
+                            span.addEvent(
+                                name,
+                                Attributes.builder().fromMap(attributes).build(),
+                                timestampMs.normalizeTimestampAsMillis(),
+                                TimeUnit.MILLISECONDS
+                            )
+                        } else if (timestampMs != null) {
+                            span.addEvent(name, timestampMs.normalizeTimestampAsMillis(), TimeUnit.MILLISECONDS)
                         } else if (!attributes.isNullOrEmpty()) {
                             span.addEvent(name, Attributes.builder().fromMap(attributes).build())
                         } else {

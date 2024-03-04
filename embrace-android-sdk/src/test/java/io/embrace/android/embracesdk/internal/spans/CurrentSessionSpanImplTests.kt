@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -58,8 +59,8 @@ internal class CurrentSessionSpanImplTests {
             assertTrue(
                 spanService.recordCompletedSpan(
                     name = "complete$it",
-                    startTimeNanos = 100L,
-                    endTimeNanos = 200L,
+                    startTimeMs = 100L,
+                    endTimeMs = 200L,
                     internal = false
                 )
             )
@@ -92,8 +93,8 @@ internal class CurrentSessionSpanImplTests {
         assertFalse(
             spanService.recordCompletedSpan(
                 name = "failed-span",
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 parent = parentSpan,
                 internal = false
             )
@@ -112,8 +113,8 @@ internal class CurrentSessionSpanImplTests {
         assertTrue(
             spanService.recordCompletedSpan(
                 name = "failed-span",
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 parent = parentSpan,
                 internal = true
             )
@@ -137,9 +138,9 @@ internal class CurrentSessionSpanImplTests {
 
             val lastFlushedSpan = flushedSpans[0]
             with(lastFlushedSpan) {
-                assertEquals("emb-session-span", name)
+                assertEquals("emb-session", name)
                 assertEquals(
-                    EmbraceAttributes.Type.SESSION.name,
+                    EmbraceAttributes.Type.SESSION.typeName,
                     attributes[EmbraceAttributes.Type.SESSION.keyName()]
                 )
                 assertEquals(StatusCode.OK, status)
@@ -179,14 +180,16 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add event forwarded to span`() {
-        currentSessionSpan.addEvent(SpanEventData("test-event", 1000L, mapOf("key" to "value")))
+        currentSessionSpan.addEvent("test-event") {
+            SpanEventData(this, 1000L, mapOf("key" to "value"))
+        }
         val span = currentSessionSpan.endSession(null).single()
-        assertEquals("emb-session-span", span.name)
+        assertEquals("emb-session", span.name)
 
         // verify event was added to the span
         val testEvent = span.events.single()
         assertEquals("test-event", testEvent.name)
-        assertEquals(1000, testEvent.timestampNanos)
+        assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
         assertEquals(mapOf("key" to "value"), testEvent.attributes)
     }
 
@@ -194,7 +197,7 @@ internal class CurrentSessionSpanImplTests {
     fun `add attribute forwarded to span`() {
         currentSessionSpan.addAttribute(SpanAttributeData("my_key", "my_value"))
         val span = currentSessionSpan.endSession(null).single()
-        assertEquals("emb-session-span", span.name)
+        assertEquals("emb-session", span.name)
 
         // verify attribute was added to the span
         assertEquals("my_value", span.attributes["my_key"])

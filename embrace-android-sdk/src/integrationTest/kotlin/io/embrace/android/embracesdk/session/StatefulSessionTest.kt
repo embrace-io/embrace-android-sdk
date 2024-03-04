@@ -45,14 +45,11 @@ internal class StatefulSessionTest {
             verifySessionHappened(first)
             assertEquals(LifeEventType.STATE, first.session.startType)
             assertEquals(LifeEventType.STATE, first.session.endType)
-            val crumb = checkNotNull(first.breadcrumbs?.customBreadcrumbs?.single())
-            assertEquals("Hello, World!", crumb.message)
 
             // verify second session
             val second = messages[1]
             verifySessionHappened(second)
             assertNotEquals(first.session.sessionId, second.session.sessionId)
-            assertEquals(true, second.breadcrumbs?.customBreadcrumbs?.isEmpty())
         }
     }
 

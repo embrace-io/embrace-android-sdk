@@ -120,7 +120,7 @@ internal class ModuleInitBootstrapper(
         context: Context,
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
-        sdkStartTimeNanos: Long,
+        sdkStartTimeMs: Long,
         customAppId: String? = null,
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
@@ -138,8 +138,8 @@ internal class ModuleInitBootstrapper(
 
                     val initTask = postInit(OpenTelemetryModule::class) {
                         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
-                            Systrace.trace("span-service-init") {
-                                openTelemetryModule.spanService.initializeService(sdkStartTimeNanos)
+                            Systrace.traceSynchronous("span-service-init") {
+                                openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }
                         }
                     }
@@ -338,8 +338,6 @@ internal class ModuleInitBootstrapper(
                                     }
                                 }
                             }
-                        } else {
-                            InternalStaticEmbraceLogger.logger.logWarning("Failed to load SO file embrace-native")
                         }
                     }
 
@@ -358,7 +356,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             nativeModule,
                             sessionProperties,
-                            TimeUnit.NANOSECONDS.toMillis(sdkStartTimeNanos)
+                            sdkStartTimeMs
                         )
                     }
 
@@ -371,7 +369,14 @@ internal class ModuleInitBootstrapper(
                     }
 
                     dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(essentialServiceModule)
+                        dataSourceModuleSupplier(
+                            essentialServiceModule,
+                            initModule,
+                            openTelemetryModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            workerThreadModule
+                        )
                     }
 
                     sessionModule = init(SessionModule::class) {
@@ -411,8 +416,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerService(crashModule.crashService)
                     }
 
-                    Systrace.startSynchronous("modules-post-init")
-
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
                     serviceRegistry.closeRegistration()
@@ -422,7 +425,6 @@ internal class ModuleInitBootstrapper(
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
 
                     asyncInitTask.set(initTask)
-                    Systrace.endSynchronous()
                     true
                 } else {
                     false
@@ -439,7 +441,7 @@ internal class ModuleInitBootstrapper(
      */
     @JvmOverloads
     fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) =
-        Systrace.trace("async-init-wait") {
+        Systrace.traceSynchronous("async-init-wait") {
             asyncInitTask.get()?.get(timeout, unit)
         }
 
@@ -461,7 +463,7 @@ internal class ModuleInitBootstrapper(
         }
     }
 
-    private fun isInitialized(): Boolean = Systrace.traceSynchronous("check-init") { asyncInitTask.get() != null }
+    private fun isInitialized(): Boolean = asyncInitTask.get() != null
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
         Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }

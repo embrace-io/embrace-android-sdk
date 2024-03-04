@@ -52,6 +52,17 @@ internal interface TracingApi {
     ): EmbraceSpan?
 
     /**
+     * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time. Returns null if the [EmbraceSpan] cannot
+     * be created or started, like if the parent has been started.
+     */
+    @BetaApi
+    fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?
+    ): EmbraceSpan?
+
+    /**
      * Execute the given block of code and record a new trace around it. If the span cannot be created, the block of code will still run and
      * return correctly. If an exception or error is thrown inside the block, the span will end at the point of the throw and the
      * [Throwable] will be rethrown.
@@ -110,8 +121,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long
+        startTimeMs: Long,
+        endTimeMs: Long
     ): Boolean
 
     /**
@@ -122,8 +133,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?
     ): Boolean
 
@@ -134,8 +145,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?
     ): Boolean
 
@@ -147,8 +158,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
     ): Boolean
@@ -161,8 +172,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean
@@ -176,8 +187,8 @@ internal interface TracingApi {
     @BetaApi
     fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,

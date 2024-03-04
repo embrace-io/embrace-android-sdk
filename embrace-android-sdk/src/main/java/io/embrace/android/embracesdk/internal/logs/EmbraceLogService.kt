@@ -123,17 +123,18 @@ internal class EmbraceLogService(
             // Set these after the custom properties so they can't be overridden
             sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
             metadataService.getAppState()?.let { attributes.setAppState(it) }
+            attributes.setLogId(Uuid.getEmbUuid())
 
             val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(
-                timestampNanos = clock.nowInNanos(),
-                message = trimToMaxLength(message),
+                startTimeMs = clock.nowInNanos(),
+                message = message,
                 severity = otelSeverity,
                 severityText = otelSeverity.name,
                 attributes = attributes.toMap()
             )
 
-            logWriter.addLog(logEventData)
+            logWriter.addLog(logEventData) { logEventData }
         }
     }
 

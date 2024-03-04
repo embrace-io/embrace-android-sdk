@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
@@ -82,26 +83,29 @@ internal class EmbraceLogServiceTest {
         assertEquals(3, logs.size)
         val first = logs[0]
         assertEquals("Hello world", first.message)
-        assertNotEquals(0, first.timestampNanos)
+        assertNotEquals(0, first.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO, first.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, first.severityText)
         assertEquals("bar", first.attributes?.get("foo"))
+        assertNotNull(first.attributes?.get("emb.log_id"))
         assertEquals("session-123", first.attributes?.get("emb.session_id"))
         assertNull(first.attributes?.get("emb.exception_type"))
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
-        assertNotEquals(0, second.timestampNanos)
+        assertNotEquals(0, second.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.WARN, second.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, second.severityText)
+        assertNotNull(second.attributes?.get("emb.log_id"))
         assertEquals("session-123", second.attributes?.get("emb.session_id"))
         assertNull(second.attributes?.get("emb.exception_type"))
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
-        assertNotEquals(0, third.timestampNanos)
+        assertNotEquals(0, third.startTimeMs)
         assertEquals(io.opentelemetry.api.logs.Severity.ERROR, third.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.ERROR.name, third.severityText)
+        assertNotNull(third.attributes?.get("emb.log_id"))
         assertEquals("session-123", third.attributes?.get("emb.session_id"))
         assertNull(third.attributes?.get("emb.exception_type"))
     }
@@ -130,6 +134,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, log.severityText)
         assertEquals("NullPointerException", log.attributes?.get("emb.exception_name"))
         assertEquals("exception message", log.attributes?.get("emb.exception_message"))
+        assertNotNull(log.attributes?.get("emb.log_id"))
         assertEquals("session-123", log.attributes?.get("emb.session_id"))
         assertEquals("none", log.attributes?.get("emb.exception_type"))
     }
@@ -144,6 +149,7 @@ internal class EmbraceLogServiceTest {
         assertEquals("Hello world", log.message)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO, log.severity)
         assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, log.severityText)
+        assertNotNull(log.attributes?.get("emb.log_id"))
         assertEquals("session-123", log.attributes?.get("emb.session_id"))
     }
 

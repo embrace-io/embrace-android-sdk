@@ -26,7 +26,7 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun listFilenamesByPrefix(prefix: String): List<String> {
+    override fun normalizeCacheAndGetSessionFileIds(): List<String> {
         TODO("Not yet implemented")
     }
 
@@ -43,6 +43,10 @@ internal class FakeCacheService : CacheService {
     }
 
     override fun loadPayload(name: String): SerializationAction {
+        TODO("Not yet implemented")
+    }
+
+    override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
         TODO("Not yet implemented")
     }
 }

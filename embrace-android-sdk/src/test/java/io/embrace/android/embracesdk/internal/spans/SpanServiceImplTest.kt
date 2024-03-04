@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
 import io.embrace.android.embracesdk.fixtures.tooBigAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEvents
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -42,7 +42,7 @@ internal class SpanServiceImplTest {
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.openTelemetryModule.tracer
         )
-        spansService.initializeService(clock.nowInNanos())
+        spansService.initializeService(clock.now())
     }
 
     @Test
@@ -54,7 +54,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())
@@ -65,8 +65,8 @@ internal class SpanServiceImplTest {
     fun `create trace with custom start and end times`() {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertNull(embraceSpan.parent)
-        assertTrue(embraceSpan.start((clock.now() - 1).millisToNanos()))
-        assertTrue(embraceSpan.stop((clock.now() + 10).millisToNanos()))
+        assertTrue(embraceSpan.start(clock.now() - 1))
+        assertTrue(embraceSpan.stop(clock.now() + 10))
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
@@ -83,7 +83,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())
@@ -161,52 +161,58 @@ internal class SpanServiceImplTest {
     fun `start a span directly`() {
         spanSink.flushSpans()
         val parent = checkNotNull(spansService.startSpan(name = "test-span"))
+        val childStartTimeMs = clock.now() + 10L
         val child = checkNotNull(
             spansService.startSpan(
                 name = "child-span",
                 parent = parent,
+                startTimeMs = childStartTimeMs,
                 type = EmbraceAttributes.Type.SESSION,
                 internal = true
             )
         )
+        clock.tick(40L)
+        val childSpanEndTimeMs = clock.now()
         assertTrue(child.stop())
         val completedSpans = spanSink.flushSpans()
         assertEquals(1, completedSpans.size)
         with(completedSpans[0]) {
             assertTrue(isPrivate())
             assertFalse(isKey())
-            assertEquals(EmbraceAttributes.Type.SESSION.name, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+            assertEquals(EmbraceAttributes.Type.SESSION.typeName, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
     fun `record internal completed span with all the fixings`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedType = EmbraceAttributes.Type.PERFORMANCE
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
         )
         val expectedEvents = listOf(
-            EmbraceSpanEvent(name = "event1", timestampNanos = 0L, attributes = expectedAttributes),
-            EmbraceSpanEvent(name = "event2", timestampNanos = 5L, attributes = expectedAttributes)
+            EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
+            EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
         )
 
         spansService.recordCompletedSpan(
             name = expectedName,
-            startTimeNanos = expectedStartTime,
-            endTimeNanos = expectedEndTime,
+            startTimeMs = expectedStartTimeMs,
+            endTimeMs = expectedEndTimeMs,
             type = expectedType,
             attributes = expectedAttributes,
             events = expectedEvents
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
-            assertEquals(expectedType.name, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertTrue(isKey())
             assertTrue(isPrivate())
@@ -220,22 +226,22 @@ internal class SpanServiceImplTest {
     @Test
     fun `record completed child span`() {
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
                 parent = parentSpan,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertFalse(isKey())
             assertTrue(isPrivate())
         }
@@ -250,8 +256,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `record completed child span with stopped parent`() {
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(parentSpan.stop())
@@ -260,8 +266,8 @@ internal class SpanServiceImplTest {
             spansService.recordCompletedSpan(
                 name = expectedName,
                 parent = parentSpan,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
     }
@@ -274,8 +280,8 @@ internal class SpanServiceImplTest {
             spansService.recordCompletedSpan(
                 name = expectedName,
                 parent = parentSpan,
-                startTimeNanos = 10L,
-                endTimeNanos = 100L
+                startTimeMs = 10L,
+                endTimeMs = 100L
             )
         )
     }
@@ -286,8 +292,8 @@ internal class SpanServiceImplTest {
             assertTrue(
                 spansService.recordCompletedSpan(
                     name = "test${it.name}",
-                    startTimeNanos = 0,
-                    endTimeNanos = 1,
+                    startTimeMs = 0,
+                    endTimeMs = 1,
                     errorCode = it
                 )
             )
@@ -303,8 +309,8 @@ internal class SpanServiceImplTest {
         assertFalse(
             spansService.recordCompletedSpan(
                 name = "test-pan",
-                startTimeNanos = 500,
-                endTimeNanos = 499
+                startTimeMs = 500,
+                endTimeMs = 499
             )
         )
     }
@@ -317,8 +323,8 @@ internal class SpanServiceImplTest {
         assertFalse(
             spansService.recordCompletedSpan(
                 name = "test-span",
-                startTimeNanos = 500,
-                endTimeNanos = 600
+                startTimeMs = 500,
+                endTimeMs = 600
             )
         )
     }
@@ -334,7 +340,7 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.name,
+                EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isKey())
@@ -426,19 +432,19 @@ internal class SpanServiceImplTest {
         spansService.recordSpan("test-span") {
             // do thing
         }
-        assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeNanos = 0, endTimeNanos = 1))
+        assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeMs = 0, endTimeMs = 1))
         assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
     fun `check name length limit`() {
         assertNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME))
-        assertFalse(spansService.recordCompletedSpan(name = TOO_LONG_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
+        assertFalse(spansService.recordCompletedSpan(name = TOO_LONG_SPAN_NAME, startTimeMs = 100L, endTimeMs = 200L))
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME) { 1 })
         assertEquals(0, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME) { 2 })
-        assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeNanos = 100L, endTimeNanos = 200L))
+        assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeMs = 100L, endTimeMs = 200L))
         assertEquals(2, spanSink.completedSpans().size)
     }
 
@@ -447,16 +453,16 @@ internal class SpanServiceImplTest {
         assertFalse(
             spansService.recordCompletedSpan(
                 name = "too many events",
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 events = tooBigEvents
             )
         )
         assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_SPAN_NAME,
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 events = maxSizeEvents
             )
         )
@@ -478,8 +484,8 @@ internal class SpanServiceImplTest {
         assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_SPAN_NAME,
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 events = events
             )
         )
@@ -495,16 +501,16 @@ internal class SpanServiceImplTest {
         assertFalse(
             spansService.recordCompletedSpan(
                 name = "too many attributes",
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 attributes = tooBigAttributes
             )
         )
         assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_SPAN_NAME,
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 attributes = maxSizeAttributes
             )
         )
@@ -522,8 +528,8 @@ internal class SpanServiceImplTest {
         assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_SPAN_NAME,
-                startTimeNanos = 100L,
-                endTimeNanos = 200L,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
                 attributes = attributesMap
             )
         )

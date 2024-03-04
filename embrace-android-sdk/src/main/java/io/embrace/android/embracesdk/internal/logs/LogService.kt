@@ -36,6 +36,7 @@ internal interface LogService {
      */
     fun logException(
         message: String,
+        severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,

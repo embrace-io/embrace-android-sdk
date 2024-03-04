@@ -25,8 +25,8 @@ internal class InternalTracer(
         }
     }
 
-    override fun stopSpan(spanId: String, errorCode: ErrorCode?): Boolean =
-        spanRepository.getSpan(spanId = spanId)?.stop(errorCode = errorCode) ?: false
+    override fun stopSpan(spanId: String, errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+        spanRepository.getSpan(spanId = spanId)?.stop(errorCode = errorCode, endTimeMs = endTimeMs) ?: false
 
     override fun <T> recordSpan(
         name: String,

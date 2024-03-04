@@ -37,7 +37,7 @@ internal class EmbraceBreadcrumbService(
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
     private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock)
-    private val fragmentBreadcrumbDataSource = FragmentBreadcrumbDataSource(configService, clock)
+    private val fragmentBreadcrumbDataSource = LegacyFragmentBreadcrumbDataSource(configService, clock)
     private val pushNotificationBreadcrumbDataSource =
         PushNotificationBreadcrumbDataSource(configService, clock)
     val fragmentStack = fragmentBreadcrumbDataSource.fragmentStack

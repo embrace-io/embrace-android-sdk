@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
@@ -12,7 +13,12 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.logs.EmbraceLogBody
+import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
+import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.SessionPayload
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -35,6 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.lang.reflect.ParameterizedType
 import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
@@ -247,6 +254,54 @@ internal class EmbraceApiServiceTest {
             expectedPayload = payload
         )
         assertTrue(finished)
+    }
+
+    @Test
+    fun `send logs envelope is as expected`() {
+        val logsEnvelope = Envelope(
+            data = LogPayload(
+                logs = listOf(
+                    EmbraceLogRecordData(
+                        traceId = "traceId",
+                        spanId = "spanId",
+                        timeUnixNanos = 1234567890,
+                        severityText = "severityText",
+                        severityNumber = 1,
+                        body = EmbraceLogBody("a message"),
+                        attributes = mapOf("key" to "value")
+                    )
+                )
+            )
+        )
+
+        fakeApiClient.queueResponse(successfulPostResponse)
+        apiService.sendLogsEnvelope(logsEnvelope)
+
+        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
+            expectedPayload = getGenericsExpectedPayloadSerialized(logsEnvelope, type)
+        )
+    }
+
+    @Test
+    fun `send session envelope is as expected`() {
+        val sessionEnvelope = Envelope(
+            data = SessionPayload(
+                sharedLibSymbolMapping = mapOf("key" to "value")
+            )
+        )
+
+        fakeApiClient.queueResponse(successfulPostResponse)
+        apiService.sendSessionEnvelope(sessionEnvelope)
+
+        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/sessions",
+            expectedPayload = getGenericsExpectedPayloadSerialized(sessionEnvelope, type)
+        )
     }
 
     @Test
@@ -484,6 +539,17 @@ internal class EmbraceApiServiceTest {
         val os = ByteArrayOutputStream()
         ConditionalGzipOutputStream(os).use {
             serializer.toJson(payload, T::class.java, it)
+        }
+        return os.toByteArray()
+    }
+
+    private inline fun <reified T> getGenericsExpectedPayloadSerialized(
+        payload: T,
+        parameterizedType: ParameterizedType
+    ): ByteArray {
+        val os = ByteArrayOutputStream()
+        ConditionalGzipOutputStream(os).use {
+            serializer.toJson(payload, parameterizedType, it)
         }
         return os.toByteArray()
     }

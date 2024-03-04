@@ -15,16 +15,16 @@ import io.embrace.android.embracesdk.internal.logs.LogPayload
 @JsonClass(generateAdapter = true)
 internal data class Envelope<T>(
     @Json(name = "resource")
-    val resource: EnvelopeResource,
+    val resource: EnvelopeResource? = null,
 
     @Json(name = "metadata")
-    val metadata: EnvelopeMetadata,
+    val metadata: EnvelopeMetadata? = null,
 
     @Json(name = "version")
-    val version: String,
+    val version: String? = null,
 
     @Json(name = "type")
-    val type: String,
+    val type: String? = null,
 
     @Json(name = "data")
     val data: T

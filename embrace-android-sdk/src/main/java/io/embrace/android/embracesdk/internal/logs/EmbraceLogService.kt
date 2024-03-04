@@ -23,7 +23,7 @@ internal class EmbraceLogService(
     private val logWriter: LogWriter,
     private val clock: Clock,
     private val metadataService: MetadataService,
-    configService: ConfigService,
+    private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val backgroundWorker: BackgroundWorker
 ) : LogService {
@@ -110,7 +110,9 @@ internal class EmbraceLogService(
         attributes: EmbraceLogAttributes,
     ) {
         backgroundWorker.submit {
-            // TBD: Check if log should be gated
+            if (shouldLogBeGated(severity)) {
+                return@submit
+            }
 
             val messageId = Uuid.getEmbUuid()
             if (!logCounters.getValue(severity).addIfAllowed(messageId)) {
@@ -132,6 +134,21 @@ internal class EmbraceLogService(
             )
 
             logWriter.addLog(logEventData) { logEventData }
+        }
+    }
+
+    /**
+     * Checks if the info or warning log event should be gated based on gating config. Error logs
+     * should never be gated.
+     *
+     * @param severity of the log event
+     * @return true if the log should be gated
+     */
+    private fun shouldLogBeGated(severity: Severity): Boolean {
+        return when (severity) {
+            Severity.INFO -> configService.sessionBehavior.shouldGateInfoLog()
+            Severity.WARNING -> configService.sessionBehavior.shouldGateWarnLog()
+            else -> false
         }
     }
 

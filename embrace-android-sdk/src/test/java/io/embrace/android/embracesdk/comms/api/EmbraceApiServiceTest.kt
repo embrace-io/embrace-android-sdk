@@ -543,7 +543,10 @@ internal class EmbraceApiServiceTest {
         return os.toByteArray()
     }
 
-    private inline fun <reified T> getGenericsExpectedPayloadSerialized(payload: T, parameterizedType: ParameterizedType): ByteArray {
+    private inline fun <reified T> getGenericsExpectedPayloadSerialized(
+        payload: T,
+        parameterizedType: ParameterizedType
+    ): ByteArray {
         val os = ByteArrayOutputStream()
         ConditionalGzipOutputStream(os).use {
             serializer.toJson(payload, parameterizedType, it)

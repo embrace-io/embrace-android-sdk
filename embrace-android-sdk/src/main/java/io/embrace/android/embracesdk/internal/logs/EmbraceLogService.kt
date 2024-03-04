@@ -128,7 +128,7 @@ internal class EmbraceLogService(
             val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(
                 startTimeMs = clock.nowInNanos(),
-                message = message,
+                message = trimToMaxLength(message),
                 severity = otelSeverity,
                 severityText = otelSeverity.name,
                 attributes = attributes.toMap()

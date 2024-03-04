@@ -136,6 +136,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 initModule.clock,
                 configService,
                 essentialServiceModule.activityLifecycleTracker,
+                openTelemetryModule.currentSessionSpan,
                 coreModule.logger
             )
         }

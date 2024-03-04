@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -20,6 +21,8 @@ internal interface DataSourceModule {
      * Returns a list of all the data sources that are defined in this module.
      */
     fun getDataSources(): List<DataSourceState>
+
+    val customBreadcrumbDataSource: DataSourceState
 }
 
 internal class DataSourceModuleImpl(
@@ -32,6 +35,15 @@ internal class DataSourceModuleImpl(
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState> = mutableListOf()
+
+    override val customBreadcrumbDataSource: DataSourceState by dataSource {
+        DataSourceState({
+            CustomBreadcrumbDataSource(
+                breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                writer = otelModule.currentSessionSpan
+            )
+        })
+    }
 
     /* Implementation details */
 

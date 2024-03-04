@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
 import android.util.Pair
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -29,10 +30,12 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val activityTracker: ActivityTracker,
+    sessionSpanWriter: SessionSpanWriter,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val customBreadcrumbDataSource = LegacyCustomBreadcrumbDataSource(configService)
+    private val customBreadcrumbDataSource =
+        CustomBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter)
     private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
     private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
@@ -82,7 +85,6 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(
-        customBreadcrumbs = customBreadcrumbDataSource.getCapturedData(),
         tapBreadcrumbs = tapBreadcrumbDataSource.getCapturedData(),
         viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
         webViewBreadcrumbs = webViewBreadcrumbDataSource.getCapturedData(),
@@ -134,7 +136,6 @@ internal class EmbraceBreadcrumbService(
     override fun cleanCollections() {
         viewBreadcrumbDataSource.cleanCollections()
         tapBreadcrumbDataSource.cleanCollections()
-        customBreadcrumbDataSource.cleanCollections()
         webViewBreadcrumbDataSource.cleanCollections()
         fragmentBreadcrumbDataSource.cleanCollections()
         pushNotificationBreadcrumbDataSource.cleanCollections()

@@ -23,10 +23,10 @@
     }
   },
   "br": {
-    "cb": [
+    "vb": [
       {
-        "m": "fake-breadcrumb",
-        "ts": 1
+        "vn": "fake-view",
+        "st": 109234098234
       }
     ]
   },

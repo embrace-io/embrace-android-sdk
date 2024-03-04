@@ -138,9 +138,9 @@ internal class CurrentSessionSpanImplTests {
 
             val lastFlushedSpan = flushedSpans[0]
             with(lastFlushedSpan) {
-                assertEquals("emb-session-span", name)
+                assertEquals("emb-session", name)
                 assertEquals(
-                    EmbraceAttributes.Type.SESSION.name,
+                    EmbraceAttributes.Type.SESSION.typeName,
                     attributes[EmbraceAttributes.Type.SESSION.keyName()]
                 )
                 assertEquals(StatusCode.OK, status)
@@ -184,7 +184,7 @@ internal class CurrentSessionSpanImplTests {
             SpanEventData(this, 1000L, mapOf("key" to "value"))
         }
         val span = currentSessionSpan.endSession(null).single()
-        assertEquals("emb-session-span", span.name)
+        assertEquals("emb-session", span.name)
 
         // verify event was added to the span
         val testEvent = span.events.single()
@@ -197,7 +197,7 @@ internal class CurrentSessionSpanImplTests {
     fun `add attribute forwarded to span`() {
         currentSessionSpan.addAttribute(SpanAttributeData("my_key", "my_value"))
         val span = currentSessionSpan.endSession(null).single()
-        assertEquals("emb-session-span", span.name)
+        assertEquals("emb-session", span.name)
 
         // verify attribute was added to the span
         assertEquals("my_value", span.attributes["my_key"])

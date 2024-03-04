@@ -112,7 +112,7 @@
         "emb.sequence_id": "2",
         "emb.private": "true",
         "emb.key": "true",
-        "emb.type": "PERFORMANCE"
+        "emb.type": "performance"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],
@@ -127,7 +127,7 @@
       "attributes": {
         "emb.sequence_id": "3",
         "emb.key": "true",
-        "emb.type": "PERFORMANCE"
+        "emb.type": "performance"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],
@@ -142,7 +142,7 @@
       "attributes": {
         "emb.sequence_id": "1",
         "emb.private": "true",
-        "emb.type": "SESSION",
+        "emb.type": "ux.session",
         "emb.okhttp3": "true",
         "emb.okhttp3_on_classpath": "4.9.3",
         "emb.kotlin_on_classpath": "1.4.32",
@@ -155,7 +155,7 @@
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],
-      "name": "emb-session-span",
+      "name": "emb-session",
       "parent_span_id": "0000000000000000",
       "span_id": "__EMBRACE_TEST_IGNORE__",
       "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",

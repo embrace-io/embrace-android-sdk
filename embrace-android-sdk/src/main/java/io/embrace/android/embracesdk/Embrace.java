@@ -40,7 +40,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @NonNull
     private static final Embrace embrace = new Embrace();
 
-    private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-init", EmbraceImpl::new);
+    private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-impl-init", EmbraceImpl::new);
 
     @NonNull
     private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;

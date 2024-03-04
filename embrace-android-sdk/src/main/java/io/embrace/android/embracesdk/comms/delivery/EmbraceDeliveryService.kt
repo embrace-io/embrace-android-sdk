@@ -97,15 +97,14 @@ internal class EmbraceDeliveryService(
     override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
         sendCachedCrash()
         backgroundWorker.submit(TaskPriority.HIGH) {
-            val allSessions = cacheManager.getAllCachedSessionIds()
-
+            val allSessions = cacheManager.getAllCachedSessionIds().filter { it != sessionIdTracker.getActiveSessionId() }
             ndkService?.let { service ->
                 val nativeCrashData = service.checkForNativeCrash()
                 if (nativeCrashData != null) {
                     addCrashDataToCachedSession(nativeCrashData)
                 }
             }
-            sendCachedSessions(allSessions, sessionIdTracker.getActiveSessionId())
+            sendCachedSessions(allSessions)
         }
     }
 
@@ -117,18 +116,8 @@ internal class EmbraceDeliveryService(
     }
 
     private fun addCrashDataToCachedSession(nativeCrashData: NativeCrashData) {
-        cacheManager.loadSession(nativeCrashData.sessionId)
-            ?.also { sessionMessage ->
-                // Create a new session message with the specified crash id
-                val newSessionMessage =
-                    attachCrashToSession(nativeCrashData, sessionMessage)
-                // Replace the cached file for the corresponding session
-                cacheManager.saveSession(newSessionMessage, SessionSnapshotType.NORMAL_END)
-            } ?: run {
-            logger.logError(
-                "Could not find session with id ${nativeCrashData.sessionId} to " +
-                    "add native crash"
-            )
+        cacheManager.transformSession(nativeCrashData.sessionId) { sessionMessage ->
+            attachCrashToSession(nativeCrashData, sessionMessage)
         }
     }
 
@@ -145,19 +134,17 @@ internal class EmbraceDeliveryService(
         return sessionMessage.copy(session = session)
     }
 
-    private fun sendCachedSessions(ids: List<String>, currentSession: String?) {
+    private fun sendCachedSessions(ids: List<String>) {
         ids.forEach { id ->
-            if (id != currentSession) {
-                try {
-                    val action = cacheManager.loadSessionAsAction(id)
-                    if (action != null) {
-                        apiService.sendSession(action) { cacheManager.deleteSession(id) }
-                    } else {
-                        logger.logError("Session $id not found")
-                    }
-                } catch (ex: Throwable) {
-                    logger.logError("Could not send cached session", ex, true)
+            try {
+                val action = cacheManager.loadSessionAsAction(id)
+                if (action != null) {
+                    apiService.sendSession(action) { cacheManager.deleteSession(id) }
+                } else {
+                    logger.logError("Session $id not found")
                 }
+            } catch (ex: Throwable) {
+                logger.logError("Could not send cached session", ex, true)
             }
         }
     }

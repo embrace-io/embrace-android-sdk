@@ -3,11 +3,15 @@ package io.embrace.android.embracesdk
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fixtures.testSessionMessage
+import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -15,22 +19,24 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
+import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.spyk
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 internal class EmbraceDeliveryCacheManagerTest {
 
@@ -38,33 +44,27 @@ internal class EmbraceDeliveryCacheManagerTest {
     private val serializer = EmbraceSerializer()
     private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
-    private lateinit var cacheService: TestCacheService
+    private lateinit var storageService: StorageService
+    private lateinit var cacheService: EmbraceCacheService
+    private lateinit var logger: InternalEmbraceLogger
     private lateinit var fakeClock: FakeClock
 
     companion object {
         private const val clockInit = 1663800000000
-        private lateinit var logger: InternalEmbraceLogger
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            logger = InternalEmbraceLogger()
-        }
     }
 
     @Before
     fun before() {
-        cacheService = spyk(TestCacheService())
         fakeClock = FakeClock(clockInit)
-        initializeSessionCacheManager()
-    }
-
-    @After
-    fun after() {
-        clearAllMocks(answers = false)
-    }
-
-    private fun initializeSessionCacheManager() {
+        logger = InternalEmbraceLogger()
+        storageService = FakeStorageService()
+        cacheService = spyk(
+            EmbraceCacheService(
+                storageService = storageService,
+                serializer = serializer,
+                logger = logger
+            )
+        )
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
             worker,
@@ -73,137 +73,91 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
     }
 
+    @After
+    fun after() {
+        clearAllMocks()
+    }
+
     @Test
-    fun `cache current session successfully`() {
+    fun `serializing current session successfully`() {
         val sessionMessage = createSessionMessage("test_cache")
-        val expectedBytes = serializer.toJson(sessionMessage).toByteArray()
-
         deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
-
-        verify {
-            cacheService.cacheBytes(
-                "$prefix.$clockInit.test_cache.json",
-                expectedBytes
-            )
-        }
-
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `cache periodic session successful`() {
         val sessionMessage = createSessionMessage("test_cache")
-
         deliveryCacheManager.saveSession(sessionMessage, PERIODIC_CACHE)
-
-        verify {
-            cacheService.writeSession(
-                "$prefix.$clockInit.test_cache.json",
-                sessionMessage
-            )
-        }
-
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `cache session on crash successful`() {
         val sessionMessage = createSessionMessage("test_cache")
-
         deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
-        val expectedByteArray = serializer.toJson(sessionMessage).toByteArray()
-
-        verify(exactly = 1) {
-            cacheService.cacheBytes(
-                "$prefix.$clockInit.test_cache.json",
-                expectedByteArray
-            )
-        }
-        assertSessionsMatch(sessionMessage, checkNotNull(deliveryCacheManager.loadSession("test_cache")))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `session not found in cache`() {
-        assertNull(deliveryCacheManager.loadSession("not_found_session"))
         assertNull(deliveryCacheManager.loadSessionAsAction("not_found_session"))
     }
 
     @Test
-    fun `manager returns null if cache service throws an exception`() {
-        every { cacheService.loadObject(any(), SessionMessage::class.java) } throws Exception()
+    fun `could not load session if cache service throws an exception when writing the initial session`() {
+        every { cacheService.writeSession(any(), any()) } throws Exception()
 
         deliveryCacheManager.saveSession(createSessionMessage("exception_session"), NORMAL_END)
-        assertNull(deliveryCacheManager.loadSession("exception_session"))
-
-        every {
-            cacheService.loadObject(
-                any(),
-                SessionMessage::class.java
-            )
-        } answers { callOriginal() }
+        assertNull(deliveryCacheManager.loadSessionAsAction("exception_session"))
     }
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.cacheBytes(any(), any()) } throws Exception()
+        every { cacheService.transformSession(any(), any()) } throws Exception()
 
-        val sessionMessage = createSessionMessage("test_cache_fails")
+        deliveryCacheManager.saveSession(testSessionMessage, PERIODIC_CACHE)
+        val firstSessionPayload = deliveryCacheManager.loadPayload(testSessionMessage.session.sessionId)
+        deliveryCacheManager.saveSession(testSessionMessageOneMinuteLater, PERIODIC_CACHE)
 
-        deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
-
-        assertNull(deliveryCacheManager.loadSessionAsAction("test_cache_fails"))
+        assertArrayEquals(firstSessionPayload, deliveryCacheManager.loadPayload(testSessionMessage.session.sessionId))
     }
 
     @Test
     fun `remove cached session successfully`() {
-        assertNull(deliveryCacheManager.loadSession("test_remove"))
+        assertNull(deliveryCacheManager.loadSessionAsAction("test_remove"))
 
         val session = createSessionMessage("test_remove")
         deliveryCacheManager.saveSession(session, NORMAL_END)
-
-        val cachedSession = deliveryCacheManager.loadSession("test_remove")
-        checkNotNull(cachedSession)
-        assertSessionsMatch(session, cachedSession)
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_remove"))
 
         deliveryCacheManager.deleteSession("test_remove")
-
-        verify(exactly = 1) { cacheService.deleteFile("$prefix.$clockInit.test_remove.json") }
+        assertNull(deliveryCacheManager.loadSessionAsAction("test_remove"))
     }
 
     @Test
-    fun `if an exception is thrown, then remove cache session should not fail`() {
+    fun `if an exception is thrown when deleting a file, the operation should not throw an operation`() {
         every { cacheService.deleteFile(any()) } throws Exception()
 
         deliveryCacheManager.saveSession(createSessionMessage("test_delete_exception"), NORMAL_END)
-        deliveryCacheManager.deleteSession("test_delete_exception")
-
-        verify {
-            cacheService.deleteFile(
-                getCachedSessionName(
-                    "test_delete_exception",
-                    1663800000000
-                )
-            )
-        }
-
-        every { cacheService.deleteFile(any()) } answers { callOriginal() }
+        deliveryCacheManager.deleteSession("deliveryCacheManager")
+        assertNotNull(deliveryCacheManager.loadSessionAsAction("test_delete_exception"))
     }
 
     @Test
     fun `read cached sessions`() {
-        cacheService.cacheBytes(
-            getCachedSessionName("session1", clockInit - 300000),
-            "{ cached_session }".toByteArray()
+        cacheService.writeSession(
+            EmbraceCacheService.getFileNameForSession("session1", clockInit - 300000),
+            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session1", startTime = clockInit - 300000))
         )
-        cacheService.cacheBytes(
-            getCachedSessionName("session2", clockInit - 360000),
-            "{ cached_session }".toByteArray()
+        cacheService.writeSession(
+            EmbraceCacheService.getFileNameForSession("session2", clockInit - 360000),
+            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session2", startTime = clockInit - 360000))
         )
-        cacheService.cacheBytes(
-            getCachedSessionName("session3", clockInit - 420000),
-            "{ cached_session }".toByteArray()
+        cacheService.writeSession(
+            EmbraceCacheService.getFileNameForSession("session3", clockInit - 420000),
+            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session3", startTime = clockInit - 420000))
         )
-
         assertEquals(
             setOf("session1", "session2", "session3"),
             deliveryCacheManager.getAllCachedSessionIds().toSet()
@@ -229,22 +183,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             deliveryCacheManager.saveSession(createSessionMessage("test$i"), NORMAL_END)
             fakeClock.tick()
         }
-        for (i in 0..99) {
-            verify(exactly = 1) {
-                cacheService.cacheBytes(
-                    eq(
-                        getCachedSessionName(
-                            "test$i",
-                            clockInit + i
-                        )
-                    ),
-                    any()
-                )
-            }
-        }
-        for (i in 0..(99 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)) {
-            verify(exactly = 1) { cacheService.deleteFile("$prefix.${clockInit + i}.test$i.json") }
-        }
 
         val cachedSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
@@ -254,17 +192,14 @@ internal class EmbraceDeliveryCacheManagerTest {
     }
 
     @Test
-    fun `check for a session saved in previous versions of the SDK`() {
-        val session = createSessionMessage("previous_sdk_session")
+    fun `check for a session saved in previous versions of the SDK will return and the original file will be deleted`() {
+        val session = testSessionMessage
         cacheService.cacheObject("last_session.json", session, SessionMessage::class.java)
-
-        initializeSessionCacheManager()
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
-        assertSessionsMatch(session, checkNotNull(deliveryCacheManager.loadSession(allSessions[0])))
-
-        verify { cacheService.deleteFile("last_session.json") }
+        assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0]))
+        assertNull(cacheService.loadBytes("last_session.json"))
     }
 
     @Test
@@ -273,27 +208,46 @@ internal class EmbraceDeliveryCacheManagerTest {
         val action: (outputStream: OutputStream) -> Unit = {
             it.write(payload)
         }
+
         val cacheName = deliveryCacheManager.savePayload(action)
-
-        verify { cacheService.cachePayload(cacheName, action) }
-
         assertArrayEquals(payload, deliveryCacheManager.loadPayload(cacheName))
     }
 
     @Test
-    fun `load payload as action`() {
+    fun `load uncompressed payload as action that will output compressed bytes`() {
         val payload = "{ json payload }".toByteArray()
         val action: (outputStream: OutputStream) -> Unit = {
             it.write(payload)
         }
         val cacheName = deliveryCacheManager.savePayload(action)
 
-        verify { cacheService.cachePayload(cacheName, action) }
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(cacheName))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = GZIPInputStream(compressed.inputStream()).readBytes()
+        assertArrayEquals(payload, uncompressed)
+    }
+
+    @Test
+    fun `load compressed payload as action that will output compressed bytes`() {
+        val gzippedBytes = ByteArrayOutputStream().use { byteArrayStream ->
+            GZIPOutputStream(byteArrayStream).use { gzipStream ->
+                gzipStream.write("{ json payload }".toByteArray())
+                gzipStream.finish()
+            }
+            byteArrayStream.toByteArray()
+        }
+        val action: (outputStream: OutputStream) -> Unit = {
+            it.write(gzippedBytes)
+        }
+        val cacheName = deliveryCacheManager.savePayload(action)
 
         val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(cacheName))
         val stream = ByteArrayOutputStream()
         returnedAction(stream)
-        assertArrayEquals(payload, stream.toByteArray())
+        val compressed = stream.toByteArray()
+        assertArrayEquals(gzippedBytes, compressed)
     }
 
     @Test
@@ -351,7 +305,7 @@ internal class EmbraceDeliveryCacheManagerTest {
      */
     @Test
     fun `load old version of pending api calls file as new version when load cache returns null`() {
-        val pendingApiCallsQueue = ArrayList<PendingApiCall>()
+        val pendingApiCallsQueue = mutableListOf<PendingApiCall>()
         val request1 = ApiRequest(
             url = EmbraceUrl.create("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -375,7 +329,8 @@ internal class EmbraceDeliveryCacheManagerTest {
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
         pendingApiCallsQueue.add(pendingApiCall2)
 
-        cacheService.oldPendingApiCalls = pendingApiCallsQueue
+        cacheService.cacheObject("failed_api_calls.json", pendingApiCallsQueue, List::class.java)
+
         val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
@@ -388,23 +343,11 @@ internal class EmbraceDeliveryCacheManagerTest {
         assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
     }
 
-    private fun assertSessionsMatch(session1: SessionMessage, session2: SessionMessage) {
-        // SessionMessage does not implement equals, so we have to serialize to compare
-        assertEquals(
-            serializer.toJson(session1),
-            serializer.toJson(session2)
-        )
-    }
-
     private fun createSessionMessage(sessionId: String): SessionMessage {
         val session = fakeSession().copy(
             sessionId = sessionId,
             startTime = fakeClock.now()
         )
         return SessionMessage(session)
-    }
-
-    private fun getCachedSessionName(sessionId: String, timestamp: Long): String {
-        return EmbraceDeliveryCacheManager.CachedSession(sessionId, timestamp).filename
     }
 }

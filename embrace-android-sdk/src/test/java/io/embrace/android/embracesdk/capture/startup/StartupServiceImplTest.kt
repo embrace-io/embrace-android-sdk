@@ -45,7 +45,7 @@ internal class StartupServiceImplTest {
             assertEquals(startTimeMillis, startTimeNanos.nanosToMillis())
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertEquals(
-                io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.name,
+                io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.typeName,
                 attributes[io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertTrue(isPrivate())

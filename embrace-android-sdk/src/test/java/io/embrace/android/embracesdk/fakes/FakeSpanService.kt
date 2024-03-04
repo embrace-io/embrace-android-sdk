@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class FakeSpanService : SpanService {
 
-    val createdSpans = mutableListOf<String>()
+    val createdSpans = mutableListOf<FakeEmbraceSpan>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -20,9 +20,8 @@ internal class FakeSpanService : SpanService {
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean
-    ): EmbraceSpan? {
-        createdSpans.add(name)
-        return null
+    ): EmbraceSpan = FakeEmbraceSpan(null, name, type, internal).apply {
+        createdSpans.add(this)
     }
 
     override fun <T> recordSpan(

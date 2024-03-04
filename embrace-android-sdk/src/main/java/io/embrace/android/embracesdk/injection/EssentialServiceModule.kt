@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
@@ -82,12 +83,14 @@ internal class EssentialServiceModuleImpl(
 
     // Many of these properties are temporarily here to break a circular dependency between services.
     // When possible, we should try to move them into a new service or module.
-    private val localConfig = LocalConfigParser.fromResources(
-        coreModule.resources,
-        coreModule.context.packageName,
-        customAppId,
-        coreModule.jsonSerializer
-    )
+    private val localConfig = Systrace.traceSynchronous("local-config-init") {
+        LocalConfigParser.fromResources(
+            coreModule.resources,
+            coreModule.context.packageName,
+            customAppId,
+            coreModule.jsonSerializer
+        )
+    }
 
     @Suppress("DEPRECATION")
     private val lazyPackageInfo = lazy {
@@ -140,7 +143,9 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val processStateService: ProcessStateService by singleton {
-        EmbraceProcessStateService(initModule.clock)
+        Systrace.traceSynchronous("process-state-service-init") {
+            EmbraceProcessStateService(initModule.clock)
+        }
     }
 
     override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
@@ -148,17 +153,19 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val configService: ConfigService by singleton {
-        configServiceProvider.invoke()
-            ?: EmbraceConfigService(
-                localConfig,
-                apiService,
-                androidServicesModule.preferencesService,
-                initModule.clock,
-                coreModule.logger,
-                backgroundWorker,
-                coreModule.isDebug,
-                thresholdCheck
-            )
+        Systrace.traceSynchronous("config-service-init") {
+            configServiceProvider.invoke()
+                ?: EmbraceConfigService(
+                    localConfig,
+                    apiService,
+                    androidServicesModule.preferencesService,
+                    initModule.clock,
+                    coreModule.logger,
+                    backgroundWorker,
+                    coreModule.isDebug,
+                    thresholdCheck
+                )
+        }
     }
 
     override val sharedObjectLoader: SharedObjectLoader by singleton {
@@ -174,52 +181,56 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val metadataService: MetadataService by singleton {
-        EmbraceMetadataService.ofContext(
-            coreModule.context,
-            coreModule.buildInfo,
-            configService,
-            coreModule.appFramework,
-            androidServicesModule.preferencesService,
-            processStateService,
-            backgroundWorker,
-            systemServiceModule.storageManager,
-            systemServiceModule.windowManager,
-            systemServiceModule.activityManager,
-            initModule.clock,
-            cpuInfoDelegate,
-            deviceArchitecture,
-            lazyAppVersionName,
-            lazyAppVersionCode
-        )
+        Systrace.traceSynchronous("metadata-service-init") {
+            EmbraceMetadataService.ofContext(
+                coreModule.context,
+                coreModule.buildInfo,
+                configService,
+                coreModule.appFramework,
+                androidServicesModule.preferencesService,
+                processStateService,
+                backgroundWorker,
+                systemServiceModule.storageManager,
+                systemServiceModule.windowManager,
+                systemServiceModule.activityManager,
+                initModule.clock,
+                cpuInfoDelegate,
+                deviceArchitecture,
+                lazyAppVersionName,
+                lazyAppVersionCode
+            )
+        }
     }
 
     override val urlBuilder by singleton {
-        // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
-        // but we want to access behaviors from ConfigService when possible.
-        val sdkEndpointBehavior = SdkEndpointBehavior(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::baseUrls,
-        )
+        Systrace.traceSynchronous("url-builder-init") {
+            // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
+            // but we want to access behaviors from ConfigService when possible.
+            val sdkEndpointBehavior = SdkEndpointBehavior(
+                thresholdCheck = thresholdCheck,
+                localSupplier = localConfig.sdkConfig::baseUrls,
+            )
 
-        val isDebug = coreModule.isDebug &&
-            enableIntegrationTesting &&
-            (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
+            val isDebug = coreModule.isDebug &&
+                enableIntegrationTesting &&
+                (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
 
-        val coreBaseUrl = if (isDebug) {
-            sdkEndpointBehavior.getDataDev(appId)
-        } else {
-            sdkEndpointBehavior.getData(appId)
+            val coreBaseUrl = if (isDebug) {
+                sdkEndpointBehavior.getDataDev(appId)
+            } else {
+                sdkEndpointBehavior.getData(appId)
+            }
+
+            val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
+
+            EmbraceApiUrlBuilder(
+                coreBaseUrl = coreBaseUrl,
+                configBaseUrl = configBaseUrl,
+                appId = appId,
+                lazyDeviceId = lazyDeviceId,
+                lazyAppVersionName = lazyAppVersionName
+            )
         }
-
-        val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
-
-        EmbraceApiUrlBuilder(
-            coreBaseUrl = coreBaseUrl,
-            configBaseUrl = configBaseUrl,
-            appId = appId,
-            lazyDeviceId = lazyDeviceId,
-            lazyAppVersionName = lazyAppVersionName
-        )
     }
 
     override val gatingService: GatingService by singleton {
@@ -227,53 +238,63 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val userService: UserService by singleton {
-        EmbraceUserService(
-            androidServicesModule.preferencesService,
-            coreModule.logger
-        )
+        Systrace.traceSynchronous("user-service-init") {
+            EmbraceUserService(
+                androidServicesModule.preferencesService,
+                coreModule.logger
+            )
+        }
     }
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
-        val autoDataCaptureBehavior = AutoDataCaptureBehavior(
-            thresholdCheck = thresholdCheck,
-            localSupplier = { localConfig },
-            remoteSupplier = { null }
-        )
-        EmbraceNetworkConnectivityService(
-            coreModule.context,
-            initModule.clock,
-            backgroundWorker,
-            coreModule.logger,
-            systemServiceModule.connectivityManager,
-            autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
-        )
+        Systrace.traceSynchronous("network-connectivity-service-init") {
+            val autoDataCaptureBehavior = AutoDataCaptureBehavior(
+                thresholdCheck = thresholdCheck,
+                localSupplier = { localConfig },
+                remoteSupplier = { null }
+            )
+            EmbraceNetworkConnectivityService(
+                coreModule.context,
+                initModule.clock,
+                backgroundWorker,
+                coreModule.logger,
+                systemServiceModule.connectivityManager,
+                autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+            )
+        }
     }
 
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
-        EmbracePendingApiCallsSender(
-            networkConnectivityService,
-            pendingApiCallsWorker,
-            storageModule.deliveryCacheManager,
-            initModule.clock
-        )
+        Systrace.traceSynchronous("pending-call-sender-init") {
+            EmbracePendingApiCallsSender(
+                networkConnectivityService,
+                pendingApiCallsWorker,
+                storageModule.deliveryCacheManager,
+                initModule.clock
+            )
+        }
     }
 
     override val apiService: ApiService by singleton {
-        EmbraceApiService(
-            apiClient = apiClient,
-            serializer = coreModule.jsonSerializer,
-            cachedConfigProvider = { url: String, request: ApiRequest ->
-                storageModule.cache.retrieveCachedConfig(url, request)
-            },
-            logger = coreModule.logger,
-            backgroundWorker = networkRequestWorker,
-            cacheManager = storageModule.deliveryCacheManager,
-            pendingApiCallsSender = pendingApiCallsSender,
-            lazyDeviceId = lazyDeviceId,
-            appId = appId,
-            urlBuilder = urlBuilder,
-            networkConnectivityService = networkConnectivityService
-        )
+        Systrace.traceSynchronous("api-service-init") {
+            EmbraceApiService(
+                apiClient = apiClient,
+                serializer = coreModule.jsonSerializer,
+                cachedConfigProvider = { url: String, request: ApiRequest ->
+                    Systrace.traceSynchronous("provide-cache-config") {
+                        storageModule.cache.retrieveCachedConfig(url, request)
+                    }
+                },
+                logger = coreModule.logger,
+                backgroundWorker = networkRequestWorker,
+                cacheManager = Systrace.traceSynchronous("cache-manager") { storageModule.deliveryCacheManager },
+                pendingApiCallsSender = pendingApiCallsSender,
+                lazyDeviceId = lazyDeviceId,
+                appId = appId,
+                urlBuilder = urlBuilder,
+                networkConnectivityService = Systrace.traceSynchronous("network-connectivity") { networkConnectivityService }
+            )
+        }
     }
 
     override val apiClient: ApiClient by singleton {

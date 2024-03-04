@@ -19,12 +19,14 @@ internal class SessionSanitizerFacade(
         val sanitizedPerformanceInfo = PerformanceInfoSanitizer(sessionMessage.performanceInfo, components).sanitize()
         val sanitizedBreadcrumbs =
             BreadcrumbsSanitizer(sessionMessage.breadcrumbs, components).sanitize()
+        val sanitizedSpans = SpanSanitizer(sessionMessage.spans, components).sanitize()
 
         return sessionMessage.copy(
             session = sanitizedSession,
             userInfo = sanitizedUserInfo,
             performanceInfo = sanitizedPerformanceInfo,
-            breadcrumbs = sanitizedBreadcrumbs
+            breadcrumbs = sanitizedBreadcrumbs,
+            spans = sanitizedSpans
         )
     }
 }

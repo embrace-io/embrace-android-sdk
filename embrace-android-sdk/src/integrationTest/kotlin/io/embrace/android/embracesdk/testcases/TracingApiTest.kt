@@ -124,7 +124,7 @@ internal class TracingApiTest {
                 checkNotNull(harness.openTelemetryModule.spanSink.completedSpans())
 
             val spansMap = allSpans.associateBy { it.name }
-            val sessionSpan = checkNotNull(spansMap["emb-session-span"])
+            val sessionSpan = checkNotNull(spansMap["emb-session"])
             val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
 
             results.add("\nAll spans to validate: ${allSpans.map { it.name }}")
@@ -135,7 +135,7 @@ internal class TracingApiTest {
                 "record-span-span",
                 "completed-span",
                 "emb-startup-moment",
-                "emb-session-span",
+                "emb-session",
                 "bonus-span",
                 "bonus-span-2",
             )

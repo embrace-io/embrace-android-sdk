@@ -1,7 +1,7 @@
 {
   "attributes": {
     "emb.sequence_id": "3",
-    "emb.type": "PERFORMANCE"
+    "emb.type": "performance"
   },
   "end_time_unix_nano": 1681972471871000000,
   "events": [

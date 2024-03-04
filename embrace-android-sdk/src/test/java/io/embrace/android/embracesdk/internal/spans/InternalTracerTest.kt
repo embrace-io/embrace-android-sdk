@@ -231,7 +231,7 @@ internal class InternalTracerTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                expectedType.name,
+                expectedType.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertEquals("true", attributes["emb.key"])
@@ -274,7 +274,7 @@ internal class InternalTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         assertEquals(
-            EmbraceAttributes.Type.PERFORMANCE.name,
+            EmbraceAttributes.Type.PERFORMANCE.typeName,
             currentSpan.attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])

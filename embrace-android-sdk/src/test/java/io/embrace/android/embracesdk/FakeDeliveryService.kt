@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
  * invocations. Please add additional tracking functionality as tests require them.
  */
-internal class FakeDeliveryService : DeliveryService {
+internal open class FakeDeliveryService : DeliveryService {
     var lastSentNetworkCall: NetworkEvent? = null
     var lastSentCrash: EventMessage? = null
     var lastSentEvent: EventMessage? = null

@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -91,11 +92,9 @@ internal class EmbraceNdkService(
             if (appFramework == AppFramework.UNITY) {
                 unityCrashId = getEmbUuid()
             }
-            logger.logDeveloper("EmbraceNDKService", "NDK enabled - starting service installation.")
-            startNdk()
-            cleanOldCrashFiles()
-        } else {
-            logger.logDeveloper("EmbraceNDKService", "NDK disabled.")
+
+            Systrace.traceSynchronous("start-ndk-service") { startNdk() }
+            Systrace.traceSynchronous("clear-stale-crashes") { cleanOldCrashFiles() }
         }
     }
 

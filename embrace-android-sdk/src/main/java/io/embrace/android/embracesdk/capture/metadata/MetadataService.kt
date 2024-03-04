@@ -113,7 +113,7 @@ internal interface MetadataService {
     /**
      * Sets React Native Bundle ID from a custom JavaScript Bundle URL.
      */
-    fun setReactNativeBundleId(context: Context, jsBundleIdUrl: String?)
+    fun setReactNativeBundleId(context: Context, jsBundleUrl: String?)
 
     /**
      * Sets the Embrace Flutter SDK version

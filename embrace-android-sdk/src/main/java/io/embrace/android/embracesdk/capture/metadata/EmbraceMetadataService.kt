@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
@@ -27,14 +26,13 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
-import io.embrace.android.embracesdk.worker.eagerLazyLoad
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
-import java.util.concurrent.Callable
+import java.util.concurrent.Future
 
 /**
  * Provides information about the state of the device, retrieved from Android system services,
@@ -60,7 +58,7 @@ internal class EmbraceMetadataService private constructor(
     private val osUpdated: Lazy<Boolean>,
     private val preferencesService: PreferencesService,
     private val processStateService: ProcessStateService,
-    reactNativeBundleId: Lazy<String?>,
+    reactNativeBundleId: Future<String?>,
     javaScriptPatchNumber: String?,
     reactNativeVersion: String?,
     unityVersion: String?,
@@ -79,7 +77,7 @@ internal class EmbraceMetadataService private constructor(
     private val unityVersion: String?
     private val buildGuid: String?
     private val unitySdkVersion: String?
-    private var reactNativeBundleId: Lazy<String?>
+    private var reactNativeBundleId: Future<String?>
 
     @Volatile
     private var diskUsage: DiskUsage? = null
@@ -107,7 +105,7 @@ internal class EmbraceMetadataService private constructor(
             this.reactNativeVersion = reactNativeVersion
             this.rnSdkVersion = rnSdkVersion
         } else {
-            this.reactNativeBundleId = lazy { buildInfo.buildId }
+            this.reactNativeBundleId = metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
             this.javaScriptPatchNumber = null
             this.reactNativeVersion = null
             this.rnSdkVersion = null
@@ -238,7 +236,16 @@ internal class EmbraceMetadataService private constructor(
         }
     }
 
-    fun getReactNativeBundleId(): String? = reactNativeBundleId.value
+    /**
+     * Return the bundle Id if it was already calculated in background or null if it's not ready yet.
+     * This way, we avoid blocking the main thread to wait for the value.
+     */
+    fun getReactNativeBundleId(): String? =
+        if (reactNativeBundleId.isDone) {
+            reactNativeBundleId.get()
+        } else {
+            null
+        }
 
     override fun getDeviceId(): String = deviceId.value
 
@@ -292,7 +299,7 @@ internal class EmbraceMetadataService private constructor(
 
         // applies to React Native builds only
         if (appFramework == AppFramework.REACT_NATIVE) {
-            infoReactNativeBundle = reactNativeBundleId.value
+            infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
             infoReactNativeVersion = reactNativeVersion
             hostedSdkVersion = getRnSdkVersion()
@@ -376,36 +383,22 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getEgl(): String? = egl
 
-    override fun setReactNativeBundleId(context: Context, jsBundleIdUrl: String?) {
-        if (jsBundleIdUrl.isNullOrEmpty()) {
-            InternalStaticEmbraceLogger.logError("JavaScript bundle URL must have non-zero length")
-            reactNativeBundleId = lazy { buildInfo.buildId }
-            return
-        }
+    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?) {
         val currentUrl = preferencesService.javaScriptBundleURL
-        if (currentUrl != null && currentUrl == jsBundleIdUrl) {
-            // if the JS bundle ID URL didn't change, use the value from preferences
-            InternalStaticEmbraceLogger.logDebug(
-                "JavaScript bundle URL already exists and didn't change. " +
-                    "Using: " + currentUrl + "."
-            )
-            reactNativeBundleId = lazy { buildInfo.buildId }
-            return
-        }
 
-        // if doesn't exists or if is a new JS bundle ID URL, save the new value in preferences
-        preferencesService.javaScriptBundleURL = jsBundleIdUrl
+        if (currentUrl != jsBundleUrl) {
+            // It`s a new JS bundle URL, save the new value in preferences.
+            preferencesService.javaScriptBundleURL = jsBundleUrl
 
-        // get the hashed bundle ID file from the bundle ID URL
-        reactNativeBundleId = metadataBackgroundWorker.eagerLazyLoad(
-            Callable {
+            // Calculate the bundle ID for the new bundle URL
+            reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
                 computeReactNativeBundleId(
                     context,
-                    jsBundleIdUrl,
+                    jsBundleUrl,
                     buildInfo.buildId
                 )
             }
-        )
+        }
     }
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {
@@ -504,29 +497,16 @@ internal class EmbraceMetadataService private constructor(
             var javaScriptPatchNumber: String? = null
             val reactNativeVersion: String? = null
             var rnSdkVersion: String? = null
-            val reactNativeBundleId: Lazy<String?>
+            val reactNativeBundleId: Future<String?>
             if (appFramework == AppFramework.REACT_NATIVE) {
-                reactNativeBundleId =
-                    metadataBackgroundWorker.eagerLazyLoad(
-                        Callable {
-                            val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-                            if (lastKnownJsBundleUrl != null) {
-                                computeReactNativeBundleId(
-                                    context,
-                                    lastKnownJsBundleUrl,
-                                    buildInfo.buildId
-                                )
-                            } else {
-                                // If JS bundle ID URL is not found we assume that the App is not using Codepush.
-                                // Use JS bundle ID URL as React Native bundle ID.
-                                logDeveloper(
-                                    "EmbraceMetadataService",
-                                    "setting JSBundleUrl as buildId: " + buildInfo.buildId
-                                )
-                                buildInfo.buildId
-                            }
-                        }
+                reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
+                    val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
+                    computeReactNativeBundleId(
+                        context,
+                        lastKnownJsBundleUrl,
+                        buildInfo.buildId
                     )
+                }
                 javaScriptPatchNumber = preferencesService.javaScriptPatchNumber
                 if (javaScriptPatchNumber != null) {
                     logDeveloper(
@@ -539,7 +519,7 @@ internal class EmbraceMetadataService private constructor(
                     logDeveloper("EmbraceMetadataService", "RN Embrace SDK version: $rnSdkVersion")
                 }
             } else {
-                reactNativeBundleId = lazy { buildInfo.buildId }
+                reactNativeBundleId = metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
                 logDeveloper("EmbraceMetadataService", "setting default RN as buildId")
             }
             var unityVersion: String? = null
@@ -610,7 +590,7 @@ internal class EmbraceMetadataService private constructor(
                 )
                 return context.assets.open(getBundleAssetName(bundleUrl))
             } catch (e: Exception) {
-                InternalStaticEmbraceLogger.logError("Failed to retrieve RN bundle file from assets.", e)
+                logError("Failed to retrieve RN bundle file from assets.", e)
             }
             return null
         }
@@ -623,19 +603,29 @@ internal class EmbraceMetadataService private constructor(
                 )
                 return FileInputStream(bundleUrl)
             } catch (e: NullPointerException) {
-                InternalStaticEmbraceLogger.logError("Failed to retrieve the custom RN bundle file.", e)
+                logError("Failed to retrieve the custom RN bundle file.", e)
             } catch (e: FileNotFoundException) {
-                InternalStaticEmbraceLogger.logError("Failed to retrieve the custom RN bundle file.", e)
+                logError("Failed to retrieve the custom RN bundle file.", e)
             }
             return null
         }
 
         internal fun computeReactNativeBundleId(
             context: Context,
-            bundleUrl: String,
+            bundleUrl: String?,
             defaultBundleId: String?
         ): String? {
+            if (bundleUrl == null) {
+                // If JS bundle URL is null, we set React Native bundle ID to the defaultBundleId.
+                logDeveloper(
+                    "EmbraceMetadataService",
+                    "bundleUrl is null. Setting default buildId: $defaultBundleId"
+                )
+                return defaultBundleId
+            }
+
             val bundleStream: InputStream?
+
             // checks if the bundle url is an asset
             if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets

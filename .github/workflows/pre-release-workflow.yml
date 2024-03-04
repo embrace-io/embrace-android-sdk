@@ -82,7 +82,7 @@ jobs:
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push
+          git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
           ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results

@@ -11,17 +11,7 @@ internal interface StartupService {
     fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long)
 
     /**
-     * Returns the SDK startup duration. This is called when the session ends.
+     * Returns the SDK startup info. This is called when the session ends.
      */
-    fun getSdkStartupDuration(coldStart: Boolean): Long?
-
-    /**
-     * The epoch time in milliseconds of when the SDK startup began
-     */
-    fun getSdkInitStartMs(): Long?
-
-    /**
-     * The epoch time in milliseconds of when the SDK startup finished
-     */
-    fun getSdkInitEndMs(): Long?
+    fun getSdkStartupInfo(coldStart: Boolean): Long?
 }

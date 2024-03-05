@@ -162,9 +162,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val startupService: StartupService by singleton {
-        StartupServiceImpl(
-            spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-        )
+        StartupServiceImpl(openTelemetryModule.spanService)
     }
 }

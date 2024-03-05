@@ -20,6 +20,7 @@ internal class AppStartupTraceEmitter(
     private val clock: Clock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
+    @Suppress("UnusedPrivateMember")
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: InternalEmbraceLogger

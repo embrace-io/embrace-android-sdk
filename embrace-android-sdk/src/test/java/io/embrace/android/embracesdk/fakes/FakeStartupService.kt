@@ -10,7 +10,15 @@ internal class FakeStartupService : StartupService {
         sdkStartupDuration = endTimeMs - startTimeMs
     }
 
-    override fun getSdkStartupInfo(coldStart: Boolean): Long? {
+    override fun getSdkStartupDuration(coldStart: Boolean): Long? {
         return sdkStartupDuration
+    }
+
+    override fun getSdkInitStartMs(): Long? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getSdkInitEndMs(): Long? {
+        TODO("Not yet implemented")
     }
 }

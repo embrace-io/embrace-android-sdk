@@ -49,8 +49,10 @@ internal class OpenTelemetrySdk(
         sdk.getTracer(configuration.serviceName, configuration.serviceVersion)
     }
 
-    private val logger = Systrace.traceSynchronous("otel-logger-init") {
-        sdk.logsBridge.loggerBuilder(configuration.serviceName).build()
+    private val logger by lazy {
+        Systrace.traceSynchronous("otel-logger-init") {
+            sdk.logsBridge.loggerBuilder(configuration.serviceName).build()
+        }
     }
 
     fun getOpenTelemetryTracer(): Tracer = tracer

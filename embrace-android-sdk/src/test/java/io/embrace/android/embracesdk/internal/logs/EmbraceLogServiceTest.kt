@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong
 internal class EmbraceLogServiceTest {
 
     companion object {
-        private lateinit var logWriter: FakeOpenTelemetryLogWriter
+        private lateinit var logWriter: FakeLogWriter
         private lateinit var metadataService: FakeMetadataService
         private lateinit var configService: ConfigService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -56,7 +56,7 @@ internal class EmbraceLogServiceTest {
 
     @Before
     fun setUp() {
-        logWriter = FakeOpenTelemetryLogWriter()
+        logWriter = FakeLogWriter()
         sessionIdTracker.setActiveSessionId("session-123", true)
         cfg = RemoteConfig()
         configService = FakeConfigService(
@@ -86,8 +86,7 @@ internal class EmbraceLogServiceTest {
         val first = logs[0]
         assertEquals("Hello world", first.message)
         assertNotEquals(0, first.startTimeMs)
-        assertEquals(io.opentelemetry.api.logs.Severity.INFO, first.severity)
-        assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, first.severityText)
+        assertEquals(Severity.INFO, first.severity)
         assertEquals("bar", first.attributes?.get("foo"))
         assertNotNull(first.attributes?.get("emb.log_id"))
         assertEquals("session-123", first.attributes?.get("emb.session_id"))
@@ -96,8 +95,7 @@ internal class EmbraceLogServiceTest {
         val second = logs[1]
         assertEquals("Warning world", second.message)
         assertNotEquals(0, second.startTimeMs)
-        assertEquals(io.opentelemetry.api.logs.Severity.WARN, second.severity)
-        assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, second.severityText)
+        assertEquals(Severity.WARNING, second.severity)
         assertNotNull(second.attributes?.get("emb.log_id"))
         assertEquals("session-123", second.attributes?.get("emb.session_id"))
         assertNull(second.attributes?.get("emb.exception_type"))
@@ -105,8 +103,7 @@ internal class EmbraceLogServiceTest {
         val third = logs[2]
         assertEquals("Hello errors", third.message)
         assertNotEquals(0, third.startTimeMs)
-        assertEquals(io.opentelemetry.api.logs.Severity.ERROR, third.severity)
-        assertEquals(io.opentelemetry.api.logs.Severity.ERROR.name, third.severityText)
+        assertEquals(Severity.ERROR, third.severity)
         assertNotNull(third.attributes?.get("emb.log_id"))
         assertEquals("session-123", third.attributes?.get("emb.session_id"))
         assertNull(third.attributes?.get("emb.exception_type"))
@@ -132,8 +129,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(io.opentelemetry.api.logs.Severity.WARN, log.severity)
-        assertEquals(io.opentelemetry.api.logs.Severity.WARN.name, log.severityText)
+        assertEquals(Severity.WARNING, log.severity)
         assertEquals("NullPointerException", log.attributes?.get("emb.exception_name"))
         assertEquals("exception message", log.attributes?.get("emb.exception_message"))
         assertNotNull(log.attributes?.get("emb.log_id"))
@@ -149,8 +145,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(io.opentelemetry.api.logs.Severity.INFO, log.severity)
-        assertEquals(io.opentelemetry.api.logs.Severity.INFO.name, log.severityText)
+        assertEquals(Severity.INFO, log.severity)
         assertNotNull(log.attributes?.get("emb.log_id"))
         assertEquals("session-123", log.attributes?.get("emb.session_id"))
     }

@@ -1,4 +1,4 @@
-name: Release - Cut Release Branch and Create Release Candidate
+name: Pre-Release - Cut Release Branch and Create Release Candidates
 
 env:
   SONATYPE_USERNAME: embrace-io
@@ -16,7 +16,7 @@ on:
         description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. 6.3. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
         required: true
       next_version:
-        description: 'Next Version. Specify <major.minor.patch>, e.g. 6.4.0 (Do NOT include -SNAPSHOT, will be added automatically)'
+        description: 'Next version. Specify <major.minor>, e.g. 6.4 (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
 
 jobs:
@@ -82,7 +82,7 @@ jobs:
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push
+          git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
           ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results
@@ -116,7 +116,7 @@ jobs:
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push
+          git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
           ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Set Next Swazzler Version

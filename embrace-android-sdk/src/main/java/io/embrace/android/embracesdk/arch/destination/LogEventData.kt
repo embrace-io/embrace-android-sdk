@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.arch.destination
 
-import io.opentelemetry.api.logs.Severity
+import io.embrace.android.embracesdk.Severity
 
 /**
  * Represents a Log event that can be added to the current session span.
@@ -8,7 +8,6 @@ import io.opentelemetry.api.logs.Severity
 internal class LogEventData(
     val startTimeMs: Long,
     val severity: Severity,
-    val severityText: String?,
     val message: String,
     val attributes: Map<String, String>?
 )

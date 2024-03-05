@@ -1,4 +1,4 @@
-name: Test - Cut Release Branch
+name: Pre-Release - Create New Release Candidates
 
 env:
   SONATYPE_USERNAME: embrace-io
@@ -12,11 +12,8 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. 6.3. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
-        required: true
-      next_version:
-        description: 'Next Version. Specify <major.minor.patch>, e.g. 6.4.0 (Do NOT include -SNAPSHOT, will be added automatically)'
+      version_of_rc:
+        description: 'Version to create new RC for. Specify <major.minor> only, e.g. 6.3'
         required: true
 
 jobs:
@@ -43,12 +40,8 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: release/${{ github.event.inputs.version_of_rc }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - name: Create Release Branch "release/${{ github.event.inputs.version_to_release }}"
-        run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
 
       - uses: actions/cache@v4
         with:
@@ -77,12 +70,9 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v2
 
-      - name: Set Release Version
+      - name: Generate SDK RC - Publish and close Sonatype repository
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push
+          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -95,19 +85,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
+          ref: release/${{ github.event.inputs.version_of_rc }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"
+      - name: Generate Swazzler RC - Publish and Close repository
         run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
-
-      - name: Set Release Version
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push
+          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

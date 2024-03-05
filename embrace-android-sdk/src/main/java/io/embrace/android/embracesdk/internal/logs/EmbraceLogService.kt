@@ -127,12 +127,10 @@ internal class EmbraceLogService(
             metadataService.getAppState()?.let { attributes.setAppState(it) }
             attributes.setLogId(Uuid.getEmbUuid())
 
-            val otelSeverity = mapSeverity(severity)
             val logEventData = LogEventData(
                 startTimeMs = clock.nowInNanos(),
                 message = trimToMaxLength(message),
-                severity = otelSeverity,
-                severityText = otelSeverity.name,
+                severity = severity,
                 attributes = attributes.toMap()
             )
 
@@ -175,14 +173,6 @@ internal class EmbraceLogService(
             message.substring(0, allowedLength) + endChars
         } else {
             message
-        }
-    }
-
-    private fun mapSeverity(embraceSeverity: Severity): io.opentelemetry.api.logs.Severity {
-        return when (embraceSeverity) {
-            Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
-            Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
-            Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
         }
     }
 

@@ -7,6 +7,7 @@ import okio.sink
 import okio.source
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
 /**
@@ -39,6 +40,13 @@ internal class EmbraceSerializer {
     fun <T> toJson(any: T, clazz: Class<T>, outputStream: OutputStream) {
         outputStream.sink().buffer().use {
             val adapter = impl.adapter(clazz)
+            adapter.toJson(it, any)
+        }
+    }
+
+    fun <T> toJson(any: T, type: ParameterizedType, outputStream: OutputStream) {
+        outputStream.sink().buffer().use {
+            val adapter = impl.adapter<T>(type)
             adapter.toJson(it, any)
         }
     }

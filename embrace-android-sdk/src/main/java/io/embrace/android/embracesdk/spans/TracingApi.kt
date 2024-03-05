@@ -17,7 +17,7 @@ internal interface TracingApi {
     @BetaApi
     fun createSpan(
         name: String
-    ): EmbraceSpan?
+    ): EmbraceSpan? = createSpan(name = name, parent = null)
 
     /**
      * Create an [EmbraceSpan] with the given name and parent. Passing in a parent that is null result in a new trace with this
@@ -39,7 +39,7 @@ internal interface TracingApi {
     @BetaApi
     fun startSpan(
         name: String
-    ): EmbraceSpan?
+    ): EmbraceSpan? = startSpan(name = name, parent = null)
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given name and parent. Returns null if the [EmbraceSpan] cannot be created
@@ -49,7 +49,11 @@ internal interface TracingApi {
     fun startSpan(
         name: String,
         parent: EmbraceSpan?
-    ): EmbraceSpan?
+    ): EmbraceSpan? = startSpan(
+        name = name,
+        parent = parent,
+        startTimeMs = null
+    )
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time. Returns null if the [EmbraceSpan] cannot
@@ -71,7 +75,7 @@ internal interface TracingApi {
     fun <T> recordSpan(
         name: String,
         code: () -> T
-    ): T
+    ): T = recordSpan(name = name, parent = null, attributes = null, events = null, code = code)
 
     /**
      * Execute the given block of code and record a new span around it with the given parent. Passing in a parent that is null will result
@@ -84,7 +88,7 @@ internal interface TracingApi {
         name: String,
         parent: EmbraceSpan?,
         code: () -> T
-    ): T
+    ): T = recordSpan(name = name, parent = parent, attributes = null, events = null, code = code)
 
     /**
      * Execute the given block of code and record a new trace around it with optional attributes and list of [EmbraceSpanEvent]. If the span
@@ -97,7 +101,7 @@ internal interface TracingApi {
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
         code: () -> T
-    ): T
+    ): T = recordSpan(name = name, parent = null, attributes = attributes, events = events, code = code)
 
     /**
      * Execute the given block of code and record a new span around it with the given parent with optional attributes and list
@@ -123,7 +127,16 @@ internal interface TracingApi {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long
-    ): Boolean
+    ): Boolean =
+        recordCompletedSpan(
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            errorCode = null,
+            parent = null,
+            attributes = null,
+            events = null
+        )
 
     /**
      * Record a span with the given name, error code, as well as start and end times, which will be the root span of a new trace. A
@@ -136,7 +149,16 @@ internal interface TracingApi {
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCode?
-    ): Boolean
+    ): Boolean =
+        recordCompletedSpan(
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            errorCode = errorCode,
+            parent = null,
+            attributes = null,
+            events = null
+        )
 
     /**
      * Record a span with the given name, parent, as well as start and end times. Passing in a parent that is null will result
@@ -148,7 +170,16 @@ internal interface TracingApi {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?
-    ): Boolean
+    ): Boolean =
+        recordCompletedSpan(
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            errorCode = null,
+            parent = parent,
+            attributes = null,
+            events = null
+        )
 
     /**
      * Record a span with the given name, parent, error code, as well as start and end times. Passing in a parent that is null will result
@@ -162,7 +193,15 @@ internal interface TracingApi {
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-    ): Boolean
+    ): Boolean = recordCompletedSpan(
+        name = name,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
+        errorCode = errorCode,
+        parent = parent,
+        attributes = null,
+        events = null
+    )
 
     /**
      * Record a span with the given name as well as start and end times, which will be the root span of a new trace. You can also pass in
@@ -176,7 +215,15 @@ internal interface TracingApi {
         endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
-    ): Boolean
+    ): Boolean = recordCompletedSpan(
+        name = name,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
+        errorCode = null,
+        parent = null,
+        attributes = attributes,
+        events = events
+    )
 
     /**
      * Record a span with the given name, error code, parent, as well as start and end times. Passing in a parent that is null will result

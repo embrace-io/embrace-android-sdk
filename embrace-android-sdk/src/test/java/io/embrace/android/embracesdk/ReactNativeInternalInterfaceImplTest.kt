@@ -159,6 +159,44 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
+    fun testSetCacheableJavaScriptBundleUrl() {
+        impl = ReactNativeInternalInterfaceImpl(
+            embrace,
+            mockk(),
+            REACT_NATIVE,
+            preferencesService,
+            crashService,
+            metadataService,
+            logger
+        )
+
+        every { embrace.isStarted } returns true
+        impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
+        // Test that the metadata service was called with the correct parameters
+        assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
+        assertEquals(true, metadataService.forceUpdate)
+    }
+
+    @Test
+    fun testSetJavaScriptBundleURLForOtherOTAs() {
+        impl = ReactNativeInternalInterfaceImpl(
+            embrace,
+            mockk(),
+            REACT_NATIVE,
+            preferencesService,
+            crashService,
+            metadataService,
+            logger
+        )
+
+        every { embrace.isStarted } returns true
+        impl.setJavaScriptBundleUrl(context, "index.android.bundle")
+        // Test that the metadata service was called with the correct parameters
+        assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
+        assertEquals(null, metadataService.forceUpdate)
+    }
+
+    @Test
     fun testLogUnhandledJsException() {
         every { embrace.isStarted } returns true
         impl.logUnhandledJsException("name", "message", "type", "stack")

@@ -38,8 +38,6 @@ internal class EmbraceSpanImpl(
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording == true
 
-    override fun start(): Boolean = start(startTimeMs = null)
-
     override fun start(startTimeMs: Long?): Boolean {
         return if (startedSpan.get() != null) {
             false
@@ -59,13 +57,7 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun stop(): Boolean = stop(endTimeMs = null, errorCode = null)
-
-    override fun stop(endTimeMs: Long?): Boolean = stop(endTimeMs = endTimeMs, errorCode = null)
-
-    override fun stop(errorCode: ErrorCode?): Boolean = stop(endTimeMs = null, errorCode = errorCode)
-
-    override fun stop(endTimeMs: Long?, errorCode: ErrorCode?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
         return if (startedSpan.get()?.isRecording == false) {
             false
         } else {
@@ -80,8 +72,6 @@ internal class EmbraceSpanImpl(
             return successful
         }
     }
-
-    override fun addEvent(name: String): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {

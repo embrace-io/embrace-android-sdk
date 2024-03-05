@@ -182,6 +182,7 @@ internal class PendingApiCallsTest {
             Endpoint.NETWORK -> 50
             Endpoint.SESSIONS -> 100
             Endpoint.UNKNOWN -> 50
+            Endpoint.SESSIONS_V2 -> 100
         }
     }
 }

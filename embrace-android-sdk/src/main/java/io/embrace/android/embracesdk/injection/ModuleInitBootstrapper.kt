@@ -209,12 +209,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    Systrace.traceSynchronous("startup-tracker") {
-                        coreModule.application.registerActivityLifecycleCallbacks(
-                            dataCaptureServiceModule.startupTracker
-                        )
-                    }
-
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
                             dataCaptureServiceModule.webviewService,

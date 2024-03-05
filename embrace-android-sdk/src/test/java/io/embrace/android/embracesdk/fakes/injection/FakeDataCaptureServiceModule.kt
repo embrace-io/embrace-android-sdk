@@ -7,9 +7,7 @@ import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
-import io.embrace.android.embracesdk.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
@@ -30,15 +28,7 @@ internal class FakeDataCaptureServiceModule(
 
     override val pushNotificationService: PushNotificationCaptureService
         get() = TODO("Not yet implemented")
-
     override val componentCallbackService: ComponentCallbackService
         get() = TODO("Not yet implemented")
-
     override val startupService: StartupService = FakeStartupService()
-
-    override val startupTracker: StartupTracker
-        get() = TODO("Not yet implemented")
-
-    override val appStartupTraceEmitter: AppStartupTraceEmitter
-        get() = TODO("Not yet implemented")
 }

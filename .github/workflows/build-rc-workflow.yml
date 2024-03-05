@@ -1,0 +1,101 @@
+name: Pre-Release - Create New Release Candidates
+
+env:
+  SONATYPE_USERNAME: embrace-io
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+  MAVEN_QA_USER: github
+  MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+  mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
+  mavenSigningKeyRingFileEncoded: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
+  mavenSigningKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_of_rc:
+        description: 'Version to create new RC for. Specify <major.minor> only, e.g. 6.3'
+        required: true
+
+jobs:
+  release:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk-version: [ "17" ]
+        ndk-version: [ "21.4.7075529" ]
+    steps:
+      - name: Decode Keystore
+        run: |
+          mkdir "$RUNNER_TEMP"/keystore
+          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
+          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          ref: release/${{ github.event.inputs.version_of_rc }}
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Install JDK ${{ matrix.jdk-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.jdk-version }}
+
+      - name: Setup NDK ${{ matrix.ndk-version }}
+        run: |
+          export ANDROID_ROOT=/usr/local/lib/android
+          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Generate SDK RC - Publish and close Sonatype repository
+        run: |
+          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+
+      - name: Archive Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-sdk-test-results
+          path: embrace-android-sdk/build/reports/tests/
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: release/${{ github.event.inputs.version_of_rc }}
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Generate Swazzler RC - Publish and Close repository
+        run: |
+          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+
+      - name: Cleanup Gradle Cache
+        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
+        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+        run: |
+          rm -f ~/.gradle/caches/modules-2/modules-2.lock
+          rm -f ~/.gradle/caches/modules-2/gc.properties

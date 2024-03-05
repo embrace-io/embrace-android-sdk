@@ -11,8 +11,10 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
+import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
+import io.embrace.android.embracesdk.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
@@ -72,6 +74,10 @@ internal interface DataCaptureServiceModule {
      * Captures the startup time of the SDK
      */
     val startupService: StartupService
+
+    val startupTracker: StartupTracker
+
+    val appStartupTraceEmitter: AppStartupTraceEmitter
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -165,6 +171,24 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         StartupServiceImpl(
             spanService = openTelemetryModule.spanService,
             backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+        )
+    }
+
+    override val appStartupTraceEmitter: AppStartupTraceEmitter by singleton {
+        AppStartupTraceEmitter(
+            clock = initModule.openTelemetryClock,
+            startupServiceProvider = { startupService },
+            spanService = openTelemetryModule.spanService,
+            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            versionChecker = versionChecker,
+            logger = coreModule.logger
+        )
+    }
+
+    override val startupTracker: StartupTracker by singleton {
+        StartupTracker(
+            appStartupTraceEmitter = appStartupTraceEmitter,
+            versionChecker = versionChecker,
         )
     }
 }

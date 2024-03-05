@@ -11,6 +11,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to
@@ -36,9 +37,11 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  */
 internal class StartupTracker(
     private val appStartupTraceEmitter: AppStartupTraceEmitter,
+    private val logger: InternalEmbraceLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
     private var isFirstDraw = false
+    private var nullWindowCallbackErrorLogged = false
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.observeForStartup()) {
@@ -46,15 +49,20 @@ internal class StartupTracker(
             if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 if (!isFirstDraw) {
                     val window = activity.window
-                    window.onDecorViewReady {
-                        val decorView = window.decorView
-                        decorView.onNextDraw {
-                            if (!isFirstDraw) {
-                                isFirstDraw = true
-                                val callback = { appStartupTraceEmitter.firstFrameRendered() }
-                                decorView.viewTreeObserver.registerFrameCommitCallback(callback)
+                    if (window.callback != null) {
+                        window.onDecorViewReady {
+                            val decorView = window.decorView
+                            decorView.onNextDraw {
+                                if (!isFirstDraw) {
+                                    isFirstDraw = true
+                                    val callback = { appStartupTraceEmitter.firstFrameRendered() }
+                                    decorView.viewTreeObserver.registerFrameCommitCallback(callback)
+                                }
                             }
                         }
+                    } else if (!nullWindowCallbackErrorLogged) {
+                        logger.logError("Fail to attach frame rendering callback because the callback on Window was null")
+                        nullWindowCallbackErrorLogged = true
                     }
                 }
             }
@@ -130,14 +138,16 @@ internal class StartupTracker(
             )
         }
 
-        fun Window.onDecorViewReady(callback: () -> Unit) {
-            if (peekDecorView() == null) {
-                onContentChanged {
-                    callback()
-                    return@onContentChanged false
+        fun Window.onDecorViewReady(onDecorViewReady: () -> Unit) {
+            if (callback != null) {
+                if (peekDecorView() == null) {
+                    onContentChanged {
+                        onDecorViewReady()
+                        return@onContentChanged false
+                    }
+                } else {
+                    onDecorViewReady()
                 }
-            } else {
-                callback()
             }
         }
 

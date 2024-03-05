@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class StartupServiceImpl(
     private val spanService: SpanService,
+    @Suppress("UnusedPrivateMember")
     private val backgroundWorker: BackgroundWorker
 ) : StartupService {
 
@@ -22,13 +23,11 @@ internal class StartupServiceImpl(
 
     override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
         if (sdkStartupDurationMs == null) {
-            backgroundWorker.submit {
-                spanService.recordCompletedSpan(
-                    name = "sdk-init",
-                    startTimeMs = startTimeMs,
-                    endTimeMs = endTimeMs
-                )
-            }
+            spanService.recordCompletedSpan(
+                name = "sdk-init",
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs
+            )
         }
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs

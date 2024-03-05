@@ -15,6 +15,22 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Records startup traces based on the data that it is provided. It adjusts what it logs based on what data has been provided and
  * and which Android version the app is running.
+ *
+ * For the start of cold launch traces, the start time is determined by the following:
+ *
+ * - Android 13 onwards, it is determined by when the app process is specialized from the zygote process, which could be some time after the
+ *   the zygote process is created, depending on, perhaps among other things, the manufacturer of the device. If this value is used,
+ *   it value will be captured in an attribute on the root span of the trace.
+ *
+ * - Android 7.0 to 12 (inclusive), it is determined by when the app process is created. Some OEMs on some versions of Android are known to
+ *   pre-created a bunch of zygotes in order to speed up startup time, to mixed success. The fact that Pixel devices don't do this should
+ *   tell you how effectively that strategy overall is.
+ *
+ * - Older Android version that are supported, if provided, the application object creation time. Otherwise, we fall back to
+ *   SDK startup time (for now)
+ *
+ * For the start of warm launch traces, we use the creation time for the first activity that we want to consider for startup
+ *
  */
 internal class AppStartupTraceEmitter(
     private val clock: Clock,

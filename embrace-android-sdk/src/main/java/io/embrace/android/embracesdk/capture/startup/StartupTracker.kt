@@ -21,24 +21,15 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  * measuring slightly different events during startup, so there will be several flavors the startup trace depending on which version of
  * Android the app is currently running on.
  *
- * For app process start time:
- *
- * - Android 13 onwards, it is determined by when the app process is requested to be specialized, which could be some time after the
- *   the zygote process is created, depending on, perhaps among other things, the manufacturer of the device. If this value is used,
- *   it value will be captured in an attribute on the root span of the trace.
- *
- * - Android 7.0 to 12 (inclusive), it is determined by when the app process is created. Some OEMs on some versions of Android are known to
- *   pre-created a bunch of zygotes in order to speed up start time, to mixed success. The fact that Pixel devices don't do this should
- *   tell you how effectively that strategy overall is.
- *
- * - Older Android version that are supported, we use the SDK startup time (for now).
+ * Data this component provides will be used along side manually set our captured data by [AppStartupTraceEmitter] to create the final
+ * traces.
  *
  * For approximating the first frame being completely drawn:
  *
  * - Android 10 onwards, we use a [ViewTreeObserver.OnDrawListener] callback to detect that the first frame from the first activity load
  *   has been fully rendered and queued for display.
  *
- * - Older Android versions that are supported, we just use when the first Activity was resumed.
+ * - Older Android versions that are supported, we just use when the first Activity was resumed. We will iterate on this in the future.
  *
  * Note that this implementation has benefited from the work of Pierre-Yves Ricau and his blog post about Android application launch time
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.

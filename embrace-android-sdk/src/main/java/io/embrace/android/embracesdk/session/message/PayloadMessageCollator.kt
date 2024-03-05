@@ -90,7 +90,7 @@ internal class PayloadMessageCollator(
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
-            sdkStartupDuration = startupService.getSdkStartupInfo(initial.isColdStart),
+            sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
             startupDuration = startupInfo?.duration,
             startupThreshold = startupInfo?.threshold,
             betaFeatures = betaFeatures,

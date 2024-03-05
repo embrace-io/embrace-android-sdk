@@ -98,11 +98,9 @@ internal class AppStartupTraceEmitter(
         if (!startupRecorded.get()) {
             synchronized(startupRecorded) {
                 if (!startupRecorded.get()) {
-                    backgroundWorker.submit {
-                        recordStartup()
-                        if (!startupRecorded.get()) {
-                            logger.logWarning("App startup trace recording attempted but did not succeed")
-                        }
+                    recordStartup()
+                    if (!startupRecorded.get()) {
+                        logger.logWarning("App startup trace recording attempted but did not succeed")
                     }
                 }
             }

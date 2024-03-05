@@ -112,11 +112,11 @@ internal class EmbraceLogService(
         severity: Severity,
         attributes: EmbraceLogAttributes,
     ) {
-        backgroundWorker.submit {
-            if (shouldLogBeGated(severity)) {
-                return@submit
-            }
+        if (shouldLogBeGated(severity)) {
+            return
+        }
 
+        backgroundWorker.submit {
             val messageId = Uuid.getEmbUuid()
             if (!logCounters.getValue(severity).addIfAllowed(messageId)) {
                 return@submit

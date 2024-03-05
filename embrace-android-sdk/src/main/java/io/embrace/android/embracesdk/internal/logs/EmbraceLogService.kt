@@ -126,7 +126,7 @@ internal class EmbraceLogService(
             attributes.setLogId(Uuid.getEmbUuid())
 
             val logEventData = LogEventData(
-                startTimeMs = clock.nowInNanos(),
+                "emb-log",
                 message = trimToMaxLength(message),
                 severity = severity,
                 attributes = attributes.toMap()

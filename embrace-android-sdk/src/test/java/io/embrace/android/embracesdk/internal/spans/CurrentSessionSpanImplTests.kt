@@ -181,7 +181,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `add event forwarded to span`() {
         currentSessionSpan.addEvent("test-event") {
-            SpanEventData(this, 1000L, mapOf("key" to "value"))
+            SpanEventData("my-type", this, 1000L, mapOf("key" to "value"))
         }
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
@@ -190,7 +190,7 @@ internal class CurrentSessionSpanImplTests {
         val testEvent = span.events.single()
         assertEquals("test-event", testEvent.name)
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
-        assertEquals(mapOf("key" to "value"), testEvent.attributes)
+        assertEquals(mapOf("emb.type" to "my-type", "key" to "value"), testEvent.attributes)
     }
 
     @Test

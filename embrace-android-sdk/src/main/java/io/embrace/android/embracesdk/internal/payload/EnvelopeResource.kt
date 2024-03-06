@@ -190,21 +190,14 @@ internal data class EnvelopeResource(
 ) {
 
     /**
-     * The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity. Previous name: a.f
+     * The frameworks in use by the app. Previous name: a.f
      *
-     * Values: _1,_2,_3
+     * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
      */
-    internal enum class AppFramework(val value: kotlin.Int) {
-        @Json(name = "1")
-        NATIVE(1),
-
-        @Json(name = "2")
-        REACT_NATIVE(2),
-
-        @Json(name = "3")
-        UNITY(3),
-
-        @Json(name = "4")
-        FLUTTER(4)
+    internal enum class AppFramework(val value: kotlin.String) {
+        @Json(name = "native") NATIVE("native"),
+        @Json(name = "react_native") REACT_NATIVE("react_native"),
+        @Json(name = "unity") UNITY("unity"),
+        @Json(name = "flutter") FLUTTER("flutter");
     }
 }

@@ -282,7 +282,7 @@ internal class EmbraceMetadataService private constructor(
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun getAppInfo(populateAllFields: Boolean): AppInfo {
-        var infoPlatformVersion: String? = null
+        var hostedPlatformVersion: String? = null
         var hostedSdkVersion: String? = null
         var infoUnityBuildIdNumber: String? = null
         var infoReactNativeBundle: String? = null
@@ -290,7 +290,7 @@ internal class EmbraceMetadataService private constructor(
         var infoReactNativeVersion: String? = null
         // applies to Unity builds only.
         if (appFramework == AppFramework.UNITY) {
-            infoPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
+            hostedPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
             infoUnityBuildIdNumber = buildGuid ?: preferencesService.unityBuildIdNumber
             hostedSdkVersion = unitySdkVersion ?: preferencesService.unitySdkVersionNumber
         }
@@ -300,12 +300,13 @@ internal class EmbraceMetadataService private constructor(
             infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
             infoReactNativeVersion = reactNativeVersion
+            hostedPlatformVersion = reactNativeVersion
             hostedSdkVersion = getRnSdkVersion()
         }
 
         // applies to Flutter builds only
         if (appFramework == AppFramework.FLUTTER) {
-            infoPlatformVersion = dartSdkVersion
+            hostedPlatformVersion = dartSdkVersion
             hostedSdkVersion = getEmbraceFlutterSdkVersion()
         }
         return AppInfo(
@@ -337,7 +338,7 @@ internal class EmbraceMetadataService private constructor(
             infoReactNativeBundle,
             infoJavaScriptPatchNumber,
             infoReactNativeVersion,
-            infoPlatformVersion,
+            hostedPlatformVersion,
             infoUnityBuildIdNumber,
             hostedSdkVersion
         )

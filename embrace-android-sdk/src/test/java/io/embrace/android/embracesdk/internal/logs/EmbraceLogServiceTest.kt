@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
@@ -71,7 +73,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testSimpleLog() {
-        val logService = getLogMessageService()
+        val logService = getLogService()
 
         val props = mapOf("foo" to "bar")
         logService.log("Hello world", Severity.INFO, props)
@@ -106,7 +108,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testExceptionLog() {
-        val logService = getLogMessageService()
+        val logService = getLogService()
         val exception = NullPointerException("exception message")
 
         logService.logException(
@@ -135,7 +137,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun `Embrace properties can not be overriden by custom properties`() {
-        val logService = getLogMessageService()
+        val logService = getLogService()
         val props = mapOf("emb.session_id" to "session-456")
         logService.log("Hello world", Severity.INFO, props)
 
@@ -148,7 +150,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testDefaultMaxMessageCountLimits() {
-        val logService = getLogMessageService()
+        val logService = getLogService()
 
         repeat(500) { k ->
             logService.log("Test info $k", Severity.INFO, null)
@@ -174,7 +176,7 @@ internal class EmbraceLogServiceTest {
             )
         )
 
-        val logService = getLogMessageService()
+        val logService = getLogService()
 
         repeat(500) { k ->
             logService.log("Test info $k", Severity.INFO, null)
@@ -192,7 +194,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testDefaultMaxMessageLength() {
-        val logMessageService = getLogMessageService()
+        val logMessageService = getLogService()
         logMessageService.log("Hi".repeat(65), Severity.INFO, null)
 
         val log = logWriter.logEvents.single()
@@ -208,7 +210,7 @@ internal class EmbraceLogServiceTest {
             )
         )
 
-        val logMessageService = getLogMessageService()
+        val logMessageService = getLogService()
         logMessageService.log("Hi".repeat(50), Severity.INFO, null)
 
         val log = logWriter.logEvents.single()
@@ -217,7 +219,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testLoggingUnityMessage() {
-        val logMessageService = getLogMessageService(appFramework = AppFramework.UNITY)
+        val logMessageService = getLogService(appFramework = AppFramework.UNITY)
 
         logMessageService.logException(
             "Unity".repeat(1000),
@@ -242,7 +244,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testCleanCollections() {
-        val logService = getLogMessageService()
+        val logService = getLogService()
         repeat(10) { k ->
             logService.log("Test info $k", Severity.INFO, null)
             logService.log("Test warning $k", Severity.WARNING, null)
@@ -265,7 +267,57 @@ internal class EmbraceLogServiceTest {
         assertEquals(0, logService.getErrorLogsAttemptedToSend())
     }
 
-    private fun getLogMessageService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
+    // If the session components are null, no gating should be applied
+    @Test
+    fun testGatingWithNullSessionComponents() {
+        cfg = buildCustomRemoteConfig(null)
+        val logService = getLogService()
+
+        logService.log("Test info log", Severity.INFO, null)
+        logService.log("Test warning log", Severity.WARNING, null)
+
+        assertEquals(2, logWriter.logEvents.size)
+        assertEquals(1, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getInfoLogsAttemptedToSend())
+        assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getWarnLogsAttemptedToSend())
+    }
+
+    // If the session components exists, only keys present should be allowed to be sent
+    @Test
+    fun testGatingWithEmptySessionComponents() {
+        cfg = buildCustomRemoteConfig(
+            setOf()
+        )
+        val logService = getLogService()
+
+        logService.log("Test info log", Severity.INFO, null)
+        logService.log("Test warning log", Severity.WARNING, null)
+
+        assertEquals(0, logWriter.logEvents.size)
+        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.getInfoLogsAttemptedToSend())
+    }
+
+    // If the session components exists, only keys present should be allowed to be sent
+    @Test
+    fun testGatingWithLogKeysInSessionComponents() {
+        cfg = buildCustomRemoteConfig(
+            setOf(SessionGatingKeys.LOGS_INFO, SessionGatingKeys.LOGS_WARN)
+        )
+        val logService = getLogService()
+
+        logService.log("Test info log", Severity.INFO, null)
+        logService.log("Test warning log", Severity.WARNING, null)
+
+        assertEquals(2, logWriter.logEvents.size)
+        assertEquals(1, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getInfoLogsAttemptedToSend())
+        assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(1, logService.getWarnLogsAttemptedToSend())
+    }
+
+    private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
         return EmbraceLogService(
             logWriter,
             clock,
@@ -276,4 +328,13 @@ internal class EmbraceLogServiceTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService())
         )
     }
+
+    private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =
+        RemoteConfig(
+            sessionConfig = SessionRemoteConfig(
+                isEnabled = true,
+                sessionComponents = components,
+                fullSessionEvents = fullSessionEvents
+            )
+        )
 }

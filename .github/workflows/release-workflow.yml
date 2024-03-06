@@ -35,6 +35,12 @@ jobs:
           ref: release/${{ github.event.inputs.version_to_release }}
           fetch-depth: 0
           token: ${{ secrets.CD_GITHUB_TOKEN }}
+      
+      - name: Set up JDK ${{ matrix.jdk-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk-version }}
+          distribution: 'adopt'
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v2

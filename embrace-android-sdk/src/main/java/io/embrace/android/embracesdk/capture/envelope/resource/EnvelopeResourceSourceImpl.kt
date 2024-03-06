@@ -24,7 +24,6 @@ internal class EnvelopeResourceSourceImpl(
             sdkVersion = appInfo.sdkVersion,
             sdkSimpleVersion = appInfo.sdkSimpleVersion!!.toInt(),
             reactNativeBundleId = appInfo.reactNativeBundleId,
-            reactNativeVersion = appInfo.reactNativeVersion,
             javascriptPatchNumber = appInfo.javaScriptPatchNumber,
             hostedPlatformVersion = appInfo.hostedPlatformVersion,
             hostedSdkVersion = appInfo.hostedSdkVersion,

@@ -29,6 +29,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Immutable attributes about the app, device, and Embrace SDK internal state for duration of an app launch.
@@ -69,6 +70,7 @@ import com.squareup.moshi.Json
  * @param numCores (Android) The number of CPU cores the device has. Previous name: d.nc
  */
 
+@JsonClass(generateAdapter = true)
 internal data class EnvelopeResource(
 
     /* The app's publicly displayed version name. Previous name: a.v */

@@ -219,11 +219,17 @@ internal open class BaseTest {
                         assertEquals("GET", request.method)
                     }
 
-                    else -> fail("Unexpected Request call. ${request.path}")
+                    else -> handleUnexpectedFailure(request)
                 }
                 logTestMessage("Validated initialization request at ${request.path}")
             }
         }
+    }
+
+    private fun handleUnexpectedFailure(request: RecordedRequest) {
+        val body = readCompressedRequestBody(request)
+        writeFailedOutputToDisk(body, "unexpected-failure", ".observed")
+        fail("Unexpected Request call. ${request.path}")
     }
 
     /**
@@ -290,10 +296,10 @@ internal open class BaseTest {
 
             if (!result.success) {
                 val msg by lazy {
-                    val observedOutput = writeOutputToDisk(requestBody, goldenFileName, ".observed")
+                    val observedOutput = writeFailedOutputToDisk(requestBody, goldenFileName, ".observed")
                     val expected =
                         mContext.assets.open("golden-files/$goldenFileName").bufferedReader().readText()
-                    val expectedOutput = writeOutputToDisk(expected, goldenFileName, ".expected")
+                    val expectedOutput = writeFailedOutputToDisk(expected, goldenFileName, ".expected")
 
                     "Request ${request.path} differs from golden-files/$goldenFileName.\n" +
                         "JSON validation failure reason: ${result.message}" +
@@ -332,7 +338,7 @@ internal open class BaseTest {
         }
     }
 
-    private fun writeOutputToDisk(
+    private fun writeFailedOutputToDisk(
         requestBody: String,
         goldenFilename: String,
         suffix: String

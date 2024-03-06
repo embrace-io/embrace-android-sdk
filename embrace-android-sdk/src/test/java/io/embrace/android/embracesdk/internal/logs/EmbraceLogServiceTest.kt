@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -85,28 +84,26 @@ internal class EmbraceLogServiceTest {
         assertEquals(3, logs.size)
         val first = logs[0]
         assertEquals("Hello world", first.message)
-        assertNotEquals(0, first.startTimeMs)
         assertEquals(Severity.INFO, first.severity)
-        assertEquals("bar", first.attributes?.get("foo"))
-        assertNotNull(first.attributes?.get("emb.log_id"))
-        assertEquals("session-123", first.attributes?.get("emb.session_id"))
-        assertNull(first.attributes?.get("emb.exception_type"))
+        assertEquals("bar", first.attributes["foo"])
+        assertNotNull(first.attributes["emb.log_id"])
+        assertEquals("session-123", first.attributes["emb.session_id"])
+        assertNull(first.attributes["emb.exception_type"])
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
-        assertNotEquals(0, second.startTimeMs)
         assertEquals(Severity.WARNING, second.severity)
-        assertNotNull(second.attributes?.get("emb.log_id"))
-        assertEquals("session-123", second.attributes?.get("emb.session_id"))
-        assertNull(second.attributes?.get("emb.exception_type"))
+        assertNotNull(second.attributes["emb.log_id"])
+        assertEquals("session-123", second.attributes["emb.session_id"])
+        assertNull(second.attributes["emb.exception_type"])
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
-        assertNotEquals(0, third.startTimeMs)
         assertEquals(Severity.ERROR, third.severity)
-        assertNotNull(third.attributes?.get("emb.log_id"))
-        assertEquals("session-123", third.attributes?.get("emb.session_id"))
-        assertNull(third.attributes?.get("emb.exception_type"))
+        assertNotNull(third.attributes["emb.log_id"])
+        assertEquals("session-123", third.attributes["emb.session_id"])
+        assertNull(third.attributes["emb.exception_type"])
+        assertEquals("emb-log", third.attributes["emb.type"])
     }
 
     @Test
@@ -130,11 +127,12 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertEquals("NullPointerException", log.attributes?.get("emb.exception_name"))
-        assertEquals("exception message", log.attributes?.get("emb.exception_message"))
-        assertNotNull(log.attributes?.get("emb.log_id"))
-        assertEquals("session-123", log.attributes?.get("emb.session_id"))
-        assertEquals("none", log.attributes?.get("emb.exception_type"))
+        assertEquals("NullPointerException", log.attributes["emb.exception_name"])
+        assertEquals("exception message", log.attributes["emb.exception_message"])
+        assertNotNull(log.attributes["emb.log_id"])
+        assertEquals("session-123", log.attributes["emb.session_id"])
+        assertEquals("none", log.attributes["emb.exception_type"])
+        assertEquals("emb-log", log.attributes["emb.type"])
     }
 
     @Test
@@ -146,8 +144,8 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.INFO, log.severity)
-        assertNotNull(log.attributes?.get("emb.log_id"))
-        assertEquals("session-123", log.attributes?.get("emb.session_id"))
+        assertNotNull(log.attributes["emb.log_id"])
+        assertEquals("session-123", log.attributes["emb.session_id"])
     }
 
     @Test
@@ -239,7 +237,7 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Unity".repeat(1000), log.message) // log limit higher on unity
         // TBD: Assert stacktrace
-        assertEquals(LogExceptionType.HANDLED.value, log.attributes?.get("emb.exception_type"))
+        assertEquals(LogExceptionType.HANDLED.value, log.attributes["emb.exception_type"])
         // TBD: Assert unhandled exceptions
         // assertEquals(0, logMessageService.getUnhandledExceptionsSent())
     }

@@ -188,6 +188,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val startupTracker: StartupTracker by singleton {
         StartupTracker(
             appStartupTraceEmitter = appStartupTraceEmitter,
+            logger = coreModule.logger,
             versionChecker = versionChecker,
         )
     }

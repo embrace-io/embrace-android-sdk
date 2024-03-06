@@ -13,6 +13,12 @@ import androidx.appcompat.app.AppCompatActivity
 public class MockActivity(private val context: EmbraceContext) : AppCompatActivity() {
     private val fragmentManager = MockFragmentManager(this)
     private val mockView = MockView(context)
+    private val mockWindow = MockWindow(context, mockView)
+
+    init {
+        mockWindow.callback = this
+    }
+
     public fun setContext(context: Context) {
         this.attachBaseContext(context)
     }
@@ -27,6 +33,6 @@ public class MockActivity(private val context: EmbraceContext) : AppCompatActivi
     }
 
     override fun getWindow(): Window {
-        return MockWindow(context, mockView)
+        return mockWindow
     }
 }

@@ -29,6 +29,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Immutable attributes about the app, device, and Embrace SDK internal state for duration of an app launch.

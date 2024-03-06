@@ -48,12 +48,12 @@ internal class FakeEmbraceSpan(
     }
 
     override fun addEvent(name: String): Boolean {
-        events.add(SpanEventData(name, 0, null))
+        events.add(SpanEventData(TYPE_VALUE, name, 0, null))
         return true
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
-        events.add(SpanEventData(name, checkNotNull(timestampMs), attributes))
+        events.add(SpanEventData(TYPE_VALUE, name, checkNotNull(timestampMs), attributes))
         return true
     }
 
@@ -63,6 +63,7 @@ internal class FakeEmbraceSpan(
     }
 
     companion object {
+        private const val TYPE_VALUE = "emb-fake-span"
         fun notStarted(parent: EmbraceSpan? = null): FakeEmbraceSpan = FakeEmbraceSpan(parent)
 
         fun started(parent: EmbraceSpan? = null): FakeEmbraceSpan {

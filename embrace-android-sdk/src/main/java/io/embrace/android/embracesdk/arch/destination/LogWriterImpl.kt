@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.arch.destination
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.logs.Severity
-import java.util.concurrent.TimeUnit
 
 internal class LogWriterImpl(private val logger: Logger) : LogWriter {
 
@@ -15,9 +14,8 @@ internal class LogWriterImpl(private val logger: Logger) : LogWriter {
             .setBody(logEventData.message)
             .setSeverity(logEventData.severity.toOtelSeverity())
             .setSeverityText(logEventData.severity.name)
-            .setTimestamp(logEventData.startTimeMs, TimeUnit.MILLISECONDS)
 
-        logEventData.attributes?.forEach {
+        logEventData.attributes.forEach {
             builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
         }
         builder.emit()

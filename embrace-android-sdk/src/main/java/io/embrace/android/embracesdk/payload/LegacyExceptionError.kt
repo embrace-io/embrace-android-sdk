@@ -3,18 +3,19 @@ package io.embrace.android.embracesdk.payload
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.InternalError
 
 /**
  * Describes an Exception Error with a count of occurrences and a list of exceptions (causes).
  */
 @JsonClass(generateAdapter = true)
-internal data class ExceptionError(@Transient private val logStrictMode: Boolean = false) {
+internal data class LegacyExceptionError(@Transient private val logStrictMode: Boolean = false) {
 
     @Json(name = "c")
     var occurrences = 0
 
     @Json(name = "rep")
-    var exceptionErrors = mutableListOf<ExceptionErrorInfo>()
+    var exceptionErrors = mutableListOf<LegacyExceptionErrorInfo>()
 
     /**
      * Add a new exception error info if exceptionError's size is below 20.
@@ -31,7 +32,7 @@ internal data class ExceptionError(@Transient private val logStrictMode: Boolean
         }
         if (exceptionErrors.size < exceptionsLimits) {
             exceptionErrors.add(
-                ExceptionErrorInfo(
+                LegacyExceptionErrorInfo(
                     clock.now(),
                     appState,
                     getExceptionInfo(ex)
@@ -40,15 +41,19 @@ internal data class ExceptionError(@Transient private val logStrictMode: Boolean
         }
     }
 
-    private fun getExceptionInfo(ex: Throwable?): List<ExceptionInfo> {
-        val result = mutableListOf<ExceptionInfo>()
+    private fun getExceptionInfo(ex: Throwable?): List<LegacyExceptionInfo> {
+        val result = mutableListOf<LegacyExceptionInfo>()
         var throwable: Throwable? = ex
         while (throwable != null && throwable != throwable.cause) {
-            val exceptionInfo = ExceptionInfo.ofThrowable(throwable)
+            val exceptionInfo = LegacyExceptionInfo.ofThrowable(throwable)
             result.add(0, exceptionInfo)
             throwable = throwable.cause
         }
         return result
+    }
+
+    fun toNewPayload(): InternalError {
+        return InternalError(occurrences, exceptionErrors.map(LegacyExceptionErrorInfo::toNewPayload))
     }
 }
 

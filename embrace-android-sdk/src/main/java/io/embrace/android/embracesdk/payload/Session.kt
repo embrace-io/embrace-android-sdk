@@ -85,7 +85,7 @@ internal data class Session @JvmOverloads internal constructor(
     val errorLogsAttemptedToSend: Int? = null,
 
     @Json(name = "e")
-    val exceptionError: ExceptionError? = null,
+    val exceptionError: LegacyExceptionError? = null,
 
     @Json(name = "ri")
     val crashReportId: String? = null,

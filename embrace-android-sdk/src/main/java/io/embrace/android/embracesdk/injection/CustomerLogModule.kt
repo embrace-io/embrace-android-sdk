@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.event.EmbraceLogMessageService
 import io.embrace.android.embracesdk.event.LogMessageService
+import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
@@ -17,11 +20,14 @@ internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
     val networkLoggingService: NetworkLoggingService
     val logMessageService: LogMessageService
+    val logService: LogService
+    val logOrchestrator: LogOrchestrator
 }
 
 internal class CustomerLogModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
+    openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
@@ -61,6 +67,25 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.gatingService,
             essentialServiceModule.networkConnectivityService,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
+        )
+    }
+
+    override val logService: LogService by singleton {
+        EmbraceLogService(
+            openTelemetryModule.logWriter,
+            initModule.clock,
+            essentialServiceModule.metadataService,
+            essentialServiceModule.sessionIdTracker,
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
+        )
+    }
+
+    override val logOrchestrator: LogOrchestrator by singleton {
+        LogOrchestrator(
+            workerThreadModule.scheduledWorker(WorkerName.REMOTE_LOGGING),
+            initModule.clock,
+            openTelemetryModule.logSink,
+            deliveryModule.deliveryService
         )
     }
 }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -17,6 +18,7 @@ internal class CustomerLogModuleImplTest {
         val module = CustomerLogModuleImpl(
             initModule,
             FakeCoreModule(),
+            FakeOpenTelemetryModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),

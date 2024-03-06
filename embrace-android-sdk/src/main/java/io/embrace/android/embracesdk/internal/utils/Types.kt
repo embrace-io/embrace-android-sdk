@@ -137,6 +137,7 @@ internal typealias SdkObservabilityModuleSupplier = (
 internal typealias CustomerLogModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
+    openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,

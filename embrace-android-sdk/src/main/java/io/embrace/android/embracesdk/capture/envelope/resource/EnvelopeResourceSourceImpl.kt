@@ -29,8 +29,6 @@ internal class EnvelopeResourceSourceImpl(
             hostedPlatformVersion = appInfo.hostedPlatformVersion,
             hostedSdkVersion = appInfo.hostedSdkVersion,
             unityBuildId = appInfo.buildGuid,
-            // networkLogBody = ,
-            // networkEncryptedLogBody = ,
             deviceManufacturer = deviceInfo.manufacturer,
             deviceModel = deviceInfo.model,
             deviceArchitecture = deviceInfo.architecture,

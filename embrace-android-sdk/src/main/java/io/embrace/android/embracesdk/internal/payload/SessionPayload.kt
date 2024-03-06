@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.session
+package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

@@ -13,7 +13,7 @@ internal class EnvelopeResourceSourceImpl(
 ) : EnvelopeResourceSource {
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
-            appVersion = metadataService.getAppVersionName(),
+            appVersion = appInfo.appVersion,
             appEcosystemId = metadataService.getPackageName(),
             appFramework = mapFramework(metadataService.getAppFramework()),
             buildId = appInfo.buildId,

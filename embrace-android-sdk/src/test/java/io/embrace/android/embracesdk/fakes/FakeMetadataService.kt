@@ -21,11 +21,27 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
             buildFlavor = "oem",
             environment = "prod",
             bundleVersion = "5ac7fe",
-            sdkSimpleVersion = "5.10.0",
+            sdkSimpleVersion = "53",
             sdkVersion = "5.11.0",
-            buildGuid = "5092abc"
+            buildGuid = "5092abc",
+            reactNativeBundleId = "fakeReactNativeBundleId",
+            reactNativeVersion = "fakeRnSdkVersion",
+            javaScriptPatchNumber = "js",
+            hostedPlatformVersion = "19",
+            hostedSdkVersion = "1.2.0"
         )
-        private val androidDeviceInfo = DeviceInfo()
+        private val androidDeviceInfo = DeviceInfo(
+            manufacturer = "Samsung",
+            model = "SM-G950U",
+            architecture = "arm64-v8a",
+            jailbroken = false,
+            internalStorageTotalCapacity = 10000000L,
+            operatingSystemType = "Android",
+            operatingSystemVersion = "8.0.0",
+            operatingSystemVersionCode = 26,
+            screenResolution = "1080x720",
+            cores = 8
+        )
         private val diskUsage = DiskUsage(
             appDiskUsage = 10000000L,
             deviceDiskFree = 500000000L
@@ -53,6 +69,7 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     var fakeReactNativeVersion: String? = "fakeReactNativeVersion"
     var fakeJavaScriptPatchNumber: String? = "fakeJavaScriptPatchNumber"
     var fakeRnSdkVersion: String? = "fakeRnSdkVersion"
+    val fakePackageName: String = "com.embrace.fake"
 
     private lateinit var appState: String
     private var appSessionId: String? = null
@@ -112,4 +129,7 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
+    override fun getAppFramework() = Embrace.AppFramework.NATIVE
+
+    override fun getPackageName() = fakePackageName
 }

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.system
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.app.Application
 import android.app.usage.StorageStatsManager
 import android.content.Context

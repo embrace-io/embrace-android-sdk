@@ -381,6 +381,9 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getEgl(): String? = egl
 
+    override fun getAppFramework() = appFramework
+    override fun getPackageName() = packageName
+
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL
 

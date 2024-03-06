@@ -184,9 +184,16 @@ internal data class EnvelopeResource(
      * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
      */
     internal enum class AppFramework(val value: kotlin.String) {
-        @Json(name = "native") NATIVE("native"),
-        @Json(name = "react_native") REACT_NATIVE("react_native"),
-        @Json(name = "unity") UNITY("unity"),
-        @Json(name = "flutter") FLUTTER("flutter");
+        @Json(name = "native")
+        NATIVE("native"),
+
+        @Json(name = "react_native")
+        REACT_NATIVE("react_native"),
+
+        @Json(name = "unity")
+        UNITY("unity"),
+
+        @Json(name = "flutter")
+        FLUTTER("flutter")
     }
 }

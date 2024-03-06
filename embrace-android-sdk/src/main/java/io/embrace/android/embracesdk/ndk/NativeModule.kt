@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -32,46 +33,52 @@ internal class NativeModuleImpl(
 ) : NativeModule {
 
     override val ndkService: NdkService by singleton {
-        EmbraceNdkService(
-            coreModule.context,
-            storageModule.storageService,
-            essentialServiceModule.metadataService,
-            essentialServiceModule.processStateService,
-            essentialServiceModule.configService,
-            deliveryModule.deliveryService,
-            essentialServiceModule.userService,
-            androidServicesModule.preferencesService,
-            sessionProperties,
-            coreModule.appFramework,
-            essentialServiceModule.sharedObjectLoader,
-            coreModule.logger,
-            embraceNdkServiceRepository,
-            NdkDelegateImpl(),
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-            essentialServiceModule.deviceArchitecture,
-            coreModule.jsonSerializer
-        )
+        Systrace.traceSynchronous("ndk-service-init") {
+            EmbraceNdkService(
+                coreModule.context,
+                storageModule.storageService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.processStateService,
+                essentialServiceModule.configService,
+                deliveryModule.deliveryService,
+                essentialServiceModule.userService,
+                androidServicesModule.preferencesService,
+                sessionProperties,
+                coreModule.appFramework,
+                essentialServiceModule.sharedObjectLoader,
+                coreModule.logger,
+                embraceNdkServiceRepository,
+                NdkDelegateImpl(),
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                essentialServiceModule.deviceArchitecture,
+                coreModule.jsonSerializer
+            )
+        }
     }
 
     override val nativeThreadSamplerService: NativeThreadSamplerService? by singleton {
-        if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
-            EmbraceNativeThreadSamplerService(
-                essentialServiceModule.configService,
-                lazy { ndkService.getSymbolsForCurrentArch() },
-                scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
-                deviceArchitecture = essentialServiceModule.deviceArchitecture
-            )
-        } else {
-            null
+        Systrace.traceSynchronous("native-thread-sampler-init") {
+            if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
+                EmbraceNativeThreadSamplerService(
+                    essentialServiceModule.configService,
+                    lazy { ndkService.getSymbolsForCurrentArch() },
+                    scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    deviceArchitecture = essentialServiceModule.deviceArchitecture
+                )
+            } else {
+                null
+            }
         }
     }
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {
-        if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
-            NativeThreadSamplerInstaller()
-        } else {
-            null
+        Systrace.traceSynchronous("native-thread-sampler-installer-init") {
+            if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
+                NativeThreadSamplerInstaller()
+            } else {
+                null
+            }
         }
     }
 

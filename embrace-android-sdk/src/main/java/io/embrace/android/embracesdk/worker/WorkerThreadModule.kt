@@ -63,18 +63,6 @@ internal enum class WorkerName(internal val threadName: String) {
     REMOTE_LOGGING("remote-logging"),
 
     /**
-     * Used to construct log messages in an OTel format. Log messages are sent to the server on a
-     * separate thread - the intention behind this is to offload unnecessary CPU work from the
-     * main thread.
-     */
-    OTEL_LOGGING("otel-logging"),
-
-    /**
-     * Used for the orchestrator that handles batching OTel logs and sending them to the Delivery service.
-     */
-    LOG_ORCHESTRATOR("log-orchestrator"),
-
-    /**
      * Monitor thread that checks the main thread for ANRs.
      */
     ANR_MONITOR("anr-monitor"),

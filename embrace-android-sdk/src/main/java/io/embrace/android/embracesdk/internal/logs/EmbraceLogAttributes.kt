@@ -23,7 +23,7 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
         /**
          * Attribute name for a unique id identifying the log
          */
-        const val LOG_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "log_id"
+        private const val LOG_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "log_id"
 
         /**
          * Attribute name for the exception type in a log representing an exception
@@ -59,9 +59,8 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
     private val attributes: MutableMap<String, String> = mutableMapOf()
 
     init {
-        // TODO Validate attribute names?
-        // TODO There is an implicit conversion from Any to String here. Should the attributes
-        // in LogEventData be <String, Any> instead of <String, String> ?
+        // Note that there is an implicit conversion from Any to String here
+        // Currently the backend only supports string attributes for logs
         properties?.forEach {
             attributes[it.key] = it.value.toString()
         }
@@ -79,6 +78,13 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
      */
     fun setSessionId(sessionId: String) {
         attributes[SESSION_ID_ATTRIBUTE_NAME] = sessionId
+    }
+
+    /**
+     * Add a unique log identifier
+     */
+    fun setLogId(logId: String) {
+        attributes[LOG_ID_ATTRIBUTE_NAME] = logId
     }
 
     /**

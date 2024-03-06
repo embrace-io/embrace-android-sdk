@@ -21,7 +21,7 @@ internal class EmbraceSpanService(
     @Volatile
     private var currentDelegate: SpanService = uninitializedSdkSpansService
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized()) {
             synchronized(currentDelegate) {
                 if (!initialized()) {
@@ -30,7 +30,7 @@ internal class EmbraceSpanService(
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracerSupplier(),
                     )
-                    realSpansService.initializeService(sdkInitStartTimeNanos)
+                    realSpansService.initializeService(sdkInitStartTimeMs)
                     if (realSpansService.initialized()) {
                         uninitializedSdkSpansService.triggerBufferedSpanRecording(realSpansService)
                     }
@@ -65,8 +65,8 @@ internal class EmbraceSpanService(
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         parent: EmbraceSpan?,
         type: EmbraceAttributes.Type,
         internal: Boolean,
@@ -75,8 +75,8 @@ internal class EmbraceSpanService(
         errorCode: ErrorCode?
     ): Boolean = currentDelegate.recordCompletedSpan(
         name = name,
-        startTimeNanos = startTimeNanos,
-        endTimeNanos = endTimeNanos,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
         parent = parent,
         type = type,
         internal = internal,

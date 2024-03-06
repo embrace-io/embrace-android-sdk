@@ -13,7 +13,6 @@ import androidx.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -268,9 +267,10 @@ final class EmbraceImpl {
             return;
         }
 
-        final long startTime = sdkClock.now();
+        final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, TimeUnit.MILLISECONDS.toNanos(startTime), customAppId);
+        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId);
+        Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 
         final CoreModule coreModule = moduleInitBootstrapper.getCoreModule();
@@ -330,16 +330,17 @@ final class EmbraceImpl {
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
 
+        Systrace.startSynchronous("send-cached-sessions");
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
             nativeModule.getNdkService(),
             essentialServiceModule.getSessionIdTracker()
         );
+        Systrace.endSynchronous();
 
         final CrashModule crashModule = moduleInitBootstrapper.getCrashModule();
         loadCrashVerifier(crashModule, moduleInitBootstrapper.getWorkerThreadModule());
 
-        Systrace.startSynchronous("internal-interface-init");
         internalInterfaceModule = new InternalInterfaceModuleImpl(
             moduleInitBootstrapper.getInitModule(),
             moduleInitBootstrapper.getOpenTelemetryModule(),
@@ -366,19 +367,19 @@ final class EmbraceImpl {
                 internalInterfaceModule.getFlutterInternalInterface();
                 break;
         }
-        Systrace.endSynchronous();
+
 
         final String startMsg = "Embrace SDK started. App ID: " +
             essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
         internalEmbraceLogger.logInfo(startMsg);
 
-        final long endTime = sdkClock.now();
+        final long endTimeMs = sdkClock.now();
         started.set(true);
+        Systrace.endSynchronous();
         Systrace.startSynchronous("startup-tracking");
-        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTime, endTime);
+        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTimeMs, endTimeMs);
         Systrace.endSynchronous();
 
-        Systrace.startSynchronous("startup-moment");
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
@@ -386,7 +387,6 @@ final class EmbraceImpl {
             internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             dataContainerModule.getEventService().sendStartupMoment();
         }
-        Systrace.endSynchronous();
 
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.

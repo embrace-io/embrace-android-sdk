@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogBody
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
 import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -63,22 +64,24 @@ internal class ApiRequestMapperTest {
 
     @Test
     fun testLogsRequest() {
-        val request = mapper.logsRequest(
-            LogPayload(
-                logs = listOf(
-                    EmbraceLogRecordData(
-                        traceId = "traceId",
-                        spanId = "spanId",
-                        timeUnixNanos = 1234567890,
-                        severityText = "severityText",
-                        severityNumber = 1,
-                        body = EmbraceLogBody("a message"),
-                        attributes = mapOf("key" to "value")
+        val request = mapper.logsEnvelopeRequest(
+            Envelope(
+                data = LogPayload(
+                    logs = listOf(
+                        EmbraceLogRecordData(
+                            traceId = "traceId",
+                            spanId = "spanId",
+                            timeUnixNanos = 1234567890,
+                            severityText = "severityText",
+                            severityNumber = 1,
+                            body = EmbraceLogBody("a message"),
+                            attributes = mapOf("key" to "value")
+                        )
                     )
                 )
             )
         )
-        request.assertCoreFieldsPopulated("/v2/log/logs")
+        request.assertCoreFieldsPopulated("/v2/logs")
     }
 
     @Test

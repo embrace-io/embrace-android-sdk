@@ -29,19 +29,15 @@ internal class CleanSessionBoundaryTest {
     fun `session messages have a clean boundary`() {
         with(testRule) {
             val message = harness.recordSession {
-                embrace.addBreadcrumb("Hello, World!")
                 embrace.addSessionProperty("foo", "bar", false)
             }
             checkNotNull(message)
 
             // validate info added to first session
-            val crumbs = checkNotNull(message.breadcrumbs?.customBreadcrumbs)
-            assertEquals("Hello, World!", crumbs.single().message)
             assertEquals(mapOf("foo" to "bar"), message.session.properties)
 
             // confirm info not added to next session
             val nextMessage = checkNotNull(harness.recordSession())
-            assertEquals(0, nextMessage.breadcrumbs?.customBreadcrumbs?.size)
             assertEquals(emptyMap<String, String>(), nextMessage.session.properties)
         }
     }

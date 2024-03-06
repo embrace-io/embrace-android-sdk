@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class SessionIdTrackerImpl(
-    private val activityManager: ActivityManager? = null
+    private val activityManager: ActivityManager?
 ) : SessionIdTracker {
 
     @Volatile

@@ -1,12 +1,20 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.trace.IdGenerator
 
-internal class FakeEmbraceSpan private constructor(
-    override val parent: EmbraceSpan?
+internal class FakeEmbraceSpan(
+    override val parent: EmbraceSpan?,
+    val name: String? = null,
+    val type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
+    val internal: Boolean = true
 ) : EmbraceSpan {
+
+    val attributes = mutableMapOf<String, String>()
+    val events = mutableListOf<SpanEventData>()
 
     private var started = false
     private var stopped = false
@@ -18,9 +26,9 @@ internal class FakeEmbraceSpan private constructor(
     override val isRecording: Boolean
         get() = started && !stopped
 
-    override fun start(): Boolean = start(startTimeNanos = null)
+    override fun start(): Boolean = start(startTimeMs = null)
 
-    override fun start(startTimeNanos: Long?): Boolean {
+    override fun start(startTimeMs: Long?): Boolean {
         if (!started) {
             spanId = IdGenerator.random().generateSpanId()
             if (parent == null) {
@@ -31,13 +39,7 @@ internal class FakeEmbraceSpan private constructor(
         return true
     }
 
-    override fun stop(): Boolean = stop(errorCode = null, endTimeNanos = null)
-
-    override fun stop(endTimeNanos: Long?): Boolean = stop(errorCode = null, endTimeNanos = endTimeNanos)
-
-    override fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeNanos = null)
-
-    override fun stop(endTimeNanos: Long?, errorCode: ErrorCode?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
         if (!stopped) {
             this.errorCode = errorCode
             stopped = true
@@ -46,18 +48,22 @@ internal class FakeEmbraceSpan private constructor(
     }
 
     override fun addEvent(name: String): Boolean {
-        TODO("Not yet implemented")
+        events.add(SpanEventData(TYPE_VALUE, name, 0, null))
+        return true
     }
 
-    override fun addEvent(name: String, timeNanos: Long?, attributes: Map<String, String>?): Boolean {
-        TODO("Not yet implemented")
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
+        events.add(SpanEventData(TYPE_VALUE, name, checkNotNull(timestampMs), attributes))
+        return true
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        TODO("Not yet implemented")
+        attributes[key] = value
+        return true
     }
 
     companion object {
+        private const val TYPE_VALUE = "emb-fake-span"
         fun notStarted(parent: EmbraceSpan? = null): FakeEmbraceSpan = FakeEmbraceSpan(parent)
 
         fun started(parent: EmbraceSpan? = null): FakeEmbraceSpan {

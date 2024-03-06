@@ -185,6 +185,11 @@ internal typealias DataContainerModuleSupplier = (
 
 internal typealias DataSourceModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
+    initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
+    systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    workerThreadModule: WorkerThreadModule,
 ) -> DataSourceModule
 
 /**

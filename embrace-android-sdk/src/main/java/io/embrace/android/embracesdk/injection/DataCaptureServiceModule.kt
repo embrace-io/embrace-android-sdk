@@ -11,13 +11,16 @@ import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
+import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
+import io.embrace.android.embracesdk.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -71,6 +74,10 @@ internal interface DataCaptureServiceModule {
      * Captures the startup time of the SDK
      */
     val startupService: StartupService
+
+    val startupTracker: StartupTracker
+
+    val appStartupTraceEmitter: AppStartupTraceEmitter
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -95,19 +102,23 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val componentCallbackService: ComponentCallbackService by singleton {
-        ComponentCallbackService(coreModule.application, memoryService)
+        Systrace.traceSynchronous("component-callback-service-init") {
+            ComponentCallbackService(coreModule.application, memoryService)
+        }
     }
 
     override val powerSaveModeService: PowerSaveModeService by singleton {
-        if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
-            EmbracePowerSaveModeService(
-                coreModule.context,
-                backgroundWorker,
-                initModule.clock,
-                systemServiceModule.powerManager
-            )
-        } else {
-            NoOpPowerSaveModeService()
+        Systrace.traceSynchronous("power-service-init") {
+            if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
+                EmbracePowerSaveModeService(
+                    coreModule.context,
+                    backgroundWorker,
+                    initModule.clock,
+                    systemServiceModule.powerManager
+                )
+            } else {
+                NoOpPowerSaveModeService()
+            }
         }
     }
 
@@ -116,12 +127,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val breadcrumbService: BreadcrumbService by singleton {
-        EmbraceBreadcrumbService(
-            initModule.clock,
-            configService,
-            essentialServiceModule.activityLifecycleTracker,
-            coreModule.logger
-        )
+        Systrace.traceSynchronous("breadcrumb-service-init") {
+            EmbraceBreadcrumbService(
+                initModule.clock,
+                configService,
+                essentialServiceModule.activityLifecycleTracker,
+                coreModule.logger
+            )
+        }
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
@@ -132,27 +145,51 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val thermalStatusService: ThermalStatusService by singleton {
-        if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            // Android API only accepts an executor. We don't want to directly expose those
-            // to everything in the codebase so we decorate the BackgroundWorker here as an
-            // alternative
-            val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-            val executor = Executor {
-                backgroundWorker.submit(runnable = it)
-            }
+        Systrace.traceSynchronous("thermal-service-init") {
+            if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+                // Android API only accepts an executor. We don't want to directly expose those
+                // to everything in the codebase so we decorate the BackgroundWorker here as an
+                // alternative
+                val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+                val executor = Executor {
+                    backgroundWorker.submit(runnable = it)
+                }
 
-            EmbraceThermalStatusService(
-                executor,
-                initModule.clock,
-                coreModule.logger,
-                systemServiceModule.powerManager
-            )
-        } else {
-            NoOpThermalStatusService()
+                EmbraceThermalStatusService(
+                    executor,
+                    initModule.clock,
+                    coreModule.logger,
+                    systemServiceModule.powerManager
+                )
+            } else {
+                NoOpThermalStatusService()
+            }
         }
     }
 
     override val startupService: StartupService by singleton {
-        StartupServiceImpl(openTelemetryModule.spanService)
+        StartupServiceImpl(
+            spanService = openTelemetryModule.spanService,
+            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+        )
+    }
+
+    override val appStartupTraceEmitter: AppStartupTraceEmitter by singleton {
+        AppStartupTraceEmitter(
+            clock = initModule.openTelemetryClock,
+            startupServiceProvider = { startupService },
+            spanService = openTelemetryModule.spanService,
+            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            versionChecker = versionChecker,
+            logger = coreModule.logger
+        )
+    }
+
+    override val startupTracker: StartupTracker by singleton {
+        StartupTracker(
+            appStartupTraceEmitter = appStartupTraceEmitter,
+            logger = coreModule.logger,
+            versionChecker = versionChecker,
+        )
     }
 }

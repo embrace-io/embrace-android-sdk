@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -43,6 +43,7 @@ internal class EmbraceSpanServiceTest {
     fun `service works once initialized`() {
         assertTrue(spanService.initialized())
         assertNotNull(spanService.createSpan("test-span"))
+        assertNotNull(spanService.startSpan("test-span"))
         assertTrue(spanService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
         spanService.recordSpan("test-span") { lambdaRan = true }
@@ -55,22 +56,22 @@ internal class EmbraceSpanServiceTest {
     fun `record internal completed span recording with all the fixings`() {
         spanSink.flushSpans()
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedType = EmbraceAttributes.Type.PERFORMANCE
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
         )
         val expectedEvents = listOf(
-            EmbraceSpanEvent(name = "event1", timestampNanos = 0L, attributes = expectedAttributes),
-            EmbraceSpanEvent(name = "event2", timestampNanos = 5L, attributes = expectedAttributes)
+            EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
+            EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
         )
 
         spanService.recordCompletedSpan(
             name = expectedName,
-            startTimeNanos = expectedStartTime,
-            endTimeNanos = expectedEndTime,
+            startTimeMs = expectedStartTimeMs,
+            endTimeMs = expectedEndTimeMs,
             type = expectedType,
             attributes = expectedAttributes,
             events = expectedEvents
@@ -83,9 +84,9 @@ internal class EmbraceSpanServiceTest {
 
         with(span) {
             assertEquals(name, name)
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
-            assertEquals(expectedType.name, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -99,9 +100,12 @@ internal class EmbraceSpanServiceTest {
         val parent = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(parent.start())
         val child = checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
-        assertTrue(child.start(startTimeNanos = (clock.now() - 10).millisToNanos()))
+        assertTrue(child.start(startTimeMs = clock.now() - 10))
+        val grandchild =
+            checkNotNull(spanService.startSpan(name = "grand-child-span", parent = child, startTimeMs = clock.now() + 1L))
+        assertTrue(grandchild.stop())
         assertTrue(child.stop())
-        assertTrue(parent.stop(endTimeNanos = (clock.now() + 50).millisToNanos()))
+        assertTrue(parent.stop(endTimeMs = clock.now() + 50))
         assertTrue(parent.traceId == child.traceId)
         assertTrue(parent.spanId == checkNotNull(child.parent).spanId)
     }
@@ -110,13 +114,13 @@ internal class EmbraceSpanServiceTest {
     fun `can record completed span after init`() {
         spanSink.flushSpans()
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         assertTrue(
             spanService.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
 
@@ -127,16 +131,16 @@ internal class EmbraceSpanServiceTest {
     fun `can record completed child span after init`() {
         spanSink.flushSpans()
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val parentSpan = checkNotNull(spanService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(
             spanService.recordCompletedSpan(
                 name = expectedName,
                 parent = parentSpan,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
         assertTrue(parentSpan.stop())

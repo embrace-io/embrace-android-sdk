@@ -76,13 +76,13 @@ internal class CustomerLogModuleImpl(
             initModule.clock,
             essentialServiceModule.metadataService,
             essentialServiceModule.sessionIdTracker,
-            workerThreadModule.backgroundWorker(WorkerName.OTEL_LOGGING)
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
         )
     }
 
     override val logOrchestrator: LogOrchestrator by singleton {
         LogOrchestrator(
-            workerThreadModule.scheduledWorker(WorkerName.LOG_ORCHESTRATOR),
+            workerThreadModule.scheduledWorker(WorkerName.REMOTE_LOGGING),
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService

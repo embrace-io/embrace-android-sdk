@@ -14,7 +14,8 @@ public interface InternalTracingApi {
      */
     public fun startSpan(
         name: String,
-        parentSpanId: String? = null
+        parentSpanId: String? = null,
+        startTimeMs: Long? = null
     ): String?
 
     /**
@@ -22,7 +23,8 @@ public interface InternalTracingApi {
      */
     public fun stopSpan(
         spanId: String,
-        errorCode: ErrorCode? = null
+        errorCode: ErrorCode? = null,
+        endTimeMs: Long? = null
     ): Boolean
 
     /**
@@ -32,7 +34,7 @@ public interface InternalTracingApi {
     public fun addSpanEvent(
         spanId: String,
         name: String,
-        time: Long? = null,
+        timestampMs: Long? = null,
         attributes: Map<String, String>? = null
     ): Boolean
 
@@ -53,7 +55,8 @@ public interface InternalTracingApi {
      *
      * {
      *  "name": [String],
-     *  "timestampNanos": [Long] (optional),
+     *  "timestampMs": [Long] (optional),
+     *  "timestampNanos": [Long] (deprecated and optional),
      *  "attributes": [Map<String, String>] (optional)
      * }
      *
@@ -73,8 +76,8 @@ public interface InternalTracingApi {
      */
     public fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode? = null,
         parentSpanId: String? = null,
         attributes: Map<String, String>? = null,

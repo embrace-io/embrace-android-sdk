@@ -10,15 +10,19 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 internal class FakeCurrentSessionSpan : CurrentSessionSpan {
 
     var initializedCallCount = 0
+    var addedEvents = mutableListOf<SpanEventData>()
+    var addedAttributes = mutableListOf<SpanAttributeData>()
 
-    override fun initializeService(sdkInitStartTimeNanos: Long) {
+    override fun initializeService(sdkInitStartTimeMs: Long) {
     }
 
-    override fun addEvent(event: SpanEventData): Boolean {
+    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
+        addedEvents.add(obj.mapper())
         return true
     }
 
     override fun addAttribute(attribute: SpanAttributeData): Boolean {
+        addedAttributes.add(attribute)
         return true
     }
 

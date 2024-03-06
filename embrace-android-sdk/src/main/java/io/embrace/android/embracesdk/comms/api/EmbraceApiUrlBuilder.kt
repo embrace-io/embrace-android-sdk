@@ -28,6 +28,7 @@ internal class EmbraceApiUrlBuilder(
             "ApiUrlBuilder",
             "getEmbraceUrlWithSuffix - apiVersion: $apiVersion - suffix: $suffix"
         )
-        return "$coreBaseUrl/$apiVersion/log/$suffix"
+        val fullSuffix = if (apiVersion == "v1") "log/$suffix" else suffix
+        return "$coreBaseUrl/$apiVersion/$fullSuffix"
     }
 }

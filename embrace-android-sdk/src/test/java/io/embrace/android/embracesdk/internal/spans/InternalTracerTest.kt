@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -18,7 +19,7 @@ internal class InternalTracerTest {
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spanService: SpanService
     private lateinit var internalTracer: InternalTracer
-    private val clock = FakeClock(10000L)
+    private val clock = FakeClock()
 
     @Before
     fun setup() {
@@ -26,7 +27,7 @@ internal class InternalTracerTest {
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.nowInNanos())
+        spanService.initializeService(clock.now())
         internalTracer = InternalTracer(
             initModule.openTelemetryModule.spanRepository,
             initModule.openTelemetryModule.embraceTracer,
@@ -38,21 +39,48 @@ internal class InternalTracerTest {
     fun `start and stop trace with child span`() {
         val parentSpanId = checkNotNull(internalTracer.startSpan(name = "parent-span"))
         assertNotNull(parentSpanId)
-        val spanId = checkNotNull(internalTracer.startSpan(name = "test-span", parentSpanId = parentSpanId))
+        clock.tick(1L)
+        val childStartTimeMs = clock.now()
+        clock.tick(10L)
+        val spanId =
+            checkNotNull(internalTracer.startSpan(name = "test-span", parentSpanId = parentSpanId, startTimeMs = childStartTimeMs))
         assertNotNull(spanId)
         assertTrue(internalTracer.addSpanAttribute(spanId = spanId, key = "keyz", value = "valuez"))
-        assertTrue(internalTracer.stopSpan(spanId))
+        val childEndTimeMs = clock.now() - 1L
+        assertTrue(internalTracer.stopSpan(spanId = spanId, endTimeMs = childEndTimeMs))
         assertFalse(internalTracer.addSpanAttribute(spanId = spanId, key = "fail", value = "value"))
         with(verifyPublicSpan(name = "test-span", traceRoot = false)) {
             assertEquals("valuez", attributes["keyz"])
+            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(childEndTimeMs, endTimeNanos.nanosToMillis())
         }
         spanSink.flushSpans()
-        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, "first event"))
+        val firstEventTime = clock.now()
+        clock.tick(10L)
+        val secondEventTime = clock.now()
+        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "first event", timestampMs = firstEventTime))
+        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "second event"))
         assertTrue(internalTracer.stopSpan(parentSpanId))
-        assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "second event"))
+        assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "failed event"))
         with(verifyPublicSpan("parent-span")) {
-            assertEquals(1, events.size)
+            assertEquals(2, events.size)
             assertEquals("first event", events[0].name)
+            assertEquals(firstEventTime, events[0].timestampNanos.nanosToMillis())
+            assertEquals(secondEventTime, events[1].timestampNanos.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `verify event timestamp fallback`() {
+        spanSink.flushSpans()
+        val spanId = checkNotNull(internalTracer.startSpan(name = "my-span"))
+        val eventTimeNanos = clock.nowInNanos()
+        clock.tick(10L)
+        assertTrue(internalTracer.addSpanEvent(spanId = spanId, name = "first event", timestampMs = eventTimeNanos))
+        assertTrue(internalTracer.stopSpan(spanId))
+        with(verifyPublicSpan("my-span")) {
+            assertEquals(1, events.size)
+            assertEquals(eventTimeNanos, events[0].timestampNanos)
         }
     }
 
@@ -69,34 +97,39 @@ internal class InternalTracerTest {
     @Test
     fun `record basic completed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
-    fun `record completed span with bad event data`() {
+    fun `record completed span with various event add attempts`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        clock.tick(10)
+        val expectedEventStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val eventsInput: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "correct event", "timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
-                mapOf("name" to "correct event2"),
-                mapOf("timestampNanos" to 0L, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to "correct event", "timestampMs" to expectedStartTimeMs, "attributes" to mapOf("key" to "value")),
+                mapOf("name" to "correct event 2"),
+                mapOf("name" to "correct fallback event", "timestampNanos" to expectedEndTimeMs.millisToNanos()),
+                mapOf("timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
                 mapOf("name" to 1234),
+                mapOf("name" to "failed event", "timestampMs" to 123),
+                mapOf("name" to "failed event", "timestampMs" to "123"),
                 mapOf("name" to "failed event", "timestampNanos" to 123),
                 mapOf("name" to "failed event", "timestampNanos" to "123"),
                 mapOf("name" to "partial event", "attributes" to mapOf("key" to 123)),
@@ -106,43 +139,45 @@ internal class InternalTracerTest {
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 events = eventsInput
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(4, events.size)
+            assertEquals(5, events.size)
             assertEquals("correct event", events[0].name)
-            assertEquals(0L, events[0].timestampNanos)
-            assertEquals("correct event2", events[1].name)
-            assertEquals(expectedStartTime.millisToNanos(), events[1].timestampNanos)
-            assertEquals("partial event", events[2].name)
-            assertEquals(0, events[2].attributes.size)
-            assertEquals("partial event2", events[3].name)
+            assertEquals(expectedStartTimeMs, events[0].timestampNanos.nanosToMillis())
+            assertEquals("correct event 2", events[1].name)
+            assertEquals(expectedEventStartTimeMs, events[1].timestampNanos.nanosToMillis())
+            assertEquals("correct fallback event", events[2].name)
+            assertEquals(expectedEndTimeMs, events[2].timestampNanos.nanosToMillis())
+            assertEquals("partial event", events[3].name)
             assertEquals(0, events[3].attributes.size)
+            assertEquals("partial event2", events[4].name)
+            assertEquals(0, events[4].attributes.size)
         }
     }
 
     @Test
     fun `record completed failed span`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 errorCode = ErrorCode.FAILURE
             )
         )
 
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(StatusCode.ERROR, status)
         }
     }
@@ -151,29 +186,29 @@ internal class InternalTracerTest {
     fun `record completed child span`() {
         val parentSpanId = checkNotNull(internalTracer.startSpan(name = "parent-span"))
         val expectedName = "child-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 parentSpanId = parentSpanId
             )
         )
 
         with(verifyPublicSpan(expectedName, false)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
     }
 
     @Test
     fun `record completed span with all the fixings`() {
         val expectedName = "test-span"
-        val expectedStartTime = clock.now()
-        val expectedEndTime = expectedStartTime + 100L
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedType = EmbraceAttributes.Type.PERFORMANCE
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
@@ -181,25 +216,25 @@ internal class InternalTracerTest {
         )
         val expectedEvents: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "event1", "timestampNanos" to 0L, "attributes" to expectedAttributes),
-                mapOf("name" to "event2", "timestampNanos" to 5L, "attributes" to expectedAttributes),
+                mapOf("name" to "event1", "timestampMs" to 0L, "attributes" to expectedAttributes),
+                mapOf("name" to "event2", "timestampMs" to 5L, "attributes" to expectedAttributes),
             )
 
         assertTrue(
             internalTracer.recordCompletedSpan(
                 name = expectedName,
-                startTimeNanos = expectedStartTime,
-                endTimeNanos = expectedEndTime,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
                 attributes = expectedAttributes,
                 events = expectedEvents
             )
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTime, startTimeNanos)
-            assertEquals(expectedEndTime, endTimeNanos)
+            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                expectedType.name,
+                expectedType.typeName,
                 attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
             )
             assertEquals("true", attributes["emb.key"])
@@ -208,12 +243,12 @@ internal class InternalTracerTest {
             }
             with(events[0]) {
                 assertEquals(expectedEvents[0]["name"], name)
-                assertEquals(expectedEvents[0]["timestampNanos"], timestampNanos)
+                assertEquals(expectedEvents[0]["timestampMs"], timestampNanos.nanosToMillis())
                 assertEquals(2, attributes.size)
             }
             with(events[1]) {
                 assertEquals(expectedEvents[1]["name"], name)
-                assertEquals(expectedEvents[1]["timestampNanos"], timestampNanos)
+                assertEquals(expectedEvents[1]["timestampMs"], timestampNanos.nanosToMillis())
                 assertEquals(2, attributes.size)
             }
         }
@@ -230,8 +265,8 @@ internal class InternalTracerTest {
             internalTracer.recordCompletedSpan(
                 name = "test-span",
                 parentSpanId = NON_EXISTENT_SPAN_ID,
-                startTimeNanos = 0L,
-                endTimeNanos = 10L
+                startTimeMs = 0L,
+                endTimeMs = 10L
             )
         )
     }
@@ -242,7 +277,7 @@ internal class InternalTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         assertEquals(
-            EmbraceAttributes.Type.PERFORMANCE.name,
+            EmbraceAttributes.Type.PERFORMANCE.typeName,
             currentSpan.attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])

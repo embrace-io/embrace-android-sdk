@@ -92,6 +92,7 @@ internal class PendingApiCalls(
             Endpoint.LOGS -> 10
             Endpoint.NETWORK -> 50
             Endpoint.SESSIONS -> 100
+            Endpoint.SESSIONS_V2 -> 100
             Endpoint.UNKNOWN -> 50
         }
     }

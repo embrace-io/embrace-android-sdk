@@ -44,8 +44,9 @@ internal interface CacheService {
     fun cachePayload(name: String, action: SerializationAction)
 
     /**
-     * Serializes a session object to disk via a stream. This saves memory when the session is
-     * large & the return value isn't used (e.g. for a crash & periodic caching)
+     * Serializes a session object to disk via a stream. This saves memory when the session is large & the return value isn't used
+     * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new [SessionMessage]
+     * is successfully written to disk
      */
     fun writeSession(name: String, sessionMessage: SessionMessage)
 
@@ -74,15 +75,20 @@ internal interface CacheService {
     fun deleteFile(name: String): Boolean
 
     /**
-     * Get file names in cache that start with a given prefix.
+     * Get file IDs for all cached session files. This method also normalizes the file names and removes and temporarily files left behind
+     * when the app unexpectedly terminates.
      *
-     * @param prefix    start of the file names to look for
      * @return list of file names
      */
-    fun listFilenamesByPrefix(prefix: String): List<String>
+    fun normalizeCacheAndGetSessionFileIds(): List<String>
 
     /**
      * Loads the old format of pending API calls.
      */
     fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
+
+    /**
+     * Transform the current saved session with the given name using the given [transformer] and save it in its place
+     */
+    fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage)
 }

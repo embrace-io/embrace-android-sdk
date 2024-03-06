@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class EmbraceLogRecordProcessorTest {
@@ -19,6 +18,5 @@ internal class EmbraceLogRecordProcessorTest {
 
         val logRecordData = logRecordExporter.exportedLogs?.first()
         assertEquals(readWriteLogRecord.toLogRecordData(), logRecordData)
-        assertNotNull(readWriteLogRecord.attributes["emb.log_id"])
     }
 }

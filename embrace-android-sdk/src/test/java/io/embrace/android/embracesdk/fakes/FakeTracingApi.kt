@@ -9,35 +9,12 @@ internal class FakeTracingApi : TracingApi {
 
     val createdSpans = mutableListOf<String>()
 
-    override fun createSpan(name: String): EmbraceSpan? = createSpan(name = name, parent = null)
-
     override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
         createdSpans.add(name)
         return null
     }
 
-    override fun startSpan(name: String): EmbraceSpan? {
-        TODO("Not yet implemented")
-    }
-
-    override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
-        TODO("Not yet implemented")
-    }
-
-    override fun <T> recordSpan(name: String, code: () -> T): T {
-        TODO("Not yet implemented")
-    }
-
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, code: () -> T): T {
-        TODO("Not yet implemented")
-    }
-
-    override fun <T> recordSpan(
-        name: String,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?,
-        code: () -> T
-    ): T {
+    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? {
         TODO("Not yet implemented")
     }
 
@@ -53,54 +30,8 @@ internal class FakeTracingApi : TracingApi {
 
     override fun recordCompletedSpan(
         name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
-        errorCode: ErrorCode?
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
-        parent: EmbraceSpan?
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
-        errorCode: ErrorCode?,
-        parent: EmbraceSpan?
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeNanos: Long,
-        endTimeNanos: Long,
+        startTimeMs: Long,
+        endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,

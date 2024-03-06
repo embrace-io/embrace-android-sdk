@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.logs.LogRecordProcessor
 import io.opentelemetry.sdk.logs.ReadWriteLogRecord
@@ -14,8 +13,6 @@ internal class EmbraceLogRecordProcessor(
 ) : LogRecordProcessor {
 
     override fun onEmit(context: Context, logRecord: ReadWriteLogRecord) {
-        // TODO Add session id and app state here?
-        logRecord.setLogId(Uuid.getEmbUuid())
         logRecordExporter.export(mutableListOf(logRecord.toLogRecordData()))
     }
 }

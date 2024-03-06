@@ -75,6 +75,8 @@ internal class CustomerLogModuleImpl(
             openTelemetryModule.logWriter,
             initModule.clock,
             essentialServiceModule.metadataService,
+            essentialServiceModule.configService,
+            coreModule.appFramework,
             essentialServiceModule.sessionIdTracker,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
         )

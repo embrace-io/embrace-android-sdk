@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.arch.destination
 
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
+
 /**
  * Represents a span event that can be added to the current session span.
  *
@@ -10,10 +12,10 @@ package io.embrace.android.embracesdk.arch.destination
  * @param attributes the attributes of the span event. emb-type is automatically added to these.
  */
 internal class SpanEventData(
-    embType: String,
+    embType: TelemetryType,
     val spanName: String,
     val spanStartTimeMs: Long,
     attributes: Map<String, String>? = null
 ) {
-    val attributes = (attributes ?: emptyMap()).plus(Pair("emb.type", embType))
+    val attributes = (attributes ?: emptyMap()).plus(Pair("emb.type", embType.description))
 }

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
@@ -128,7 +129,7 @@ internal class EmbraceLogService(
             attributes.setLogId(Uuid.getEmbUuid())
 
             val logEventData = LogEventData(
-                "emb-log",
+                EmbType.System.Log,
                 message = trimToMaxLength(message),
                 severity = severity,
                 attributes = attributes.toMap()

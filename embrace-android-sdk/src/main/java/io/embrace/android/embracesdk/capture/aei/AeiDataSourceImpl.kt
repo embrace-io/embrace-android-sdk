@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.ConfigService
@@ -47,7 +48,6 @@ internal class AeiDataSourceImpl(
 ) {
 
     companion object {
-        private const val TYPE_NAME = "system.exit"
         private const val LOG_NAME = "aei-record"
         private const val SDK_AEI_SEND_LIMIT = 32
     }
@@ -224,7 +224,7 @@ internal class AeiDataSourceImpl(
             "trace-status" to message.traceStatus
         )
         return LogEventData(
-            TYPE_NAME,
+            EmbType.System.Exit,
             severity = Severity.INFO,
             message = LOG_NAME,
             attributes = attrs.toNonNullMap()

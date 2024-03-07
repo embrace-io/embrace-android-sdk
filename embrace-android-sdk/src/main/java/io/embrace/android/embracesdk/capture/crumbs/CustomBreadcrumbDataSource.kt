@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
@@ -22,7 +23,6 @@ internal class CustomBreadcrumbDataSource(
     SpanEventMapper<CustomBreadcrumb> {
 
     companion object {
-        internal const val TYPE_NAME = "system.breadcrumb"
         internal const val EVENT_NAME = "custom-breadcrumb"
         internal const val ATTR_KEY_MESSAGE = "message"
     }
@@ -40,7 +40,7 @@ internal class CustomBreadcrumbDataSource(
     }
 
     override fun toSpanEventData(obj: CustomBreadcrumb) = SpanEventData(
-        TYPE_NAME,
+        EmbType.System.Breadcrumb,
         EVENT_NAME,
         obj.timestamp.millisToNanos(),
         mapOf("message" to (obj.message ?: ""))

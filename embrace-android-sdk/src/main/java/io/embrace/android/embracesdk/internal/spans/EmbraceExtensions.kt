@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -68,7 +69,7 @@ internal fun Tracer.embraceSpanBuilder(name: String, internal: Boolean): SpanBui
 internal fun createEmbraceSpanBuilder(
     tracer: Tracer,
     name: String,
-    type: EmbraceAttributes.Type,
+    type: TelemetryType,
     internal: Boolean = true
 ): SpanBuilder = tracer.embraceSpanBuilder(name, internal).setType(type)
 
@@ -78,15 +79,15 @@ internal fun createEmbraceSpanBuilder(
 internal fun createRootSpanBuilder(
     tracer: Tracer,
     name: String,
-    type: EmbraceAttributes.Type,
+    type: TelemetryType,
     internal: Boolean
 ): SpanBuilder = createEmbraceSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).setNoParent()
 
 /**
  * Sets and returns the [EmbraceAttributes.Type] attribute for the given [SpanBuilder]
  */
-internal fun SpanBuilder.setType(value: EmbraceAttributes.Type): SpanBuilder {
-    setAttribute(value.keyName(), value.typeName)
+internal fun SpanBuilder.setType(value: TelemetryType): SpanBuilder {
+    setAttribute(value.attributeName(), value.description)
     return this
 }
 
@@ -233,25 +234,6 @@ internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIB
  * in the Embrace world. Each enum defines the attribute name used in the [Span] and specifies the set of valid values it can be set to.
  */
 internal object EmbraceAttributes {
-
-    /**
-     * Attribute to categorize a [Span] and give it a distinct semantic meaning. Spans of each [Type] may be treated differently by the
-     * backend and can be expected to contain a set of attributes to further flesh out the given semantic meanings.
-     */
-    internal enum class Type(val typeName: String) : Attribute {
-        /**
-         * Spans that model an Embrace session or background activity.
-         */
-        SESSION("ux.session"),
-
-        /**
-         * A [Span] created by an SDK user to measure the performance of an operation
-         */
-        PERFORMANCE("performance");
-
-        override val canonicalName = "type"
-    }
-
     /**
      * The reason for the termination of a process span
      */

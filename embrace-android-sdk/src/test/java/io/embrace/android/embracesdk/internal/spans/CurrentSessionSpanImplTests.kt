@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -140,10 +141,7 @@ internal class CurrentSessionSpanImplTests {
             val lastFlushedSpan = flushedSpans[0]
             with(lastFlushedSpan) {
                 assertEquals("emb-session", name)
-                assertEquals(
-                    EmbraceAttributes.Type.SESSION.typeName,
-                    attributes[EmbraceAttributes.Type.SESSION.keyName()]
-                )
+                assertEquals(EmbType.Ux.Session.description, attributes[EmbType.Ux.Session.attributeName()])
                 assertEquals(StatusCode.OK, status)
                 assertFalse(isKey())
                 assertEquals(it.name, attributes[it.keyName()])

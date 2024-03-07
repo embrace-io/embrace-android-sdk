@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -209,7 +210,7 @@ internal class InternalTracerTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbraceAttributes.Type.PERFORMANCE
+        val expectedType = EmbType.Performance
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -234,8 +235,8 @@ internal class InternalTracerTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                expectedType.typeName,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
+                expectedType.description,
+                attributes[expectedType.attributeName()]
             )
             assertEquals("true", attributes["emb.key"])
             expectedAttributes.forEach {
@@ -277,8 +278,8 @@ internal class InternalTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         assertEquals(
-            EmbraceAttributes.Type.PERFORMANCE.typeName,
-            currentSpan.attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
+            EmbType.Performance.description,
+            currentSpan.attributes[EmbType.Performance.attributeName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
         assertEquals(errorCode?.name, currentSpan.attributes[errorCode?.keyName()])

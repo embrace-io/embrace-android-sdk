@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -18,7 +18,7 @@ internal class FakeSpanService : SpanService {
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean
     ): EmbraceSpan = FakeEmbraceSpan(null, name, type, internal).apply {
         createdSpans.add(this)
@@ -27,7 +27,7 @@ internal class FakeSpanService : SpanService {
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
@@ -41,7 +41,7 @@ internal class FakeSpanService : SpanService {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,

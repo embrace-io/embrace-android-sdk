@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
@@ -54,8 +55,8 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.typeName,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
+                EmbType.Performance.description,
+                attributes[EmbType.Performance.attributeName()]
             )
             assertTrue(isKey())
         }
@@ -75,7 +76,7 @@ internal class SpanServiceImplTest {
         val embraceSpan = checkNotNull(
             spansService.createSpan(
                 name = "test-span",
-                type = EmbraceAttributes.Type.PERFORMANCE
+                type = EmbType.Performance
             )
         )
         assertTrue(embraceSpan.start())
@@ -83,8 +84,8 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.typeName,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
+                EmbType.Performance.description,
+                attributes[EmbType.Performance.attributeName()]
             )
             assertTrue(isKey())
         }
@@ -167,7 +168,7 @@ internal class SpanServiceImplTest {
                 name = "child-span",
                 parent = parent,
                 startTimeMs = childStartTimeMs,
-                type = EmbraceAttributes.Type.SESSION,
+                type = EmbType.Ux.View,
                 internal = true
             )
         )
@@ -179,7 +180,7 @@ internal class SpanServiceImplTest {
         with(completedSpans[0]) {
             assertTrue(isPrivate())
             assertFalse(isKey())
-            assertEquals(EmbraceAttributes.Type.SESSION.typeName, attributes[EmbraceAttributes.Type.SESSION.keyName()])
+            assertEquals(EmbType.Ux.View.description, attributes[EmbType.Ux.View.attributeName()])
             assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
         }
@@ -190,7 +191,7 @@ internal class SpanServiceImplTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbraceAttributes.Type.PERFORMANCE
+        val expectedType = EmbType.Performance
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -212,7 +213,10 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(
+                EmbType.Performance.description,
+                attributes[EmbType.Performance.attributeName()]
+            )
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertTrue(isKey())
             assertTrue(isPrivate())
@@ -339,10 +343,7 @@ internal class SpanServiceImplTest {
         assertEquals(returnThis, lambdaReturn)
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
-            assertEquals(
-                EmbraceAttributes.Type.PERFORMANCE.typeName,
-                attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()]
-            )
+            assertEquals(EmbType.Performance.description, attributes[EmbType.Performance.attributeName()])
             assertTrue(isKey())
             assertTrue(isPrivate())
         }

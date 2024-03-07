@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.trace.IdGenerator
@@ -10,7 +11,7 @@ import io.opentelemetry.sdk.trace.IdGenerator
 internal class FakeEmbraceSpan(
     override val parent: EmbraceSpan?,
     val name: String? = null,
-    val type: EmbraceAttributes.Type = EmbraceAttributes.Type.PERFORMANCE,
+    val type: TelemetryType = EmbType.Performance,
     val internal: Boolean = true
 ) : EmbraceSpan {
 

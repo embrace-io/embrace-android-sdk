@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.system
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.app.Application
 import android.app.usage.StorageStatsManager
 import android.content.Context
@@ -35,5 +34,4 @@ internal fun mockResources(): Resources = mockk(relaxed = true)
 internal fun mockBundle(): Bundle = mockk(relaxed = true)
 internal fun mockStorageStatsManager(): StorageStatsManager = mockk(relaxed = true)
 internal fun mockWindowManager(): WindowManager = mockk(relaxed = true)
-internal fun mockActivityManager(): ActivityManager = mockk(relaxed = true)
 internal fun mockPowerManager(): PowerManager = mockk(relaxed = true)

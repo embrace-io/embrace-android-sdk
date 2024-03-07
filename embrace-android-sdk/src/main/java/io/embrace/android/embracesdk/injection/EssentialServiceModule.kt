@@ -192,7 +192,6 @@ internal class EssentialServiceModuleImpl(
                 backgroundWorker,
                 systemServiceModule.storageManager,
                 systemServiceModule.windowManager,
-                systemServiceModule.activityManager,
                 initModule.clock,
                 cpuInfoDelegate,
                 deviceArchitecture,

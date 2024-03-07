@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.metadata
 
-import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageInfo
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.system.mockActivityManager
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
@@ -54,7 +52,6 @@ internal class EmbraceMetadataServiceTest {
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
         private val windowManager = mockk<WindowManager>()
-        private val activityManager = mockk<ActivityManager>()
 
         @BeforeClass
         @JvmStatic
@@ -135,7 +132,6 @@ internal class EmbraceMetadataServiceTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             storageStatsManager,
             windowManager,
-            activityManager,
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
@@ -156,7 +152,6 @@ internal class EmbraceMetadataServiceTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             storageStatsManager,
             windowManager,
-            activityManager,
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
@@ -293,7 +288,6 @@ internal class EmbraceMetadataServiceTest {
             BackgroundWorker(BlockingScheduledExecutorService()),
             mockStorageStatsManager(),
             mockWindowManager(),
-            mockActivityManager(),
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,

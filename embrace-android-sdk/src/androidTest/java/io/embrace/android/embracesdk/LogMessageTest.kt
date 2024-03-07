@@ -29,9 +29,9 @@ internal class LogMessageTest : BaseTest() {
         logTestMessage("Adding info log to Embrace.")
         Embrace.getInstance().logInfo("Test log info")
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-info-event.json")
-        }
+        })
     }
 
     @Test
@@ -42,9 +42,9 @@ internal class LogMessageTest : BaseTest() {
         properties["info"] = "test property"
         Embrace.getInstance().logMessage("Test log info with property", Severity.INFO, properties)
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-info-with-property-event.json")
-        }
+        })
     }
 
     private fun validateFileContent(file: File) {
@@ -68,9 +68,9 @@ internal class LogMessageTest : BaseTest() {
         logTestMessage("Adding error log to Embrace.")
         Embrace.getInstance().logError("Test log error")
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-error-event.json")
-        }
+        })
     }
 
     @Test
@@ -81,9 +81,9 @@ internal class LogMessageTest : BaseTest() {
 
         Embrace.getInstance().logMessage("Test log error", Severity.ERROR, properties)
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-error-with-property-event.json")
-        }
+        })
     }
 
     @Test
@@ -91,9 +91,9 @@ internal class LogMessageTest : BaseTest() {
         logTestMessage("Adding exception log to Embrace.")
         Embrace.getInstance().logException(Exception("Another log error"))
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-error-with-exception-event.json")
-        }
+        })
     }
 
     @Test
@@ -102,12 +102,9 @@ internal class LogMessageTest : BaseTest() {
         val exception = java.lang.NullPointerException("Exception message")
         Embrace.getInstance().logException(exception, Severity.ERROR, mapOf(), "log message")
 
-        waitForRequest { request ->
-            validateMessageAgainstGoldenFile(
-                request,
-                "log-error-with-exception-and-message-event.json"
-            )
-        }
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
+            validateMessageAgainstGoldenFile(request, "log-error-with-exception-and-message-event.json")
+        })
     }
 
     @Test
@@ -115,8 +112,8 @@ internal class LogMessageTest : BaseTest() {
         logTestMessage("Adding warning log to Embrace.")
         Embrace.getInstance().logWarning("Test log warning")
 
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.LOGGING) { request ->
             validateMessageAgainstGoldenFile(request, "log-warning-event.json")
-        }
+        })
     }
 }

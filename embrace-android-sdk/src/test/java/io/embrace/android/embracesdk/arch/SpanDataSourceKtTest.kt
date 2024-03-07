@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.SpanServiceImpl
@@ -22,13 +22,11 @@ internal class SpanDataSourceKtTest {
         service.initializeService(1500000000000)
 
         val data = StartSpanData(
-            EmbType.Ux.View,
-            "spanName",
-            1500000000000,
-            mapOf("key" to "value")
+            SchemaType.ViewBreadcrumb("my-view"),
+            1500000000000
         )
         assertEquals("ux.view", data.attributes["emb.type"])
-        assertEquals("value", data.attributes["key"])
+        assertEquals("my-view", data.attributes["view.name"])
 
         val span = service.startSpanCapture("") { data }
         checkNotNull(span)

@@ -114,9 +114,11 @@ internal class AeiDataSourceImplTest {
         assertEquals(RSS.toString(), attrs["rss"])
         assertEquals(STATUS.toString(), attrs["exit-status"])
         assertEquals(DESCRIPTION, attrs["description"])
-        assertEquals(TRACE, attrs["blob"])
         assertEquals("", attrs["session-id-error"])
         assertNull(attrs["trace-status"])
+
+        val logEventData = logWriter.logEvents.single()
+        assertEquals(TRACE, logEventData.message)
     }
 
     @Test
@@ -316,8 +318,8 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then a truncated trace should be sent
-        val attrs = getAeiLogAttrs()
-        assertEquals("a".repeat(100), attrs["blob"])
+        val logEventData = logWriter.logEvents.single()
+        assertEquals("a".repeat(100), logEventData.message)
     }
 
     @Test
@@ -356,7 +358,7 @@ internal class AeiDataSourceImplTest {
 
     private fun getAeiLogAttrs(): Map<String, String> {
         val logEventData = logWriter.logEvents.single()
-        assertEquals("aei-record", logEventData.message)
+        assertEquals("aei-record", logEventData.schemaType.name)
         assertEquals(Severity.INFO, logEventData.severity)
         assertEquals("system.exit", logEventData.attributes["emb.type"])
         return logEventData.attributes

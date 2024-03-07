@@ -99,7 +99,8 @@ internal open class BaseTest {
     }
 
     private fun getDefaultNetworkResponses(): Map<String, TestServerResponse> {
-        val configMockResponse = TestServerResponse(HttpURLConnection.HTTP_OK, serializer.toJson(remoteConfig))
+        val configMockResponse =
+            TestServerResponse(HttpURLConnection.HTTP_OK, serializer.toJson(remoteConfig))
 
         return mapOf(
             EmbraceEndpoint.LOGGING.url to TestServerResponse(HttpURLConnection.HTTP_OK),
@@ -196,34 +197,27 @@ internal open class BaseTest {
         logTestMessage("Starting validation of initialization requests")
         var isStartupStartEventValidated = false
 
-        (0 until TOTAL_REQUESTS_AT_INIT).forEach { _ ->
-            waitForRequest { request ->
-                when (request.path?.substringBefore("?")) {
-                    EmbraceEndpoint.EVENTS.url -> {
-                        assertEquals("POST", request.method)
-                        if (!isStartupStartEventValidated) {
-                            isStartupStartEventValidated = true
-                            validateMessageAgainstGoldenFile(
-                                request,
-                                "moment-startup-start-event.json"
-                            )
-                        } else {
-                            validateMessageAgainstGoldenFile(
-                                request,
-                                "moment-startup-late-event.json"
-                            )
-                        }
+        waitForRequest(
+            listOf(
+                RequestValidator(EmbraceEndpoint.EVENTS) { request ->
+                    assertEquals("POST", request.method)
+                    if (!isStartupStartEventValidated) {
+                        isStartupStartEventValidated = true
+                        validateMessageAgainstGoldenFile(
+                            request,
+                            "moment-startup-start-event.json"
+                        )
+                    } else {
+                        validateMessageAgainstGoldenFile(
+                            request,
+                            "moment-startup-late-event.json"
+                        )
                     }
-
-                    EmbraceEndpoint.CONFIG.url -> {
-                        assertEquals("GET", request.method)
-                    }
-
-                    else -> handleUnexpectedFailure(request)
-                }
-                logTestMessage("Validated initialization request at ${request.path}")
-            }
-        }
+                },
+                RequestValidator(EmbraceEndpoint.CONFIG) { request ->
+                    assertEquals("GET", request.method)
+                })
+        )
     }
 
     private fun handleUnexpectedFailure(request: RecordedRequest) {
@@ -241,13 +235,37 @@ internal open class BaseTest {
      * If the request is not received within a reasonable amount of time this method will
      * fail the test.
      */
-    fun waitForRequest(action: (response: RecordedRequest) -> Unit = {}) {
+    fun waitForRequest(requestValidator: RequestValidator) {
+        waitForRequest(listOf(requestValidator))
+    }
+
+    fun waitForRequest(requestValidators: List<RequestValidator>) {
         logTestMessage("Waiting to assert that request was received by MockWebServer.")
-        val request = testServer.takeRequest()
-        request?.let(action) ?: fail(
-            "Expected request not sent after configured timeout. " +
-                "The SDK probably either failed to send the data or crashed - check Logcat for clues."
-        )
+        var remainingCount = requestValidators.size
+
+        while (remainingCount > 0) {
+            val request = testServer.takeRequest()
+
+            if (request == null) {
+                fail(
+                    "Expected request not sent after configured timeout. " +
+                        "The SDK probably either failed to send the data or crashed - check Logcat for clues."
+                )
+            }
+            val req = checkNotNull(request)
+            val path = checkNotNull(req.path)
+
+            val validator = requestValidators.singleOrNull { validator ->
+                path.endsWith(validator.endpoint.url)
+            }
+
+            if (validator != null) {
+                validator.validate(req)
+                remainingCount--
+            } else {
+                logTestMessage("Unexpected request: $path")
+            }
+        }
     }
 
     fun waitForFailedRequest(
@@ -296,10 +314,13 @@ internal open class BaseTest {
 
             if (!result.success) {
                 val msg by lazy {
-                    val observedOutput = writeFailedOutputToDisk(requestBody, goldenFileName, ".observed")
+                    val observedOutput =
+                        writeFailedOutputToDisk(requestBody, goldenFileName, ".observed")
                     val expected =
-                        mContext.assets.open("golden-files/$goldenFileName").bufferedReader().readText()
-                    val expectedOutput = writeFailedOutputToDisk(expected, goldenFileName, ".expected")
+                        mContext.assets.open("golden-files/$goldenFileName").bufferedReader()
+                            .readText()
+                    val expectedOutput =
+                        writeFailedOutputToDisk(expected, goldenFileName, ".expected")
 
                     "Request ${request.path} differs from golden-files/$goldenFileName.\n" +
                         "JSON validation failure reason: ${result.message}" +

@@ -1,32 +1,48 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import android.text.TextUtils
-import io.embrace.android.embracesdk.arch.DataCaptureService
+import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
+import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 
 /**
  * Captures custom breadcrumbs.
  */
 internal class CustomBreadcrumbDataSource(
-    private val configService: ConfigService,
-    private val store: BreadcrumbDataStore<CustomBreadcrumb> = BreadcrumbDataStore {
-        configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
-    },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
-) : DataCaptureService<List<CustomBreadcrumb>> by store {
+    configService: ConfigService,
+    writer: SessionSpanWriter
+) : DataSourceImpl<SessionSpanWriter>(
+    destination = writer,
+    limitStrategy = UpToLimitStrategy(configService.breadcrumbBehavior::getCustomBreadcrumbLimit)
+),
+    SpanEventMapper<CustomBreadcrumb> {
+
+    companion object {
+        internal const val TYPE_NAME = "system.breadcrumb"
+        internal const val EVENT_NAME = "custom-breadcrumb"
+        internal const val ATTR_KEY_MESSAGE = "message"
+    }
 
     fun logCustom(message: String, timestamp: Long) {
-        if (TextUtils.isEmpty(message)) {
-            logger.logWarning("Breadcrumb message must not be blank")
-            return
-        }
-        try {
-            store.tryAddBreadcrumb(CustomBreadcrumb(message, timestamp))
-        } catch (ex: Exception) {
-            logger.logError("Failed to log custom breadcrumb with message $message", ex)
-        }
+        alterSessionSpan(
+            inputValidation = {
+                message.isNotEmpty()
+            },
+            captureAction = {
+                val crumb = CustomBreadcrumb(message, timestamp)
+                addEvent(crumb, ::toSpanEventData)
+            }
+        )
     }
+
+    override fun toSpanEventData(obj: CustomBreadcrumb) = SpanEventData(
+        TYPE_NAME,
+        EVENT_NAME,
+        obj.timestamp.millisToNanos(),
+        mapOf("message" to (obj.message ?: ""))
+    )
 }

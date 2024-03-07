@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -49,12 +49,12 @@ internal class FakeEmbraceSpan(
     }
 
     override fun addEvent(name: String): Boolean {
-        events.add(SpanEventData(EmbType.System.Log, name, 0, null))
+        events.add(SpanEventData(SchemaType.CustomBreadcrumb(name), 0))
         return true
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
-        events.add(SpanEventData(EmbType.System.Log, name, checkNotNull(timestampMs), attributes))
+        events.add(SpanEventData(SchemaType.CustomBreadcrumb(name), checkNotNull(timestampMs)))
         return true
     }
 

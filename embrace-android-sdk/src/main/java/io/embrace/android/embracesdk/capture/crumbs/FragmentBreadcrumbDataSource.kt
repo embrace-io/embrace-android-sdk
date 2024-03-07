@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -25,10 +25,6 @@ internal class FragmentBreadcrumbDataSource(
     UpToLimitStrategy({ configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() })
 ),
     StartSpanMapper<FragmentBreadcrumb> {
-
-    companion object {
-        internal const val SPAN_NAME = "screen-view"
-    }
 
     private val fragmentSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
 
@@ -74,10 +70,8 @@ internal class FragmentBreadcrumbDataSource(
 
     override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
         StartSpanData(
-            embType = EmbType.Ux.View,
-            spanName = SPAN_NAME,
+            schemaType = SchemaType.ViewBreadcrumb(name),
             spanStartTimeMs = start,
-            attributes = mapOf("view.name" to name)
         )
     }
 }

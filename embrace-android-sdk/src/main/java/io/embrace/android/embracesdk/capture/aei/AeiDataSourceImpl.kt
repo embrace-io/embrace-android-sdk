@@ -10,14 +10,13 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
@@ -48,7 +47,6 @@ internal class AeiDataSourceImpl(
 ) {
 
     companion object {
-        private const val LOG_NAME = "aei-record"
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 
@@ -210,24 +208,11 @@ internal class AeiDataSourceImpl(
 
     override fun toLogEventData(obj: BlobMessage): LogEventData {
         val message: AppExitInfoData = obj.applicationExits.single()
-        val attrs = mapOf(
-            "session-id" to message.sessionId,
-            "session-id-error" to message.sessionIdError,
-            "process-importance" to message.importance.toString(),
-            "pss" to message.pss.toString(),
-            "rs" to message.reason.toString(),
-            "rss" to message.rss.toString(),
-            "exit-status" to message.status.toString(),
-            "timestamp" to message.timestamp.toString(),
-            "blob" to message.trace,
-            "description" to message.description,
-            "trace-status" to message.traceStatus
-        )
+        val schemaType = SchemaType.AeiLog(message)
         return LogEventData(
-            EmbType.System.Exit,
+            schemaType = schemaType,
             severity = Severity.INFO,
-            message = LOG_NAME,
-            attributes = attrs.toNonNullMap()
+            message = message.trace ?: ""
         )
     }
 

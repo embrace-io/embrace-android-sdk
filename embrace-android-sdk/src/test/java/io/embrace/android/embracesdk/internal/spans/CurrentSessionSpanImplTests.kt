@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -181,7 +182,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `add event forwarded to span`() {
         currentSessionSpan.addEvent("test-event") {
-            SpanEventData("my-type", this, 1000L, mapOf("key" to "value"))
+            SpanEventData(EmbType.System.Exit, this, 1000L, mapOf("key" to "value"))
         }
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
@@ -190,7 +191,7 @@ internal class CurrentSessionSpanImplTests {
         val testEvent = span.events.single()
         assertEquals("test-event", testEvent.name)
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
-        assertEquals(mapOf("emb.type" to "my-type", "key" to "value"), testEvent.attributes)
+        assertEquals(mapOf("emb.type" to "system.exit", "key" to "value"), testEvent.attributes)
     }
 
     @Test

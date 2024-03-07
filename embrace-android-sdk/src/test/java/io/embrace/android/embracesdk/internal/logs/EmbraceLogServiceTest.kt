@@ -103,7 +103,7 @@ internal class EmbraceLogServiceTest {
         assertNotNull(third.attributes["emb.log_id"])
         assertEquals("session-123", third.attributes["emb.session_id"])
         assertNull(third.attributes["emb.exception_type"])
-        assertEquals("emb-log", third.attributes["emb.type"])
+        assertEquals("system.log", third.attributes["emb.type"])
     }
 
     @Test
@@ -132,7 +132,7 @@ internal class EmbraceLogServiceTest {
         assertNotNull(log.attributes["emb.log_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
         assertEquals("none", log.attributes["emb.exception_type"])
-        assertEquals("emb-log", log.attributes["emb.type"])
+        assertEquals("system.log", log.attributes["emb.type"])
     }
 
     @Test

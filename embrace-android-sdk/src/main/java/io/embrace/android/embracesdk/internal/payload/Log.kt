@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * A recording of an event. Typically the record includes a timestamp indicating when the event
@@ -19,6 +20,7 @@ import com.squareup.moshi.Json
  * @param spanId The span ID of the log. Can be set for logs that are part of a particular
  * processing span. If span_id is present, trace_id SHOULD be also present.
  */
+@JsonClass(generateAdapter = true)
 internal data class Log(
 
     /* The time the log was captured, in nanoseconds since the Unix epoch */

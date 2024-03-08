@@ -282,7 +282,13 @@ internal class InternalTracerTest {
             currentSpan.attributes[EmbType.Performance.attributeName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
-        assertEquals(errorCode?.name, currentSpan.attributes[errorCode?.keyName()])
+        errorCode?.run {
+            val errorCodeAttribute = fromErrorCode()
+            assertEquals(
+                errorCodeAttribute.attributeValue,
+                currentSpan.attributes[errorCodeAttribute.otelAttributeName()]
+            )
+        }
         assertFalse(currentSpan.isPrivate())
         return currentSpan
     }

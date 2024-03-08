@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -65,7 +66,7 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun endSession(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
+    override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         val endingSessionSpan = sessionSpan.get() ?: return emptyList()
         synchronized(sessionSpan) {
             // Right now, session spans don't survive native crashes and sudden process terminations,
@@ -82,8 +83,8 @@ internal class CurrentSessionSpanImpl(
                 sessionSpan.set(startSessionSpan(clock.now().nanosToMillis()))
             } else {
                 endingSessionSpan.addAttribute(
-                    appTerminationCause.keyName(),
-                    appTerminationCause.name
+                    appTerminationCause.otelAttributeName(),
+                    appTerminationCause.attributeValue
                 )
                 endingSessionSpan.stop()
             }

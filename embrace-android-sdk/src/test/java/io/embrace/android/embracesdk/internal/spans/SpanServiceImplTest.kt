@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
@@ -292,17 +294,21 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `record spans with different ending error codes `() {
-        ErrorCode.values().forEach {
+        ErrorCode.values().forEach { errorCode ->
             assertTrue(
                 spansService.recordCompletedSpan(
-                    name = "test${it.name}",
+                    name = "test${errorCode.name}",
                     startTimeMs = 0,
                     endTimeMs = 1,
-                    errorCode = it
+                    errorCode = errorCode
                 )
             )
-            with(verifyAndReturnSoleCompletedSpan("emb-test${it.name}")) {
-                assertEquals(it.name, attributes[it.keyName()])
+            with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
+                val errorCodeAttribute = checkNotNull(errorCode.fromErrorCode())
+                assertEquals(
+                    errorCodeAttribute.attributeValue,
+                    attributes[errorCodeAttribute.otelAttributeName()]
+                )
             }
             spanSink.flushSpans()
         }
@@ -322,7 +328,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `cannot record completed span if there is not current session span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION
+            appTerminationCause = AppTerminationCause.UserTermination
         )
         assertFalse(
             spansService.recordCompletedSpan(
@@ -407,8 +413,8 @@ internal class SpanServiceImplTest {
 
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(
-                ErrorCode.FAILURE.name,
-                attributes[ErrorCode.FAILURE.keyName()]
+                ErrorCodeAttribute.Failure.attributeValue,
+                attributes[ErrorCodeAttribute.Failure.otelAttributeName()]
             )
         }
     }
@@ -416,7 +422,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `recording span as lambda with no current active session will run code but not log span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = EmbraceAttributes.AppTerminationCause.USER_TERMINATION
+            appTerminationCause = AppTerminationCause.UserTermination
         )
         var executed = false
         spansService.recordSpan(name = "test-span") {
@@ -429,7 +435,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(EmbraceAttributes.AppTerminationCause.USER_TERMINATION)
+        currentSessionSpan.endSession(AppTerminationCause.UserTermination)
         spansService.recordSpan("test-span") {
             // do thing
         }

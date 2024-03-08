@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -131,11 +132,12 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `flushing with app termination and termination reason flushes session span with right termination type`() {
-        EmbraceAttributes.AppTerminationCause.values().forEach {
+        AppTerminationCause::class.sealedSubclasses.forEach {
+            val cause = checkNotNull(it.objectInstance)
             val module = FakeInitModule(clock = clock)
             val sessionSpan = module.openTelemetryModule.currentSessionSpan
             module.openTelemetryModule.spanService.initializeService(clock.now())
-            val flushedSpans = sessionSpan.endSession(it)
+            val flushedSpans = sessionSpan.endSession(cause)
             assertEquals(1, flushedSpans.size)
 
             val lastFlushedSpan = flushedSpans[0]
@@ -144,7 +146,7 @@ internal class CurrentSessionSpanImplTests {
                 assertEquals(EmbType.Ux.Session.description, attributes[EmbType.Ux.Session.attributeName()])
                 assertEquals(StatusCode.OK, status)
                 assertFalse(isKey())
-                assertEquals(it.name, attributes[it.keyName()])
+                assertEquals(cause.attributeValue, attributes[cause.otelAttributeName()])
             }
 
             assertEquals(0, module.openTelemetryModule.spanSink.completedSpans().size)

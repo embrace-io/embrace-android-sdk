@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Attribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -84,7 +83,7 @@ internal fun createRootSpanBuilder(
 ): SpanBuilder = createEmbraceSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).setNoParent()
 
 /**
- * Sets and returns the [EmbraceAttributes.Type] attribute for the given [SpanBuilder]
+ * Sets and returns the [TelemetryType] attribute for the given [SpanBuilder]
  */
 internal fun SpanBuilder.setType(value: TelemetryType): SpanBuilder {
     setAttribute(value.attributeName(), value.description)
@@ -182,7 +181,8 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null)
         setStatus(StatusCode.OK)
     } else {
         setStatus(StatusCode.ERROR)
-        setAttribute(errorCode.keyName(), errorCode.toString())
+        val errorCodeAttribute = errorCode.fromErrorCode()
+        setAttribute(errorCodeAttribute.otelAttributeName(), errorCodeAttribute.attributeValue)
     }
 
     if (endTimeMs != null) {
@@ -228,36 +228,3 @@ internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PR
  * Return the appropriate internal Embrace attribute usage name given the current string
  */
 internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
-
-/**
- * Contains the set of attributes (i.e. implementers of the [Attribute] interface) set on a [Span] by the SDK that has special meaning
- * in the Embrace world. Each enum defines the attribute name used in the [Span] and specifies the set of valid values it can be set to.
- */
-internal object EmbraceAttributes {
-    /**
-     * The reason for the termination of a process span
-     */
-    internal enum class AppTerminationCause : Attribute {
-        CRASH,
-        USER_TERMINATION,
-        UNKNOWN;
-
-        override val canonicalName: String = "termination_cause"
-    }
-
-    /**
-     * Denotes an attribute added by the SDK with a restricted set of valid values
-     */
-    internal interface Attribute {
-
-        /**
-         * The name used to identify this [Attribute]
-         */
-        val canonicalName: String
-
-        /**
-         * The name used as the key for the [Attribute] in the attributes map
-         */
-        fun keyName(): String = EMBRACE_ATTRIBUTE_NAME_PREFIX + canonicalName
-    }
-}

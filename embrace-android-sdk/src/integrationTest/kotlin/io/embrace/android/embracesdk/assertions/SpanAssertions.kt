@@ -36,7 +36,13 @@ internal fun assertEmbraceSpanData(
             assertEquals(32, traceId.length)
         }
         assertEquals(expectedStatus, status)
-        assertEquals(errorCode?.name, attributes[errorCode?.keyName()])
+        errorCode?.run {
+            val errorCodeAttribute = fromErrorCode()
+            assertEquals(
+                errorCodeAttribute.attributeValue,
+                attributes[errorCodeAttribute.otelAttributeName()]
+            )
+        }
         expectedCustomAttributes.forEach { entry ->
             assertEquals(entry.value, attributes[entry.key])
         }

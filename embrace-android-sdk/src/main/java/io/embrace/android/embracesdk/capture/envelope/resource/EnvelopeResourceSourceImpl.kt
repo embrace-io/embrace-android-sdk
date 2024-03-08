@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
@@ -9,13 +9,14 @@ import io.embrace.android.embracesdk.payload.DeviceInfo
 internal class EnvelopeResourceSourceImpl(
     private val deviceInfo: DeviceInfo,
     private val appInfo: AppInfo,
-    private val metadataService: MetadataService,
+    private val packageName: String,
+    private val appFramework: AppFramework
 ) : EnvelopeResourceSource {
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
             appVersion = appInfo.appVersion,
-            appEcosystemId = metadataService.getPackageName(),
-            appFramework = mapFramework(metadataService.getAppFramework()),
+            appEcosystemId = packageName,
+            appFramework = mapFramework(appFramework),
             buildId = appInfo.buildId,
             buildType = appInfo.buildType,
             buildFlavor = appInfo.buildFlavor,

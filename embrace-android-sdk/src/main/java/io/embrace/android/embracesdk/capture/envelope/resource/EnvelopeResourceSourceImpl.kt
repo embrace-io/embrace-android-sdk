@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -43,18 +42,18 @@ internal class EnvelopeResourceSourceImpl(
         )
     }
 
-    private fun mapFramework(appFramework: Embrace.AppFramework): EnvelopeResource.AppFramework {
+    private fun mapFramework(appFramework: AppFramework): EnvelopeResource.AppFramework {
         return when (appFramework) {
-            Embrace.AppFramework.NATIVE ->
+            AppFramework.NATIVE ->
                 EnvelopeResource.AppFramework.NATIVE
 
-            Embrace.AppFramework.REACT_NATIVE ->
+            AppFramework.REACT_NATIVE ->
                 EnvelopeResource.AppFramework.REACT_NATIVE
 
-            Embrace.AppFramework.UNITY ->
+            AppFramework.UNITY ->
                 EnvelopeResource.AppFramework.UNITY
 
-            Embrace.AppFramework.FLUTTER ->
+            AppFramework.FLUTTER ->
                 EnvelopeResource.AppFramework.FLUTTER
         }
     }

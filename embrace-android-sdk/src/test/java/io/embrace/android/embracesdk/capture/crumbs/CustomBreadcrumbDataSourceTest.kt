@@ -16,7 +16,7 @@ internal class CustomBreadcrumbDataSourceTest {
     fun setUp() {
         writer = FakeCurrentSessionSpan()
         source = CustomBreadcrumbDataSource(
-            FakeConfigService(),
+            FakeConfigService().breadcrumbBehavior,
             writer
         )
     }

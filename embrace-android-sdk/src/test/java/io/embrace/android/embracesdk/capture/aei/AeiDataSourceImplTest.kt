@@ -83,7 +83,7 @@ internal class AeiDataSourceImplTest {
         logWriter = FakeLogWriter()
         applicationExitInfoService = AeiDataSourceImpl(
             worker,
-            configService,
+            configService.appExitInfoBehavior,
             mockActivityManager,
             preferenceService,
             metadataService,

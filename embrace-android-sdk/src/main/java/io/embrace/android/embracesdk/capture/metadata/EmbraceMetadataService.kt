@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.metadata
 
-import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -42,7 +41,6 @@ internal class EmbraceMetadataService private constructor(
     private val windowManager: WindowManager?,
     private val packageManager: PackageManager,
     private val storageStatsManager: StorageStatsManager?,
-    private val activityManager: ActivityManager?,
     private val buildInfo: BuildInfo,
     private val configService: ConfigService,
     private val applicationInfo: ApplicationInfo,
@@ -470,7 +468,6 @@ internal class EmbraceMetadataService private constructor(
             metadataBackgroundWorker: BackgroundWorker,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
-            activityManager: ActivityManager?,
             clock: Clock,
             embraceCpuInfoDelegate: CpuInfoDelegate,
             deviceArchitecture: DeviceArchitecture,
@@ -562,7 +559,6 @@ internal class EmbraceMetadataService private constructor(
                 windowManager,
                 context.packageManager,
                 storageStatsManager,
-                activityManager,
                 buildInfo,
                 configService,
                 context.applicationInfo,

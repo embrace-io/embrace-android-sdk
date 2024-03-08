@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
-import io.embrace.android.embracesdk.payload.ExceptionError
+import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.net.BindException
 import java.net.ConnectException
@@ -26,9 +26,9 @@ internal class EmbraceInternalErrorService(
     private val logStrictMode: Boolean
 ) : InternalErrorService {
     private var configService: ConfigService? = null
-    private var err: ExceptionError? = null
+    private var err: LegacyExceptionError? = null
 
-    override val currentExceptionError: ExceptionError?
+    override val currentExceptionError: LegacyExceptionError?
         get() = err
 
     // ignore network-related exceptions since they are expected
@@ -104,7 +104,7 @@ internal class EmbraceInternalErrorService(
             return
         }
         if (err == null) {
-            err = ExceptionError(logStrictMode)
+            err = LegacyExceptionError(logStrictMode)
         }
 
         // if the config service has not been set yet, capture the exception

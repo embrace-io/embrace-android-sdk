@@ -75,10 +75,10 @@ internal class AnrIntegrationTest : BaseTest() {
         sendBackground()
 
         // ignore startup moment end request that is validated in other tests
-        waitForRequest()
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) {})
 
         // validate ANRs with JUnit assertions rather than golden file
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.SESSIONS) { request ->
             val payload = readBodyAsSessionMessage(request)
             assertNotNull(payload)
             val perfInfo by lazy { serializer.toJson(payload.performanceInfo) }
@@ -86,7 +86,7 @@ internal class AnrIntegrationTest : BaseTest() {
                 "No ANR intervals in payload. p=$perfInfo"
             }
             validateIntervals(intervals)
-        }
+        })
     }
 
     private fun validateIntervals(intervals: List<AnrInterval>) {

@@ -1,19 +1,17 @@
 package io.embrace.android.embracesdk.arch.destination
 
+import io.embrace.android.embracesdk.arch.schema.SchemaType
+
 /**
  * Holds the information required to start a span.
  *
- * @param embType the type of the span. Used to differentiate data from different sources
+ * @param schemaType the type of the span. Used to differentiate data from different sources
  * by the backend.
- * @param spanName the name of the span.
  * @param spanStartTimeMs the start time of the span event in milliseconds.
- * @param attributes the attributes of the span. emb-type is automatically added to these.
  */
 internal class StartSpanData(
-    embType: String,
-    val spanName: String,
+    val schemaType: SchemaType,
     val spanStartTimeMs: Long,
-    attributes: Map<String, String>? = null
 ) {
-    val attributes = (attributes ?: emptyMap()).plus(Pair("emb.type", embType))
+    val attributes = schemaType.attrs.plus(Pair("emb.type", schemaType.telemetryType.description))
 }

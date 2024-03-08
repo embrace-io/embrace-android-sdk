@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.payload.ExceptionError
+import io.embrace.android.embracesdk.payload.LegacyExceptionError
 
 internal class FakeInternalErrorService : InternalErrorService {
 
@@ -22,5 +22,5 @@ internal class FakeInternalErrorService : InternalErrorService {
         resetCallCount++
     }
 
-    override var currentExceptionError: ExceptionError? = null
+    override var currentExceptionError: LegacyExceptionError? = null
 }

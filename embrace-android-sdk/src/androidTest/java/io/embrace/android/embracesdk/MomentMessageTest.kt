@@ -35,18 +35,18 @@ internal class MomentMessageTest : BaseTest() {
         Embrace.getInstance().startMoment(MOMENT_NAME)
 
         // Validate start moment request
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) { request ->
             validateMessageAgainstGoldenFile(request, "moment-custom-start-event.json")
-        }
+        })
 
         // Send end moment
         logTestMessage("Ending start moment to Embrace.")
         Embrace.getInstance().endMoment(MOMENT_NAME)
 
         // Validate end moment request
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) { request ->
             validateMessageAgainstGoldenFile(request, "moment-custom-end-event.json")
-        }
+        })
     }
 
     /**
@@ -57,7 +57,7 @@ internal class MomentMessageTest : BaseTest() {
         // ignore startup event
         logTestMessage("Ending appStartup moment in Embrace.")
         Embrace.getInstance().endAppStartup()
-        waitForRequest()
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) {})
 
         logTestMessage("Sending moment in Embrace.")
         val properties = HashMap<String, Any>()
@@ -68,25 +68,24 @@ internal class MomentMessageTest : BaseTest() {
         Embrace.getInstance().startMoment(MOMENT_NAME, MOMENT_NAME, properties)
 
         // Validate start moment request with properties
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) { request ->
             validateMessageAgainstGoldenFile(
                 request,
                 "moment-custom-with-properties-start-event.json"
             )
-        }
+        })
 
         // Send end moment
         logTestMessage("Ending moment in Embrace.")
         Embrace.getInstance().endMoment(MOMENT_NAME)
 
         // Validate end moment request
-        waitForRequest { request ->
+        waitForRequest(RequestValidator(EmbraceEndpoint.EVENTS) { request ->
             validateMessageAgainstGoldenFile(
                 request,
                 "moment-custom-with-properties-end-event.json"
             )
-        }
-
+        })
     }
 
     private fun validateFileContent(file: File) {

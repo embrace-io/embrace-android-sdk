@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.payload.ExceptionError
+import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.IntegrationTestRule
 import org.junit.Assert.assertTrue
 
@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
  * Return true if at least one exception matching the expected time, exception type, and error message is found in the internal errors
  */
 internal fun assertInternalErrorLogged(
-    exceptionError: ExceptionError?,
+    exceptionError: LegacyExceptionError?,
     exceptionClassName: String,
     errorMessage: String,
     errorTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS

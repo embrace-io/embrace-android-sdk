@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.payload.ExceptionErrorInfo
-import io.embrace.android.embracesdk.payload.ExceptionInfo
+import io.embrace.android.embracesdk.payload.LegacyExceptionErrorInfo
+import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class ExceptionErrorInfoTest {
+internal class LegacyLegacyExceptionErrorInfoTest {
 
-    private val info = ExceptionInfo(
+    private val info = LegacyExceptionInfo(
         "java.lang.IllegalStateException",
         "Whoops!",
         listOf(
@@ -18,7 +18,7 @@ internal class ExceptionErrorInfoTest {
 
     @Test
     fun testExceptionErrorInfoSerialization() {
-        val exceptionErrorInfo = ExceptionErrorInfo(
+        val exceptionErrorInfo = LegacyExceptionErrorInfo(
             0,
             "STATE",
             listOf(
@@ -30,7 +30,7 @@ internal class ExceptionErrorInfoTest {
 
     @Test
     fun testExceptionErrorInfoDeserialization() {
-        val obj = deserializeJsonFromResource<ExceptionErrorInfo>("exception_error_info_expected.json")
+        val obj = deserializeJsonFromResource<LegacyExceptionErrorInfo>("exception_error_info_expected.json")
         assertEquals(0L, obj.timestamp)
         assertEquals("STATE", obj.state)
         val exceptionInfo = obj.exceptions?.get(0)

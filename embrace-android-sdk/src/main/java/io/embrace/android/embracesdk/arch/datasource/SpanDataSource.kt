@@ -39,7 +39,7 @@ internal interface SpanDataSource : DataSource<SpanService> {
  */
 internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanData): EmbraceSpan? {
     val data = obj.mapper()
-    return createSpan(data.spanName)?.apply {
+    return createSpan(data.schemaType.name)?.apply {
         data.attributes.forEach {
             addAttribute(it.key, it.value)
         }

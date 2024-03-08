@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.BetaFeatures
-import io.embrace.android.embracesdk.payload.ExceptionError
+import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -41,7 +41,7 @@ internal class SessionTest {
         startupThreshold = 5000,
         sdkStartupDuration = 109,
         unhandledExceptions = 1,
-        exceptionError = ExceptionError(false),
+        exceptionError = LegacyExceptionError(false),
         orientations = listOf(Orientation(1, 16092342200)),
         properties = mapOf("fake-key" to "fake-value"),
         symbols = mapOf("fake-native-key" to "fake-native-value"),
@@ -92,7 +92,7 @@ internal class SessionTest {
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)
             assertEquals(1, unhandledExceptions)
-            assertEquals(ExceptionError(false), exceptionError)
+            assertEquals(LegacyExceptionError(false), exceptionError)
             assertEquals(listOf(Orientation(1, 16092342200)), orientations)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
             assertEquals(mapOf("fake-native-key" to "fake-native-value"), symbols)

@@ -32,12 +32,12 @@ internal class EmbraceBreadcrumbService(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val customBreadcrumbDataSource = CustomBreadcrumbDataSource(configService)
+    private val customBreadcrumbDataSource = LegacyCustomBreadcrumbDataSource(configService)
     private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
     private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock)
-    private val fragmentBreadcrumbDataSource = FragmentBreadcrumbDataSource(configService, clock)
+    private val fragmentBreadcrumbDataSource = LegacyFragmentBreadcrumbDataSource(configService, clock)
     private val pushNotificationBreadcrumbDataSource =
         PushNotificationBreadcrumbDataSource(configService, clock)
     val fragmentStack = fragmentBreadcrumbDataSource.fragmentStack

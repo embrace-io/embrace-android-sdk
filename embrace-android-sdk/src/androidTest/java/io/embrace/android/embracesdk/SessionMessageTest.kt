@@ -20,18 +20,21 @@ internal class SessionMessageTest : BaseTest() {
         addCoreWebVitals()
         sendBackground()
 
-        waitForRequest { request ->
-            validateMessageAgainstGoldenFile(request, "moment-startup-end-event.json")
-        }
-
-        waitForRequest { request ->
-            validateMessageAgainstGoldenFile(request, "session-end.json")
-        }
+        waitForRequest(
+            listOf(
+                RequestValidator(EmbraceEndpoint.EVENTS) { request ->
+                    validateMessageAgainstGoldenFile(request, "moment-startup-end-event.json")
+                },
+                RequestValidator(EmbraceEndpoint.SESSIONS) { request ->
+                    validateMessageAgainstGoldenFile(request, "session-end.json")
+                })
+        )
     }
 
     private fun addCoreWebVitals() {
         val webViewExpectedLog =
-            mContext.assets.open("golden-files/${"expected-webview-core-vital.json"}").bufferedReader().readText()
+            mContext.assets.open("golden-files/${"expected-webview-core-vital.json"}")
+                .bufferedReader().readText()
         Embrace.getInstance().trackWebViewPerformance("myWebView", webViewExpectedLog)
     }
 }

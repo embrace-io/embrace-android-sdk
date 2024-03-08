@@ -1,20 +1,23 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
+import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.DeviceInfo
 
 internal class EnvelopeResourceSourceImpl(
-    private val deviceInfo: DeviceInfo,
     private val appInfo: AppInfo,
-    private val packageName: String,
-    private val appFramework: AppFramework
+    private val packageInfo: PackageInfo,
+    private val appFramework: AppFramework,
+    private val deviceArchitecture: DeviceArchitecture,
+    private val device: Device
 ) : EnvelopeResourceSource {
+
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
             appVersion = appInfo.appVersion,
-            appEcosystemId = packageName,
+            appEcosystemId = packageInfo.packageName,
             appFramework = mapFramework(appFramework),
             buildId = appInfo.buildId,
             buildType = appInfo.buildType,
@@ -28,16 +31,16 @@ internal class EnvelopeResourceSourceImpl(
             hostedPlatformVersion = appInfo.hostedPlatformVersion,
             hostedSdkVersion = appInfo.hostedSdkVersion,
             unityBuildId = appInfo.buildGuid,
-            deviceManufacturer = deviceInfo.manufacturer,
-            deviceModel = deviceInfo.model,
-            deviceArchitecture = deviceInfo.architecture,
-            jailbroken = deviceInfo.jailbroken,
-            diskTotalCapacity = deviceInfo.internalStorageTotalCapacity,
-            osType = deviceInfo.operatingSystemType,
-            osVersion = deviceInfo.operatingSystemVersion,
-            osCode = deviceInfo.operatingSystemVersionCode.toString(),
-            screenResolution = deviceInfo.screenResolution,
-            numCores = deviceInfo.cores,
+            deviceManufacturer = device.manufacturer,
+            deviceModel = device.model,
+            deviceArchitecture = deviceArchitecture.architecture,
+            jailbroken = device.isJailbroken,
+            diskTotalCapacity = device.internalStorageTotalCapacity.value,
+            osType = device.operatingSystemType,
+            osVersion = device.operatingSystemVersion,
+            osCode = device.operatingSystemVersionCode.toString(),
+            screenResolution = device.screenResolution,
+            numCores = device.numberOfCores,
         )
     }
 

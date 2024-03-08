@@ -59,7 +59,7 @@ internal class EmbraceSpanServiceTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbType.Performance
+        val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -88,8 +88,8 @@ internal class EmbraceSpanServiceTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                EmbType.Performance.description,
-                attributes[EmbType.Performance.attributeName()]
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
             )
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])

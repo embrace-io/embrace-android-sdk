@@ -18,7 +18,7 @@ internal interface SpanService : Initializable {
     fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance,
+        type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true
     ): EmbraceSpan?
 
@@ -29,7 +29,7 @@ internal interface SpanService : Initializable {
         name: String,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
-        type: TelemetryType = EmbType.Performance,
+        type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true
     ): EmbraceSpan? {
         createSpan(
@@ -53,7 +53,7 @@ internal interface SpanService : Initializable {
     fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance,
+        type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
@@ -69,7 +69,7 @@ internal interface SpanService : Initializable {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance,
+        type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),

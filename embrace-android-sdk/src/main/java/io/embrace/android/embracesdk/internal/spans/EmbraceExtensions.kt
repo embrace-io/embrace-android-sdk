@@ -86,7 +86,7 @@ internal fun createRootSpanBuilder(
  * Sets and returns the [TelemetryType] attribute for the given [SpanBuilder]
  */
 internal fun SpanBuilder.setType(value: TelemetryType): SpanBuilder {
-    setAttribute(value.attributeName(), value.description)
+    setAttribute(value.otelAttributeName(), value.attributeValue)
     return this
 }
 

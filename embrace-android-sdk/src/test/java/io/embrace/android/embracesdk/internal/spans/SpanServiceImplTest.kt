@@ -57,8 +57,8 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbType.Performance.description,
-                attributes[EmbType.Performance.attributeName()]
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
             )
             assertTrue(isKey())
         }
@@ -78,7 +78,7 @@ internal class SpanServiceImplTest {
         val embraceSpan = checkNotNull(
             spansService.createSpan(
                 name = "test-span",
-                type = EmbType.Performance
+                type = EmbType.Performance.Default
             )
         )
         assertTrue(embraceSpan.start())
@@ -86,8 +86,8 @@ internal class SpanServiceImplTest {
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertEquals(
-                EmbType.Performance.description,
-                attributes[EmbType.Performance.attributeName()]
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
             )
             assertTrue(isKey())
         }
@@ -182,7 +182,10 @@ internal class SpanServiceImplTest {
         with(completedSpans[0]) {
             assertTrue(isPrivate())
             assertFalse(isKey())
-            assertEquals(EmbType.Ux.View.description, attributes[EmbType.Ux.View.attributeName()])
+            assertEquals(
+                EmbType.Ux.View.attributeValue,
+                attributes[EmbType.Ux.View.otelAttributeName()]
+            )
             assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
         }
@@ -193,7 +196,7 @@ internal class SpanServiceImplTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbType.Performance
+        val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -216,8 +219,8 @@ internal class SpanServiceImplTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                EmbType.Performance.description,
-                attributes[EmbType.Performance.attributeName()]
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
             )
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertTrue(isKey())
@@ -349,7 +352,10 @@ internal class SpanServiceImplTest {
         assertEquals(returnThis, lambdaReturn)
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(SpanId.getInvalid(), parentSpanId)
-            assertEquals(EmbType.Performance.description, attributes[EmbType.Performance.attributeName()])
+            assertEquals(
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
+            )
             assertTrue(isKey())
             assertTrue(isPrivate())
         }

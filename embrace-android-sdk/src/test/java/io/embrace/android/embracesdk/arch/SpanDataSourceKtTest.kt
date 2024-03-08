@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -25,7 +26,7 @@ internal class SpanDataSourceKtTest {
             SchemaType.ViewBreadcrumb("my-view"),
             1500000000000
         )
-        assertEquals("ux.view", data.attributes["emb.type"])
+        assertEquals(EmbType.Ux.View.attributeValue, data.attributes[EmbType.Ux.View.otelAttributeName()])
         assertEquals("my-view", data.attributes["view.name"])
 
         val span = service.startSpanCapture("") { data }

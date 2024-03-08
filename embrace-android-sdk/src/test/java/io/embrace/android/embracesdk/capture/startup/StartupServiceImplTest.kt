@@ -51,8 +51,8 @@ internal class StartupServiceImplTest {
             assertEquals(startTimeMillis, startTimeNanos.nanosToMillis())
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertEquals(
-                EmbType.Performance.description,
-                attributes[EmbType.Performance.attributeName()]
+                EmbType.Performance.Default.attributeValue,
+                attributes[EmbType.Performance.Default.otelAttributeName()]
             )
             assertTrue(isPrivate())
             assertEquals(StatusCode.OK, status)

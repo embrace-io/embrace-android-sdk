@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -35,7 +36,7 @@ internal class CustomBreadcrumbDataSourceTest {
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    "emb.type" to "system.breadcrumb",
+                    EmbType.System.Breadcrumb.otelAttributeName() to EmbType.System.Breadcrumb.attributeValue,
                     "message" to "Hello, world!"
                 ),
                 attributes

@@ -316,8 +316,8 @@ internal class EmbraceTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         assertEquals(
-            EmbType.Performance.description,
-            currentSpan.attributes[EmbType.Performance.attributeName()]
+            EmbType.Performance.Default.attributeValue,
+            currentSpan.attributes[EmbType.Performance.Default.otelAttributeName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
         errorCode?.run {

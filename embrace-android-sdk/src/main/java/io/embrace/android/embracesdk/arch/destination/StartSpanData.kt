@@ -13,5 +13,5 @@ internal class StartSpanData(
     val schemaType: SchemaType,
     val spanStartTimeMs: Long,
 ) {
-    val attributes = schemaType.attrs.plus(Pair("emb.type", schemaType.telemetryType.description))
+    val attributes = schemaType.attrs.plus(Pair(schemaType.telemetryType.otelAttributeName(), schemaType.telemetryType.attributeValue))
 }

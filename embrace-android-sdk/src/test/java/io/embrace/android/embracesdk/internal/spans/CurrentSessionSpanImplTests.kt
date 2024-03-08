@@ -143,7 +143,7 @@ internal class CurrentSessionSpanImplTests {
             val lastFlushedSpan = flushedSpans[0]
             with(lastFlushedSpan) {
                 assertEquals("emb-session", name)
-                assertEquals(EmbType.Ux.Session.description, attributes[EmbType.Ux.Session.attributeName()])
+                assertEquals(EmbType.Ux.Session.attributeValue, attributes[EmbType.Ux.Session.otelAttributeName()])
                 assertEquals(StatusCode.OK, status)
                 assertFalse(isKey())
                 assertEquals(cause.attributeValue, attributes[cause.otelAttributeName()])
@@ -191,7 +191,13 @@ internal class CurrentSessionSpanImplTests {
         val testEvent = span.events.single()
         assertEquals("custom-breadcrumb", testEvent.name)
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
-        assertEquals(mapOf("emb.type" to "system.breadcrumb", "message" to "test-event"), testEvent.attributes)
+        assertEquals(
+            mapOf(
+                EmbType.System.Breadcrumb.otelAttributeName() to EmbType.System.Breadcrumb.attributeValue,
+                "message" to "test-event"
+            ),
+            testEvent.attributes
+        )
     }
 
     @Test

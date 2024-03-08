@@ -27,7 +27,7 @@ internal class BackgroundActivityTest {
         infoLogsAttemptedToSend = 1,
         warnLogsAttemptedToSend = 2,
         errorLogsAttemptedToSend = 3,
-        exceptionError = ExceptionError(false),
+        exceptionError = LegacyExceptionError(false),
         crashReportId = "fake-crash-id",
         endType = Session.LifeEventType.BKGND_STATE,
         startType = Session.LifeEventType.BKGND_STATE,
@@ -65,7 +65,7 @@ internal class BackgroundActivityTest {
             assertEquals(Session.LifeEventType.BKGND_STATE, endType)
             assertEquals(Session.LifeEventType.BKGND_STATE, startType)
             assertEquals(1, unhandledExceptions)
-            assertEquals(ExceptionError(false), exceptionError)
+            assertEquals(LegacyExceptionError(false), exceptionError)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
         }
     }

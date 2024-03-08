@@ -9,10 +9,10 @@ import org.junit.Assert.assertEquals
 import org.junit.BeforeClass
 import org.junit.Test
 
-internal class ExceptionErrorTest {
+internal class LegacyExceptionErrorTest {
 
     companion object {
-        private lateinit var exceptionError: ExceptionError
+        private lateinit var exceptionError: LegacyExceptionError
         private lateinit var clock: FakeClock
 
         @BeforeClass
@@ -30,15 +30,15 @@ internal class ExceptionErrorTest {
 
     @Test
     fun `serialize then deserialize default object`() {
-        val obj = ExceptionError(false)
+        val obj = LegacyExceptionError(false)
         assertJsonMatchesGoldenFile("exception_error_expected.json", obj)
-        val other = deserializeJsonFromResource<ExceptionError>("exception_error_expected.json")
+        val other = deserializeJsonFromResource<LegacyExceptionError>("exception_error_expected.json")
         assertEquals(obj, other)
     }
 
     @Test
     fun `test addException with strict mode disabled has a limit of 5 exceptions`() {
-        exceptionError = ExceptionError(false)
+        exceptionError = LegacyExceptionError(false)
         val throwable = Throwable("exceptions")
         exceptionError.addException(throwable, "state", clock)
         exceptionError.addException(throwable, "state", clock)
@@ -53,7 +53,7 @@ internal class ExceptionErrorTest {
 
     @Test
     fun `test addException with strict mode enabled has a limit of 50 exceptions`() {
-        exceptionError = ExceptionError(true)
+        exceptionError = LegacyExceptionError(true)
         val throwable = Throwable("exceptions")
 
         repeat(50) {

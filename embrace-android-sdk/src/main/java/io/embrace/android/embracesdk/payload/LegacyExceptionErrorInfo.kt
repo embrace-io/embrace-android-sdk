@@ -2,13 +2,14 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.payload.ExceptionErrorInfo
 
 /**
  * Describes a particular Exception error. Where an exception error has a cause, there will be an
  * {@link ExceptionErrorInfo} for each nested cause.
  */
 @JsonClass(generateAdapter = true)
-internal data class ExceptionErrorInfo(
+internal data class LegacyExceptionErrorInfo(
 
     /**
      * Timestamp when exception error happened.
@@ -23,6 +24,18 @@ internal data class ExceptionErrorInfo(
     /**
      * A list of exceptions.
      */
-    @Json(name = "ex") val exceptions: List<ExceptionInfo>? = null
+    @Json(name = "ex") val exceptions: List<LegacyExceptionInfo>? = null
 
-)
+) {
+    fun toNewPayload(): ExceptionErrorInfo {
+        val mappedState = when (state) {
+            "background" -> ExceptionErrorInfo.AppState.BACKGROUND
+            else -> ExceptionErrorInfo.AppState.ACTIVE
+        }
+        return ExceptionErrorInfo(
+            timestamp,
+            mappedState,
+            exceptions?.map(LegacyExceptionInfo::toNewPayload)
+        )
+    }
+}

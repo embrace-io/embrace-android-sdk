@@ -10,7 +10,7 @@ internal data class Crash(
     val crashId: String,
 
     @Json(name = "ex")
-    val exceptions: List<ExceptionInfo>? = null,
+    val exceptions: List<LegacyExceptionInfo>? = null,
 
     @Json(name = "rep_js")
     val jsExceptions: List<String>? = null,

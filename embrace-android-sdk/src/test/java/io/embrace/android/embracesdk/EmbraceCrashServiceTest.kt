@@ -18,8 +18,8 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.payload.Crash
-import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.payload.extensions.CrashFactory
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -183,7 +183,7 @@ internal class EmbraceCrashServiceTest {
         val crash = Crash(
             "123",
             listOf(
-                ExceptionInfo(
+                LegacyExceptionInfo(
                     "java.lang.RuntimeException",
                     "ExceptionMessage",
                     listOf("stacktrace.line")

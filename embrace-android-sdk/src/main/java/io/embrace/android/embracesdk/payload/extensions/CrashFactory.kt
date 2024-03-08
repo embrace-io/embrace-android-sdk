@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Crash
-import io.embrace.android.embracesdk.payload.ExceptionInfo
 import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.payload.ThreadInfo
 
 internal object CrashFactory {
@@ -39,14 +39,14 @@ internal object CrashFactory {
 
     /**
      * @param ex the throwable to parse
-     * @return a list of [ExceptionInfo] elements of the throwable.
+     * @return a list of [LegacyExceptionInfo] elements of the throwable.
      */
     @JvmStatic
-    private fun exceptionInfo(ex: Throwable?): List<ExceptionInfo> {
-        val result = mutableListOf<ExceptionInfo>()
+    private fun exceptionInfo(ex: Throwable?): List<LegacyExceptionInfo> {
+        val result = mutableListOf<LegacyExceptionInfo>()
         var throwable: Throwable? = ex
         while (throwable != null && throwable != throwable.cause) {
-            val exceptionInfo = ExceptionInfo.ofThrowable(throwable)
+            val exceptionInfo = LegacyExceptionInfo.ofThrowable(throwable)
             result.add(0, exceptionInfo)
             throwable = throwable.cause
         }

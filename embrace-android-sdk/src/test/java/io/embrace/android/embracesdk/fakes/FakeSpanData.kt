@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.api.common.Attributes
@@ -44,6 +46,8 @@ internal class FakeSpanData(
     override fun getTotalRecordedEvents(): Int = events.size
     override fun getTotalRecordedLinks(): Int = links.size
     override fun getTotalAttributeCount(): Int = attributes.size()
+
+    @Deprecated("Deprecated in Java")
     override fun getInstrumentationLibraryInfo() = InstrumentationLibraryInfo.empty()
     override fun getResource(): Resource = resource
 }

@@ -47,7 +47,7 @@ internal class FakeApiService : ApiService {
         logPayloads.add(logsEnvelope.data)
     }
 
-    override fun sendSessionEnvelope(envelope: Envelope<SessionPayload>) {
+    override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
         TODO("Not yet implemented")
     }
 

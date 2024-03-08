@@ -1,19 +1,58 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
+import android.content.pm.PackageInfo
+import android.os.Environment
+import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.fakes.FakeDevice
+import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.BeforeClass
 import org.junit.Test
+import java.io.File
 
 internal class EnvelopeResourceSourceImplTest {
+
+    companion object {
+        private val packageInfo = PackageInfo()
+        private val fakeArchitecture = FakeDeviceArchitecture()
+
+        @BeforeClass
+        @JvmStatic
+        fun beforeClass() {
+            mockkStatic(Environment::class)
+
+            initContext()
+
+            every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
+            //every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
+        }
+
+        @After
+        fun tearDown() {
+            unmockkAll()
+        }
+
+        @Suppress("DEPRECATION")
+        private fun initContext() {
+            packageInfo.packageName = "com.embrace.fake"
+        }
+    }
 
     @Test
     fun getEnvelopeResource() {
         val metadataService = FakeMetadataService()
         val source = EnvelopeResourceSourceImpl(
-            metadataService.getDeviceInfo(),
             metadataService.getAppInfo(),
-            metadataService
+            packageInfo,
+            Embrace.AppFramework.NATIVE,
+            fakeArchitecture,
+            FakeDevice()
         )
         val envelope = source.getEnvelopeResource()
 
@@ -33,14 +72,14 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("19", envelope.hostedPlatformVersion)
         assertEquals("5092abc", envelope.unityBuildId)
         assertEquals("Samsung", envelope.deviceManufacturer)
-        assertEquals("SM-G950U", envelope.deviceModel)
+        assertEquals("Galaxy S10", envelope.deviceModel)
         assertEquals("arm64-v8a", envelope.deviceArchitecture)
         assertEquals(false, envelope.jailbroken)
         assertEquals(10000000L, envelope.diskTotalCapacity)
         assertEquals("Android", envelope.osType)
         assertEquals("8.0.0", envelope.osVersion)
         assertEquals("26", envelope.osCode)
-        assertEquals("1080x720", envelope.screenResolution)
+        assertEquals("1920x1080", envelope.screenResolution)
         assertEquals(8, envelope.numCores)
     }
 }

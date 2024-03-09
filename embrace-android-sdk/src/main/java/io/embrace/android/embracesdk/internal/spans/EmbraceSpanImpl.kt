@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -144,5 +145,10 @@ internal class EmbraceSpanImpl(
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH
+
+        internal fun EmbraceSpan.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): EmbraceSpan {
+            addAttribute(embraceAttribute.otelAttributeName(), embraceAttribute.attributeValue)
+            return this
+        }
     }
 }

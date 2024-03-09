@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
@@ -82,10 +83,7 @@ internal class CurrentSessionSpanImpl(
                 spanRepository.clearCompletedSpans()
                 sessionSpan.set(startSessionSpan(clock.now().nanosToMillis()))
             } else {
-                endingSessionSpan.addAttribute(
-                    appTerminationCause.otelAttributeName(),
-                    appTerminationCause.attributeValue
-                )
+                endingSessionSpan.setEmbraceAttribute(appTerminationCause)
                 endingSessionSpan.stop()
             }
             return spanSink.flushSpans()

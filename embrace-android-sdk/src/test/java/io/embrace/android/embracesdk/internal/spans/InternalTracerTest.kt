@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.assertIsTypePerformance
+import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -210,7 +214,6 @@ internal class InternalTracerTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -234,11 +237,8 @@ internal class InternalTracerTest {
         with(verifyPublicSpan(expectedName)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(
-                expectedType.attributeValue,
-                attributes[expectedType.otelAttributeName()]
-            )
-            assertEquals("true", attributes["emb.key"])
+            assertIsTypePerformance()
+            assertIsKeySpan()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -277,17 +277,16 @@ internal class InternalTracerTest {
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
-        assertEquals(
-            EmbType.Performance.Default.attributeValue,
-            currentSpan.attributes[EmbType.Performance.Default.otelAttributeName()]
-        )
-        assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
-        errorCode?.run {
-            val errorCodeAttribute = fromErrorCode()
-            assertEquals(
-                errorCodeAttribute.attributeValue,
-                currentSpan.attributes[errorCodeAttribute.otelAttributeName()]
-            )
+        currentSpan.assertIsTypePerformance()
+        if (traceRoot) {
+            currentSpan.assertIsKeySpan()
+        } else {
+            currentSpan.assertNotKeySpan()
+        }
+        if (errorCode == null) {
+            currentSpan.assertSuccessful()
+        } else {
+            currentSpan.assertError(errorCode)
         }
         assertFalse(currentSpan.isPrivate())
         return currentSpan

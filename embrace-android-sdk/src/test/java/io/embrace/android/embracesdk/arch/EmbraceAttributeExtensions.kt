@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
 import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.KeySpan
+import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -27,6 +28,10 @@ internal fun EmbraceSpanData.assertIsType(telemetryType: TelemetryType) = assert
 internal fun EmbraceSpanData.assertIsKeySpan() = assertHasEmbraceAttribute(KeySpan)
 
 internal fun EmbraceSpanData.assertNotKeySpan() = assertDoesNotHaveEmbraceAttribute(KeySpan)
+
+internal fun EmbraceSpanData.assertIsPrivateSpan() = assertHasEmbraceAttribute(PrivateSpan)
+
+internal fun EmbraceSpanData.assertNotPrivateSpan() = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
 /**
  * Assert [EmbraceSpanData] has the [EmbraceAttribute] defined by [embraceAttribute]

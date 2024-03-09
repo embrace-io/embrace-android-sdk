@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.startup
 
+import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -7,13 +8,11 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -51,7 +50,7 @@ internal class StartupServiceImplTest {
             assertEquals(startTimeMillis, startTimeNanos.nanosToMillis())
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()
-            assertTrue(isPrivate())
+            assertIsPrivateSpan()
             assertEquals(StatusCode.OK, status)
         }
     }

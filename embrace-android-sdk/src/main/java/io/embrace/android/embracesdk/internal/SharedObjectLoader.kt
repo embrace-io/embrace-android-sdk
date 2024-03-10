@@ -8,7 +8,9 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 internal class SharedObjectLoader {
 
     fun loadEmbraceNative() = try {
-        System.loadLibrary("embrace-native")
+        Systrace.traceSynchronous("load-embrace-native-lib") {
+            System.loadLibrary("embrace-native")
+        }
         true
     } catch (exc: UnsatisfiedLinkError) {
         InternalStaticEmbraceLogger.logError("Failed to load SO file embrace-native", exc)

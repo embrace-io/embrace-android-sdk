@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -59,12 +58,13 @@ internal class NativeModuleImpl(
 
     override val nativeThreadSamplerService: NativeThreadSamplerService? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-init") {
-            if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
+            if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     essentialServiceModule.configService,
                     lazy { ndkService.getSymbolsForCurrentArch() },
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
-                    deviceArchitecture = essentialServiceModule.deviceArchitecture
+                    deviceArchitecture = essentialServiceModule.deviceArchitecture,
+                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader
                 )
             } else {
                 null
@@ -74,16 +74,15 @@ internal class NativeModuleImpl(
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
-            if (nativeThreadSamplingEnabled(essentialServiceModule.configService, essentialServiceModule.sharedObjectLoader)) {
-                NativeThreadSamplerInstaller()
+            if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
+                NativeThreadSamplerInstaller(sharedObjectLoader = essentialServiceModule.sharedObjectLoader)
             } else {
                 null
             }
         }
     }
 
-    private fun nativeThreadSamplingEnabled(configService: ConfigService, sharedObjectLoader: SharedObjectLoader) =
-        configService.autoDataCaptureBehavior.isNdkEnabled() && sharedObjectLoader.loadEmbraceNative()
+    private fun nativeThreadSamplingEnabled(configService: ConfigService) = configService.autoDataCaptureBehavior.isNdkEnabled()
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(

@@ -1,19 +1,35 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Loads shared object files.
+ * Component to load native binaries
  */
 internal class SharedObjectLoader {
+    val loaded = AtomicBoolean(false)
 
-    fun loadEmbraceNative() = try {
-        Systrace.traceSynchronous("load-embrace-native-lib") {
-            System.loadLibrary("embrace-native")
+    /**
+     * Load Embrace native binary if necessary
+     */
+    fun loadEmbraceNative(): Boolean {
+        if (loaded.get()) {
+            return true
         }
-        true
-    } catch (exc: UnsatisfiedLinkError) {
-        InternalStaticEmbraceLogger.logError("Failed to load SO file embrace-native", exc)
-        false
+        synchronized(loaded) {
+            if (!loaded.get()) {
+                try {
+                    Systrace.traceSynchronous("load-embrace-native-lib") {
+                        System.loadLibrary("embrace-native")
+                    }
+                    loaded.set(true)
+                } catch (exc: UnsatisfiedLinkError) {
+                    InternalStaticEmbraceLogger.logError("Failed to load SO file embrace-native", exc)
+                    return false
+                }
+            }
+
+            return true
+        }
     }
 }

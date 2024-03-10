@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,31 +20,34 @@ import java.util.concurrent.TimeUnit
 internal class NativeThreadSamplerInstallerTest {
 
     private lateinit var sampler: EmbraceNativeThreadSamplerService
+    private lateinit var sharedObjectLoader: SharedObjectLoader
     private lateinit var configService: ConfigService
     private lateinit var anrService: AnrService
     private lateinit var delegate: EmbraceNativeThreadSamplerService.NdkDelegate
     private lateinit var cfg: AnrRemoteConfig
+    private lateinit var installer: NativeThreadSamplerInstaller
 
     @Before
     fun setUp() {
+        sharedObjectLoader = mockk(relaxed = true)
         anrService = mockk(relaxed = true)
         delegate = mockk(relaxed = true)
         sampler = mockk(relaxed = true)
 
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
         configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
+        installer = NativeThreadSamplerInstaller(sharedObjectLoader = sharedObjectLoader)
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
     }
 
     @Test
     fun testInstallDisabled() {
-        val installer = NativeThreadSamplerInstaller()
         installer.monitorCurrentThread(sampler, configService, anrService)
         verify(exactly = 0) { delegate.setupNativeThreadSampler(false) }
     }
 
     @Test
     fun testInstallEnabledSuccess() {
-        val installer = NativeThreadSamplerInstaller()
         every { sampler.setupNativeSampler() } returns true
         every { sampler.monitorCurrentThread() } returns true
 
@@ -56,7 +60,6 @@ internal class NativeThreadSamplerInstallerTest {
 
     @Test
     fun testInstallEnabledFailure() {
-        val installer = NativeThreadSamplerInstaller()
         every { sampler.setupNativeSampler() } returns false
         every { sampler.monitorCurrentThread() } returns false
         sampler.setupNativeSampler()
@@ -81,7 +84,6 @@ internal class NativeThreadSamplerInstallerTest {
 
     @Test
     fun testConfigListener() {
-        val installer = NativeThreadSamplerInstaller()
         every { sampler.setupNativeSampler() } returns true
         every { sampler.monitorCurrentThread() } returns true
         sampler.setupNativeSampler()
@@ -95,7 +97,6 @@ internal class NativeThreadSamplerInstallerTest {
 
     @Test
     fun testInstallNewThread() {
-        val installer = NativeThreadSamplerInstaller()
         every { sampler.setupNativeSampler() } returns true
         every { sampler.monitorCurrentThread() } returns true
 

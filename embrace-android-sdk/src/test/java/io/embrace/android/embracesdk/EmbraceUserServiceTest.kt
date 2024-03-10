@@ -49,21 +49,21 @@ internal class EmbraceUserServiceTest {
     @Test
     fun testUserInfoNotLoaded() {
         mockNoUserInfo()
-        assertNotNull(service.info)
-        service.info.verifyNoUserInfo()
+        assertNotNull(service.getUserInfo())
+        service.getUserInfo().verifyNoUserInfo()
     }
 
     @Test
     fun testUserInfoLoaded() {
         mockUserInfo()
-        assertNotNull(service.info)
-        service.info.verifyExpectedUserInfo()
+        assertNotNull(service.getUserInfo())
+        service.getUserInfo().verifyExpectedUserInfo()
     }
 
     @Test
     fun testUserInfoSessionCopy() {
         mockUserInfo()
-        assertNotSame(service.info, service.getUserInfo())
+        assertNotSame(service.getUserInfo(), service.getUserInfo())
     }
 
     @Test
@@ -71,11 +71,11 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            assertEquals("f0a923498c", info.userId)
+            assertEquals("f0a923498c", getUserInfo().userId)
             setUserIdentifier("abc")
-            assertEquals("abc", info.userId)
+            assertEquals("abc", getUserInfo().userId)
             service.clearUserIdentifier()
-            assertNull(info.userId)
+            assertNull(getUserInfo().userId)
         }
     }
 
@@ -84,11 +84,11 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            assertEquals("Mr Test", info.username)
+            assertEquals("Mr Test", getUserInfo().username)
             setUsername("Joe")
-            assertEquals("Joe", info.username)
+            assertEquals("Joe", getUserInfo().username)
             service.clearUsername()
-            assertNull(info.username)
+            assertNull(getUserInfo().username)
         }
     }
 
@@ -97,11 +97,11 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            assertEquals("test@example.com", info.email)
+            assertEquals("test@example.com", getUserInfo().email)
             setUserEmail("foo@test.com")
-            assertEquals("foo@test.com", info.email)
+            assertEquals("foo@test.com", getUserInfo().email)
             service.clearUserEmail()
-            assertNull(info.email)
+            assertNull(getUserInfo().email)
         }
     }
 
@@ -110,11 +110,11 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            assertTrue(checkNotNull(info.personas).contains("payer"))
+            assertTrue(checkNotNull(getUserInfo().personas).contains("payer"))
             clearUserAsPayer()
-            assertFalse(checkNotNull(info.personas).contains("payer"))
+            assertFalse(checkNotNull(getUserInfo().personas).contains("payer"))
             setUserAsPayer()
-            assertTrue(checkNotNull(info.personas).contains("payer"))
+            assertTrue(checkNotNull(getUserInfo().personas).contains("payer"))
         }
     }
 
@@ -123,12 +123,12 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
 
         with(service) {
-            info.verifyExpectedUserInfo()
+            getUserInfo().verifyExpectedUserInfo()
             service.clearAllUserInfo()
-            assertNull(info.email)
-            assertNull(info.userId)
-            assertNull(info.username)
-            assertEquals(extraPersonas, info.personas)
+            assertNull(getUserInfo().email)
+            assertNull(getUserInfo().userId)
+            assertNull(getUserInfo().username)
+            assertEquals(extraPersonas, getUserInfo().personas)
         }
     }
 
@@ -137,7 +137,7 @@ internal class EmbraceUserServiceTest {
         mockUserInfo()
         val persona = "!@£$$%*("
         service.addUserPersona(persona)
-        val personas = checkNotNull(service.info.personas)
+        val personas = checkNotNull(service.getUserInfo().personas)
         assertFalse(personas.contains(persona))
     }
 
@@ -148,7 +148,7 @@ internal class EmbraceUserServiceTest {
         repeat(11) { k ->
             service.addUserPersona("Persona_$k")
         }
-        val personas = checkNotNull(service.info.personas)
+        val personas = checkNotNull(service.getUserInfo().personas)
         assertTrue(personas.contains("Persona_1"))
         assertTrue(personas.contains("Persona_9"))
         assertFalse(personas.contains("Persona_10"))

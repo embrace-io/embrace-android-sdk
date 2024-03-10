@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
@@ -11,16 +13,25 @@ internal class EmbraceSessionProperties(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
-    private var permanent: MutableMap<String, String>
+    private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
+    private val permanentPropertiesProvider: Provider<MutableMap<String, String>> = {
+        preferencesService.permanentSessionProperties?.let(::HashMap) ?: HashMap()
+    }
 
-    init {
-        // TODO: this blocks on the preferences being successfully read from this. Are we cool with this?
-        val existingPermanent: Map<String, String>? = preferencesService.permanentSessionProperties
-        permanent = existingPermanent?.let(::HashMap) ?: HashMap()
+    private fun permanentProperties(): MutableMap<String, String> {
+        if (permanentPropertiesReference.get() === NOT_LOADED) {
+            synchronized(permanentPropertiesReference) {
+                if (permanentPropertiesReference.get() === NOT_LOADED) {
+                    permanentPropertiesReference.set(permanentPropertiesProvider())
+                }
+            }
+        }
+
+        return permanentPropertiesReference.get()
     }
 
     private fun haveKey(key: String): Boolean {
-        return permanent.containsKey(key) || temporary.containsKey(key)
+        return permanentProperties().containsKey(key) || temporary.containsKey(key)
     }
 
     private fun isValidKey(key: String?): Boolean {
@@ -51,58 +62,64 @@ internal class EmbraceSessionProperties(
         return value.substring(0, maxLength - endChars.length) + endChars
     }
 
-    @Synchronized
     fun add(key: String, value: String, isPermanent: Boolean): Boolean {
-        if (!isValidKey(key)) {
-            return false
-        }
-        val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
-        if (!isValidValue(value)) {
-            return false
-        }
-        val sanitizedValue = enforceLength(value, SESSION_PROPERTY_VALUE_LIMIT)
-        val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
-        if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
-            logger.logError("Session property count is at its limit. Rejecting.")
-            return false
-        }
-
-        // add to selected destination, deleting the key if it exists in the other destination
-        if (isPermanent) {
-            permanent[sanitizedKey] = sanitizedValue
-            temporary.remove(sanitizedKey)
-            preferencesService.permanentSessionProperties = permanent
-        } else {
-            // only save the permanent values if the key existed in the permanent map
-            if (permanent.remove(sanitizedKey) != null) {
-                preferencesService.permanentSessionProperties = permanent
+        synchronized(permanentPropertiesReference) {
+            if (!isValidKey(key)) {
+                return false
             }
-            temporary[sanitizedKey] = sanitizedValue
+            val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
+            if (!isValidValue(value)) {
+                return false
+            }
+            val sanitizedValue = enforceLength(value, SESSION_PROPERTY_VALUE_LIMIT)
+            val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
+            if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
+                logger.logError("Session property count is at its limit. Rejecting.")
+                return false
+            }
+
+            // add to selected destination, deleting the key if it exists in the other destination
+            if (isPermanent) {
+                permanentProperties()[sanitizedKey] = sanitizedValue
+                temporary.remove(sanitizedKey)
+                preferencesService.permanentSessionProperties = permanentProperties()
+            } else {
+                // only save the permanent values if the key existed in the permanent map
+                val newPermanent = permanentProperties()
+                if (newPermanent.remove(sanitizedKey) != null) {
+                    permanentPropertiesReference.set(newPermanent)
+                    preferencesService.permanentSessionProperties = permanentProperties()
+                }
+                temporary[sanitizedKey] = sanitizedValue
+            }
+            return true
         }
-        return true
     }
 
-    @Synchronized
     fun remove(key: String): Boolean {
-        if (!isValidKey(key)) {
-            return false
+        synchronized(permanentPropertiesReference) {
+            if (!isValidKey(key)) {
+                return false
+            }
+            val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
+            var existed = false
+            if (temporary.remove(sanitizedKey) != null) {
+                existed = true
+            }
+
+            val newPermanent = permanentProperties()
+            if (newPermanent.remove(sanitizedKey) != null) {
+                permanentPropertiesReference.set(newPermanent)
+                preferencesService.permanentSessionProperties = permanentProperties()
+                existed = true
+            }
+            return existed
         }
-        val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
-        var existed = false
-        if (temporary.remove(sanitizedKey) != null) {
-            existed = true
-        }
-        if (permanent.remove(sanitizedKey) != null) {
-            preferencesService.permanentSessionProperties = permanent
-            existed = true
-        }
-        return existed
     }
 
-    @Synchronized
-    fun get(): Map<String, String> = permanent.plus(temporary)
+    fun get(): Map<String, String> = synchronized(permanentPropertiesReference) { permanentProperties().plus(temporary) }
 
-    private fun size(): Int = permanent.size + temporary.size
+    private fun size(): Int = permanentProperties().size + temporary.size
 
     fun clearTemporary() = temporary.clear()
 
@@ -113,5 +130,6 @@ internal class EmbraceSessionProperties(
          */
         private const val SESSION_PROPERTY_KEY_LIMIT = 128
         private const val SESSION_PROPERTY_VALUE_LIMIT = 1024
+        private val NOT_LOADED = mutableMapOf<String, String>()
     }
 }

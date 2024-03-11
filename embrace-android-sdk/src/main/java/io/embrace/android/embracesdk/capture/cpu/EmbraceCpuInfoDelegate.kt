@@ -21,7 +21,7 @@ internal class EmbraceCpuInfoDelegate(
         }
     }
 
-    override fun getElg(): String? {
+    override fun getEgl(): String? {
         return if (sharedObjectLoader.loadEmbraceNative()) {
             try {
                 getNativeEgl()

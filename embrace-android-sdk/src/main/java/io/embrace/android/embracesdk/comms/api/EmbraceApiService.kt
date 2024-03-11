@@ -62,8 +62,8 @@ internal class EmbraceApiService(
     @Throws(IllegalStateException::class)
     @Suppress("UseCheckOrError")
     override fun getConfig(): RemoteConfig? {
-        var request = prepareConfigRequest(configUrl.value)
-        val cachedResponse = cachedConfigProvider(configUrl.value, request)
+        var request = prepareConfigRequest(configUrl)
+        val cachedResponse = cachedConfigProvider(configUrl, request)
         if (cachedResponse.isValid()) { // only bother if we have a useful response.
             request = request.copy(eTag = cachedResponse.eTag)
         }
@@ -105,8 +105,8 @@ internal class EmbraceApiService(
     }
 
     override fun getCachedConfig(): CachedConfig {
-        val request = prepareConfigRequest(configUrl.value)
-        return cachedConfigProvider(configUrl.value, request)
+        val request = prepareConfigRequest(configUrl)
+        return cachedConfigProvider(configUrl, request)
     }
 
     private fun prepareConfigRequest(url: String) = ApiRequest(
@@ -122,37 +122,37 @@ internal class EmbraceApiService(
     }
 
     override fun sendLog(eventMessage: EventMessage) {
-        post(eventMessage, mapper.value::logRequest)
+        post(eventMessage, mapper::logRequest)
     }
 
     override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
         val parameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
-        post(logsEnvelope, mapper.value::logsEnvelopeRequest, parameterizedType)
+        post(logsEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
     }
 
     override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
         val parameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
-        post(sessionEnvelope, mapper.value::sessionEnvelopeRequest, parameterizedType)
+        post(sessionEnvelope, mapper::sessionEnvelopeRequest, parameterizedType)
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        post(blobMessage, mapper.value::aeiBlobRequest)
+        post(blobMessage, mapper::aeiBlobRequest)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        post(networkEvent, mapper.value::networkEventRequest)
+        post(networkEvent, mapper::networkEventRequest)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {
-        post(eventMessage, mapper.value::eventMessageRequest)
+        post(eventMessage, mapper::eventMessageRequest)
     }
 
     override fun sendCrash(crash: EventMessage): Future<*> {
-        return post(crash, mapper.value::eventMessageRequest) { cacheManager.deleteCrash() }
+        return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
     override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
-        return postOnWorker(action, mapper.value.sessionRequest(), onFinish)
+        return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(

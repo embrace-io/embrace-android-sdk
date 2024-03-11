@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,7 +35,7 @@ internal class FragmentBreadcrumbDataSourceTest {
 
         val span = spanService.createdSpans.single()
         assertEquals("view-breadcrumb", span.name)
-        assertEquals(EmbraceAttributes.Type.PERFORMANCE, span.type)
+        assertEquals(EmbType.Performance, span.type)
         assertTrue(span.isRecording)
         assertEquals(
             mapOf(
@@ -54,7 +54,7 @@ internal class FragmentBreadcrumbDataSourceTest {
 
         val span = spanService.createdSpans.single()
         assertEquals("view-breadcrumb", span.name)
-        assertEquals(EmbraceAttributes.Type.PERFORMANCE, span.type)
+        assertEquals(EmbType.Performance, span.type)
         assertFalse(span.isRecording)
         assertEquals(
             mapOf(

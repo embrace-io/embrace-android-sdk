@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -27,7 +28,7 @@ internal class SpanServiceImpl(
 
     override fun initialized(): Boolean = initialized.get()
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? {
+    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             EmbraceSpanImpl(
                 spanBuilder = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal),
@@ -42,7 +43,7 @@ internal class SpanServiceImpl(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
@@ -62,7 +63,7 @@ internal class SpanServiceImpl(
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,

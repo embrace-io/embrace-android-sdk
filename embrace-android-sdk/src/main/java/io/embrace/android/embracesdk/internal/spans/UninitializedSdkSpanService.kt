@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -21,12 +22,12 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun initialized(): Boolean = true
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: EmbraceAttributes.Type, internal: Boolean): EmbraceSpan? = null
+    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): EmbraceSpan? = null
 
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
@@ -38,7 +39,7 @@ internal class UninitializedSdkSpanService : SpanService {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: EmbraceAttributes.Type,
+        type: TelemetryType,
         internal: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
@@ -116,7 +117,7 @@ internal class UninitializedSdkSpanService : SpanService {
         val startTimeMs: Long,
         val endTimeMs: Long,
         val parent: EmbraceSpan?,
-        val type: EmbraceAttributes.Type,
+        val type: TelemetryType,
         val internal: Boolean,
         val attributes: Map<String, String>,
         val events: List<EmbraceSpanEvent>,

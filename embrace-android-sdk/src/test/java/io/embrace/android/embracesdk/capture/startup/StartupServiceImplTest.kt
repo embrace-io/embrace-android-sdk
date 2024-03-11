@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.startup
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -50,8 +51,8 @@ internal class StartupServiceImplTest {
             assertEquals(startTimeMillis, startTimeNanos.nanosToMillis())
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertEquals(
-                io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.typeName,
-                attributes[io.embrace.android.embracesdk.internal.spans.EmbraceAttributes.Type.PERFORMANCE.keyName()]
+                EmbType.Performance.description,
+                attributes[EmbType.Performance.attributeName()]
             )
             assertTrue(isPrivate())
             assertEquals(StatusCode.OK, status)

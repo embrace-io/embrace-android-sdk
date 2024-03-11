@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -58,7 +59,7 @@ internal class EmbraceSpanServiceTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbraceAttributes.Type.PERFORMANCE
+        val expectedType = EmbType.Performance
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -86,7 +87,10 @@ internal class EmbraceSpanServiceTest {
             assertEquals(name, name)
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(expectedType.typeName, attributes[EmbraceAttributes.Type.PERFORMANCE.keyName()])
+            assertEquals(
+                EmbType.Performance.description,
+                attributes[EmbType.Performance.attributeName()]
+            )
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }

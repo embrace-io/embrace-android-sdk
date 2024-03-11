@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -110,7 +111,7 @@ internal class CurrentSessionSpanImpl(
         val spanBuilder = createEmbraceSpanBuilder(
             tracer = tracerSupplier(),
             name = "session",
-            type = EmbraceAttributes.Type.SESSION
+            type = EmbType.Ux.Session
         )
             .setNoParent()
             .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)

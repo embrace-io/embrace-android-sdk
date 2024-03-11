@@ -39,12 +39,12 @@ internal class EmbraceApiService(
     networkConnectivityService: NetworkConnectivityService,
 ) : ApiService, NetworkConnectivityListener {
 
-    private val mapper = lazy {
+    private val mapper by lazy {
         Systrace.traceSynchronous("api-request-mapper-init") {
             ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
         }
     }
-    private val configUrl = lazy {
+    private val configUrl by lazy {
         Systrace.traceSynchronous("config-url-init") {
             urlBuilder.getConfigUrl()
         }

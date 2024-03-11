@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.worker.TaskPriority
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -88,13 +89,15 @@ internal class EmbraceNdkService(
             null
         }
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            Systrace.traceSynchronous("init-ndk-service") {
-                processStateService.addListener(this)
-                if (appFramework == AppFramework.UNITY) {
-                    unityCrashId = getEmbUuid()
+            ndkStartupWorker.submit(priority = TaskPriority.CRITICAL) {
+                Systrace.traceSynchronous("init-ndk-service") {
+                    processStateService.addListener(this)
+                    if (appFramework == AppFramework.UNITY) {
+                        unityCrashId = getEmbUuid()
+                    }
+                    startNativeCrashMonitoring()
+                    cleanOldCrashFiles()
                 }
-                startNdk()
-                cleanOldCrashFiles()
             }
         }
     }
@@ -148,7 +151,7 @@ internal class EmbraceNdkService(
         }
     }
 
-    private fun startNdk() {
+    private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 installSignals()
@@ -158,15 +161,9 @@ internal class EmbraceNdkService(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
                 )
-                logger.logInfo("NDK library successfully loaded")
-            } else {
-                logger.logDeveloper(
-                    "EmbraceNDKService",
-                    "Failed to load embrace library - probable unsatisfied linkage."
-                )
             }
         } catch (ex: Exception) {
-            logger.logError("Failed to load NDK library", ex)
+            logger.logError("Failed to start native crash monitoring", ex)
         }
     }
 

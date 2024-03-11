@@ -2,11 +2,12 @@ package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
@@ -48,7 +49,11 @@ internal fun assertEmbraceSpanData(
             assertEquals(entry.value, attributes[entry.key])
         }
         assertEquals(expectedEvents, events)
-        assertEquals(private, isPrivate())
+        if (private) {
+            assertIsPrivateSpan()
+        } else {
+            assertNotPrivateSpan()
+        }
         if (key) {
             assertIsKeySpan()
         } else {

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -288,7 +289,7 @@ internal class InternalTracerTest {
         } else {
             currentSpan.assertError(errorCode)
         }
-        assertFalse(currentSpan.isPrivate())
+        currentSpan.assertNotPrivateSpan()
         return currentSpan
     }
 

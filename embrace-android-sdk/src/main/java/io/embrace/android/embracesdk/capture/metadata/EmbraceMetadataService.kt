@@ -124,7 +124,7 @@ internal class EmbraceMetadataService private constructor(
             if (storedEgl != null) {
                 egl = storedEgl
             } else {
-                egl = embraceCpuInfoDelegate.getElg()
+                egl = embraceCpuInfoDelegate.getEgl()
                 preferencesService.egl = egl
                 logDeveloper("EmbraceMetadataService", "egl computed and stored")
             }

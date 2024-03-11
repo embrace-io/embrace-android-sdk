@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -23,10 +22,9 @@ import io.embrace.android.embracesdk.utils.stream
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import java.util.NavigableMap
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.ConcurrentSkipListMap
 
 /**
  * Handles the lifecycle of events (moments).
@@ -54,8 +52,7 @@ internal class EmbraceEventService(
     /**
      * Timeseries of event IDs, keyed on the start time of the event.
      */
-    private val eventIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
-    private val eventIdsCache = CacheableValue<List<String>> { eventIds.size }
+    private val eventIds = ConcurrentLinkedQueue<String>()
 
     /**
      * Map of active events, keyed on their event ID (event name + identifier).
@@ -166,7 +163,7 @@ internal class EmbraceEventService(
                 sanitizedStartTime = now
             }
             val eventId = getEmbUuid()
-            eventIds[now] = eventId
+            eventIds.add(eventId)
             val eventDescription = eventHandler.onEventStarted(
                 eventId,
                 name,
@@ -251,10 +248,8 @@ internal class EmbraceEventService(
         }
     }
 
-    override fun findEventIdsForSession(startTime: Long, endTime: Long): List<String> {
-        logDeveloper("EmbraceEventService", "findEventIdsForSession")
-        return eventIdsCache.value { ArrayList(eventIds.subMap(startTime, endTime).values) }
-    }
+    override fun findEventIdsForSession(): List<String> =
+        eventIds.toList()
 
     override fun getActiveEventIds(): List<String> {
         val ids: MutableList<String> = ArrayList()
@@ -268,13 +263,13 @@ internal class EmbraceEventService(
 
     override fun close() {
         cleanCollections()
-        logDeveloper("EmbraceEventService", "close")
     }
 
     override fun cleanCollections() {
-        eventIds.clear()
-        activeEvents.clear()
-        logDeveloper("EmbraceEventService", "collections cleaned")
+        val activeEventIds = activeEvents.values.map { it.event.eventId }
+        eventIds.removeAll {
+            !activeEventIds.contains(it)
+        }
     }
 
     /**

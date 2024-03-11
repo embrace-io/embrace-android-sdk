@@ -9,7 +9,9 @@ public class FakeDevice(
     override val model: String? = "Galaxy S10",
     override val operatingSystemType: String = "Android",
     override val operatingSystemVersion: String? = "8.0.0",
-    override val operatingSystemVersionCode: Int = 26 ,
+    override val operatingSystemVersionCode: Int = 26,
     override val numberOfCores: Int = 8,
-    override val internalStorageTotalCapacity: Lazy<Long> = lazy { 10000000L }
+    override val internalStorageTotalCapacity: Lazy<Long> = lazy { 10000000L },
+    override val cpuName: String? = "fake_cpu",
+    override val eglInfo: String? = "fake_elg"
 ) : Device

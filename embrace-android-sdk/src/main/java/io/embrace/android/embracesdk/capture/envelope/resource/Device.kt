@@ -6,6 +6,7 @@ import android.os.StatFs
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.annotation.ChecksSdkIntAtLeast
+import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -80,12 +81,27 @@ public interface Device {
      * @return the total free capacity of the internal storage of the device in bytes
      */
     public val internalStorageTotalCapacity: Lazy<Long>
+
+    /**
+     * The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
+     *
+     * @return the name of the primary CPU of the device
+     */
+    public val cpuName: String?
+
+    /**
+     * The EGL (Embedded-System Graphics Library) information obtained with the system call 'ro.hardware.egl'
+     *
+     * @return the ELG of the primary CPU of the device
+     */
+    public val eglInfo: String?
 }
 
 internal class DeviceImpl(
     private val windowManager: WindowManager,
     private val preferencesService: PreferencesService,
-    private val backgroundWorker: BackgroundWorker
+    private val backgroundWorker: BackgroundWorker,
+    private val cpuInfoDelegate: CpuInfoDelegate
 ) : Device {
     override var isJailbroken: Boolean? = null
     override var screenResolution: String = ""
@@ -263,4 +279,8 @@ internal class DeviceImpl(
      * @return the total free capacity of the internal storage of the device in bytes
      */
     override val internalStorageTotalCapacity = lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
+
+    override val cpuName: String? = cpuInfoDelegate.getCpuName()
+
+    override val eglInfo: String? = cpuInfoDelegate.getEgl()
 }

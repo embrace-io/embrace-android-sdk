@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
 import android.content.pm.PackageInfo
+import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
 
 internal class EnvelopeResourceSourceImpl(
     private val appInfo: AppInfo,
+    private val buildInfo: BuildInfo,
     private val packageInfo: PackageInfo,
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
@@ -19,13 +22,13 @@ internal class EnvelopeResourceSourceImpl(
             appVersion = appInfo.appVersion,
             appEcosystemId = packageInfo.packageName,
             appFramework = mapFramework(appFramework),
-            buildId = appInfo.buildId,
-            buildType = appInfo.buildType,
-            buildFlavor = appInfo.buildFlavor,
+            buildId = buildInfo.buildId,
+            buildType = buildInfo.buildType,
+            buildFlavor = buildInfo.buildFlavor,
             environment = appInfo.environment,
             bundleVersion = appInfo.bundleVersion,
-            sdkVersion = appInfo.sdkVersion,
-            sdkSimpleVersion = appInfo.sdkSimpleVersion!!.toInt(),
+            sdkVersion = BuildConfig.VERSION_NAME,
+            sdkSimpleVersion = BuildConfig.VERSION_CODE.toInt(),
             reactNativeBundleId = appInfo.reactNativeBundleId,
             javascriptPatchNumber = appInfo.javaScriptPatchNumber,
             hostedPlatformVersion = appInfo.hostedPlatformVersion,

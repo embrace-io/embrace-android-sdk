@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
@@ -17,9 +18,9 @@ internal class NativeThreadSamplerNdkDelegate : EmbraceNativeThreadSamplerServic
 }
 
 internal class NativeThreadSamplerInstaller(
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val sharedObjectLoader: SharedObjectLoader,
+    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
 ) {
-
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
 
@@ -64,6 +65,9 @@ internal class NativeThreadSamplerInstaller(
         }
 
         currentThread = Thread.currentThread()
+        if (!sharedObjectLoader.loadEmbraceNative()) {
+            return
+        }
         prepareTargetHandler()
 
         if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {

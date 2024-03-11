@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.anr.ndk
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
@@ -25,7 +26,8 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
     private val scheduledWorker: ScheduledWorker,
-    private val deviceArchitecture: DeviceArchitecture
+    private val deviceArchitecture: DeviceArchitecture,
+    private val sharedObjectLoader: SharedObjectLoader
 ) : NativeThreadSamplerService {
 
     companion object {
@@ -55,11 +57,16 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private var targetThread: Thread = Thread.currentThread()
 
     override fun setupNativeSampler(): Boolean {
-        logger.logDeveloper(
-            "EmbraceNativeThreadSamplerService",
-            "Target thread found, attempting to install NativeThreadSampler"
-        )
-        return delegate.setupNativeThreadSampler(deviceArchitecture.is32BitDevice)
+        return if (sharedObjectLoader.loadEmbraceNative()) {
+            logger.logDeveloper(
+                "EmbraceNativeThreadSamplerService",
+                "Target thread found, attempting to install NativeThreadSampler"
+            )
+            delegate.setupNativeThreadSampler(deviceArchitecture.is32BitDevice)
+        } else {
+            logger.logWarning("Embrace native binary load failed. Native thread sampler setup aborted.")
+            false
+        }
     }
 
     override fun monitorCurrentThread(): Boolean {

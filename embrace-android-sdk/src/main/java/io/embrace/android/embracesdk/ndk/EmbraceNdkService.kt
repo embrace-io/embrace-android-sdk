@@ -88,13 +88,14 @@ internal class EmbraceNdkService(
             null
         }
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            processStateService.addListener(this)
-            if (appFramework == AppFramework.UNITY) {
-                unityCrashId = getEmbUuid()
+            Systrace.traceSynchronous("init-ndk-service") {
+                processStateService.addListener(this)
+                if (appFramework == AppFramework.UNITY) {
+                    unityCrashId = getEmbUuid()
+                }
+                startNdk()
+                cleanOldCrashFiles()
             }
-
-            Systrace.traceSynchronous("start-ndk-service") { startNdk() }
-            Systrace.traceSynchronous("clear-stale-crashes") { cleanOldCrashFiles() }
         }
     }
 
@@ -230,26 +231,31 @@ internal class EmbraceNdkService(
             "EmbraceNDKService",
             "Installing signal handlers. 32bit=$is32bit, crashId=$nativeCrashId"
         )
-        val initialMetaData = serializer.toJson(
-            NativeCrashMetadata(
-                metadataService.getLightweightAppInfo(),
-                metadataService.getLightweightDeviceInfo(),
-                userService.getUserInfo(),
-                sessionProperties.get().toMap()
+
+        val initialMetaData = Systrace.traceSynchronous("init-native-crash-metadata") {
+            serializer.toJson(
+                NativeCrashMetadata(
+                    metadataService.getLightweightAppInfo(),
+                    metadataService.getLightweightDeviceInfo(),
+                    userService.getUserInfo(),
+                    sessionProperties.get().toMap()
+                )
             )
-        )
-        delegate._installSignalHandlers(
-            reportBasePath,
-            markerFilePath,
-            initialMetaData,
-            "null",
-            metadataService.getAppState(),
-            nativeCrashId,
-            Build.VERSION.SDK_INT,
-            is32bit,
-            ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
-        )
-        updateDeviceMetaData()
+        }
+        Systrace.traceSynchronous("native-install-handlers") {
+            delegate._installSignalHandlers(
+                reportBasePath,
+                markerFilePath,
+                initialMetaData,
+                "null",
+                metadataService.getAppState(),
+                nativeCrashId,
+                Build.VERSION.SDK_INT,
+                is32bit,
+                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+            )
+        }
+        Systrace.traceSynchronous("update-metadata") { updateDeviceMetaData() }
         isInstalled = true
     }
 

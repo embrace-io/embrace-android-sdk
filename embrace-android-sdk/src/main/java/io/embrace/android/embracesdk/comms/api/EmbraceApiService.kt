@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.logs.LogPayload
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -38,21 +39,31 @@ internal class EmbraceApiService(
     networkConnectivityService: NetworkConnectivityService,
 ) : ApiService, NetworkConnectivityListener {
 
-    private val mapper = ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
-    private val configUrl = urlBuilder.getConfigUrl()
+    private val mapper by lazy {
+        Systrace.traceSynchronous("api-request-mapper-init") {
+            ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
+        }
+    }
+    private val configUrl by lazy {
+        Systrace.traceSynchronous("config-url-init") {
+            urlBuilder.getConfigUrl()
+        }
+    }
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
     init {
-        networkConnectivityService.addNetworkConnectivityListener(this)
-        lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
-        pendingApiCallsSender.setSendMethod(this::executePost)
+        Systrace.traceSynchronous("api-service-init-block") {
+            networkConnectivityService.addNetworkConnectivityListener(this)
+            lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
+            pendingApiCallsSender.setSendMethod(this::executePost)
+        }
     }
 
     @Throws(IllegalStateException::class)
     @Suppress("UseCheckOrError")
     override fun getConfig(): RemoteConfig? {
-        var request = prepareConfigRequest(configUrl)
-        val cachedResponse = cachedConfigProvider(configUrl, request)
+        var request = prepareConfigRequest(configUrl.value)
+        val cachedResponse = cachedConfigProvider(configUrl.value, request)
         if (cachedResponse.isValid()) { // only bother if we have a useful response.
             request = request.copy(eTag = cachedResponse.eTag)
         }
@@ -64,23 +75,28 @@ internal class EmbraceApiService(
                     serializer.fromJson(it, RemoteConfig::class.java)
                 }
             }
+
             is ApiResponse.NotModified -> {
                 logger.logInfo("Confirmed config has not been modified.")
                 cachedResponse.remoteConfig
             }
+
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
                 logger.logWarning("Too many requests. ")
                 null
             }
+
             is ApiResponse.Failure -> {
                 logger.logInfo("Failed to fetch config (no response).")
                 null
             }
+
             is ApiResponse.Incomplete -> {
                 logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
             }
+
             ApiResponse.PayloadTooLarge -> {
                 // Not expected to receive a 413 response for a GET request.
                 null
@@ -89,8 +105,8 @@ internal class EmbraceApiService(
     }
 
     override fun getCachedConfig(): CachedConfig {
-        val request = prepareConfigRequest(configUrl)
-        return cachedConfigProvider(configUrl, request)
+        val request = prepareConfigRequest(configUrl.value)
+        return cachedConfigProvider(configUrl.value, request)
     }
 
     private fun prepareConfigRequest(url: String) = ApiRequest(
@@ -106,37 +122,37 @@ internal class EmbraceApiService(
     }
 
     override fun sendLog(eventMessage: EventMessage) {
-        post(eventMessage, mapper::logRequest)
+        post(eventMessage, mapper.value::logRequest)
     }
 
     override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
         val parameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
-        post(logsEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
+        post(logsEnvelope, mapper.value::logsEnvelopeRequest, parameterizedType)
     }
 
     override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
         val parameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
-        post(sessionEnvelope, mapper::sessionEnvelopeRequest, parameterizedType)
+        post(sessionEnvelope, mapper.value::sessionEnvelopeRequest, parameterizedType)
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
-        post(blobMessage, mapper::aeiBlobRequest)
+        post(blobMessage, mapper.value::aeiBlobRequest)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        post(networkEvent, mapper::networkEventRequest)
+        post(networkEvent, mapper.value::networkEventRequest)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {
-        post(eventMessage, mapper::eventMessageRequest)
+        post(eventMessage, mapper.value::eventMessageRequest)
     }
 
     override fun sendCrash(crash: EventMessage): Future<*> {
-        return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
+        return post(crash, mapper.value::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
     override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
-        return postOnWorker(action, mapper.sessionRequest(), onFinish)
+        return postOnWorker(action, mapper.value.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(

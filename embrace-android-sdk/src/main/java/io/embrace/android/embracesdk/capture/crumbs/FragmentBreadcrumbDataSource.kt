@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
@@ -17,12 +17,12 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
  * Captures fragment breadcrumbs.
  */
 internal class FragmentBreadcrumbDataSource(
-    configService: ConfigService,
+    breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService
 ) : SpanDataSourceImpl(
     spanService,
-    UpToLimitStrategy({ configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() })
+    UpToLimitStrategy({ breadcrumbBehavior.getFragmentBreadcrumbLimit() })
 ),
     StartSpanMapper<FragmentBreadcrumb> {
 

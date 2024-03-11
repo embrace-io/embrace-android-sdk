@@ -23,7 +23,7 @@ internal class FragmentBreadcrumbDataSourceTest {
         clock = FakeClock()
         spanService = FakeSpanService()
         dataSource = FragmentBreadcrumbDataSource(
-            configService,
+            configService.breadcrumbBehavior,
             clock,
             spanService,
         )

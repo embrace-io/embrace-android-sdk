@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -33,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @RequiresApi(VERSION_CODES.R)
 internal class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
-    private val configService: ConfigService,
+    private val appExitInfoBehavior: AppExitInfoBehavior,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
     private val metadataService: MetadataService,
@@ -117,7 +116,7 @@ internal class AeiDataSourceImpl(
 
         // number of results to be returned; a value of 0 means to ignore this parameter and return
         // all matching records with a maximum of 16 entries
-        val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
+        val maxNum = appExitInfoBehavior.appExitInfoMaxNum()
 
         var historicalProcessExitReasons: List<ApplicationExitInfo> =
             activityManager?.getHistoricalProcessExitReasons(null, pid, maxNum)
@@ -225,7 +224,7 @@ internal class AeiDataSourceImpl(
                 return null
             }
 
-            val traceMaxLimit = configService.appExitInfoBehavior.getTraceMaxLimit()
+            val traceMaxLimit = appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
                 logInfoWithException("AEI - Blob size was reduced. Current size is ${trace.length} and the limit is $traceMaxLimit")
                 return AppExitInfoBehavior.CollectTracesResult.TooLarge(trace.take(traceMaxLimit))

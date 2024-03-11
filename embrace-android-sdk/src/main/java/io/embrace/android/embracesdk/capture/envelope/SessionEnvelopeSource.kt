@@ -1,16 +1,25 @@
 package io.embrace.android.embracesdk.capture.envelope
 
+import io.embrace.android.embracesdk.capture.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.capture.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class SessionEnvelopeSource(
-    private val sessionPayloadSource: SessionPayloadSource
+    private val metadataSource: EnvelopeMetadataSource,
+    private val resourceSource: EnvelopeResourceSource,
+    private val sessionPayloadSource: SessionPayloadSource,
 ) : EnvelopeSource<SessionPayload> {
 
     override fun getEnvelope(endType: SessionSnapshotType): Envelope<SessionPayload> {
-        sessionPayloadSource.getSessionPayload(endType)
-        throw NotImplementedError("Not yet implemented")
+        return Envelope(
+            resourceSource.getEnvelopeResource(),
+            metadataSource.getEnvelopeMetadata(),
+            null,
+            null,
+            sessionPayloadSource.getSessionPayload(endType)
+        )
     }
 }

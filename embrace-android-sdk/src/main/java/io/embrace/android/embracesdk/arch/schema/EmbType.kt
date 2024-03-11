@@ -1,16 +1,22 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
+
 internal sealed class EmbType {
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
      */
-    internal sealed class Performance : TelemetryType
+    internal object Performance : TelemetryType {
+        override val description: String = "performance"
+    }
 
     /**
      * Keys that track a point in time & is visual in nature. Applies to spans, logs, and span events.
      */
     internal sealed class Ux(subtype: String) : TelemetryType {
+        internal object Session : Ux("session")
+
         internal object View : Ux("view")
 
         override val description = "ux.$subtype"
@@ -35,4 +41,9 @@ internal sealed class EmbType {
  */
 internal interface TelemetryType {
     val description: String
+
+    /**
+     * Return the key name used by this attribute when is used inside of OpenTelemetry objects
+     */
+    fun attributeName(): String = "type".toEmbraceAttributeName()
 }

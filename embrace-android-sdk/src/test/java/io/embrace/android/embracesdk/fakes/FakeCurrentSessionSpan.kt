@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
+import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -31,7 +31,7 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
         return true
     }
 
-    override fun endSession(appTerminationCause: EmbraceAttributes.AppTerminationCause?): List<EmbraceSpanData> {
+    override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         return emptyList()
     }
 

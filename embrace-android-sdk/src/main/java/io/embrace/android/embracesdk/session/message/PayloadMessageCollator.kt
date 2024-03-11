@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
+import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -12,7 +13,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -160,11 +160,12 @@ internal class PayloadMessageCollator(
             when {
                 !params.isCacheAttempt -> {
                     val appTerminationCause = when {
-                        finalPayload.crashReportId != null -> EmbraceAttributes.AppTerminationCause.CRASH
+                        finalPayload.crashReportId != null -> AppTerminationCause.Crash
                         else -> null
                     }
                     currentSessionSpan.endSession(appTerminationCause)
                 }
+
                 else -> spanSink.completedSpans()
             }
         }

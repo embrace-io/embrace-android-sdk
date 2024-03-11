@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.annotation.BetaApi
-import io.embrace.android.embracesdk.internal.spans.EmbraceAttributes
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 
 /**
- * Attribute to categorize the broad reason a Span completed unsuccessfully.
+ * Categorize the broad reason a Span completed unsuccessfully.
  */
 @BetaApi
-public enum class ErrorCode : EmbraceAttributes.Attribute {
-
+public enum class ErrorCode {
     /**
      * An application failure caused the Span to terminate
      */
@@ -24,5 +23,9 @@ public enum class ErrorCode : EmbraceAttributes.Attribute {
      */
     UNKNOWN;
 
-    override val canonicalName: String = "error_code"
+    internal fun fromErrorCode(): ErrorCodeAttribute = when (this) {
+        FAILURE -> ErrorCodeAttribute.Failure
+        USER_ABANDON -> ErrorCodeAttribute.UserAbandon
+        UNKNOWN -> ErrorCodeAttribute.Unknown
+    }
 }

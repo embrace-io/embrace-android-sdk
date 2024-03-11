@@ -375,12 +375,10 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpanEventJsonAdapt
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum, io/embrace/android/embracesdk/internal/spans/EmbraceAttributes$Attribute {
+public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum {
 	public static final field FAILURE Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static final field UNKNOWN Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static final field USER_ABANDON Lio/embrace/android/embracesdk/spans/ErrorCode;
-	public fun getCanonicalName ()Ljava/lang/String;
-	public fun keyName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static fun values ()[Lio/embrace/android/embracesdk/spans/ErrorCode;
 }

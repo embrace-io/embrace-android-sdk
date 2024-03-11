@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 internal class LogOrchestrator(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
@@ -14,10 +15,10 @@ internal class LogOrchestrator(
     private val deliveryService: DeliveryService
 ) {
     @Volatile
-    private var lastLogTime: Long = 0
+    private var lastLogTime: AtomicLong = AtomicLong(0)
 
     @Volatile
-    private var firstLogInBatchTime: Long = 0
+    private var firstLogInBatchTime: AtomicLong = AtomicLong(0)
 
     @Volatile
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
@@ -27,16 +28,12 @@ internal class LogOrchestrator(
     }
 
     private fun onLogsAdded() {
-        lastLogTime = clock.now()
-        if (firstLogInBatchTime == 0L) {
-            firstLogInBatchTime = lastLogTime
-        }
+        lastLogTime.set(clock.now())
+        firstLogInBatchTime.compareAndSet(0, lastLogTime.get())
         if (!sendLogsIfNeeded()) {
             // If [firstLogInBatchTime] was cleared by a concurrent call to [sendLogsIfNeeded]
             // then update it to the time of this log
-            if (firstLogInBatchTime == 0L) {
-                firstLogInBatchTime = lastLogTime
-            }
+            firstLogInBatchTime.compareAndSet(0, lastLogTime.get())
             scheduleCheck()
         }
     }
@@ -47,20 +44,19 @@ internal class LogOrchestrator(
     @Synchronized
     private fun sendLogsIfNeeded(): Boolean {
         val now = clock.now()
-        val shouldSendLogs = sink.completedLogs().size >= MAX_LOGS_PER_BATCH ||
-            now - lastLogTime > MAX_INACTIVITY_TIME ||
-            (firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME)
+        val shouldSendLogs = isMaxLogsPerBatchReached() ||
+            isMaxInactivityTimeReached(now) ||
+            isMaxBatchTimeReached(now)
 
         if (!shouldSendLogs) {
-            // None of the conditions to send the logs is met
             return false
         }
 
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
-        firstLogInBatchTime = 0
+        firstLogInBatchTime.set(0)
 
-        val storedLogs = sink.flushLogs()
+        val storedLogs = sink.flushLogs(MAX_LOGS_PER_BATCH)
 
         if (storedLogs.isNotEmpty()) {
             deliveryService.sendLogs(LogPayload(logs = storedLogs))
@@ -71,8 +67,8 @@ internal class LogOrchestrator(
 
     private fun scheduleCheck() {
         val now = clock.now()
-        val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime)
-        val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime)
+        val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime.get())
+        val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime.get())
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
             ::sendLogsIfNeeded,
@@ -81,6 +77,16 @@ internal class LogOrchestrator(
         )
     }
 
+    private fun isMaxLogsPerBatchReached(): Boolean =
+        sink.completedLogs().size >= MAX_LOGS_PER_BATCH
+
+    private fun isMaxInactivityTimeReached(now: Long): Boolean =
+        now - lastLogTime.get() > MAX_INACTIVITY_TIME
+
+    private fun isMaxBatchTimeReached(now: Long): Boolean {
+        val firstLogInBatchTime = firstLogInBatchTime.get()
+        return firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME
+    }
     companion object {
         private const val MAX_LOGS_PER_BATCH = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds

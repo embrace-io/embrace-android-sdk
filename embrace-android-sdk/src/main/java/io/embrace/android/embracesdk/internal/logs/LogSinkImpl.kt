@@ -2,16 +2,16 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
+import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class LogSinkImpl : LogSink {
-    private val storedLogs: MutableList<EmbraceLogRecordData> = mutableListOf()
+    private val storedLogs: ConcurrentLinkedQueue<EmbraceLogRecordData> = ConcurrentLinkedQueue()
     private var onLogsStored: (() -> Unit)? = null
+    private val flushLock = Any()
 
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
         try {
-            synchronized(storedLogs) {
-                storedLogs += logs.map { EmbraceLogRecordData(logRecordData = it) }
-            }
+            storedLogs.addAll(logs.map { EmbraceLogRecordData(logRecordData = it) })
             onLogsStored?.invoke()
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
@@ -21,15 +21,16 @@ internal class LogSinkImpl : LogSink {
     }
 
     override fun completedLogs(): List<EmbraceLogRecordData> {
-        synchronized(storedLogs) {
-            return storedLogs.toList()
-        }
+        return storedLogs.toList()
     }
 
-    override fun flushLogs(): List<EmbraceLogRecordData> {
-        synchronized(storedLogs) {
-            val flushedLogs = storedLogs.toList()
-            storedLogs.clear()
+    override fun flushLogs(max: Int?): List<EmbraceLogRecordData> {
+        synchronized(flushLock) {
+            val maxIndex = max?.let {
+                minOf(storedLogs.size, it)
+            } ?: storedLogs.size
+            val flushedLogs = storedLogs.take(maxIndex)
+            storedLogs.removeAll(flushedLogs.toSet())
             return flushedLogs
         }
     }

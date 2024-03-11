@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.worker.ScheduledWorker
@@ -12,6 +13,9 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 internal class LogOrchestratorTest {
 
@@ -87,6 +91,34 @@ internal class LogOrchestratorTest {
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
         verifyPayload(4)
+    }
+
+    @Test
+    fun `simulate race condition`() {
+        val fakeLog = FakeLogRecordData()
+        val fakeLogs = mutableListOf<LogRecordData>()
+        val threads = mutableListOf<ScheduledExecutorService>()
+        val latch = CountDownLatch(49)
+        repeat(49) {
+            fakeLogs.add(fakeLog)
+            threads.add(SingleThreadTestScheduledExecutor())
+        }
+        logSink.storeLogs(fakeLogs)
+        threads.forEach { thread ->
+            thread.schedule(
+                {
+                    logSink.storeLogs(listOf(fakeLog))
+                    latch.countDown()
+                },
+                10L,
+                TimeUnit.MILLISECONDS
+            )
+        }
+
+        latch.await(1000L, TimeUnit.MILLISECONDS)
+
+        assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
+        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].logs.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {

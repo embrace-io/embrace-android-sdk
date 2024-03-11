@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -103,7 +104,7 @@ internal class EmbraceLogServiceTest {
         assertNotNull(third.attributes["emb.log_id"])
         assertEquals("session-123", third.attributes["emb.session_id"])
         assertNull(third.attributes["emb.exception_type"])
-        assertEquals("system.log", third.attributes["emb.type"])
+        assertEquals(EmbType.System.Log.attributeValue, third.attributes[EmbType.System.Log.otelAttributeName()])
     }
 
     @Test
@@ -132,11 +133,11 @@ internal class EmbraceLogServiceTest {
         assertNotNull(log.attributes["emb.log_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
         assertEquals("none", log.attributes["emb.exception_type"])
-        assertEquals("system.log", log.attributes["emb.type"])
+        assertEquals(EmbType.System.Log.attributeValue, log.attributes[EmbType.System.Log.otelAttributeName()])
     }
 
     @Test
-    fun `Embrace properties can not be overriden by custom properties`() {
+    fun `Embrace properties can not be overridden by custom properties`() {
         val logService = getLogService()
         val props = mapOf("emb.session_id" to "session-456")
         logService.log("Hello world", Severity.INFO, props)

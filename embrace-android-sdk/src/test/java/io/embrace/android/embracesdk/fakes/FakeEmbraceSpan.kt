@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.trace.IdGenerator
 internal class FakeEmbraceSpan(
     override val parent: EmbraceSpan?,
     val name: String? = null,
-    val type: TelemetryType = EmbType.Performance,
+    val type: TelemetryType = EmbType.Performance.Default,
     val internal: Boolean = true
 ) : EmbraceSpan {
 

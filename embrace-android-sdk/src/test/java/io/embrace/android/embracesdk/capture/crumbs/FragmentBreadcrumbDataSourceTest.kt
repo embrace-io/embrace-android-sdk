@@ -35,12 +35,12 @@ internal class FragmentBreadcrumbDataSourceTest {
 
         val span = spanService.createdSpans.single()
         assertEquals("view-breadcrumb", span.name)
-        assertEquals(EmbType.Performance, span.type)
+        assertEquals(EmbType.Performance.Default, span.type)
         assertTrue(span.isRecording)
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                "emb.type" to "ux.view"
+                EmbType.Ux.View.otelAttributeName() to EmbType.Ux.View.attributeValue,
             ),
             span.attributes
         )
@@ -54,12 +54,12 @@ internal class FragmentBreadcrumbDataSourceTest {
 
         val span = spanService.createdSpans.single()
         assertEquals("view-breadcrumb", span.name)
-        assertEquals(EmbType.Performance, span.type)
+        assertEquals(EmbType.Performance.Default, span.type)
         assertFalse(span.isRecording)
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                "emb.type" to "ux.view"
+                EmbType.Ux.View.otelAttributeName() to EmbType.Ux.View.attributeValue,
             ),
             span.attributes
         )

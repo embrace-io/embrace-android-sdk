@@ -210,7 +210,7 @@ internal class InternalTracerTest {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val expectedType = EmbType.Performance
+        val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
@@ -235,8 +235,8 @@ internal class InternalTracerTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(
-                expectedType.description,
-                attributes[expectedType.attributeName()]
+                expectedType.attributeValue,
+                attributes[expectedType.otelAttributeName()]
             )
             assertEquals("true", attributes["emb.key"])
             expectedAttributes.forEach {
@@ -278,8 +278,8 @@ internal class InternalTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         assertEquals(
-            EmbType.Performance.description,
-            currentSpan.attributes[EmbType.Performance.attributeName()]
+            EmbType.Performance.Default.attributeValue,
+            currentSpan.attributes[EmbType.Performance.Default.otelAttributeName()]
         )
         assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
         errorCode?.run {

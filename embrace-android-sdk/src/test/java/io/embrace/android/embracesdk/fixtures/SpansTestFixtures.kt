@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fixtures
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -30,7 +31,10 @@ internal val testSpan = EmbraceSpanData(
             )
         )
     ),
-    attributes = mapOf(Pair("emb.sequence_id", "3"), Pair("emb.type", "performance"))
+    attributes = mapOf(
+        Pair("emb.sequence_id", "3"),
+        EmbType.Performance.Default.otelAttributeName() to EmbType.Performance.Default.attributeValue,
+    )
 )
 
 private fun createMapOfSize(size: Int): Map<String, String> {

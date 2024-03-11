@@ -13,5 +13,5 @@ internal class SpanEventData(
     val schemaType: SchemaType,
     val spanStartTimeMs: Long
 ) {
-    val attributes = schemaType.attrs.plus(Pair(schemaType.telemetryType.otelAttributeName(), schemaType.telemetryType.attributeValue))
+    val attributes = schemaType.attrs.plus(schemaType.telemetryType.toOTelKeyValuePair())
 }

@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -361,7 +362,7 @@ internal class AeiDataSourceImplTest {
         val logEventData = logWriter.logEvents.single()
         assertEquals("aei-record", logEventData.schemaType.name)
         assertEquals(Severity.INFO, logEventData.severity)
-        assertEquals(EmbType.System.Exit.attributeValue, logEventData.attributes[EmbType.System.Exit.otelAttributeName()])
+        logEventData.assertIsType(EmbType.System.Exit)
         return logEventData.attributes
     }
 }

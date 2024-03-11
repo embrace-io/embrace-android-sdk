@@ -33,7 +33,7 @@ internal val testSpan = EmbraceSpanData(
     ),
     attributes = mapOf(
         Pair("emb.sequence_id", "3"),
-        EmbType.Performance.Default.otelAttributeName() to EmbType.Performance.Default.attributeValue,
+        EmbType.Performance.Default.toOTelKeyValuePair(),
     )
 )
 

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -41,11 +43,6 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
 
 /**
- * Denotes an important span to be listed in the Spans listing page in the UI. Currently defined as any spans that are the root of a trace
- */
-private const val KEY_SPAN_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "key"
-
-/**
  * Denotes a private span logged by Embrace for diagnostic purposes and should not be displayed to customers in the dashboard, but
  * should be shown to Embrace employees.
  */
@@ -70,7 +67,7 @@ internal fun createEmbraceSpanBuilder(
     name: String,
     type: TelemetryType,
     internal: Boolean = true
-): SpanBuilder = tracer.embraceSpanBuilder(name, internal).setType(type)
+): SpanBuilder = tracer.embraceSpanBuilder(name, internal).setEmbraceAttribute(type)
 
 /**
  * Create a [SpanBuilder] that will create a root [Span] with the appropriate custom Embrace attributes
@@ -83,10 +80,10 @@ internal fun createRootSpanBuilder(
 ): SpanBuilder = createEmbraceSpanBuilder(tracer = tracer, name = name, type = type, internal = internal).setNoParent()
 
 /**
- * Sets and returns the [TelemetryType] attribute for the given [SpanBuilder]
+ * Sets an [EmbraceAttribute] on the given [SpanBuilder] and return it
  */
-internal fun SpanBuilder.setType(value: TelemetryType): SpanBuilder {
-    setAttribute(value.otelAttributeName(), value.attributeValue)
+internal fun SpanBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): SpanBuilder {
+    setAttribute(embraceAttribute.otelAttributeName(), embraceAttribute.attributeValue)
     return this
 }
 
@@ -95,7 +92,7 @@ internal fun SpanBuilder.setType(value: TelemetryType): SpanBuilder {
  * for any spans that are the root of a trace.
  */
 internal fun SpanBuilder.makeKey(): SpanBuilder {
-    setAttribute(KEY_SPAN_ATTRIBUTE_NAME, true)
+    setEmbraceAttribute(KeySpan)
     return this
 }
 
@@ -172,6 +169,10 @@ internal fun Span.setSequenceId(id: Long): Span {
     return this
 }
 
+internal fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    setAttribute(embraceAttribute.otelAttributeName(), embraceAttribute.attributeValue)
+}
+
 /**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
@@ -181,8 +182,7 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null)
         setStatus(StatusCode.OK)
     } else {
         setStatus(StatusCode.ERROR)
-        val errorCodeAttribute = errorCode.fromErrorCode()
-        setAttribute(errorCodeAttribute.otelAttributeName(), errorCodeAttribute.attributeValue)
+        setEmbraceAttribute(errorCode.fromErrorCode())
     }
 
     if (endTimeMs != null) {
@@ -203,11 +203,6 @@ internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): Attribu
     }
     return this
 }
-
-/**
- * Returns true if the Span is a Key Span
- */
-internal fun EmbraceSpanData.isKey(): Boolean = attributes[KEY_SPAN_ATTRIBUTE_NAME] == true.toString()
 
 /**
  * Returns true if the Span is private

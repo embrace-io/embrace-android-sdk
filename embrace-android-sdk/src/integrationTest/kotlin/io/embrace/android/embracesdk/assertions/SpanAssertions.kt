@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.assertions
 
+import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.isKey
 import io.embrace.android.embracesdk.internal.spans.isPrivate
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -36,18 +39,20 @@ internal fun assertEmbraceSpanData(
             assertEquals(32, traceId.length)
         }
         assertEquals(expectedStatus, status)
-        errorCode?.run {
-            val errorCodeAttribute = fromErrorCode()
-            assertEquals(
-                errorCodeAttribute.attributeValue,
-                attributes[errorCodeAttribute.otelAttributeName()]
-            )
+        if (errorCode == null) {
+            assertSuccessful()
+        } else {
+            assertError(errorCode)
         }
         expectedCustomAttributes.forEach { entry ->
             assertEquals(entry.value, attributes[entry.key])
         }
         assertEquals(expectedEvents, events)
         assertEquals(private, isPrivate())
-        assertEquals(key, isKey())
+        if (key) {
+            assertIsKeySpan()
+        } else {
+            assertNotKeySpan()
+        }
     }
 }

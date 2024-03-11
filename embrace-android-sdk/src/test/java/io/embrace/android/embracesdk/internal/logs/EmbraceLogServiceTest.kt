@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
@@ -104,7 +105,7 @@ internal class EmbraceLogServiceTest {
         assertNotNull(third.attributes["emb.log_id"])
         assertEquals("session-123", third.attributes["emb.session_id"])
         assertNull(third.attributes["emb.exception_type"])
-        assertEquals(EmbType.System.Log.attributeValue, third.attributes[EmbType.System.Log.otelAttributeName()])
+        third.assertIsType(EmbType.System.Log)
     }
 
     @Test
@@ -133,7 +134,7 @@ internal class EmbraceLogServiceTest {
         assertNotNull(log.attributes["emb.log_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
         assertEquals("none", log.attributes["emb.exception_type"])
-        assertEquals(EmbType.System.Log.attributeValue, log.attributes[EmbType.System.Log.otelAttributeName()])
+        log.assertIsType(EmbType.System.Log)
     }
 
     @Test

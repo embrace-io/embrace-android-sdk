@@ -1,5 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
+import io.embrace.android.embracesdk.arch.assertIsType
+import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
@@ -9,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -143,10 +146,10 @@ internal class CurrentSessionSpanImplTests {
             val lastFlushedSpan = flushedSpans[0]
             with(lastFlushedSpan) {
                 assertEquals("emb-session", name)
-                assertEquals(EmbType.Ux.Session.attributeValue, attributes[EmbType.Ux.Session.otelAttributeName()])
-                assertEquals(StatusCode.OK, status)
-                assertFalse(isKey())
-                assertEquals(cause.attributeValue, attributes[cause.otelAttributeName()])
+                assertIsType(EmbType.Ux.Session)
+                assertSuccessful()
+                assertNotKeySpan()
+                assertHasEmbraceAttribute(cause)
             }
 
             assertEquals(0, module.openTelemetryModule.spanSink.completedSpans().size)
@@ -193,7 +196,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
         assertEquals(
             mapOf(
-                EmbType.System.Breadcrumb.otelAttributeName() to EmbType.System.Breadcrumb.attributeValue,
+                EmbType.System.Breadcrumb.toOTelKeyValuePair(),
                 "message" to "test-event"
             ),
             testEvent.attributes

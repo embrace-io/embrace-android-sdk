@@ -16,5 +16,13 @@ internal interface EmbraceAttribute {
      */
     val attributeValue: String
 
+    /**
+     * Return the appropriate key name for this attribute to use in an OpenTelemetry attribute
+     */
     fun otelAttributeName(): String = attributeName.toEmbraceAttributeName()
+
+    /**
+     * Return attribute as a key-value pair appropriate to use as an OpenTelemetry attribute
+     */
+    fun toOTelKeyValuePair() = Pair(otelAttributeName(), attributeValue)
 }

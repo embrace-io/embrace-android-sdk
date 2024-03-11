@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -87,10 +88,7 @@ internal class EmbraceSpanServiceTest {
             assertEquals(name, name)
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(
-                EmbType.Performance.Default.attributeValue,
-                attributes[EmbType.Performance.Default.otelAttributeName()]
-            )
+            assertIsTypePerformance()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }

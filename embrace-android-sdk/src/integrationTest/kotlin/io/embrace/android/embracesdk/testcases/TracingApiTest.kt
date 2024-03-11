@@ -204,6 +204,7 @@ internal class TracingApiTest {
                 expectedParentId = traceRootSpan.spanId,
                 expectedTraceId = traceRootSpan.traceId,
                 expectedStatus = StatusCode.ERROR,
+                errorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
                 expectedEvents = listOf(
                     checkNotNull(

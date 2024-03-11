@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.assertIsTypePerformance
+import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
@@ -66,7 +70,7 @@ internal class EmbraceTracerTest {
             assertNotNull(embraceSpan)
             assertTrue(embraceSpan.start())
             assertTrue(embraceSpan.stop(errorCode))
-            verifyPublicSpan("test-span")
+            verifyPublicSpan(name = "test-span", errorCode = errorCode)
             spanSink.flushSpans()
         }
     }
@@ -315,17 +319,16 @@ internal class EmbraceTracerTest {
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
-        assertEquals(
-            EmbType.Performance.Default.attributeValue,
-            currentSpan.attributes[EmbType.Performance.Default.otelAttributeName()]
-        )
-        assertEquals(if (traceRoot) "true" else null, currentSpan.attributes["emb.key"])
-        errorCode?.run {
-            val errorCodeAttribute = fromErrorCode()
-            assertEquals(
-                errorCodeAttribute.attributeValue,
-                currentSpan.attributes[errorCodeAttribute.otelAttributeName()]
-            )
+        currentSpan.assertIsTypePerformance()
+        if (traceRoot) {
+            currentSpan.assertIsKeySpan()
+        } else {
+            currentSpan.assertNotKeySpan()
+        }
+        if (errorCode == null) {
+            currentSpan.assertSuccessful()
+        } else {
+            currentSpan.assertError(errorCode)
         }
         assertFalse(currentSpan.isPrivate())
         return currentSpan

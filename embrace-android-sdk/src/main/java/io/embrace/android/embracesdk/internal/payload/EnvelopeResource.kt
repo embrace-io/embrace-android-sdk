@@ -187,8 +187,7 @@ internal data class EnvelopeResource(
     'ro.hardware.egl'. Previous name: d.gp */
     @Json(name = "egl_info")
     val eglInfo: kotlin.Int? = null
-
-) {
+){
 
     /**
      * The frameworks in use by the app. Previous name: a.f

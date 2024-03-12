@@ -1,15 +1,17 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
 
 internal class EnvelopeResourceSourceImpl(
-    private val appInfo: AppInfo,
+    private val applicationInfo: ApplicationInfo,
     private val buildInfo: BuildInfo,
     private val packageInfo: PackageInfo,
     private val appFramework: AppFramework,
@@ -17,23 +19,24 @@ internal class EnvelopeResourceSourceImpl(
     private val device: Device
 ) : EnvelopeResourceSource {
 
+
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
-            appVersion = appInfo.appVersion,
+            appVersion = packageInfo.versionName.toString().trim { it <= ' ' },
+            bundleVersion = packageInfo.versionCode.toString(),
             appEcosystemId = packageInfo.packageName,
             appFramework = mapFramework(appFramework),
             buildId = buildInfo.buildId,
             buildType = buildInfo.buildType,
             buildFlavor = buildInfo.buildFlavor,
-            environment = appInfo.environment,
-            bundleVersion = appInfo.bundleVersion,
+            environment = if (applicationInfo.isDebug()) ENVIRONMENT_DEV else ENVIRONMENT_PROD,
             sdkVersion = BuildConfig.VERSION_NAME,
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toInt(),
-            reactNativeBundleId = appInfo.reactNativeBundleId,
-            javascriptPatchNumber = appInfo.javaScriptPatchNumber,
-            hostedPlatformVersion = appInfo.hostedPlatformVersion,
-            hostedSdkVersion = appInfo.hostedSdkVersion,
-            unityBuildId = appInfo.buildGuid,
+            hostedPlatformVersion = hosted.hostedPlatformVersion,
+            reactNativeBundleId = hosted.reactNativeBundleId,
+            javascriptPatchNumber = hosted.javaScriptPatchNumber,
+            hostedSdkVersion = hosted.hostedSdkVersion,
+            unityBuildId = hosted.buildGuid,
             deviceManufacturer = device.manufacturer,
             deviceModel = device.model,
             deviceArchitecture = deviceArchitecture.architecture,
@@ -61,5 +64,10 @@ internal class EnvelopeResourceSourceImpl(
             AppFramework.FLUTTER ->
                 EnvelopeResource.AppFramework.FLUTTER
         }
+    }
+
+    companion object {
+        const val ENVIRONMENT_DEV = "dev"
+        const val ENVIRONMENT_PROD = "prod"
     }
 }

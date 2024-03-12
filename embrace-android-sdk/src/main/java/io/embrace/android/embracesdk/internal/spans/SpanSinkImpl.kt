@@ -2,15 +2,17 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 
 internal class SpanSinkImpl : SpanSink {
-    private val completedSpans: MutableList<EmbraceSpanData> = mutableListOf()
+    private val completedSpans: Queue<EmbraceSpanData> = ConcurrentLinkedQueue()
+    private val spansToFlush = AtomicReference<List<EmbraceSpanData>>(listOf())
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode {
         try {
-            synchronized(completedSpans) {
-                completedSpans += spans.map { EmbraceSpanData(spanData = it) }
-            }
+            completedSpans += spans.map { EmbraceSpanData(spanData = it) }
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
         }
@@ -19,16 +21,15 @@ internal class SpanSinkImpl : SpanSink {
     }
 
     override fun completedSpans(): List<EmbraceSpanData> {
-        synchronized(completedSpans) {
-            return completedSpans.toList()
-        }
+        val spansToReturn = completedSpans.size
+        return completedSpans.take(spansToReturn)
     }
 
     override fun flushSpans(): List<EmbraceSpanData> {
-        synchronized(completedSpans) {
-            val flushedSpans = completedSpans.toList()
-            completedSpans.clear()
-            return flushedSpans
+        synchronized(spansToFlush) {
+            spansToFlush.set(completedSpans())
+            completedSpans.removeAll(spansToFlush.get().toSet())
+            return spansToFlush.get()
         }
     }
 }

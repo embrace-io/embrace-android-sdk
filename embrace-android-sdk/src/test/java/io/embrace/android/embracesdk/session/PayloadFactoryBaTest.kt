@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
+import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import org.junit.Assert.assertEquals
@@ -110,9 +111,10 @@ internal class PayloadFactoryBaTest {
         service = createService()
         val now = clock.now()
         spanService.initializeService(now)
-        val msg = service.endBackgroundActivityWithCrash(initial, now, "crashId")
+        val msg = service.endPayloadWithCrash(ProcessState.BACKGROUND, now, initial, "crashId")
 
         // there should be 1 completed span: the session span
+        checkNotNull(msg)
         assertEquals(1, msg.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -121,9 +123,10 @@ internal class PayloadFactoryBaTest {
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
         spanService.initializeService(clock.now())
-        val msg = service.endBackgroundActivityWithState(initial, clock.now())
+        val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
 
         // there should be 1 completed span: the session span
+        checkNotNull(msg)
         assertEquals(1, msg.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -133,9 +136,10 @@ internal class PayloadFactoryBaTest {
         service = createService()
         spanService.initializeService(clock.now())
         clock.tick(1000L)
-        val msg = service.endBackgroundActivityWithState(initial, clock.now())
+        val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
 
         // there should be 1 completed span: the session span
+        checkNotNull(msg)
         assertEquals(1, msg.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -144,7 +148,7 @@ internal class PayloadFactoryBaTest {
     fun `foregrounding background activity flushes breadcrumbs`() {
         service = createService()
         clock.tick(1000L)
-        service.endBackgroundActivityWithState(initial, clock.now())
+        service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
         assertEquals(1, breadcrumbService.flushCount)
     }
 
@@ -167,9 +171,9 @@ internal class PayloadFactoryBaTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        return PayloadFactoryImpl(collator).apply {
+        return PayloadFactoryImpl(collator, configService).apply {
             if (createInitialSession) {
-                startBackgroundActivityWithState(clock.now(), true)
+                startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
             }
         }
     }

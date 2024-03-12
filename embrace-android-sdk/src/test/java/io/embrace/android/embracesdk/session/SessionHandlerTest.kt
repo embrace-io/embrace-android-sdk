@@ -39,6 +39,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
@@ -152,7 +153,7 @@ internal class SessionHandlerTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        payloadFactory = PayloadFactoryImpl(payloadMessageCollator)
+        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, configService)
     }
 
     @After
@@ -167,7 +168,7 @@ internal class SessionHandlerTest {
         sessionLocalConfig = SessionLocalConfig()
         // this is needed so session handler creates automatic session stopper
 
-        payloadFactory.startSessionWithState(now, true)
+        payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, now, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }
@@ -184,7 +185,13 @@ internal class SessionHandlerTest {
             isColdStart = true
         )
 
-        val session = payloadFactory.endSessionWithCrash(initial, clock.now(), crashId).session
+        val msg = payloadFactory.endPayloadWithCrash(
+            ProcessState.FOREGROUND,
+            clock.now(),
+            initial,
+            crashId
+        )
+        val session = checkNotNull(msg).session
 
         // when crashing, the following calls should not be made, this is because since we're
         // about to crash we can save some time on not doing these //
@@ -225,7 +232,7 @@ internal class SessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        val msg = payloadFactory.endSessionWithState(initial, 10L)
+        val msg = payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
         assertSpanInSessionMessage(msg)
     }
 
@@ -233,7 +240,7 @@ internal class SessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        payloadFactory.endSessionWithState(initial, 10L)
+        payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
         assertEquals(0, userService.clearedCount)
     }
 
@@ -244,7 +251,12 @@ internal class SessionHandlerTest {
         spanService.recordSpan("test-span") {
             // do nothing
         }
-        val msg = payloadFactory.endSessionWithCrash(initial, clock.now(), "fakeCrashId")
+        val msg = payloadFactory.endPayloadWithCrash(
+            ProcessState.FOREGROUND,
+            clock.now(),
+            initial,
+            "fakeCrashId"
+        )
         assertSpanInSessionMessage(msg)
     }
 
@@ -261,7 +273,14 @@ internal class SessionHandlerTest {
         assertEquals(1, spanSink.completedSpans().size)
 
         clock.tick(15000L)
-        val sessionMessage = payloadFactory.endSessionWithState(initial, clock.now())
+        val sessionMessage =
+            checkNotNull(
+                payloadFactory.endPayloadWithState(
+                    ProcessState.FOREGROUND,
+                    clock.now(),
+                    initial
+                )
+            )
         val spans = checkNotNull(sessionMessage.spans)
         assertEquals(2, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
@@ -274,12 +293,12 @@ internal class SessionHandlerTest {
         spanService.recordSpan("test-span") {}
         assertEquals(1, spanSink.completedSpans().size)
 
-        payloadFactory.endSessionWithCrash(initial, clock.now(), "crashId")
+        payloadFactory.endPayloadWithCrash(ProcessState.FOREGROUND, clock.now(), initial, "crashId")
         assertEquals(0, spanSink.completedSpans().size)
     }
 
     private fun startFakeSession(): Session {
-        return payloadFactory.startSessionWithState(now, true)
+        return checkNotNull(payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, now, true))
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

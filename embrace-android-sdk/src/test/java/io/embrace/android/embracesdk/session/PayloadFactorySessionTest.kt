@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.mockk.clearAllMocks
@@ -69,7 +70,7 @@ internal class PayloadFactorySessionTest {
         initializeSessionService()
         val coldStart = true
 
-        service.startSessionWithState(456, coldStart)
+        service.startPayloadWithState(ProcessState.FOREGROUND, 456, coldStart)
         assertNull(deliveryService.lastSentCachedSession)
     }
 
@@ -83,6 +84,6 @@ internal class PayloadFactorySessionTest {
         isActivityInBackground: Boolean = true
     ) {
         processStateService.isInBackground = isActivityInBackground
-        service = PayloadFactoryImpl(mockk(relaxed = true))
+        service = PayloadFactoryImpl(mockk(relaxed = true), FakeConfigService())
     }
 }

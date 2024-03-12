@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -171,16 +170,6 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadFactory.manualSessionEndCount)
         assertEquals(0, payloadFactory.manualSessionStartCount)
         assertEquals(0, deliveryService.lastSentSessions.size)
-    }
-
-    @Test
-    fun `test background activity capture disabled`() {
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = false)
-        createOrchestrator(false)
-        orchestrator.onBackground(TIMESTAMP)
-        assertEquals(2, memoryCleanerService.callCount)
-        assertTrue(payloadFactory.startBaTimestamps.isEmpty())
-        assertEquals(1, deliveryService.lastSentSessions.size)
     }
 
     @Test

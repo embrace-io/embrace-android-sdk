@@ -156,7 +156,7 @@ internal data class EnvelopeResource(
 
     /* The total capacity of internal storage for the whole device. Previous name: d.ms */
     @Json(name = "disk_total_capacity")
-    val diskTotalCapacity: kotlin.Long? = null,
+    val diskTotalCapacity: Long? = null,
 
     /* A hardcoded string representing the operating system in use. Previous name: d.os */
     @Json(name = "os_type")

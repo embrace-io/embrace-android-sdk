@@ -162,6 +162,11 @@ openApiGenerate {
             models: ""
     ])
 
+    // replace data with envelopeData to avoid conflict with kotlin keyword
+    nameMappings = [
+            "data": "envelopeData",
+    ]
+
     // see further options for configuring kotlin codegen here:
     // https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/kotlin.md
     additionalProperties = [

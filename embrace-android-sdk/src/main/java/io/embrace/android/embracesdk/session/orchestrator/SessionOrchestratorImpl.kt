@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.ConfigGate
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -19,7 +18,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 
 internal class SessionOrchestratorImpl(
-    private val processStateService: ProcessStateService,
+    processStateService: ProcessStateService,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
@@ -43,15 +42,8 @@ internal class SessionOrchestratorImpl(
         else -> ProcessState.FOREGROUND
     }
 
-    private val backgroundActivityGate = ConfigGate(payloadFactory) {
-        configService.isBackgroundActivityCaptureEnabled()
-    }
-    private val backgroundActivityFactory: PayloadFactory?
-        get() = backgroundActivityGate.getService()
-
     init {
         processStateService.addListener(this)
-        configService.addListener(backgroundActivityGate)
         createInitialSession()
     }
 
@@ -61,11 +53,7 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.INITIAL,
             timestamp = timestamp,
             newSessionAction = {
-                if (state == ProcessState.BACKGROUND) {
-                    backgroundActivityFactory?.startBackgroundActivityWithState(timestamp, true)
-                } else {
-                    payloadFactory.startSessionWithState(timestamp, true)
-                }
+                payloadFactory.startPayloadWithState(state, timestamp, true)
             }
         )
     }
@@ -75,10 +63,10 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.ON_FOREGROUND,
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
-                backgroundActivityFactory?.endBackgroundActivityWithState(initial, timestamp)
+                payloadFactory.endPayloadWithState(ProcessState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startSessionWithState(timestamp, coldStart)
+                payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, timestamp, coldStart)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnForeground(state)
@@ -91,10 +79,10 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.ON_BACKGROUND,
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
-                payloadFactory.endSessionWithState(initial, timestamp)
+                payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
-                backgroundActivityFactory?.startBackgroundActivityWithState(timestamp, false)
+                payloadFactory.startPayloadWithState(ProcessState.BACKGROUND, timestamp, false)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
@@ -109,7 +97,7 @@ internal class SessionOrchestratorImpl(
             timestamp = timestamp,
             clearUserInfo = clearUserInfo,
             oldSessionAction = { initial: Session ->
-                payloadFactory.endSessionWithManual(initial, timestamp)
+                payloadFactory.endSessionWithManual(timestamp, initial)
             },
             newSessionAction = {
                 payloadFactory.startSessionWithManual(timestamp)
@@ -131,15 +119,7 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.CRASH,
             timestamp = timestamp,
             oldSessionAction = { initial: Session ->
-                if (processStateService.isInBackground) {
-                    backgroundActivityFactory?.endBackgroundActivityWithCrash(
-                        initial,
-                        timestamp,
-                        crashId
-                    )
-                } else {
-                    payloadFactory.endSessionWithCrash(initial, timestamp, crashId)
-                }
+                payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             }
         )
     }
@@ -147,7 +127,7 @@ internal class SessionOrchestratorImpl(
     override fun reportBackgroundActivityStateChange() {
         if (state == ProcessState.BACKGROUND) {
             val initial = activeSession ?: return
-            scheduleBackgroundActivitySave(initial)
+            scheduleBackgroundActivitySave(ProcessState.BACKGROUND, initial)
         }
     }
 
@@ -254,20 +234,20 @@ internal class SessionOrchestratorImpl(
             ProcessState.FOREGROUND -> {
                 periodicSessionCacher.start {
                     synchronized(lock) {
-                        payloadFactory.snapshotSession(newState, clock.now())?.apply {
+                        payloadFactory.snapshotPayload(endProcessState, clock.now(), newState)?.apply {
                             deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
                         }
                     }
                 }
             }
-            ProcessState.BACKGROUND -> scheduleBackgroundActivitySave(newState)
+            ProcessState.BACKGROUND -> scheduleBackgroundActivitySave(endProcessState, newState)
         }
     }
 
-    private fun scheduleBackgroundActivitySave(initial: Session) {
+    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: Session) {
         periodicBackgroundActivityCacher.scheduleSave {
             synchronized(lock) {
-                backgroundActivityFactory?.snapshotBackgroundActivity(initial, clock.now())?.apply {
+                payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
                     deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
                 }
             }

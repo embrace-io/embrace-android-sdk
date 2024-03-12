@@ -89,7 +89,7 @@ internal class SessionModuleImpl(
     }
 
     override val payloadFactory: PayloadFactory by singleton {
-        PayloadFactoryImpl(payloadMessageCollator)
+        PayloadFactoryImpl(payloadMessageCollator, essentialServiceModule.configService)
     }
 
     private val boundaryDelegate by singleton {

@@ -12,6 +12,7 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     var initializedCallCount = 0
     var addedEvents = mutableListOf<SpanEventData>()
     var addedAttributes = mutableListOf<SpanAttributeData>()
+    var spanData = listOf<EmbraceSpanData>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -32,7 +33,7 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
-        return emptyList()
+        return spanData
     }
 
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {

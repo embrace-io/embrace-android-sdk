@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
 import android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
@@ -18,7 +20,7 @@ internal class EmbracePowerSaveModeService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    private val powerManager: PowerManager?
+    powerManagerProvider: Provider<PowerManager?>
 ) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
 
     private companion object {
@@ -31,20 +33,26 @@ internal class EmbracePowerSaveModeService(
 
     private val powerSaveModeIntervals = mutableListOf<PowerChange>()
 
+    private val powerManager: PowerManager? by lazy(powerManagerProvider)
+
     init {
         registerPowerSaveModeReceiver()
     }
 
     private fun registerPowerSaveModeReceiver() {
         backgroundWorker.submit {
-            try {
-                context.registerReceiver(this, powerSaveIntentFilter)
-                logDeveloper(tag, "registered power save mode changed")
-            } catch (ex: Exception) {
-                InternalStaticEmbraceLogger.logError(
-                    "Failed to register: $tag broadcast receiver. Power save mode status will be unavailable.",
-                    ex
-                )
+            Systrace.traceSynchronous("power-service-registration") {
+                try {
+                    if (powerManager != null) {
+                        context.registerReceiver(this, powerSaveIntentFilter)
+                        logDeveloper(tag, "registered power save mode changed")
+                    }
+                } catch (ex: Exception) {
+                    InternalStaticEmbraceLogger.logError(
+                        "Failed to register: $tag broadcast receiver. Power save mode status will be unavailable.",
+                        ex
+                    )
+                }
             }
         }
     }

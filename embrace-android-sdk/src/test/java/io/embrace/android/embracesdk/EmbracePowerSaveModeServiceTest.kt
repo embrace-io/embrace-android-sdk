@@ -67,9 +67,8 @@ internal class EmbracePowerSaveModeServiceTest {
         service = EmbracePowerSaveModeService(
             context,
             worker,
-            fakeClock,
-            powerManager
-        )
+            fakeClock
+        ) { powerManager }
     }
 
     /**

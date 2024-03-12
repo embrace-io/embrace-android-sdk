@@ -28,9 +28,7 @@ internal class SpanSinkImpl : SpanSink {
     override fun flushSpans(): List<EmbraceSpanData> {
         synchronized(spansToFlush) {
             spansToFlush.set(completedSpans())
-            repeat(spansToFlush.get().size) {
-                completedSpans.removeAll(spansToFlush.get().toSet())
-            }
+            completedSpans.removeAll(spansToFlush.get().toSet())
             return spansToFlush.get()
         }
     }

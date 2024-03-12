@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.capture.envelope.LogEnvelopeSource
 import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
-import io.embrace.android.embracesdk.capture.envelope.log.LogSourceImpl
+import io.embrace.android.embracesdk.capture.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
@@ -40,8 +40,10 @@ internal class PayloadModuleImpl(
         )
     }
 
-    private val logSource by singleton {
-        LogSourceImpl()
+    private val logPayloadSource by singleton {
+        LogPayloadSourceImpl(
+            otelModule.logSink
+        )
     }
 
     override val sessionEnvelopeSource: SessionEnvelopeSource by singleton {
@@ -49,6 +51,6 @@ internal class PayloadModuleImpl(
     }
 
     override val logEnvelopeSource: LogEnvelopeSource by singleton {
-        LogEnvelopeSource(metadataSource, resourceSource, logSource)
+        LogEnvelopeSource(metadataSource, resourceSource, logPayloadSource)
     }
 }

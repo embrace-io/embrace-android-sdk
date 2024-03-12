@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import io.opentelemetry.sdk.logs.data.LogRecordData
+import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
 
-internal fun LogRecordData.toNewPayload(): Log = Log(
-    timeUnixNano = observedTimestampEpochNanos,
-    severityNumber = severity.severityNumber,
+internal fun EmbraceLogRecordData.toNewPayload(): Log = Log(
+    timeUnixNano = timeUnixNanos,
+    severityNumber = severityNumber,
     severityText = severityText,
-    body = LogBody(body.asString()),
-    attributes = attributes.asMap().map { (key, value) -> Attribute(key.key, value.toString()) },
-    traceId = spanContext.traceId,
-    spanId = spanContext.spanId,
+    body = LogBody(body.message),
+    attributes = attributes.toNewPayload(),
+    traceId = traceId,
+    spanId = spanId,
 )
+
+internal fun Map<String, Any>.toNewPayload(): List<Attribute> =
+    map { (key, value) -> Attribute(key, value.toString()) }

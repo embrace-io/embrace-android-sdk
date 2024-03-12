@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.capture.envelope
 
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeLogSource
+import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -14,7 +14,7 @@ internal class LogEnvelopeSourceTest {
     fun getEnvelope() {
         val metadataSource = FakeEnvelopeMetadataSource()
         val resourceSource = FakeEnvelopeResourceSource()
-        val logSource = FakeLogSource()
+        val logSource = FakeLogPayloadSource()
         val source = LogEnvelopeSource(
             metadataSource,
             resourceSource,
@@ -23,7 +23,7 @@ internal class LogEnvelopeSourceTest {
         val payload = source.getEnvelope(SessionSnapshotType.NORMAL_END)
         assertEquals(metadataSource.metadata, payload.metadata)
         assertEquals(resourceSource.resource, payload.resource)
-        assertEquals(logSource.log, payload.data)
+        assertEquals(logSource.logs, payload.data)
 
         // future fields that need populating:
         assertNull(payload.type)

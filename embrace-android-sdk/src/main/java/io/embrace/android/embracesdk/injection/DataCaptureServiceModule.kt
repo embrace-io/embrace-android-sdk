@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import java.util.concurrent.Executor
 
 /**
  * This modules provides services that capture data from within an application. It could be argued
@@ -92,6 +91,11 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     private val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
     private val configService = essentialServiceModule.configService
+    private val powerManagerProvider = {
+        Systrace.traceSynchronous("power-manager-load") {
+            systemServiceModule.powerManager
+        }
+    }
 
     override val memoryService: MemoryService by singleton {
         if (configService.autoDataCaptureBehavior.isMemoryServiceEnabled()) {
@@ -114,7 +118,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                     coreModule.context,
                     backgroundWorker,
                     initModule.clock,
-                    systemServiceModule.powerManager
+                    powerManagerProvider
                 )
             } else {
                 NoOpPowerSaveModeService()
@@ -147,19 +151,12 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val thermalStatusService: ThermalStatusService by singleton {
         Systrace.traceSynchronous("thermal-service-init") {
             if (configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() && versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-                // Android API only accepts an executor. We don't want to directly expose those
-                // to everything in the codebase so we decorate the BackgroundWorker here as an
-                // alternative
                 val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-                val executor = Executor {
-                    backgroundWorker.submit(runnable = it)
-                }
-
                 EmbraceThermalStatusService(
-                    executor,
+                    backgroundWorker,
                     initModule.clock,
                     coreModule.logger,
-                    systemServiceModule.powerManager
+                    powerManagerProvider
                 )
             } else {
                 NoOpThermalStatusService()

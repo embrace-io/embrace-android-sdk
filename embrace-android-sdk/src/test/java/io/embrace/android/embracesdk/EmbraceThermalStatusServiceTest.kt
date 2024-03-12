@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk
 
 import android.os.PowerManager
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.ThermalState
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -17,11 +18,10 @@ internal class EmbraceThermalStatusServiceTest {
     @Before
     fun setUp() {
         service = EmbraceThermalStatusService(
-            MoreExecutors.directExecutor(),
+            BackgroundWorker(BlockableExecutorService()),
             { 0 },
-            InternalEmbraceLogger(),
-            mockPowerManager()
-        )
+            InternalEmbraceLogger()
+        ) { mockPowerManager() }
     }
 
     @Test

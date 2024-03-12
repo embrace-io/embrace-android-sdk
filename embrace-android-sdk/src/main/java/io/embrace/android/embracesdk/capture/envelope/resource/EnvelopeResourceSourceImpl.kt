@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
 
 internal class EnvelopeResourceSourceImpl(
+    private val appInfo: AppInfo,
     private val applicationInfo: ApplicationInfo,
     private val buildInfo: BuildInfo,
     private val packageInfo: PackageInfo,
@@ -32,11 +33,11 @@ internal class EnvelopeResourceSourceImpl(
             environment = if (applicationInfo.isDebug()) ENVIRONMENT_DEV else ENVIRONMENT_PROD,
             sdkVersion = BuildConfig.VERSION_NAME,
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
-            hostedPlatformVersion = hosted.hostedPlatformVersion,
-            reactNativeBundleId = hosted.reactNativeBundleId,
-            javascriptPatchNumber = hosted.javaScriptPatchNumber,
-            hostedSdkVersion = hosted.hostedSdkVersion,
-            unityBuildId = hosted.buildGuid,
+            hostedPlatformVersion = appInfo.hostedPlatformVersion,
+            reactNativeBundleId = appInfo.reactNativeBundleId,
+            javascriptPatchNumber = appInfo.javaScriptPatchNumber,
+            hostedSdkVersion = appInfo.hostedSdkVersion,
+            unityBuildId = appInfo.buildGuid,
             deviceManufacturer = device.manufacturer,
             deviceModel = device.model,
             deviceArchitecture = deviceArchitecture.architecture,

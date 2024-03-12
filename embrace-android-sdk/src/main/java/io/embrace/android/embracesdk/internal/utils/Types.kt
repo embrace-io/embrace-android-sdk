@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.injection.PayloadModule
 import io.embrace.android.embracesdk.injection.SdkObservabilityModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
@@ -227,6 +228,16 @@ internal typealias CrashModuleSupplier = (
     dataContainerModule: DataContainerModule,
     androidServicesModule: AndroidServicesModule
 ) -> CrashModule
+
+/**
+ * Function that returns an instance of [PayloadModule]. Matches the signature of the constructor for [PayloadModuleImpl]
+ */
+internal typealias PayloadModuleSupplier = (
+    essentialServiceModule: EssentialServiceModule,
+    nativeModule: NativeModule,
+    otelModule: OpenTelemetryModule,
+    sdkObservabilityModule: SdkObservabilityModule
+) -> PayloadModule
 
 /**
  * Function that returns an instance of T meant to represent a provider/supplier that does not require any input parameters

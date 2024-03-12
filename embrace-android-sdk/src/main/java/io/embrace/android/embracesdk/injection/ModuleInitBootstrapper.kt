@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.utils.DataSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
+import io.embrace.android.embracesdk.internal.utils.PayloadModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.SdkObservabilityModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
@@ -61,6 +62,7 @@ internal class ModuleInitBootstrapper(
     private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
     private val sessionModuleSupplier: SessionModuleSupplier = ::SessionModuleImpl,
     private val crashModuleSupplier: CrashModuleSupplier = ::CrashModuleImpl,
+    private val payloadModuleSupplier: PayloadModuleSupplier = ::PayloadModuleImpl,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -108,6 +110,9 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var crashModule: CrashModule
+        private set
+
+    lateinit var payloadModule: PayloadModule
         private set
 
     private val asyncInitTask = AtomicReference<Future<*>?>(null)
@@ -418,6 +423,15 @@ internal class ModuleInitBootstrapper(
                             anrModule,
                             dataContainerModule,
                             androidServicesModule
+                        )
+                    }
+
+                    payloadModule = init(PayloadModule::class) {
+                        payloadModuleSupplier(
+                            essentialServiceModule,
+                            nativeModule,
+                            openTelemetryModule,
+                            sdkObservabilityModule
                         )
                     }
 

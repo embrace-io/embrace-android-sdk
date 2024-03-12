@@ -45,6 +45,7 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertTrue(dataCaptureServiceModule is DataCaptureServiceModuleImpl)
             assertTrue(deliveryModule is DeliveryModuleImpl)
+            assertTrue(payloadModule is PayloadModuleImpl)
         }
     }
 

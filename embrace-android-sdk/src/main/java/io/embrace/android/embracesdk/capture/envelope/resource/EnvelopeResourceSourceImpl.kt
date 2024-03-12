@@ -31,7 +31,7 @@ internal class EnvelopeResourceSourceImpl(
             buildFlavor = buildInfo.buildFlavor,
             environment = if (applicationInfo.isDebug()) ENVIRONMENT_DEV else ENVIRONMENT_PROD,
             sdkVersion = BuildConfig.VERSION_NAME,
-            sdkSimpleVersion = BuildConfig.VERSION_CODE.toInt(),
+            sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
             hostedPlatformVersion = hosted.hostedPlatformVersion,
             reactNativeBundleId = hosted.reactNativeBundleId,
             javascriptPatchNumber = hosted.javaScriptPatchNumber,

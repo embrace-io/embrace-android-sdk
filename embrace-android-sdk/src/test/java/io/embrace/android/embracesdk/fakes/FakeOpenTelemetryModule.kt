@@ -9,18 +9,18 @@ import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 
 internal class FakeOpenTelemetryModule(
-    override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan()
+    override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
+    override val spanSink: SpanSink = SpanSinkImpl()
 ) : OpenTelemetryModule {
     override val openTelemetryConfiguration: OpenTelemetryConfiguration
         get() = TODO()
     override val spanRepository: SpanRepository
-        get() = TODO()
-    override val spanSink: SpanSink
         get() = TODO()
     override val tracer: Tracer
         get() = TODO()

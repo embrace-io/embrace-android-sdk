@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 internal class LogPayloadSourceImpl(
     private val logSink: LogSink
 ) : LogPayloadSource {
+
     override fun getLogPayload(): LogPayload {
         return LogPayload(
             logs = logSink.completedLogs().map(EmbraceLogRecordData::toNewPayload)

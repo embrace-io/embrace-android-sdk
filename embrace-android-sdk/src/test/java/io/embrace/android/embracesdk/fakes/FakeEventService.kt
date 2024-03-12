@@ -41,7 +41,7 @@ internal class FakeEventService : EventService {
         TODO("Not yet implemented")
     }
 
-    override fun findEventIdsForSession(startTime: Long, endTime: Long): List<String> {
+    override fun findEventIdsForSession(): List<String> {
         return emptyList()
     }
 

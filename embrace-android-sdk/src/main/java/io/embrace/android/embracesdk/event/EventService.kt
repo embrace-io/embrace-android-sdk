@@ -96,11 +96,9 @@ internal interface EventService : Closeable {
     /**
      * Finds all event IDs (event UUIDs) within the given time window.
      *
-     * @param startTime the start time of the window to search
-     * @param endTime   the end time of the window to search
      * @return the list of story IDs within the specified range
      */
-    fun findEventIdsForSession(startTime: Long, endTime: Long): List<String>
+    fun findEventIdsForSession(): List<String>
 
     /**
      * Gets all of the IDs of the currently active moments.

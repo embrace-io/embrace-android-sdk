@@ -354,63 +354,27 @@ internal class EmbraceEventServiceTest {
     }
 
     @Test
-    fun `verify find event ids using findEventIdsForSession()`() {
-        // Simulate the session moving forward in time, and having new Moments added and us retrieving the eventIds given the new time range
-        // Note that because of how the underlying cache works, if the size of the eventIds collection didn't change from the last time
-        // this method was invoked, the previously cached value will be returned. So while calling this method with arbitrary start/end
-        // times can return wrong values, how it is being used, that won't happen. This test will simulate the EXPECTED usage rather than
-        // the arbitrary usage.
-
-        val sessionBeginTime = 100L
-        fakeClock.setCurrentTime(sessionBeginTime)
-        eventService.startEvent("first")
-        fakeClock.setCurrentTime(fakeClock.now() + 1L)
-
-        // after a new Moment is logged and the time ticks forward, we should see it reflected in the cache
-        assertEquals(1, eventService.findEventIdsForSession(sessionBeginTime, fakeClock.now()).size)
-        fakeClock.setCurrentTime(fakeClock.now() + 50L)
-        eventService.startEvent("second")
-        fakeClock.setCurrentTime(fakeClock.now() + 1L)
-        eventService.startEvent("third")
-
-        // the new time range will only return 2 of the logged moments because the clock hasn't ticked forward
-        assertEquals(2, eventService.findEventIdsForSession(sessionBeginTime, fakeClock.now()).size)
-        fakeClock.setCurrentTime(fakeClock.now() + 1L)
-
-        // After the clock ticks forward, because of the caching, we will still only return 2. This is a perf optimization that will be
-        // OK in practice because we should only bust the cache if there's a new moment - this check is just to verify the caching works
-        // because it won't really happen in practice
-        assertEquals(2, eventService.findEventIdsForSession(sessionBeginTime, fakeClock.now()).size)
-
-        // After logging another moment, the cache is busted so after the clock ticks forward, we get all 4 moments
-        eventService.startEvent("fourth")
-        fakeClock.setCurrentTime(fakeClock.now() + 1L)
-        assertEquals(4, eventService.findEventIdsForSession(sessionBeginTime, fakeClock.now()).size)
-    }
-
-    @Test
-    fun `verify close clears the existing events`() {
-        eventService.startEvent("event-yeah")
-        eventService.close()
-        assertTrue(eventService.activeEvents.isEmpty())
-    }
-
-    @Test
     fun `verify clean collections`() {
         val time = 123L
         fakeClock.setCurrentTime(time)
         val eventName = "event-to-start"
+        val secondEventName = "another-event-to-start"
         val identifier = "identifier"
 
         eventService.startEvent(eventName, identifier)
+        eventService.startEvent(secondEventName, identifier)
+        eventService.endEvent(secondEventName, identifier)
         // assert that active events is not empty
         assertTrue(eventService.activeEvents.isNotEmpty())
-        assertTrue(eventService.findEventIdsForSession(time - 1, time + 1).isNotEmpty())
+        assertTrue(eventService.findEventIdsForSession().isNotEmpty())
 
-        eventService.cleanCollections()
+        eventService.close()
+        assertEquals("event-to-start#identifier", eventService.activeEvents.keys.single())
+        eventService.endEvent(eventName, identifier)
 
+        eventService.close()
         assertTrue(eventService.activeEvents.isEmpty())
-        assertTrue(eventService.findEventIdsForSession(time - 1, time + 1).isEmpty())
+        assertTrue(eventService.findEventIdsForSession().isEmpty())
     }
 
     @Test

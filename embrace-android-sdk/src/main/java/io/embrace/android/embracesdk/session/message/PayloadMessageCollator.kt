@@ -121,10 +121,7 @@ internal class PayloadMessageCollator(
         return initial.copy(
             endTime = endTime,
             eventIds = captureDataSafely {
-                eventService.findEventIdsForSession(
-                    startTime,
-                    endTime
-                )
+                eventService.findEventIdsForSession()
             },
             infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
             warningLogIds = captureDataSafely {

@@ -55,7 +55,7 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     val spans: List<EmbraceSpanData>? = null,
 
     @Json(name = "v")
-    val version: Int = ApiClient.MESSAGE_VERSION,
+    val version: Int? = ApiClient.MESSAGE_VERSION,
 
     /*
      * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate

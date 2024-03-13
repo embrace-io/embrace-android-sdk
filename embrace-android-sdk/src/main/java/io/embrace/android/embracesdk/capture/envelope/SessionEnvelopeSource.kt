@@ -17,8 +17,8 @@ internal class SessionEnvelopeSource(
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
-            null,
-            null,
+            "0.1.0",
+            "session",
             sessionPayloadSource.getSessionPayload(endType)
         )
     }

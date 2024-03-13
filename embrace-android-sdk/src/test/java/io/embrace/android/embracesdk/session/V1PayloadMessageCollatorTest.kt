@@ -104,6 +104,7 @@ internal class V1PayloadMessageCollatorTest {
                 startMsg,
                 15000000000,
                 LifeEventType.BKGND_STATE,
+                SessionSnapshotType.NORMAL_END,
                 "crashId"
             )
         )
@@ -128,8 +129,8 @@ internal class V1PayloadMessageCollatorTest {
                 startMsg,
                 15000000000,
                 LifeEventType.STATE,
-                "crashId",
-                SessionSnapshotType.NORMAL_END
+                SessionSnapshotType.NORMAL_END,
+                "crashId"
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)

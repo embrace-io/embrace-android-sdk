@@ -162,9 +162,32 @@ openApiGenerate {
             models: ""
     ])
 
-    // replace data with envelopeData to avoid conflict with kotlin keyword
+    // replace data with envelopeData to avoid conflict with kotlin keyword (avoids having to use backticks)
     nameMappings = [
             "data": "envelopeData",
+    ]
+
+    // adding typeMappings and languageSpecificPrimitives avoids classes with full import paths (like kotlin.String)
+    typeMappings = [
+            "double": "Double",
+            "number": "Double",
+            "string": "String",
+            "array": "List",
+            "boolean": "Boolean",
+            "integer": "Int",
+            "long": "Long",
+            "map": "Map"
+    ]
+
+    languageSpecificPrimitives = [
+            "String",
+            "Double",
+            "Array",
+            "List",
+            "Int",
+            "Boolean",
+            "Long",
+            "Map"
     ]
 
     // see further options for configuring kotlin codegen here:

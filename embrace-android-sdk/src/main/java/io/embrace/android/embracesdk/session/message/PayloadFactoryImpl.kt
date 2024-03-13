@@ -9,9 +9,15 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class PayloadFactoryImpl(
     private val v1payloadMessageCollator: V1PayloadMessageCollator,
-    @Suppress("UnusedPrivateProperty") private val v2payloadMessageCollator: V2PayloadMessageCollator,
+    private val v2payloadMessageCollator: V2PayloadMessageCollator,
     private val configService: ConfigService
 ) : PayloadFactory {
+
+    private val collator: PayloadMessageCollator
+        get() = when {
+            configService.sessionBehavior.useV2Payload() -> v2payloadMessageCollator
+            else -> v1payloadMessageCollator
+        }
 
     override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean) =
         when (state) {
@@ -42,7 +48,7 @@ internal class PayloadFactoryImpl(
         }
 
     override fun startSessionWithManual(timestamp: Long): Session {
-        return v1payloadMessageCollator.buildInitialSession(
+        return collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
                 LifeEventType.MANUAL,
@@ -52,7 +58,7 @@ internal class PayloadFactoryImpl(
     }
 
     override fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage {
-        return v1payloadMessageCollator.buildFinalSessionMessage(
+        return collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
                 endTime = timestamp,
@@ -63,7 +69,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
-        return v1payloadMessageCollator.buildInitialSession(
+        return collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 coldStart,
                 LifeEventType.STATE,
@@ -83,7 +89,7 @@ internal class PayloadFactoryImpl(
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        return v1payloadMessageCollator.buildInitialSession(
+        return collator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
@@ -93,7 +99,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endSessionWithState(initial: Session, timestamp: Long): SessionMessage {
-        return v1payloadMessageCollator.buildFinalSessionMessage(
+        return collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
                 endTime = timestamp,
@@ -110,7 +116,7 @@ internal class PayloadFactoryImpl(
 
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        return v1payloadMessageCollator.buildFinalBackgroundActivityMessage(
+        return collator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp - 1,
@@ -125,7 +131,7 @@ internal class PayloadFactoryImpl(
         timestamp: Long,
         crashId: String
     ): SessionMessage {
-        return v1payloadMessageCollator.buildFinalSessionMessage(
+        return collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
                 endTime = timestamp,
@@ -144,7 +150,7 @@ internal class PayloadFactoryImpl(
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
-        return v1payloadMessageCollator.buildFinalBackgroundActivityMessage(
+        return collator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp,
@@ -159,7 +165,7 @@ internal class PayloadFactoryImpl(
      * Called when the session is persisted every 2s to cache its state.
      */
     private fun snapshotSession(initial: Session, timestamp: Long): SessionMessage {
-        return v1payloadMessageCollator.buildFinalSessionMessage(
+        return collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
                 endTime = timestamp,
@@ -173,7 +179,7 @@ internal class PayloadFactoryImpl(
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
-        return v1payloadMessageCollator.buildFinalBackgroundActivityMessage(
+        return collator.buildFinalBackgroundActivityMessage(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp,

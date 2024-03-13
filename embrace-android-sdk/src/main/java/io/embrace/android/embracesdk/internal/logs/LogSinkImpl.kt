@@ -26,9 +26,10 @@ internal class LogSinkImpl : LogSink {
 
     override fun flushLogs(max: Int?): List<EmbraceLogRecordData> {
         synchronized(flushLock) {
+            val currentSize = storedLogs.size
             val maxIndex = max?.let {
-                minOf(storedLogs.size, it)
-            } ?: storedLogs.size
+                minOf(currentSize, it)
+            } ?: currentSize
             val flushedLogs = storedLogs.take(maxIndex)
             storedLogs.removeAll(flushedLogs.toSet())
             return flushedLogs

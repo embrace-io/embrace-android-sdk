@@ -48,13 +48,13 @@ internal class AppStartupTraceEmitter(
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
-        processCreateRequestedMs = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
-            timestampAtDeviceStart + Process.getStartElapsedRealtime()
+        processCreateRequestedMs = if (versionChecker.isAtLeast(VERSION_CODES.TIRAMISU)) {
+            timestampAtDeviceStart + Process.getStartRequestedElapsedRealtime()
         } else {
             null
         }
-        processCreatedMs = if (versionChecker.isAtLeast(VERSION_CODES.TIRAMISU)) {
-            timestampAtDeviceStart + Process.getStartRequestedElapsedRealtime()
+        processCreatedMs = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
+            timestampAtDeviceStart + Process.getStartElapsedRealtime()
         } else {
             null
         }
@@ -134,6 +134,7 @@ internal class AppStartupTraceEmitter(
         }
     }
 
+    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun recordStartup() {
         val startupService = startupServiceProvider() ?: return
         val sdkInitStartMs = startupService.getSdkInitStartMs()

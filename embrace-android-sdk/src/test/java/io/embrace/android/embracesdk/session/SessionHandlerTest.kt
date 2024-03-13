@@ -42,7 +42,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
@@ -135,7 +135,7 @@ internal class SessionHandlerTest {
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
-        val payloadMessageCollator = PayloadMessageCollatorImpl(
+        val payloadMessageCollator = V1PayloadMessageCollator(
             configService,
             metadataService,
             eventService,

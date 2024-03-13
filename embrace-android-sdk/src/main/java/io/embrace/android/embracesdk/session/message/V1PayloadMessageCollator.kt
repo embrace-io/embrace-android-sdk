@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
-internal class PayloadMessageCollatorImpl(
+internal class V1PayloadMessageCollator(
     private val configService: ConfigService,
     private val metadataService: MetadataService,
     private val eventService: EventService,

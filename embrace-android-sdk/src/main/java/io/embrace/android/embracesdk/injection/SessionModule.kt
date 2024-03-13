@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -44,7 +44,7 @@ internal class SessionModuleImpl(
 ) : SessionModule {
 
     override val payloadMessageCollator: PayloadMessageCollator by singleton {
-        PayloadMessageCollatorImpl(
+        V1PayloadMessageCollator(
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
             dataContainerModule.eventService,

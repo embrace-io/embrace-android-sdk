@@ -34,7 +34,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -153,7 +153,7 @@ internal class PayloadFactoryBaTest {
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
-        val collator = PayloadMessageCollatorImpl(
+        val collator = V1PayloadMessageCollator(
             configService,
             metadataService,
             eventService,

@@ -8,8 +8,10 @@ import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -42,6 +44,7 @@ internal class AppStartupTraceEmitter(
 ) {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
+    private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
@@ -110,6 +113,12 @@ internal class AppStartupTraceEmitter(
         }
     }
 
+    fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
+        additionalTrackedIntervals.add(
+            TrackedInterval(name = name, startTimeMs = startTimeMs, endTimeMs = endTimeMs)
+        )
+    }
+
     private fun dataCollectionComplete() {
         if (!startupRecorded.get()) {
             synchronized(startupRecorded) {
@@ -147,8 +156,9 @@ internal class AppStartupTraceEmitter(
         if (processStartTimeMs != null && traceEndTimeMs != null) {
             val gap = applicationActivityCreationGap() ?: duration(sdkInitEndMs, startupActivityInitStartMs)
             if (gap != null) {
-                if (!spanService.initialized()) {
+                val startupTrace: EmbraceSpan? = if (!spanService.initialized()) {
                     logger.logWarning("Startup trace not recorded because the spans service is not initialized")
+                    null
                 } else if (gap <= SDK_AND_ACTIVITY_INIT_GAP) {
                     recordColdTtid(
                         traceStartTimeMs = processStartTimeMs,
@@ -172,8 +182,25 @@ internal class AppStartupTraceEmitter(
                         )
                     }
                 }
+
+                if (startupTrace != null) {
+                    recordAdditionalIntervals(startupTrace)
+                }
             }
         }
+    }
+
+    private fun recordAdditionalIntervals(startupTrace: EmbraceSpan) {
+        do {
+            additionalTrackedIntervals.poll()?.let { trackedInterval ->
+                spanService.recordCompletedSpan(
+                    name = trackedInterval.name,
+                    parent = startupTrace,
+                    startTimeMs = trackedInterval.startTimeMs,
+                    endTimeMs = trackedInterval.endTimeMs,
+                )
+            }
+        } while (additionalTrackedIntervals.isNotEmpty())
     }
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
@@ -186,12 +213,12 @@ internal class AppStartupTraceEmitter(
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
         processCreateDelay: Long?,
-    ) {
-        if (!startupRecorded.get()) {
+    ): EmbraceSpan? {
+        return if (!startupRecorded.get()) {
             spanService.startSpan(
                 name = "cold-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
-            )?.run {
+            )?.apply {
                 processCreateDelay?.let { delay ->
                     addAttribute("process-create-delay-ms".toEmbraceAttributeName(), delay.toString())
                 }
@@ -246,6 +273,8 @@ internal class AppStartupTraceEmitter(
                     )
                 }
             }
+        } else {
+            null
         }
     }
 
@@ -256,12 +285,12 @@ internal class AppStartupTraceEmitter(
         processCreateDelay: Long?,
         processToActivityCreateGap: Long?,
         sdkStartupDuration: Long?,
-    ) {
-        if (!startupRecorded.get()) {
+    ): EmbraceSpan? {
+        return if (!startupRecorded.get()) {
             spanService.startSpan(
                 name = "warm-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
-            )?.run {
+            )?.apply {
                 processCreateDelay?.let { delay ->
                     addAttribute("process-create-delay-ms".toEmbraceAttributeName(), delay.toString())
                 }
@@ -294,6 +323,8 @@ internal class AppStartupTraceEmitter(
                     )
                 }
             }
+        } else {
+            null
         }
     }
 
@@ -302,6 +333,12 @@ internal class AppStartupTraceEmitter(
     private fun applicationActivityCreationGap(): Long? = duration(applicationInitEndMs, startupActivityInitStartMs)
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
+
+    private data class TrackedInterval(
+        val name: String,
+        val startTimeMs: Long,
+        val endTimeMs: Long,
+    )
 
     companion object {
         /**

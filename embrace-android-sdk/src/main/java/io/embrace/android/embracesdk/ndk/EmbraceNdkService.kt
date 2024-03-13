@@ -92,15 +92,12 @@ internal class EmbraceNdkService(
             // thread doing this when the native ANR monitoring tries to load this
             // Remove this once the native ANR initialization is done on the background thread too.
             sharedObjectLoader.loadEmbraceNative()
-            highPriorityWorker.submit {
-                Systrace.traceSynchronous("init-ndk-service") {
-                    processStateService.addListener(this)
-                    if (appFramework == AppFramework.UNITY) {
-                        unityCrashId = getEmbUuid()
-                    }
-                    startNativeCrashMonitoring()
-                    cleanOldCrashFiles()
+            if (configService.sdkModeBehavior.isServiceInitDeferred()) {
+                highPriorityWorker.submit {
+                    initializeService(processStateService, appFramework)
                 }
+            } else {
+                initializeService(processStateService, appFramework)
             }
         }
     }
@@ -386,6 +383,20 @@ internal class EmbraceNdkService(
 
     override fun getSymbolsForCurrentArch(): Map<String, String>? {
         return symbolsForArch.value
+    }
+
+    private fun initializeService(
+        processStateService: ProcessStateService,
+        appFramework: AppFramework
+    ) {
+        Systrace.traceSynchronous("init-ndk-service") {
+            processStateService.addListener(this)
+            if (appFramework == AppFramework.UNITY) {
+                unityCrashId = getEmbUuid()
+            }
+            startNativeCrashMonitoring()
+            cleanOldCrashFiles()
+        }
     }
 
     @SuppressLint("DiscouragedApi")

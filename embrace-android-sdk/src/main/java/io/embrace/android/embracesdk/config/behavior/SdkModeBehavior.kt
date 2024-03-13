@@ -30,6 +30,12 @@ internal class SdkModeBehavior(
         private const val DEFAULT_BETA_FEATURES_PCT = 1.0f
 
         /**
+         * The percentage of devices that defer some expensive service initialization to a background
+         * thread to improve startup performance in exchange for delayed enablement of some features of the SDK
+         */
+        private const val DEFAULT_DEFER_SERVICE_INIT_PCT = 0.0f
+
+        /**
          * The default percentage of devices for which the SDK is enabled.
          */
         private const val DEFAULT_THRESHOLD = 100
@@ -55,6 +61,14 @@ internal class SdkModeBehavior(
         }
 
         val pct = remote?.pctBetaFeaturesEnabled ?: DEFAULT_BETA_FEATURES_PCT
+        return thresholdCheck.isBehaviorEnabled(pct)
+    }
+
+    /**
+     * Checks if an expanded list of services' initialization during startup will be done on a background thread
+     */
+    fun isServiceInitDeferred(): Boolean {
+        val pct = remote?.pctDeferServiceInitEnabled ?: DEFAULT_DEFER_SERVICE_INIT_PCT
         return thresholdCheck.isBehaviorEnabled(pct)
     }
 

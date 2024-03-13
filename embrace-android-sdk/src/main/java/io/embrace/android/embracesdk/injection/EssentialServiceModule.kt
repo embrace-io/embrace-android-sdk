@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Debug
+import android.util.Log
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate

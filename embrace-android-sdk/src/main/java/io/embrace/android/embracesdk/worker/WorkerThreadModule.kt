@@ -66,4 +66,9 @@ internal enum class WorkerName(internal val threadName: String) {
      * Monitor thread that checks the main thread for ANRs.
      */
     ANR_MONITOR("anr-monitor"),
+
+    /**
+     * Initialize services asynchronously
+     */
+    SERVICE_INIT("service-init"),
 }

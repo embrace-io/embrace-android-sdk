@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -44,7 +45,7 @@ internal class SessionOrchestratorImpl(
 
     init {
         processStateService.addListener(this)
-        createInitialSession()
+        Systrace.traceSynchronous("start-first-session") { createInitialSession() }
     }
 
     private fun createInitialSession() {
@@ -240,6 +241,7 @@ internal class SessionOrchestratorImpl(
                     }
                 }
             }
+
             ProcessState.BACKGROUND -> scheduleBackgroundActivitySave(endProcessState, newState)
         }
     }

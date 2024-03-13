@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logs.LogSink
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
@@ -16,7 +17,8 @@ import io.opentelemetry.api.trace.Tracer
 
 internal class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
-    override val spanSink: SpanSink = SpanSinkImpl()
+    override val spanSink: SpanSink = SpanSinkImpl(),
+    override val logSink: LogSink = LogSinkImpl(),
 ) : OpenTelemetryModule {
     override val openTelemetryConfiguration: OpenTelemetryConfiguration
         get() = TODO()
@@ -33,7 +35,5 @@ internal class FakeOpenTelemetryModule(
     override val logWriter: LogWriter
         get() = TODO()
     override val logger: Logger
-        get() = TODO()
-    override val logSink: LogSink
         get() = TODO()
 }

@@ -2,11 +2,10 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.internal.logs.LogPayload
 
 /**
  * Envelope used for Embrace API requests for different types of data:
- * - [LogPayload]
+ * - LogPayload
  * - SessionPayload
  * - BlobPayload
  * - CrashPayload

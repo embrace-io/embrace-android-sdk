@@ -118,13 +118,13 @@ internal class LogOrchestratorTest {
         latch.await(1000L, TimeUnit.MILLISECONDS)
 
         assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
-        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].logs.size)
+        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].logs?.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {
         assertNotNull(deliveryService.lastSentLogPayloads)
         assertEquals(1, deliveryService.lastSentLogPayloads.size)
-        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].logs.size)
+        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].logs?.size)
     }
 
     private fun verifyPayloadNotSent() {

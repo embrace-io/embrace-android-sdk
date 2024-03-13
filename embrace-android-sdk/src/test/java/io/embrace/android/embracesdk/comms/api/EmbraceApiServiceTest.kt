@@ -13,10 +13,11 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
-import io.embrace.android.embracesdk.internal.logs.EmbraceLogBody
-import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordData
-import io.embrace.android.embracesdk.internal.logs.LogPayload
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.LogBody
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -261,14 +262,14 @@ internal class EmbraceApiServiceTest {
         val logsEnvelope = Envelope(
             data = LogPayload(
                 logs = listOf(
-                    EmbraceLogRecordData(
+                    Log(
                         traceId = "traceId",
                         spanId = "spanId",
-                        timeUnixNanos = 1234567890,
+                        timeUnixNano = 1234567890,
                         severityText = "severityText",
                         severityNumber = 1,
-                        body = EmbraceLogBody("a message"),
-                        attributes = mapOf("key" to "value")
+                        body = LogBody("a message"),
+                        attributes = listOf(Attribute("key", "value"))
                     )
                 )
             )

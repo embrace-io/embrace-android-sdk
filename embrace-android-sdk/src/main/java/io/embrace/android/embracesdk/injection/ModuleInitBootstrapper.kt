@@ -394,6 +394,15 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    payloadModule = init(PayloadModule::class) {
+                        payloadModuleSupplier(
+                            essentialServiceModule,
+                            nativeModule,
+                            openTelemetryModule,
+                            sdkObservabilityModule
+                        )
+                    }
+
                     sessionModule = init(SessionModule::class) {
                         sessionModuleSupplier(
                             initModule,
@@ -408,7 +417,8 @@ internal class ModuleInitBootstrapper(
                             customerLogModule,
                             sdkObservabilityModule,
                             workerThreadModule,
-                            dataSourceModule
+                            dataSourceModule,
+                            payloadModule
                         )
                     }
 
@@ -423,15 +433,6 @@ internal class ModuleInitBootstrapper(
                             anrModule,
                             dataContainerModule,
                             androidServicesModule
-                        )
-                    }
-
-                    payloadModule = init(PayloadModule::class) {
-                        payloadModuleSupplier(
-                            essentialServiceModule,
-                            nativeModule,
-                            openTelemetryModule,
-                            sdkObservabilityModule
                         )
                     }
 

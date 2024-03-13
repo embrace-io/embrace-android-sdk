@@ -210,7 +210,8 @@ internal typealias SessionModuleSupplier = (
     customerLogModule: CustomerLogModule,
     sdkObservabilityModule: SdkObservabilityModule,
     workerThreadModule: WorkerThreadModule,
-    dataSourceModule: DataSourceModule
+    dataSourceModule: DataSourceModule,
+    payloadModule: PayloadModule
 ) -> SessionModule
 
 /**

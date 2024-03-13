@@ -1,14 +1,20 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
+import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -84,6 +90,14 @@ internal class PayloadFactorySessionTest {
         isActivityInBackground: Boolean = true
     ) {
         processStateService.isInBackground = isActivityInBackground
-        service = PayloadFactoryImpl(mockk(relaxed = true), FakeConfigService())
+
+        val sessionEnvelopeSource = SessionEnvelopeSource(
+            metadataSource = FakeEnvelopeMetadataSource(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            sessionPayloadSource = FakeSessionPayloadSource()
+        )
+        val v1Collator = mockk<V1PayloadMessageCollator>(relaxed = true)
+        val v2Collator = V2PayloadMessageCollator(v1Collator, sessionEnvelopeSource)
+        service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService())
     }
 }

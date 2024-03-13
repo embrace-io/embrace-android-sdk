@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +29,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
-internal class PayloadMessageCollatorTest {
+internal class V1PayloadMessageCollatorTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var collator: PayloadMessageCollator
@@ -42,7 +42,7 @@ internal class PayloadMessageCollatorTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
-        collator = PayloadMessageCollatorImpl(
+        collator = V1PayloadMessageCollator(
             configService = FakeConfigService(),
             nativeThreadSamplerService = null,
             thermalStatusService = FakeThermalStatusService(),

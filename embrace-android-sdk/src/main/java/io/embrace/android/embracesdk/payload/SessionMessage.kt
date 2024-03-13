@@ -3,6 +3,9 @@ package io.embrace.android.embracesdk.payload
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.comms.api.ApiClient
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 
 /**
@@ -52,5 +55,32 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     val spans: List<EmbraceSpanData>? = null,
 
     @Json(name = "v")
-    val version: Int = ApiClient.MESSAGE_VERSION
+    val version: Int = ApiClient.MESSAGE_VERSION,
+
+    /*
+     * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate
+     * everything to use [Envelope] and [SessionPayload] and remove this class,
+     * but we'll keep it for now for backwards compat.
+     */
+
+    @Json(name = "resource")
+    val resource: EnvelopeResource? = null,
+
+    @Json(name = "metadata")
+    val metadata: EnvelopeMetadata? = null,
+
+    @Json(name = "version")
+    val newVersion: String? = null,
+
+    @Json(name = "type")
+    val type: String? = null,
+
+    @Json(name = "data")
+    val data: SessionPayload? = null
 )
+
+/**
+ * Returns true if this message is a v2 payload. If so, it should be sent to a different
+ * endpoint & handled differently.
+ */
+internal fun SessionMessage.isV2Payload() = data != null

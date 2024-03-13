@@ -13,6 +13,9 @@ internal data class SessionRemoteConfig(
     @Json(name = "enable")
     val isEnabled: Boolean? = null,
 
+    @Json(name = "use_v2_payload")
+    val useV2Payload: Boolean? = null,
+
     /**
      * A list of session components (i.e. Breadcrumbs, Session properties, etc) that will be
      * included in the session payload. If components list exists, the services should restrict

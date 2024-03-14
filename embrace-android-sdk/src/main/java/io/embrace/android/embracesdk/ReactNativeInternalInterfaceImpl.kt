@@ -108,7 +108,7 @@ internal class ReactNativeInternalInterfaceImpl(
             if (framework != AppFramework.REACT_NATIVE) {
                 logger.logError(
                     "Failed to set Java Script bundle ID URL. Current framework: " +
-                            framework.name + " is not React Native."
+                        framework.name + " is not React Native."
                 )
                 return
             }

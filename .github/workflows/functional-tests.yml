@@ -101,19 +101,16 @@ jobs:
             emulator_logcat.log
 
       - name: Test 1
-        id: slack
         if: steps.runFunctionalTests.outcome == 'failure'
         run: |
           echo "Test 1 executed"
 
       - name: Test 3
-        id: slack
         if: ${{ failure() }}
         run: |
           echo "Test 3 executed"
 
       - name: Test 4
-        id: slack
         if: failure()
         run: |
           echo "Test 4 executed"

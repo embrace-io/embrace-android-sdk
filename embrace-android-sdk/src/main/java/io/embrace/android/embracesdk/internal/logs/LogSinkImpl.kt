@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.payload.toNewPayload
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -12,7 +13,7 @@ internal class LogSinkImpl : LogSink {
 
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
         try {
-            storedLogs.addAll(logs.map { Log(logRecordData = it) })
+            storedLogs.addAll(logs.map { it.toNewPayload() })
             onLogsStored?.invoke()
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()

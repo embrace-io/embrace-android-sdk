@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.opentelemetry.sdk.logs.data.LogRecordData
 
 /**
  * A recording of an event. Typically the record includes a timestamp indicating when the event
@@ -54,14 +53,4 @@ internal data class Log(
      If span_id is present, trace_id SHOULD be also present. */
     @Json(name = "span_id")
     val spanId: String? = null
-) {
-    internal constructor(logRecordData: LogRecordData) : this(
-        traceId = logRecordData.spanContext.traceId,
-        spanId = logRecordData.spanContext.spanId,
-        timeUnixNano = logRecordData.observedTimestampEpochNanos,
-        severityNumber = logRecordData.severity.severityNumber,
-        severityText = logRecordData.severityText,
-        body = LogBody(logRecordData.body.asString()),
-        attributes = logRecordData.attributes.asMap().entries.map { Attribute(it.key.key, it.value.toString()) }
-    )
-}
+)

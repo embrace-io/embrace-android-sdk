@@ -38,6 +38,7 @@ import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 import kotlin.reflect.KClass
 
 /**
@@ -117,6 +118,12 @@ internal class ModuleInitBootstrapper(
 
     private val asyncInitTask = AtomicReference<Future<*>?>(null)
 
+    @Volatile
+    private var synchronousInitCompletionMs: Long = -1L
+
+    @Volatile
+    private var asyncInitCompletionMs: Long = -1L
+
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
      */
@@ -146,6 +153,7 @@ internal class ModuleInitBootstrapper(
                             Systrace.traceSynchronous("span-service-init") {
                                 openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }
+                            asyncInitCompletionMs = initModule.clock.now()
                         }
                     }
 
@@ -320,8 +328,18 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeModule::class) {
+                        val ndkService = nativeModule.ndkService
+                        val initWorkerTaskQueueTime = initModule.clock.now()
+                        workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
+                            val taskRuntimeMs = initModule.clock.now()
+                            dataCaptureServiceModule.appStartupTraceEmitter.addTrackedInterval(
+                                name = "init-worker-schedule-delay",
+                                startTimeMs = initWorkerTaskQueueTime,
+                                endTimeMs = taskRuntimeMs
+                            )
+                        }
                         serviceRegistry.registerServices(
-                            nativeModule.ndkService,
+                            ndkService,
                             nativeModule.nativeThreadSamplerService
                         )
 
@@ -449,6 +467,7 @@ internal class ModuleInitBootstrapper(
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
 
                     asyncInitTask.set(initTask)
+                    synchronousInitCompletionMs = initModule.clock.now()
                     true
                 } else {
                     false
@@ -464,10 +483,25 @@ internal class ModuleInitBootstrapper(
      * [Future] if there is a timeout or if this failed for other reasons.
      */
     @JvmOverloads
-    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) =
+    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) {
         Systrace.traceSynchronous("async-init-wait") {
             asyncInitTask.get()?.get(timeout, unit)
         }
+
+        Systrace.traceSynchronous("record-delay") {
+            // If async init finished after synchronous init, there's a delay so record that delay
+            // Otherwise, record a 0-duration span to signify there was no significant wait
+            val delayStartMs = synchronousInitCompletionMs
+            val delayEndMs = max(synchronousInitCompletionMs, asyncInitCompletionMs)
+            if (delayStartMs > 0) {
+                dataCaptureServiceModule.appStartupTraceEmitter.addTrackedInterval(
+                    name = "async-init-delay",
+                    startTimeMs = delayStartMs,
+                    endTimeMs = delayEndMs
+                )
+            }
+        }
+    }
 
     fun stopServices() {
         if (isInitialized()) {

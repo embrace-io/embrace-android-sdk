@@ -58,8 +58,8 @@ internal class EmbraceNdkService(
     private val logger: InternalEmbraceLogger,
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
-    private val cleanCacheWorker: BackgroundWorker,
-    private val ndkStartupWorker: BackgroundWorker,
+    private val backgroundWorker: BackgroundWorker,
+    highPriorityWorker: BackgroundWorker,
     /**
      * The device architecture.
      */
@@ -88,13 +88,16 @@ internal class EmbraceNdkService(
             null
         }
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            Systrace.traceSynchronous("init-ndk-service") {
-                processStateService.addListener(this)
-                if (appFramework == AppFramework.UNITY) {
-                    unityCrashId = getEmbUuid()
+            // Workaround to load native symbols synchronously so the main thread won't be blocked by the background
+            // thread doing this when the native ANR monitoring tries to load this
+            // Remove this once the native ANR initialization is done on the background thread too.
+            sharedObjectLoader.loadEmbraceNative()
+            if (configService.sdkModeBehavior.isServiceInitDeferred()) {
+                highPriorityWorker.submit {
+                    initializeService(processStateService, appFramework)
                 }
-                startNdk()
-                cleanOldCrashFiles()
+            } else {
+                initializeService(processStateService, appFramework)
             }
         }
     }
@@ -117,14 +120,18 @@ internal class EmbraceNdkService(
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
         logger.logDeveloper("EmbraceNDKService", "NDK update: (session properties): $properties")
         if (isInstalled) {
-            updateDeviceMetaData()
+            backgroundWorker.submit {
+                updateDeviceMetaData()
+            }
         }
     }
 
     override fun onUserInfoUpdate() {
         logger.logDeveloper("EmbraceNDKService", "NDK update (user)")
         if (isInstalled) {
-            updateDeviceMetaData()
+            backgroundWorker.submit {
+                updateDeviceMetaData()
+            }
         }
     }
 
@@ -148,7 +155,7 @@ internal class EmbraceNdkService(
         }
     }
 
-    private fun startNdk() {
+    private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 installSignals()
@@ -158,15 +165,9 @@ internal class EmbraceNdkService(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
                 )
-                logger.logInfo("NDK library successfully loaded")
-            } else {
-                logger.logDeveloper(
-                    "EmbraceNDKService",
-                    "Failed to load embrace library - probable unsatisfied linkage."
-                )
             }
         } catch (ex: Exception) {
-            logger.logError("Failed to load NDK library", ex)
+            logger.logError("Failed to start native crash monitoring", ex)
         }
     }
 
@@ -384,6 +385,20 @@ internal class EmbraceNdkService(
         return symbolsForArch.value
     }
 
+    private fun initializeService(
+        processStateService: ProcessStateService,
+        appFramework: AppFramework
+    ) {
+        Systrace.traceSynchronous("init-ndk-service") {
+            processStateService.addListener(this)
+            if (appFramework == AppFramework.UNITY) {
+                unityCrashId = getEmbUuid()
+            }
+            startNativeCrashMonitoring()
+            cleanOldCrashFiles()
+        }
+    }
+
     @SuppressLint("DiscouragedApi")
     private fun getNativeSymbols(): NativeSymbols? {
         val resources = context.resources
@@ -462,7 +477,7 @@ internal class EmbraceNdkService(
     }
 
     private fun cleanOldCrashFiles() {
-        cleanCacheWorker.submit {
+        backgroundWorker.submit {
             logger.logDeveloper("EmbraceNDKService", "Processing clean of old crash files.")
             val sortedFiles = repository.sortNativeCrashes(true)
             val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
@@ -587,19 +602,16 @@ internal class EmbraceNdkService(
     }
 
     /**
-     * Compute NDK metadata on a background thread.
+     * Compute NDK metadata
      */
     private fun updateDeviceMetaData() {
-        ndkStartupWorker.submit {
-            logger.logDeveloper("EmbraceNDKService", "Processing NDK metadata update on bg thread.")
-            var newDeviceMetaData = getMetaData(true)
-            logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")
-            if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
-                logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
-                newDeviceMetaData = getMetaData(false)
-            }
-            delegate._updateMetaData(newDeviceMetaData)
+        var newDeviceMetaData = getMetaData(true)
+        logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")
+        if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
+            logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
+            newDeviceMetaData = getMetaData(false)
         }
+        delegate._updateMetaData(newDeviceMetaData)
     }
 
     private fun getMetaData(includeSessionProperties: Boolean): String {

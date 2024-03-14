@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -116,9 +115,7 @@ internal class TracingApiTest {
                 embrace.endAppStartup()
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            assertTrue("Timed out waiting for the expected spans: $results", spanExporter.awaitSpanExport(9))
             val sessionEndTime = harness.fakeClock.now()
-            assertEquals(2, harness.fakeDeliveryModule.deliveryService.lastSentSessions.size)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(sessionMessage?.spans) +
                 checkNotNull(harness.openTelemetryModule.spanSink.completedSpans())

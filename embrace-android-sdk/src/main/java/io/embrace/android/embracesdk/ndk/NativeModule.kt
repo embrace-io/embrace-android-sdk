@@ -49,7 +49,7 @@ internal class NativeModuleImpl(
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT),
                 essentialServiceModule.deviceArchitecture,
                 coreModule.jsonSerializer
             )

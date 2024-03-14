@@ -73,8 +73,6 @@ jobs:
 
       - name: Run Functional Tests
         uses: embrace-io/android-emulator-runner@v2
-        id: runFunctionalTests
-        continue-on-error: true
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
@@ -85,7 +83,7 @@ jobs:
           script: ./gradlew connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Archive Test Results
-        if: ${{ always() }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sdk-functional-test-results
@@ -94,15 +92,20 @@ jobs:
             test_failure
             emulator_logcat.log
 
-      - name: Post workflow result
-        id: slack
-        if: ${{steps.runFunctionalTests.outcome == 'failure'}}
+      - name: Notify Slack of Test Failure
+        if: failure()
         uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "failed_action_url": "${{ github.run_url }}"
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Cleanup Gradle Cache
+        if: always()
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
         # Restoring these files from a GitHub Actions cache might cause problems for future builds.

@@ -86,7 +86,7 @@ jobs:
 
       - name: Debug Step Outcome
         run:
-          echo ${{ "Outcome:" + steps.runFunctionalTests.outcome }}
+          echo "Outcome: ${{ steps.runFunctionalTests.outcome }}"
 
       - name: Archive Test Results
         if: ${{ always() }}

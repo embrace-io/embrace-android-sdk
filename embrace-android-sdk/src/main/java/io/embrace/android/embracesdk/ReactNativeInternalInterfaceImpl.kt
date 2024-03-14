@@ -7,13 +7,11 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.JsException
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val framework: AppFramework,
-    private val preferencesService: PreferencesService,
     private val crashService: CrashService,
     private val metadataService: MetadataService,
     private val logger: InternalEmbraceLogger

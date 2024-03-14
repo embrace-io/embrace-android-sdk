@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
+import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -16,6 +17,8 @@ import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
@@ -25,6 +28,7 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
@@ -43,6 +47,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
@@ -153,7 +158,15 @@ internal class SessionHandlerTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, configService)
+        val v2Collator = V2PayloadMessageCollator(
+            payloadMessageCollator,
+            SessionEnvelopeSource(
+                metadataSource = FakeEnvelopeMetadataSource(),
+                resourceSource = FakeEnvelopeResourceSource(),
+                sessionPayloadSource = FakeSessionPayloadSource()
+            )
+        )
+        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService)
     }
 
     @After

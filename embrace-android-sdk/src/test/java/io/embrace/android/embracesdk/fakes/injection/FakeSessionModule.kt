@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
@@ -18,7 +19,10 @@ internal class FakeSessionModule(
     override val sessionOrchestrator: SessionOrchestrator = FakeSessionOrchestrator()
 ) : SessionModule {
 
-    override val payloadMessageCollator: PayloadMessageCollator
+    override val v1PayloadMessageCollator: V1PayloadMessageCollator
+        get() = TODO("Not yet implemented")
+
+    override val v2PayloadMessageCollator: V2PayloadMessageCollator
         get() = TODO("Not yet implemented")
 
     override val periodicSessionCacher: PeriodicSessionCacher

@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityC
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -19,7 +19,8 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
     val payloadFactory: PayloadFactory
-    val payloadMessageCollator: PayloadMessageCollator
+    val v1PayloadMessageCollator: V1PayloadMessageCollator
+    val v2PayloadMessageCollator: V2PayloadMessageCollator
     val sessionPropertiesService: SessionPropertiesService
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
@@ -40,10 +41,11 @@ internal class SessionModuleImpl(
     customerLogModule: CustomerLogModule,
     sdkObservabilityModule: SdkObservabilityModule,
     workerThreadModule: WorkerThreadModule,
-    dataSourceModule: DataSourceModule
+    dataSourceModule: DataSourceModule,
+    payloadModule: PayloadModule
 ) : SessionModule {
 
-    override val payloadMessageCollator: PayloadMessageCollator by singleton {
+    override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
         V1PayloadMessageCollator(
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
@@ -61,6 +63,13 @@ internal class SessionModuleImpl(
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService
+        )
+    }
+
+    override val v2PayloadMessageCollator: V2PayloadMessageCollator by singleton {
+        V2PayloadMessageCollator(
+            v1PayloadMessageCollator,
+            payloadModule.sessionEnvelopeSource
         )
     }
 
@@ -90,7 +99,11 @@ internal class SessionModuleImpl(
     }
 
     override val payloadFactory: PayloadFactory by singleton {
-        PayloadFactoryImpl(payloadMessageCollator, essentialServiceModule.configService)
+        PayloadFactoryImpl(
+            v1PayloadMessageCollator,
+            v2PayloadMessageCollator,
+            essentialServiceModule.configService
+        )
     }
 
     private val boundaryDelegate by singleton {

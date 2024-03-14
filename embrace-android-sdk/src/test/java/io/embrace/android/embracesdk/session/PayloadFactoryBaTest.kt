@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -14,6 +15,8 @@ import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
@@ -22,6 +25,7 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -35,6 +39,7 @@ import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -171,7 +176,13 @@ internal class PayloadFactoryBaTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        return PayloadFactoryImpl(collator, configService).apply {
+        val sessionEnvelopeSource = SessionEnvelopeSource(
+            metadataSource = FakeEnvelopeMetadataSource(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            sessionPayloadSource = FakeSessionPayloadSource()
+        )
+        val v2Collator = V2PayloadMessageCollator(collator, sessionEnvelopeSource)
+        return PayloadFactoryImpl(collator, v2Collator, configService).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
             }

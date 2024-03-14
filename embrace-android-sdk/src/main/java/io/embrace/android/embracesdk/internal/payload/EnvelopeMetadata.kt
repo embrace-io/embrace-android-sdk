@@ -19,7 +19,7 @@ internal data class EnvelopeMetadata(
     val username: String? = null,
 
     @Json(name = "personas")
-    val personas: Set<String> = emptySet(),
+    val personas: Set<String>? = null,
 
     @Json(name = "timezone_description")
     val timezoneDescription: String? = null,

@@ -25,8 +25,11 @@ internal class FakeGatingService(configService: ConfigService = FakeConfigServic
         return filteredMessage
     }
 
-    override fun gateSessionEnvelope(envelope: Envelope<SessionPayload>): Envelope<SessionPayload> {
-        val filteredMessage = realGatingService.gateSessionEnvelope(envelope)
+    override fun gateSessionEnvelope(
+        sessionMessage: SessionMessage,
+        envelope: Envelope<SessionPayload>
+    ): Envelope<SessionPayload> {
+        val filteredMessage = realGatingService.gateSessionEnvelope(sessionMessage, envelope)
         envelopesFiltered.add(filteredMessage)
         return envelope
     }

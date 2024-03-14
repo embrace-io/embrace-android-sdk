@@ -31,7 +31,7 @@ internal class V2PayloadMessageCollator(
     }
 
     private fun SessionMessage.convertToV2Payload(endType: SessionSnapshotType): SessionMessage {
-        val envelope = gatingService.gateSessionEnvelope(sessionEnvelopeSource.getEnvelope(endType))
+        val envelope = gatingService.gateSessionEnvelope(this, sessionEnvelopeSource.getEnvelope(endType))
         return copy(
             // future work: make legacy fields null here.
             resource = envelope.resource,

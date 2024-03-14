@@ -24,11 +24,11 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getTimestampEpochNanos(): Long {
-        return testLog.timeUnixNano!!
+        return checkNotNull(testLog.timeUnixNano)
     }
 
     override fun getObservedTimestampEpochNanos(): Long {
-        return testLog.timeUnixNano!!
+        return checkNotNull(testLog.timeUnixNano)
     }
 
     override fun getSpanContext(): SpanContext {
@@ -56,6 +56,6 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getTotalAttributeCount(): Int {
-        return testLog.attributes!!.size
+        return checkNotNull(testLog.attributes?.size)
     }
 }

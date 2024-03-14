@@ -122,6 +122,14 @@ internal interface MetadataService {
      * Sets the Embrace React Native SDK version
      */
     fun setEmbraceRnSdkVersion(version: String?)
+    /**
+     * Sets the React Native version
+     */
+    fun setRnVersion(version: String?)
+    /**
+     * Sets the JavaScript patch number
+     */
+    fun setJavaScriptPatchNumber(number: String)
 
     /**
      * Sets the Embrace Flutter SDK version

@@ -65,7 +65,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("JavaScript patch number must have non-zero length")
                 return
             }
-            preferencesService.javaScriptPatchNumber = number
+            metadataService.setJavaScriptPatchNumber(number)
         } else {
             logger.logSDKNotInitialized("set JavaScript patch number")
         }
@@ -89,7 +89,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("ReactNative version must have non-zero length")
                 return
             }
-            preferencesService.reactNativeVersionNumber = version
+            metadataService.setRnVersion(version)
         } else {
             logger.logSDKNotInitialized("set React Native version number")
         }
@@ -101,6 +101,21 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean) {
         setJavaScriptBundleUrl(context, url, didUpdate)
+    }
+
+    private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
+        if (embrace.isStarted) {
+            if (framework != AppFramework.REACT_NATIVE) {
+                logger.logError(
+                    "Failed to set Java Script bundle ID URL. Current framework: " +
+                            framework.name + " is not React Native."
+                )
+                return
+            }
+            metadataService.setReactNativeBundleId(context, url, didUpdate)
+        } else {
+            logger.logSDKNotInitialized("set JavaScript bundle URL")
+        }
     }
 
     override fun logRnAction(
@@ -116,20 +131,5 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun logRnView(screen: String) {
         embrace.logRnView(screen)
-    }
-
-    private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
-        if (embrace.isStarted) {
-            if (framework != AppFramework.REACT_NATIVE) {
-                logger.logError(
-                    "Failed to set Java Script bundle ID URL. Current framework: " +
-                        framework.name + " is not React Native."
-                )
-                return
-            }
-            metadataService.setReactNativeBundleId(context, url, didUpdate)
-        } else {
-            logger.logSDKNotInitialized("set JavaScript bundle URL")
-        }
     }
 }

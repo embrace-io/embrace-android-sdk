@@ -47,6 +47,8 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     var forceUpdate: Boolean? = null
     var fakeFlutterSdkVersion: String? = "fakeFlutterSdkVersion"
     var fakeDartVersion: String? = "fakeDartVersion"
+    var fakeReactNativeVersion: String? = "fakeReactNativeVersion"
+    var fakeJavaScriptPatchNumber: String? = "fakeJavaScriptPatchNumber"
     var fakeRnSdkVersion: String? = "fakeRnSdkVersion"
 
     private lateinit var appState: String
@@ -108,6 +110,14 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
 
     override fun setEmbraceRnSdkVersion(version: String?) {
         fakeRnSdkVersion = version
+    }
+
+    override fun setRnVersion(version: String?) {
+        fakeReactNativeVersion = version
+    }
+
+    override fun setJavaScriptPatchNumber(number: String) {
+        fakeJavaScriptPatchNumber = number
     }
 
     override fun setDartVersion(version: String?) {

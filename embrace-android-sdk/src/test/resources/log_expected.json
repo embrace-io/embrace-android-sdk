@@ -7,8 +7,14 @@
   "body":{
     "message":"test log message"
   },
-  "attributes":{
-    "test1":"value1",
-    "test2":"value2"
-  }
+  "attributes": [
+    {
+      "key": "test1",
+      "value": "value1"
+    },
+    {
+      "key": "test2",
+      "value": "value2"
+    }
+  ]
 }

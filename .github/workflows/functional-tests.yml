@@ -106,12 +106,6 @@ jobs:
         run: |
           echo "Test 1 executed"
 
-      - name: Test 2
-        id: slack
-        if: ${{ if (steps.runFunctionalTests.outcome == 'failure') always() }}
-        run: |
-          echo "Test 2 executed"  
-
       - name: Test 3
         id: slack
         if: ${{ failure() }}

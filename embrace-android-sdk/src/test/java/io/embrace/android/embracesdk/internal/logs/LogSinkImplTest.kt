@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.mockk.mockk
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals

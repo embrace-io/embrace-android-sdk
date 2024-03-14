@@ -1,8 +1,5 @@
-package io.embrace.android.embracesdk.payload
+package io.embrace.android.embracesdk.internal.payload
 
-import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.LogBody
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.logs.data.LogRecordData
 

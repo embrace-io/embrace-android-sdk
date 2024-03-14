@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.toNewPayload
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

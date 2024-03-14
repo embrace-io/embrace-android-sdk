@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.payload.toNewPayload
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

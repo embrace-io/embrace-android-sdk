@@ -100,13 +100,37 @@ jobs:
             test_failure
             emulator_logcat.log
 
-      - name: Post workflow result
+      - name: Test 1
         id: slack
-        if: ${{steps.runFunctionalTests.outcome == 'failure'}}
-        uses: slackapi/slack-github-action@v1.25.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        if: steps.runFunctionalTests.outcome == 'failure'
+        run: |
+          echo "Test 1 executed"
+
+      - name: Test 2
+        id: slack
+        if: ${{ if (steps.runFunctionalTests.outcome == 'failure') always() }}
+        run: |
+          echo "Test 2 executed"  
+
+      - name: Test 3
+        id: slack
+        if: ${{ failure() }}
+        run: |
+          echo "Test 3 executed"
+
+      - name: Test 4
+        id: slack
+        if: failure()
+        run: |
+          echo "Test 4 executed"
+
+#      - name: Post workflow result
+#        id: slack
+#        if: ${{steps.runFunctionalTests.outcome == 'failure'}}
+#        uses: slackapi/slack-github-action@v1.25.0
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Cleanup Gradle Cache
         if: ${{ always() }}

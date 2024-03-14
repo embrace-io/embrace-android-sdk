@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -47,10 +46,6 @@ internal class FakeApiService : ApiService {
         logPayloads.add(logsEnvelope.data)
     }
 
-    override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
-        TODO("Not yet implemented")
-    }
-
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         networkCallRequests.add(networkEvent)
     }
@@ -68,7 +63,7 @@ internal class FakeApiService : ApiService {
         blobRequests.add(blobMessage)
     }
 
-    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*>? {
+    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: (() -> Unit)?): Future<*>? {
         if (throwExceptionSendSession) {
             error("FakeApiService.sendSession")
         }

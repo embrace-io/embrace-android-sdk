@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
@@ -102,7 +102,7 @@ internal class FakePayloadFactory : PayloadFactory {
     private fun endSessionWithState(timestamp: Long): SessionMessage {
         endSessionTimestamps.add(timestamp)
         activeSession = null
-        return fakeSessionMessage()
+        return fakeV1SessionMessage()
     }
 
     var crashId: String? = null
@@ -110,13 +110,13 @@ internal class FakePayloadFactory : PayloadFactory {
     private fun endSessionWithCrash(crashId: String): SessionMessage {
         this.crashId = crashId
         activeSession = null
-        return fakeSessionMessage()
+        return fakeV1SessionMessage()
     }
 
     override fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage {
         manualSessionEndCount++
         activeSession = null
-        return fakeSessionMessage()
+        return fakeV1SessionMessage()
     }
 
     private fun snapshotSession(): SessionMessage? {

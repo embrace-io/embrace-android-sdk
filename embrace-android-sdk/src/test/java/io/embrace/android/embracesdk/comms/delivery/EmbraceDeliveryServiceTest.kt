@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
@@ -26,9 +26,9 @@ import org.junit.Test
 internal class EmbraceDeliveryServiceTest {
 
     private val session = fakeSession()
-    private val sessionMessage = fakeSessionMessage()
+    private val sessionMessage = fakeV1SessionMessage()
     private val anotherMessage =
-        fakeSessionMessage().copy(session = session.copy(sessionId = "session2"))
+        fakeV1SessionMessage().copy(session = session.copy(sessionId = "session2"))
 
     private lateinit var worker: BackgroundWorker
     private lateinit var deliveryCacheManager: FakeDeliveryCacheManager

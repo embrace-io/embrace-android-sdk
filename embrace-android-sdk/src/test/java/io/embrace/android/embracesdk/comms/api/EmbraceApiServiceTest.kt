@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogBody
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -245,13 +244,26 @@ internal class EmbraceApiServiceTest {
     }
 
     @Test
-    fun `send session is as expected`() {
+    fun `send v1 session`() {
         fakeApiClient.queueResponse(successfulPostResponse)
         val payload = "{}".toByteArray(Charsets.UTF_8)
         var finished = false
-        apiService.sendSession({ it.write(payload) }) { finished = true }
+        apiService.sendSession(false, { it.write(payload) }) { finished = true }
         verifyOnlyRequest(
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
+            expectedPayload = payload
+        )
+        assertTrue(finished)
+    }
+
+    @Test
+    fun `send v2 session`() {
+        fakeApiClient.queueResponse(successfulPostResponse)
+        val payload = "".toByteArray(Charsets.UTF_8)
+        var finished = false
+        apiService.sendSession(true, { it.write(payload) }) { finished = true }
+        verifyOnlyRequest(
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/sessions",
             expectedPayload = payload
         )
         assertTrue(finished)
@@ -287,25 +299,6 @@ internal class EmbraceApiServiceTest {
     }
 
     @Test
-    fun `send session envelope is as expected`() {
-        val sessionEnvelope = Envelope(
-            data = SessionPayload(
-                sharedLibSymbolMapping = mapOf("key" to "value")
-            )
-        )
-
-        fakeApiClient.queueResponse(successfulPostResponse)
-        apiService.sendSessionEnvelope(sessionEnvelope)
-
-        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
-
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/sessions",
-            expectedPayload = getGenericsExpectedPayloadSerialized(sessionEnvelope, type)
-        )
-    }
-
-    @Test
     fun `validate all API endpoint URLs`() {
         Endpoint.values().forEach {
             if (it.version == "v1") {
@@ -327,7 +320,7 @@ internal class EmbraceApiServiceTest {
         testScheduledExecutor = mockk(relaxed = true)
         initApiService()
         val payload = "{}".toByteArray(Charsets.UTF_8)
-        apiService.sendSession({ it.write(payload) }) {}
+        apiService.sendSession(false, { it.write(payload) }) {}
         verify(exactly = 1) { testScheduledExecutor.submit(any<Runnable>()) }
     }
 

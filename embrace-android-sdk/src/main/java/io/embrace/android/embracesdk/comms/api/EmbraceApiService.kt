@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -130,11 +129,6 @@ internal class EmbraceApiService(
         post(logsEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
     }
 
-    override fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>) {
-        val parameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
-        post(sessionEnvelope, mapper::sessionEnvelopeRequest, parameterizedType)
-    }
-
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         post(blobMessage, mapper::aeiBlobRequest)
     }
@@ -151,8 +145,8 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
-        return postOnWorker(action, mapper.sessionRequest(), onFinish)
+    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
+        return postOnWorker(action, mapper.sessionRequest(isV2), onFinish)
     }
 
     private inline fun <reified T> post(

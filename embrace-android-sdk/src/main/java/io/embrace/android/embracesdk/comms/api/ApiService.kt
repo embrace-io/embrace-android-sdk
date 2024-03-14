@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.comms.api
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -40,13 +39,6 @@ internal interface ApiService {
     fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>)
 
     /**
-     * Sends a session to the API.
-     *
-     * @param sessionEnvelope containing the session
-     */
-    fun sendSessionEnvelope(sessionEnvelope: Envelope<SessionPayload>)
-
-    /**
      * Sends an Application Exit Info (AEI) blob message to the API.
      *
      * @param blobMessage the blob message containing the AEI data
@@ -74,5 +66,10 @@ internal interface ApiService {
      * @param crash the event message containing the crash
      */
     fun sendCrash(crash: EventMessage): Future<*>
-    fun sendSession(action: SerializationAction, onFinish: (() -> Unit)?): Future<*>?
+
+    /**
+     * Sends a session to the API. This can be either a v1 or v2 session - the implementation
+     * is responsible for routing the payload correctly.
+     */
+    fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: (() -> Unit)?): Future<*>?
 }

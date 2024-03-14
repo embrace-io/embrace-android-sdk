@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -158,7 +159,9 @@ internal class PayloadFactoryBaTest {
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
+        val gatingService = FakeGatingService()
         val collator = V1PayloadMessageCollator(
+            gatingService,
             configService,
             metadataService,
             eventService,
@@ -181,7 +184,7 @@ internal class PayloadFactoryBaTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        val v2Collator = V2PayloadMessageCollator(collator, sessionEnvelopeSource)
+        val v2Collator = V2PayloadMessageCollator(gatingService, collator, sessionEnvelopeSource)
         return PayloadFactoryImpl(collator, v2Collator, configService).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)

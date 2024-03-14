@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -45,6 +46,7 @@ internal class PayloadFactoryImplTest {
         )
         val initModule = FakeInitModule()
         val v1Collator = V1PayloadMessageCollator(
+            gatingService = FakeGatingService(),
             configService = FakeConfigService(),
             nativeThreadSamplerService = null,
             thermalStatusService = FakeThermalStatusService(),
@@ -65,6 +67,7 @@ internal class PayloadFactoryImplTest {
             startupService = FakeStartupService()
         )
         val v2Collator = V2PayloadMessageCollator(
+            FakeGatingService(),
             v1Collator,
             SessionEnvelopeSource(
                 FakeEnvelopeMetadataSource(),

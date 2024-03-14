@@ -20,7 +20,6 @@ internal class DeliveryModuleImpl(
         EmbraceDeliveryService(
             storageModule.deliveryCacheManager,
             essentialServiceModule.apiService,
-            essentialServiceModule.gatingService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.jsonSerializer,
             coreModule.logger

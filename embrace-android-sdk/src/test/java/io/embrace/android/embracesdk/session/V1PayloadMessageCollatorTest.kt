@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -33,6 +34,7 @@ internal class V1PayloadMessageCollatorTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var collator: PayloadMessageCollator
+    private lateinit var gatingService: FakeGatingService
 
     private enum class PayloadType {
         BACKGROUND_ACTIVITY,
@@ -42,7 +44,9 @@ internal class V1PayloadMessageCollatorTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
+        gatingService = FakeGatingService()
         collator = V1PayloadMessageCollator(
+            gatingService = gatingService,
             configService = FakeConfigService(),
             nativeThreadSamplerService = null,
             thermalStatusService = FakeThermalStatusService(),
@@ -109,6 +113,7 @@ internal class V1PayloadMessageCollatorTest {
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -134,6 +139,7 @@ internal class V1PayloadMessageCollatorTest {
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
+        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     private fun SessionMessage.verifyFinalFieldsPopulated(

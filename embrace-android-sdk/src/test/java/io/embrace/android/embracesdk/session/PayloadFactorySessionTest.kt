@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -97,7 +98,7 @@ internal class PayloadFactorySessionTest {
             sessionPayloadSource = FakeSessionPayloadSource()
         )
         val v1Collator = mockk<V1PayloadMessageCollator>(relaxed = true)
-        val v2Collator = V2PayloadMessageCollator(v1Collator, sessionEnvelopeSource)
+        val v2Collator = V2PayloadMessageCollator(FakeGatingService(), v1Collator, sessionEnvelopeSource)
         service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService())
     }
 }

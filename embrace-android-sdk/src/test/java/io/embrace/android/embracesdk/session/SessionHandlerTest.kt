@@ -141,6 +141,7 @@ internal class SessionHandlerTest {
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         val payloadMessageCollator = V1PayloadMessageCollator(
+            gatingService,
             configService,
             metadataService,
             eventService,
@@ -159,6 +160,7 @@ internal class SessionHandlerTest {
             FakeStartupService()
         )
         val v2Collator = V2PayloadMessageCollator(
+            gatingService,
             payloadMessageCollator,
             SessionEnvelopeSource(
                 metadataSource = FakeEnvelopeMetadataSource(),

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -33,6 +34,7 @@ internal class V2PayloadMessageCollatorTest {
     private lateinit var initModule: FakeInitModule
     private lateinit var v1collator: V1PayloadMessageCollator
     private lateinit var v2collator: V2PayloadMessageCollator
+    private lateinit var gatingService: FakeGatingService
 
     private enum class PayloadType {
         BACKGROUND_ACTIVITY,
@@ -42,7 +44,9 @@ internal class V2PayloadMessageCollatorTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
+        gatingService = FakeGatingService()
         v1collator = V1PayloadMessageCollator(
+            gatingService = gatingService,
             configService = FakeConfigService(),
             nativeThreadSamplerService = null,
             thermalStatusService = FakeThermalStatusService(),
@@ -65,7 +69,7 @@ internal class V2PayloadMessageCollatorTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        v2collator = V2PayloadMessageCollator(v1collator, sessionEnvelopeSource)
+        v2collator = V2PayloadMessageCollator(gatingService, v1collator, sessionEnvelopeSource)
     }
 
     @Test
@@ -115,6 +119,7 @@ internal class V2PayloadMessageCollatorTest {
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     @Test
@@ -140,6 +145,7 @@ internal class V2PayloadMessageCollatorTest {
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
+        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     private fun SessionMessage.verifyFinalFieldsPopulated(

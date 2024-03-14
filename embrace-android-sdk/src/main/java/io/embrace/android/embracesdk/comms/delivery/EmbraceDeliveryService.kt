@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
-import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -23,7 +22,6 @@ import java.util.concurrent.TimeUnit
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
-    private val gatingService: GatingService,
     private val backgroundWorker: BackgroundWorker,
     private val serializer: EmbraceSerializer,
     private val logger: InternalEmbraceLogger
@@ -40,8 +38,7 @@ internal class EmbraceDeliveryService(
      * point.
      */
     override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
-        val sanitizedSessionMessage = gatingService.gateSessionMessage(sessionMessage)
-        cacheManager.saveSession(sanitizedSessionMessage, snapshotType)
+        cacheManager.saveSession(sessionMessage, snapshotType)
         if (snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
             return
         }

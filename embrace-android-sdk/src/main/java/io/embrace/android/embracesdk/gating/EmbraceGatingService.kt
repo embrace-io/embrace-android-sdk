@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.isV2Payload
 
 /**
  * Receives the local and remote config to build the Gating config and define the amount of
@@ -38,12 +39,7 @@ internal class EmbraceGatingService(
      *  regardless of the 'components' list status.
      *
      */
-    override fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage = when {
-        sessionMessage.isV2Payload() -> gateV2Message(sessionMessage)
-        else -> gateV1Message(sessionMessage)
-    }
-
-    private fun gateV1Message(sessionMessage: SessionMessage): SessionMessage {
+    override fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage {
         val components = configService.sessionBehavior.getSessionComponents()
         if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
             InternalStaticEmbraceLogger.logDebug("Session gating feature enabled. Attempting to sanitize the session message")
@@ -75,10 +71,9 @@ internal class EmbraceGatingService(
         return sessionMessage
     }
 
-    private fun gateV2Message(sessionMessage: SessionMessage): SessionMessage {
-        // future: need to gate the v2 message here. Temporarily we will just return the
-        // ungated message
-        return sessionMessage
+    override fun gateSessionEnvelope(envelope: Envelope<SessionPayload>): Envelope<SessionPayload> {
+        // future: gate the session envelope
+        return envelope
     }
 
     override fun gateEventMessage(eventMessage: EventMessage): EventMessage {

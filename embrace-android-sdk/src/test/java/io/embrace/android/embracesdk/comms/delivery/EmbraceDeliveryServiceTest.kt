@@ -59,7 +59,6 @@ internal class EmbraceDeliveryServiceTest {
         deliveryService = EmbraceDeliveryService(
             deliveryCacheManager,
             apiService,
-            gatingService,
             worker,
             EmbraceSerializer(),
             logger
@@ -73,7 +72,6 @@ internal class EmbraceDeliveryServiceTest {
 
         val observed = deliveryCacheManager.saveSessionRequests.single()
         assertEquals(Pair(sessionMessage, NORMAL_END), observed)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -83,7 +81,6 @@ internal class EmbraceDeliveryServiceTest {
 
         val observed = deliveryCacheManager.saveSessionRequests.last()
         assertEquals(Pair(sessionMessage, PERIODIC_CACHE), observed)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -93,7 +90,6 @@ internal class EmbraceDeliveryServiceTest {
 
         val observed = deliveryCacheManager.saveSessionRequests.last()
         assertEquals(Pair(sessionMessage, JVM_CRASH), observed)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test
@@ -135,7 +131,6 @@ internal class EmbraceDeliveryServiceTest {
         initializeDeliveryService()
         deliveryService.sendSession(sessionMessage, JVM_CRASH)
         assertEquals(sessionMessage, apiService.sessionRequests.last())
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
     }
 
     @Test

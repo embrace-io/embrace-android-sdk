@@ -47,6 +47,7 @@ internal class SessionModuleImpl(
 
     override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
         V1PayloadMessageCollator(
+            essentialServiceModule.gatingService,
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
             dataContainerModule.eventService,
@@ -68,6 +69,7 @@ internal class SessionModuleImpl(
 
     override val v2PayloadMessageCollator: V2PayloadMessageCollator by singleton {
         V2PayloadMessageCollator(
+            essentialServiceModule.gatingService,
             v1PayloadMessageCollator,
             payloadModule.sessionEnvelopeSource
         )

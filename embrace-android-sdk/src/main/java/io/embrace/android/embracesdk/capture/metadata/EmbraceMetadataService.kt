@@ -409,7 +409,7 @@ internal class EmbraceMetadataService private constructor(
         preferencesService.embraceFlutterSdkVersion = version
     }
 
-    override fun setRnSdkVersion(version: String?) {
+    override fun setEmbraceRnSdkVersion(version: String?) {
         rnSdkVersion = version
         preferencesService.rnSdkVersion = version
     }

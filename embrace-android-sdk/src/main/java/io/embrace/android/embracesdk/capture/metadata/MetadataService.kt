@@ -119,14 +119,14 @@ internal interface MetadataService {
     fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean? = null)
 
     /**
+     * Sets the Embrace React Native SDK version
+     */
+    fun setEmbraceRnSdkVersion(version: String?)
+
+    /**
      * Sets the Embrace Flutter SDK version
      */
     fun setEmbraceFlutterSdkVersion(version: String?)
-
-    /**
-     * Sets the Embrace React Native SDK version
-     */
-    fun setRnSdkVersion(version: String?)
 
     /**
      * Sets the Dart version

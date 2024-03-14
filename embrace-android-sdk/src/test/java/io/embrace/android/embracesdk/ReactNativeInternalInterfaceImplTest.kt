@@ -90,6 +90,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns true
         impl.setReactNativeVersionNumber("0.69.1")
         assertEquals("0.69.1", preferencesService.reactNativeVersionNumber)
+        assertEquals("0.69.1", metadataService.getAppInfo().reactNativeVersion)
     }
 
     @Test

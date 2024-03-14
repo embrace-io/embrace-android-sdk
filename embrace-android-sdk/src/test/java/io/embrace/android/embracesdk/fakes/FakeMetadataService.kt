@@ -106,7 +106,7 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
         fakeFlutterSdkVersion = version
     }
 
-    override fun setRnSdkVersion(version: String?) {
+    override fun setEmbraceRnSdkVersion(version: String?) {
         fakeRnSdkVersion = version
     }
 

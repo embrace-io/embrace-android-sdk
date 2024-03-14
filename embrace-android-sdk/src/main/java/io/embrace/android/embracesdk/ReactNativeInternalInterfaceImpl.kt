@@ -73,7 +73,7 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setReactNativeSdkVersion(version: String?) {
         if (embrace.isStarted) {
-            metadataService.setRnSdkVersion(version)
+            metadataService.setEmbraceRnSdkVersion(version)
         } else {
             logger.logSDKNotInitialized("set React Native SDK version")
         }

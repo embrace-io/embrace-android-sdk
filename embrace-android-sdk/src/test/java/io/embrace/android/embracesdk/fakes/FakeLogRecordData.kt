@@ -24,11 +24,11 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getTimestampEpochNanos(): Long {
-        return testLog.timeUnixNanos
+        return testLog.timeUnixNano!!
     }
 
     override fun getObservedTimestampEpochNanos(): Long {
-        return testLog.timeUnixNanos
+        return testLog.timeUnixNano!!
     }
 
     override fun getSpanContext(): SpanContext {
@@ -44,18 +44,18 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getBody(): Body {
-        return Body.string(checkNotNull(testLog.body.message))
+        return Body.string(checkNotNull(testLog.body?.message))
     }
 
     override fun getAttributes(): Attributes {
         val attrBuilder = Attributes.builder()
-        testLog.attributes.forEach { (key, value) ->
+        testLog.attributes?.forEach { (key, value) ->
             attrBuilder.put(AttributeKey.stringKey(key), value as String)
         }
         return attrBuilder.build()
     }
 
     override fun getTotalAttributeCount(): Int {
-        return testLog.attributes.size
+        return testLog.attributes!!.size
     }
 }

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
@@ -61,7 +60,7 @@ internal class LogOrchestrator(
         val storedLogs = sink.flushLogs(MAX_LOGS_PER_BATCH)
 
         if (storedLogs.isNotEmpty()) {
-            deliveryService.sendLogs(LogPayload(logs = storedLogs.map(EmbraceLogRecordData::toNewPayload)))
+            deliveryService.sendLogs(LogPayload(logs = storedLogs))
         }
 
         return true

@@ -74,7 +74,7 @@ jobs:
       - name: Run Functional Tests
         uses: embrace-io/android-emulator-runner@v2
         id: runFunctionalTests
-        continue-on-error: true
+        continue-on-error: false
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}

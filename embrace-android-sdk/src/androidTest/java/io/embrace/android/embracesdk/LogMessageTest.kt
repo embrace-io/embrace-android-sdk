@@ -25,6 +25,11 @@ internal class LogMessageTest : BaseTest() {
     }
 
     @Test
+    fun failTest() {
+        fail("This test should fail")
+    }
+
+    @Test
     fun logInfoTest() {
         logTestMessage("Adding info log to Embrace.")
         Embrace.getInstance().logInfo("Test log info")

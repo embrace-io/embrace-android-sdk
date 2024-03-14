@@ -211,6 +211,7 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.unityVersionNumber }.returns(null)
         every { preferencesService.unityBuildIdNumber }.returns(null)
         every { preferencesService.rnSdkVersion }.returns(null)
+        every { preferencesService.reactNativeVersionNumber }.returns(null)
         every { preferencesService.javaScriptPatchNumber }.returns(null)
         every { preferencesService.javaScriptBundleURL }.returns(null)
         every { preferencesService.javaScriptBundleId }.returns(null)

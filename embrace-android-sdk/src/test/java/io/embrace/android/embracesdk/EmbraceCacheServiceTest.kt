@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.comms.delivery.CacheService
+import io.embrace.android.embracesdk.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.EMBRACE_PREFIX
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.NEW_COPY_SUFFIX
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.OLD_COPY_SUFFIX
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.getFileNameForSession
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -230,8 +231,8 @@ internal class EmbraceCacheServiceTest {
     fun `only proper session file IDs returned when normalizeCacheAndGetSessionFileIds is called`() {
         val session1 = testSessionMessage
         val session2 = testSessionMessage2
-        val session1FileName = getFileNameForSession(session1.session.sessionId, session1.session.startTime)
-        val session2FileName = getFileNameForSession(session2.session.sessionId, session2.session.startTime)
+        val session1FileName = CachedSession.create(session1.session.sessionId, session1.session.startTime, false).filename
+        val session2FileName = CachedSession.create(session2.session.sessionId, session2.session.startTime, false).filename
         service.writeSession(session1FileName, session1)
         service.writeSession(session2FileName, session2)
         service.cacheBytes("not-match.json", testPayloadBytes)
@@ -247,9 +248,9 @@ internal class EmbraceCacheServiceTest {
     fun `temp files removed during cache normalization`() {
         val session1 = testSessionMessage
         val session2 = testSessionMessage2
-        val session1FileName = getFileNameForSession(session1.session.sessionId, session1.session.startTime)
-        val session2FileName = getFileNameForSession(session2.session.sessionId, session2.session.startTime)
-        val badSessionFileName = getFileNameForSession("badId", System.currentTimeMillis())
+        val session1FileName = CachedSession.create(session1.session.sessionId, session1.session.startTime, false).filename
+        val session2FileName = CachedSession.create(session2.session.sessionId, session2.session.startTime, false).filename
+        val badSessionFileName = CachedSession.create("badId", System.currentTimeMillis(), false).filename
         service.writeSession(session1FileName, session1)
         service.writeSession(session2FileName + OLD_COPY_SUFFIX, session2)
         service.cacheBytes(badSessionFileName + TEMP_COPY_SUFFIX, testPayloadBytes)
@@ -265,7 +266,7 @@ internal class EmbraceCacheServiceTest {
     fun `new version of session file replaces existing one during cache normalization`() {
         val session = testSessionMessage
         val newSession = testSessionMessageOneMinuteLater
-        val sessionFileName = getFileNameForSession(session.session.sessionId, session.session.startTime)
+        val sessionFileName = CachedSession.create(session.session.sessionId, session.session.startTime, false).filename
         service.writeSession(sessionFileName, session)
         service.writeSession(sessionFileName + NEW_COPY_SUFFIX, newSession)
 
@@ -285,7 +286,7 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `new version of session file swapped in during cache normalization if proper session file is missing`() {
         val session = testSessionMessage
-        val sessionFileName = getFileNameForSession(session.session.sessionId, session.session.startTime)
+        val sessionFileName = CachedSession.create(session.session.sessionId, session.session.startTime, false).filename
         service.writeSession(sessionFileName + NEW_COPY_SUFFIX, session)
         service.writeSession(sessionFileName + OLD_COPY_SUFFIX, session)
 
@@ -346,10 +347,11 @@ internal class EmbraceCacheServiceTest {
     @Test
     fun `session replacement does not create duplicate files`() {
         val original = testSessionMessage
-        val filename = getFileNameForSession(
+        val filename = CachedSession.create(
             sessionId = original.session.sessionId,
-            timestampMs = original.session.startTime
-        )
+            timestampMs = original.session.startTime,
+            v2Payload = false
+        ).filename
         val replacement = testSessionMessageOneMinuteLater
 
         service.writeSession(filename, original)
@@ -367,6 +369,15 @@ internal class EmbraceCacheServiceTest {
 
         val errors = loggerAction.msgQueue.filter { it.severity == InternalStaticEmbraceLogger.Severity.ERROR }
         assertEquals("The following errors were logged: $errors", 0, errors.size)
+    }
+
+    @Test
+    fun `test is v2 payload`() {
+        val session = fakeSession()
+        val filename = CachedSession.create(session.sessionId, session.startTime, false).filename
+        assertFalse(checkNotNull(CachedSession.fromFilename(filename)).v2Payload)
+        val v2Filename = filename.replace(".json", ".v2.json")
+        assertTrue(checkNotNull(CachedSession.fromFilename(v2Filename)).v2Payload)
     }
 
     companion object {

@@ -187,7 +187,7 @@ internal class EmbraceCacheService(
                 previousSdkSession?.also { sessionMessage ->
                     runCatching {
                         val session = sessionMessage.session
-                        val properSessionFilename = getFileNameForSession(session.sessionId, session.startTime)
+                        val properSessionFilename = CachedSession.create(session.sessionId, session.startTime, false).filename
                         if (!sessionFileNames.contains(properSessionFilename)) {
                             replaceSessionFile(properSessionFilename, filename)
                             properSessionFileIds.add(properSessionFilename)
@@ -298,7 +298,7 @@ internal class EmbraceCacheService(
         /**
          * File names for all cached sessions start with this prefix
          */
-        private const val SESSION_FILE_PREFIX = "last_session"
+        internal const val SESSION_FILE_PREFIX = "last_session"
 
         /**
          * Full file name for a session saved with a previous version of the SDK. Note that to
@@ -311,7 +311,5 @@ internal class EmbraceCacheService(
         const val OLD_COPY_SUFFIX = "-old"
         const val TEMP_COPY_SUFFIX = "-tmp"
         const val NEW_COPY_SUFFIX = "-new"
-
-        fun getFileNameForSession(sessionId: String, timestampMs: Long): String = "$SESSION_FILE_PREFIX.$timestampMs.$sessionId.json"
     }
 }

@@ -10,7 +10,7 @@ internal interface DeliveryCacheManager {
     fun transformSession(sessionId: String, transformer: (SessionMessage) -> SessionMessage)
     fun loadSessionAsAction(sessionId: String): SerializationAction?
     fun deleteSession(sessionId: String)
-    fun getAllCachedSessionIds(): List<String>
+    fun getAllCachedSessionIds(): List<CachedSession>
     fun saveCrash(crash: EventMessage)
     fun loadCrash(): EventMessage?
     fun deleteCrash()

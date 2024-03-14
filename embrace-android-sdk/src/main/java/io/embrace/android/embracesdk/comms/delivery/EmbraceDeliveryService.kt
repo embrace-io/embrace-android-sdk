@@ -97,7 +97,9 @@ internal class EmbraceDeliveryService(
     override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
         sendCachedCrash()
         backgroundWorker.submit(TaskPriority.HIGH) {
-            val allSessions = cacheManager.getAllCachedSessionIds().filter { it != sessionIdTracker.getActiveSessionId() }
+            val allSessions = cacheManager.getAllCachedSessionIds().filter {
+                it.sessionId != sessionIdTracker.getActiveSessionId()
+            }
             ndkService?.let { service ->
                 val nativeCrashData = service.checkForNativeCrash()
                 if (nativeCrashData != null) {
@@ -134,16 +136,17 @@ internal class EmbraceDeliveryService(
         return sessionMessage.copy(session = session)
     }
 
-    private fun sendCachedSessions(ids: List<String>) {
-        ids.forEach { id ->
+    private fun sendCachedSessions(cachedSessions: List<CachedSession>) {
+        cachedSessions.forEach { cachedSession ->
             try {
-                val action = cacheManager.loadSessionAsAction(id)
+                val sessionId = cachedSession.sessionId
+                val action = cacheManager.loadSessionAsAction(sessionId)
                 if (action != null) {
                     // temporarily assume all sessions are v1. Future changeset
                     // will encode this information in the filename.
-                    apiService.sendSession(false, action) { cacheManager.deleteSession(id) }
+                    apiService.sendSession(false, action) { cacheManager.deleteSession(sessionId) }
                 } else {
-                    logger.logError("Session $id not found")
+                    logger.logError("Session $sessionId not found")
                 }
             } catch (ex: Throwable) {
                 logger.logError("Could not send cached session", ex, true)

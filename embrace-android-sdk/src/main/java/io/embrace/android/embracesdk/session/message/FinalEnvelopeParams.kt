@@ -15,6 +15,7 @@ internal sealed class FinalEnvelopeParams(
     val endTime: Long,
     val lifeEventType: Session.LifeEventType?,
     crashId: String?,
+    val endType: SessionSnapshotType,
     val isCacheAttempt: Boolean
 ) {
 
@@ -35,12 +36,14 @@ internal sealed class FinalEnvelopeParams(
         initial: Session,
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
-        crashId: String? = null
+        endType: SessionSnapshotType,
+        crashId: String? = null,
     ) : FinalEnvelopeParams(
         initial,
         endTime,
         lifeEventType,
         crashId,
+        endType,
         lifeEventType == null
     ) {
         override val terminationTime: Long? = null
@@ -56,13 +59,14 @@ internal sealed class FinalEnvelopeParams(
         initial: Session,
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
+        endType: SessionSnapshotType,
         crashId: String? = null,
-        val endType: SessionSnapshotType
     ) : FinalEnvelopeParams(
         initial,
         endTime,
         lifeEventType,
         crashId,
+        endType,
         endType == SessionSnapshotType.PERIODIC_CACHE
     ) {
 

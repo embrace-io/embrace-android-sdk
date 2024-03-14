@@ -113,7 +113,8 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp - 1,
-                lifeEventType = LifeEventType.BKGND_STATE
+                lifeEventType = LifeEventType.BKGND_STATE,
+                endType = SessionSnapshotType.NORMAL_END
             )
         )
     }
@@ -147,7 +148,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp,
                 lifeEventType = LifeEventType.BKGND_STATE,
-                crashId = crashId
+                crashId = crashId,
+                endType = SessionSnapshotType.JVM_CRASH
             )
         )
     }
@@ -174,7 +176,8 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams.BackgroundActivityParams(
                 initial = initial,
                 endTime = timestamp,
-                lifeEventType = null
+                lifeEventType = null,
+                endType = SessionSnapshotType.PERIODIC_CACHE
             )
         )
     }

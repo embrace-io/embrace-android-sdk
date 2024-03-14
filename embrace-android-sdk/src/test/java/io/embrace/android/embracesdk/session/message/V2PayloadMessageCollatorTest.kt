@@ -2,13 +2,17 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -56,7 +60,12 @@ internal class V2PayloadMessageCollatorTest {
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService()
         )
-        v2collator = V2PayloadMessageCollator(v1collator)
+        val sessionEnvelopeSource = SessionEnvelopeSource(
+            metadataSource = FakeEnvelopeMetadataSource(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            sessionPayloadSource = FakeSessionPayloadSource()
+        )
+        v2collator = V2PayloadMessageCollator(v1collator, sessionEnvelopeSource)
     }
 
     @Test
@@ -101,6 +110,7 @@ internal class V2PayloadMessageCollatorTest {
                 startMsg,
                 15000000000,
                 Session.LifeEventType.BKGND_STATE,
+                SessionSnapshotType.NORMAL_END,
                 "crashId"
             )
         )
@@ -125,8 +135,8 @@ internal class V2PayloadMessageCollatorTest {
                 startMsg,
                 15000000000,
                 Session.LifeEventType.STATE,
+                SessionSnapshotType.NORMAL_END,
                 "crashId",
-                SessionSnapshotType.NORMAL_END
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
@@ -140,6 +150,11 @@ internal class V2PayloadMessageCollatorTest {
         assertNotNull(deviceInfo)
         assertNotNull(performanceInfo)
         assertNotNull(breadcrumbs)
+        assertNotNull(resource)
+        assertNotNull(metadata)
+        assertNotNull(data)
+        assertNotNull(newVersion)
+        assertNotNull(type)
         session.verifyInitialFieldsPopulated(payloadType)
         session.verifyFinalFieldsPopulated(payloadType)
     }

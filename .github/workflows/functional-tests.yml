@@ -98,7 +98,7 @@ jobs:
         with:
           payload: |
             {
-              "failed_action_url": "${{ github.run_url }}"
+              "failed_action_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

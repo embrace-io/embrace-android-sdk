@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -18,6 +19,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
+/**
+ * The various combinations of OS capabilities mean we have to test the following Android versions:
+ *
+ *  - 14+:         cold start trace from process create to render, process requested time available
+ *  - 10 to 13:    cold start trace from process create to render, process requested time NOT available
+ *  - 7 to 9:      cold start trace from process create to activity resume, process requested time NOT available
+ *  - 5 to 6.0.1:  cold start trace application init if available (sdk init if not) to activity resume
+ */
 @RunWith(AndroidJUnit4::class)
 internal class AppStartupTraceEmitterTest {
     private var startupService: StartupService? = null
@@ -66,8 +75,129 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with every event triggered in T`() {
+        verifyColdStartWithRender()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `verify cold start trace without application init start and end triggered in T`() {
+        verifyColdStartWithRenderWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `verify warm start trace without application init start and end triggered in T`() {
+        verifyWarmStartWithRenderWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.S])
+    @Test
+    fun `no crashes if startup service not available in S`() {
+        startupService = null
+        appStartupTraceEmitter.firstFrameRendered()
+        assertEquals(1, loggerAction.msgQueue.size)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace with every event triggered in S`() {
+        verifyColdStartWithRender()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace without application init start and end triggered in S`() {
+        verifyColdStartWithRenderWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.S])
+    @Test
+    fun `verify warm start trace without application init start and end triggered in S`() {
+        verifyWarmStartWithRenderWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.P])
+    @Test
+    fun `no crashes if startup service not available in P`() {
+        startupService = null
+        appStartupTraceEmitter.startupActivityResumed()
+        assertEquals(1, loggerAction.msgQueue.size)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.P])
+    @Test
+    fun `verify cold start trace with every event triggered in P`() {
+        verifyColdStartWithResume()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.P])
+    @Test
+    fun `verify cold start trace without application init start and end triggered in P`() {
+        verifyColdStartWithResumeWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.P])
+    @Test
+    fun `verify warm start trace without application init start and end triggered in O`() {
+        verifyWarmStartWithResumeWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.M])
+    @Test
+    fun `no crashes if startup service not available in M`() {
+        startupService = null
+        appStartupTraceEmitter.startupActivityResumed()
+        assertEquals(1, loggerAction.msgQueue.size)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.M])
+    @Test
+    fun `verify cold start trace with every event triggered in M`() {
+        verifyColdStartWithResume(trackProcessStart = false)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.M])
+    @Test
+    fun `verify cold start trace without application init start and end triggered in M`() {
+        verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart = false)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.M])
+    @Test
+    fun `verify warm start trace without application init start and end triggered in M`() {
+        verifyWarmStartWithResumeWithoutAppInitEvents()
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `no crashes if startup service not available in L`() {
+        startupService = null
+        appStartupTraceEmitter.startupActivityResumed()
+        assertEquals(1, loggerAction.msgQueue.size)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify cold start trace with every event triggered in L`() {
+        verifyColdStartWithResume(trackProcessStart = false)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify cold start trace without application init start and end triggered in L`() {
+        verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart = false)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify warm start trace without application init start and end triggered in L`() {
+        verifyWarmStartWithResumeWithoutAppInitEvents()
+    }
+
+    private fun verifyColdStartWithRender() {
         clock.tick(100L)
         appStartupTraceEmitter.applicationInitStart()
+        clock.tick(15L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
@@ -97,11 +227,11 @@ internal class AppStartupTraceEmitterTest {
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
         with(trace) {
-            assertEquals(FakeClock.DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
+            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
             assertEquals(traceEnd, endTimeNanos.nanosToMillis())
         }
         with(processInit) {
-            assertEquals(FakeClock.DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
+            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
             assertEquals(applicationInitEnd, endTimeNanos.nanosToMillis())
         }
         with(embraceInit) {
@@ -124,9 +254,7 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(0, loggerAction.msgQueue.size)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
-    @Test
-    fun `verify cold start trace without application init start and end triggered in T`() {
+    private fun verifyColdStartWithRenderWithoutAppInitEvents() {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
@@ -153,7 +281,7 @@ internal class AppStartupTraceEmitterTest {
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
         with(trace) {
-            assertEquals(FakeClock.DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
+            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
             assertEquals(traceEnd, endTimeNanos.nanosToMillis())
         }
         with(embraceInit) {
@@ -176,9 +304,126 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(0, loggerAction.msgQueue.size)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
-    @Test
-    fun `verify warm start trace without application init start and end triggered in T`() {
+    private fun verifyColdStartWithResume(trackProcessStart: Boolean = true) {
+        clock.tick(100L)
+        appStartupTraceEmitter.applicationInitStart()
+        val applicationInitStart = clock.now()
+        clock.tick(10L)
+        val sdkInitStart = clock.now()
+        clock.tick(30L)
+        val sdkInitEnd = clock.now()
+        clock.tick(400L)
+        appStartupTraceEmitter.applicationInitEnd()
+        val applicationInitEnd = clock.now()
+        clock.tick(50L)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        appStartupTraceEmitter.startupActivityInitStart()
+        val startupActivityStart = clock.now()
+        clock.tick(180L)
+        appStartupTraceEmitter.startupActivityInitEnd()
+        val startupActivityEnd = clock.now()
+        clock.tick(15L)
+        appStartupTraceEmitter.startupActivityResumed()
+        val traceEnd = clock.now()
+
+        assertEquals(7, spanSink.completedSpans().size)
+        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
+        val processInit = checkNotNull(spanMap["emb-process-init"])
+        val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
+        val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
+        val activityCreate = checkNotNull(spanMap["emb-activity-create"])
+        val activityResume = checkNotNull(spanMap["emb-activity-resume"])
+
+        val traceStartMs = if (trackProcessStart) {
+            DEFAULT_FAKE_CURRENT_TIME
+        } else {
+            applicationInitStart
+        }
+
+        with(trace) {
+            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
+            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+        }
+        with(processInit) {
+            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
+            assertEquals(applicationInitEnd, endTimeNanos.nanosToMillis())
+        }
+        with(embraceInit) {
+            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
+            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
+        }
+        with(activityInitDelay) {
+            assertEquals(applicationInitEnd, startTimeNanos.nanosToMillis())
+            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
+        }
+        with(activityCreate) {
+            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
+            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
+        }
+        with(activityResume) {
+            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
+            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+        }
+
+        assertEquals(0, loggerAction.msgQueue.size)
+    }
+
+    private fun verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart: Boolean = true) {
+        clock.tick(100L)
+        val sdkInitStart = clock.now()
+        clock.tick(30L)
+        val sdkInitEnd = clock.now()
+        clock.tick(400L)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        appStartupTraceEmitter.startupActivityInitStart()
+        val startupActivityStart = clock.now()
+        clock.tick(180L)
+        appStartupTraceEmitter.startupActivityInitEnd()
+        val startupActivityEnd = clock.now()
+        clock.tick(15L)
+        appStartupTraceEmitter.startupActivityResumed()
+        val traceEnd = clock.now()
+
+        assertEquals(6, spanSink.completedSpans().size)
+        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
+        val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
+        val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
+        val activityCreate = checkNotNull(spanMap["emb-activity-create"])
+        val activityResume = checkNotNull(spanMap["emb-activity-resume"])
+
+        val traceStartMs = if (trackProcessStart) {
+            DEFAULT_FAKE_CURRENT_TIME
+        } else {
+            sdkInitStart
+        }
+
+        with(trace) {
+            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
+            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+        }
+        with(embraceInit) {
+            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
+            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
+        }
+        with(activityInitDelay) {
+            assertEquals(sdkInitEnd, startTimeNanos.nanosToMillis())
+            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
+        }
+        with(activityCreate) {
+            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
+            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
+        }
+        with(activityResume) {
+            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
+            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+        }
+
+        assertEquals(0, loggerAction.msgQueue.size)
+    }
+
+    private fun verifyWarmStartWithRenderWithoutAppInitEvents() {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
@@ -220,128 +465,7 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(0, loggerAction.msgQueue.size)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
-    @Test
-    fun `no crashes if startup service not available in L`() {
-        startupService = null
-        appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
-    }
-
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
-    @Test
-    fun `verify cold start trace with every event triggered in L`() {
-        clock.tick(100L)
-        appStartupTraceEmitter.applicationInitStart()
-        val applicationInitStart = clock.now()
-        clock.tick(10L)
-        val sdkInitStart = clock.now()
-        clock.tick(30L)
-        val sdkInitEnd = clock.now()
-        clock.tick(400L)
-        appStartupTraceEmitter.applicationInitEnd()
-        val applicationInitEnd = clock.now()
-        clock.tick(50L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
-        appStartupTraceEmitter.startupActivityInitStart()
-        val startupActivityStart = clock.now()
-        clock.tick(180L)
-        appStartupTraceEmitter.startupActivityInitEnd()
-        val startupActivityEnd = clock.now()
-        clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
-        val traceEnd = clock.now()
-
-        assertEquals(7, spanSink.completedSpans().size)
-        val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
-        val processInit = checkNotNull(spanMap["emb-process-init"])
-        val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
-        val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
-        val activityCreate = checkNotNull(spanMap["emb-activity-create"])
-        val activityResume = checkNotNull(spanMap["emb-activity-resume"])
-
-        with(trace) {
-            assertEquals(applicationInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(processInit) {
-            assertEquals(applicationInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(applicationInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(applicationInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityResume) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-
-        assertEquals(0, loggerAction.msgQueue.size)
-    }
-
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
-    @Test
-    fun `verify cold start trace without application init start and end triggered in L`() {
-        clock.tick(100L)
-        val sdkInitStart = clock.now()
-        clock.tick(30L)
-        val sdkInitEnd = clock.now()
-        clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
-        appStartupTraceEmitter.startupActivityInitStart()
-        val startupActivityStart = clock.now()
-        clock.tick(180L)
-        appStartupTraceEmitter.startupActivityInitEnd()
-        val startupActivityEnd = clock.now()
-        clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
-        val traceEnd = clock.now()
-
-        assertEquals(6, spanSink.completedSpans().size)
-        val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
-        val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
-        val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
-        val activityCreate = checkNotNull(spanMap["emb-activity-create"])
-        val activityResume = checkNotNull(spanMap["emb-activity-resume"])
-
-        with(trace) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(sdkInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityResume) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-
-        assertEquals(0, loggerAction.msgQueue.size)
-    }
-
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
-    @Test
-    fun `verify warm start trace without application init start and end triggered in L`() {
+    private fun verifyWarmStartWithResumeWithoutAppInitEvents() {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)

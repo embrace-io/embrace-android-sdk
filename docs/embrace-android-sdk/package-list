@@ -69,7 +69,6 @@ $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode.FAILURE///Pointing
 $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode.UNKNOWN///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/-u-n-k-n-o-w-n/index.html
 $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode.USER_ABANDON///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/-u-s-e-r_-a-b-a-n-d-o-n/index.html
 $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode///PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/index.html
-$dokka.location:io.embrace.android.embracesdk.spans/ErrorCode/getCanonicalName/#/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/get-canonical-name.html
 $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode/valueOf/#kotlin.String/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/value-of.html
 $dokka.location:io.embrace.android.embracesdk.spans/ErrorCode/values/#/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk.spans/-error-code/values.html
 $dokka.location:io.embrace.android.embracesdk////PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/index.html

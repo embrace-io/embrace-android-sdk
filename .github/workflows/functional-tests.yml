@@ -85,8 +85,10 @@ jobs:
           script: ./gradlew connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Debug Step Outcome
+        if: ${{ always() }}
         run: |
-          echo "Outcome: ${{ steps.runFunctionalTests.outcome }}"
+          echo "Outcome1: ${{ steps.runFunctionalTests.outcome }}"
+          echo "Outcome2: ${{ steps.runFunctionalTests.outcome == 'failure' }}"
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -107,6 +109,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Cleanup Gradle Cache
+        if: ${{ always() }}
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
         # Restoring these files from a GitHub Actions cache might cause problems for future builds.

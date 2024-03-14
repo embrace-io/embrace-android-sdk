@@ -7,7 +7,6 @@ import java.io.IOException
 import logTestMessage
 import org.junit.After
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -22,11 +21,6 @@ internal class LogMessageTest : BaseTest() {
     @After
     fun tearDown() {
         sendBackground()
-    }
-
-    @Test
-    fun failTest() {
-        fail("This test should fail")
     }
 
     @Test

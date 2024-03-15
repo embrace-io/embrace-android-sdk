@@ -13,11 +13,11 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -42,7 +42,7 @@ internal class EmbraceCacheServiceTest {
     private lateinit var storageManager: FakeStorageService
     private lateinit var loggerAction: FakeLoggerAction
     private lateinit var logger: InternalEmbraceLogger
-    private val serializer = EmbraceSerializer()
+    private val serializer = TestPlatformSerializer()
 
     @Before
     fun setUp() {

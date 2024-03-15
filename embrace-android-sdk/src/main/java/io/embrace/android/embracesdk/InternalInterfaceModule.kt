@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.capture.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
@@ -46,7 +47,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             androidServicesModule.preferencesService,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.hostedSdkVersionInfo as UnitySdkVersionInfo,
             coreModule.logger
         )
     }

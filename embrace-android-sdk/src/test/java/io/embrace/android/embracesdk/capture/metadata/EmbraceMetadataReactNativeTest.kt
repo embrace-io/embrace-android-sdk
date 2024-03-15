@@ -33,6 +33,7 @@ import java.nio.file.Files
 
 internal class EmbraceMetadataReactNativeTest {
 
+    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private val fakeClock = FakeClock()
     private lateinit var context: Context
     private lateinit var assetManager: AssetManager
@@ -61,6 +62,7 @@ internal class EmbraceMetadataReactNativeTest {
         preferencesService.reactNativeVersionNumber = "rn-version-number"
         mockSharedObjectLoader = mockk(relaxed = true)
         cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, InternalEmbraceLogger())
+        hostedSdkVersionInfo = HostedSdkVersionInfo(preferencesService, InternalEmbraceLogger())
     }
 
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
@@ -77,7 +79,8 @@ internal class EmbraceMetadataReactNativeTest {
         cpuInfoDelegate,
         deviceArchitecture,
         lazy { "" },
-        lazy { "" }
+        lazy { "" },
+        hostedSdkVersionInfo
     )
 
     @Test

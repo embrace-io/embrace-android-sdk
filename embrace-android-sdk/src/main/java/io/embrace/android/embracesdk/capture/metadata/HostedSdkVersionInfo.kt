@@ -43,19 +43,29 @@ internal open class HostedSdkVersionInfo(
             }
         }
 }
-//
-//internal class UnitySdkInfo(
-//    private val preferencesService: PreferencesService
-//) : HostedSdkVersionInfo {
-//    override var hostedSdkVersion: String? = null
-//        get() = preferencesService.unitySdkVersionNumber
-//    override val hostedPlatformVersion: String?
-//        get() = preferencesService.unityVersionNumber
-//    override val unityBuildIdNumber: String?
-//        get() = preferencesService.unityBuildIdNumber
-//    override val reactNativeBundleId: String? = null
-//    override val javaScriptPatchNumber: String? = null
-//}
+
+internal class UnitySdkVersionInfo(
+    private val preferencesService: PreferencesService,
+    private val logger: InternalEmbraceLogger
+) : HostedSdkVersionInfo(preferencesService, logger) {
+    var unityBuildIdNumber: String? = null
+        get() = field ?: preferencesService.unityBuildIdNumber
+        set(value) {
+            val unityBuildIdNumber = preferencesService.unityBuildIdNumber
+            if (unityBuildIdNumber != null) {
+                logger.logDeveloper("Embrace", "unityBuildIdNumber is present")
+                if (value != unityBuildIdNumber) {
+                    logger.logDeveloper("Embrace", "Setting a new unityBuildIdNumber")
+                    field = value
+                    preferencesService.unityBuildIdNumber = value
+                }
+            } else {
+                logger.logDeveloper("Embrace", "Setting unityBuildIdNumber")
+                field = value
+                preferencesService.unityBuildIdNumber = value
+            }
+        }
+}
 //
 //internal class ReactNativeSdkInfo(
 //    private val preferencesService: PreferencesService

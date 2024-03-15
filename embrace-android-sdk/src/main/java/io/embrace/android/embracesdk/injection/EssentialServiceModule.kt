@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
@@ -186,7 +187,7 @@ internal class EssentialServiceModuleImpl(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         when(coreModule.appFramework) {
             Embrace.AppFramework.UNITY -> {
-                HostedSdkVersionInfo(
+                UnitySdkVersionInfo(
                     androidServicesModule.preferencesService,
                     coreModule.logger
                 )
@@ -222,7 +223,8 @@ internal class EssentialServiceModuleImpl(
                 cpuInfoDelegate,
                 deviceArchitecture,
                 lazyAppVersionName,
-                lazyAppVersionCode
+                lazyAppVersionCode,
+                hostedSdkVersionInfo
             )
         }
     }

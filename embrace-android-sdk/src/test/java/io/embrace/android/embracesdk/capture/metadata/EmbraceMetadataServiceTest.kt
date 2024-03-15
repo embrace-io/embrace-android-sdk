@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -46,6 +47,7 @@ internal class EmbraceMetadataServiceTest {
         private val context: Context = mockContext()
         private val packageInfo = PackageInfo()
         private val serializer = EmbraceSerializer()
+        private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
         private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
@@ -64,6 +66,8 @@ internal class EmbraceMetadataServiceTest {
 
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
             every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
+
+            hostedSdkVersionInfo = HostedSdkVersionInfo(preferencesService, InternalEmbraceLogger())
         }
 
         @After
@@ -136,7 +140,8 @@ internal class EmbraceMetadataServiceTest {
             cpuInfoDelegate,
             fakeArchitecture,
             lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() }
+            lazy { packageInfo.versionCode.toString() },
+            hostedSdkVersionInfo
         ).apply { precomputeValues() }
     }
 
@@ -156,7 +161,8 @@ internal class EmbraceMetadataServiceTest {
             cpuInfoDelegate,
             fakeArchitecture,
             lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() }
+            lazy { packageInfo.versionCode.toString() },
+            hostedSdkVersionInfo
         )
 
     @Test
@@ -293,7 +299,8 @@ internal class EmbraceMetadataServiceTest {
             cpuInfoDelegate,
             fakeArchitecture,
             lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() }
+            lazy { packageInfo.versionCode.toString() },
+            hostedSdkVersionInfo
         )
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())

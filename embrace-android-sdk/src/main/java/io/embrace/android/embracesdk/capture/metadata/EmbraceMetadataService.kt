@@ -63,6 +63,7 @@ internal class EmbraceMetadataService private constructor(
     buildGuid: String?,
     unitySdkVersion: String?,
     rnSdkVersion: String?,
+    private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
@@ -282,17 +283,13 @@ internal class EmbraceMetadataService private constructor(
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun getAppInfo(populateAllFields: Boolean): AppInfo {
-        var infoPlatformVersion: String? = null
-        var hostedSdkVersion: String? = null
         var infoUnityBuildIdNumber: String? = null
         var infoReactNativeBundle: String? = null
         var infoJavaScriptPatchNumber: String? = null
         var infoReactNativeVersion: String? = null
         // applies to Unity builds only.
         if (appFramework == AppFramework.UNITY) {
-            infoPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
             infoUnityBuildIdNumber = unityBuildIdNumber ?: preferencesService.unityBuildIdNumber
-            hostedSdkVersion = embraceUnitySdkVersion ?: preferencesService.unitySdkVersionNumber
         }
 
         // applies to React Native builds only
@@ -300,14 +297,8 @@ internal class EmbraceMetadataService private constructor(
             infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
             infoReactNativeVersion = getReactNativeVersion()
-            hostedSdkVersion = getRnSdkVersion()
         }
 
-        // applies to Flutter builds only
-        if (appFramework == AppFramework.FLUTTER) {
-            infoPlatformVersion = dartSdkVersion
-            hostedSdkVersion = getEmbraceFlutterSdkVersion()
-        }
         return AppInfo(
             lazyAppVersionName.value,
             appFramework.value,
@@ -337,9 +328,9 @@ internal class EmbraceMetadataService private constructor(
             infoReactNativeBundle,
             infoJavaScriptPatchNumber,
             infoReactNativeVersion,
-            infoPlatformVersion,
+            hostedSdkVersionInfo.hostedPlatformVersion,
             infoUnityBuildIdNumber,
-            hostedSdkVersion
+            hostedSdkVersionInfo.hostedSdkVersion
         )
     }
 
@@ -496,7 +487,8 @@ internal class EmbraceMetadataService private constructor(
             embraceCpuInfoDelegate: CpuInfoDelegate,
             deviceArchitecture: DeviceArchitecture,
             lazyAppVersionName: Lazy<String>,
-            lazyAppVersionCode: Lazy<String>
+            lazyAppVersionCode: Lazy<String>,
+            hostedSdkVersionInfo: HostedSdkVersionInfo
         ): EmbraceMetadataService {
             val isAppUpdated = lazy {
                 val lastKnownAppVersion = preferencesService.appVersion
@@ -603,6 +595,7 @@ internal class EmbraceMetadataService private constructor(
                 buildGuid,
                 unitySdkVersion,
                 rnSdkVersion,
+                hostedSdkVersionInfo,
                 metadataBackgroundWorker,
                 clock,
                 embraceCpuInfoDelegate,

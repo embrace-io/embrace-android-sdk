@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -42,6 +43,7 @@ internal class EmbraceMetadataUnityTest {
         private val serializer = EmbraceSerializer()
         private lateinit var buildInfo: BuildInfo
         private lateinit var configService: ConfigService
+        private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
         private lateinit var preferencesService: FakePreferenceService
         private lateinit var processStateService: ProcessStateService
         private lateinit var cpuInfoDelegate: FakeCpuInfoDelegate
@@ -63,6 +65,8 @@ internal class EmbraceMetadataUnityTest {
 
             initContext()
             initPreferences()
+
+            hostedSdkVersionInfo = HostedSdkVersionInfo(preferencesService, InternalEmbraceLogger())
         }
 
         @AfterClass
@@ -113,7 +117,8 @@ internal class EmbraceMetadataUnityTest {
         cpuInfoDelegate,
         deviceArchitecture,
         lazy { packageInfo.versionName },
-        lazy { packageInfo.versionCode.toString() }
+        lazy { packageInfo.versionCode.toString() },
+        hostedSdkVersionInfo
     )
 
     @Test

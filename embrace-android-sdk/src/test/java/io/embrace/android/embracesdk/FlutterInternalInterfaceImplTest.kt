@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.mockk.every
 import io.mockk.mockk
@@ -14,21 +15,26 @@ internal class FlutterInternalInterfaceImplTest {
     private lateinit var impl: FlutterInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var logger: InternalEmbraceLogger
-    private lateinit var metadataService: FakeMetadataService
+    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
+    private lateinit var fakePreferencesService: FakePreferenceService
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
-        metadataService = FakeMetadataService()
         logger = mockk(relaxed = true)
-        impl = FlutterInternalInterfaceImpl(embrace, mockk(), metadataService, logger)
+        fakePreferencesService = FakePreferenceService(
+            dartSdkVersion = "fakeDartVersion",
+            embraceFlutterSdkVersion = "fakeFlutterSdkVersion"
+        )
+        hostedSdkVersionInfo = HostedSdkVersionInfo(fakePreferencesService, logger)
+        impl = FlutterInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 
     @Test
     fun testSetFlutterSdkVersion() {
         every { embrace.isStarted } returns true
         impl.setEmbraceFlutterSdkVersion("2.12")
-        assertEquals("2.12", metadataService.fakeFlutterSdkVersion)
+        assertEquals("2.12", hostedSdkVersionInfo.hostedSdkVersion)
     }
 
     @Test
@@ -44,14 +50,14 @@ internal class FlutterInternalInterfaceImplTest {
     fun testSetFlutterSdkVersionNull() {
         every { embrace.isStarted } returns true
         impl.setEmbraceFlutterSdkVersion(null)
-        assertEquals("fakeFlutterSdkVersion", metadataService.fakeFlutterSdkVersion)
+        assertEquals("fakeFlutterSdkVersion", hostedSdkVersionInfo.hostedSdkVersion)
     }
 
     @Test
     fun testSetDartSdkVersion() {
         every { embrace.isStarted } returns true
         impl.setDartVersion("2.12")
-        assertEquals("2.12", metadataService.fakeDartVersion)
+        assertEquals("2.12", hostedSdkVersionInfo.hostedPlatformVersion)
     }
 
     @Test
@@ -67,7 +73,7 @@ internal class FlutterInternalInterfaceImplTest {
     fun testSetDartVersionNull() {
         every { embrace.isStarted } returns true
         impl.setDartVersion(null)
-        assertEquals("fakeDartVersion", metadataService.fakeDartVersion)
+        assertEquals("fakeDartVersion", hostedSdkVersionInfo.hostedPlatformVersion)
     }
 
     @Test

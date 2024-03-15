@@ -1,20 +1,20 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
-    private val metadataService: MetadataService,
+    private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalEmbraceLogger
 ) : EmbraceInternalInterface by impl, FlutterInternalInterface {
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {
         if (embrace.isStarted) {
             if (version != null) {
-                metadataService.setEmbraceFlutterSdkVersion(version)
+                hostedSdkVersionInfo.hostedSdkVersion = version
             }
         } else {
             logger.logSDKNotInitialized("setEmbraceFlutterSdkVersion")
@@ -24,7 +24,7 @@ internal class FlutterInternalInterfaceImpl(
     override fun setDartVersion(version: String?) {
         if (embrace.isStarted) {
             if (version != null) {
-                metadataService.setDartVersion(version)
+                hostedSdkVersionInfo.hostedPlatformVersion = version
             }
         } else {
             logger.logSDKNotInitialized("setDartVersion")

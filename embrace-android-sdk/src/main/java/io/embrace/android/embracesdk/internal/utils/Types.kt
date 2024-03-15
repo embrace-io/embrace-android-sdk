@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AnrModule
@@ -84,7 +85,7 @@ internal typealias EssentialServiceModuleSupplier = (
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    configServiceProvider: Provider<ConfigService?>,
+    configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule
 
 /**

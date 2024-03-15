@@ -55,7 +55,7 @@ internal class InternalInterfaceModuleImpl(
         FlutterInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.hostedSdkVersionInfo,
             coreModule.logger
         )
     }

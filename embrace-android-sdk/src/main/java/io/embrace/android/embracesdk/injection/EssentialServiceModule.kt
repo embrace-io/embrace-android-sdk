@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Debug
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
@@ -55,6 +57,7 @@ internal interface EssentialServiceModule {
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
     val metadataService: MetadataService
+    val hostedSdkVersionInfo: HostedSdkVersionInfo
     val configService: ConfigService
     val gatingService: GatingService
     val userService: UserService
@@ -78,7 +81,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    private val configServiceProvider: Provider<ConfigService?> = { null },
+    private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
@@ -178,6 +181,29 @@ internal class EssentialServiceModuleImpl(
 
     override val deviceArchitecture: DeviceArchitecture by singleton {
         DeviceArchitectureImpl()
+    }
+
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
+        when(coreModule.appFramework) {
+            Embrace.AppFramework.UNITY -> {
+                HostedSdkVersionInfo(
+                    androidServicesModule.preferencesService,
+                    coreModule.logger
+                )
+            }
+            Embrace.AppFramework.REACT_NATIVE -> {
+                HostedSdkVersionInfo(
+                    androidServicesModule.preferencesService,
+                    coreModule.logger
+                )
+            }
+            else -> {
+                HostedSdkVersionInfo(
+                    androidServicesModule.preferencesService,
+                    coreModule.logger
+                )
+            }
+        }
     }
 
     override val metadataService: MetadataService by singleton {

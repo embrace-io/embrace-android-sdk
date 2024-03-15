@@ -70,11 +70,6 @@ internal class EmbraceMetadataService private constructor(
 ) : MetadataService, ActivityLifecycleListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
-    private val javaScriptPatchNumber: String?
-    private val reactNativeVersion: String?
-    private val unityVersion: String?
-    private val buildGuid: String?
-    private val unitySdkVersion: String?
     private var reactNativeBundleId: Future<String?>
 
     @Volatile
@@ -93,7 +88,12 @@ internal class EmbraceMetadataService private constructor(
     private var isJailbroken: Boolean? = null
     private var embraceFlutterSdkVersion: String? = null
     private var dartVersion: String? = null
-    private var rnSdkVersion: String?
+    private var reactNativeSdkVersion: String?
+    private var reactNativeVersion: String?
+    private var javaScriptPatchNumber: String?
+    private var embraceUnitySdkVersion: String?
+    private var unityVersion: String?
+    private var unityBuildIdNumber: String?
 
     init {
         if (appFramework == AppFramework.REACT_NATIVE) {
@@ -101,22 +101,22 @@ internal class EmbraceMetadataService private constructor(
             this.reactNativeBundleId = reactNativeBundleId
             this.javaScriptPatchNumber = javaScriptPatchNumber
             this.reactNativeVersion = reactNativeVersion
-            this.rnSdkVersion = rnSdkVersion
+            this.reactNativeSdkVersion = rnSdkVersion
         } else {
             this.reactNativeBundleId = metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
             this.javaScriptPatchNumber = null
             this.reactNativeVersion = null
-            this.rnSdkVersion = null
+            this.reactNativeSdkVersion = null
         }
         if (appFramework == AppFramework.UNITY) {
             logDeveloper("EmbraceMetadataService", "Setting Unity settings")
             this.unityVersion = unityVersion
-            this.buildGuid = buildGuid
-            this.unitySdkVersion = unitySdkVersion
+            this.unityBuildIdNumber = buildGuid
+            this.embraceUnitySdkVersion = unitySdkVersion
         } else {
             this.unityVersion = null
-            this.buildGuid = null
-            this.unitySdkVersion = null
+            this.unityBuildIdNumber = null
+            this.embraceUnitySdkVersion = null
         }
     }
 
@@ -291,15 +291,15 @@ internal class EmbraceMetadataService private constructor(
         // applies to Unity builds only.
         if (appFramework == AppFramework.UNITY) {
             infoPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
-            infoUnityBuildIdNumber = buildGuid ?: preferencesService.unityBuildIdNumber
-            hostedSdkVersion = unitySdkVersion ?: preferencesService.unitySdkVersionNumber
+            infoUnityBuildIdNumber = unityBuildIdNumber ?: preferencesService.unityBuildIdNumber
+            hostedSdkVersion = embraceUnitySdkVersion ?: preferencesService.unitySdkVersionNumber
         }
 
         // applies to React Native builds only
         if (appFramework == AppFramework.REACT_NATIVE) {
             infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
-            infoReactNativeVersion = reactNativeVersion
+            infoReactNativeVersion = getReactNativeVersion()
             hostedSdkVersion = getRnSdkVersion()
         }
 
@@ -345,7 +345,8 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getLightweightAppInfo(): AppInfo = getAppInfo(false)
 
-    private fun getRnSdkVersion(): String? = rnSdkVersion ?: preferencesService.rnSdkVersion
+    private fun getReactNativeVersion(): String? = reactNativeVersion ?: preferencesService.reactNativeVersionNumber
+    private fun getRnSdkVersion(): String? = reactNativeSdkVersion ?: preferencesService.rnSdkVersion
 
     private val dartSdkVersion: String?
         get() = dartVersion ?: preferencesService.dartSdkVersion
@@ -380,6 +381,20 @@ internal class EmbraceMetadataService private constructor(
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
+    override fun setUnityVersionNumber(unityVersion: String) {
+        this.unityVersion = unityVersion
+        preferencesService.unityVersionNumber = unityVersion
+    }
+
+    override fun setUnityBuildIdNumber(unityBuildIdNumber: String) {
+        this.unityBuildIdNumber = unityBuildIdNumber
+        preferencesService.unityBuildIdNumber = unityBuildIdNumber
+    }
+
+    override fun setUnitySdkVersionNumber(unitySdkVersion: String) {
+        this.embraceUnitySdkVersion = unitySdkVersion
+        preferencesService.unitySdkVersionNumber = unitySdkVersion
+    }
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL
@@ -404,14 +419,23 @@ internal class EmbraceMetadataService private constructor(
         }
     }
 
+    override fun setEmbraceRnSdkVersion(version: String?) {
+        reactNativeSdkVersion = version
+        preferencesService.rnSdkVersion = version
+    }
+
+    override fun setRnVersion(version: String?) {
+        reactNativeVersion = version
+        preferencesService.reactNativeVersionNumber = version
+    }
+
+    override fun setJavaScriptPatchNumber(number: String) {
+        javaScriptPatchNumber = number
+        preferencesService.javaScriptPatchNumber = number
+    }
     override fun setEmbraceFlutterSdkVersion(version: String?) {
         embraceFlutterSdkVersion = version
         preferencesService.embraceFlutterSdkVersion = version
-    }
-
-    override fun setRnSdkVersion(version: String?) {
-        rnSdkVersion = version
-        preferencesService.rnSdkVersion = version
     }
 
     override fun setDartVersion(version: String?) {
@@ -497,7 +521,7 @@ internal class EmbraceMetadataService private constructor(
             }
             val deviceIdentifier = lazy(preferencesService::deviceIdentifier)
             var javaScriptPatchNumber: String? = null
-            val reactNativeVersion: String? = null
+            var reactNativeVersion: String? = null
             var rnSdkVersion: String? = null
             val reactNativeBundleId: Future<String?>
             if (appFramework == AppFramework.REACT_NATIVE) {
@@ -524,6 +548,7 @@ internal class EmbraceMetadataService private constructor(
                         "Java script patch number: $javaScriptPatchNumber"
                     )
                 }
+                reactNativeVersion = preferencesService.reactNativeVersionNumber
                 rnSdkVersion = preferencesService.rnSdkVersion
                 if (rnSdkVersion != null) {
                     logDeveloper("EmbraceMetadataService", "RN Embrace SDK version: $rnSdkVersion")

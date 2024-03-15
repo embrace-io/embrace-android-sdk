@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -10,6 +11,7 @@ internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val preferencesService: PreferencesService,
+    private val metadataService: MetadataService,
     private val logger: InternalEmbraceLogger
 ) : EmbraceInternalInterface by impl, UnityInternalInterface {
 
@@ -36,22 +38,22 @@ internal class UnityInternalInterfaceImpl(
                         "Embrace",
                         "Setting a new Unity version number"
                     )
-                    preferencesService.unityVersionNumber = unityVersion
+                    metadataService.setUnityVersionNumber(unityVersion)
                 }
             } else {
                 logger.logDeveloper("Embrace", "Setting Unity version number")
-                preferencesService.unityVersionNumber = unityVersion
+                metadataService.setUnityVersionNumber(unityVersion)
             }
             val unityBuildIdNumber = preferencesService.unityBuildIdNumber
             if (unityBuildIdNumber != null) {
                 logger.logDeveloper("Embrace", "Unity build id is present")
                 if (buildGuid != unityBuildIdNumber) {
                     logger.logDeveloper("Embrace", "Setting a Unity new build id")
-                    preferencesService.unityBuildIdNumber = buildGuid
+                    metadataService.setUnityBuildIdNumber(buildGuid)
                 }
             } else {
                 logger.logDeveloper("Embrace", "Setting Unity build id")
-                preferencesService.unityBuildIdNumber = buildGuid
+                metadataService.setUnityBuildIdNumber(buildGuid)
             }
             if (unitySdkVersion == null) {
                 logger.logDeveloper("Embrace", "Unity SDK version is null.")
@@ -65,11 +67,11 @@ internal class UnityInternalInterfaceImpl(
                         "Embrace",
                         "Setting a new Unity SDK version number"
                     )
-                    preferencesService.unitySdkVersionNumber = unitySdkVersion
+                    metadataService.setUnitySdkVersionNumber(unitySdkVersion)
                 }
             } else {
                 logger.logDeveloper("Embrace", "Setting Unity SDK version number")
-                preferencesService.unitySdkVersionNumber = unitySdkVersion
+                metadataService.setUnitySdkVersionNumber(unitySdkVersion)
             }
         } else {
             logger.logSDKNotInitialized("set Unity metadata")

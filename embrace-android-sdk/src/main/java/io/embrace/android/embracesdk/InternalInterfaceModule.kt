@@ -35,7 +35,6 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             coreModule.appFramework,
-            androidServicesModule.preferencesService,
             crashModule.crashService,
             essentialServiceModule.metadataService,
             coreModule.logger
@@ -47,6 +46,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             androidServicesModule.preferencesService,
+            essentialServiceModule.metadataService,
             coreModule.logger
         )
     }

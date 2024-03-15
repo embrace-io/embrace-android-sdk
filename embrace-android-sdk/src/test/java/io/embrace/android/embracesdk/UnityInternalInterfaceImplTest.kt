@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -16,35 +16,16 @@ internal class UnityInternalInterfaceImplTest {
     private lateinit var impl: UnityInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var preferencesService: PreferencesService
+    private lateinit var metadataService: FakeMetadataService
     private lateinit var logger: InternalEmbraceLogger
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
         preferencesService = FakePreferenceService()
+        metadataService = FakeMetadataService()
         logger = mockk(relaxed = true)
-        impl = UnityInternalInterfaceImpl(embrace, mockk(), preferencesService, logger)
-    }
-
-    @Test
-    fun testSetUnityMetaData() {
-        every { embrace.isStarted } returns true
-        impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
-        assertEquals("unityVersion", preferencesService.unityVersionNumber)
-        assertEquals("buildGuid", preferencesService.unityBuildIdNumber)
-        assertEquals("unitySdkVersion", preferencesService.unitySdkVersionNumber)
-    }
-
-    @Test
-    fun testSetUnityMetaDataAlreadyPresent() {
-        every { embrace.isStarted } returns true
-        preferencesService.unityVersionNumber = "myUnityVersion"
-        preferencesService.unityBuildIdNumber = "myBuildId"
-        preferencesService.unitySdkVersionNumber = "mySdkVersion"
-        impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
-        assertEquals("unityVersion", preferencesService.unityVersionNumber)
-        assertEquals("buildGuid", preferencesService.unityBuildIdNumber)
-        assertEquals("unitySdkVersion", preferencesService.unitySdkVersionNumber)
+        impl = UnityInternalInterfaceImpl(embrace, mockk(), preferencesService, metadataService, logger)
     }
 
     @Test

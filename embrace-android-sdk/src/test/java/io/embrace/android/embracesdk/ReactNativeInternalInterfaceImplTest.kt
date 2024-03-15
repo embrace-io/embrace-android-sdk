@@ -40,18 +40,10 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             REACT_NATIVE,
-            preferencesService,
             crashService,
             metadataService,
             logger
         )
-    }
-
-    @Test
-    fun testSetJavaScriptPatchNumber() {
-        every { embrace.isStarted } returns true
-        impl.setJavaScriptPatchNumber("28.9.1")
-        assertEquals("28.9.1", preferencesService.javaScriptPatchNumber)
     }
 
     @Test
@@ -83,13 +75,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         verify(exactly = 1) {
             logger.logError(any())
         }
-    }
-
-    @Test
-    fun testSetReactNativeVersionNumber() {
-        every { embrace.isStarted } returns true
-        impl.setReactNativeVersionNumber("0.69.1")
-        assertEquals("0.69.1", preferencesService.reactNativeVersionNumber)
     }
 
     @Test
@@ -145,7 +130,6 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             FLUTTER,
-            preferencesService,
             crashService,
             metadataService,
             logger
@@ -164,7 +148,6 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             REACT_NATIVE,
-            preferencesService,
             crashService,
             metadataService,
             logger
@@ -183,7 +166,6 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             REACT_NATIVE,
-            preferencesService,
             crashService,
             metadataService,
             logger

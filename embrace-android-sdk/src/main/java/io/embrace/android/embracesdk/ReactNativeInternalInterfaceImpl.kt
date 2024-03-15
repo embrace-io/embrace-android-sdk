@@ -7,13 +7,11 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.JsException
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val framework: AppFramework,
-    private val preferencesService: PreferencesService,
     private val crashService: CrashService,
     private val metadataService: MetadataService,
     private val logger: InternalEmbraceLogger
@@ -65,7 +63,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("JavaScript patch number must have non-zero length")
                 return
             }
-            preferencesService.javaScriptPatchNumber = number
+            metadataService.setJavaScriptPatchNumber(number)
         } else {
             logger.logSDKNotInitialized("set JavaScript patch number")
         }
@@ -73,7 +71,7 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setReactNativeSdkVersion(version: String?) {
         if (embrace.isStarted) {
-            metadataService.setRnSdkVersion(version)
+            metadataService.setEmbraceRnSdkVersion(version)
         } else {
             logger.logSDKNotInitialized("set React Native SDK version")
         }
@@ -89,7 +87,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("ReactNative version must have non-zero length")
                 return
             }
-            preferencesService.reactNativeVersionNumber = version
+            metadataService.setRnVersion(version)
         } else {
             logger.logSDKNotInitialized("set React Native version number")
         }
@@ -101,21 +99,6 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean) {
         setJavaScriptBundleUrl(context, url, didUpdate)
-    }
-
-    override fun logRnAction(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String
-    ) {
-        embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
-    }
-
-    override fun logRnView(screen: String) {
-        embrace.logRnView(screen)
     }
 
     private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
@@ -131,5 +114,20 @@ internal class ReactNativeInternalInterfaceImpl(
         } else {
             logger.logSDKNotInitialized("set JavaScript bundle URL")
         }
+    }
+
+    override fun logRnAction(
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        properties: Map<String?, Any?>,
+        bytesSent: Int,
+        output: String
+    ) {
+        embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+    }
+
+    override fun logRnView(screen: String) {
+        embrace.logRnView(screen)
     }
 }

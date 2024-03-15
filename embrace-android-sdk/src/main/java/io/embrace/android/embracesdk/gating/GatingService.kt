@@ -21,9 +21,13 @@ internal interface GatingService {
      * Breadcrumbs, session properties, ANRs, logs, etc can be removed from the session payload.
      * This method should be called before send the session message to the ApiClient class.
      *
+     * @param sessionMessage to be sanitized
      * @param envelope to be sanitized
      */
-    fun gateSessionEnvelope(envelope: Envelope<SessionPayload>): Envelope<SessionPayload>
+    fun gateSessionEnvelope(
+        sessionMessage: SessionMessage,
+        envelope: Envelope<SessionPayload>
+    ): Envelope<SessionPayload>
 
     /**
      * Sanitizes an event message before send it to backend based on the Gating configuration.

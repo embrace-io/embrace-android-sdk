@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
@@ -71,8 +72,25 @@ internal class EmbraceGatingService(
         return sessionMessage
     }
 
-    override fun gateSessionEnvelope(envelope: Envelope<SessionPayload>): Envelope<SessionPayload> {
-        // future: gate the session envelope
+    override fun gateSessionEnvelope(
+        sessionMessage: SessionMessage,
+        envelope: Envelope<SessionPayload>
+    ): Envelope<SessionPayload> {
+        val components = configService.sessionBehavior.getSessionComponents()
+        if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
+            // check if the session has error logs IDs. If so, send the full session payload.
+            if (sessionMessage.session.errorLogIds?.isNotEmpty() == true &&
+                configService.sessionBehavior.shouldSendFullForErrorLog()
+            ) {
+                return envelope
+            }
+
+            // check if the session has a crash report id. If so, send the full session payload.
+            if (sessionMessage.session.crashReportId != null) {
+                return envelope
+            }
+            return EnvelopeSanitizerFacade(envelope, components).sanitize()
+        }
         return envelope
     }
 

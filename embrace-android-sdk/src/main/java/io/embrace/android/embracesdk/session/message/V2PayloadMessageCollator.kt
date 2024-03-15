@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
  * backwards compatibility.
  */
 internal class V2PayloadMessageCollator(
+    private val gatingService: GatingService,
     private val v1Collator: V1PayloadMessageCollator,
     private val sessionEnvelopeSource: SessionEnvelopeSource
 ) : PayloadMessageCollator {
@@ -29,7 +31,7 @@ internal class V2PayloadMessageCollator(
     }
 
     private fun SessionMessage.convertToV2Payload(endType: SessionSnapshotType): SessionMessage {
-        val envelope = sessionEnvelopeSource.getEnvelope(endType)
+        val envelope = gatingService.gateSessionEnvelope(sessionEnvelopeSource.getEnvelope(endType))
         return copy(
             // future work: make legacy fields null here.
             resource = envelope.resource,

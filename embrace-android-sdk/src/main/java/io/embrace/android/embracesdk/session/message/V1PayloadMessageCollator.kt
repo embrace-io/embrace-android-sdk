@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
+import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanSink
@@ -25,6 +26,7 @@ import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class V1PayloadMessageCollator(
+    private val gatingService: GatingService,
     private val configService: ConfigService,
     private val metadataService: MetadataService,
     private val eventService: EventService,
@@ -96,7 +98,8 @@ internal class V1PayloadMessageCollator(
             betaFeatures = betaFeatures,
             symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
         )
-        return buildWrapperEnvelope(params, endSession, initial.startTime, endTime)
+        val envelope = buildWrapperEnvelope(params, endSession, initial.startTime, endTime)
+        return gatingService.gateSessionMessage(envelope)
     }
 
     /**
@@ -108,7 +111,8 @@ internal class V1PayloadMessageCollator(
         val msg = buildFinalBackgroundActivity(params)
         val startTime = msg.startTime
         val endTime = params.endTime
-        return buildWrapperEnvelope(params, msg, startTime, endTime)
+        val envelope = buildWrapperEnvelope(params, msg, startTime, endTime)
+        return gatingService.gateSessionMessage(envelope)
     }
 
     /**

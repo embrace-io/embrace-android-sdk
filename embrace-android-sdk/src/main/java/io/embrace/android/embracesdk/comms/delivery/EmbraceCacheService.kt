@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -18,7 +18,7 @@ import kotlin.concurrent.write
  */
 internal class EmbraceCacheService(
     private val storageService: StorageService,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val logger: InternalEmbraceLogger
 ) : CacheService {
 

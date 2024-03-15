@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -21,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -28,7 +30,6 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
@@ -37,7 +38,7 @@ import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
@@ -159,13 +160,20 @@ internal class SessionHandlerTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
+        val sessionPayloadSource = SessionPayloadSourceImpl(
+            FakeInternalErrorService(),
+            null,
+            spanSink,
+            initModule.openTelemetryModule.currentSessionSpan,
+            initModule.openTelemetryModule.spanRepository,
+        )
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
             payloadMessageCollator,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
-                sessionPayloadSource = FakeSessionPayloadSource()
+                sessionPayloadSource = sessionPayloadSource
             )
         )
         payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService)
@@ -296,7 +304,7 @@ internal class SessionHandlerTest {
                     initial
                 )
             )
-        val spans = checkNotNull(sessionMessage.spans)
+        val spans = checkNotNull(sessionMessage.data?.spans)
         assertEquals(2, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -322,9 +330,9 @@ internal class SessionHandlerTest {
 
     private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
         assertNotNull(sessionMessage)
-        val spans = checkNotNull(sessionMessage?.spans)
+        val spans = checkNotNull(sessionMessage?.data?.spans)
         assertEquals(2, spans.size)
         val expectedSpans = listOf("emb-test-span", "emb-session")
-        assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
+        assertEquals(expectedSpans, spans.map(Span::name))
     }
 }

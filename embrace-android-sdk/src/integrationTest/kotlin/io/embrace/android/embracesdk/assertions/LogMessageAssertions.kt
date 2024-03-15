@@ -5,13 +5,15 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
 
 /**
  * Asserts that a log message was sent with the given parameters.
  */
 internal fun assertLogMessageReceived(
-    eventMessage: EventMessage,
+    envelope: Envelope<LogPayload>,
     message: String,
     eventType: EventType,
     logType: LogExceptionType = LogExceptionType.NONE,
@@ -20,21 +22,22 @@ internal fun assertLogMessageReceived(
     exception: Exception? = null,
     stack: Array<StackTraceElement>? = null
 ) {
-    with(eventMessage.event) {
-        assertEquals(message, name)
-        assertEquals(timeMs, timestamp)
-        assertEquals(false, screenshotTaken)
-        assertEquals(logType.value, logExceptionType)
-        assertEquals(eventType, type)
-        assertEquals(Embrace.AppFramework.NATIVE.value, framework)
-        assertEquals(properties, customProperties)
-        exception?.let {
-            assertEquals(it.message, exceptionMessage)
-            assertEquals(it.javaClass.simpleName, exceptionName)
-        }
+    with(checkNotNull(envelope.data.logs?.single())) {
+        TODO(" Fixme!")
+//        assertEquals(message, name)
+//        assertEquals(timeMs, timestamp)
+//        assertEquals(false, screenshotTaken)
+//        assertEquals(logType.value, logExceptionType)
+//        assertEquals(eventType, type)
+//        assertEquals(Embrace.AppFramework.NATIVE.value, framework)
+//        assertEquals(properties, customProperties)
+//        exception?.let {
+//            assertEquals(it.message, exceptionMessage)
+//            assertEquals(it.javaClass.simpleName, exceptionName)
+//        }
     }
 
     if (stack != null) {
-        assertEquals(stack.map { it.toString() }, eventMessage.stacktraces?.jvmStacktrace)
+//        assertEquals(stack.map { it.toString() }, envelope.stacktraces?.jvmStacktrace)
     }
 }

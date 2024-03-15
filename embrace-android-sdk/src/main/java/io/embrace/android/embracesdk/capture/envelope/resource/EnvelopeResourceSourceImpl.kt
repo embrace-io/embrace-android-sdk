@@ -4,6 +4,6 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
 internal class EnvelopeResourceSourceImpl : EnvelopeResourceSource {
     override fun getEnvelopeResource(): EnvelopeResource {
-        throw NotImplementedError("Not yet implemented")
+        return EnvelopeResource() // FIXME: placeholder. need to populate properly.
     }
 }

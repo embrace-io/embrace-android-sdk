@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -20,8 +22,8 @@ import org.junit.Assert.assertNotNull
  * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right
  * away.
  */
-internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<EventMessage> {
-    val logs = fakeDeliveryModule.deliveryService.lastSentLogs
+internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<Envelope<LogPayload>> {
+    val logs = fakeDeliveryModule.deliveryService.lastSentLogPayloads
     return when (expectedSize) {
         null -> logs
         else -> returnIfConditionMet({ logs }) {
@@ -35,7 +37,7 @@ internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? =
  * the number of sent log message equal that size. If a second passes that the size requirement is not met, a [TimeoutException] will
  * be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right away.
  */
-internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int? = null): EventMessage {
+internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int? = null): Envelope<LogPayload> {
     return getSentLogMessages(expectedSize).last()
 }
 
@@ -131,12 +133,11 @@ internal fun verifySessionMessage(sessionMessage: SessionMessage) {
     assertNotNull(sessionMessage.session)
     assertNotNull(sessionMessage.appInfo)
     assertNotNull(sessionMessage.deviceInfo)
-
-    if (sessionMessage.session.messageType == "en") {
-        assertNotNull(sessionMessage.userInfo)
-        assertNotNull(sessionMessage.breadcrumbs)
-        assertNotNull(sessionMessage.performanceInfo)
-    }
+    assertNotNull(sessionMessage.resource)
+    assertNotNull(sessionMessage.metadata)
+    assertNotNull(sessionMessage.data)
+    assertNotNull(sessionMessage.type)
+    assertNotNull(sessionMessage.newVersion)
 }
 
 internal fun verifyBgActivityHappened(message: SessionMessage) {
@@ -145,15 +146,8 @@ internal fun verifyBgActivityHappened(message: SessionMessage) {
 }
 
 internal fun verifyBgActivityMessage(message: SessionMessage) {
-    assertNotNull(message.session)
-    assertNotNull(message.appInfo)
-    assertNotNull(message.deviceInfo)
-
-    if (message.session.messageType == "en") {
-        assertNotNull(message.userInfo)
-        assertNotNull(message.breadcrumbs)
-        assertNotNull(message.performanceInfo)
-    }
+    verifySessionMessage(message)
+    assertEquals("background", message.session.appState)
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

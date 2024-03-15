@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
@@ -297,15 +298,17 @@ internal class EmbraceInternalInterfaceTest {
                 }
             }
 
-            val spans = checkNotNull(sessionPayload?.spans?.filter { it.name.startsWith("tz-") }?.associateBy { it.name })
+            val spanList = sessionPayload?.data?.spans
+            val spans = checkNotNull(spanList?.filter { checkNotNull(it.name).startsWith("tz-") }?.associateBy { it.name })
             assertEquals(4, spans.size)
             with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes["testkey"])
+                assertEquals("testvalue", checkNotNull(attributes).single { it.key == "testkey" }.data)
             }
             with(checkNotNull(spans["tz-child-span"])) {
-                assertEquals("cool event bro", events[0].name)
-                assertEquals("value", events[0].attributes["key"])
-                assertEquals(StatusCode.ERROR, status)
+                assertEquals("cool event bro", checkNotNull(events)[0].name)
+                val attrs = checkNotNull(events[0].attributes)
+                assertEquals("value", attrs.single { it.key == "key" }.data)
+                assertEquals(Span.Status.ERROR, status)
             }
             with(checkNotNull(spans["tz-another-span"])) {
                 assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)

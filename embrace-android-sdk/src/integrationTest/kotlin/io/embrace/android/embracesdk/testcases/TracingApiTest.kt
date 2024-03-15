@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -49,7 +51,11 @@ internal class TracingApiTest {
             harness.fakeClock.tick(100L)
             embrace.addSpanExporter(spanExporter)
             embrace.start(harness.fakeCoreModule.context)
-            results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
+            results.add(
+                "\nSpans exported before session starts: ${
+                    spanExporter.exportedSpans.toList().map { it.name }
+                }"
+            )
             val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start(startTimeMs = harness.fakeClock.now() - 1L))
@@ -67,7 +73,11 @@ internal class TracingApiTest {
                 })
                 val failedOpStartTimeMs = embrace.internalInterface.getSdkCurrentTime()
                 harness.fakeClock.tick(200L)
-                parentSpan.addEvent(name = "delayed event", timestampMs = harness.fakeClock.now() - 50L, null)
+                parentSpan.addEvent(
+                    name = "delayed event",
+                    timestampMs = harness.fakeClock.now() - 50L,
+                    null
+                )
                 val failedOpEndTimeMs = embrace.internalInterface.getSdkCurrentTime()
 
                 assertTrue(parentSpan.stop())
@@ -100,7 +110,8 @@ internal class TracingApiTest {
                         events = events
                     )
                 )
-                val bonusSpan = checkNotNull(embrace.startSpan(name = "bonus-span", parent = parentSpan))
+                val bonusSpan =
+                    checkNotNull(embrace.startSpan(name = "bonus-span", parent = parentSpan))
                 val bonusSpan2 = checkNotNull(
                     embrace.startSpan(
                         name = "bonus-span-2",
@@ -111,13 +122,23 @@ internal class TracingApiTest {
                 assertTrue(bonusSpan.stop(endTimeMs = harness.fakeClock.now() + 1))
                 harness.fakeClock.tick(300L)
                 assertTrue(bonusSpan2.stop())
-                results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
+                results.add(
+                    "\nSpans exported before ending startup: ${
+                        spanExporter.exportedSpans.toList().map { it.name }
+                    }"
+                )
                 embrace.endAppStartup()
             }
-            results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
+            results.add(
+                "\nSpans exported after session ends: ${
+                    spanExporter.exportedSpans.toList().map { it.name }
+                }"
+            )
             val sessionEndTime = harness.fakeClock.now()
-            val allSpans = getSdkInitSpanFromBackgroundActivity() +
-                checkNotNull(sessionMessage?.spans) +
+            val messageSpans: List<EmbraceSpanData> =
+                checkNotNull(sessionMessage?.data?.spans).map(::toEmbraceSpanData)
+            val allSpans: List<EmbraceSpanData> = getSdkInitSpanFromBackgroundActivity() +
+                messageSpans +
                 checkNotNull(harness.openTelemetryModule.spanSink.completedSpans())
 
             val spansMap = allSpans.associateBy { it.name }
@@ -125,7 +146,11 @@ internal class TracingApiTest {
             val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
 
             results.add("\nAll spans to validate: ${allSpans.map { it.name }}")
-            results.add("\nSpans exported before validation: ${spanExporter.exportedSpans.toList().map { it.name }}")
+            results.add(
+                "\nSpans exported before validation: ${
+                    spanExporter.exportedSpans.toList().map { it.name }
+                }"
+            )
             val expectedSpanName = listOf(
                 "emb-sdk-init",
                 "test-trace-root",
@@ -234,8 +259,33 @@ internal class TracingApiTest {
         }
     }
 
+    private fun toEmbraceSpanData(it: Span) =
+        EmbraceSpanData(
+            checkNotNull(it.traceId),
+            checkNotNull(it.spanId),
+            it.parentSpanId,
+            checkNotNull(it.name),
+            checkNotNull(it.startTimeUnixNano),
+            checkNotNull(it.endTimeUnixNano),
+            when (it.status) {
+                Span.Status.UNSET -> StatusCode.UNSET
+                Span.Status.ERROR -> StatusCode.ERROR
+                Span.Status.OK -> StatusCode.OK
+                else -> error("Unknown status: ${it.status}")
+            },
+            it.events?.map { event ->
+                EmbraceSpanEvent(
+                    checkNotNull(event.name),
+                    checkNotNull(event.timeUnixNano),
+                    event.attributes?.associate { attr -> attr.key to attr.data } as Map<String, String>
+                )
+            } ?: emptyList(),
+            it.attributes?.associate { attr -> attr.key to attr.data } as Map<String, String>
+        )
+
     private fun getSdkInitSpanFromBackgroundActivity(): List<EmbraceSpanData> {
         val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities().last()
-        return lastSentBackgroundActivity.spans?.filter { it.name == "emb-sdk-init" } ?: emptyList()
+        val spans = lastSentBackgroundActivity.data?.spans
+        return spans?.filter { it.name == "emb-sdk-init" }?.map(::toEmbraceSpanData) ?: emptyList()
     }
 }

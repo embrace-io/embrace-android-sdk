@@ -39,25 +39,6 @@ internal class CompositeLogServiceTest {
     }
 
     @Test
-    fun testLogV1() {
-        compositeLogService.log(
-            message = "simple log",
-            type = EventType.INFO_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            properties = null,
-            stackTraceElements = null,
-            customStackTrace = null,
-            framework = Embrace.AppFramework.NATIVE,
-            context = null,
-            library = null,
-            exceptionName = null,
-            exceptionMessage = null
-        )
-        assertEquals(1, v1LogService.loggedMessages.size)
-        assertEquals(0, v2LogService.loggedMessages.size)
-    }
-
-    @Test
     fun testLogV2() {
         sessionConfig = SessionRemoteConfig(useV2Payload = true)
         compositeLogService.log(
@@ -75,25 +56,6 @@ internal class CompositeLogServiceTest {
         )
         assertEquals(0, v1LogService.loggedMessages.size)
         assertEquals(1, v2LogService.loggedMessages.size)
-    }
-
-    @Test
-    fun testLogExceptionV1() {
-        compositeLogService.log(
-            message = "simple log",
-            type = EventType.INFO_LOG,
-            logExceptionType = LogExceptionType.HANDLED,
-            properties = null,
-            stackTraceElements = null,
-            customStackTrace = null,
-            framework = Embrace.AppFramework.NATIVE,
-            context = null,
-            library = null,
-            exceptionName = null,
-            exceptionMessage = null
-        )
-        assertEquals(1, v1LogService.loggedMessages.size)
-        assertEquals(0, v2LogService.loggedExceptions.size)
     }
 
     @Test

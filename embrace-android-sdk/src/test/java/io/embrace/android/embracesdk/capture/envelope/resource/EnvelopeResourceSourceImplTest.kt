@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class EnvelopeResourceSourceImplTest {
 
-    @Test(expected = NotImplementedError::class)
+    @Test
     fun `test source`() {
-        EnvelopeResourceSourceImpl().getEnvelopeResource()
+        val resource = EnvelopeResourceSourceImpl().getEnvelopeResource()
+        assertNotNull(resource)
     }
 }

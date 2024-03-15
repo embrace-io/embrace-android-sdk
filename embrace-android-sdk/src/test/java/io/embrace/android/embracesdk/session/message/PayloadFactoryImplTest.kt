@@ -84,6 +84,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `legacy payload generated`() {
+        sessionConfig = SessionRemoteConfig(useV2Payload = false)
         val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
         val sessionMessage = checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
         assertFalse(sessionMessage.isV2Payload())

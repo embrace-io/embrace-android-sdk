@@ -15,6 +15,8 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.hasEvent
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType

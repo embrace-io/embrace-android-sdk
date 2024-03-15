@@ -98,70 +98,52 @@
       }
     ]
   },
-  "u": {
-    "id": "some id",
-    "em": "user@email.com",
-    "un": "John Doe",
-    "per": [
-      "first_day"
-    ]
+  "resource": {},
+  "metadata": {
+    "user_id": "some id",
+    "email": "user@email.com",
+    "username": "John Doe",
+    "personas": "__EMBRACE_TEST_IGNORE__",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
+    "locale": "__EMBRACE_TEST_IGNORE__"
   },
-  "spans": [
-    {
-      "attributes": {
-        "emb.sequence_id": "2",
-        "emb.private": "true",
-        "emb.key": "true",
-        "emb.type": "perf"
+  "version": "0.1.0",
+  "type": "session",
+  "data": {
+    "spans": [
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "0000000000000000",
+        "name": "emb-sdk-init",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Ok",
+        "events": [],
+        "attributes": "__EMBRACE_TEST_IGNORE__"
       },
-      "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "events": [],
-      "name": "emb-sdk-init",
-      "parent_span_id": "0000000000000000",
-      "span_id": "__EMBRACE_TEST_IGNORE__",
-      "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "status": "OK",
-      "trace_id": "__EMBRACE_TEST_IGNORE__"
-    },
-    {
-      "attributes": {
-        "emb.sequence_id": "3",
-        "emb.key": "true",
-        "emb.type": "perf"
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "0000000000000000",
+        "name": "emb-startup-moment",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Ok",
+        "events": [],
+        "attributes": "__EMBRACE_TEST_IGNORE__"
       },
-      "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "events": [],
-      "name": "emb-startup-moment",
-      "parent_span_id": "0000000000000000",
-      "span_id": "__EMBRACE_TEST_IGNORE__",
-      "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "status": "OK",
-      "trace_id": "__EMBRACE_TEST_IGNORE__"
-    },
-    {
-      "attributes": {
-        "emb.sequence_id": "1",
-        "emb.private": "true",
-        "emb.type": "ux.session",
-        "emb.okhttp3": "true",
-        "emb.okhttp3_on_classpath": "4.9.3",
-        "emb.kotlin_on_classpath": "1.4.32",
-        "emb.is_emulator": "__EMBRACE_TEST_IGNORE__",
-        "emb.usage.add_breadcrumb": "1",
-        "emb.usage.add_user_persona": "1",
-        "emb.usage.set_user_email": "1",
-        "emb.usage.set_user_identifier": "1",
-        "emb.usage.set_username": "1"
-      },
-      "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "events": [],
-      "name": "emb-session",
-      "parent_span_id": "0000000000000000",
-      "span_id": "__EMBRACE_TEST_IGNORE__",
-      "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "status": "OK",
-      "trace_id": "__EMBRACE_TEST_IGNORE__"
-    }
-  ],
-  "v": 13
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "0000000000000000",
+        "name": "emb-session",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Ok",
+        "events": [],
+        "attributes": "__EMBRACE_TEST_IGNORE__"
+      }
+    ]
+  }
 }

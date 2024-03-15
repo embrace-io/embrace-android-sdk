@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -26,7 +27,6 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
@@ -66,6 +67,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var localConfig: LocalConfig
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var spanRepository: SpanRepository
     private lateinit var spanService: SpanService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
@@ -89,6 +91,7 @@ internal class PayloadFactoryBaTest {
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
+        spanRepository = initModule.openTelemetryModule.spanRepository
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true
         )
@@ -121,7 +124,8 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        val spans = checkNotNull(msg.data?.spans)
+        assertEquals(1, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -133,7 +137,8 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        val spans = checkNotNull(msg.data?.spans)
+        assertEquals(1, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -146,7 +151,8 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        val spans = checkNotNull(msg.data?.spans)
+        assertEquals(1, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -182,7 +188,7 @@ internal class PayloadFactoryBaTest {
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
-            sessionPayloadSource = FakeSessionPayloadSource()
+            sessionPayloadSource = SessionPayloadSourceImpl(FakeInternalErrorService(), null, spanSink, currentSessionSpan, spanRepository)
         )
         val v2Collator = V2PayloadMessageCollator(gatingService, collator, sessionEnvelopeSource)
         return PayloadFactoryImpl(collator, v2Collator, configService).apply {

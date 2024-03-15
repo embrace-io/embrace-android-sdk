@@ -21,7 +21,7 @@ internal class SessionBehaviorTest {
     private val remote = RemoteConfig(
         sessionConfig = SessionRemoteConfig(
             isEnabled = true,
-            useV2Payload = true,
+            useV2Payload = false,
             sessionComponents = setOf("test"),
             fullSessionEvents = setOf("test2")
         ),
@@ -37,7 +37,7 @@ internal class SessionBehaviorTest {
             assertFalse(isGatingFeatureEnabled())
             assertFalse(isSessionControlEnabled())
             assertEquals(10, getMaxSessionProperties())
-            assertFalse(useV2Payload())
+            assertTrue(useV2Payload())
         }
     }
 
@@ -48,7 +48,7 @@ internal class SessionBehaviorTest {
             assertEquals(setOf("breadcrumbs"), getSessionComponents())
             assertEquals(setOf("crash"), getFullSessionEvents())
             assertTrue(isGatingFeatureEnabled())
-            assertFalse(useV2Payload())
+            assertTrue(useV2Payload())
         }
     }
 
@@ -60,7 +60,7 @@ internal class SessionBehaviorTest {
             assertEquals(setOf("test"), getSessionComponents())
             assertEquals(setOf("test2"), getFullSessionEvents())
             assertEquals(57, getMaxSessionProperties())
-            assertTrue(useV2Payload())
+            assertFalse(useV2Payload())
         }
     }
 

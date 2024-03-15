@@ -159,4 +159,7 @@ internal interface MetadataService {
      * @return egl name
      */
     fun getEgl(): String?
+    fun setUnityVersionNumber(unityVersion: String)
+    fun setUnityBuildIdNumber(unityBuildIdNumber: String)
+    fun setUnitySdkVersionNumber(unitySdkVersion: String)
 }

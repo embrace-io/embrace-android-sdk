@@ -66,7 +66,7 @@ internal class ReactNativeInternalInterfaceTest {
     }
 
     @Test
-    fun `react native read from previous session`() {
+    fun `react native metadata already present from previous session`() {
         with(testRule) {
             harness.recordSession {
                 embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")

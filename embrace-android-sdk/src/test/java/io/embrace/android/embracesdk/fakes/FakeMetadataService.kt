@@ -39,6 +39,9 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
         private const val egl = "fakeEgl"
     }
 
+    var fakeUnityVersion = "fakeUnityVersion"
+    var fakeUnityBuildIdNumber = "fakeUnityBuildIdNumber"
+    var fakeUnitySdkVersion = "fakeUnitySdkVersion"
     var appUpdated = false
     var osUpdated = false
     var fakeAppId: String = "o0o0o"
@@ -128,4 +131,15 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
+    override fun setUnityVersionNumber(unityVersion: String) {
+        fakeUnityVersion = unityVersion
+    }
+
+    override fun setUnityBuildIdNumber(unityBuildIdNumber: String) {
+        fakeUnityBuildIdNumber = unityBuildIdNumber
+    }
+
+    override fun setUnitySdkVersionNumber(unitySdkVersion: String) {
+        fakeUnitySdkVersion = unitySdkVersion
+    }
 }

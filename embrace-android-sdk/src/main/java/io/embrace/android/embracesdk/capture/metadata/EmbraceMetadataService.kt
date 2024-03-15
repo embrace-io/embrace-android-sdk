@@ -91,9 +91,9 @@ internal class EmbraceMetadataService private constructor(
     private var reactNativeSdkVersion: String?
     private var reactNativeVersion: String?
     private var javaScriptPatchNumber: String?
-    private val embraceUnitySdkVersion: String?
-    private val unityVersion: String?
-    private val unityBuildIdNumber: String?
+    private var embraceUnitySdkVersion: String?
+    private var unityVersion: String?
+    private var unityBuildIdNumber: String?
 
     init {
         if (appFramework == AppFramework.REACT_NATIVE) {
@@ -299,7 +299,7 @@ internal class EmbraceMetadataService private constructor(
         if (appFramework == AppFramework.REACT_NATIVE) {
             infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
-            infoReactNativeVersion = reactNativeVersion
+            infoReactNativeVersion = getReactNativeVersion()
             hostedSdkVersion = getRnSdkVersion()
         }
 
@@ -345,6 +345,7 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getLightweightAppInfo(): AppInfo = getAppInfo(false)
 
+    private fun getReactNativeVersion(): String? = reactNativeVersion ?: preferencesService.reactNativeVersionNumber
     private fun getRnSdkVersion(): String? = reactNativeSdkVersion ?: preferencesService.rnSdkVersion
 
     private val dartSdkVersion: String?
@@ -380,6 +381,20 @@ internal class EmbraceMetadataService private constructor(
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
+    override fun setUnityVersionNumber(unityVersion: String) {
+        this.unityVersion = unityVersion
+        preferencesService.unityVersionNumber = unityVersion
+    }
+
+    override fun setUnityBuildIdNumber(unityBuildIdNumber: String) {
+        this.unityBuildIdNumber = unityBuildIdNumber
+        preferencesService.unityBuildIdNumber = unityBuildIdNumber
+    }
+
+    override fun setUnitySdkVersionNumber(unitySdkVersion: String) {
+        this.embraceUnitySdkVersion = unitySdkVersion
+        preferencesService.unitySdkVersionNumber = unitySdkVersion
+    }
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL

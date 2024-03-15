@@ -63,7 +63,7 @@ internal class UnityInternalInterfaceTest {
     }
 
     @Test
-    fun `unity read from previous session`() {
+    fun `unity metadata already present from previous session`() {
         with(testRule) {
             harness.recordSession {
                 embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")

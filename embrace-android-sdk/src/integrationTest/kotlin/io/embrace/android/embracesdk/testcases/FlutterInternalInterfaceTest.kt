@@ -63,7 +63,7 @@ internal class FlutterInternalInterfaceTest {
     }
 
     @Test
-    fun `flutter read from previous session`() {
+    fun `flutter metadata already present from previous session`() {
         with(testRule) {
             harness.recordSession {
                 embrace.flutterInternalInterface?.setDartVersion("28.9.1")

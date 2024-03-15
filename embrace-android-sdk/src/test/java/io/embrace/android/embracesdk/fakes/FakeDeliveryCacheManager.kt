@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
@@ -35,8 +36,8 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun getAllCachedSessionIds(): List<String> {
-        return cachedSessions.map { it.session.sessionId }
+    override fun getAllCachedSessionIds(): List<CachedSession> {
+        return cachedSessions.map { CachedSession.create(it.session.sessionId, 0, false) }
     }
 
     override fun saveCrash(crash: EventMessage) {

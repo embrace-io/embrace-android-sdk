@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.getFileNameForSession
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -53,7 +53,7 @@ internal class EmbraceDeliveryCacheManager(
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 
-            saveSessionBytes(sessionId, writeSync, snapshot) { filename: String ->
+            saveSessionBytes(sessionId, writeSync, snapshot, sessionMessage.isV2Payload()) { filename: String ->
                 Systrace.traceSynchronous("serialize-session") {
                     cacheService.writeSession(filename, sessionMessage)
                 }
@@ -88,24 +88,15 @@ internal class EmbraceDeliveryCacheManager(
     /**
      * This method will do disk reads so do not run it on the main thread
      */
-    override fun getAllCachedSessionIds(): List<String> {
+    override fun getAllCachedSessionIds(): List<CachedSession> {
         val sessionFileIds = cacheService.normalizeCacheAndGetSessionFileIds()
         sessionFileIds.forEach { filename ->
-            val values = filename.split('.')
-            if (values.size != 4) {
-                logger.logError("Unrecognized cached file: $filename")
-                return@forEach
-            }
-            val timestamp = values[1].toLongOrNull()
-            timestamp?.also { ts ->
-                val sessionId = values[2]
-                cachedSessions[sessionId] = CachedSession(sessionId, ts)
-            } ?: run {
-                logger.logError("Could not parse timestamp ${values[2]}")
+            CachedSession.fromFilename(filename)?.let { cachedSession ->
+                cachedSessions[cachedSession.sessionId] = cachedSession
             }
         }
 
-        return cachedSessions.keys.toList()
+        return cachedSessions.values.toList()
     }
 
     override fun saveCrash(crash: EventMessage) {
@@ -205,10 +196,11 @@ internal class EmbraceDeliveryCacheManager(
         sessionId: String,
         writeSync: Boolean = false,
         snapshot: Boolean = false,
+        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         if (writeSync) {
-            saveSessionBytesImpl(sessionId, saveAction)
+            saveSessionBytesImpl(sessionId, v2Payload, saveAction)
         } else {
             // snapshots are low priority compared to state ends + loading/unloading other payload
             // types. State ends are critical as they contain the final information.
@@ -217,19 +209,20 @@ internal class EmbraceDeliveryCacheManager(
                 else -> TaskPriority.CRITICAL
             }
             backgroundWorker.submit(priority) {
-                saveSessionBytesImpl(sessionId, saveAction)
+                saveSessionBytesImpl(sessionId, v2Payload, saveAction)
             }
         }
     }
 
     private fun saveSessionBytesImpl(
         sessionId: String,
+        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         try {
             synchronized(cachedSessions) {
                 val cachedSession = cachedSessions.getOrElse(sessionId) {
-                    CachedSession(sessionId, clock.now())
+                    CachedSession.create(sessionId, clock.now(), v2Payload)
                 }
                 saveAction(cachedSession.filename)
                 if (!cachedSessions.containsKey(cachedSession.sessionId)) {
@@ -240,12 +233,5 @@ internal class EmbraceDeliveryCacheManager(
         } catch (ex: Throwable) {
             logger.logError("Failed to cache current active session", ex, true)
         }
-    }
-
-    data class CachedSession(
-        val sessionId: String,
-        val timestampMs: Long
-    ) {
-        val filename = getFileNameForSession(sessionId, timestampMs)
     }
 }

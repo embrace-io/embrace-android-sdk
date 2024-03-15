@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiRequest
 import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
@@ -147,20 +148,20 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `read cached sessions`() {
         cacheService.writeSession(
-            EmbraceCacheService.getFileNameForSession("session1", clockInit - 300000),
+            CachedSession.create("session1", clockInit - 300000, false).filename,
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session1", startTime = clockInit - 300000))
         )
         cacheService.writeSession(
-            EmbraceCacheService.getFileNameForSession("session2", clockInit - 360000),
+            CachedSession.create("session2", clockInit - 360000, false).filename,
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session2", startTime = clockInit - 360000))
         )
         cacheService.writeSession(
-            EmbraceCacheService.getFileNameForSession("session3", clockInit - 420000),
+            CachedSession.create("session3", clockInit - 420000, false).filename,
             testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session3", startTime = clockInit - 420000))
         )
         assertEquals(
             setOf("session1", "session2", "session3"),
-            deliveryCacheManager.getAllCachedSessionIds().toSet()
+            deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId).toSet()
         )
     }
 
@@ -184,7 +185,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             fakeClock.tick()
         }
 
-        val cachedSessions = deliveryCacheManager.getAllCachedSessionIds()
+        val cachedSessions = deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId)
         assertEquals(EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
         for (i in (100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
             assertTrue(cachedSessions.contains("test$i"))
@@ -198,7 +199,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
-        assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0]))
+        assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0].sessionId))
         assertNull(cacheService.loadBytes("last_session.json"))
     }
 

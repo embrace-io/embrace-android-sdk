@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -55,7 +55,7 @@ internal class EmbraceDeliveryService(
                     serializer.toJson(sessionMessage, SessionMessage::class.java, it)
                 }
             }
-            val future = apiService.sendSession(action) {
+            val future = apiService.sendSession(sessionMessage.isV2Payload(), action) {
                 cacheManager.deleteSession(sessionId)
             }
             if (snapshotType == SessionSnapshotType.JVM_CRASH) {
@@ -76,11 +76,6 @@ internal class EmbraceDeliveryService(
     override fun sendLogs(logPayload: LogPayload) {
         val logsEnvelope = Envelope(data = logPayload)
         apiService.sendLogsEnvelope(logsEnvelope)
-    }
-
-    override fun sendSessionV2(sessionPayload: SessionPayload) {
-        val sessionEnvelope = Envelope(data = sessionPayload)
-        apiService.sendSessionEnvelope(sessionEnvelope)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
@@ -147,7 +142,9 @@ internal class EmbraceDeliveryService(
             try {
                 val action = cacheManager.loadSessionAsAction(id)
                 if (action != null) {
-                    apiService.sendSession(action) { cacheManager.deleteSession(id) }
+                    // temporarily assume all sessions are v1. Future changeset
+                    // will encode this information in the filename.
+                    apiService.sendSession(false, action) { cacheManager.deleteSession(id) }
                 } else {
                     logger.logError("Session $id not found")
                 }

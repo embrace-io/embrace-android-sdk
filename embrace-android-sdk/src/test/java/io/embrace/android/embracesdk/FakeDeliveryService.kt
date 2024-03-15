@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -59,10 +58,6 @@ internal open class FakeDeliveryService : DeliveryService {
 
     override fun sendLogs(logPayload: LogPayload) {
         lastSentLogPayloads.add(logPayload)
-    }
-
-    override fun sendSessionV2(sessionPayload: SessionPayload) {
-        TODO("Not yet implemented")
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

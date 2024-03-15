@@ -68,9 +68,12 @@ internal class ApiRequestMapper(
         return requestBuilder(url)
     }
 
-    fun sessionRequest(): ApiRequest {
-        val url = Endpoint.SESSIONS.asEmbraceUrl()
-        return requestBuilder(url)
+    fun sessionRequest(v2Payload: Boolean): ApiRequest {
+        val url = when {
+            v2Payload -> Endpoint.SESSIONS_V2
+            else -> Endpoint.SESSIONS
+        }
+        return requestBuilder(url.asEmbraceUrl())
     }
 
     fun eventMessageRequest(eventMessage: EventMessage): ApiRequest {

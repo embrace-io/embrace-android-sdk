@@ -39,6 +39,14 @@ internal class V2PayloadMessageCollator(
             data = envelope.data,
             newVersion = envelope.version,
             type = envelope.type,
+
+            // make legacy fields null
+            userInfo = null,
+            version = null,
+            spans = null,
+
+            // future: make appInfo, deviceInfo, performanceInfo, breadcrumbs null.
+            // this is blocked until we can migrate others
         )
     }
 }

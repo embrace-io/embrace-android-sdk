@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -151,7 +152,9 @@ internal class V2PayloadMessageCollatorTest {
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
-        assertNotNull(userInfo)
+        assertNull(userInfo)
+        assertNull(version)
+        assertNull(spans)
         assertNotNull(appInfo)
         assertNotNull(deviceInfo)
         assertNotNull(performanceInfo)

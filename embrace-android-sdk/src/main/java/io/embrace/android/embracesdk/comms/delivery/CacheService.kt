@@ -8,12 +8,14 @@ import io.embrace.android.embracesdk.payload.SessionMessage
  */
 internal interface CacheService {
     /**
-     * Caches the specified object.
+     * Writes a JSON-serializable object to a file.
      *
-     * @param name   the name of the object to cache
-     * @param objectToCache the object to cache
-     * @param clazz  the class of the object to cache
-     * @param <T>    the type of the object
+     * If writing the object to the cache fails, an exception is logged.
+     *
+     * @param name   the unique name to identify this object which will form the basis of the file name that stores it
+     * @param objectToCache the object to write
+     * @param clazz  the [Class] object of the object to write
+     * @param T    the class of the object to write
      */
     fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>)
 

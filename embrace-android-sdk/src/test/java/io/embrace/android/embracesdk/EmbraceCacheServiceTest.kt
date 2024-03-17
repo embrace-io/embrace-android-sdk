@@ -60,13 +60,17 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test cacheObject with non-writable file does not throw exception`() {
+    fun `cacheObject in non-writable directory and file does not throw exception`() {
+        val directory = File(storageManager.filesDirectory, "")
         val cacheFile = File(storageManager.filesDirectory, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
-        cacheFile.writeText("locked file")
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, "old data", String::class.java)
+        assertEquals("old data", service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, String::class.java))
+        directory.setReadOnly()
         cacheFile.setReadOnly()
 
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, "data", String::class.java)
-        assertNull(service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, String::class.java))
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, "tha new new", String::class.java)
+        assertEquals("old data", service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, String::class.java))
     }
 
     @Test

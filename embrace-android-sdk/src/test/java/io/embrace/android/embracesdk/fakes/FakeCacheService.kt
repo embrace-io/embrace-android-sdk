@@ -14,6 +14,14 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
+    override fun cachePayload(name: String, action: SerializationAction) {
+        TODO("Not yet implemented")
+    }
+
+    override fun loadPayload(name: String): SerializationAction {
+        TODO("Not yet implemented")
+    }
+
     override fun deleteFile(name: String): Boolean {
         TODO("Not yet implemented")
     }
@@ -22,19 +30,11 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        TODO("Not yet implemented")
-    }
-
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         TODO("Not yet implemented")
     }
 
-    override fun cachePayload(name: String, action: SerializationAction) {
-        TODO("Not yet implemented")
-    }
-
-    override fun loadPayload(name: String): SerializationAction {
+    override fun writeSession(name: String, sessionMessage: SessionMessage) {
         TODO("Not yet implemented")
     }
 

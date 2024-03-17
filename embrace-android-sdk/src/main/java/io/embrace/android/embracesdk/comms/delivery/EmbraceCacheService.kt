@@ -157,7 +157,7 @@ internal class EmbraceCacheService(
                         val session = sessionMessage.session
                         val properSessionFilename = CachedSession.create(session.sessionId, session.startTime, false).filename
                         if (!sessionFileNames.contains(properSessionFilename)) {
-                            replaceSessionFile(properSessionFilename, filename)
+                            replaceFile(properSessionFilename, filename)
                             properSessionFileIds.add(properSessionFilename)
                         }
                     }
@@ -166,7 +166,7 @@ internal class EmbraceCacheService(
                 val isTempFile = filename.endsWith(NEW_COPY_SUFFIX)
                 val properFilename = if (isTempFile) filename.removeSuffix(NEW_COPY_SUFFIX) else filename
                 if (isTempFile) {
-                    if (!replaceSessionFile(filenameToReplace = properFilename, filenameOfReplacement = filename)) {
+                    if (!replaceFile(filenameToReplace = properFilename, filenameOfReplacement = filename)) {
                         return@forEach
                     }
                 }
@@ -194,37 +194,8 @@ internal class EmbraceCacheService(
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        findLock(name).write {
-            var isOverwrite = false
-            var sessionWriteTempFile: File? = null
-            try {
-                // First write session to a temp file, then renaming it to the proper session file if it didn't exist before.
-                // If it's an overwrite, rename it to denote that serialization was complete, then swap it with the proper session file.
-                // That way, if we see a file suffix with "-tmp", we'll know the operation terminated before completing,
-                // and thus is likely an incomplete file.
-                val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                isOverwrite = sessionFile.exists()
-                sessionWriteTempFile = storageService.getFileForWrite(sessionFile.name + TEMP_COPY_SUFFIX)
-                // Write new session file to a temporary location
-                serializer.toJson(sessionMessage, SessionMessage::class.java, sessionWriteTempFile.outputStream())
-
-                val suffix = if (isOverwrite) {
-                    val newSessionFile = storageService.getFileForWrite(sessionFile.name + NEW_COPY_SUFFIX)
-                    sessionWriteTempFile.renameTo(newSessionFile)
-                    NEW_COPY_SUFFIX
-                } else {
-                    TEMP_COPY_SUFFIX
-                }
-                replaceSessionFile(name, name + suffix)
-            } catch (ex: Exception) {
-                sessionWriteTempFile?.delete()
-                val action = if (isOverwrite) {
-                    "overwrite"
-                } else {
-                    "write new"
-                }
-                logger.logError("Failed to $action session object ", ex)
-            }
+        safeFileWrite(name) { tempFile ->
+            serializer.toJson(sessionMessage, SessionMessage::class.java, tempFile.outputStream())
         }
     }
 
@@ -240,17 +211,58 @@ internal class EmbraceCacheService(
         }
     }
 
-    private fun replaceSessionFile(filenameToReplace: String, filenameOfReplacement: String): Boolean {
+    /**
+     * Write data to a file. If the file already exists, first write it to a temporary location before overwriting the old version,
+     * ensuring that data loss would be minimized if the operation is interrupted. Any partially written files will be cleaned up to
+     * limit sending of corrupted data to the backend, and log any instances when that happens.
+     */
+    private fun safeFileWrite(name: String, writeAction: (tempFile: File) -> Unit) {
+        findLock(name).write {
+            var isOverwrite = false
+            var tempFile: File? = null
+            try {
+                // First write session to a temp file, then renaming it to the proper session file if it didn't exist before.
+                // If it's an overwrite, rename it to denote that serialization was complete, then swap it with the proper session file.
+                // That way, if we see a file suffix with "-tmp", we'll know the operation terminated before completing,
+                // and thus is likely an incomplete file.
+                val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
+                isOverwrite = file.exists()
+                tempFile = storageService.getFileForWrite(file.name + TEMP_COPY_SUFFIX)
+
+                // Write new file to a temporary location
+                writeAction(tempFile)
+
+                val suffix = if (isOverwrite) {
+                    val newVersion = storageService.getFileForWrite(file.name + NEW_COPY_SUFFIX)
+                    tempFile.renameTo(newVersion)
+                    NEW_COPY_SUFFIX
+                } else {
+                    TEMP_COPY_SUFFIX
+                }
+                replaceFile(name, name + suffix)
+            } catch (ex: Exception) {
+                tempFile?.delete()
+                val action = if (isOverwrite) {
+                    "overwrite"
+                } else {
+                    "write new"
+                }
+                logger.logError("Failed to $action session object ", ex)
+            }
+        }
+    }
+
+    private fun replaceFile(filenameToReplace: String, filenameOfReplacement: String): Boolean {
         try {
-            val sessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameToReplace)
-            val oldSessionFile = storageService.getFileForWrite(sessionFile.name + OLD_COPY_SUFFIX)
-            if (sessionFile.exists()) {
-                sessionFile.renameTo(oldSessionFile)
-                oldSessionFile.delete()
+            val file = storageService.getFileForWrite(EMBRACE_PREFIX + filenameToReplace)
+            val oldVersion = storageService.getFileForWrite(file.name + OLD_COPY_SUFFIX)
+            if (file.exists()) {
+                file.renameTo(oldVersion)
+                oldVersion.delete()
             }
 
-            val newSessionFile = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
-            newSessionFile.renameTo(sessionFile)
+            val newVersion = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
+            newVersion.renameTo(file)
         } catch (e: Exception) {
             logger.logError("Failed to replace session file ", e)
             return false

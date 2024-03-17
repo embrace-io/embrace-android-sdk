@@ -36,13 +36,6 @@ internal interface CacheService {
     fun cachePayload(name: String, action: SerializationAction)
 
     /**
-     * Serializes a session object to disk via a stream. This saves memory when the session is large & the return value isn't used
-     * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new [SessionMessage]
-     * is successfully written to disk
-     */
-    fun writeSession(name: String, sessionMessage: SessionMessage)
-
-    /**
      * Provides a function that writes the bytes from a cached file, if it exists, to an
      * outputstream
      *
@@ -70,6 +63,13 @@ internal interface CacheService {
      * Loads the old format of pending API calls.
      */
     fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
+
+    /**
+     * Serializes a session object to disk via a stream. This saves memory when the session is large & the return value isn't used
+     * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new [SessionMessage]
+     * is successfully written to disk
+     */
+    fun writeSession(name: String, sessionMessage: SessionMessage)
 
     /**
      * Transform the current saved session with the given name using the given [transformer] and save it in its place

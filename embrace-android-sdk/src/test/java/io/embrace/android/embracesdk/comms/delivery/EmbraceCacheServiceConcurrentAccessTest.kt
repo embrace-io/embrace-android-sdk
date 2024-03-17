@@ -43,8 +43,8 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
     @Test
     fun `concurrent write attempts to the same non-existent session file should lead to last finished persist`() {
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessage) },
-            second = { embraceCacheService.writeSession(FILENAME, testSessionMessageOneMinuteLater) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
+            second = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
             firstBlocksSecond = true
         )
 
@@ -57,10 +57,10 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     @Test
     fun `accessing sessions with different names should not block`() {
-        embraceCacheService.writeSession(FILENAME, testSessionMessage2)
+        embraceCacheService.cacheObject(FILENAME, testSessionMessage2, SessionMessage::class.java)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessage) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
             second = { embraceCacheService.loadObject(FILENAME_2, SessionMessage::class.java) },
             firstBlocksSecond = false
         )
@@ -68,7 +68,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     @Test
     fun `reading a session should not block other reads to same session`() {
-        embraceCacheService.writeSession(FILENAME, testSessionMessage)
+        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
 
         executionCoordinator.executeOperations(
             first = { embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
@@ -79,11 +79,11 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     @Test
     fun `reads should block writes`() {
-        embraceCacheService.writeSession(FILENAME, testSessionMessage)
+        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
 
         executionCoordinator.executeOperations(
             first = { embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
-            second = { embraceCacheService.writeSession(FILENAME, testSessionMessageOneMinuteLater) },
+            second = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
             firstBlocksSecond = true
         )
 
@@ -99,7 +99,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         var readSession: SessionMessage? = null
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessage) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
             second = { readSession = embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
             firstBlocksSecond = true
         )
@@ -110,10 +110,10 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
     @Test
     fun `reading a file that is being rewritten to should block and succeed`() {
         var readSession: SessionMessage? = null
-        embraceCacheService.writeSession(FILENAME, testSessionMessage)
+        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessageOneMinuteLater) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
             second = { readSession = embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
             firstBlocksSecond = true
         )
@@ -124,7 +124,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
     @Test
     fun `interrupting a session write should not leave a file`() {
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessage) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
             second = { executionCoordinator.shutdownFirstThread() },
             firstBlocksSecond = false,
             firstOperationFails = true
@@ -135,10 +135,10 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     @Test
     fun `interrupting a session rewrite should not overwrite the file`() {
-        embraceCacheService.writeSession(FILENAME, testSessionMessage)
+        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.writeSession(FILENAME, testSessionMessageOneMinuteLater) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
             second = { executionCoordinator.shutdownFirstThread() },
             firstBlocksSecond = false,
             firstOperationFails = true

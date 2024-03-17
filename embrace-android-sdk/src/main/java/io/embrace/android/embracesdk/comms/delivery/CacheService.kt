@@ -28,14 +28,6 @@ internal interface CacheService {
     fun <T> loadObject(name: String, clazz: Class<T>): T?
 
     /**
-     * Caches a byte array to disk.
-     *
-     * @param name   the name of this cache in disk
-     * @param bytes  the bytes to write
-     */
-    fun cacheBytes(name: String, bytes: ByteArray?)
-
-    /**
      * Caches a payload to disk.
      *
      * @param name   the name of this cache in disk
@@ -49,14 +41,6 @@ internal interface CacheService {
      * is successfully written to disk
      */
     fun writeSession(name: String, sessionMessage: SessionMessage)
-
-    /**
-     * Reads the bytes from a cached file, if it exists.
-     *
-     * @param name  the name of the file to read
-     * @return the byte array, if it can be read successfully
-     */
-    fun loadBytes(name: String): ByteArray?
 
     /**
      * Provides a function that writes the bytes from a cached file, if it exists, to an

@@ -31,39 +31,6 @@ internal class EmbraceCacheService(
      */
     private val fileLocks = ConcurrentHashMap<String, ReentrantReadWriteLock>()
 
-    override fun cacheBytes(name: String, bytes: ByteArray?) {
-        findLock(name).write {
-            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-            if (bytes != null) {
-                val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                try {
-                    storageService.writeBytesToFile(file, bytes)
-                    logger.logDeveloper(TAG, "Bytes cached")
-                } catch (ex: Exception) {
-                    logger.logWarning("Failed to store cache object " + file.path, ex)
-                    deleteFile(name)
-                }
-            } else {
-                logger.logWarning("No bytes to save to file $name")
-            }
-        }
-    }
-
-    override fun loadBytes(name: String): ByteArray? {
-        findLock(name).read {
-            logger.logDeveloper(TAG, "Attempting to read bytes from $name")
-            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
-                return storageService.readBytesFromFile(file)
-            } catch (ex: FileNotFoundException) {
-                logger.logWarning("Cache file cannot be found " + file.path)
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to read cache object " + file.path, ex)
-            }
-            return null
-        }
-    }
-
     override fun cachePayload(name: String, action: SerializationAction) {
         findLock(name).write {
             logger.logDeveloper(TAG, "Attempting to write bytes to $name")

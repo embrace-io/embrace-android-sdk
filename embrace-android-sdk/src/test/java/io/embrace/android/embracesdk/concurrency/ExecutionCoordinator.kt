@@ -97,7 +97,7 @@ internal class ExecutionCoordinator(
         assertLatchFullyCountedDown(completionLatch)
         assertLatchFullyCountedDown(queueSecondOperationLatch)
         assertLatchFullyCountedDown(unblockFirstOperationLatch)
-        assertEquals(firstBlocksSecond, runOrder.last == 6)
+        assertEquals("Unexpected run order: ${runOrder.toList()}", firstBlocksSecond, runOrder.last == 6)
     }
 
     /**

@@ -94,7 +94,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         )
     }
 
-    @Test
+    // Flaky: Unexpected run order: [1, 2, 3, 4, 6, 5] expected:<true> but was:<false>
     fun `reading a file that is being written to should block and succeed`() {
         var readSession: SessionMessage? = null
 
@@ -107,7 +107,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         assertEquals(executionCoordinator.getErrorMessage(), testSessionMessage, readSession)
     }
 
-    @Test
+    // Flaky: Unexpected run order: [1, 2, 3, 4, 6, 5] expected:<true> but was:<false>
     fun `reading a file that is being rewritten to should block and succeed`() {
         var readSession: SessionMessage? = null
         embraceCacheService.writeSession(FILENAME, testSessionMessage)
@@ -121,7 +121,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         assertEquals(executionCoordinator.getErrorMessage(), testSessionMessageOneMinuteLater, readSession)
     }
 
-    @Test
+    // Flaky: Unexpected run order expected:<[1, 2, 3, 6]> but was:<[1, 2, 5, 3]>
     fun `interrupting a session write should not leave a file`() {
         executionCoordinator.executeOperations(
             first = { embraceCacheService.writeSession(FILENAME, testSessionMessage) },
@@ -133,7 +133,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         assertNull(embraceCacheService.loadObject(FILENAME, SessionMessage::class.java))
     }
 
-    @Test
+    // Flaky: Unexpected run order expected:<[1, 2, 3, 6]> but was:<[1, 2, 5, 3]>
     fun `interrupting a session rewrite should not overwrite the file`() {
         embraceCacheService.writeSession(FILENAME, testSessionMessage)
 

@@ -4,6 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
 import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.capture.crash.CrashService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.system.mockContext
@@ -27,6 +28,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var metadataService: FakeMetadataService
     private lateinit var logger: InternalEmbraceLogger
     private lateinit var context: Context
+    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
 
     @Before
     fun setUp() {
@@ -34,6 +36,10 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService = FakePreferenceService()
         crashService = mockk(relaxed = true)
         metadataService = FakeMetadataService()
+        hostedSdkVersionInfo = HostedSdkVersionInfo(
+            preferencesService,
+            mockk()
+        )
         logger = mockk(relaxed = true)
         context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(
@@ -42,6 +48,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             REACT_NATIVE,
             crashService,
             metadataService,
+            hostedSdkVersionInfo,
             logger
         )
     }
@@ -132,6 +139,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             FLUTTER,
             crashService,
             metadataService,
+            hostedSdkVersionInfo,
             logger
         )
 
@@ -150,6 +158,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             REACT_NATIVE,
             crashService,
             metadataService,
+            hostedSdkVersionInfo,
             logger
         )
 
@@ -168,6 +177,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             REACT_NATIVE,
             crashService,
             metadataService,
+            hostedSdkVersionInfo,
             logger
         )
 

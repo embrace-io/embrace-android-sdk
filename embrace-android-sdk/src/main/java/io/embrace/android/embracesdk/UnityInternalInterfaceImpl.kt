@@ -1,17 +1,15 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.capture.metadata.UnitySdkVersionInfo
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
-    private val preferencesService: PreferencesService,
-    private val unitySdkVersionInfo: UnitySdkVersionInfo,
+    private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalEmbraceLogger
 ) : EmbraceInternalInterface by impl, UnityInternalInterface {
 
@@ -34,9 +32,9 @@ internal class UnityInternalInterfaceImpl(
                 logger.logDeveloper("Embrace", "Unity SDK version is null.")
                 return
             }
-            unitySdkVersionInfo.hostedPlatformVersion = unityVersion
-            unitySdkVersionInfo.unityBuildIdNumber = buildGuid
-            unitySdkVersionInfo.hostedSdkVersion = unitySdkVersion
+            hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
+            hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
+            hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
         } else {
             logger.logSDKNotInitialized("set Unity metadata")
         }

@@ -45,6 +45,7 @@ internal class EmbraceMetadataServiceTest {
 
     companion object {
         private val context: Context = mockContext()
+        private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free")
         private val packageInfo = PackageInfo()
         private val serializer = EmbraceSerializer()
         private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
@@ -67,7 +68,10 @@ internal class EmbraceMetadataServiceTest {
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
             every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
 
-            hostedSdkVersionInfo = HostedSdkVersionInfo(preferencesService, InternalEmbraceLogger())
+            hostedSdkVersionInfo = HostedSdkVersionInfo(
+                preferencesService,
+                InternalEmbraceLogger()
+            )
         }
 
         @After
@@ -98,7 +102,6 @@ internal class EmbraceMetadataServiceTest {
         }
     }
 
-    private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free")
     private val activityService = FakeProcessStateService()
     private val configService: ConfigService =
         FakeConfigService(
@@ -145,26 +148,6 @@ internal class EmbraceMetadataServiceTest {
         ).apply { precomputeValues() }
     }
 
-    @Suppress("DEPRECATION")
-    private fun getReactNativeMetadataService() =
-        EmbraceMetadataService.ofContext(
-            context,
-            buildInfo,
-            configService,
-            Embrace.AppFramework.REACT_NATIVE,
-            preferencesService,
-            activityService,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            storageStatsManager,
-            windowManager,
-            fakeClock,
-            cpuInfoDelegate,
-            fakeArchitecture,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo
-        )
-
     @Test
     @Throws(InterruptedException::class)
     fun `test EmbraceMetadataService creation loads AppVersion lazily`() {
@@ -197,6 +180,9 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.osVersion }.returns(null)
         every { preferencesService.unityVersionNumber }.returns(null)
         every { preferencesService.unityBuildIdNumber }.returns(null)
+        every { preferencesService.reactNativeVersionNumber }.returns(null)
+        every { preferencesService.javaScriptBundleId }.returns(null)
+        every { preferencesService.javaScriptBundleURL }.returns(null)
 
         every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
 
@@ -205,33 +191,6 @@ internal class EmbraceMetadataServiceTest {
             .replace("{versionName}", checkNotNull(obj.sdkVersion))
             .replace("{versionCode}", checkNotNull(obj.sdkSimpleVersion))
             .filter { !it.isWhitespace() }
-
-        val appInfo = serializer.toJson(obj)
-        assertEquals(expectedInfo, appInfo.replace(" ", ""))
-    }
-
-    @Test
-    fun `test react native app info`() {
-        every { preferencesService.appVersion }.returns(null)
-        every { preferencesService.osVersion }.returns(null)
-        every { preferencesService.unityVersionNumber }.returns(null)
-        every { preferencesService.unityBuildIdNumber }.returns(null)
-        every { preferencesService.rnSdkVersion }.returns(null)
-        every { preferencesService.reactNativeVersionNumber }.returns(null)
-        every { preferencesService.javaScriptPatchNumber }.returns(null)
-        every { preferencesService.javaScriptBundleURL }.returns(null)
-        every { preferencesService.javaScriptBundleId }.returns(null)
-        every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
-
-        val metadataService = getReactNativeMetadataService()
-        val obj = metadataService.getAppInfo()
-        val expectedInfo =
-            ResourceReader.readResourceAsText("metadata_react_native_appinfo_expected.json")
-                .replace("{versionName}", checkNotNull(obj.sdkVersion))
-                .replace("{versionCode}", checkNotNull(obj.sdkSimpleVersion))
-                .filter { !it.isWhitespace() }
-
-        metadataService.setReactNativeBundleId(context, "1234")
 
         val appInfo = serializer.toJson(obj)
         assertEquals(expectedInfo, appInfo.replace(" ", ""))
@@ -328,30 +287,6 @@ internal class EmbraceMetadataServiceTest {
 
         assertEquals("appId", metadataService.getAppId())
         assertEquals("10", metadataService.getAppVersionCode())
-    }
-
-    @Test
-    fun `test flutter APIs`() {
-        val metadataService = getMetadataService(Embrace.AppFramework.FLUTTER)
-        metadataService.setEmbraceFlutterSdkVersion("1.1.0")
-        metadataService.setDartVersion("2.19.1")
-        verify(exactly = 1) { preferencesService.dartSdkVersion = "2.19.1" }
-        verify(exactly = 1) { preferencesService.embraceFlutterSdkVersion = "1.1.0" }
-
-        val appInfo = metadataService.getAppInfo()
-        assertEquals("1.1.0", appInfo.hostedSdkVersion)
-        assertEquals("2.19.1", appInfo.hostedPlatformVersion)
-    }
-
-    @Test
-    fun `test flutter API defaults to preferenceService`() {
-        val metadataService = getMetadataService(Embrace.AppFramework.FLUTTER)
-        every { preferencesService.dartSdkVersion }.returns("2.17.1")
-        every { preferencesService.embraceFlutterSdkVersion }.returns("1.0.0")
-        val defaultInfo = metadataService.getAppInfo()
-
-        assertEquals("1.0.0", defaultInfo.hostedSdkVersion)
-        assertEquals("2.17.1", defaultInfo.hostedPlatformVersion)
     }
 
     @Test

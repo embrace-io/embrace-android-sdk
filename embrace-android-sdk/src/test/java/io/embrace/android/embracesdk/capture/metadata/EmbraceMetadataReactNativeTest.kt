@@ -62,7 +62,10 @@ internal class EmbraceMetadataReactNativeTest {
         preferencesService.reactNativeVersionNumber = "rn-version-number"
         mockSharedObjectLoader = mockk(relaxed = true)
         cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, InternalEmbraceLogger())
-        hostedSdkVersionInfo = HostedSdkVersionInfo(preferencesService, InternalEmbraceLogger())
+        hostedSdkVersionInfo = HostedSdkVersionInfo(
+            preferencesService,
+            InternalEmbraceLogger()
+        )
     }
 
     private fun getMetadataService() = EmbraceMetadataService.ofContext(

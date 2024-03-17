@@ -119,31 +119,6 @@ internal interface MetadataService {
     fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean? = null)
 
     /**
-     * Sets the Embrace React Native SDK version
-     */
-    fun setEmbraceRnSdkVersion(version: String?)
-
-    /**
-     * Sets the React Native version
-     */
-    fun setRnVersion(version: String?)
-
-    /**
-     * Sets the JavaScript patch number
-     */
-    fun setJavaScriptPatchNumber(number: String)
-
-    /**
-     * Sets the Embrace Flutter SDK version
-     */
-    fun setEmbraceFlutterSdkVersion(version: String?)
-
-    /**
-     * Sets the Dart version
-     */
-    fun setDartVersion(version: String?)
-
-    /**
      * Queues in a single thread executor callables to retrieve values in background
      */
     fun precomputeValues()
@@ -159,7 +134,4 @@ internal interface MetadataService {
      * @return egl name
      */
     fun getEgl(): String?
-    fun setUnityVersionNumber(unityVersion: String)
-    fun setUnityBuildIdNumber(unityBuildIdNumber: String)
-    fun setUnitySdkVersionNumber(unitySdkVersion: String)
 }

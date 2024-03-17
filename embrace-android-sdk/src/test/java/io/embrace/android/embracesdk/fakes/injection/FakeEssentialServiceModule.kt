@@ -55,7 +55,10 @@ internal class FakeEssentialServiceModule(
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService(), mockk() )
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(
+        FakePreferenceService(),
+        mockk()
+    )
 ) : EssentialServiceModule {
 
     override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate()

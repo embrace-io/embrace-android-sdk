@@ -7,9 +7,13 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.capture.metadata.FlutterPlatformStrategy
+import io.embrace.android.embracesdk.capture.metadata.HostedPlatformStrategy
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.metadata.UnitySdkVersionInfo
+import io.embrace.android.embracesdk.capture.metadata.NativePlatformStrategy
+import io.embrace.android.embracesdk.capture.metadata.ReactNativePlatformStrategy
+import io.embrace.android.embracesdk.capture.metadata.UnityPlatformStrategy
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
@@ -53,6 +57,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  * the SDK during initialization.
  */
 internal interface EssentialServiceModule {
+
     val memoryCleanerService: MemoryCleanerService
     val orientationService: OrientationService
     val processStateService: ProcessStateService
@@ -185,25 +190,20 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        when(coreModule.appFramework) {
-            Embrace.AppFramework.UNITY -> {
-                UnitySdkVersionInfo(
-                    androidServicesModule.preferencesService,
-                    coreModule.logger
-                )
-            }
-            Embrace.AppFramework.REACT_NATIVE -> {
-                HostedSdkVersionInfo(
-                    androidServicesModule.preferencesService,
-                    coreModule.logger
-                )
-            }
-            else -> {
-                HostedSdkVersionInfo(
-                    androidServicesModule.preferencesService,
-                    coreModule.logger
-                )
-            }
+        val strategy = provideHostedPlatform(coreModule.appFramework)
+        HostedSdkVersionInfo(
+            androidServicesModule.preferencesService,
+            coreModule.logger,
+            strategy
+        )
+    }
+
+    private fun provideHostedPlatform(appFramework: Embrace.AppFramework): HostedPlatformStrategy {
+        return when (appFramework) {
+            Embrace.AppFramework.FLUTTER -> FlutterPlatformStrategy()
+            Embrace.AppFramework.REACT_NATIVE -> ReactNativePlatformStrategy()
+            Embrace.AppFramework.UNITY -> UnityPlatformStrategy()
+            else -> NativePlatformStrategy()
         }
     }
 

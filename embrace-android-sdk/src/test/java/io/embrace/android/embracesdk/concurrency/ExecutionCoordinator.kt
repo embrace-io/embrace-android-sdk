@@ -6,9 +6,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -38,7 +37,7 @@ internal class ExecutionCoordinator(
         val completionLatch = CountDownLatch(2)
         val queueSecondOperationLatch = CountDownLatch(1)
         val unblockFirstOperationLatch = CountDownLatch(1)
-        val runOrder = ConcurrentLinkedDeque<Int>()
+        val runOrder = LinkedBlockingDeque<Int>()
 
         thread1.submit {
             runOrder.offer(1)
@@ -129,7 +128,7 @@ internal class ExecutionCoordinator(
     internal class OperationWrapper : ExecutionModifiers {
         private val operationLatches = ConcurrentHashMap<Int, CountDownLatch>()
         private val operationBlockCounter = AtomicInteger(0)
-        private val operationBlocks = ConcurrentLinkedQueue<Int>()
+        private val operationBlocks = LinkedBlockingDeque<Int>()
         override fun blockNextOperation(blockBefore: Boolean): Int {
             val id = operationBlockCounter.incrementAndGet() * if (blockBefore) -1 else 1
             operationLatches[id] = CountDownLatch(1)

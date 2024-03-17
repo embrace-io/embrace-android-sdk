@@ -293,7 +293,9 @@ internal class EmbraceCacheService(
     }
 
     private fun findLock(name: String) =
-        fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
+        fileLocks[name] ?: synchronized(fileLocks) {
+            fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
+        }
 
     companion object {
         /**

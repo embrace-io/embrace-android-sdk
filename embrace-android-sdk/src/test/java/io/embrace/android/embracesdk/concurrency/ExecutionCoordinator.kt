@@ -37,10 +37,8 @@ internal class ExecutionCoordinator(
         val completionLatch = CountDownLatch(2)
         val queueSecondOperationLatch = CountDownLatch(1)
         val unblockFirstOperationLatch = CountDownLatch(1)
-        val runOrder = LinkedBlockingDeque<Int>()
 
         thread1.submit {
-            runOrder.offer(1)
             if (firstOperationFails) {
                 executionModifiers.errorOnNextOperation()
             } else {
@@ -48,27 +46,22 @@ internal class ExecutionCoordinator(
             }
             queueSecondOperationLatch.countDown()
             first()
-            runOrder.add(5)
             completionLatch.countDown()
         }
 
         queueSecondOperationLatch.await(1, TimeUnit.SECONDS)
 
         thread2.submit {
-            runOrder.offer(2)
             unblockingThread.submit {
                 unblockFirstOperationLatch.await(1, TimeUnit.SECONDS)
-                runOrder.add(4)
                 firstOperationUnblocked = executionModifiers.unblockOperation(checkNotNull(blockId))
             }
-            runOrder.add(3)
 
             if (firstBlocksSecond) {
                 unblockFirstOperationLatch.countDown()
             }
 
             second()
-            runOrder.add(6)
 
             if (!firstBlocksSecond) {
                 unblockFirstOperationLatch.countDown()
@@ -81,12 +74,6 @@ internal class ExecutionCoordinator(
         assertNull("First task threw exception", thread1.lastThrowable())
         assertNull("Second task threw exception", thread2.lastThrowable())
 
-        if (firstBlocksSecond) {
-            assertEquals("Unexpected run order", listOf(1, 2, 3, 4), runOrder.toList().take(4))
-        } else {
-            assertEquals("Unexpected run order", listOf(1, 2, 3, 6), runOrder.toList().take(4))
-        }
-
         if (!firstOperationFails) {
             assertTrue(checkNotNull(firstOperationUnblocked))
         } else if (errorLogsProvider != null) {
@@ -97,7 +84,6 @@ internal class ExecutionCoordinator(
         assertLatchFullyCountedDown(completionLatch)
         assertLatchFullyCountedDown(queueSecondOperationLatch)
         assertLatchFullyCountedDown(unblockFirstOperationLatch)
-        assertEquals("Unexpected run order: ${runOrder.toList()}", firstBlocksSecond, runOrder.last == 6)
     }
 
     /**

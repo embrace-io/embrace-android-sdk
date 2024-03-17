@@ -115,13 +115,17 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.transformSession(any(), any()) } throws Exception()
-
+        every { cacheService.writeSession(any(), eq(testSessionMessageOneMinuteLater)) } throws Exception()
         deliveryCacheManager.saveSession(testSessionMessage, PERIODIC_CACHE)
-        val firstSessionPayload = deliveryCacheManager.loadPayload(testSessionMessage.session.sessionId)
+        val original = ByteArrayOutputStream()
+        original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.session.sessionId)))
+
         deliveryCacheManager.saveSession(testSessionMessageOneMinuteLater, PERIODIC_CACHE)
 
-        assertArrayEquals(firstSessionPayload, deliveryCacheManager.loadPayload(testSessionMessage.session.sessionId))
+        val secondLoad = ByteArrayOutputStream()
+        secondLoad.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.session.sessionId)))
+
+        assertArrayEquals(original.toByteArray(), secondLoad.toByteArray())
     }
 
     @Test
@@ -167,13 +171,10 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `malformed file names do not trigger an exception`() {
-        cacheService.cacheBytes("$prefix.session1.json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes("$prefix.$clockInit.json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes("$prefix..json", "{ cached_session }".toByteArray())
-        cacheService.cacheBytes(
-            "$prefix.session1.$clockInit.json",
-            "{ cached_session }".toByteArray()
-        )
+        cacheService.writeSession("$prefix.session1.json", testSessionMessage)
+        cacheService.writeSession("$prefix.$clockInit.json", testSessionMessage)
+        cacheService.writeSession("$prefix..json", testSessionMessage)
+        cacheService.writeSession("$prefix.session1.$clockInit.json", testSessionMessage)
 
         assertTrue(deliveryCacheManager.getAllCachedSessionIds().isEmpty())
     }
@@ -195,23 +196,12 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `check for a session saved in previous versions of the SDK will return and the original file will be deleted`() {
         val session = testSessionMessage
-        cacheService.cacheObject("last_session.json", session, SessionMessage::class.java)
+        cacheService.writeSession("last_session.json", session)
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
         assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0].sessionId))
-        assertNull(cacheService.loadBytes("last_session.json"))
-    }
-
-    @Test
-    fun `save and load payloads`() {
-        val payload = "{ json payload }".toByteArray()
-        val action: (outputStream: OutputStream) -> Unit = {
-            it.write(payload)
-        }
-
-        val cacheName = deliveryCacheManager.savePayload(action)
-        assertArrayEquals(payload, deliveryCacheManager.loadPayload(cacheName))
+        assertNull(cacheService.loadObject("last_session.json", SessionMessage::class.java))
     }
 
     @Test

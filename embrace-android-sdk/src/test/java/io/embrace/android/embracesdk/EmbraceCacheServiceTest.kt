@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -61,34 +60,13 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test cacheBytes and loadBytes`() {
-        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
-        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-        val children = checkNotNull(storageManager.filesDirectory.listFiles())
-        val file = children.single()
-        assertEquals("emb_$CUSTOM_OBJECT_1_FILE_NAME", file.name)
-
-        val loadedObject = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertArrayEquals(myBytes, loadedObject)
-    }
-
-    @Test
-    fun `test loadBytes with non-existent file returns empty optional`() {
-        val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNull(loadedBytes)
-    }
-
-    @Test
-    fun `test cacheBytes with non-writable file does not throw exception`() {
+    fun `test cacheObject with non-writable file does not throw exception`() {
         val cacheFile = File(storageManager.filesDirectory, "emb_$CUSTOM_OBJECT_1_FILE_NAME")
         cacheFile.writeText("locked file")
         cacheFile.setReadOnly()
 
-        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
-        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
-
-        val loadedBytes = service.loadBytes(CUSTOM_OBJECT_1_FILE_NAME)
-        assertNull(loadedBytes)
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, "data", String::class.java)
+        assertNull(service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, String::class.java))
     }
 
     @Test
@@ -154,13 +132,12 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
-    fun `test loadObject with non-existent file returns empty optional`() {
-        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
-        assertNull(loadedObject)
+    fun `test loadObject with non-existent file returns null`() {
+        assertNull(service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java))
     }
 
     @Test
-    fun `test loadObject with malformed file returns empty optional`() {
+    fun `test loadObject with malformed file returns null`() {
         val myObject1 = fakeSession()
         service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
 
@@ -217,8 +194,7 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test deleteFile from files dir`() {
-        val myBytes = "{ \"payload\": \"test_payload\"}".toByteArray()
-        service.cacheBytes(CUSTOM_OBJECT_1_FILE_NAME, myBytes)
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, "data", String::class.java)
 
         var children = checkNotNull(storageManager.filesDirectory.listFiles())
         assertEquals(1, children.size)
@@ -235,7 +211,7 @@ internal class EmbraceCacheServiceTest {
         val session2FileName = CachedSession.create(session2.session.sessionId, session2.session.startTime, false).filename
         service.writeSession(session1FileName, session1)
         service.writeSession(session2FileName, session2)
-        service.cacheBytes("not-match.json", testPayloadBytes)
+        service.writeSession("not-match.json", testSessionMessage)
 
         val filenames = service.normalizeCacheAndGetSessionFileIds()
         assertEquals(3, storageManager.listFiles().size)
@@ -253,7 +229,7 @@ internal class EmbraceCacheServiceTest {
         val badSessionFileName = CachedSession.create("badId", System.currentTimeMillis(), false).filename
         service.writeSession(session1FileName, session1)
         service.writeSession(session2FileName + OLD_COPY_SUFFIX, session2)
-        service.cacheBytes(badSessionFileName + TEMP_COPY_SUFFIX, testPayloadBytes)
+        service.writeSession(badSessionFileName + TEMP_COPY_SUFFIX, testSessionMessageOneMinuteLater)
         assertEquals(3, storageManager.listFiles().size)
 
         val filenames = service.normalizeCacheAndGetSessionFileIds()
@@ -382,7 +358,5 @@ internal class EmbraceCacheServiceTest {
 
     companion object {
         private const val CUSTOM_OBJECT_1_FILE_NAME = "custom_object_1.json"
-        private const val TEST_PAYLOAD = "this is payload"
-        private val testPayloadBytes = TEST_PAYLOAD.toByteArray()
     }
 }

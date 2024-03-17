@@ -15,7 +15,6 @@ internal interface DeliveryCacheManager {
     fun loadCrash(): EventMessage?
     fun deleteCrash()
     fun savePayload(action: SerializationAction): String
-    fun loadPayload(name: String): ByteArray?
     fun loadPayloadAsAction(name: String): SerializationAction
     fun deletePayload(name: String)
     fun savePendingApiCalls(pendingApiCalls: PendingApiCalls)

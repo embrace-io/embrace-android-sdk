@@ -20,12 +20,6 @@ internal class FakeStorageService : StorageService {
     override fun getFileForWrite(name: String) =
         File(filesDirectory, name)
 
-    override fun readBytesFromFile(file: File): ByteArray = file.readBytes()
-
-    override fun writeBytesToFile(file: File, bytes: ByteArray) {
-        file.writeBytes(bytes)
-    }
-
     override fun getConfigCacheDir() =
         File(cacheDirectory, "emb_config_cache")
 

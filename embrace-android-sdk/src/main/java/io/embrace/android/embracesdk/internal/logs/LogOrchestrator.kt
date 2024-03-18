@@ -57,7 +57,7 @@ internal class LogOrchestrator(
         scheduledCheckFuture = null
         firstLogInBatchTime.set(0)
 
-        val storedLogs = sink.flushLogs(MAX_LOGS_PER_BATCH)
+        val storedLogs = sink.flushLogs()
 
         if (storedLogs.isNotEmpty()) {
             deliveryService.sendLogs(LogPayload(logs = storedLogs))
@@ -89,7 +89,7 @@ internal class LogOrchestrator(
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME
     }
     companion object {
-        private const val MAX_LOGS_PER_BATCH = 50
+        const val MAX_LOGS_PER_BATCH = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

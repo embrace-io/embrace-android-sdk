@@ -23,9 +23,8 @@ internal interface LogSink {
     /**
      * Returns and clears the currently stored Logs. Implementations of this method must make sure the clearing and returning is
      * atomic, i.e. logs cannot be added during this operation.
-     * @param max The maximum number of logs to flush. If null, all logs are flushed.
      */
-    fun flushLogs(max: Int? = null): List<Log>
+    fun flushLogs(): List<Log>
 
     /**
      * Registers a callback to be called when logs are stored.

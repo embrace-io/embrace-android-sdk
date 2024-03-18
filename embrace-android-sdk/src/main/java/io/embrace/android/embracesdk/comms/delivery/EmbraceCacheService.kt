@@ -32,16 +32,8 @@ internal class EmbraceCacheService(
     private val fileLocks = ConcurrentHashMap<String, ReentrantReadWriteLock>()
 
     override fun cachePayload(name: String, action: SerializationAction) {
-        findLock(name).write {
-            logger.logDeveloper(TAG, "Attempting to write bytes to $name")
-            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-            try {
-                file.outputStream().buffered().use(action)
-                logger.logDeveloper(TAG, "Bytes cached")
-            } catch (ex: Exception) {
-                logger.logWarning("Failed to store cache object " + file.path, ex)
-                deleteFile(name)
-            }
+        safeFileWrite(name) { tempFile ->
+            tempFile.outputStream().buffered().use(action)
         }
     }
 
@@ -73,27 +65,9 @@ internal class EmbraceCacheService(
         }
     }
 
-    /**
-     * Writes a file to the cache. Must be serializable JSON.
-     *
-     *
-     * If writing the object to the cache fails, an exception is logged.
-     *
-     * @param name   the name of the object to write
-     * @param objectToCache the object to write
-     * @param clazz  the class of the object to write
-     * @param <T>    the type of the object to write
-     */
     override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
-        findLock(name).write {
-            logger.logDeveloper(TAG, "Attempting to cache object: $name")
-            val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-            try {
-                serializer.toJson(objectToCache, clazz, file.outputStream())
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to store cache object " + file.path, ex)
-                deleteFile(name)
-            }
+        safeFileWrite(name) { tempFile ->
+            serializer.toJson(objectToCache, clazz, tempFile.outputStream())
         }
     }
 
@@ -194,9 +168,7 @@ internal class EmbraceCacheService(
     }
 
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        safeFileWrite(name) { tempFile ->
-            serializer.toJson(sessionMessage, SessionMessage::class.java, tempFile.outputStream())
-        }
+        cacheObject(name, sessionMessage, SessionMessage::class.java)
     }
 
     override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {

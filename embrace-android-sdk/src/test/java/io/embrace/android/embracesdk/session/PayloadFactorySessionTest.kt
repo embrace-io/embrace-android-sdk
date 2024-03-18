@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -92,7 +92,7 @@ internal class PayloadFactorySessionTest {
     ) {
         processStateService.isInBackground = isActivityInBackground
 
-        val sessionEnvelopeSource = SessionEnvelopeSource(
+        val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()

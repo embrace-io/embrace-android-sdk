@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.envelope.LogEnvelopeSource
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.injection.PayloadModule
 
 internal class FakePayloadModule : PayloadModule {
 
-    override val sessionEnvelopeSource: SessionEnvelopeSource = SessionEnvelopeSource(
+    override val sessionEnvelopeSource: SessionEnvelopeSource = SessionEnvelopeSourceImpl(
         FakeEnvelopeMetadataSource(),
         FakeEnvelopeResourceSource(),
         FakeSessionPayloadSource()

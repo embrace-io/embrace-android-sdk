@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -179,7 +179,7 @@ internal class PayloadFactoryBaTest {
             FakeSessionPropertiesService(),
             FakeStartupService()
         )
-        val sessionEnvelopeSource = SessionEnvelopeSource(
+        val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()

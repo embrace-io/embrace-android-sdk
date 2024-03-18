@@ -24,6 +24,7 @@ internal class LogPayloadSourceImplTest {
     fun `test getLogPayload returns a correct payload`() {
         val payload = impl.getLogPayload()
         val log = checkNotNull(payload.logs?.single())
+        assertEquals(0, sink.completedLogs().size)
         assertEquals(1, payload.logs?.size)
         assertEquals(fakeLog.timestampEpochNanos, log.timeUnixNano)
         assertEquals(fakeLog.severityText, log.severityText)

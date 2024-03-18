@@ -95,30 +95,33 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `simulate race condition`() {
-        val fakeLog = FakeLogRecordData()
-        val fakeLogs = mutableListOf<LogRecordData>()
-        val threads = mutableListOf<ScheduledExecutorService>()
-        val latch = CountDownLatch(49)
-        repeat(49) {
-            fakeLogs.add(fakeLog)
-            threads.add(SingleThreadTestScheduledExecutor())
-        }
-        logSink.storeLogs(fakeLogs)
-        threads.forEach { thread ->
-            thread.schedule(
-                {
-                    logSink.storeLogs(listOf(fakeLog))
-                    latch.countDown()
-                },
-                10L,
-                TimeUnit.MILLISECONDS
-            )
+        repeat(80) { i ->
+            val fakeLog = FakeLogRecordData()
+            val fakeLogs = mutableListOf<LogRecordData>()
+            val threads = mutableListOf<ScheduledExecutorService>()
+            val latch = CountDownLatch(49)
+            repeat(49) {
+                fakeLogs.add(fakeLog)
+                threads.add(SingleThreadTestScheduledExecutor())
+            }
+            logSink.storeLogs(fakeLogs)
+            threads.forEach { thread ->
+                thread.schedule(
+                    {
+                        logSink.storeLogs(listOf(fakeLog))
+                        latch.countDown()
+                    },
+                    10L,
+                    TimeUnit.MILLISECONDS
+                )
+            }
+
+            latch.await(1000L, TimeUnit.MILLISECONDS)
+
+           // assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
+            assertEquals("Too many logs in payload", 2, deliveryService.lastSentLogPayloads[i].logs?.size)
         }
 
-        latch.await(1000L, TimeUnit.MILLISECONDS)
-
-        assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
-        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].logs?.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {

@@ -32,8 +32,11 @@ internal class LogSinkImpl : LogSink {
             val maxIndex = max?.let {
                 minOf(currentSize, it)
             } ?: currentSize
-            val flushedLogs = storedLogs.toList().subList(0, maxIndex)
+            val flushedLogs = storedLogs.take(maxIndex)
             storedLogs.removeAll(flushedLogs.toSet())
+            if (flushedLogs.size > max!!) {
+                println("LogSinkImpl: flushLogs: currentSize: $currentSize | maxIndex $maxIndex | max $max | flushedLogs size: ${flushedLogs.size}")
+            }
             return flushedLogs
         }
     }

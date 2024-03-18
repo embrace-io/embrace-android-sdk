@@ -89,7 +89,7 @@ internal class LogOrchestrator(
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME
     }
     companion object {
-        private const val MAX_LOGS_PER_BATCH = 50
+        private const val MAX_LOGS_PER_BATCH = 2
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

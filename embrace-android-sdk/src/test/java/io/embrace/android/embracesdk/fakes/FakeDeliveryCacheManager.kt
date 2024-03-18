@@ -52,10 +52,6 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun loadPayload(name: String): ByteArray? {
-        TODO("Not yet implemented")
-    }
-
     override fun deletePayload(name: String) {
         TODO("Not yet implemented")
     }

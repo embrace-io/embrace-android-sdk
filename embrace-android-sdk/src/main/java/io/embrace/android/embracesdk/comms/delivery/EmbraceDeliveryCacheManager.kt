@@ -119,10 +119,6 @@ internal class EmbraceDeliveryCacheManager(
         return name
     }
 
-    override fun loadPayload(name: String): ByteArray? {
-        return cacheService.loadBytes(name)
-    }
-
     override fun loadPayloadAsAction(name: String): SerializationAction {
         return cacheService.loadPayload(name)
     }

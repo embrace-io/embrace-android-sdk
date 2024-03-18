@@ -41,12 +41,6 @@ internal class EmbraceStorageService(
         return File(filesDirectory, name)
     }
 
-    override fun readBytesFromFile(file: File): ByteArray = file.readBytes()
-
-    override fun writeBytesToFile(file: File, bytes: ByteArray) {
-        file.writeBytes(bytes)
-    }
-
     override fun getConfigCacheDir(): File {
         return File(cacheDirectory, EMBRACE_CONFIG_CACHE_DIRECTORY)
     }

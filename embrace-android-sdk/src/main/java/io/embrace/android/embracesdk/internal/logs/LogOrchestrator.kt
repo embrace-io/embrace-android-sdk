@@ -58,9 +58,10 @@ internal class LogOrchestrator(
         scheduledCheckFuture = null
         firstLogInBatchTime.set(0)
 
-        deliveryService.sendLogs(
-            logEnvelopeSource.getEnvelope()
-        )
+        val envelope = logEnvelopeSource.getEnvelope()
+        if (!envelope.data.logs.isNullOrEmpty()) {
+            deliveryService.sendLogs(envelope)
+        }
 
         return true
     }

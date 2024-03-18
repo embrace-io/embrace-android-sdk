@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
@@ -42,6 +43,7 @@ internal interface LogService : MemoryCleanerListener {
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
+        framework: AppFramework,
         context: String?,
         library: String?,
         exceptionName: String?,

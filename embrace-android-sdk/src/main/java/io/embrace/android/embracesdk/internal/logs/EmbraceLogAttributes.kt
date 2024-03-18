@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.LogExceptionType
 
 internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
@@ -42,6 +43,12 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
          */
         private const val EXCEPTION_MESSAGE_ATTRIBUTE_NAME =
             EMBRACE_ATTRIBUTE_NAME_PREFIX + "exception_message"
+
+        /**
+         * Attribute name for the app framework for a log representing an exception
+         */
+        private const val APP_FRAMEWORK_ATTRIBUTE_NAME =
+            EMBRACE_ATTRIBUTE_NAME_PREFIX + "app_framework"
 
         /**
          * Attribute name for the exception context in a log representing an exception
@@ -106,6 +113,13 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
      */
     fun setExceptionMessage(exceptionMessage: String) {
         attributes[EXCEPTION_MESSAGE_ATTRIBUTE_NAME] = exceptionMessage
+    }
+
+    /**
+     * Set an app framework (native, unity, react native or flutter) for the log
+     */
+    fun setAppFramework(framework: AppFramework) {
+        attributes[APP_FRAMEWORK_ATTRIBUTE_NAME] = framework.value.toString()
     }
 
     /**

@@ -14,10 +14,6 @@ internal class FakeLogMessageService : LogMessageService {
         networkCaptureCall?.let(networkCalls::add)
     }
 
-    override fun log(message: String, type: EventType, properties: Map<String, Any>?) {
-        TODO("Not yet implemented")
-    }
-
     override fun log(
         message: String,
         type: EventType,

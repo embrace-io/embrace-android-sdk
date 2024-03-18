@@ -136,9 +136,9 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService = getLogMessageService()
 
         val props = mapOf("foo" to "bar")
-        logMessageService.log("Hello world", EventType.INFO_LOG, props)
-        logMessageService.log("Warning world", EventType.WARNING_LOG, null)
-        logMessageService.log("Hello errors", EventType.ERROR_LOG, null)
+        simpleLog("Hello world", EventType.INFO_LOG, props)
+        simpleLog("Warning world", EventType.WARNING_LOG, null)
+        simpleLog("Hello errors", EventType.ERROR_LOG, null)
 
         val logs = deliveryService.lastSentLogs
         assertEquals(3, logs.size)
@@ -241,7 +241,7 @@ internal class EmbraceLogMessageServiceTest {
     @Test
     fun testDefaultMaxMessageLength() {
         logMessageService = getLogMessageService()
-        logMessageService.log("Hi".repeat(65), EventType.INFO_LOG, null)
+        simpleLog("Hi".repeat(65), EventType.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(62) + "H...")
@@ -257,7 +257,7 @@ internal class EmbraceLogMessageServiceTest {
         )
 
         logMessageService = getLogMessageService()
-        logMessageService.log("Hi".repeat(50), EventType.INFO_LOG, null)
+        simpleLog("Hi".repeat(50), EventType.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
         assertTrue(message.event.name == "Hi".repeat(23) + "H...")
@@ -268,8 +268,8 @@ internal class EmbraceLogMessageServiceTest {
         cfg = cfg.copy(disabledEventAndLogPatterns = setOf("Hello World"))
         logMessageService = getLogMessageService()
 
-        logMessageService.log("Hello World", EventType.INFO_LOG, null)
-        logMessageService.log("Another", EventType.INFO_LOG, null)
+        simpleLog("Hello World", EventType.INFO_LOG, null)
+        simpleLog("Another", EventType.INFO_LOG, null)
 
         deliveryService.lastSentLogs.single().let {
             assertEquals("Another", it.event.name)
@@ -281,9 +281,9 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService = getLogMessageService()
 
         repeat(500) { k ->
-            logMessageService.log("Test info $k", EventType.INFO_LOG, null)
-            logMessageService.log("Test warning $k", EventType.WARNING_LOG, null)
-            logMessageService.log("Test error $k", EventType.ERROR_LOG, null)
+            simpleLog("Test info $k", EventType.INFO_LOG, null)
+            simpleLog("Test warning $k", EventType.WARNING_LOG, null)
+            simpleLog("Test error $k", EventType.ERROR_LOG, null)
         }
 
         assertEquals(100, logMessageService.findInfoLogIds(0L, Long.MAX_VALUE).size)
@@ -390,6 +390,22 @@ internal class EmbraceLogMessageServiceTest {
         )
         assertFalse(logMessageService.checkIfShouldGateLog(EventType.INFO_LOG))
         assertFalse(logMessageService.checkIfShouldGateLog(EventType.WARNING_LOG))
+    }
+
+    private fun simpleLog(message: String, severity: EventType, properties: Map<String, Any>?) {
+        logMessageService.log(
+            message,
+            severity,
+            LogExceptionType.NONE,
+            properties,
+            null,
+            null,
+            Embrace.AppFramework.NATIVE,
+            null,
+            null,
+            null,
+            null
+        )
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =

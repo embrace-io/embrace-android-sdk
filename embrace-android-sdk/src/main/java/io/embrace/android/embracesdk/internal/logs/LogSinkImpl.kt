@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator.Companion.MAX_LOGS_PER_BATCH
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -29,9 +30,8 @@ internal class LogSinkImpl : LogSink {
 
     override fun flushLogs(): List<Log> {
         synchronized(flushLock) {
-            val currentSize = storedLogs.size
-            val maxIndex = minOf(currentSize, MAX_LOGS_PER_BATCH)
-            val flushedLogs = storedLogs.toList().take(maxIndex)
+            val batchSize = minOf(storedLogs.size, MAX_LOGS_PER_BATCH)
+            val flushedLogs = storedLogs.threadSafeTake(batchSize)
             storedLogs.removeAll(flushedLogs.toSet())
             return flushedLogs
         }

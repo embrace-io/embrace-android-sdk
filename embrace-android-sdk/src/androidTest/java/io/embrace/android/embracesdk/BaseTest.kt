@@ -411,6 +411,7 @@ public enum class EmbraceEndpoint(public val url: String) {
     CONFIG("/v2/config"),
     SCREENSHOT("/v1/screenshot"),
     SESSIONS("/v1/log/sessions"),
+    SESSIONS_V2("/v2/spans"),
     EVENTS("/v1/log/events"),
     LOGGING("/v1/log/logging")
 }

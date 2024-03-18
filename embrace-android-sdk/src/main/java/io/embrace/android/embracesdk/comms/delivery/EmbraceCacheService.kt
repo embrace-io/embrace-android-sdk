@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -28,7 +29,7 @@ internal class EmbraceCacheService(
      * If a file is being written then nothing else should read/write it. Otherwise, it's safe
      * to read a file using multiple threads at the same time.
      */
-    private val fileLocks = mutableMapOf<String, ReentrantReadWriteLock>()
+    private val fileLocks = ConcurrentHashMap<String, ReentrantReadWriteLock>()
 
     override fun cacheBytes(name: String, bytes: ByteArray?) {
         findLock(name).write {
@@ -292,7 +293,9 @@ internal class EmbraceCacheService(
     }
 
     private fun findLock(name: String) =
-        fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
+        fileLocks[name] ?: synchronized(fileLocks) {
+            fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
+        }
 
     companion object {
         /**

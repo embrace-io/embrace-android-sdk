@@ -123,26 +123,6 @@ internal class EmbraceLogMessageService(
         }
     }
 
-    override fun log(
-        message: String,
-        type: EventType,
-        properties: Map<String, Any>?
-    ) {
-        log(
-            message,
-            type,
-            LogExceptionType.NONE,
-            properties,
-            null,
-            null,
-            AppFramework.NATIVE,
-            null,
-            null,
-            null,
-            null
-        )
-    }
-
     @Suppress("CyclomaticComplexMethod", "ComplexMethod", "LongParameterList")
     override fun log(
         message: String,

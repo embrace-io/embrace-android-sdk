@@ -116,6 +116,7 @@ internal class V2PayloadMessageCollatorTest {
                 15000000000,
                 Session.LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
+                true,
                 "crashId"
             )
         )
@@ -142,6 +143,7 @@ internal class V2PayloadMessageCollatorTest {
                 15000000000,
                 Session.LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
+                true,
                 "crashId",
             )
         )

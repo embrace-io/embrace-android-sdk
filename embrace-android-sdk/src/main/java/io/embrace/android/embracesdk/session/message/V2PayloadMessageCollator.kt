@@ -21,13 +21,29 @@ internal class V2PayloadMessageCollator(
     }
 
     override fun buildFinalSessionMessage(params: FinalEnvelopeParams.SessionParams): SessionMessage {
-        return v1Collator.buildFinalSessionMessage(params)
-            .convertToV2Payload(params.endType)
+        val newParams = FinalEnvelopeParams.SessionParams(
+            initial = params.initial,
+            endTime = params.endTime,
+            lifeEventType = params.lifeEventType,
+            crashId = params.crashId,
+            endType = params.endType,
+            captureSpans = false
+        )
+        return v1Collator.buildFinalSessionMessage(newParams)
+            .convertToV2Payload(newParams.endType)
     }
 
     override fun buildFinalBackgroundActivityMessage(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
-        return v1Collator.buildFinalBackgroundActivityMessage(params)
-            .convertToV2Payload(params.endType)
+        val newParams = FinalEnvelopeParams.BackgroundActivityParams(
+            initial = params.initial,
+            endTime = params.endTime,
+            lifeEventType = params.lifeEventType,
+            crashId = params.crashId,
+            endType = params.endType,
+            captureSpans = false
+        )
+        return v1Collator.buildFinalBackgroundActivityMessage(newParams)
+            .convertToV2Payload(newParams.endType)
     }
 
     private fun SessionMessage.convertToV2Payload(endType: SessionSnapshotType): SessionMessage {

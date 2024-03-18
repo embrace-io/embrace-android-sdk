@@ -31,11 +31,13 @@ internal interface LogService : MemoryCleanerListener {
      * @param properties         custom properties to send as part of the event
      * @param stackTraceElements the stacktrace elements of a throwable
      * @param customStackTrace   stacktrace string for non-JVM exceptions
+     * @param framework          the app framework (Native, Unity, etc) for the exception
      * @param context            context for a Dart exception from the Flutter SDK
      * @param library            library from a Dart exception from the Flutter SDK
      * @param exceptionName      the exception name of a Throwable is it is present
      * @param exceptionMessage   the exception message of a Throwable is it is present
      */
+    @Suppress("LongParameterList")
     fun logException(
         message: String,
         severity: Severity,

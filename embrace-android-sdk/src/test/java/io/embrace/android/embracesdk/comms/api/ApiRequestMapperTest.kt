@@ -94,7 +94,7 @@ internal class ApiRequestMapperTest {
     @Test
     fun testV2SessionRequest() {
         val request = mapper.sessionRequest(true)
-        request.assertCoreFieldsPopulated("/v2/sessions")
+        request.assertCoreFieldsPopulated("/v2/spans")
     }
 
     @Test

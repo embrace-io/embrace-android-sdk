@@ -12,7 +12,7 @@ internal enum class Endpoint(val path: String, val version: String) {
     LOGS("logs", "v2"),
     NETWORK("network", "v1"),
     SESSIONS("sessions", "v1"),
-    SESSIONS_V2("sessions", "v2"),
+    SESSIONS_V2("spans", "v2"),
     UNKNOWN("unknown", "v1");
 
     private var rateLimitRetryCount = AtomicInteger(0)

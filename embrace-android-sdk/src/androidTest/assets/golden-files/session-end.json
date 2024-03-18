@@ -112,7 +112,7 @@
         "emb.sequence_id": "2",
         "emb.private": "true",
         "emb.key": "true",
-        "emb.type": "performance"
+        "emb.type": "perf"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],
@@ -127,7 +127,7 @@
       "attributes": {
         "emb.sequence_id": "3",
         "emb.key": "true",
-        "emb.type": "performance"
+        "emb.type": "perf"
       },
       "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "events": [],

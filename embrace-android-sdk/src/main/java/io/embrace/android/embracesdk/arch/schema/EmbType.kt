@@ -15,7 +15,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     }
 
     /**
-     * Keys that track a point in time & is visual in nature. Applies to spans, logs, and span events.
+     * Keys that track telemetry that is explicitly tied to user behaviour or visual in nature.
+     * Applies to spans, logs, and span events.
      */
     internal sealed class Ux(subtype: String) : EmbType("ux", subtype) {
 
@@ -25,7 +26,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     }
 
     /**
-     * Keys that track a point in time that is not visual in nature. Applies to spans, logs, and span events.
+     * Keys that track telemetry that is not explicitly tied to user behaviour and is not visual in nature.
+     * Applies to spans, logs, and span events.
      */
     internal sealed class System(subtype: String) : EmbType("sys", subtype) {
 

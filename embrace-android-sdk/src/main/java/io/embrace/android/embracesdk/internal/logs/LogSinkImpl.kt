@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator.Companion.MAX_LOGS_PER_BATCH
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -26,13 +27,11 @@ internal class LogSinkImpl : LogSink {
         return storedLogs.toList()
     }
 
-    override fun flushLogs(max: Int?): List<Log> {
+    override fun flushLogs(): List<Log> {
         synchronized(flushLock) {
             val currentSize = storedLogs.size
-            val maxIndex = max?.let {
-                minOf(currentSize, it)
-            } ?: currentSize
-            val flushedLogs = storedLogs.take(maxIndex)
+            val maxIndex = minOf(currentSize, MAX_LOGS_PER_BATCH)
+            val flushedLogs = storedLogs.toList().take(maxIndex)
             storedLogs.removeAll(flushedLogs.toSet())
             return flushedLogs
         }

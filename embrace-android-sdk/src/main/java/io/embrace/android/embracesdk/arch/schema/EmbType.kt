@@ -7,11 +7,11 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
      */
-    internal sealed class Performance(subtype: String?) : EmbType("performance", subtype) {
+    internal sealed class Performance(subtype: String?) : EmbType("perf", subtype) {
 
         internal object Default : Performance(null)
 
-        internal object Network : Performance("network")
+        internal object Network : Performance("network_request")
     }
 
     /**
@@ -27,9 +27,9 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     /**
      * Keys that track a point in time that is not visual in nature. Applies to spans, logs, and span events.
      */
-    internal sealed class System(subtype: String) : EmbType("system", subtype) {
+    internal sealed class System(subtype: String) : EmbType("sys", subtype) {
 
-        internal object Breadcrumb : System("breadcrumb")
+        internal object Breadcrumb : System("custom_breadcrumb")
 
         internal object Log : System("log")
 

@@ -177,6 +177,22 @@ internal class EmbraceCacheService(
         return properSessionFileIds.toList()
     }
 
+    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
+        findLock(name).read {
+            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
+            try {
+                val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
+                return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>?
+                    ?: emptyList()
+            } catch (ex: FileNotFoundException) {
+                logger.logDebug("Cache file cannot be found " + file.path)
+            } catch (ex: Exception) {
+                logger.logDebug("Failed to read cache object " + file.path, ex)
+            }
+            return null
+        }
+    }
+
     override fun writeSession(name: String, sessionMessage: SessionMessage) {
         findLock(name).write {
             var isOverwrite = false
@@ -209,22 +225,6 @@ internal class EmbraceCacheService(
                 }
                 logger.logError("Failed to $action session object ", ex)
             }
-        }
-    }
-
-    override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
-        findLock(name).read {
-            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
-                val type = Types.newParameterizedType(List::class.java, PendingApiCall::class.java)
-                return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>?
-                    ?: emptyList()
-            } catch (ex: FileNotFoundException) {
-                logger.logDebug("Cache file cannot be found " + file.path)
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to read cache object " + file.path, ex)
-            }
-            return null
         }
     }
 

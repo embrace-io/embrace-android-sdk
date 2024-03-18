@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.capture.envelope
+package io.embrace.android.embracesdk.capture.envelope.session
 
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
@@ -7,14 +7,14 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class SessionEnvelopeSourceTest {
+internal class SessionEnvelopeSourceImplTest {
 
     @Test
     fun getEnvelope() {
         val metadataSource = FakeEnvelopeMetadataSource()
         val resourceSource = FakeEnvelopeResourceSource()
         val sessionPayloadSource = FakeSessionPayloadSource()
-        val source = SessionEnvelopeSource(
+        val source = SessionEnvelopeSourceImpl(
             metadataSource,
             resourceSource,
             sessionPayloadSource,

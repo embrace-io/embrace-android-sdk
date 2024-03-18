@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.envelope.LogEnvelopeSource
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.resource.EnvelopeResourceSourceImpl
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.ndk.NativeModule
 
@@ -47,10 +49,10 @@ internal class PayloadModuleImpl(
     }
 
     override val sessionEnvelopeSource: SessionEnvelopeSource by singleton {
-        SessionEnvelopeSource(metadataSource, resourceSource, sessionPayloadSource)
+        SessionEnvelopeSourceImpl(metadataSource, resourceSource, sessionPayloadSource)
     }
 
     override val logEnvelopeSource: LogEnvelopeSource by singleton {
-        LogEnvelopeSource(metadataSource, resourceSource, logPayloadSource)
+        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource)
     }
 }

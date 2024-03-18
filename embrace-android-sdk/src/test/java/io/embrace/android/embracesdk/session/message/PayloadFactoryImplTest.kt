@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -69,7 +69,7 @@ internal class PayloadFactoryImplTest {
         val v2Collator = V2PayloadMessageCollator(
             FakeGatingService(),
             v1Collator,
-            SessionEnvelopeSource(
+            SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),
                 FakeSessionPayloadSource()

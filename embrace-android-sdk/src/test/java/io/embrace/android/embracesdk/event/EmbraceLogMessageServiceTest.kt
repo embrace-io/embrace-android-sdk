@@ -393,8 +393,21 @@ internal class EmbraceLogMessageServiceTest {
     }
 
     private fun simpleLog(message: String, severity: EventType, properties: Map<String, Any>?) {
-        logMessageService.log(message, severity, LogExceptionType.NONE, properties, null, null, Embrace.AppFramework.NATIVE, null, null, null, null)
+        logMessageService.log(
+            message,
+            severity,
+            LogExceptionType.NONE,
+            properties,
+            null,
+            null,
+            Embrace.AppFramework.NATIVE,
+            null,
+            null,
+            null,
+            null
+        )
     }
+
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>? = null) =
         RemoteConfig(
             sessionConfig = SessionRemoteConfig(

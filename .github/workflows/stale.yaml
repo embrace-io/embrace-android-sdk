@@ -1,0 +1,10 @@
+name: "Close Stale PRs"
+on:
+  workflow_call:
+  schedule:
+    - cron: "30 1 * * *"
+
+jobs:
+  stale:
+    uses: embrace-io/actions/.github/workflows/stale.yaml@master
+    secrets: inherit

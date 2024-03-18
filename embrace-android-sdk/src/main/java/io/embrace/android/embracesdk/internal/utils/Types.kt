@@ -143,7 +143,8 @@ internal typealias CustomerLogModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     sessionProperties: EmbraceSessionProperties,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    payloadModule: PayloadModule,
 ) -> CustomerLogModule
 
 /**

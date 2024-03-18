@@ -42,8 +42,8 @@ internal class FakeApiService : ApiService {
         logRequests.add(eventMessage)
     }
 
-    override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
-        logPayloads.add(logsEnvelope.data)
+    override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
+        logPayloads.add(logEnvelope.data)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

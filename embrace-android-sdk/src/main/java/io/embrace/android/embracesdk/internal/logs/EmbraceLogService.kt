@@ -65,6 +65,7 @@ internal class EmbraceLogService(
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
+        framework: AppFramework,
         context: String?,
         library: String?,
         exceptionName: String?,

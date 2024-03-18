@@ -120,6 +120,7 @@ internal class EmbraceLogServiceTest {
             null,
             exception.stackTrace,
             null,
+            AppFramework.NATIVE,
             null,
             null,
             exception.javaClass.simpleName,
@@ -131,6 +132,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.WARNING, log.severity)
         assertEquals("NullPointerException", log.attributes["emb.exception_name"])
         assertEquals("exception message", log.attributes["emb.exception_message"])
+        assertEquals(AppFramework.NATIVE.value.toString(), log.attributes["emb.app_framework"])
         assertNotNull(log.attributes["emb.log_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
         assertEquals("none", log.attributes["emb.exception_type"])
@@ -230,6 +232,7 @@ internal class EmbraceLogServiceTest {
             null,
             null,
             "my stacktrace",
+            AppFramework.UNITY,
             null,
             null,
             null,
@@ -239,6 +242,7 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Unity".repeat(1000), log.message) // log limit higher on unity
         // TBD: Assert stacktrace
+        assertEquals(AppFramework.UNITY.value.toString(), log.attributes["emb.app_framework"])
         assertEquals(LogExceptionType.HANDLED.value, log.attributes["emb.exception_type"])
         // TBD: Assert unhandled exceptions
         // assertEquals(0, logMessageService.getUnhandledExceptionsSent())

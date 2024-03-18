@@ -155,10 +155,11 @@ internal class V1PayloadMessageCollator(
         params: FinalEnvelopeParams,
         finalPayload: Session,
         startTime: Long,
-        endTime: Long
+        endTime: Long,
     ): SessionMessage {
         val spans: List<EmbraceSpanData>? = captureDataSafely {
             when {
+                !params.captureSpans -> null
                 !params.isCacheAttempt -> {
                     val appTerminationCause = when {
                         finalPayload.crashReportId != null -> AppTerminationCause.Crash

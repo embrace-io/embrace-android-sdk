@@ -21,19 +21,6 @@ internal interface LogMessageService : MemoryCleanerListener {
     /**
      * Creates a remote log.
      *
-     * @param message        the message to log
-     * @param type           the type of message to log, which must be INFO_LOG, WARNING_LOG, or ERROR_LOG
-     * @param properties     custom properties to send as part of the event
-     */
-    fun log(
-        message: String,
-        type: EventType,
-        properties: Map<String, Any>?
-    )
-
-    /**
-     * Creates a remote log.
-     *
      * @param message            the message to log
      * @param type               the type of message to log, which must be INFO_LOG, WARNING_LOG, or ERROR_LOG
      * @param logExceptionType   whether the log is a handled exception, unhandled, or non an exception

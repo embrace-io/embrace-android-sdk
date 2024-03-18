@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
-import io.embrace.android.embracesdk.capture.envelope.SessionEnvelopeSource
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -162,7 +162,7 @@ internal class SessionHandlerTest {
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
             payloadMessageCollator,
-            SessionEnvelopeSource(
+            SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = FakeSessionPayloadSource()

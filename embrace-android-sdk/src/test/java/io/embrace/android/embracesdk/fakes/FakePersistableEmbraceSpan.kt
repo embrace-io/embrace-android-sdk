@@ -4,16 +4,18 @@ import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.sdk.trace.IdGenerator
 
-internal class FakeEmbraceSpan(
+internal class FakePersistableEmbraceSpan(
     override val parent: EmbraceSpan?,
     val name: String? = null,
     val type: TelemetryType = EmbType.Performance.Default,
     val internal: Boolean = true
-) : EmbraceSpan {
+) : PersistableEmbraceSpan {
 
     val attributes = mutableMapOf<String, String>()
     val events = mutableListOf<SpanEventData>()
@@ -64,16 +66,20 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    companion object {
-        fun notStarted(parent: EmbraceSpan? = null): FakeEmbraceSpan = FakeEmbraceSpan(parent)
+    override fun snapshot(): Span? {
+        TODO("Not yet implemented")
+    }
 
-        fun started(parent: EmbraceSpan? = null): FakeEmbraceSpan {
+    companion object {
+        fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan = FakePersistableEmbraceSpan(parent)
+
+        fun started(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
             val span = notStarted(parent)
             span.start()
             return span
         }
 
-        fun stopped(parent: EmbraceSpan? = null): FakeEmbraceSpan {
+        fun stopped(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
             val span = started(parent)
             span.stop()
             return span

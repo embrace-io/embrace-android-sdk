@@ -1,23 +1,22 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
+import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.logs.LogService
 
-internal class FakeLogMessageService : LogMessageService {
+internal class FakeLogService : LogService {
 
     val loggedMessages = mutableListOf<String>()
-    val networkCalls = mutableListOf<NetworkCapturedCall>()
+    val loggedExceptions = mutableListOf<String>()
 
-    override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        networkCaptureCall?.let(networkCalls::add)
+    override fun log(message: String, severity: Severity, properties: Map<String, Any>?) {
+        loggedMessages.add(message)
     }
 
-    override fun log(
+    override fun logException(
         message: String,
-        type: EventType,
+        severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -28,41 +27,38 @@ internal class FakeLogMessageService : LogMessageService {
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        loggedMessages.add(message)
+        loggedExceptions.add(message)
     }
 
     override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
+        TODO("Not yet implemented")
     }
 
     override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
+        TODO("Not yet implemented")
     }
 
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
-    }
-
-    override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
+        TODO("Not yet implemented")
     }
 
     override fun getInfoLogsAttemptedToSend(): Int {
-        return 0
+        TODO("Not yet implemented")
     }
 
     override fun getWarnLogsAttemptedToSend(): Int {
-        return 0
+        TODO("Not yet implemented")
     }
 
     override fun getErrorLogsAttemptedToSend(): Int {
-        return 0
+        TODO("Not yet implemented")
     }
 
     override fun getUnhandledExceptionsSent(): Int {
-        return 0
+        TODO("Not yet implemented")
     }
 
     override fun cleanCollections() {
+        TODO("Not yet implemented")
     }
 }

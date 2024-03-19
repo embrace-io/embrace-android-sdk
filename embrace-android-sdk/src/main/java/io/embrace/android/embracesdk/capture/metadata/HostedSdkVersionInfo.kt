@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.metadata
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import java.util.concurrent.Future
 
 internal class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,

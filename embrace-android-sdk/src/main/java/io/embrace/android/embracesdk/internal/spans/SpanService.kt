@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
@@ -20,7 +21,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true
-    ): EmbraceSpan?
+    ): PersistableEmbraceSpan?
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
@@ -31,7 +32,7 @@ internal interface SpanService : Initializable {
         startTimeMs: Long? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true
-    ): EmbraceSpan? {
+    ): PersistableEmbraceSpan? {
         createSpan(
             name = name,
             parent = parent,

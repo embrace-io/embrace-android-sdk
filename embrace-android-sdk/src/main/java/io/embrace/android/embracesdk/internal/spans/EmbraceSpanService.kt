@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 
@@ -46,7 +47,7 @@ internal class EmbraceSpanService(
 
     override fun initialized(): Boolean = currentDelegate is SpanServiceImpl
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): EmbraceSpan? =
+    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? =
         currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal)
 
     override fun <T> recordSpan(

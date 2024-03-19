@@ -112,14 +112,14 @@ internal class SpanServiceImpl(
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
 
+    private fun getSpanName(name: String, internal: Boolean): String =
+        if (internal) {
+            name.toEmbraceSpanName()
+        } else {
+            name
+        }
+
     companion object {
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500
-
-        private fun getSpanName(name: String, internal: Boolean): String =
-            if (internal) {
-                name.toEmbraceSpanName()
-            } else {
-                name
-            }
     }
 }

@@ -1,15 +1,26 @@
 package io.embrace.android.embracesdk.capture.metadata
 
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
+import java.util.concurrent.Future
 
 internal class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,
     private val logger: InternalEmbraceLogger,
-    private val hostedPlatformStrategy: HostedPlatformStrategy = NativePlatformStrategy()
+    appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE
 ) {
-    // precompute on initialization
+    private var hostedPlatformStrategy: HostedPlatformStrategy
 
+    // precompute on initialization
+    init {
+        when (appFramework) {
+            Embrace.AppFramework.REACT_NATIVE -> this.hostedPlatformStrategy = ReactNativePlatformStrategy()
+            Embrace.AppFramework.UNITY -> this.hostedPlatformStrategy = UnityPlatformStrategy()
+            Embrace.AppFramework.FLUTTER -> this.hostedPlatformStrategy = FlutterPlatformStrategy()
+            else -> this.hostedPlatformStrategy = NativePlatformStrategy()
+        }
+    }
     var hostedSdkVersion: String? = null
         get() = field ?: hostedPlatformStrategy.getHostedSdkVersionFromPreferences(preferencesService)
         set(value) {

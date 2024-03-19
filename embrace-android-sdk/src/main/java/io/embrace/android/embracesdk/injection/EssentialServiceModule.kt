@@ -1,19 +1,13 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Debug
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.capture.metadata.FlutterPlatformStrategy
-import io.embrace.android.embracesdk.capture.metadata.HostedPlatformStrategy
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.metadata.NativePlatformStrategy
-import io.embrace.android.embracesdk.capture.metadata.ReactNativePlatformStrategy
-import io.embrace.android.embracesdk.capture.metadata.UnityPlatformStrategy
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
@@ -190,21 +184,11 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        val strategy = provideHostedPlatform(coreModule.appFramework)
         HostedSdkVersionInfo(
             androidServicesModule.preferencesService,
             coreModule.logger,
-            strategy
+            coreModule.appFramework
         )
-    }
-
-    private fun provideHostedPlatform(appFramework: Embrace.AppFramework): HostedPlatformStrategy {
-        return when (appFramework) {
-            Embrace.AppFramework.FLUTTER -> FlutterPlatformStrategy()
-            Embrace.AppFramework.REACT_NATIVE -> ReactNativePlatformStrategy()
-            Embrace.AppFramework.UNITY -> UnityPlatformStrategy()
-            else -> NativePlatformStrategy()
-        }
     }
 
     override val metadataService: MetadataService by singleton {

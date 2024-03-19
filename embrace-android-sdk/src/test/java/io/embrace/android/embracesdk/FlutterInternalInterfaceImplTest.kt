@@ -27,7 +27,8 @@ internal class FlutterInternalInterfaceImplTest {
         )
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             fakePreferencesService,
-            logger
+            logger,
+            Embrace.AppFramework.FLUTTER
         )
         impl = FlutterInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }

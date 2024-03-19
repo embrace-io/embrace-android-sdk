@@ -30,7 +30,7 @@ internal class PayloadModuleImpl(
     }
 
     private val resourceSource by singleton {
-        EnvelopeResourceSourceImpl()
+        EnvelopeResourceSourceImpl(essentialServiceModule.metadataService)
     }
 
     private val sessionPayloadSource by singleton {

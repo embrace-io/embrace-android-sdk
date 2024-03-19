@@ -2,23 +2,22 @@ package io.embrace.android.embracesdk.capture.envelope.resource
 
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.AppInfo
 
 internal class EnvelopeResourceSourceImpl(
-    private val appInfo: AppInfo,
-    private val packageInfo: PackageInfo,
-    private val appFramework: AppFramework,
-    private val deviceArchitecture: DeviceArchitecture,
-    private val device: Device
+    private val metadataService: MetadataService
 ) : EnvelopeResourceSource {
 
     override fun getEnvelopeResource(): EnvelopeResource {
+        val appInfo = metadataService.getAppInfo()
+        val device = metadataService.getDeviceInfo()
         return EnvelopeResource(
             appVersion = appInfo.appVersion,
-            appEcosystemId = packageInfo.packageName,
-            appFramework = mapFramework(appFramework),
+            appEcosystemId = "", //packageInfo.packageName,
+            appFramework = mapFramework(metadataService.getAppFramework()),
             buildId = appInfo.buildId,
             buildType = appInfo.buildType,
             buildFlavor = appInfo.buildFlavor,
@@ -33,14 +32,14 @@ internal class EnvelopeResourceSourceImpl(
             unityBuildId = appInfo.buildGuid,
             deviceManufacturer = device.manufacturer,
             deviceModel = device.model,
-            deviceArchitecture = deviceArchitecture.architecture,
-            jailbroken = device.isJailbroken,
-            diskTotalCapacity = device.internalStorageTotalCapacity.value,
+            deviceArchitecture = "", // deviceArchitecture.architecture,
+            jailbroken = false, // device.isJailbroken,
+            diskTotalCapacity = device.internalStorageTotalCapacity,
             osType = device.operatingSystemType,
             osVersion = device.operatingSystemVersion,
             osCode = device.operatingSystemVersionCode.toString(),
             screenResolution = device.screenResolution,
-            numCores = device.numberOfCores,
+            numCores = 0, // device.numberOfCores,
         )
     }
 

@@ -30,7 +30,9 @@ internal class ExecutionCoordinator(
         first: () -> Unit,
         second: () -> Unit,
         firstBlocksSecond: Boolean,
-        firstOperationFails: Boolean = false
+        firstOperationFails: Boolean = false,
+        operationTimeoutSecs: Long = 1,
+        completionTimeoutSecs: Long = 5
     ) {
         var blockId: Int? = null
         var firstOperationUnblocked: Boolean? = null
@@ -49,11 +51,11 @@ internal class ExecutionCoordinator(
             completionLatch.countDown()
         }
 
-        queueSecondOperationLatch.await(1, TimeUnit.SECONDS)
+        queueSecondOperationLatch.await(operationTimeoutSecs, TimeUnit.SECONDS)
 
         thread2.submit {
             unblockingThread.submit {
-                unblockFirstOperationLatch.await(1, TimeUnit.SECONDS)
+                unblockFirstOperationLatch.await(operationTimeoutSecs, TimeUnit.SECONDS)
                 firstOperationUnblocked = executionModifiers.unblockOperation(checkNotNull(blockId))
             }
 
@@ -69,7 +71,7 @@ internal class ExecutionCoordinator(
             completionLatch.countDown()
         }
 
-        completionLatch.await(5, TimeUnit.SECONDS)
+        completionLatch.await(completionTimeoutSecs, TimeUnit.SECONDS)
 
         assertNull("First task threw exception", thread1.lastThrowable())
         assertNull("Second task threw exception", thread2.lastThrowable())

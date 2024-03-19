@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
+import android.os.Debug
 import io.embrace.android.embracesdk.config.local.AnrLocalConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig.Unwinder
@@ -238,4 +239,9 @@ internal class AnrBehavior(
      */
     fun getNativeThreadAnrSamplingIntervalMs() =
         getSamplingIntervalMs() * getNativeThreadAnrSamplingFactor()
+
+    /**
+     * Returns true if the debugger is enabled - as we want to eliminate false positive ANRs.
+     */
+    fun isDebuggerConnected(): Boolean = Debug.isDebuggerConnected() || Debug.waitingForDebugger()
 }

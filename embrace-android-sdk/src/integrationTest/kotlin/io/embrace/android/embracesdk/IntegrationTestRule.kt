@@ -19,6 +19,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
+import io.embrace.android.embracesdk.injection.AnrModule
+import io.embrace.android.embracesdk.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
@@ -32,6 +34,7 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -110,7 +113,8 @@ internal class IntegrationTestRule(
                     storageModuleSupplier = { _, _, _ -> storageModule },
                     essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                     dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
-                    deliveryModuleSupplier = { _, _, _, _ -> fakeDeliveryModule }
+                    deliveryModuleSupplier = { _, _, _, _ -> fakeDeliveryModule },
+                    anrModuleSupplier = { _, _, _, _ -> anrModule }
                 )
             )
             Embrace.setImpl(embraceImpl)
@@ -133,7 +137,7 @@ internal class IntegrationTestRule(
      */
     internal class Harness(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
-        val fakeClock: FakeClock = FakeClock(currentTime = currentTimeMs),
+        var fakeClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val enableIntegrationTesting: Boolean = false,
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: FakeInitModule = FakeInitModule(clock = fakeClock),
@@ -188,6 +192,9 @@ internal class IntegrationTestRule(
                 enableIntegrationTesting = enableIntegrationTesting,
                 configServiceProvider = { fakeConfigService }
             ),
+        var anrModule: AnrModule = AnrModuleImpl(
+            initModule, fakeCoreModule, essentialServiceModule, workerThreadModule
+        ),
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(
                 initModule = initModule,

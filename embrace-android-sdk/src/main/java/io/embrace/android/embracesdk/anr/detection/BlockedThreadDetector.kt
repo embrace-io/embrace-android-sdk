@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import android.os.Debug
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -55,7 +54,7 @@ internal class BlockedThreadDetector(
         state.lastTargetThreadResponseMs = timestamp
         heartbeatResponseMonitor.ping()
 
-        if (isDebuggerEnabled()) {
+        if (configService.anrBehavior.isDebuggerConnected()) {
             return
         }
 
@@ -79,7 +78,7 @@ internal class BlockedThreadDetector(
     fun updateAnrTracking(timestamp: Long) {
         enforceThread(anrMonitorThread)
 
-        if (isDebuggerEnabled()) {
+        if (configService.anrBehavior.isDebuggerConnected()) {
             return
         }
 
@@ -149,10 +148,4 @@ internal class BlockedThreadDetector(
         val minTriggerDuration = configService.anrBehavior.getMinDuration()
         return targetThreadLag > minTriggerDuration
     }
-
-    /**
-     * Returns true if the debugger is enabled - as we want to eliminate false positive ANRs.
-     */
-    private fun isDebuggerEnabled(): Boolean =
-        Debug.isDebuggerConnected() || Debug.waitingForDebugger()
 }

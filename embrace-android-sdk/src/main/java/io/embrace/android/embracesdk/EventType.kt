@@ -56,4 +56,13 @@ internal enum class EventType(
             }
         }
     }
+
+    fun getSeverity(): Severity? {
+        return when (this) {
+            INFO_LOG -> Severity.INFO
+            WARNING_LOG -> Severity.WARNING
+            ERROR_LOG -> Severity.ERROR
+            else -> null
+        }
+    }
 }

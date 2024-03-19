@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.common.Clock
 
 /**
  * A [SpanService] that can be instantiated quickly. At that time, it will defer calls an implementation that handles the case when
@@ -13,6 +14,7 @@ import io.opentelemetry.api.trace.Tracer
  * instantiate and initialize [SpanServiceImpl] to provide the span recording functionality.
  */
 internal class EmbraceSpanService(
+    private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracerSupplier: Provider<Tracer>,
@@ -27,6 +29,7 @@ internal class EmbraceSpanService(
             synchronized(currentDelegate) {
                 if (!initialized()) {
                     val realSpansService = SpanServiceImpl(
+                        openTelemetryClock = openTelemetryClock,
                         spanRepository = spanRepository,
                         currentSessionSpan = currentSessionSpan,
                         tracer = tracerSupplier(),

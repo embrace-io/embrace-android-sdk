@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
 import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -44,11 +43,11 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
 
 /**
- * Creates a new [SpanBuilder] with the correctly prefixed name, to be used for recording Spans in the SDK internally
+ * Creates a new [SpanBuilder] that marks the resulting span as private if [internal] is true
  */
 internal fun Tracer.embraceSpanBuilder(name: String, internal: Boolean): SpanBuilder {
     return if (internal) {
-        spanBuilder(EMBRACE_SPAN_NAME_PREFIX + name).makePrivate()
+        spanBuilder(name).makePrivate()
     } else {
         spanBuilder(name)
     }
@@ -127,31 +126,6 @@ internal fun Span.addEvents(events: List<EmbraceSpanEvent>): Span {
         }
     }
     return this
-}
-
-/**
- * Allow a [SpanBuilder] to take in a lambda around which a span will be created for its execution
- */
-internal fun <T> SpanBuilder.record(
-    attributes: Map<String, String>,
-    events: List<EmbraceSpanEvent>,
-    code: Provider<T>
-): T {
-    val returnValue: T
-    var span: Span? = null
-
-    try {
-        span = startSpan()
-            .setAllAttributes(Attributes.builder().fromMap(attributes).build())
-            .addEvents(events)
-        returnValue = code()
-        span.endSpan()
-    } catch (t: Throwable) {
-        span?.endSpan(ErrorCode.FAILURE)
-        throw t
-    }
-
-    return returnValue
 }
 
 /**

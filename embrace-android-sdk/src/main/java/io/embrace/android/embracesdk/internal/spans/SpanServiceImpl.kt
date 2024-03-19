@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -13,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Implementation of the core logic for [SpanService]
  */
 internal class SpanServiceImpl(
+    private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val tracer: Tracer,
@@ -30,8 +33,11 @@ internal class SpanServiceImpl(
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): EmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+            val spanName = getSpanName(name = name, internal = internal)
             EmbraceSpanImpl(
-                spanBuilder = createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal),
+                spanName = spanName,
+                openTelemetryClock = openTelemetryClock,
+                spanBuilder = createRootSpanBuilder(tracer = tracer, name = spanName, type = type, internal = internal),
                 parent = parent,
                 spanRepository = spanRepository
             )
@@ -49,13 +55,30 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>,
         code: () -> T
     ): T {
-        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
-                .updateParent(parent)
-                .record(attributes, events, code)
-        } else {
-            code()
+        val returnValue: T
+        val span = createSpan(name = name, parent = parent, type = type, internal = internal)
+        try {
+            val started = span?.start() ?: false
+            if (started) {
+                attributes.forEach { attribute ->
+                    span?.addAttribute(attribute.key, attribute.value)
+                }
+                events.forEach { event ->
+                    span?.addEvent(
+                        event.name,
+                        event.timestampNanos.nanosToMillis(),
+                        event.attributes
+                    )
+                }
+            }
+            returnValue = code()
+            span?.stop()
+        } catch (t: Throwable) {
+            span?.stop(ErrorCode.FAILURE)
+            throw t
         }
+
+        return returnValue
     }
 
     override fun recordCompletedSpan(
@@ -73,10 +96,8 @@ internal class SpanServiceImpl(
             return false
         }
 
-        return if (EmbraceSpanImpl.inputsValid(name, events, attributes) &&
-            currentSessionSpan.canStartNewSpan(parent, internal)
-        ) {
-            createRootSpanBuilder(tracer = tracer, name = name, type = type, internal = internal)
+        return if (EmbraceSpanImpl.inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+            createRootSpanBuilder(tracer = tracer, name = getSpanName(name, internal), type = type, internal = internal)
                 .updateParent(parent)
                 .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
                 .startSpan()
@@ -90,6 +111,13 @@ internal class SpanServiceImpl(
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
+
+    private fun getSpanName(name: String, internal: Boolean): String =
+        if (internal) {
+            name.toEmbraceSpanName()
+        } else {
+            name
+        }
 
     companion object {
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500

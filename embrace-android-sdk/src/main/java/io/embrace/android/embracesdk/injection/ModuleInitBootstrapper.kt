@@ -291,29 +291,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    customerLogModule = init(CustomerLogModule::class) {
-                        customerLogModuleSupplier(
-                            initModule,
-                            coreModule,
-                            openTelemetryModule,
-                            androidServicesModule,
-                            essentialServiceModule,
-                            deliveryModule,
-                            sessionProperties,
-                            workerThreadModule
-                        )
-                    }
-
-                    postInit(CustomerLogModule::class) {
-                        serviceRegistry.registerServices(
-                            customerLogModule.logMessageService,
-                            customerLogModule.networkCaptureService,
-                            customerLogModule.networkLoggingService
-                        )
-                        // Start the log orchestrator
-                        customerLogModule.logOrchestrator
-                    }
-
                     nativeModule = init(NativeModule::class) {
                         nativeModuleSupplier(
                             coreModule,
@@ -373,6 +350,39 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
+                    payloadModule = init(PayloadModule::class) {
+                        payloadModuleSupplier(
+                            essentialServiceModule,
+                            nativeModule,
+                            openTelemetryModule,
+                            sdkObservabilityModule
+                        )
+                    }
+
+                    customerLogModule = init(CustomerLogModule::class) {
+                        customerLogModuleSupplier(
+                            initModule,
+                            coreModule,
+                            openTelemetryModule,
+                            androidServicesModule,
+                            essentialServiceModule,
+                            deliveryModule,
+                            sessionProperties,
+                            workerThreadModule,
+                            payloadModule
+                        )
+                    }
+
+                    postInit(CustomerLogModule::class) {
+                        serviceRegistry.registerServices(
+                            customerLogModule.logMessageService,
+                            customerLogModule.networkCaptureService,
+                            customerLogModule.networkLoggingService
+                        )
+                        // Start the log orchestrator
+                        customerLogModule.logOrchestrator
+                    }
+
                     dataContainerModule = init(DataContainerModule::class) {
                         dataContainerModuleSupplier(
                             initModule,
@@ -408,15 +418,6 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             workerThreadModule
-                        )
-                    }
-
-                    payloadModule = init(PayloadModule::class) {
-                        payloadModuleSupplier(
-                            essentialServiceModule,
-                            nativeModule,
-                            openTelemetryModule,
-                            sdkObservabilityModule
                         )
                     }
 

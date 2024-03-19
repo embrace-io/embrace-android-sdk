@@ -288,7 +288,7 @@ internal class EmbraceApiServiceTest {
         )
 
         fakeApiClient.queueResponse(successfulPostResponse)
-        apiService.sendLogsEnvelope(logsEnvelope)
+        apiService.sendLogEnvelope(logsEnvelope)
 
         val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
 

@@ -34,9 +34,9 @@ internal interface ApiService {
     /**
      * Sends a list of OTel Logs to the API.
      *
-     * @param logsEnvelope containing the logs
+     * @param logEnvelope containing the logs
      */
-    fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>)
+    fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>)
 
     /**
      * Sends an Application Exit Info (AEI) blob message to the API.

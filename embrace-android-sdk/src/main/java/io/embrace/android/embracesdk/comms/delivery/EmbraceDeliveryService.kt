@@ -70,9 +70,8 @@ internal class EmbraceDeliveryService(
         apiService.sendLog(eventMessage)
     }
 
-    override fun sendLogs(logPayload: LogPayload) {
-        val logsEnvelope = Envelope(data = logPayload)
-        apiService.sendLogsEnvelope(logsEnvelope)
+    override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
+        apiService.sendLogEnvelope(logEnvelope)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

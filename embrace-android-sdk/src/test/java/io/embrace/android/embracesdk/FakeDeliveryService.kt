@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -19,7 +20,7 @@ internal open class FakeDeliveryService : DeliveryService {
     var lastSentCrash: EventMessage? = null
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
-    val lastSentLogPayloads: MutableList<LogPayload> = mutableListOf()
+    val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val sentMoments: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
     var lastSentBackgroundActivities: MutableList<SessionMessage> = mutableListOf()
@@ -56,8 +57,8 @@ internal open class FakeDeliveryService : DeliveryService {
         lastSentLogs.add(eventMessage)
     }
 
-    override fun sendLogs(logPayload: LogPayload) {
-        lastSentLogPayloads.add(logPayload)
+    override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
+        lastSentLogPayloads.add(logEnvelope)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

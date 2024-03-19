@@ -9,7 +9,7 @@ internal class LogPayloadSourceImpl(
 
     override fun getLogPayload(): LogPayload {
         return LogPayload(
-            logs = logSink.completedLogs()
+            logs = logSink.flushLogs()
         )
     }
 }

@@ -124,9 +124,9 @@ internal class EmbraceApiService(
         post(eventMessage, mapper::logRequest)
     }
 
-    override fun sendLogsEnvelope(logsEnvelope: Envelope<LogPayload>) {
+    override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         val parameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
-        post(logsEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
+        post(logEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {

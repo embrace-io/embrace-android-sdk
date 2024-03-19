@@ -38,19 +38,20 @@ internal class SpanServiceImplTest {
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpanServiceImpl
-    private val clock = FakeClock(1000L)
+    private val clock = FakeClock()
 
     @Before
     fun setup() {
-        val initModule = FakeInitModule(clock = clock)
+        val initModule = FakeInitModule(clock)
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spansService = SpanServiceImpl(
+            openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = initModule.openTelemetryModule.spanRepository,
             currentSessionSpan = currentSessionSpan,
             tracer = initModule.openTelemetryModule.tracer
         )
-        spansService.initializeService(clock.now())
+        spansService.initializeService(initModule.clock.now())
     }
 
     @Test

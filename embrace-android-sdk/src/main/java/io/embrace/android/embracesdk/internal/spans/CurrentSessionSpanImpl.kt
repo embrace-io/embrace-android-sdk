@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class CurrentSessionSpanImpl(
-    private val clock: Clock,
+    private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
@@ -81,7 +81,7 @@ internal class CurrentSessionSpanImpl(
             if (appTerminationCause == null) {
                 endingSessionSpan.stop()
                 spanRepository.clearCompletedSpans()
-                sessionSpan.set(startSessionSpan(clock.now().nanosToMillis()))
+                sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
             } else {
                 endingSessionSpan.setEmbraceAttribute(appTerminationCause)
                 endingSessionSpan.stop()
@@ -107,15 +107,21 @@ internal class CurrentSessionSpanImpl(
     private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
         traceCount.set(0)
 
+        val spanName = "session".toEmbraceSpanName()
         val spanBuilder = createEmbraceSpanBuilder(
             tracer = tracerSupplier(),
-            name = "session",
+            name = spanName,
             type = EmbType.Ux.Session
         )
             .setNoParent()
             .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
 
-        return EmbraceSpanImpl(spanBuilder, sessionSpan = true).apply {
+        return EmbraceSpanImpl(
+            spanName = spanName,
+            openTelemetryClock = openTelemetryClock,
+            spanBuilder = spanBuilder,
+            sessionSpan = true
+        ).apply {
             start()
         }
     }

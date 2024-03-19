@@ -65,6 +65,7 @@ internal class EmbraceLogService(
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
+        framework: AppFramework,
         context: String?,
         library: String?,
         exceptionName: String?,
@@ -72,6 +73,7 @@ internal class EmbraceLogService(
     ) {
         val attributes = EmbraceLogAttributes(properties)
         attributes.setExceptionType(logExceptionType)
+        attributes.setAppFramework(framework)
         // TBD: Add stacktrace elements
         exceptionName?.let { attributes.setExceptionName(it) }
         exceptionMessage?.let { attributes.setExceptionMessage(it) }

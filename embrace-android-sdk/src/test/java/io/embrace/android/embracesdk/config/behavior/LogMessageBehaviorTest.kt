@@ -17,7 +17,7 @@ internal class LogMessageBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeLogMessageBehavior()) {
-            assertEquals(128, getLogMessageMaximumAllowedLength())
+            assertEquals(4000, getLogMessageMaximumAllowedLength())
             assertEquals(100, getInfoLogLimit())
             assertEquals(100, getWarnLogLimit())
             assertEquals(250, getErrorLogLimit())

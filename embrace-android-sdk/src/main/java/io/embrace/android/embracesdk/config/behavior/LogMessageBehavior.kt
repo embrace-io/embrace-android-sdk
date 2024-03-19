@@ -20,7 +20,7 @@ internal class LogMessageBehavior(
         private const val DEFAULT_LOG_INFO_LIMIT = 100
         private const val DEFAULT_LOG_WARNING_LIMIT = 100
         private const val DEFAULT_LOG_ERROR_LIMIT = 250
-        internal const val LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH = 128
+        internal const val LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH = 4000
     }
 
     fun getLogMessageMaximumAllowedLength(): Int {

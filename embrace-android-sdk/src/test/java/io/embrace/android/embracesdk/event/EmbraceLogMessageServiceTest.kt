@@ -241,10 +241,10 @@ internal class EmbraceLogMessageServiceTest {
     @Test
     fun testDefaultMaxMessageLength() {
         logMessageService = getLogMessageService()
-        simpleLog("Hi".repeat(65), EventType.INFO_LOG, null)
+        simpleLog("Hi".repeat(2001), EventType.INFO_LOG, null)
 
         val message = deliveryService.lastSentLogs.single()
-        assertTrue(message.event.name == "Hi".repeat(62) + "H...")
+        assertTrue(message.event.name == "Hi".repeat(1998) + "H...")
     }
 
     @Test

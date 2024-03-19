@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import java.util.Queue
@@ -22,7 +23,7 @@ internal class SpanSinkImpl : SpanSink {
 
     override fun completedSpans(): List<EmbraceSpanData> {
         val spansToReturn = completedSpans.size
-        return completedSpans.take(spansToReturn)
+        return completedSpans.threadSafeTake(spansToReturn)
     }
 
     override fun flushSpans(): List<EmbraceSpanData> {

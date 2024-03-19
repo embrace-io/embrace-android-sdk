@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -23,7 +24,8 @@ internal class CustomerLogModuleImplTest {
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
             fakeEmbraceSessionProperties(),
-            WorkerThreadModuleImpl(initModule)
+            WorkerThreadModuleImpl(initModule),
+            FakePayloadModule(),
         )
 
         assertNotNull(module.networkCaptureService)

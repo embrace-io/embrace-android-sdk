@@ -32,7 +32,8 @@ internal class CustomerLogModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     sessionProperties: EmbraceSessionProperties,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    payloadModule: PayloadModule,
 ) : CustomerLogModule {
 
     override val networkCaptureService: NetworkCaptureService by singleton {
@@ -87,7 +88,8 @@ internal class CustomerLogModuleImpl(
             workerThreadModule.scheduledWorker(WorkerName.REMOTE_LOGGING),
             initModule.clock,
             openTelemetryModule.logSink,
-            deliveryModule.deliveryService
+            deliveryModule.deliveryService,
+            payloadModule.logEnvelopeSource,
         )
     }
 }

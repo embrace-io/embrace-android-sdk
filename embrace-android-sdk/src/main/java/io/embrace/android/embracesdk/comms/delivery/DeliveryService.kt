@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -13,7 +14,7 @@ internal interface DeliveryService {
     fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
     fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker)
     fun sendLog(eventMessage: EventMessage)
-    fun sendLogs(logPayload: LogPayload)
+    fun sendLogs(logEnvelope: Envelope<LogPayload>)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendCrash(crash: EventMessage, processTerminating: Boolean)
     fun sendAEIBlob(blobMessage: BlobMessage)

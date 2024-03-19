@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.FakeDeliveryService
+import io.embrace.android.embracesdk.capture.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
+import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
@@ -37,7 +39,15 @@ internal class LogOrchestratorTest {
         logSink = LogSinkImpl()
         deliveryService = FakeDeliveryService()
         clock.setCurrentTime(now)
-        logOrchestrator = LogOrchestrator(scheduledWorker, clock, logSink, deliveryService)
+        logOrchestrator = LogOrchestrator(
+            scheduledWorker,
+            clock,
+            logSink,
+            deliveryService,
+            FakePayloadModule(
+                logPayloadSource = LogPayloadSourceImpl(logSink)
+            ).logEnvelopeSource
+        )
     }
 
     @Test
@@ -118,13 +128,13 @@ internal class LogOrchestratorTest {
         latch.await(1000L, TimeUnit.MILLISECONDS)
 
         assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
-        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].logs?.size)
+        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].data.logs?.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {
         assertNotNull(deliveryService.lastSentLogPayloads)
         assertEquals(1, deliveryService.lastSentLogPayloads.size)
-        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].logs?.size)
+        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].data.logs?.size)
     }
 
     private fun verifyPayloadNotSent() {

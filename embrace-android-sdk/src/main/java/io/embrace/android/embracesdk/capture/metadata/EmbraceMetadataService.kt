@@ -155,7 +155,7 @@ internal class EmbraceMetadataService private constructor(
             if (storedEgl != null) {
                 egl = storedEgl
             } else {
-                egl = embraceCpuInfoDelegate.getElg()
+                egl = embraceCpuInfoDelegate.getEgl()
                 preferencesService.egl = egl
                 logDeveloper("EmbraceMetadataService", "egl computed and stored")
             }
@@ -282,7 +282,7 @@ internal class EmbraceMetadataService private constructor(
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun getAppInfo(populateAllFields: Boolean): AppInfo {
-        var infoPlatformVersion: String? = null
+        var hostedPlatformVersion: String? = null
         var hostedSdkVersion: String? = null
         var infoUnityBuildIdNumber: String? = null
         var infoReactNativeBundle: String? = null
@@ -290,7 +290,7 @@ internal class EmbraceMetadataService private constructor(
         var infoReactNativeVersion: String? = null
         // applies to Unity builds only.
         if (appFramework == AppFramework.UNITY) {
-            infoPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
+            hostedPlatformVersion = unityVersion ?: preferencesService.unityVersionNumber
             infoUnityBuildIdNumber = unityBuildIdNumber ?: preferencesService.unityBuildIdNumber
             hostedSdkVersion = embraceUnitySdkVersion ?: preferencesService.unitySdkVersionNumber
         }
@@ -299,13 +299,14 @@ internal class EmbraceMetadataService private constructor(
         if (appFramework == AppFramework.REACT_NATIVE) {
             infoReactNativeBundle = getReactNativeBundleId()
             infoJavaScriptPatchNumber = javaScriptPatchNumber
-            infoReactNativeVersion = getReactNativeVersion()
+            infoReactNativeVersion = reactNativeVersion
+            hostedPlatformVersion = reactNativeVersion
             hostedSdkVersion = getRnSdkVersion()
         }
 
         // applies to Flutter builds only
         if (appFramework == AppFramework.FLUTTER) {
-            infoPlatformVersion = dartSdkVersion
+            hostedPlatformVersion = dartSdkVersion
             hostedSdkVersion = getEmbraceFlutterSdkVersion()
         }
         return AppInfo(
@@ -337,7 +338,7 @@ internal class EmbraceMetadataService private constructor(
             infoReactNativeBundle,
             infoJavaScriptPatchNumber,
             infoReactNativeVersion,
-            infoPlatformVersion,
+            hostedPlatformVersion,
             infoUnityBuildIdNumber,
             hostedSdkVersion
         )
@@ -395,6 +396,9 @@ internal class EmbraceMetadataService private constructor(
         this.embraceUnitySdkVersion = unitySdkVersion
         preferencesService.unitySdkVersionNumber = unitySdkVersion
     }
+
+    override fun getAppFramework() = appFramework
+    override fun getPackageName() = packageName
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL

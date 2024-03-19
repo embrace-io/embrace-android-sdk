@@ -32,6 +32,6 @@ internal class EmbraceCpuInfoDelegateTest {
         every { mockSharedObjectLoader.loadEmbraceNative() } returns false
 
         assertEquals(null, cpuInfoDelegate.getCpuName())
-        assertEquals(null, cpuInfoDelegate.getElg())
+        assertEquals(null, cpuInfoDelegate.getEgl())
     }
 }

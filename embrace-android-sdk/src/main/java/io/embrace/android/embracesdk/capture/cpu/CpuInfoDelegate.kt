@@ -12,5 +12,5 @@ internal interface CpuInfoDelegate {
     /**
      * Get the ELG of the primary CPU of the device
      */
-    fun getElg(): String?
+    fun getEgl(): String?
 }

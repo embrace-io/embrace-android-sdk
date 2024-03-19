@@ -116,7 +116,7 @@ internal class EmbraceLogServiceTest {
         logService.logException(
             "Hello world",
             Severity.WARNING,
-            LogExceptionType.NONE,
+            LogExceptionType.HANDLED,
             null,
             exception.stackTrace,
             null,
@@ -128,6 +128,7 @@ internal class EmbraceLogServiceTest {
         )
 
         val log = logWriter.logEvents.single()
+        assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertEquals("NullPointerException", log.attributes["emb.exception_name"])
@@ -135,7 +136,39 @@ internal class EmbraceLogServiceTest {
         assertEquals(AppFramework.NATIVE.value.toString(), log.attributes["emb.app_framework"])
         assertNotNull(log.attributes["emb.log_id"])
         assertEquals("session-123", log.attributes["emb.session_id"])
-        assertEquals("none", log.attributes["emb.exception_type"])
+        assertEquals(LogExceptionType.HANDLED.value, log.attributes["emb.exception_type"])
+        log.assertIsType(EmbType.System.Log)
+    }
+
+    @Test
+    fun testUnhandledExceptionLog() {
+        val logService = getLogService()
+        val exception = NullPointerException("exception message")
+
+        logService.logException(
+            "Hello world",
+            Severity.WARNING,
+            LogExceptionType.UNHANDLED,
+            null,
+            exception.stackTrace,
+            null,
+            AppFramework.UNITY,
+            null,
+            null,
+            exception.javaClass.simpleName,
+            exception.message,
+        )
+
+        val log = logWriter.logEvents.single()
+        assertEquals(1, logService.getUnhandledExceptionsSent())
+        assertEquals("Hello world", log.message)
+        assertEquals(Severity.WARNING, log.severity)
+        assertEquals("NullPointerException", log.attributes["emb.exception_name"])
+        assertEquals("exception message", log.attributes["emb.exception_message"])
+        assertEquals(AppFramework.UNITY.value.toString(), log.attributes["emb.app_framework"])
+        assertNotNull(log.attributes["emb.log_id"])
+        assertEquals("session-123", log.attributes["emb.session_id"])
+        assertEquals(LogExceptionType.UNHANDLED.value, log.attributes["emb.exception_type"])
         log.assertIsType(EmbType.System.Log)
     }
 

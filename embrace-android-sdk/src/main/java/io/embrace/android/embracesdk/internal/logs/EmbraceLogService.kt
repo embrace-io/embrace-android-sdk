@@ -50,6 +50,8 @@ internal class EmbraceLogService(
         )
     )
 
+    private var unhandledExceptionsCount = 0
+
     override fun log(
         message: String,
         severity: Severity,
@@ -71,6 +73,9 @@ internal class EmbraceLogService(
         exceptionName: String?,
         exceptionMessage: String?
     ) {
+        if (logExceptionType == LogExceptionType.UNHANDLED) {
+            unhandledExceptionsCount++
+        }
         val attributes = EmbraceLogAttributes(properties)
         attributes.setExceptionType(logExceptionType)
         attributes.setAppFramework(framework)
@@ -104,6 +109,10 @@ internal class EmbraceLogService(
 
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return logCounters.getValue(Severity.ERROR).findLogIds(startTime, endTime)
+    }
+
+    override fun getUnhandledExceptionsSent(): Int {
+        return unhandledExceptionsCount
     }
 
     override fun cleanCollections() {

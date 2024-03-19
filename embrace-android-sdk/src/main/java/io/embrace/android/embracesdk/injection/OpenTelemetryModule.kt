@@ -114,7 +114,7 @@ internal class OpenTelemetryModuleImpl(
 
     override val currentSessionSpan: CurrentSessionSpan by lazy {
         CurrentSessionSpanImpl(
-            clock = initModule.openTelemetryClock,
+            openTelemetryClock = initModule.openTelemetryClock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
@@ -124,6 +124,7 @@ internal class OpenTelemetryModuleImpl(
 
     override val spanService: SpanService by singleton {
         EmbraceSpanService(
+            openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = spanRepository,
             currentSessionSpan = currentSessionSpan,
             tracerSupplier = { tracer },

@@ -33,7 +33,7 @@ internal class FakeOpenTelemetryModule(
     override val internalTracer: InternalTracer
         get() = TODO()
     override val logWriter: LogWriter
-        get() = TODO()
+        get() = FakeLogWriter()
     override val logger: Logger
-        get() = TODO()
+        get() = FakeOtelLogger()
 }

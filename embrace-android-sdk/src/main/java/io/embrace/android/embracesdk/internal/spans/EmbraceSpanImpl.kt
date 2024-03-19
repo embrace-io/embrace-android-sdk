@@ -1,24 +1,33 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSpanImpl(
+    private val spanName: String,
+    private val openTelemetryClock: Clock,
     private val spanBuilder: SpanBuilder,
     override val parent: EmbraceSpan? = null,
     private val spanRepository: SpanRepository? = null,
     sessionSpan: Boolean = false
-) : EmbraceSpan {
+) : PersistableEmbraceSpan {
 
     init {
         if (!sessionSpan) {
@@ -26,9 +35,16 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
+    private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
+    private var spanStartTimeMs: Long? = null
+    private var spanEndTimeMs: Long? = null
+    private var status = Span.Status.UNSET
+    private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val attributes = ConcurrentHashMap<String, String>()
+
+    // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
+    // do the bookkeeping separately so we don't have to worry about this
     private val eventCount = AtomicInteger(0)
-    private val attributeCount = AtomicInteger(0)
 
     override val traceId: String?
         get() = startedSpan.get()?.spanContext?.traceId
@@ -44,14 +60,14 @@ internal class EmbraceSpanImpl(
             false
         } else {
             var successful: Boolean
-            if (startTimeMs != null) {
-                spanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-            }
+            val attemptedStartTimeMs = startTimeMs ?: openTelemetryClock.now().nanosToMillis()
+            spanBuilder.setStartTimestamp(attemptedStartTimeMs, TimeUnit.MILLISECONDS)
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan())
                 successful = startedSpan.get() != null
             }
             if (successful) {
+                spanStartTimeMs = attemptedStartTimeMs
                 spanRepository?.trackStartedSpan(this)
             }
             return successful
@@ -59,15 +75,43 @@ internal class EmbraceSpanImpl(
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
-        return if (startedSpan.get()?.isRecording == false) {
+        return if (!isRecording) {
             false
         } else {
-            var successful: Boolean
+            var successful = false
+            val attemptedEndTimeMs = endTimeMs ?: openTelemetryClock.now().nanosToMillis()
+
             synchronized(startedSpan) {
-                startedSpan.get()?.endSpan(errorCode, endTimeMs)
-                successful = startedSpan.get()?.isRecording == false
+                startedSpan.get()?.let { spanToStop ->
+                    attributes.forEach { attribute ->
+                        spanToStop.setAttribute(attribute.key, attribute.value)
+                    }
+
+                    events.forEach { event ->
+                        val eventAttributes = if (event.attributes.isNotEmpty()) {
+                            Attributes.builder().fromMap(event.attributes).build()
+                        } else {
+                            Attributes.empty()
+                        }
+
+                        spanToStop.addEvent(
+                            event.name,
+                            eventAttributes,
+                            event.timestampNanos,
+                            TimeUnit.NANOSECONDS
+                        )
+                    }
+                    spanToStop.endSpan(errorCode, attemptedEndTimeMs)
+                    successful = !isRecording
+                }
             }
             if (successful) {
+                status = if (errorCode != null) {
+                    Span.Status.ERROR
+                } else {
+                    Span.Status.OK
+                }
+                spanEndTimeMs = attemptedEndTimeMs
                 spanId?.let { spanRepository?.trackedSpanStopped(it) }
             }
             return successful
@@ -76,26 +120,16 @@ internal class EmbraceSpanImpl(
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
+            val newEvent = EmbraceSpanEvent.create(
+                name = name,
+                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
+                attributes = attributes
+            )
             synchronized(eventCount) {
-                if (eventCount.get() < MAX_EVENT_COUNT) {
-                    spanInProgress()?.let { span ->
-                        if (timestampMs != null && !attributes.isNullOrEmpty()) {
-                            span.addEvent(
-                                name,
-                                Attributes.builder().fromMap(attributes).build(),
-                                timestampMs.normalizeTimestampAsMillis(),
-                                TimeUnit.MILLISECONDS
-                            )
-                        } else if (timestampMs != null) {
-                            span.addEvent(name, timestampMs.normalizeTimestampAsMillis(), TimeUnit.MILLISECONDS)
-                        } else if (!attributes.isNullOrEmpty()) {
-                            span.addEvent(name, Attributes.builder().fromMap(attributes).build())
-                        } else {
-                            span.addEvent(name)
-                        }
-                        eventCount.incrementAndGet()
-                        return true
-                    }
+                if (eventCount.get() < MAX_EVENT_COUNT && isRecording) {
+                    events.add(newEvent)
+                    eventCount.incrementAndGet()
+                    return true
                 }
             }
         }
@@ -104,14 +138,11 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (attributeCount.get() < MAX_ATTRIBUTE_COUNT && attributeValid(key, value)) {
-            synchronized(attributeCount) {
-                if (attributeCount.get() < MAX_ATTRIBUTE_COUNT) {
-                    spanInProgress()?.let {
-                        it.setAttribute(key, value)
-                        attributeCount.incrementAndGet()
-                        return true
-                    }
+        if (attributes.size < MAX_ATTRIBUTE_COUNT && attributeValid(key, value)) {
+            synchronized(attributes) {
+                if (attributes.size < MAX_ATTRIBUTE_COUNT && isRecording) {
+                    attributes[key] = value
+                    return true
                 }
             }
         }
@@ -119,12 +150,25 @@ internal class EmbraceSpanImpl(
         return false
     }
 
-    internal fun wrappedSpan(): Span? = startedSpan.get()
+    override fun snapshot(): Span? {
+        return if (spanId == null) {
+            null
+        } else {
+            Span(
+                traceId = traceId,
+                spanId = spanId,
+                parentSpanId = parent?.spanId,
+                name = spanName,
+                startTimeUnixNano = spanStartTimeMs?.millisToNanos(),
+                endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
+                status = status,
+                events = events.map(EmbraceSpanEvent::toNewPayload),
+                attributes = attributes.toNewPayload()
+            )
+        }
+    }
 
-    /**
-     * Returns the underlying [Span] if it's currently recording
-     */
-    private fun spanInProgress(): Span? = startedSpan.get().takeIf { isRecording }
+    internal fun wrappedSpan(): io.opentelemetry.api.trace.Span? = startedSpan.get()
 
     companion object {
         internal const val MAX_NAME_LENGTH = 50

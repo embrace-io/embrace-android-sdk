@@ -19,10 +19,9 @@ internal class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
+    override val spanRepository: SpanRepository = SpanRepository(),
 ) : OpenTelemetryModule {
     override val openTelemetryConfiguration: OpenTelemetryConfiguration
-        get() = TODO()
-    override val spanRepository: SpanRepository
         get() = TODO()
     override val tracer: Tracer
         get() = TODO()

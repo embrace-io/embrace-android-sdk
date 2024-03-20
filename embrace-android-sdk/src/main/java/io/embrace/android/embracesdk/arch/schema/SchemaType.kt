@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 
 internal object SchemaKeys {
-    internal const val CUSTOM_BREADCRUMB = "custom-breadcrumb"
+    internal const val CUSTOM_BREADCRUMB = "emb-custom-breadcrumb"
     internal const val VIEW_BREADCRUMB = "view-breadcrumb"
     internal const val AEI_RECORD = "aei-record"
     internal const val LOG = "emb-log"

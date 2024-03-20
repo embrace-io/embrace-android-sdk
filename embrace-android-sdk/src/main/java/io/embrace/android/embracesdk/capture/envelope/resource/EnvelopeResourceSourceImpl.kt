@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
-import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.payload.AppInfo
 
 internal class EnvelopeResourceSourceImpl(
     private val metadataService: MetadataService
@@ -32,14 +29,14 @@ internal class EnvelopeResourceSourceImpl(
             unityBuildId = appInfo.buildGuid,
             deviceManufacturer = device.manufacturer,
             deviceModel = device.model,
-            deviceArchitecture = "", // deviceArchitecture.architecture,
-            jailbroken = false, // device.isJailbroken,
+            deviceArchitecture = device.architecture,
+            jailbroken = device.jailbroken,
             diskTotalCapacity = device.internalStorageTotalCapacity,
             osType = device.operatingSystemType,
             osVersion = device.operatingSystemVersion,
             osCode = device.operatingSystemVersionCode.toString(),
             screenResolution = device.screenResolution,
-            numCores = 0, // device.numberOfCores,
+            numCores = device.cores,
         )
     }
 

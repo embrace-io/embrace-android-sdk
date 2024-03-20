@@ -4,8 +4,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -19,7 +19,7 @@ internal class EnvelopeResourceSourceImpl(
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
     private val device: Device,
-    private val metadataService: EmbraceMetadataService
+    private val metadataService: MetadataService
 ) : EnvelopeResourceSource {
 
 

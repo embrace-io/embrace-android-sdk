@@ -207,7 +207,7 @@ internal class EmbraceMetadataService private constructor(
      * Return the bundle Id if it was already calculated in background or null if it's not ready yet.
      * This way, we avoid blocking the main thread to wait for the value.
      */
-    fun getReactNativeBundleId(): String? =
+    override fun getReactNativeBundleId(): String? =
         if (appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
             reactNativeBundleId.get()
         } else {

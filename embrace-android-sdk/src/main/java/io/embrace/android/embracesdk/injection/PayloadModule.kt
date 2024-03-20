@@ -38,7 +38,8 @@ internal class PayloadModuleImpl(
             sdkObservabilityModule.internalErrorService,
             nativeModule.nativeThreadSamplerService,
             otelModule.spanSink,
-            otelModule.currentSessionSpan
+            otelModule.currentSessionSpan,
+            otelModule.spanRepository
         )
     }
 

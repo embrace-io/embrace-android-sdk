@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
@@ -85,7 +86,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = EmbraceBreadcrumbService(
             clock,
             configService,
-            FakeActivityTracker()
+            FakeActivityTracker(),
+            FakeCurrentSessionSpan()
         )
         service.logView("viewA", clock.now())
         clock.tickSecond()
@@ -592,7 +594,8 @@ internal class EmbraceBreadcrumbServiceTest {
         val service = EmbraceBreadcrumbService(
             clock,
             configService,
-            activityTracker
+            activityTracker,
+            FakeCurrentSessionSpan()
         )
         service.addFirstViewBreadcrumbForSession(5)
         val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
@@ -603,7 +606,8 @@ internal class EmbraceBreadcrumbServiceTest {
     private fun initializeBreadcrumbService() = EmbraceBreadcrumbService(
         clock,
         configService,
-        FakeActivityTracker()
+        FakeActivityTracker(),
+        FakeCurrentSessionSpan()
     )
 
     companion object {

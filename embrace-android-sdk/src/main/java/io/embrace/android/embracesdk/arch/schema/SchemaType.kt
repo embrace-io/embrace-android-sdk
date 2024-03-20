@@ -1,8 +1,19 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys.AEI_RECORD
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys.CUSTOM_BREADCRUMB
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys.LOG
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys.VIEW_BREADCRUMB
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+
+internal object SchemaKeys {
+    internal const val CUSTOM_BREADCRUMB = "custom-breadcrumb"
+    internal const val VIEW_BREADCRUMB = "view-breadcrumb"
+    internal const val AEI_RECORD = "aei-record"
+    internal const val LOG = "emb-log"
+}
 
 internal sealed class SchemaType(
     val telemetryType: TelemetryType,
@@ -12,21 +23,21 @@ internal sealed class SchemaType(
 
     internal class CustomBreadcrumb(message: String) : SchemaType(
         EmbType.System.Breadcrumb,
-        "custom-breadcrumb"
+        CUSTOM_BREADCRUMB
     ) {
         override val attrs = mapOf("message" to message)
     }
 
     internal class ViewBreadcrumb(viewName: String) : SchemaType(
         EmbType.Ux.View,
-        "view-breadcrumb"
+        VIEW_BREADCRUMB
     ) {
         override val attrs = mapOf("view.name" to viewName)
     }
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(
         EmbType.System.Exit,
-        "aei-record"
+        AEI_RECORD
     ) {
         override val attrs = mapOf(
             "session-id" to message.sessionId,
@@ -44,7 +55,7 @@ internal sealed class SchemaType(
 
     internal class Log(attributes: EmbraceLogAttributes) : SchemaType(
         EmbType.System.Log,
-        "emb-log"
+        LOG
     ) {
         override val attrs = attributes.toMap()
     }

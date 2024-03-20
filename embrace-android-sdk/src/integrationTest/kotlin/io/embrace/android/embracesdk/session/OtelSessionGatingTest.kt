@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.hasEvent
+import io.embrace.android.embracesdk.hasSpan
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -100,11 +101,14 @@ internal class OtelSessionGatingTest {
         val sessionSpan = payload.findSessionSpan()
         assertNotNull(sessionSpan)
         assertEquals(!gated, sessionSpan.hasEvent("custom-breadcrumb"))
+        assertEquals(!gated, payload.hasSpan("emb-view-breadcrumb"))
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
         harness.recordSession {
             embrace.addBreadcrumb("Hello, world!")
+            embrace.startView("MyActivity")
+            embrace.endView("MyActivity")
             harness.fakeClock.tick(10000) // enough to trigger new session
             action()
         }

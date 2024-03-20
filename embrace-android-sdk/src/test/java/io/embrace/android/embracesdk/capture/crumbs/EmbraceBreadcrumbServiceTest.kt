@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.system.mockActivity
@@ -31,6 +32,7 @@ import java.util.concurrent.CountDownLatch
 
 internal class EmbraceBreadcrumbServiceTest {
 
+    private lateinit var spanService: FakeSpanService
     private lateinit var configService: ConfigService
     private lateinit var processStateService: ProcessStateService
     private lateinit var memoryCleanerService: EmbraceMemoryCleanerService
@@ -39,6 +41,7 @@ internal class EmbraceBreadcrumbServiceTest {
 
     @Before
     fun createMocks() {
+        spanService = FakeSpanService()
         configService = FakeConfigService(
             breadcrumbBehavior = fakeBreadcrumbBehavior(
                 localCfg = {
@@ -87,7 +90,8 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             FakeActivityTracker(),
-            FakeCurrentSessionSpan()
+            FakeCurrentSessionSpan(),
+            spanService
         )
         service.logView("viewA", clock.now())
         clock.tickSecond()
@@ -595,7 +599,8 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             activityTracker,
-            FakeCurrentSessionSpan()
+            FakeCurrentSessionSpan(),
+            spanService
         )
         service.addFirstViewBreadcrumbForSession(5)
         val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
@@ -607,7 +612,8 @@ internal class EmbraceBreadcrumbServiceTest {
         clock,
         configService,
         FakeActivityTracker(),
-        FakeCurrentSessionSpan()
+        FakeCurrentSessionSpan(),
+        spanService
     )
 
     companion object {

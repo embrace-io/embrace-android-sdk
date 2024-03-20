@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
+import io.embrace.android.embracesdk.capture.crumbs.FragmentBreadcrumbDataSource
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -23,11 +24,13 @@ internal interface DataSourceModule {
     fun getDataSources(): List<DataSourceState>
 
     val customBreadcrumbDataSource: DataSourceState
+
+    val fragmentBreadcrumbDataSource: DataSourceState
 }
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
-    @Suppress("UNUSED_PARAMETER") initModule: InitModule,
+    initModule: InitModule,
     otelModule: OpenTelemetryModule,
     @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
     @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
@@ -43,6 +46,19 @@ internal class DataSourceModuleImpl(
                 writer = otelModule.currentSessionSpan
             )
         })
+    }
+
+    override val fragmentBreadcrumbDataSource: DataSourceState by dataSource {
+        DataSourceState(
+            factory = {
+                FragmentBreadcrumbDataSource(
+                    configService.breadcrumbBehavior,
+                    initModule.clock,
+                    otelModule.spanService
+                )
+            },
+            configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+        )
     }
 
     /* Implementation details */

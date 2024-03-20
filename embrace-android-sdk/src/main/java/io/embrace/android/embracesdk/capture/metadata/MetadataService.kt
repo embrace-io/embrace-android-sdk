@@ -119,6 +119,8 @@ internal interface MetadataService {
      */
     fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean? = null)
 
+    fun getReactNativeBundleId(): String?
+
     /**
      * Queues in a single thread executor callables to retrieve values in background
      */

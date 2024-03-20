@@ -42,6 +42,14 @@ internal fun SessionMessage.findSpan(name: String): EmbraceSpanData =
     }
 
 /**
+ * Finds the span matching the name.
+ */
+internal fun SessionMessage.findSpans(name: String): List<EmbraceSpanData> =
+    checkNotNull(spans?.filter { it.name == name }) {
+        "Could not find spans: $name"
+    }
+
+/**
  * Returns true if a span exists with the given name.
  */
 internal fun SessionMessage.hasSpan(name: String): Boolean {

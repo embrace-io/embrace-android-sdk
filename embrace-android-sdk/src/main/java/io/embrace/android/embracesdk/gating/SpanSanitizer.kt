@@ -37,8 +37,10 @@ internal class SpanSanitizer(
         return sanitizedSpans
     }
 
-    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
+        if (span.name == "emb-${SchemaKeys.VIEW_BREADCRUMB}" && !shouldAddViewBreadcrumbs()) {
+            return false
+        }
         return true
     }
 
@@ -50,4 +52,7 @@ internal class SpanSanitizer(
     }
 
     private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)
+
+    private fun shouldAddViewBreadcrumbs() =
+        enabledComponents.contains(SessionGatingKeys.BREADCRUMBS_VIEWS)
 }

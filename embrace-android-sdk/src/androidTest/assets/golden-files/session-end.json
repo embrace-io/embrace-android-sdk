@@ -16,7 +16,7 @@
   },
   "br": {
     "cb": "__EMBRACE_TEST_IGNORE__",
-    "cv": [],
+    "cv": "__EMBRACE_TEST_IGNORE__",
     "rna": [],
     "pn": [],
     "tb": [],

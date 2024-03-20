@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys
+import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findSpans
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -19,7 +22,7 @@ internal class FragmentBreadcrumbFeatureTest {
     fun `fragment breadcrumb feature`() {
         with(testRule) {
             var startTime: Long = 0
-            val message = harness.recordSession {
+            val message = checkNotNull(harness.recordSession {
                 startTime = harness.fakeClock.now()
                 embrace.startView("MyView")
                 harness.fakeClock.tick(1000L)
@@ -27,8 +30,8 @@ internal class FragmentBreadcrumbFeatureTest {
                 harness.fakeClock.tick(2000L)
                 embrace.endView("MyView")
                 embrace.endView("AnotherView")
-            }
-            val fragmentBreadcrumbs = checkNotNull(message?.breadcrumbs?.fragmentBreadcrumbs).sortedBy { it.name }
+            })
+            val fragmentBreadcrumbs = checkNotNull(message.breadcrumbs?.fragmentBreadcrumbs).sortedBy { it.name }
             assertEquals(2, fragmentBreadcrumbs.size)
 
             val breadcrumb1 = fragmentBreadcrumbs[0]
@@ -40,6 +43,15 @@ internal class FragmentBreadcrumbFeatureTest {
             assertEquals("MyView", breadcrumb2.name)
             assertEquals(startTime, breadcrumb2.start)
             assertEquals(startTime + 3000, breadcrumb2.endTime)
+
+            val fragmentSpans = message.findSpans("emb-${SchemaKeys.VIEW_BREADCRUMB}")
+            assertEquals(2, fragmentSpans.size)
+
+            val span1 = fragmentSpans[0]
+            assertEquals("MyView", span1.findSpanAttribute("view.name"))
+
+            val span2 = fragmentSpans[1]
+            assertEquals("AnotherView", span2.findSpanAttribute("view.name"))
         }
     }
 }

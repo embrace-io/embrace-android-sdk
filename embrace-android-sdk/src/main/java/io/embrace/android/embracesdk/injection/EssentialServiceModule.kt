@@ -186,7 +186,6 @@ internal class EssentialServiceModuleImpl(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         HostedSdkVersionInfo(
             androidServicesModule.preferencesService,
-            coreModule.logger,
             coreModule.appFramework
         )
     }

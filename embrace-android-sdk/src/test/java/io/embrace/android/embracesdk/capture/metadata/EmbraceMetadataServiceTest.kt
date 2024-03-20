@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -69,8 +68,7 @@ internal class EmbraceMetadataServiceTest {
             every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
 
             hostedSdkVersionInfo = HostedSdkVersionInfo(
-                preferencesService,
-                InternalEmbraceLogger()
+                preferencesService
             )
         }
 

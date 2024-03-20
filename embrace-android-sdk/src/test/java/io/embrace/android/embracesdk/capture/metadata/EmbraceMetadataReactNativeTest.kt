@@ -64,7 +64,6 @@ internal class EmbraceMetadataReactNativeTest {
         cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, InternalEmbraceLogger())
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            InternalEmbraceLogger(),
             Embrace.AppFramework.REACT_NATIVE
         )
     }

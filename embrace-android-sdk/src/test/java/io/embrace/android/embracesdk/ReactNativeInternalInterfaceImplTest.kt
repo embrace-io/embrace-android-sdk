@@ -38,7 +38,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         metadataService = FakeMetadataService()
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            mockk(),
             Embrace.AppFramework.REACT_NATIVE
         )
         logger = mockk(relaxed = true)

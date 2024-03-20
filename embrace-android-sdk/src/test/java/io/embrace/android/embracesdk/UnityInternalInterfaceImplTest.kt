@@ -26,7 +26,6 @@ internal class UnityInternalInterfaceImplTest {
         logger = mockk(relaxed = true)
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            mockk(),
             Embrace.AppFramework.UNITY
         )
         impl = UnityInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)

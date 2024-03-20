@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.mockk.mockk
 
 internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),
@@ -57,7 +56,6 @@ internal class FakeEssentialServiceModule(
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(
         FakePreferenceService(),
-        mockk()
     )
 ) : EssentialServiceModule {
 

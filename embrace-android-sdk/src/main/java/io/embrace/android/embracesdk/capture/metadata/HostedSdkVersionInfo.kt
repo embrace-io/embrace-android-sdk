@@ -1,17 +1,14 @@
 package io.embrace.android.embracesdk.capture.metadata
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,
-    private val logger: InternalEmbraceLogger,
     appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE
 ) {
     private var hostedPlatformStrategy: HostedPlatformStrategy
 
-    // precompute on initialization
     init {
         when (appFramework) {
             Embrace.AppFramework.REACT_NATIVE -> this.hostedPlatformStrategy = ReactNativePlatformStrategy()
@@ -25,14 +22,11 @@ internal class HostedSdkVersionInfo(
         set(value) {
             val sdkVersion = hostedPlatformStrategy.getHostedSdkVersionFromPreferences(preferencesService)
             if (sdkVersion != null) {
-                logger.logDeveloper("Embrace", "hostedSdkVersion is present")
                 if (value != sdkVersion) {
-                    logger.logDeveloper("Embrace", "Setting a new hostedSdkVersion")
                     field = value
                     hostedPlatformStrategy.setHostedSdkVersionInPreferences(value, preferencesService)
                 }
             } else {
-                logger.logDeveloper("Embrace", "Setting hostedSdkVersion")
                 field = value
                 hostedPlatformStrategy.setHostedSdkVersionInPreferences(value, preferencesService)
             }
@@ -43,14 +37,11 @@ internal class HostedSdkVersionInfo(
         set(value) {
             val platformVersion = hostedPlatformStrategy.getHostedPlatformVersionFromPreferences(preferencesService)
             if (platformVersion != null) {
-                logger.logDeveloper("Embrace", "hostedPlatformVersion is present")
                 if (value != platformVersion) {
-                    logger.logDeveloper("Embrace", "Setting a new hostedPlatformVersion")
                     field = value
                     hostedPlatformStrategy.setHostedPlatformVersionInPreferences(value, preferencesService)
                 }
             } else {
-                logger.logDeveloper("Embrace", "Setting hostedPlatformVersion")
                 field = value
                 hostedPlatformStrategy.setHostedPlatformVersionInPreferences(value, preferencesService)
             }
@@ -61,14 +52,11 @@ internal class HostedSdkVersionInfo(
         set(value) {
             val unityBuildIdNumber = hostedPlatformStrategy.getUnityBuildIdNumber(preferencesService)
             if (unityBuildIdNumber != null) {
-                logger.logDeveloper("Embrace", "unityBuildIdNumber is present")
                 if (value != unityBuildIdNumber) {
-                    logger.logDeveloper("Embrace", "Setting a new unityBuildIdNumber")
                     field = value
                     hostedPlatformStrategy.setUnityBuildIdNumberInPreferences(value, preferencesService)
                 }
             } else {
-                logger.logDeveloper("Embrace", "Setting unityBuildIdNumber")
                 field = value
                 hostedPlatformStrategy.setUnityBuildIdNumberInPreferences(value, preferencesService)
             }
@@ -79,14 +67,11 @@ internal class HostedSdkVersionInfo(
         set(value) {
             val javaScriptPatchNumber = hostedPlatformStrategy.getJavaScriptPatchNumber(preferencesService)
             if (javaScriptPatchNumber != null) {
-                logger.logDeveloper("Embrace", "javaScriptPatchNumber is present")
                 if (value != javaScriptPatchNumber) {
-                    logger.logDeveloper("Embrace", "Setting a new javaScriptPatchNumber")
                     field = value
                     hostedPlatformStrategy.setJavaScriptPatchNumberInPreferences(value, preferencesService)
                 }
             } else {
-                logger.logDeveloper("Embrace", "Setting javaScriptPatchNumber")
                 field = value
                 hostedPlatformStrategy.setJavaScriptPatchNumberInPreferences(value, preferencesService)
             }

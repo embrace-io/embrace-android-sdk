@@ -131,7 +131,6 @@ internal class TracingApiTest {
                 "test-trace-root",
                 "record-span-span",
                 "completed-span",
-                "emb-startup-moment",
                 "emb-session",
                 "bonus-span",
                 "bonus-span-2",
@@ -146,13 +145,6 @@ internal class TracingApiTest {
                 expectedEndTimeMs = testStartTimeMs + 100,
                 expectedParentId = SpanId.getInvalid(),
                 private = true,
-                key = true
-            )
-            assertEmbraceSpanData(
-                span = spansMap["emb-startup-moment"],
-                expectedStartTimeMs = testStartTimeMs + 100,
-                expectedEndTimeMs = testStartTimeMs + 700,
-                expectedParentId = SpanId.getInvalid(),
                 key = true
             )
             assertEmbraceSpanData(

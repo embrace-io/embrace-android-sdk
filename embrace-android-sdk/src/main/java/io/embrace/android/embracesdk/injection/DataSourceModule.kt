@@ -1,8 +1,12 @@
 package io.embrace.android.embracesdk.injection
 
+import android.os.Build
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentBreadcrumbDataSource
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -26,15 +30,17 @@ internal interface DataSourceModule {
     val customBreadcrumbDataSource: DataSourceState
 
     val fragmentBreadcrumbDataSource: DataSourceState
+
+    val applicationExitInfoDataSource: DataSourceState?
 }
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
-    @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
-    @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
-    @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
+    systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState> = mutableListOf()
@@ -59,6 +65,30 @@ internal class DataSourceModuleImpl(
             },
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
         )
+    }
+
+    override val applicationExitInfoDataSource: DataSourceState? by dataSource {
+        DataSourceState(
+            factory = { aeiService },
+            configGate = { configService.isAppExitInfoCaptureEnabled() }
+        )
+    }
+
+    private val aeiService: AeiDataSourceImpl? by singleton {
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
+            AeiDataSourceImpl(
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                essentialServiceModule.configService.appExitInfoBehavior,
+                systemServiceModule.activityManager,
+                androidServicesModule.preferencesService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.sessionIdTracker,
+                essentialServiceModule.userService,
+                otelModule.logWriter
+            )
+        } else {
+            null
+        }
     }
 
     /* Implementation details */

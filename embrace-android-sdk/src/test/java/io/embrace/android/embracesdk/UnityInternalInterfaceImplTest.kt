@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -13,19 +13,22 @@ import org.junit.Test
 
 internal class UnityInternalInterfaceImplTest {
 
+    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var impl: UnityInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var preferencesService: PreferencesService
-    private lateinit var metadataService: FakeMetadataService
     private lateinit var logger: InternalEmbraceLogger
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
         preferencesService = FakePreferenceService()
-        metadataService = FakeMetadataService()
         logger = mockk(relaxed = true)
-        impl = UnityInternalInterfaceImpl(embrace, mockk(), preferencesService, metadataService, logger)
+        hostedSdkVersionInfo = HostedSdkVersionInfo(
+            preferencesService,
+            Embrace.AppFramework.UNITY
+        )
+        impl = UnityInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 
     @Test

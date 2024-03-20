@@ -84,7 +84,7 @@ internal typealias EssentialServiceModuleSupplier = (
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    configServiceProvider: Provider<ConfigService?>,
+    configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule
 
 /**

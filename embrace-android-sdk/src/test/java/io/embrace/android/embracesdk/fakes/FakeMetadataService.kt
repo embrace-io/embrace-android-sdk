@@ -107,39 +107,9 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
         this.forceUpdate = forceUpdate
     }
 
-    override fun setEmbraceFlutterSdkVersion(version: String?) {
-        fakeFlutterSdkVersion = version
-    }
-
-    override fun setEmbraceRnSdkVersion(version: String?) {
-        fakeRnSdkVersion = version
-    }
-
-    override fun setRnVersion(version: String?) {
-        fakeReactNativeVersion = version
-    }
-
-    override fun setJavaScriptPatchNumber(number: String) {
-        fakeJavaScriptPatchNumber = number
-    }
-
-    override fun setDartVersion(version: String?) {
-        fakeDartVersion = version
-    }
-
     override fun precomputeValues() {}
+
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
-    override fun setUnityVersionNumber(unityVersion: String) {
-        fakeUnityVersion = unityVersion
-    }
-
-    override fun setUnityBuildIdNumber(unityBuildIdNumber: String) {
-        fakeUnityBuildIdNumber = unityBuildIdNumber
-    }
-
-    override fun setUnitySdkVersionNumber(unitySdkVersion: String) {
-        fakeUnitySdkVersion = unitySdkVersion
-    }
 }

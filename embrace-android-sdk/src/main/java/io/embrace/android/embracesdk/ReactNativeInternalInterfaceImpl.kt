@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.crash.CrashService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -14,6 +15,7 @@ internal class ReactNativeInternalInterfaceImpl(
     private val framework: AppFramework,
     private val crashService: CrashService,
     private val metadataService: MetadataService,
+    private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalEmbraceLogger
 ) : EmbraceInternalInterface by impl, ReactNativeInternalInterface {
 
@@ -63,7 +65,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("JavaScript patch number must have non-zero length")
                 return
             }
-            metadataService.setJavaScriptPatchNumber(number)
+            hostedSdkVersionInfo.javaScriptPatchNumber = number
         } else {
             logger.logSDKNotInitialized("set JavaScript patch number")
         }
@@ -71,7 +73,7 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setReactNativeSdkVersion(version: String?) {
         if (embrace.isStarted) {
-            metadataService.setEmbraceRnSdkVersion(version)
+            hostedSdkVersionInfo.hostedSdkVersion = version
         } else {
             logger.logSDKNotInitialized("set React Native SDK version")
         }
@@ -87,7 +89,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 logger.logError("ReactNative version must have non-zero length")
                 return
             }
-            metadataService.setRnVersion(version)
+            hostedSdkVersionInfo.hostedPlatformVersion = version
         } else {
             logger.logSDKNotInitialized("set React Native version number")
         }

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
@@ -50,11 +51,13 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  * the SDK during initialization.
  */
 internal interface EssentialServiceModule {
+
     val memoryCleanerService: MemoryCleanerService
     val orientationService: OrientationService
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
     val metadataService: MetadataService
+    val hostedSdkVersionInfo: HostedSdkVersionInfo
     val configService: ConfigService
     val gatingService: GatingService
     val userService: UserService
@@ -78,7 +81,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
-    private val configServiceProvider: Provider<ConfigService?> = { null },
+    private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
@@ -180,6 +183,13 @@ internal class EssentialServiceModuleImpl(
         DeviceArchitectureImpl()
     }
 
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
+        HostedSdkVersionInfo(
+            androidServicesModule.preferencesService,
+            coreModule.appFramework
+        )
+    }
+
     override val metadataService: MetadataService by singleton {
         Systrace.traceSynchronous("metadata-service-init") {
             EmbraceMetadataService.ofContext(
@@ -196,7 +206,8 @@ internal class EssentialServiceModuleImpl(
                 cpuInfoDelegate,
                 deviceArchitecture,
                 lazyAppVersionName,
-                lazyAppVersionCode
+                lazyAppVersionCode,
+                hostedSdkVersionInfo
             )
         }
     }

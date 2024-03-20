@@ -81,6 +81,25 @@ internal class FlutterInternalInterfaceTest {
     }
 
     @Test
+    fun `setting null is ignored`() {
+        with(testRule) {
+            harness.recordSession {
+                embrace.flutterInternalInterface?.setDartVersion("28.9.1")
+                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+            }
+
+            val session = harness.recordSession {
+                embrace.flutterInternalInterface?.setDartVersion(null)
+                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion(null)
+            }
+
+            assertEquals(4, session?.appInfo?.appFramework)
+            assertEquals("28.9.1", checkNotNull(session?.appInfo?.hostedPlatformVersion))
+            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
+        }
+    }
+
+    @Test
     fun `flutter values from current session override previous values`() {
         with(testRule) {
             harness.recordSession {

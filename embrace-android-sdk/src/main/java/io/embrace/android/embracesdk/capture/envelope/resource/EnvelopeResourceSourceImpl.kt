@@ -4,19 +4,22 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
 internal class EnvelopeResourceSourceImpl(
-    private val hosted: HostedSdkInfo,
+    private val hosted: HostedSdkVersionInfo,
     private val applicationInfo: ApplicationInfo,
     private val buildInfo: BuildInfo,
     private val packageInfo: PackageInfo,
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
-    private val device: Device
+    private val device: Device,
+    private val metadataService: EmbraceMetadataService
 ) : EnvelopeResourceSource {
 
 
@@ -34,7 +37,7 @@ internal class EnvelopeResourceSourceImpl(
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
             hostedPlatformVersion = hosted.hostedPlatformVersion,
             hostedSdkVersion = hosted.hostedSdkVersion,
-            reactNativeBundleId = hosted.reactNativeBundleId,
+            reactNativeBundleId = metadataService.getReactNativeBundleId(),
             javascriptPatchNumber = hosted.javaScriptPatchNumber,
             unityBuildId = hosted.unityBuildIdNumber,
             deviceManufacturer = device.manufacturer,

@@ -12,44 +12,39 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
 internal class EnvelopeResourceSourceImpl(
-    private val hosted: HostedSdkVersionInfo,
-    private val applicationInfo: ApplicationInfo,
-    private val buildInfo: BuildInfo,
-    private val packageInfo: PackageInfo,
-    private val appFramework: AppFramework,
-    private val deviceArchitecture: DeviceArchitecture,
-    private val device: Device,
     private val metadataService: MetadataService
 ) : EnvelopeResourceSource {
 
 
     override fun getEnvelopeResource(): EnvelopeResource {
+        val appInfo = metadataService.getAppInfo()
+        val device = metadataService.getDeviceInfo()
         return EnvelopeResource(
-            appVersion = packageInfo.versionName.toString().trim { it <= ' ' },
-            bundleVersion = packageInfo.versionCode.toString(),
-            appEcosystemId = packageInfo.packageName,
-            appFramework = mapFramework(appFramework),
-            buildId = buildInfo.buildId,
-            buildType = buildInfo.buildType,
-            buildFlavor = buildInfo.buildFlavor,
-            environment = if (applicationInfo.isDebug()) ENVIRONMENT_DEV else ENVIRONMENT_PROD,
+            appVersion = appInfo.appVersion,
+            bundleVersion = appInfo.bundleVersion,
+            appEcosystemId = metadataService.getPackageName(),
+            appFramework = mapFramework(metadataService.getAppFramework()),
+            buildId = appInfo.buildId,
+            buildType = appInfo.buildType,
+            buildFlavor = appInfo.buildFlavor,
+            environment = appInfo.environment,
             sdkVersion = BuildConfig.VERSION_NAME,
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
-            hostedPlatformVersion = hosted.hostedPlatformVersion,
-            hostedSdkVersion = hosted.hostedSdkVersion,
+            hostedPlatformVersion = appInfo.hostedPlatformVersion,
+            hostedSdkVersion = appInfo.hostedSdkVersion,
             reactNativeBundleId = metadataService.getReactNativeBundleId(),
-            javascriptPatchNumber = hosted.javaScriptPatchNumber,
-            unityBuildId = hosted.unityBuildIdNumber,
+            javascriptPatchNumber = appInfo.javaScriptPatchNumber,
+            unityBuildId = appInfo.buildId,
             deviceManufacturer = device.manufacturer,
             deviceModel = device.model,
-            deviceArchitecture = deviceArchitecture.architecture,
-            jailbroken = device.isJailbroken,
-            diskTotalCapacity = device.internalStorageTotalCapacity.value,
+            deviceArchitecture = device.architecture,
+            jailbroken = device.jailbroken,
+            diskTotalCapacity = device.internalStorageTotalCapacity,
             osType = device.operatingSystemType,
             osVersion = device.operatingSystemVersion,
             osCode = device.operatingSystemVersionCode.toString(),
             screenResolution = device.screenResolution,
-            numCores = device.numberOfCores,
+            numCores = device.cores,
         )
     }
 

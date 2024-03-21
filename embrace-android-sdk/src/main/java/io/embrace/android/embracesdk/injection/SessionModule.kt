@@ -60,6 +60,7 @@ internal class SessionModuleImpl(
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
+            openTelemetryModule.spanRepository,
             openTelemetryModule.spanSink,
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,

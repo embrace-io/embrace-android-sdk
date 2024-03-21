@@ -45,5 +45,16 @@
       "attributes": {}
     }
   ],
+  "span_snapshots": [
+    {
+      "trace_id": "snapshot-trace-id",
+      "span_id": "snapshot-span-id",
+      "name": "snapshot",
+      "start_time_unix_nano": 1692201601000,
+      "status": "Unset",
+      "events": [],
+      "attributes": []
+    }
+  ],
   "v": 13
 }

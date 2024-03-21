@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalErrorService
@@ -39,10 +40,11 @@ internal class V1PayloadMessageCollator(
     private val breadcrumbService: BreadcrumbService,
     private val userService: UserService,
     private val preferencesService: PreferencesService,
+    private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
-    private val startupService: StartupService
+    private val startupService: StartupService,
 ) : PayloadMessageCollator {
 
     /**
@@ -177,6 +179,9 @@ internal class V1PayloadMessageCollator(
                 else -> breadcrumbService.getBreadcrumbs()
             }
         }
+        val spanSnapshots = captureDataSafely {
+            spanRepository.getActiveSpans().mapNotNull { it.snapshot() }
+        }
 
         return SessionMessage(
             session = finalPayload,
@@ -192,7 +197,8 @@ internal class V1PayloadMessageCollator(
                 )
             },
             breadcrumbs = breadcrumbs,
-            spans = spans
+            spans = spans,
+            spanSnapshots = spanSnapshots,
         )
     }
 }

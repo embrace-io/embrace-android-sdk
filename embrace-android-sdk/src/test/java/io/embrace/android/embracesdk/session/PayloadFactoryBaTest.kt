@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalErrorService
@@ -64,6 +65,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
     private lateinit var localConfig: LocalConfig
+    private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spanService: SpanService
@@ -86,6 +88,7 @@ internal class PayloadFactoryBaTest {
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
+        spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
@@ -174,6 +177,7 @@ internal class PayloadFactoryBaTest {
             breadcrumbService,
             userService,
             preferencesService,
+            spanRepository,
             spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.net.ConnectivityManager
 import android.os.PowerManager
 import android.view.WindowManager
@@ -55,8 +56,7 @@ internal class SystemServiceModuleImplTest {
     fun testSystemServiceModuleException() {
         val ctx = mockk<Context>()
         every { ctx.packageName } returns ""
-        every { ctx.packageManager } returns mockk()
-        val module = SystemServiceModuleImpl(FakeCoreModule(context = ctx))
+        val module = SystemServiceModuleImpl(FakeCoreModule(context = ctx, packageInfo = PackageInfo()))
 
         assertNull(module.activityManager)
         assertNull(module.powerManager)

@@ -44,16 +44,24 @@ internal class EnvelopeResourceSourceImplTest {
         @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.packageName = "com.embrace.fake"
+            packageInfo.versionName = "1.0.0"
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode = 10
         }
     }
 
     @Test
     fun getEnvelopeResource() {
         val metadataService = FakeMetadataService()
+        val hostedSdkVersionInfo = HostedSdkVersionInfo(
+            FakePreferenceService()
+        )
+        hostedSdkVersionInfo.javaScriptPatchNumber = "js"
+        hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
+        hostedSdkVersionInfo.hostedPlatformVersion = "19"
+        hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
         val source = EnvelopeResourceSourceImpl(
-            HostedSdkVersionInfo(
-                FakePreferenceService()
-            ),
+            hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
             BuildInfo("100", "release", "oem"),
             packageInfo,
@@ -71,8 +79,8 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("release", envelope.buildType)
         assertEquals("oem", envelope.buildFlavor)
         assertEquals("prod", envelope.environment)
-        assertEquals("5ac7fe", envelope.bundleVersion)
-        assertEquals("5.11.0", envelope.sdkVersion)
+        assertEquals("10", envelope.bundleVersion)
+        assertEquals("6.6.0-SNAPSHOT", envelope.sdkVersion)
         assertEquals(53, envelope.sdkSimpleVersion)
         assertEquals("fakeReactNativeBundleId", envelope.reactNativeBundleId)
         assertEquals("js", envelope.javascriptPatchNumber)

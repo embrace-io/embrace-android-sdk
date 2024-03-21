@@ -61,6 +61,7 @@ internal class PayloadFactoryImplTest {
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
+            spanRepository = initModule.openTelemetryModule.spanRepository,
             spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),

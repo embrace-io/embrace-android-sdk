@@ -154,6 +154,7 @@ internal class SessionHandlerTest {
             breadcrumbService,
             userService,
             preferencesService,
+            initModule.openTelemetryModule.spanRepository,
             initModule.openTelemetryModule.spanSink,
             initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),

@@ -3,18 +3,22 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.assertSpanPayload
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -111,14 +115,19 @@ internal class TracingApiTest {
                 assertTrue(bonusSpan.stop(endTimeMs = harness.fakeClock.now() + 1))
                 harness.fakeClock.tick(300L)
                 assertTrue(bonusSpan2.stop())
+                val unendingSpan = checkNotNull(embrace.startSpan("unending-span"))
+                harness.fakeClock.tick(100L)
+                unendingSpan.addAttribute("unending-key", "unending-value")
+                unendingSpan.addEvent("unending-event")
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionEndTime = harness.fakeClock.now()
+            val session = checkNotNull(sessionMessage)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
-                checkNotNull(sessionMessage?.spans) +
-                checkNotNull(harness.openTelemetryModule.spanSink.completedSpans())
+                checkNotNull(session.spans) +
+                harness.openTelemetryModule.spanSink.completedSpans()
 
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session"])
@@ -231,6 +240,25 @@ internal class TracingApiTest {
                 expectedParentId = SpanId.getInvalid(),
                 private = true
             )
+
+            assertEquals(1, checkNotNull(sessionMessage.spanSnapshots).size)
+            val snapshot = sessionMessage.spanSnapshots.first()
+
+            snapshot.assertSpanPayload(
+                expectedStartTimeMs = testStartTimeMs + 700,
+                expectedEndTimeMs = null,
+                expectedParentId = null,
+                expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
+                expectedEvents = listOfNotNull(
+                    EmbraceSpanEvent.create(
+                        name = "unending-event",
+                        timestampMs = testStartTimeMs + 800,
+                        attributes = null
+                    )?.toNewPayload()
+                ),
+                key = true
+            )
+            snapshot.assertIsTypePerformance()
         }
     }
 

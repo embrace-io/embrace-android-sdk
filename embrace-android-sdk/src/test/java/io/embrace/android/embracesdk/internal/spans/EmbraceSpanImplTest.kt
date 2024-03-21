@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
@@ -44,7 +45,11 @@ internal class EmbraceSpanImplTest {
         embraceSpan = EmbraceSpanImpl(
             spanName = EXPECTED_SPAN_NAME,
             openTelemetryClock = fakeInitModule.openTelemetryClock,
-            spanBuilder = tracer.spanBuilder(EXPECTED_SPAN_NAME),
+            spanBuilder = tracer.embraceSpanBuilder(
+                name = EXPECTED_SPAN_NAME,
+                type = EmbType.Performance.Default,
+                internal = false
+            ),
             spanRepository = spanRepository
         )
         fakeClock.tick(100)
@@ -76,7 +81,7 @@ internal class EmbraceSpanImplTest {
             assertSnapshot(expectedStartTimeMs = expectedStartTimeMs)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, eventCount = 1, attributeCount = 1)
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, eventCount = 1, expectedCustomAttributeCount = 1)
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
         }
@@ -117,12 +122,15 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate usage without SpanRepository`() {
-        val spanName = "test-span"
         with(
             EmbraceSpanImpl(
-                spanName = spanName,
+                spanName = EXPECTED_SPAN_NAME,
                 openTelemetryClock = openTelemetryClock,
-                spanBuilder = tracer.spanBuilder(spanName)
+                spanBuilder = tracer.embraceSpanBuilder(
+                    name = EXPECTED_SPAN_NAME,
+                    type = EmbType.Performance.Default,
+                    internal = false
+                ),
             )
         ) {
             assertTrue(start())
@@ -243,11 +251,11 @@ internal class EmbraceSpanImplTest {
             assertEquals(EXPECTED_EVENT_NAME, snapshotEvent.name)
             assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timeUnixNano)
 
-            val eventAttributes = checkNotNull(snapshotEvent.attributes?.single())
+            val eventAttributes = checkNotNull(snapshotEvent.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, eventAttributes.key)
             assertEquals(EXPECTED_ATTRIBUTE_VALUE, eventAttributes.data)
 
-            val snapshotAttributes = checkNotNull(snapshot.attributes?.single())
+            val snapshotAttributes = checkNotNull(snapshot.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, snapshotAttributes.key)
             assertEquals(EXPECTED_ATTRIBUTE_VALUE, snapshotAttributes.data)
         }
@@ -258,14 +266,19 @@ internal class EmbraceSpanImplTest {
         expectedEndTimeMs: Long? = null,
         expectedStatus: Span.Status = Span.Status.UNSET,
         eventCount: Int = 0,
-        attributeCount: Int = 0
+        expectedEmbraceAttributes: Int = 2,
+        expectedCustomAttributeCount: Int = 0
     ) {
         with(checkNotNull(snapshot())) {
             assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
             assertEquals(expectedStatus, status)
             assertEquals(eventCount, events?.size)
-            assertEquals(attributeCount, attributes?.size)
+            checkNotNull(attributes)
+            val embraceAttributeCount = attributes.filter { checkNotNull(it.key).startsWith("emb.") }.size
+            val customAttributeCount = attributes.size - embraceAttributeCount
+            assertEquals(expectedEmbraceAttributes, embraceAttributeCount)
+            assertEquals(expectedCustomAttributeCount, customAttributeCount)
         }
     }
 

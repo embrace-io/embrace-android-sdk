@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 
 /**
@@ -25,4 +26,9 @@ internal interface EmbraceAttribute {
      * Return attribute as a key-value pair appropriate to use as an OpenTelemetry attribute
      */
     fun toOTelKeyValuePair() = Pair(otelAttributeName(), attributeValue)
+
+    /**
+     * Return attribute as [Attribute]
+     */
+    fun toAttributePayload() = Attribute(otelAttributeName(), attributeValue)
 }

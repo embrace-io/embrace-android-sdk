@@ -8,12 +8,14 @@ import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNull
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 /**
  * Assert [EmbraceSpanData] is of type [EmbType.Performance.Default]
@@ -58,6 +60,36 @@ internal fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
 internal fun EmbraceSpanData.assertSuccessful() {
     assertEquals(StatusCode.OK, status)
     assertNull(attributes[ErrorCodeAttribute.Failure.otelAttributeName()])
+}
+
+internal fun Span.assertIsTypePerformance() = assertIsType(EmbType.Performance.Default)
+
+internal fun Span.assertIsType(telemetryType: TelemetryType) = assertHasEmbraceAttribute(telemetryType)
+
+internal fun Span.assertIsKeySpan() = assertHasEmbraceAttribute(KeySpan)
+
+internal fun Span.assertNotKeySpan() = assertDoesNotHaveEmbraceAttribute(KeySpan)
+
+internal fun Span.assertIsPrivateSpan() = assertHasEmbraceAttribute(PrivateSpan)
+
+internal fun Span.assertNotPrivateSpan() = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+
+internal fun Span.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertTrue(checkNotNull(attributes).contains(embraceAttribute.toAttributePayload()))
+}
+
+internal fun Span.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertFalse(checkNotNull(attributes).contains(embraceAttribute.toAttributePayload()))
+}
+
+internal fun Span.assertError(errorCode: ErrorCode) {
+    assertEquals(StatusCode.ERROR, status)
+    assertHasEmbraceAttribute(errorCode.fromErrorCode())
+}
+
+internal fun Span.assertSuccessful() {
+    assertEquals(StatusCode.OK, status)
+    assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.otelAttributeName() }.size)
 }
 
 /**

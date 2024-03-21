@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -108,21 +107,17 @@ internal class CurrentSessionSpanImpl(
         traceCount.set(0)
 
         val spanName = "session".toEmbraceSpanName()
-        val spanBuilder = createEmbraceSpanBuilder(
-            tracer = tracerSupplier(),
-            name = spanName,
-            type = EmbType.Ux.Session
-        )
-            .setNoParent()
-            .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-
         return EmbraceSpanImpl(
             spanName = spanName,
             openTelemetryClock = openTelemetryClock,
-            spanBuilder = spanBuilder,
-            sessionSpan = true
+            spanBuilder = tracerSupplier().embraceSpanBuilder(
+                name = spanName,
+                type = EmbType.Ux.Session,
+                internal = true,
+                parent = null
+            )
         ).apply {
-            start()
+            start(startTimeMs = startTimeMs)
         }
     }
 }

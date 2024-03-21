@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -38,7 +37,7 @@ internal class SpanServiceImpl(
             EmbraceSpanImpl(
                 spanName = spanName,
                 openTelemetryClock = openTelemetryClock,
-                spanBuilder = createRootSpanBuilder(tracer = tracer, name = spanName, type = type, internal = internal),
+                spanBuilder = tracer.embraceSpanBuilder(name = spanName, type = type, internal = internal, parent = parent),
                 parent = parent,
                 spanRepository = spanRepository
             )
@@ -98,10 +97,8 @@ internal class SpanServiceImpl(
         }
 
         return if (EmbraceSpanImpl.inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            createRootSpanBuilder(tracer = tracer, name = getSpanName(name, internal), type = type, internal = internal)
-                .updateParent(parent)
-                .setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-                .startSpan()
+            tracer.embraceSpanBuilder(name = getSpanName(name, internal), type = type, internal = internal, parent = parent)
+                .startSpan(startTimeMs)
                 .setAllAttributes(Attributes.builder().fromMap(attributes).build())
                 .addEvents(events)
                 .endSpan(errorCode, endTimeMs)

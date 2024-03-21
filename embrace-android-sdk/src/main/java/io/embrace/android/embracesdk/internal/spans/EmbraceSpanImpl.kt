@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsVali
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -23,23 +22,17 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSpanImpl(
     private val spanName: String,
     private val openTelemetryClock: Clock,
-    private val spanBuilder: SpanBuilder,
+    private val spanBuilder: EmbraceSpanBuilder,
     override val parent: EmbraceSpan? = null,
-    private val spanRepository: SpanRepository? = null,
-    sessionSpan: Boolean = false
+    private val spanRepository: SpanRepository? = null
 ) : PersistableEmbraceSpan {
-
-    init {
-        if (!sessionSpan) {
-            spanBuilder.updateParent(parent)
-        }
-    }
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
     private var spanStartTimeMs: Long? = null
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val schemaAttributes = spanBuilder.embraceAttributes.associate { it.toOTelKeyValuePair() }.toMutableMap()
     private val attributes = ConcurrentHashMap<String, String>()
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
@@ -61,9 +54,8 @@ internal class EmbraceSpanImpl(
         } else {
             var successful: Boolean
             val attemptedStartTimeMs = startTimeMs ?: openTelemetryClock.now().nanosToMillis()
-            spanBuilder.setStartTimestamp(attemptedStartTimeMs, TimeUnit.MILLISECONDS)
             synchronized(startedSpan) {
-                startedSpan.set(spanBuilder.startSpan())
+                startedSpan.set(spanBuilder.startSpan(attemptedStartTimeMs))
                 successful = startedSpan.get() != null
             }
             if (successful) {
@@ -83,7 +75,7 @@ internal class EmbraceSpanImpl(
 
             synchronized(startedSpan) {
                 startedSpan.get()?.let { spanToStop ->
-                    attributes.forEach { attribute ->
+                    allAttributes().forEach { attribute ->
                         spanToStop.setAttribute(attribute.key, attribute.value)
                     }
 
@@ -161,12 +153,14 @@ internal class EmbraceSpanImpl(
                 endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
-                attributes = attributes.toNewPayload()
+                attributes = allAttributes().toNewPayload()
             )
         } else {
             null
         }
     }
+
+    private fun allAttributes(): Map<String, String> = attributes + schemaAttributes
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 

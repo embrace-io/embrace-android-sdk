@@ -1,20 +1,18 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
-import android.os.Environment
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
 internal class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
-    private val appEnvironment: String,
+    private val environment: AppEnvironment.Environment,
     private val buildInfo: BuildInfo,
     private val packageInfo: PackageInfo,
     private val appFramework: AppFramework,
@@ -32,7 +30,7 @@ internal class EnvelopeResourceSourceImpl(
             buildId = buildInfo.buildId,
             buildType = buildInfo.buildType,
             buildFlavor = buildInfo.buildFlavor,
-            environment = appEnvironment,
+            environment = environment.value,
             sdkVersion = BuildConfig.VERSION_NAME,
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
             hostedPlatformVersion = hosted.hostedPlatformVersion,
@@ -67,10 +65,5 @@ internal class EnvelopeResourceSourceImpl(
             AppFramework.FLUTTER ->
                 EnvelopeResource.AppFramework.FLUTTER
         }
-    }
-
-    companion object {
-        const val ENVIRONMENT_DEV = "dev"
-        const val ENVIRONMENT_PROD = "prod"
     }
 }

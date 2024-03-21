@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.envelope.resource.EnvelopeResourceS
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -42,7 +43,7 @@ internal class PayloadModuleImpl(
     private val resourceSource by singleton {
         EnvelopeResourceSourceImpl(
             essentialServiceModule.hostedSdkVersionInfo,
-            coreModule.context.applicationInfo,
+            AppEnvironment(coreModule.context.applicationInfo).environment,
             coreModule.buildInfo,
             coreModule.packageInfo,
             coreModule.appFramework,

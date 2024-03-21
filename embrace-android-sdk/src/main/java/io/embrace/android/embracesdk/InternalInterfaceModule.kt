@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
@@ -20,7 +19,6 @@ internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
@@ -37,6 +35,7 @@ internal class InternalInterfaceModuleImpl(
             coreModule.appFramework,
             crashModule.crashService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.hostedSdkVersionInfo,
             coreModule.logger
         )
     }
@@ -45,8 +44,7 @@ internal class InternalInterfaceModuleImpl(
         UnityInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            androidServicesModule.preferencesService,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.hostedSdkVersionInfo,
             coreModule.logger
         )
     }
@@ -55,7 +53,7 @@ internal class InternalInterfaceModuleImpl(
         FlutterInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.hostedSdkVersionInfo,
             coreModule.logger
         )
     }

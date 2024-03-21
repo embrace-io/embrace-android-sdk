@@ -5,10 +5,11 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 internal class FakeSpanService : SpanService {
 
-    val createdSpans = mutableListOf<FakeEmbraceSpan>()
+    val createdSpans = mutableListOf<FakePersistableEmbraceSpan>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -20,7 +21,7 @@ internal class FakeSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean
-    ): EmbraceSpan = FakeEmbraceSpan(null, name, type, internal).apply {
+    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(null, name, type, internal).apply {
         createdSpans.add(this)
     }
 

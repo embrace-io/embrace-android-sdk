@@ -3,9 +3,12 @@ package io.embrace.android.embracesdk.capture.envelope.resource
 import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -30,7 +33,6 @@ internal class EnvelopeResourceSourceImplTest {
             initContext()
 
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-            //every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
         }
 
         @After
@@ -48,11 +50,16 @@ internal class EnvelopeResourceSourceImplTest {
     fun getEnvelopeResource() {
         val metadataService = FakeMetadataService()
         val source = EnvelopeResourceSourceImpl(
-            metadataService.getAppInfo(),
+            HostedSdkVersionInfo(
+                FakePreferenceService()
+            ),
+            packageInfo.applicationInfo,
+            BuildInfo("100", "release", "oem"),
             packageInfo,
             Embrace.AppFramework.NATIVE,
             fakeArchitecture,
-            FakeDevice()
+            FakeDevice(),
+            metadataService
         )
         val envelope = source.getEnvelopeResource()
 

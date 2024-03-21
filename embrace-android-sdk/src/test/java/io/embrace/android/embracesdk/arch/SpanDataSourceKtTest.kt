@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.SpanServiceImpl
 import org.junit.Assert.assertEquals
@@ -14,8 +13,9 @@ internal class SpanDataSourceKtTest {
 
     @Test
     fun `start span`() {
-        val initModule = FakeInitModule(FakeClock())
+        val initModule = FakeInitModule()
         val service = SpanServiceImpl(
+            openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = initModule.openTelemetryModule.spanRepository,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             tracer = initModule.openTelemetryModule.tracer

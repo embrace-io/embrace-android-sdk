@@ -4,25 +4,23 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.*
-import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
+import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessionMessages
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.hasEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -111,17 +109,6 @@ internal class OtelSessionGatingTest {
             action()
         }
     }
-
-    private fun SessionMessage.findSessionSpan(): EmbraceSpanData =
-        checkNotNull(findSpan("emb-session")) {
-            "Session span not found"
-        }
-
-    private fun SessionMessage.findSpan(name: String): EmbraceSpanData? =
-        spans?.singleOrNull { it.name == name }
-
-    private fun EmbraceSpanData.findEvent(name: String): EmbraceSpanEvent? =
-        events.singleOrNull { it.name == name }
 
     /**
      * Wraps a fake delivery service around the [GatingService] so we can assert against

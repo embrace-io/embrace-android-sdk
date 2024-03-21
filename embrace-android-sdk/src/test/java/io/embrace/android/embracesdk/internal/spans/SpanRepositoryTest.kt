@@ -2,9 +2,12 @@ package io.embrace.android.embracesdk.internal.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -89,5 +92,20 @@ internal class SpanRepositoryTest {
         repository.clearCompletedSpans()
         assertNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
         assertEquals(0, repository.getCompletedSpans().size)
+    }
+
+    @Test
+    fun `active spans become failed and complete when they are forced to fail`() {
+        val startedSpan = FakePersistableEmbraceSpan.started()
+        repository.trackStartedSpan(startedSpan)
+
+        assertSame(startedSpan, repository.getActiveSpans().single())
+        assertFalse(startedSpan.stopped)
+        assertNull(startedSpan.errorCode)
+
+        repository.failActiveSpans(100L)
+
+        assertTrue(startedSpan.stopped)
+        assertEquals(ErrorCode.FAILURE, startedSpan.errorCode)
     }
 }

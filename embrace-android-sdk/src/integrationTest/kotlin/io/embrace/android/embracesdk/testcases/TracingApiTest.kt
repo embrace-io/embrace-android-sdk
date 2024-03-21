@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -201,8 +200,7 @@ internal class TracingApiTest {
                 expectedEndTimeMs = testStartTimeMs + 400,
                 expectedParentId = traceRootSpan.spanId,
                 expectedTraceId = traceRootSpan.traceId,
-                expectedStatus = StatusCode.ERROR,
-                errorCode = ErrorCode.FAILURE,
+                expectedErrorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
                 expectedEvents = listOf(
                     checkNotNull(

@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.utils.lockAndRun
 import java.util.concurrent.ConcurrentHashMap
@@ -62,6 +64,18 @@ internal class SpanRepository {
      */
     fun getCompletedSpans(): List<EmbraceSpan> = synchronized(spanIdsInProcess) { completedSpans.values.toList() }
 
+    /**
+     * Stop the existing active spans and mark them as failed
+     */
+    fun failActiveSpans(failureTimeMs: Long) {
+        getActiveSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
+            span.stop(ErrorCode.FAILURE, failureTimeMs)
+        }
+    }
+
+    /**
+     * Clear the spans this repository is tracking
+     */
     fun clearCompletedSpans() {
         synchronized(spanIdsInProcess) {
             completedSpans.clear()

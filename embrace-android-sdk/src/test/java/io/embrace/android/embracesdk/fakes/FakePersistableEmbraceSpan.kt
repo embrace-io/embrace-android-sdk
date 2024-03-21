@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -25,10 +27,10 @@ internal class FakePersistableEmbraceSpan(
 
     val attributes = mutableMapOf<String, String>()
     val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    var started = false
+    var stopped = false
+    var errorCode: ErrorCode? = null
 
-    private var started = false
-    private var stopped = false
-    private var errorCode: ErrorCode? = null
     private var spanStartTimeMs: Long? = null
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
@@ -100,6 +102,9 @@ internal class FakePersistableEmbraceSpan(
             )
         }
     }
+
+    override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+        attributes.hasEmbraceAttribute(embraceAttribute)
 
     /**
      * Should only used if this is being used to fake a session span

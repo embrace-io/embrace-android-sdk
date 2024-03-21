@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -27,8 +26,7 @@ internal fun assertEmbraceSpanData(
     expectedEndTimeMs: Long,
     expectedParentId: String,
     expectedTraceId: String? = null,
-    expectedStatus: StatusCode = StatusCode.OK,
-    errorCode: ErrorCode? = null,
+    expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<EmbraceSpanEvent> = emptyList(),
     private: Boolean = false,
@@ -44,11 +42,10 @@ internal fun assertEmbraceSpanData(
         } else {
             assertEquals(32, traceId.length)
         }
-        assertEquals(expectedStatus, status)
-        if (errorCode == null) {
+        if (expectedErrorCode == null) {
             assertSuccessful()
         } else {
-            assertError(errorCode)
+            assertError(expectedErrorCode)
         }
         expectedCustomAttributes.forEach { entry ->
             assertEquals(entry.value, attributes[entry.key])

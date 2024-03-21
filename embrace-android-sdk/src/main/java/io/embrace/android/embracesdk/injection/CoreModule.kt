@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.injection
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
@@ -91,12 +91,10 @@ internal class CoreModuleImpl(
     }
 
     override val isDebug: Boolean by lazy {
-        context.applicationInfo.isDebug()
+        AppEnvironment(context.applicationInfo).isDebug
     }
 
     override val buildInfo: BuildInfo by lazy {
         fromResources(resources, context.packageName)
     }
 }
-
-internal fun ApplicationInfo.isDebug() = flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

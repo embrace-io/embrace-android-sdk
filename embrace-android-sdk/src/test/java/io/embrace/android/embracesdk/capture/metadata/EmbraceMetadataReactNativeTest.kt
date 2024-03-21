@@ -70,6 +70,7 @@ internal class EmbraceMetadataReactNativeTest {
 
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
+        AppEnvironment.Environment.PROD,
         buildInfo,
         configService,
         appFramework,

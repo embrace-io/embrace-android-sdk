@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.envelope.resource
 
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.Embrace
@@ -8,9 +9,11 @@ import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.injection.isDebug
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
@@ -53,7 +56,7 @@ internal class EnvelopeResourceSourceImplTest {
             HostedSdkVersionInfo(
                 FakePreferenceService()
             ),
-            packageInfo.applicationInfo,
+            "prod",
             BuildInfo("100", "release", "oem"),
             packageInfo,
             Embrace.AppFramework.NATIVE,
@@ -90,3 +93,5 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals(8, envelope.numCores)
     }
 }
+
+

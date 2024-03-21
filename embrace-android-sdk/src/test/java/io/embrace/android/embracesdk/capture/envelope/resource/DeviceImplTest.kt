@@ -18,7 +18,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 
-
 internal class DeviceImplTest {
 
     companion object {
@@ -45,6 +44,7 @@ internal class DeviceImplTest {
             every { preferencesService.screenResolution }.returns("200x300")
         }
     }
+
     @Before
     fun setUp() {
         clearAllMocks(
@@ -57,27 +57,36 @@ internal class DeviceImplTest {
 
     @Test
     fun `test screen resolution from preferences`() {
-        val device = DeviceImpl(windowManager, preferencesService,
+        val device = DeviceImpl(
+            windowManager,
+            preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            cpuInfoDelegate)
+            cpuInfoDelegate
+        )
 
         assertEquals("200x300", device.screenResolution)
     }
 
     @Test
     fun getCpuName() {
-        val device = DeviceImpl(windowManager, preferencesService,
+        val device = DeviceImpl(
+            windowManager,
+            preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            cpuInfoDelegate)
+            cpuInfoDelegate
+        )
 
         assertEquals("fake_cpu", device.cpuName)
     }
 
     @Test
     fun getEgl() {
-        val device = DeviceImpl(windowManager, preferencesService,
+        val device = DeviceImpl(
+            windowManager,
+            preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            cpuInfoDelegate)
+            cpuInfoDelegate
+        )
 
         assertEquals("fake_egl", device.eglInfo)
     }

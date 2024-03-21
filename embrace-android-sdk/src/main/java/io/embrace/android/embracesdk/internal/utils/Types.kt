@@ -236,6 +236,10 @@ internal typealias CrashModuleSupplier = (
  */
 internal typealias PayloadModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
+    coreModule: CoreModule,
+    androidServicesModule: AndroidServicesModule,
+    systemServiceModule: SystemServiceModule,
+    workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     sdkObservabilityModule: SdkObservabilityModule

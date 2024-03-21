@@ -124,6 +124,10 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
         this.forceUpdate = forceUpdate
     }
 
+    override fun getReactNativeBundleId(): String? {
+        return fakeReactNativeBundleId
+    }
+
     override fun precomputeValues() {}
 
     override fun getCpuName(): String? = cpuName

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
-public interface Device {
+internal interface Device {
 
     /**
      * Tries to determine whether the device is jailbroken by looking for specific directories which
@@ -22,7 +22,7 @@ public interface Device {
      *
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
-    public var isJailbroken: Boolean?
+    var isJailbroken: Boolean?
 
     /**
      * Gets the device's screen resolution.
@@ -30,49 +30,49 @@ public interface Device {
      * @param windowManager the {@link WindowManager} from the {@link Context}
      * @return the device's screen resolution
      */
-    public var screenResolution: String
+    var screenResolution: String
 
     /**
      * Gets the name of the manufacturer of the device.
      *
      * @return the name of the device manufacturer
      */
-    public val manufacturer: String?
+    val manufacturer: String?
 
     /**
      * Gets the name of the model of the device.
      *
      * @return the name of the model of the device
      */
-    public val model: String?
+    val model: String?
 
     /**
      * Gets the operating system of the device. This is hard-coded to Android OS.
      *
      * @return the device's operating system
      */
-    public val operatingSystemType: String
+    val operatingSystemType: String
 
     /**
      * Gets the version of the installed operating system on the device.
      *
      * @return the version of the operating system
      */
-    public val operatingSystemVersion: String?
+    val operatingSystemVersion: String?
 
     /**
      * Gets the version code of the running Android SDK.
      *
      * @return the running Android SDK version code
      */
-    public val operatingSystemVersionCode: Int
+    val operatingSystemVersionCode: Int
 
     /**
      * Get the number of available cores for device info
      *
      * @return Number of cores in long
      */
-    public val numberOfCores: Int
+    val numberOfCores: Int
 
     /**
      * Gets the free capacity of the internal storage of the device.
@@ -80,28 +80,28 @@ public interface Device {
      * @param statFs the {@link StatFs} service for the device
      * @return the total free capacity of the internal storage of the device in bytes
      */
-    public val internalStorageTotalCapacity: Lazy<Long>
+    val internalStorageTotalCapacity: Lazy<Long>
 
     /**
      * The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
      *
      * @return the name of the primary CPU of the device
      */
-    public val cpuName: String?
+    val cpuName: String?
 
     /**
      * The EGL (Embedded-System Graphics Library) information obtained with the system call 'ro.hardware.egl'
      *
      * @return the ELG of the primary CPU of the device
      */
-    public val eglInfo: String?
+    val eglInfo: String?
 }
 
 internal class DeviceImpl(
-    private val windowManager: WindowManager,
+    private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
-    private val cpuInfoDelegate: CpuInfoDelegate
+    cpuInfoDelegate: CpuInfoDelegate
 ) : Device {
     override var isJailbroken: Boolean? = null
     override var screenResolution: String = ""
@@ -115,7 +115,7 @@ internal class DeviceImpl(
         "/system/bin/failsafe/",
         "/data/local/"
     )
-    
+
     init {
         logDeveloper(
             "Device",
@@ -146,12 +146,12 @@ internal class DeviceImpl(
         }
     }
 
-    private fun getScreenResolution(windowManager: WindowManager): String {
+    private fun getScreenResolution(windowManager: WindowManager?): String {
         return try {
             logDeveloper("Device", "Computing screen resolution")
-            val display = windowManager.defaultDisplay
+            val display = windowManager?.defaultDisplay
             val displayMetrics = DisplayMetrics()
-            display.getMetrics(displayMetrics)
+            display?.getMetrics(displayMetrics)
             String.format(
                 Locale.US,
                 "%dx%d",
@@ -216,15 +216,15 @@ internal class DeviceImpl(
      */
     private fun isEmulator(): Boolean {
         val isEmulator = Build.FINGERPRINT.startsWith("generic") ||
-                Build.FINGERPRINT.startsWith("unknown") ||
-                Build.FINGERPRINT.contains("emulator") ||
-                Build.MODEL.contains("google_sdk") ||
-                Build.MODEL.contains("sdk_gphone64") ||
-                Build.MODEL.contains("Emulator") ||
-                Build.MODEL.contains("Android SDK built for") ||
-                Build.MANUFACTURER.contains("Genymotion") ||
-                Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
-                Build.PRODUCT.equals("google_sdk")
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.FINGERPRINT.contains("emulator") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("sdk_gphone64") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
+            Build.PRODUCT.equals("google_sdk")
         logDeveloper("MetadataUtils", "Device is an Emulator = $isEmulator")
         return isEmulator
     }

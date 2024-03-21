@@ -77,7 +77,7 @@ internal data class EnvelopeResource(
     @Json(name = "app_version")
     val appVersion: String? = null,
 
-    /* The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity. Previous name: a.f */
+    /* The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity, 4=Flutter. Previous name: a.f */
     @Json(name = "app_framework")
     val appFramework: EnvelopeResource.AppFramework? = null,
 
@@ -156,7 +156,7 @@ internal data class EnvelopeResource(
 
     /* The total capacity of internal storage for the whole device. Previous name: d.ms */
     @Json(name = "disk_total_capacity")
-    val diskTotalCapacity: kotlin.Long? = null,
+    val diskTotalCapacity: Long? = null,
 
     /* A hardcoded string representing the operating system in use. Previous name: d.os */
     @Json(name = "os_type")
@@ -181,30 +181,30 @@ internal data class EnvelopeResource(
     /* (Android) The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
     Previous name: d.pt */
     @Json(name = "cpu_name")
-    val cpuName: kotlin.Int? = null,
+    val cpuName: Int? = null,
 
     /* (Android) The EGL (Embedded-System Graphics Library) information obtained with the system call
     'ro.hardware.egl'. Previous name: d.gp */
     @Json(name = "egl_info")
-    val eglInfo: kotlin.Int? = null
-){
+    val eglInfo: Int? = null
+) {
 
     /**
      * The frameworks in use by the app. Previous name: a.f
      *
      * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
      */
-    internal enum class AppFramework(val value: String) {
-        @Json(name = "native")
-        NATIVE("native"),
+    internal enum class AppFramework(val value: Int) {
+        @Json(name = "1")
+        NATIVE(1),
 
-        @Json(name = "react_native")
-        REACT_NATIVE("react_native"),
+        @Json(name = "2")
+        REACT_NATIVE(2),
 
-        @Json(name = "unity")
-        UNITY("unity"),
+        @Json(name = "3")
+        UNITY(3),
 
-        @Json(name = "flutter")
-        FLUTTER("flutter")
+        @Json(name = "4")
+        FLUTTER(4)
     }
 }

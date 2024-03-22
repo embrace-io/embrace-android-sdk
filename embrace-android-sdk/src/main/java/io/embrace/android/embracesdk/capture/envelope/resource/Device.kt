@@ -105,7 +105,7 @@ internal class DeviceImpl(
 ) : Device {
     override var isJailbroken: Boolean? = null
     override var screenResolution: String = ""
-    private val jailbreakLocations: List<String> = mutableListOf(
+    private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
         "/system/bin/",
         "/system/xbin/",
@@ -128,27 +128,22 @@ internal class DeviceImpl(
     private fun asyncRetrieveScreenResolution() {
         // if the screenResolution exists in memory, don't try to retrieve it
         if (screenResolution.isNotEmpty()) {
-            logDeveloper("Device", "Screen resolution already exists")
             return
         }
         backgroundWorker.submit {
-            logDeveloper("Device", "Async retrieve screen resolution")
             val storedScreenResolution = preferencesService.screenResolution
             // get from shared preferences
             if (storedScreenResolution != null) {
-                logDeveloper("Device", "Screen resolution is present, loading from store")
                 screenResolution = storedScreenResolution
             } else {
                 screenResolution = getScreenResolution(windowManager)
                 preferencesService.screenResolution = screenResolution
-                logDeveloper("Device", "Screen resolution computed and stored")
             }
         }
     }
 
     private fun getScreenResolution(windowManager: WindowManager?): String {
         return try {
-            logDeveloper("Device", "Computing screen resolution")
             val display = windowManager?.defaultDisplay
             val displayMetrics = DisplayMetrics()
             display?.getMetrics(displayMetrics)
@@ -165,26 +160,19 @@ internal class DeviceImpl(
     }
 
     private fun asyncRetrieveIsJailbroken() {
-        logDeveloper("Device", "Async retrieve Jailbroken")
-
         // if the isJailbroken property exists in memory, don't try to retrieve it
         if (isJailbroken != null) {
-            logDeveloper("Device", "Jailbroken already exists")
             return
         }
         backgroundWorker.submit {
-            logDeveloper("Device", "Async retrieve jailbroken")
             val storedIsJailbroken = preferencesService.jailbroken
             // load value from shared preferences
             if (storedIsJailbroken != null) {
-                logDeveloper("Device", "Jailbroken is present, loading from store")
                 isJailbroken = storedIsJailbroken
             } else {
                 isJailbroken = checkIfIsJailbroken()
                 preferencesService.jailbroken = isJailbroken
-                logDeveloper("Device", "Jailbroken processed and stored")
             }
-            logDeveloper("Device", "Jailbroken: $isJailbroken")
         }
     }
 
@@ -225,7 +213,6 @@ internal class DeviceImpl(
             Build.MANUFACTURER.contains("Genymotion") ||
             Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
             Build.PRODUCT.equals("google_sdk")
-        logDeveloper("MetadataUtils", "Device is an Emulator = $isEmulator")
         return isEmulator
     }
 

@@ -55,8 +55,7 @@ internal class StorageModuleImpl(
         EmbraceDeliveryCacheManager(
             cacheService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
-            coreModule.logger,
-            initModule.clock
+            coreModule.logger
         )
     }
 

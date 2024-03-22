@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
@@ -82,8 +83,10 @@ internal class CurrentSessionSpanImpl(
                 spanRepository.clearCompletedSpans()
                 sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
             } else {
+                val crashTime = openTelemetryClock.now().nanosToMillis()
+                spanRepository.failActiveSpans(crashTime)
                 endingSessionSpan.setEmbraceAttribute(appTerminationCause)
-                endingSessionSpan.stop()
+                endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
             }
             return spanSink.flushSpans()
         }

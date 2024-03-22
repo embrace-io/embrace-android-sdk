@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
  */
 internal interface EmbraceAttribute {
     /**
-     * The unique name given to the attribute
+     * The unique name given to the attribute.
+     * Don't use this to look up the existence of an attribute in a log or span - use [otelAttributeName] instead
      */
     val attributeName: String
 

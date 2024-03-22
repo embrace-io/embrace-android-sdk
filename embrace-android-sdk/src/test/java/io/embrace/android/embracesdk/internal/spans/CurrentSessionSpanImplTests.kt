@@ -1,18 +1,21 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
-import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -147,13 +150,56 @@ internal class CurrentSessionSpanImplTests {
             with(lastFlushedSpan) {
                 assertEquals("emb-session", name)
                 assertIsType(EmbType.Ux.Session)
-                assertSuccessful()
+                assertError(ErrorCode.FAILURE)
                 assertNotKeySpan()
                 assertHasEmbraceAttribute(cause)
             }
 
             assertEquals(0, module.openTelemetryModule.spanSink.completedSpans().size)
         }
+    }
+
+    @Test
+    fun `crashing results in the session span and active spans being terminated`() {
+        val sessionStartTimeMs = clock.now()
+        clock.tick(100)
+
+        val crashedSpanName = "crashed-span"
+        spanService.startSpan(name = crashedSpanName, internal = false)
+
+        val crashSpanStartTimeMs = clock.now()
+        clock.tick(500)
+
+        val crashTimeMs = clock.now()
+        val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash).associateBy { it.name }
+
+        assertEmbraceSpanData(
+            span = flushedSpans["emb-session"],
+            expectedStartTimeMs = sessionStartTimeMs,
+            expectedEndTimeMs = crashTimeMs,
+            expectedParentId = SpanId.getInvalid(),
+            expectedErrorCode = ErrorCode.FAILURE,
+            expectedCustomAttributes = mapOf(
+                AppTerminationCause.Crash.toOTelKeyValuePair(),
+                EmbType.Ux.Session.toOTelKeyValuePair()
+            ),
+            private = true
+        )
+
+        assertEmbraceSpanData(
+            span = flushedSpans[crashedSpanName],
+            expectedStartTimeMs = crashSpanStartTimeMs,
+            expectedEndTimeMs = crashTimeMs,
+            expectedParentId = SpanId.getInvalid(),
+            expectedErrorCode = ErrorCode.FAILURE,
+            expectedCustomAttributes = mapOf(
+                EmbType.Performance.Default.toOTelKeyValuePair()
+            ),
+            key = true
+        )
+
+        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanRepository.getActiveSpans().size)
     }
 
     @Test

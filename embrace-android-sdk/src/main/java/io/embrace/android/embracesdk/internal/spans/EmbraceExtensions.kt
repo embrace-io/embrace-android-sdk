@@ -131,3 +131,6 @@ internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PR
  * Return the appropriate internal Embrace attribute usage name given the current string
  */
 internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
+
+internal fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    this[embraceAttribute.otelAttributeName()] == embraceAttribute.attributeValue

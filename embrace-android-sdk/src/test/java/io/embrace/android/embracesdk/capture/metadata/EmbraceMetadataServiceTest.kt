@@ -307,6 +307,6 @@ internal class EmbraceMetadataServiceTest {
         val metadataService = getMetadataService()
 
         assertEquals("fake_cpu", metadataService.getCpuName())
-        assertEquals("fake_elg", metadataService.getEgl())
+        assertEquals("fake_egl", metadataService.getEgl())
     }
 }

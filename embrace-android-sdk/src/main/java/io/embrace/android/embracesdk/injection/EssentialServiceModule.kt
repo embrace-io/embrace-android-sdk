@@ -96,9 +96,8 @@ internal class EssentialServiceModuleImpl(
         )
     }
 
-    @Suppress("DEPRECATION")
     private val lazyPackageInfo = lazy {
-        coreModule.context.packageManager.getPackageInfo(coreModule.context.packageName, 0)
+        coreModule.packageInfo
     }
 
     private val lazyAppVersionName = lazy {

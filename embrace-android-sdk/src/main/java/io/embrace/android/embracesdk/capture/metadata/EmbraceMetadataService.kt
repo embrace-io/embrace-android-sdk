@@ -124,7 +124,7 @@ internal class EmbraceMetadataService private constructor(
             if (storedEgl != null) {
                 egl = storedEgl
             } else {
-                egl = embraceCpuInfoDelegate.getElg()
+                egl = embraceCpuInfoDelegate.getEgl()
                 preferencesService.egl = egl
                 logDeveloper("EmbraceMetadataService", "egl computed and stored")
             }
@@ -207,7 +207,7 @@ internal class EmbraceMetadataService private constructor(
      * Return the bundle Id if it was already calculated in background or null if it's not ready yet.
      * This way, we avoid blocking the main thread to wait for the value.
      */
-    fun getReactNativeBundleId(): String? =
+    override fun getReactNativeBundleId(): String? =
         if (appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
             reactNativeBundleId.get()
         } else {
@@ -315,6 +315,9 @@ internal class EmbraceMetadataService private constructor(
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
+
+    override fun getAppFramework() = appFramework
+    override fun getPackageName() = packageName
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL

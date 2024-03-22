@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
@@ -23,6 +24,8 @@ internal interface CoreModule {
      * Reference to the context. This will always return the application context so won't leak.
      */
     val context: Context
+
+    val packageInfo: PackageInfo
 
     /**
      * Reference to the current application.
@@ -73,6 +76,10 @@ internal class CoreModuleImpl(
             else -> ctx.applicationContext
         }
     }
+
+    @Suppress("DEPRECATION")
+    override val packageInfo: PackageInfo
+        get() = context.packageManager.getPackageInfo(context.packageName, 0)
 
     override val application by singleton { context as Application }
 

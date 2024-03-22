@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -17,7 +16,6 @@ internal class InternalInterfaceModuleImplTest {
             initModule,
             initModule.openTelemetryModule,
             FakeCoreModule(),
-            FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             EmbraceImpl(),
             FakeCrashModule()

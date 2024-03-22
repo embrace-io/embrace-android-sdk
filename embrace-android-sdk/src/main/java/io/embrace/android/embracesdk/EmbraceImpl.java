@@ -340,7 +340,6 @@ final class EmbraceImpl {
             moduleInitBootstrapper.getInitModule(),
             moduleInitBootstrapper.getOpenTelemetryModule(),
             coreModule,
-            androidServicesModule,
             essentialServiceModule,
             this,
             crashModule

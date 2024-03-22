@@ -4,14 +4,15 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
+import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -20,6 +21,8 @@ internal class SessionPayloadSourceImplTest {
     private lateinit var impl: SessionPayloadSourceImpl
     private lateinit var sink: SpanSinkImpl
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var spanRepository: SpanRepository
+    private lateinit var activeSpan: FakePersistableEmbraceSpan
     private val cacheSpan = FakeSpanData(name = "cache-span")
 
     @Before
@@ -35,11 +38,15 @@ internal class SessionPayloadSourceImplTest {
         currentSessionSpan = FakeCurrentSessionSpan().apply {
             spanData = listOf(EmbraceSpanData(FakeSpanData("my-span")))
         }
+        activeSpan = FakePersistableEmbraceSpan.started()
+        spanRepository = SpanRepository()
+        spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPayloadSourceImpl(
             errorService,
             FakeNativeThreadSamplerService(),
             sink,
-            currentSessionSpan
+            currentSessionSpan,
+            spanRepository
         )
     }
 
@@ -71,6 +78,7 @@ internal class SessionPayloadSourceImplTest {
         val err = checkNotNull(payload.internalError)
         assertEquals(1, err.count)
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
-        assertNull(payload.spanSnapshots)
+        val snapshots = checkNotNull(payload.spanSnapshots)
+        assertEquals(1, snapshots.size)
     }
 }

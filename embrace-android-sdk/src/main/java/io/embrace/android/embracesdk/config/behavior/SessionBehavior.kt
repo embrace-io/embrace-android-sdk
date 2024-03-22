@@ -118,7 +118,7 @@ internal class SessionBehavior(
     /**
      * Whether to use the V2 payload format for sending sessions.
      */
-    fun useV2Payload() = remote?.sessionConfig?.useV2Payload ?: false
+    fun useV2Payload() = remote?.sessionConfig?.useV2Payload ?: true
 
     /**
      * Checks whether a feature should be gated.

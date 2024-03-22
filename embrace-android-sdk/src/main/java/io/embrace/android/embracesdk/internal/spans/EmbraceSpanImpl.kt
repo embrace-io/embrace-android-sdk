@@ -151,9 +151,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun snapshot(): Span? {
-        return if (spanId == null) {
-            null
-        } else {
+        return if (canSnapshot()) {
             Span(
                 traceId = traceId,
                 spanId = spanId,
@@ -165,8 +163,12 @@ internal class EmbraceSpanImpl(
                 events = events.map(EmbraceSpanEvent::toNewPayload),
                 attributes = attributes.toNewPayload()
             )
+        } else {
+            null
         }
     }
+
+    private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
     internal fun wrappedSpan(): io.opentelemetry.api.trace.Span? = startedSpan.get()
 

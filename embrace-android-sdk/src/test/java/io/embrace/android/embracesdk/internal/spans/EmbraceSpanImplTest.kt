@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -40,13 +41,13 @@ internal class EmbraceSpanImplTest {
         val fakeInitModule = FakeInitModule(fakeClock)
         openTelemetryClock = fakeInitModule.openTelemetryClock
         spanRepository = SpanRepository()
-        val spanName = "test-span"
         embraceSpan = EmbraceSpanImpl(
-            spanName = spanName,
+            spanName = EXPECTED_SPAN_NAME,
             openTelemetryClock = fakeInitModule.openTelemetryClock,
-            spanBuilder = tracer.spanBuilder(spanName),
+            spanBuilder = tracer.spanBuilder(EXPECTED_SPAN_NAME),
             spanRepository = spanRepository
         )
+        fakeClock.tick(100)
     }
 
     @Test
@@ -59,6 +60,7 @@ internal class EmbraceSpanImplTest {
             assertFalse(addAttribute("first", "value"))
             assertEquals(0, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertNull(embraceSpan.snapshot())
         }
     }
 
@@ -66,12 +68,15 @@ internal class EmbraceSpanImplTest {
     fun `validate span started state`() {
         with(embraceSpan) {
             assertTrue(start())
+            val expectedStartTimeMs = fakeClock.now()
             assertFalse(start())
             assertNotNull(traceId)
             assertNotNull(spanId)
             assertTrue(isRecording)
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, eventCount = 1, attributeCount = 1)
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
         }
@@ -81,7 +86,15 @@ internal class EmbraceSpanImplTest {
     fun `validate span stopped state`() {
         with(embraceSpan) {
             assertTrue(start())
+            val expectedStartTimeMs = fakeClock.now()
+            fakeClock.tick(200)
             assertTrue(stop())
+            val expectedEndTimeMs = fakeClock.now()
+            assertSnapshot(
+                expectedStartTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = expectedEndTimeMs,
+                expectedStatus = Span.Status.OK
+            )
             validateStoppedSpan()
         }
     }
@@ -89,8 +102,15 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `validate starting and stopping span with specific times`() {
         with(embraceSpan) {
-            assertTrue(start(startTimeMs = 5L))
-            assertTrue(stop(endTimeMs = 10L))
+            val expectedStartTimeMs = fakeClock.now() + 1000
+            val expectedEndTimeMs = fakeClock.now() + 5700
+            assertTrue(start(startTimeMs = expectedStartTimeMs))
+            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs))
+            assertSnapshot(
+                expectedStartTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = expectedEndTimeMs,
+                expectedStatus = Span.Status.ERROR
+            )
             validateStoppedSpan()
         }
     }
@@ -111,6 +131,7 @@ internal class EmbraceSpanImplTest {
             assertFalse(isRecording)
             assertNotNull(traceId)
             assertNotNull(spanId)
+            assertNotNull(snapshot())
         }
     }
 
@@ -126,8 +147,10 @@ internal class EmbraceSpanImplTest {
                     attributes = mapOf(Pair("key", "value"), Pair("key2", "value1"))
                 )
             )
-            assertTrue(addEvent(name = "past event", timestampMs = 1L, attributes = null))
-            assertTrue(addEvent(name = "future event", timestampMs = 2L, mapOf(Pair("key", "value"), Pair("key2", "value1"))))
+            assertTrue(addEvent(name = "past event", timestampMs = fakeClock.now() - 1L, attributes = null))
+            assertTrue(
+                addEvent(name = "future event", timestampMs = fakeClock.now() + 2L, mapOf(Pair("key", "value"), Pair("key2", "value1")))
+            )
         }
     }
 
@@ -191,7 +214,7 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
-    fun `validate snapshot`() {
+    fun `validate full snapshot`() {
         assertTrue(embraceSpan.start())
         assertNotNull(embraceSpan.snapshot())
         with(embraceSpan) {
@@ -230,9 +253,20 @@ internal class EmbraceSpanImplTest {
         }
     }
 
-    @Test
-    fun `no snapshot for spans that are not started`() {
-        assertNull(embraceSpan.snapshot())
+    private fun EmbraceSpanImpl.assertSnapshot(
+        expectedStartTimeMs: Long,
+        expectedEndTimeMs: Long? = null,
+        expectedStatus: Span.Status = Span.Status.UNSET,
+        eventCount: Int = 0,
+        attributeCount: Int = 0
+    ) {
+        with(checkNotNull(snapshot())) {
+            assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
+            assertEquals(expectedStatus, status)
+            assertEquals(eventCount, events?.size)
+            assertEquals(attributeCount, attributes?.size)
+        }
     }
 
     private fun EmbraceSpanImpl.validateStoppedSpan() {

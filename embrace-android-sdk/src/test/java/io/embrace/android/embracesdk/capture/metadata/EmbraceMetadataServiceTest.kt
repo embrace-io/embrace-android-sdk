@@ -129,6 +129,7 @@ internal class EmbraceMetadataServiceTest {
     private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE): EmbraceMetadataService {
         return EmbraceMetadataService.ofContext(
             context,
+            AppEnvironment.Environment.UNKNOWN,
             buildInfo,
             configService,
             framework,
@@ -181,8 +182,6 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.reactNativeVersionNumber }.returns(null)
         every { preferencesService.javaScriptBundleId }.returns(null)
         every { preferencesService.javaScriptBundleURL }.returns(null)
-
-        every { MetadataUtils.appEnvironment(any()) }.returns("UNKNOWN")
 
         val obj = getMetadataService().getAppInfo()
         val expectedInfo = ResourceReader.readResourceAsText("metadata_appinfo_expected.json")
@@ -244,6 +243,7 @@ internal class EmbraceMetadataServiceTest {
 
         val metadataService = EmbraceMetadataService.ofContext(
             context,
+            AppEnvironment.Environment.PROD,
             buildInfo,
             configService,
             Embrace.AppFramework.NATIVE,

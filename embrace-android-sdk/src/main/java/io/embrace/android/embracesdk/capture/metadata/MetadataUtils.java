@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import io.embrace.android.embracesdk.injection.CoreModuleKt;
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 /**
@@ -32,11 +30,6 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
  */
 final class MetadataUtils {
     private static final String OS_VERSION = "Android OS";
-
-    private static final String ENVIRONMENT_DEV = "dev";
-
-    private static final String ENVIRONMENT_PROD = "prod";
-
     private static final List<String> JAILBREAK_LOCATIONS = Arrays.asList(
         "/sbin/",
         "/system/bin/",
@@ -231,17 +224,6 @@ final class MetadataUtils {
 
         InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Device is an Emulator = " + isEmulator);
         return isEmulator;
-    }
-
-    /**
-     * Creates a "prod" or "dev" environment string, depending on whether or not this is a debug
-     * build of the app.
-     *
-     * @param applicationInfo the application info used for introspecting flags
-     * @return a string representation of the environment name
-     */
-    static String appEnvironment(ApplicationInfo applicationInfo) {
-        return CoreModuleKt.isDebug(applicationInfo) ? ENVIRONMENT_DEV : ENVIRONMENT_PROD;
     }
 
     /**

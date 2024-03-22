@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnecti
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
+import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -194,6 +195,7 @@ internal class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("metadata-service-init") {
             EmbraceMetadataService.ofContext(
                 coreModule.context,
+                AppEnvironment(coreModule.context.applicationInfo).environment,
                 coreModule.buildInfo,
                 configService,
                 coreModule.appFramework,

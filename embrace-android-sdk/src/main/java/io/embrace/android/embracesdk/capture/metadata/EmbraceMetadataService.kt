@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.capture.metadata
 
 import android.app.usage.StorageStatsManager
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
@@ -43,7 +42,7 @@ internal class EmbraceMetadataService private constructor(
     private val storageStatsManager: StorageStatsManager?,
     private val buildInfo: BuildInfo,
     private val configService: ConfigService,
-    private val applicationInfo: ApplicationInfo,
+    private val environment: AppEnvironment.Environment,
     private val deviceId: Lazy<String>,
     private val packageName: String,
     private val lazyAppVersionName: Lazy<String>,
@@ -258,7 +257,7 @@ internal class EmbraceMetadataService private constructor(
             buildInfo.buildId,
             buildInfo.buildType,
             buildInfo.buildFlavor,
-            MetadataUtils.appEnvironment(applicationInfo),
+            environment.value,
             when {
                 populateAllFields -> appUpdated.value
                 else -> false
@@ -381,6 +380,7 @@ internal class EmbraceMetadataService private constructor(
         @Suppress("LongParameterList")
         fun ofContext(
             context: Context,
+            environment: AppEnvironment.Environment,
             buildInfo: BuildInfo,
             configService: ConfigService,
             appFramework: AppFramework,
@@ -446,7 +446,7 @@ internal class EmbraceMetadataService private constructor(
                 storageStatsManager,
                 buildInfo,
                 configService,
-                context.applicationInfo,
+                environment,
                 deviceIdentifier,
                 context.packageName,
                 lazyAppVersionName,

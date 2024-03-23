@@ -134,3 +134,8 @@ internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIB
 
 internal fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.otelAttributeName()] == embraceAttribute.attributeValue
+
+internal fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
+    this[embraceAttribute.otelAttributeName()] = embraceAttribute.attributeValue
+    return this
+}

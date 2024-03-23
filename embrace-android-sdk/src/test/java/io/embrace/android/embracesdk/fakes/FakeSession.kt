@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -25,6 +26,22 @@ internal fun fakeSession(
 
 internal fun fakeV1SessionMessage(): SessionMessage = SessionMessage(
     session = fakeSession()
+)
+
+internal fun fakeV1EndedSessionMessage(): SessionMessage = SessionMessage(
+    session = fakeSession().copy(endTime = 160000500000L),
+    spans = listOfNotNull(testSpan),
+    spanSnapshots = listOfNotNull(),
+)
+
+internal fun fakeV1EndedSessionMessageWithSnapshot(): SessionMessage = SessionMessage(
+    session = fakeSession().copy(
+        sessionId = "fakeSessionWithSnapshot",
+        startTime = 161000000000L,
+        endTime = 161000400000L
+    ),
+    spans = listOfNotNull(testSpan),
+    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()),
 )
 
 internal fun fakeV2SessionMessage(): SessionMessage = SessionMessage(

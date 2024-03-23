@@ -4,10 +4,9 @@ import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
-import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fixtures.testSpanSnapshot
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -38,19 +37,8 @@ internal class SessionMessageTest {
             emptyList()
         )
     )
-    private val spanSnapshots = listOfNotNull(
-        Span(
-            traceId = "snapshot-trace-id",
-            spanId = "snapshot-span-id",
-            parentSpanId = null,
-            name = "snapshot",
-            startTimeUnixNano = DEFAULT_FAKE_CURRENT_TIME,
-            endTimeUnixNano = null,
-            status = Span.Status.UNSET,
-            events = emptyList(),
-            attributes = emptyList()
-        )
-    )
+
+    private val spanSnapshots = listOfNotNull(testSpanSnapshot)
 
     private val info = SessionMessage(
         session,

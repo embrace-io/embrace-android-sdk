@@ -5,7 +5,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.fromMap
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
@@ -23,16 +22,23 @@ import io.opentelemetry.sdk.trace.data.StatusData
 import kotlin.random.Random
 
 internal class FakeSpanData(
-    private var name: String = "fake-span",
+    private var name: String = "fake-started-span",
     private var kind: SpanKind = SpanKind.INTERNAL,
     private var spanContext: SpanContext = newTraceRootContext(),
     private var parentSpanContext: SpanContext = SpanContext.getInvalid(),
     private var status: StatusData = StatusData.unset(),
-    private var startEpochNanos: Long = FakeClock.DEFAULT_FAKE_CURRENT_TIME.millisToNanos(),
-    private var attributes: Attributes = Attributes.builder().put("my-key", "my-value").build(),
+    private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
+    private var attributes: Attributes =
+        Attributes.builder().fromMap(
+            mapOf(
+                EmbType.Performance.Default.toOTelKeyValuePair(),
+                KeySpan.toOTelKeyValuePair(),
+                Pair("my-key", "my-value")
+            )
+        ).build(),
     private var events: MutableList<EventData> = mutableListOf(
         EventData.create(
-            0L,
+            startEpochNanos + 1000000L,
             "fake-event",
             Attributes.builder().put("my-key", "my-value").build()
         )
@@ -62,20 +68,14 @@ internal class FakeSpanData(
     override fun getResource(): Resource = resource
 
     companion object {
-        val snapshot = EmbraceSpanData(
+        private const val DEFAULT_START_TIME_MS = FakeClock.DEFAULT_FAKE_CURRENT_TIME
+        val perfSpanSnapshot = FakeSpanData(name = "snapshot-perf-span")
+        val perfSpanCompleted =
             FakeSpanData(
-                attributes = Attributes
-                    .builder()
-                    .fromMap(
-                        mapOf(
-                            EmbType.Performance.Default.toOTelKeyValuePair(),
-                            KeySpan.toOTelKeyValuePair(),
-                            Pair("my-key", "my-value")
-                        )
-                    )
-                    .build(),
+                name = "completed-perf-span",
+                status = StatusData.ok(),
+                endEpochNanos = (DEFAULT_START_TIME_MS + 60000L).millisToNanos()
             )
-        )
 
         private fun newTraceRootContext() = SpanContext.create(
             TraceId.fromLongs(Random.nextLong(), Random.nextLong()).toString(),

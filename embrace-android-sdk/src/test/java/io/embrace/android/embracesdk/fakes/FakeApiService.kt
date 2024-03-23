@@ -13,8 +13,10 @@ import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 internal class FakeApiService : ApiService {
@@ -28,7 +30,7 @@ internal class FakeApiService : ApiService {
     val crashRequests = mutableListOf<EventMessage>()
     val blobRequests = mutableListOf<BlobMessage>()
     val sessionRequests = mutableListOf<SessionMessage>()
-    val bgActivityRequests = mutableListOf<SessionMessage>()
+    var futureGetCount: Int = 0
 
     override fun getConfig(): RemoteConfig? {
         TODO("Not yet implemented")
@@ -56,14 +58,14 @@ internal class FakeApiService : ApiService {
 
     override fun sendCrash(crash: EventMessage): Future<*> {
         crashRequests.add(crash)
-        return FutureTask { }
+        return ObservableFutureTask { }
     }
 
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         blobRequests.add(blobMessage)
     }
 
-    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>? {
+    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
         if (throwExceptionSendSession) {
             error("FakeApiService.sendSession")
         }
@@ -71,12 +73,25 @@ internal class FakeApiService : ApiService {
         action(stream)
         val obj = readBodyAsSessionMessage(stream.toByteArray().inputStream())
         sessionRequests.add(obj)
-        return FutureTask { }
+        onFinish?.invoke(true)
+        return ObservableFutureTask { }
     }
 
     private fun readBodyAsSessionMessage(inputStream: InputStream): SessionMessage {
         return GZIPInputStream(inputStream).use {
             serializer.fromJson(it, SessionMessage::class.java)
+        }
+    }
+
+    inner class ObservableFutureTask<T>(callable: Callable<T>) : FutureTask<T>(callable) {
+        override fun get(): T {
+            futureGetCount++
+            return super.get()
+        }
+
+        override fun get(timeout: Long, unit: TimeUnit): T {
+            futureGetCount++
+            return super.get(timeout, unit)
         }
     }
 }

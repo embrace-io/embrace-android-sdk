@@ -182,10 +182,13 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun deleteOldestSessions() {
-        cachedSessions.values
+        val sessionsToPurge = cachedSessions.values
             .sortedBy { it.timestampMs }
             .take(cachedSessions.size - MAX_SESSIONS_CACHED + 1)
-            .forEach { deleteSession(it.sessionId) }
+        if (sessionsToPurge.isNotEmpty()) {
+            logger.logWarning("Too many cached sessions. Purging the oldest ${sessionsToPurge.size}")
+            sessionsToPurge.forEach { deleteSession(it.sessionId) }
+        }
     }
 
     private fun saveSessionBytes(

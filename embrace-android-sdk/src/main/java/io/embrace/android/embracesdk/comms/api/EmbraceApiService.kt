@@ -145,7 +145,7 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: (() -> Unit)?): Future<*> {
+    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
         return postOnWorker(action, mapper.sessionRequest(isV2), onFinish)
     }
 
@@ -153,7 +153,7 @@ internal class EmbraceApiService(
         payload: T,
         mapper: (T) -> ApiRequest,
         type: ParameterizedType? = null,
-        noinline onComplete: (() -> Unit)? = null,
+        noinline onComplete: ((successful: Boolean) -> Unit)? = null,
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
         logger.logDeveloper(TAG, "Post event")
@@ -178,17 +178,18 @@ internal class EmbraceApiService(
     private fun postOnWorker(
         action: SerializationAction,
         request: ApiRequest,
-        onComplete: (() -> Any)?,
+        onComplete: ((successful: Boolean) -> Any)?,
     ): Future<*> {
         val priority = when (request.isSessionRequest()) {
             true -> TaskPriority.CRITICAL
             else -> TaskPriority.NORMAL
         }
         return backgroundWorker.submit(priority) {
+            var successfullySent = false
             try {
-                handleApiRequest(request, action)
+                successfullySent = handleApiRequest(request, action)
             } finally {
-                onComplete?.invoke()
+                onComplete?.invoke(successfullySent)
             }
         }
     }
@@ -197,7 +198,7 @@ internal class EmbraceApiService(
      * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
      * Otherwise, the API call is saved to be sent later.
      */
-    private fun handleApiRequest(request: ApiRequest, action: SerializationAction) {
+    private fun handleApiRequest(request: ApiRequest, action: SerializationAction): Boolean {
         val endpoint = request.url.endpoint()
 
         if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
@@ -212,11 +213,15 @@ internal class EmbraceApiService(
             if (response !is ApiResponse.Success) {
                 // If the API call failed, propagate the error to the caller.
                 error("Failed to post Embrace API call. ")
+            } else {
+                return true
             }
         } else {
             // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
             pendingApiCallsSender.savePendingApiCall(request, action)
         }
+
+        return false
     }
 
     /**

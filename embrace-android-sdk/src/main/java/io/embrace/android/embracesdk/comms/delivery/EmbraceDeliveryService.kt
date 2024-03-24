@@ -52,7 +52,12 @@ internal class EmbraceDeliveryService(
                     serializer.toJson(sessionMessage, SessionMessage::class.java, it)
                 }
             }
-            val future = apiService.sendSession(sessionMessage.isV2Payload(), action) {
+            val future = apiService.sendSession(sessionMessage.isV2Payload(), action) { successful ->
+                if (!successful) {
+                    val message =
+                        "Session deleted without request being sent: ID $sessionId, timestamp ${sessionMessage.session.startTime}"
+                    logger.logWarning(message, SessionPurgeException(message))
+                }
                 cacheManager.deleteSession(sessionId)
             }
             if (snapshotType == SessionSnapshotType.JVM_CRASH) {
@@ -143,7 +148,13 @@ internal class EmbraceDeliveryService(
                 if (action != null) {
                     // temporarily assume all sessions are v1. Future changeset
                     // will encode this information in the filename.
-                    apiService.sendSession(false, action) { cacheManager.deleteSession(sessionId) }
+                    apiService.sendSession(false, action) { successful ->
+                        if (!successful) {
+                            val message = "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
+                            logger.logWarning(message, SessionPurgeException(message))
+                        }
+                        cacheManager.deleteSession(sessionId)
+                    }
                 } else {
                     logger.logError("Session $sessionId not found")
                 }

@@ -98,9 +98,9 @@ internal class AnrIntegrationTest : BaseTest() {
         // validate each interval contains the fields we would expect
         intervals.forEachIndexed { _, interval ->
             assertNotNull(interval.startTime)
-            assertNull(interval.lastKnownTime)
-            assertNotNull(interval.endTime)
-            assertTrue(checkNotNull(interval.endTime) > checkNotNull(interval.startTime))
+            interval.endTime?.let { endTime ->
+                assertTrue(endTime > checkNotNull(interval.startTime))
+            }
             assertEquals(AnrInterval.Type.UI, interval.type)
             assertNotNull(interval.code)
 

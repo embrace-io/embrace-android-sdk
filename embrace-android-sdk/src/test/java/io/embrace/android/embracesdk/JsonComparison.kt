@@ -16,6 +16,7 @@ internal inline fun <reified T> assertJsonMatchesGoldenFile(resourceName: String
     val json = ResourceReader.readResourceAsText(resourceName)
     val expected = serializer.fromJson(json, Map::class.java)
     val observedJson = serializer.toJson(obj)
+    println(observedJson)
     val observed = serializer.fromJson(observedJson, Map::class.java)
     assertEquals(expected, observed)
 }

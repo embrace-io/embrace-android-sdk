@@ -18,6 +18,7 @@ internal class EmbraceSerializer : PlatformSerializer {
     private val impl by threadLocal {
         Moshi.Builder()
             .add(EmbraceUrlAdapter())
+            .add(AppFrameworkAdapter())
             .build()
     }
 

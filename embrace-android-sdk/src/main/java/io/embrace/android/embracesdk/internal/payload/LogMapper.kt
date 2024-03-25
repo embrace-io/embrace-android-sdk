@@ -9,7 +9,7 @@ internal fun LogRecordData.toNewPayload(): Log = Log(
     timeUnixNano = observedTimestampEpochNanos,
     severityNumber = severity.severityNumber,
     severityText = severityText,
-    body = LogBody(body.asString()),
+    body = body.asString(),
     attributes = attributes.toNewPayload()
 )
 

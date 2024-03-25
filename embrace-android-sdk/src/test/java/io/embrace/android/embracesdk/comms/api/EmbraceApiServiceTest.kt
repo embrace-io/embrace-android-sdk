@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputS
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.LogBody
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -280,7 +279,7 @@ internal class EmbraceApiServiceTest {
                         timeUnixNano = 1234567890,
                         severityText = "severityText",
                         severityNumber = 1,
-                        body = LogBody("a message"),
+                        body = "a message",
                         attributes = listOf(Attribute("key", "value"))
                     )
                 )

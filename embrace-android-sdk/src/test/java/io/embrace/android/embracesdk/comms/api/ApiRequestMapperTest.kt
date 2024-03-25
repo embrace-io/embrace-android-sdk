@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.LogBody
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -75,7 +74,7 @@ internal class ApiRequestMapperTest {
                             timeUnixNano = 1234567890,
                             severityText = "severityText",
                             severityNumber = 1,
-                            body = LogBody("a message"),
+                            body = "a message",
                             attributes = listOf(Attribute("key", "value")),
                         )
                     )

@@ -39,7 +39,7 @@ internal data class Log(
     val severityText: String? = null,
 
     @Json(name = "body")
-    val body: LogBody? = null,
+    val body: String? = null,
 
     @Json(name = "attributes")
     val attributes: List<Attribute>? = null,

@@ -13,7 +13,7 @@ internal class LogMapperTest {
         assertEquals(input.timestampEpochNanos, output.timeUnixNano)
         assertEquals(input.severity.severityNumber, output.severityNumber)
         assertEquals(input.severityText, output.severityText)
-        assertEquals(input.body.asString(), checkNotNull(output.body).message)
+        assertEquals(input.body.asString(), checkNotNull(output.body))
         assertEquals(input.spanContext.traceId, output.traceId)
         assertEquals(input.spanContext.spanId, output.spanId)
 

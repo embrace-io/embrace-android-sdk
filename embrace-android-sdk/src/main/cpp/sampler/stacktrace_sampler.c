@@ -49,6 +49,9 @@ static timer_t timer_id = NULL;
 /* Holds information about the timer interval + delay */
 static struct itimerspec timerspec = {0};
 
+/* alternative stack to avoid overflow when unwinding */
+static stack_t emb_sample_stack = {0};
+
 emb_interval *emb_current_interval() {
     return interval;
 }
@@ -170,7 +173,7 @@ static bool emb_install_signal_handler() {
     bool result = true;
     EMB_LOGDEV("Populating handler with information.");
     handler->sa_sigaction = emb_handle_target_signal;
-    handler->sa_flags = SA_SIGINFO;
+    handler->sa_flags = SA_SIGINFO | SA_ONSTACK;
 
     // block all other signals when the handler is already executing.
     // https://www.gnu.org/software/libc/manual/html_node/Blocking-for-Handler.html
@@ -269,6 +272,9 @@ int emb_stop_thread_sampler() {
 }
 
 bool emb_monitor_current_thread() {
+    if (!emb_sig_stk_setup(emb_sample_stack)) {
+        return false;
+    }
     EMB_LOGDEV("Called emb_monitor_current_thread().");
     bool result = true;
     static pthread_mutex_t _emb_signal_mutex = PTHREAD_MUTEX_INITIALIZER;

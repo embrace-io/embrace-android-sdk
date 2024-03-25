@@ -37,18 +37,15 @@ internal class LegacyExceptionErrorTest {
     }
 
     @Test
-    fun `test addException with strict mode disabled has a limit of 5 exceptions`() {
+    fun `test addException with strict mode disabled has a limit of 10 exceptions`() {
         exceptionError = LegacyExceptionError(false)
-        val throwable = Throwable("exceptions")
-        exceptionError.addException(throwable, "state", clock)
-        exceptionError.addException(throwable, "state", clock)
-        exceptionError.addException(throwable, "state", clock)
-        exceptionError.addException(throwable, "state", clock)
-        exceptionError.addException(throwable, "state", clock)
-        exceptionError.addException(throwable, "state", clock)
+        val max = 10
+        repeat(max + 1) {
+            exceptionError.addException(Throwable("exceptions"), "state", clock)
+        }
 
-        assertEquals(exceptionError.exceptionErrors.size, 5)
-        assertEquals(exceptionError.occurrences, 6)
+        assertEquals(exceptionError.exceptionErrors.size, max)
+        assertEquals(exceptionError.occurrences, max + 1)
     }
 
     @Test

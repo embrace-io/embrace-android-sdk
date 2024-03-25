@@ -71,5 +71,5 @@ internal interface ApiService {
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation
      * is responsible for routing the payload correctly.
      */
-    fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: (() -> Unit)?): Future<*>?
+    fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
 }

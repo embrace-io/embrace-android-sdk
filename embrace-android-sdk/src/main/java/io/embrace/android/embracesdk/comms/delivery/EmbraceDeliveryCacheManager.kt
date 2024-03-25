@@ -182,10 +182,16 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     private fun deleteOldestSessions() {
-        cachedSessions.values
+        val sessionsToPurge = cachedSessions.values
             .sortedBy { it.timestampMs }
             .take(cachedSessions.size - MAX_SESSIONS_CACHED + 1)
-            .forEach { deleteSession(it.sessionId) }
+        if (sessionsToPurge.isNotEmpty()) {
+            sessionsToPurge.forEach {
+                val message = "Too many cached sessions. Purging session with file name ${it.filename}"
+                logger.logWarning(message, SessionPurgeException(message))
+                deleteSession(it.sessionId)
+            }
+        }
     }
 
     private fun saveSessionBytes(
@@ -231,3 +237,5 @@ internal class EmbraceDeliveryCacheManager(
         }
     }
 }
+
+internal class SessionPurgeException(message: String) : Exception(message)

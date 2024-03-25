@@ -60,5 +60,5 @@ internal data class LegacyExceptionError(@Transient private val logStrictMode: B
 /**
  * The occurrences list limit.
  */
-private const val DEFAULT_EXCEPTION_ERROR_LIMIT = 5
+private const val DEFAULT_EXCEPTION_ERROR_LIMIT = 10
 private const val DEFAULT_EXCEPTION_ERROR_LIMIT_STRICT_MODE = 50

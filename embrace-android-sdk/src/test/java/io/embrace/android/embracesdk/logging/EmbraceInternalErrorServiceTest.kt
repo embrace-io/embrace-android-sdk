@@ -106,12 +106,12 @@ internal class EmbraceInternalErrorServiceTest {
 
     @Test
     fun testExceptionMaxLimit() {
-        repeat(8) { k ->
+        repeat(12) { k ->
             service.handleInternalError(RuntimeException("Oh no $k"))
         }
         val err = checkNotNull(service.currentExceptionError)
-        assertEquals(8, err.occurrences)
-        assertEquals(5, err.exceptionErrors.size)
+        assertEquals(12, err.occurrences)
+        assertEquals(10, err.exceptionErrors.size)
     }
 
     @Test

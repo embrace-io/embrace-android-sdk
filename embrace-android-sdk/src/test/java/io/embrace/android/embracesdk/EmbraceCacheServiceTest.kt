@@ -225,6 +225,19 @@ internal class EmbraceCacheServiceTest {
     }
 
     @Test
+    fun `session file IDs with unexpected timestamp returned when normalizeCacheAndGetSessionFileIds is called`() {
+        val session = testSessionMessage
+        val sessionFileNameWithUnexpectedTs =
+            CachedSession.create(session.session.sessionId, session.session.startTime + 10000L, false).filename
+        service.writeSession(sessionFileNameWithUnexpectedTs, session)
+
+        val filenames = service.normalizeCacheAndGetSessionFileIds()
+        assertEquals(1, storageManager.listFiles().size)
+        assertEquals(1, filenames.size)
+        assertTrue(filenames.contains(sessionFileNameWithUnexpectedTs))
+    }
+
+    @Test
     fun `temp files removed during cache normalization`() {
         val session1 = testSessionMessage
         val session2 = testSessionMessage2

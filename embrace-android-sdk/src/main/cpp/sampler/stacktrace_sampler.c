@@ -172,9 +172,11 @@ static bool emb_install_signal_handler() {
     handler->sa_sigaction = emb_handle_target_signal;
     handler->sa_flags = SA_SIGINFO;
 
-    // block all other signals when the handler is already executing.
+    // block other SIGUSR2 signals when the handler is already executing
+    // to avoid reentrant calls
     // https://www.gnu.org/software/libc/manual/html_node/Blocking-for-Handler.html
-    sigfillset(&handler->sa_mask);
+    sigemptyset(&handler->sa_mask);
+    sigaddset(&handler->sa_mask, EMB_TARGET_THREAD_SIGNUM);
 
     const int signal = EMB_TARGET_THREAD_SIGNUM;
     int success = sigaction(signal, handler, prev_handler);

@@ -108,10 +108,12 @@ internal class EmbraceDeliveryService(
 
             allSessions.map { it.sessionId }.forEach { sessionId ->
                 cacheManager.transformSession(sessionId = sessionId) { sessionMessage ->
-                    val spansToFail = sessionMessage.spanSnapshots?.map {
-                        it.toFailedSpan(sessionMessage.session.endTime ?: 0L)
-                    } ?: emptyList()
-                    val completedSpans = spansToFail + (sessionMessage.spans ?: emptyList())
+                    val completedSpanIds = sessionMessage.spans?.map { it.spanId }?.toSet() ?: emptySet()
+                    val spansToFail = sessionMessage.spanSnapshots
+                        ?.filterNot { completedSpanIds.contains(it.spanId) }
+                        ?.map { it.toFailedSpan(sessionMessage.session.endTime ?: 0L) }
+                        ?: emptyList()
+                    val completedSpans = (sessionMessage.spans ?: emptyList()) + spansToFail
                     sessionMessage.copy(spans = completedSpans, spanSnapshots = emptyList())
                 }
             }

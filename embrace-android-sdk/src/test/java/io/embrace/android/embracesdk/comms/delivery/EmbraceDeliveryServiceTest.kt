@@ -9,12 +9,14 @@ import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.snapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessageWithSnapshot
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -24,6 +26,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NO
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -136,6 +139,42 @@ internal class EmbraceDeliveryServiceTest {
                 EmbType.Performance.Default.toOTelKeyValuePair()
             )
         )
+    }
+
+    @Test
+    fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
+        val startedSnapshot = snapshot.toNewPayload()
+        val completedSpan = snapshot.copy(status = StatusCode.OK, endTimeNanos = snapshot.startTimeNanos + 10000000L)
+        val snapshots = listOfNotNull(startedSnapshot)
+        val spans = listOf(completedSpan)
+        val messedUpSession = fakeV1EndedSessionMessage().copy(spans = spans, spanSnapshots = snapshots)
+        assertEquals(1, messedUpSession.spans?.size)
+        assertEquals(1, messedUpSession.spanSnapshots?.size)
+        val messedUpSessionFilename = CachedSession.create(
+            messedUpSession.session.sessionId,
+            messedUpSession.session.startTime,
+            false
+        ).filename
+        assertNotNull(cacheService.writeSession(messedUpSessionFilename, messedUpSession))
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        val sentSession = apiService.sessionRequests.single()
+        assertEquals(1, sentSession.spans?.size)
+        assertEquals(0, sentSession.spanSnapshots?.size)
+        assertEquals(completedSpan, sentSession.spans?.single())
+    }
+
+    @Test
+    fun `crash during sending of cache session should preserve conversion of failed snapshot`() {
+        assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
+        assertEquals(1, sessionWithSnapshot.spans?.size)
+        assertEquals(1, sessionWithSnapshot.spanSnapshots?.size)
+        apiService.throwExceptionSendSession = true
+        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        assertTrue(apiService.sessionRequests.isEmpty())
+        val transformedSession =
+            checkNotNull(cacheService.loadObject(sessionWithSnapshotFileName, SessionMessage::class.java))
+        assertEquals(2, transformedSession.spans?.size)
+        assertEquals(0, transformedSession.spanSnapshots?.size)
     }
 
     @Test

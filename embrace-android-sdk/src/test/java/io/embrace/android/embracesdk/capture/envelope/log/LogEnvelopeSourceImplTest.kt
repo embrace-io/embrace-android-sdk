@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class LogEnvelopeSourceImplTest {
@@ -23,9 +22,7 @@ internal class LogEnvelopeSourceImplTest {
         assertEquals(metadataSource.metadata, payload.metadata)
         assertEquals(resourceSource.resource, payload.resource)
         assertEquals(logSource.logs, payload.data)
-
-        // future fields that need populating:
-        assertNull(payload.type)
-        assertNull(payload.version)
+        assertEquals("logs", payload.type)
+        assertEquals("0.1.0", payload.version)
     }
 }

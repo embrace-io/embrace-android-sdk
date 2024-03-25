@@ -56,8 +56,13 @@ emb_interval *emb_current_interval() {
     return interval;
 }
 
-emb_sample *emb_current_sample() {
-    return &interval->samples[interval->num_samples];
+emb_sample * _Nullable emb_current_sample() {
+    size_t index = interval->num_samples;
+    if (index >= kEMBMaxSamples) {
+        return NULL;
+    } else {
+        return &interval->samples[index];
+    }
 }
 
 static void emb_remove_stackframes(int result, emb_sample *sample) {
@@ -151,6 +156,9 @@ static void emb_handle_target_signal(int signum, siginfo_t *info, void *user_con
 
     // make a best effort to avoid sampling in the case of a fatal signal.
     emb_sample *sample = emb_current_sample();
+    if (sample == NULL) {
+        return;
+    }
     if (env != NULL && !env->currently_handling) {
         emb_start_sample(sample);
         emb_sample_target_thread(info, user_context, sample);
@@ -224,7 +232,10 @@ void emb_sigev_notify_function(union sigval sigval) {
         emb_stop_timer(timer_id, &timerspec);
         return;
     } else {
-        emb_current_sample()->timestamp_ms = emb_get_time_ms();
+        emb_sample *sample = emb_current_sample();
+        if (sample != NULL) {
+            sample->timestamp_ms = emb_get_time_ms();
+        }
         raise_signal_on_target_thread();
     }
 }

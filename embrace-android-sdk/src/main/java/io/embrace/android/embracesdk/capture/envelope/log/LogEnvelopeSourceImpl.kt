@@ -13,8 +13,8 @@ internal class LogEnvelopeSourceImpl(
     override fun getEnvelope() = Envelope(
         resourceSource.getEnvelopeResource(),
         metadataSource.getEnvelopeMetadata(),
-        null,
-        null,
+        "0.1.0",
+        "logs",
         logPayloadSource.getLogPayload()
     )
 }

@@ -205,6 +205,10 @@ internal data class EnvelopeResource(
         UNITY(3),
 
         @Json(name = "4")
-        FLUTTER(4)
+        FLUTTER(4);
+
+        companion object {
+            fun fromInt(type: Int) = values().associateBy(AppFramework::value)[type]
+        }
     }
 }

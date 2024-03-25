@@ -30,6 +30,6 @@ internal class LogPayloadSourceImplTest {
         assertEquals(fakeLog.severityText, log.severityText)
         assertEquals(fakeLog.severity.severityNumber, log.severityNumber)
         assertEquals(fakeLog.attributes.size(), log.attributes?.size)
-        assertEquals(fakeLog.body.asString(), log.body?.message)
+        assertEquals(fakeLog.body.asString(), log.body)
     }
 }

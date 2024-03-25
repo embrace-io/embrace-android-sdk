@@ -4,9 +4,7 @@
   "time_unix_nano":1681972471806000000,
   "severity_number":9,
   "severity_text":"INFO",
-  "body":{
-    "message":"test log message"
-  },
+  "body":"test log message",
   "attributes": [
     {
       "key": "test1",

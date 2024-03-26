@@ -45,8 +45,7 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
             worker,
-            logger,
-            fakeClock
+            logger
         )
     }
 

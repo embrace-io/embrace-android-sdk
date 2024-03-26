@@ -73,8 +73,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
             worker,
-            logger,
-            fakeClock
+            logger
         )
     }
 

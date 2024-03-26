@@ -137,7 +137,7 @@ internal class EmbraceLogService(
             // Set these after the custom properties so they can't be overridden
             sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
             metadataService.getAppState()?.let { attributes.setAppState(it) }
-            attributes.setLogId(Uuid.getEmbUuid())
+            attributes.setLogId(messageId)
 
             val logEventData = LogEventData(
                 schemaType = SchemaType.Log(attributes),

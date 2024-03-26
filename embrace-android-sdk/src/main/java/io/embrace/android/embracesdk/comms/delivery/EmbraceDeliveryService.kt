@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -104,6 +105,19 @@ internal class EmbraceDeliveryService(
             val allSessions = cacheManager.getAllCachedSessionIds().filter {
                 it.sessionId != sessionIdTracker.getActiveSessionId()
             }
+
+            allSessions.map { it.sessionId }.forEach { sessionId ->
+                cacheManager.transformSession(sessionId = sessionId) { sessionMessage ->
+                    val completedSpanIds = sessionMessage.spans?.map { it.spanId }?.toSet() ?: emptySet()
+                    val spansToFail = sessionMessage.spanSnapshots
+                        ?.filterNot { completedSpanIds.contains(it.spanId) }
+                        ?.map { it.toFailedSpan(sessionMessage.session.endTime ?: 0L) }
+                        ?: emptyList()
+                    val completedSpans = (sessionMessage.spans ?: emptyList()) + spansToFail
+                    sessionMessage.copy(spans = completedSpans, spanSnapshots = emptyList())
+                }
+            }
+
             ndkService?.let { service ->
                 val nativeCrashData = service.checkForNativeCrash()
                 if (nativeCrashData != null) {

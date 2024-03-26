@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -37,6 +39,18 @@ internal val testSpan = EmbraceSpanData(
     )
 )
 
+internal val testSpanSnapshot = Span(
+    traceId = "snapshot-trace-id",
+    spanId = "snapshot-span-id",
+    parentSpanId = null,
+    name = "snapshot",
+    startTimeUnixNano = DEFAULT_FAKE_CURRENT_TIME,
+    endTimeUnixNano = null,
+    status = Span.Status.UNSET,
+    events = emptyList(),
+    attributes = emptyList()
+)
+
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()
     repeat(size) {
@@ -44,6 +58,7 @@ private fun createMapOfSize(size: Int): Map<String, String> {
     }
     return mutableMap
 }
+
 private fun createEventsListOfSize(size: Int): List<EmbraceSpanEvent> {
     val events = mutableListOf<EmbraceSpanEvent>()
     repeat(size) {

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -21,11 +22,11 @@ internal class FakePersistableEmbraceSpan(
     override val parent: EmbraceSpan?,
     val name: String? = null,
     val type: TelemetryType = EmbType.Performance.Default,
-    val internal: Boolean = true,
+    val internal: Boolean = false,
     private val fakeClock: FakeClock = FakeClock()
 ) : PersistableEmbraceSpan {
 
-    val attributes = mutableMapOf<String, String>()
+    val attributes = mutableMapOf(type.toOTelKeyValuePair())
     val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     var started = false
     var stopped = false
@@ -49,6 +50,7 @@ internal class FakePersistableEmbraceSpan(
             if (parent == null) {
                 traceId = IdGenerator.random().generateTraceId()
             }
+            spanStartTimeMs = startTimeMs ?: fakeClock.now()
             started = true
         }
         return true
@@ -60,8 +62,10 @@ internal class FakePersistableEmbraceSpan(
             status = if (errorCode == null) {
                 Span.Status.OK
             } else {
+                setEmbraceAttribute(errorCode.fromErrorCode())
                 Span.Status.ERROR
             }
+            spanEndTimeMs = endTimeMs ?: fakeClock.now()
             stopped = true
         }
         return true
@@ -118,16 +122,27 @@ internal class FakePersistableEmbraceSpan(
     }
 
     companion object {
-        fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan = FakePersistableEmbraceSpan(parent)
+        fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =
+            FakePersistableEmbraceSpan(
+                name = "not-started",
+                parent = parent
+            )
 
         fun started(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
-            val span = notStarted(parent)
+            val span = FakePersistableEmbraceSpan(
+                name = "started",
+                parent = parent
+            )
             span.start()
             return span
         }
 
         fun stopped(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
-            val span = started(parent)
+            val span = FakePersistableEmbraceSpan(
+                name = "stopped",
+                parent = parent
+            )
+            span.start()
             span.stop()
             return span
         }

@@ -1,7 +1,14 @@
 package io.embrace.android.embracesdk.internal.payload
 
+import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
+import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.assertIsTypePerformance
+import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,5 +44,28 @@ internal class SpanMapperTest {
         val outputAttrs = checkNotNull(output.attributes?.single())
         assertEquals(inputAttrs.keys.single(), outputAttrs.key)
         assertEquals(inputAttrs.values.single(), outputAttrs.data)
+    }
+
+    @Test
+    fun `terminating span snapshot works as expected`() {
+        val snapshot = FakeSpanData.snapshot.toNewPayload()
+        val terminationTimeMs = snapshot.startTimeUnixNano!!.nanosToMillis() + 60000L
+        val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
+
+        assertEquals(snapshot.traceId, failedSpan.traceId)
+        assertEquals(snapshot.spanId, failedSpan.spanId)
+        assertEquals(snapshot.parentSpanId, failedSpan.parentSpanId)
+        assertEquals(snapshot.name, failedSpan.name)
+        assertEquals(snapshot.startTimeUnixNano, failedSpan.startTimeNanos)
+        assertEquals(terminationTimeMs, failedSpan.endTimeNanos.nanosToMillis())
+        assertEquals(StatusCode.ERROR, checkNotNull(failedSpan.status))
+        assertEquals(snapshot.events?.single(), failedSpan.events.single().toNewPayload())
+        failedSpan.assertHasEmbraceAttribute(ErrorCodeAttribute.Failure)
+        failedSpan.assertIsTypePerformance()
+        failedSpan.assertIsKeySpan()
+        failedSpan.assertNotPrivateSpan()
+        checkNotNull(snapshot.attributes).forEach {
+            assertEquals(it.data, failedSpan.attributes[it.key])
+        }
     }
 }

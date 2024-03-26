@@ -112,8 +112,10 @@ internal class CompositeLogServiceTest {
             exceptionName = null,
             exceptionMessage = null
         )
-        assertEquals(0, v1LogService.loggedMessages.size)
-        assertEquals(1, v2LogService.loggedExceptions.size)
+        // Currently, log exceptions must be sent through v1. Invert this validation once
+        // the backend can read exceptions sent as OTel logs
+        assertEquals(1, v1LogService.loggedMessages.size)
+        assertEquals(0, v2LogService.loggedExceptions.size)
     }
 
     @Test

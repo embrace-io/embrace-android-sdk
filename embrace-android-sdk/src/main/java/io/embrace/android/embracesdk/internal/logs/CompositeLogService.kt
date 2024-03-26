@@ -62,9 +62,12 @@ internal class CompositeLogService(
                     properties
                 )
             } else {
-                v2LogService.logException(
+                // Currently, the backend is not processing exceptions as OTel logs, so we must
+                // use v1. When the backend is ready, this must be replaced with a call
+                // to v2LogService.logException().
+                v1LogService.log(
                     message = message,
-                    severity = severity,
+                    type = type,
                     logExceptionType = logExceptionType,
                     properties = properties,
                     stackTraceElements = stackTraceElements,

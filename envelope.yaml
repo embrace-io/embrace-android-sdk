@@ -1,0 +1,621 @@
+openapi: 3.0.3
+info:
+  title: Embrace Envelope API
+  description: |-
+    The payloads we send to the Embrace backend do not map directly to an OTLP spec or even a specific concept. Rather, they will contain objects that map to OTel concepts like resources, spans, and logs, represented by a custom JSON serialization format that mirrors, more or less, the official Protobuf definitions. But the structure within which these wrapper objects live will be Embrace-specific and be tailored to our existing lifecycle.
+
+    In general, all payloads will share a common envelope that contains shared attributes that we don’t want to duplicate - largely what was included in appInfo, deviceInfo, and userInfo. It will also have a `data` object where custom, payload-specific data can be stored, which is unique for each payload type
+
+  contact:
+    email: support@embrace.io
+  version: 0.1.0
+
+externalDocs:
+  description: Find out more about Embrace
+  url: https://embrace.io/docs
+
+servers:
+  - url: https://data.emb-api.com/v1/
+  - url: https://data-dev.emb-api.com/v1/
+
+tags:
+  - name: Embrace API
+
+paths:
+  /sessions:
+    post:
+      operationId: "sessionsPost"
+      security:
+        - app_id: [ ]
+      tags:
+        - Embrace API
+      summary: Report a session to Embrace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Envelope'
+        required: true
+      parameters:
+        - name: X-EM-AID
+          in: header
+          description: "The 5-character App ID"
+          required: true
+          schema:
+            type: string
+        - name: X-EM-DID
+          in: header
+          description: "The project's Device ID"
+          required: true
+          schema:
+            type: string
+            default: "fake-swagger-id"
+        - name: Content-Encoding
+          in: header
+          required: false
+          schema:
+            type: string
+            default: "gzip"
+      responses:
+        '200':
+          description: "Successful operation"
+  /logs:
+    post:
+      operationId: "logsPost"
+      security:
+        - app_id: [ ]
+      tags:
+        - Embrace API
+      summary: Report a log to Embrace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Envelope'
+        required: true
+      parameters:
+        - name: X-EM-AID
+          in: header
+          description: "The 5-character App ID"
+          required: true
+          schema:
+            type: string
+        - name: X-EM-DID
+          in: header
+          description: "The project's Device ID"
+          required: true
+          schema:
+            type: string
+            default: "fake-swagger-id"
+        - name: X-EM-SID
+          in: header
+          description: "The story ID"
+          required: true
+          schema:
+            type: string
+            enum:
+              - "active"
+              - "background"
+        - name: Content-Encoding
+          in: header
+          required: false
+          schema:
+            type: string
+            default: "gzip"
+      responses:
+        '200':
+          description: "Successful operation"
+
+components:
+  schemas:
+    Envelope:
+      type: object
+      description: "The envelope contains the payload and some attributes common to all payloads"
+      properties:
+        resource:
+          $ref: '#/components/schemas/EnvelopeResource'
+        metadata:
+          $ref: '#/components/schemas/EnvelopeMetadata'
+        version:
+          type: string
+          example: "0.1.0"
+          description: "API version"
+        type:
+          type: string
+          example: "session"
+          description: "type of payload this JSON object contains - maps 1-1 with structure of data"
+        data:
+          type: object
+          description: "The payload sent inside this envelope. It can be any of the following payloads: session, logs, blobs, crashes, network capture"
+          oneOf:
+            - $ref: '#/components/schemas/SessionPayload'
+            - $ref: '#/components/schemas/LogPayload'
+    #            - $ref: '#/components/schemas/BlobPayload'
+    #            - $ref: '#/components/schemas/CrashPayload'
+    #            - $ref: '#/components/schemas/NetworkCapturePayload'
+
+
+    EnvelopeResource:
+      type: object
+      description: "Immutable attributes about the app, device, and Embrace SDK internal state for duration of an app launch. Contains what previously was in AppInfo and DeviceInfo"
+      properties:
+        # App Info
+        app_version:
+          title: "App version"
+          description: "The app's publicly displayed version name. Previous name: a.v"
+          type: string
+          example: "5.2.3"
+        app_framework:
+          title: "App framework"
+          description: "The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity. Previous name: a.f"
+          example: 1
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+        build_id:
+          title: "Build ID"
+          description: "A unique ID for the build that is generated at build time. Previous name: a.bi"
+          type: string
+          example: "69D8D3BF7C5D45A2855A6F9F651364EA"
+        app_ecosystem_id:
+          title: "App ecosystem ID"
+          description: "Unique identifier for the app in its ecosystem. In Apple, this is the Bundle ID (e.g. com.io.embrace). In Android, this is the app's package name (e.g. io.embrace.testapp). Previous name: a.bid"
+          type: string
+          example: "com.io.embrace"
+        build_type:
+          title: "Build type"
+          description: "(Android) - the buildType name. Previous name: a.bt"
+          type: string
+          example: "release"
+          x-supported-platforms: [ "Android" ]
+        build_flavor:
+          title: "Build flavor"
+          description: "(Android) - the flavor name. If productFlavors are not used this will be null. Previous name: a.fl"
+          type: string
+          example: "demo"
+          x-supported-platforms: [ "Android" ]
+        environment:
+          title: "Environment"
+          description: "The name of the environment, i.e. dev or prod. Previous name: a.e"
+          example: "dev"
+          type: string
+          enum:
+            - "dev"
+            - "prod"
+        bundle_version:
+          title: "Bundle version"
+          description: "The app bundle version (on Android this is versionCode). Previous name: a.bv"
+          type: string
+          example: "150920"
+        sdk_version:
+          title: "SDK version"
+          description: "The version number of the Embrace SDK. Previous name: a.sdk"
+          type: string
+          example: "4.15.0"
+        sdk_simple_version:
+          title: "SDK simple version"
+          description: "The simple version number of the Embrace SDK. Previous name: a.sdc"
+          type: integer
+          example: 53
+        react_native_bundle_id:
+          title: "React Native bundle ID"
+          description: "(React Native) the MD5 hash of the React Native bundle file. Previous name: a.rn"
+          type: string
+          example: "094728010ffe868b926e5ad63a21d6f5"
+        react_native_version:
+          title: "React Native version"
+          description: "(React Native) the React Native version number. Previous name: a.rnv"
+          type: string
+          example: "0.69.1"
+        javascript_patch_number:
+          title: "JavaScript patch number"
+          description: "(React Native) the JavaScript patch number. Previous name: a.jsp"
+          type: string
+          example: "10.2.5"
+        hosted_platform_version:
+          title: "Hosted platform version"
+          description: "The version of the hosted platform engine, i.e. Unity/React Native/Flutter. Previous name: a.unv"
+          type: string
+          example: "Unity 2019.3.f.1"
+        hosted_sdk_version:
+          title: "Hosted SDK version"
+          description: "The version of the hosted SDK used. Previous name: a.usv"
+          type: string
+          example: "5.2.3"
+        unity_build_id:
+          title: "Unity build ID"
+          description: "(Unity) the Unity build ID number. Previous name: a.ubg"
+          type: string
+          example: "10.2.5"
+        launch_count:
+          title: "Launch count"
+          description: "(iOS) The number of times the SDK has been launched. Previous name: a.lc"
+          type: integer
+          example: 83
+          x-supported-platforms: [ "iOS" ]
+        environment_detail:
+          title: "Environment detail"
+          description: "(iOS) The name of the environment, i.e. dev or prod. Previous name: a.ed"
+          example: "dev"
+          type: string
+          x-supported-platforms: [ "iOS" ]
+          enum:
+            - "dev"
+            - "prod"
+            - "si"
+            - "de"
+            - "ad"
+            - "en"
+            - "te"
+            - "ap"
+        # DeviceInfo
+        device_manufacturer:
+          title: "Device manufacturer"
+          description: "The device manufacturer. Previous name: d.dm"
+          type: string
+          example: "Samsung"
+        device_model:
+          title: "Device model"
+          description: "The device model. Previous name: d.do"
+          type: string
+          example: "S20"
+        device_architecture:
+          title: "Device architecture"
+          description: "The CPU architecture used by the device. Previous name: d.da"
+          type: string
+          example: "armeabi-v7a"
+        jailbroken:
+          title: "Jailbroken"
+          description: "Whether the device is rooted/jailbroken or not. Previous name: d.jb"
+          type: boolean
+          example: false
+        disk_total_capacity:
+          title: "Internal storage total capacity"
+          description: "The total capacity of internal storage for the whole device. Previous name: d.ms"
+          type: integer
+          format: int64
+          example: 812531712
+        os_type:
+          title: "OS type"
+          description: "A hardcoded string representing the operating system in use. Previous name: d.os"
+          type: string
+          example: "Android OS"
+        os_version:
+          title: "OS version"
+          description: "The human readable OS version string. Previous name: d.ov"
+          type: string
+          example: "Android 10"
+        os_alternate_type:
+          title: "OS alternate type"
+          description: "(iOS) The alternate OS type. Previous name: d.oa"
+          type: string
+          example: "watchOs"
+          x-supported-platforms: [ "iOS" ]
+        os_code:
+          title: "OS version code"
+          description: "(Android) The OS version code. Previous name: d.oc"
+          type: string
+          example: "29"
+          x-supported-platforms: [ "Android" ]
+        os_build:
+          title: "OS build"
+          description: "(iOS) The OS build code. Previous name: d.ob"
+          type: string
+          x-supported-platforms: [ "iOS" ]
+        screen_resolution:
+          title: "Screen resolution"
+          description: "The screen resolution. Previous name: d.sr"
+          type: string
+          example: "1080x2208"
+        num_cores:
+          title: "Number of CPU cores"
+          description: "(Android) The number of CPU cores the device has. Previous name: d.nc"
+          type: integer
+          format: int32
+          example: 8
+          x-supported-platforms: [ "Android" ]
+
+    EnvelopeMetadata:
+      type: object
+      description: "A snapshot of mutable attributes about the app, device, and Embrace SDK internal state that are not tied to a session. Contains what previously was in UserInfo."
+      properties:
+        user_id:
+          title: "User ID"
+          description: "The user's unique ID (if set). Previous name: u.id"
+          type: string
+          example: "f0a9c09b8"
+        email:
+          title: "Email"
+          description: "The user's email address (if set). Previous name: u.em"
+          type: string
+          example: "fake@example.com"
+        username:
+          title: "Username"
+          description: "The user's username (if set). Previous name: u.un"
+          type: string
+          example: "joe_bloggs_32"
+        personas:
+          title: "Personas"
+          description: "A collection of 'default' personas and 'custom' personas that can be set by the developer. Previous name: u.per"
+          example: [ "new_user", "power_user", "logged_in", "vip", "content_creator", "tester", "payer", "first_day", "my_custom_persona" ]
+          type: array
+          items:
+            type: string
+        timezone_description:
+          title: "Timezone description"
+          description: "A description of the timezone ID. Previous name: d.tz"
+          type: string
+          example: "Europe/London"
+        locale:
+          title: "Locale"
+          description: "The device locale, encoded as the language with an underscore followed by the country code. Previous name: d.lc"
+          type: string
+          example: "en_US"
+
+    SessionPayload:
+      type: object
+      description: "The session payload, containing the session itself and different objects tied to this session"
+      properties:
+        spans:
+          title: "Spans"
+          description: "A list of spans that have completed since the last session,
+           including the session span, which contains metadata about the session represented by this payload. 
+           The spans included here may not have started in this session, but they ended during it."
+          type: array
+          items:
+            $ref: '#/components/schemas/Span'
+        span_snapshots:
+          type: array
+          description: "A list of spans that are still active at the time of the session's end."
+          items:
+            $ref: '#/components/schemas/Span'
+        internal_error:
+          $ref: '#/components/schemas/InternalError'
+        shared_lib_symbol_mapping:
+          title: "Shared library symbol mapping"
+          type: object
+          description: "A map of symbols that are associated with the session. We use this to associate the symbolication files that have been uploaded with UUIDs with the stacktrace module names, which don’t have UUIDs in them. Previous name: s.sb"
+          additionalProperties:
+            type: string
+
+    Span:
+      type: object
+      description: "A span represents a single unit of work done in the app. It can be a network request, a database query, a view transition, etc. It has a start time, an end time, and attributes that describe it."
+      properties:
+        trace_id:
+          title: "Trace ID"
+          description: "The ID of the trace that this span is part of"
+          type: string
+          example: "7bba9f33312b3dbb8b2c2c62bb7abe2d"
+        span_id:
+          title: "Span ID"
+          description: "A value that uniquely identifies a span instance"
+          type: string
+          example: "086e83747d0e381e"
+        parent_span_id:
+          title: "Parent span ID"
+          description: "A value that uniquely identifies the parent span"
+          type: string
+          example: "0x051581bf3cb55c13"
+        name:
+          title: "Name"
+          description: "The name of the span"
+          type: string
+          example: "network_request"
+        start_time_unix_nano:
+          title: "Start time"
+          description: "The time the span started, in nanoseconds since the Unix epoch"
+          type: integer
+          format: int64
+          example: 1631533200000000000
+        end_time_unix_nano:
+          title: "End time"
+          description: "The time the span ended, in nanoseconds since the Unix epoch"
+          type: integer
+          format: int64
+          example: 1631533200000000000
+        status:
+          title: "Status"
+          description: "The status of the span. Can be one of 'Unset', 'Error', or 'Ok'"
+          type: string
+          enum:
+            - "Unset"
+            - "Error"
+            - "Ok"
+          example: "Ok"
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanEvent'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanAttribute'
+
+    SpanEvent:
+      type: object
+      description: "An event that occurred during a span"
+      properties:
+        name:
+          title: "Name"
+          description: "The name of the event"
+          type: string
+          example: "network_request"
+        time_unix_nano:
+          title: "Time"
+          description: "The time the event occurred, in nanoseconds since the Unix epoch"
+          type: integer
+          format: int64
+          example: 1639300000000000000
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanEventAttribute'
+
+    SpanEventAttribute:
+      type: object
+      description: "A key-value pair that provides additional context to the span event"
+      properties:
+        key:
+          title: "Key"
+          description: "The name of the attribute"
+          type: string
+          example: "button_id"
+        value:
+          title: "Value"
+          description: "The value of the attribute"
+          type: object
+          example: "0x051581bf3cb55c13"
+
+    SpanAttribute:
+      type: object
+      description: "A key-value pair that provides additional context to the span"
+      properties:
+        key:
+          title: "Key"
+          description: "The name of the attribute"
+          type: string
+          example: "button_id"
+        value:
+          title: "Value"
+          description: "The value of the attribute"
+          type: object
+          example: "0x051581bf3cb55c13"
+
+    InternalError:
+      type: object
+      description: "Describes an Exception Error with a count of occurrences and a list of exceptions (causes)."
+      x-supported-platforms: [ "Android" ]
+      properties:
+        count:
+          title: "Count"
+          description: "The number of internal error that occurred within Embrace. Previous name: s.e.c"
+          type: integer
+          format: int32
+          example: 2
+        errors:
+          type: array
+          description: "A list of causes of the internal error. Previous name: s.e.rep"
+          items:
+            $ref: '#/components/schemas/ExceptionErrorInfo'
+
+    ExceptionErrorInfo:
+      type: object
+      x-supported-platforms: [ "Android" ]
+      properties:
+        timestamp:
+          title: "Timestamp"
+          description: "The timestamp in milliseconds of when an error happened. Previous name: s.e.rep.ts"
+          type: integer
+          format: int64
+          example: 1659956944702
+        app_state:
+          title: "App state"
+          description: "The app state at the time of the error (foreground/background). Previous name: s.e.rep.s"
+          type: string
+          enum:
+            - "active"
+            - "background"
+          example: "active"
+        exceptions:
+          type: array
+          description: "A list of exceptions. Previous name: s.e.rep.ex"
+          items:
+            $ref: '#/components/schemas/ExceptionInfo'
+
+    ExceptionInfo:
+      type: object
+      description: "Describes a Java exception."
+      x-supported-platforms: [ "Android" ]
+      properties:
+        name:
+          title: "Name"
+          description: "The name of the class causing an error. Previous name: s.e.rep.ex.n"
+          type: string
+          example: "RuntimeException"
+        message:
+          title: "message"
+          description: "The error message, if any. Previous name: s.e.rep.ex.m"
+          type: string
+          example: "This should never happen"
+        stacktrace:
+          type: array
+          description: "String representation of each line in the stack trace. Previous name: s.e.rep.ex.tt"
+          example: [ "Foo:42.bar()" ]
+          items:
+            type: string
+
+    LogPayload:
+      type: object
+      description: "A set of log messages sent by the user"
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Log'
+
+    Log:
+      type: object
+      description: "A recording of an event. Typically the record includes a timestamp indicating when the event happened, as well as other data that describes what happened, where it happened, etc."
+      properties:
+        time_unix_nano:
+          title: "Timestamp"
+          description: "The time the log was captured, in nanoseconds since the Unix epoch"
+          type: integer
+          format: int64
+          example: 1631533200000000000
+        severity_number:
+          title: "Severity number"
+          description: "Numerical value of the severity, normalized to values going from 1 to 24, where 1 is the least severe and 24 is the most severe. The ranges are as follows: 1-4: Trace, 5-8: Debug, 9-12: Info, 13-16: Warn, 17-20: Error, 21-24: Fatal."
+          type: integer
+          example: 3
+        severity_text:
+          title: "Severity text"
+          description: "Also known as log level. This is the original string representation of the severity as it is known at the source."
+          type: string
+          example: "INFO"
+        body:
+          $ref: '#/components/schemas/LogBody'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogAttribute'
+        trace_id:
+          title: "Trace ID"
+          description: "Request trace ID as defined in W3C Trace Context. Can be set for logs that are part of request processing and have an assigned trace id."
+          type: string
+          example: "0x5b8aa5a2d2c872e8321cf37308d69df2"
+        span_id:
+          title: "Span ID"
+          description: "The span ID of the log. Can be set for logs that are part of a particular processing span. If span_id is present, trace_id SHOULD be also present."
+          type: string
+          example: "0x051581bf3cb55c13"
+
+    LogBody:
+      title: "Body"
+      description: "A value containing the body of the log record"
+      type: object
+      properties:
+        message:
+          title: "Message"
+          description: "The log message"
+          type: string
+          example: "The user has tapped the 'Sign In' button"
+
+    LogAttribute:
+      title: "Attribute"
+      description: "A key-value pair that provides additional context to the log record"
+      type: object
+      properties:
+        key:
+          title: "Key"
+          description: "The name of the attribute"
+          type: string
+          example: "button_id"
+        value:
+          title: "Value"
+          description: "The value of the attribute"
+          type: string
+          example: "sign_in_button"

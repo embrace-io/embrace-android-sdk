@@ -83,12 +83,12 @@ internal fun Span.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAtt
 }
 
 internal fun Span.assertError(errorCode: ErrorCode) {
-    assertEquals(StatusCode.ERROR, status)
+    assertEquals(Span.Status.ERROR, status)
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
 }
 
 internal fun Span.assertSuccessful() {
-    assertEquals(StatusCode.OK, status)
+    assertEquals(Span.Status.OK, status)
     assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.otelAttributeName() }.size)
 }
 

@@ -1,7 +1,7 @@
 #ifndef EMBRACE_SAMPLER_STRUCTS_H
 #define EMBRACE_SAMPLER_STRUCTS_H
 
-#include "../stack_frames.h"
+#include "../schema/stack_frames.h"
 
 // Android blocks SIGUSR1 in the same way as SIGQUIT as it uses the signal
 // to force garbage collection. We therefore use SIGUSR2 instead.

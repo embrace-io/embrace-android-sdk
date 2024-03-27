@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
-#include "emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 #define EMB_ERROR_C_SIGNAL_HANDLER_NOT_INSTALLED 1
 #define EMB_ERROR_FAILED_TO_OPEN_CRASH_FILE 2

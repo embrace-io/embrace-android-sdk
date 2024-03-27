@@ -2,7 +2,7 @@
 #include <unwind.h>
 #include "sampler_unwinder_unwind.h"
 #include "unwinder_dlinfo.h"
-#include "../utilities.h"
+#include "../utils/utilities.h"
 
 #if defined(__arm__)
 #include <libunwind.h>

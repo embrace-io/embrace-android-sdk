@@ -4,10 +4,10 @@
 
 #include "file_writer.h"
 #include "inttypes.h"
-#include "base_64_encoder.h"
-#include "3rdparty/parson/parson.h"
-#include "utilities.h"
-#include "emb_log.h"
+#include "../3rdparty/base64/base_64_encoder.h"
+#include "parson.h"
+#include "../utils/utilities.h"
+#include "../utils/emb_log.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>

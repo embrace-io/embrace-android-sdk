@@ -4,16 +4,16 @@
 #include <time.h>
 #include <pthread.h>
 #include "emb_ndk_manager.h"
-#include "file_writer.h"
-#include "signals/signals_c.h"
-#include "signals/signals_cpp.h"
-#include "unwinders/unwinder.h"
-#include "utilities.h"
+#include "../serializer/file_writer.h"
+#include "../signals/signals_c.h"
+#include "../signals/signals_cpp.h"
+#include "../unwinders/unwinder.h"
+#include "../utils/utilities.h"
 #include "inttypes.h"
-#include "jni_util.h"
-#include "sampler/stacktrace_sampler.h"
-#include "emb_log.h"
-#include "safejni/safe_jni.h"
+#include "../safejni/jni_util.h"
+#include "../sampler/stacktrace_sampler.h"
+#include "../utils/emb_log.h"
+#include "../safejni/safe_jni.h"
 
 #ifdef __cplusplus
 extern "C" {

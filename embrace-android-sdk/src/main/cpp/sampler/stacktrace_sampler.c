@@ -9,9 +9,9 @@
 #include "sampler_unwinder_unwind.h"
 #include "sampler_unwinder_stack.h"
 #include "../signals/signal_utils.h"
-#include "../utilities.h"
+#include "../utils/utilities.h"
 #include "stacktrace_sampler.h"
-#include "../emb_log.h"
+#include "../utils/emb_log.h"
 #include "../utils/system_clock.h"
 #include "emb_timer.h"
 

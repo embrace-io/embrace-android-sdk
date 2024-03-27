@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "sampler_structs.h"
-#include "../emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 #ifdef __cplusplus
 extern "C" {

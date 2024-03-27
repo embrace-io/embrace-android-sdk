@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include "../emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 bool emb_setup_c_signal_handlers(emb_env* env);
 void emb_remove_c_sig_handlers();

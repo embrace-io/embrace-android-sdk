@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
+import io.embrace.android.embracesdk.capture.crumbs.FragmentBreadcrumbDataSource
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -20,18 +22,44 @@ internal interface DataSourceModule {
      * Returns a list of all the data sources that are defined in this module.
      */
     fun getDataSources(): List<DataSourceState>
+
+    val customBreadcrumbDataSource: DataSourceState
+
+    val fragmentBreadcrumbDataSource: DataSourceState
 }
 
 internal class DataSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
-    @Suppress("UNUSED_PARAMETER") initModule: InitModule,
-    @Suppress("UNUSED_PARAMETER") otelModule: OpenTelemetryModule,
+    initModule: InitModule,
+    otelModule: OpenTelemetryModule,
     @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
     @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
     @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState> = mutableListOf()
+
+    override val customBreadcrumbDataSource: DataSourceState by dataSource {
+        DataSourceState({
+            CustomBreadcrumbDataSource(
+                breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                writer = otelModule.currentSessionSpan
+            )
+        })
+    }
+
+    override val fragmentBreadcrumbDataSource: DataSourceState by dataSource {
+        DataSourceState(
+            factory = {
+                FragmentBreadcrumbDataSource(
+                    configService.breadcrumbBehavior,
+                    initModule.clock,
+                    otelModule.spanService
+                )
+            },
+            configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+        )
+    }
 
     /* Implementation details */
 

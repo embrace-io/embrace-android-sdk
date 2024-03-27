@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.gating
 
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys
+import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 internal class SpanSanitizer(
     private val spans: List<EmbraceSpanData>?,
-    @Suppress("UnusedPrivateProperty") private val enabledComponents: Set<String>
+    private val enabledComponents: Set<String>
 ) : Sanitizable<List<EmbraceSpanData>> {
 
     override fun sanitize(): List<EmbraceSpanData>? {
@@ -35,13 +37,22 @@ internal class SpanSanitizer(
         return sanitizedSpans
     }
 
-    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
+        if (span.name == "emb-${SchemaKeys.VIEW_BREADCRUMB}" && !shouldAddViewBreadcrumbs()) {
+            return false
+        }
         return true
     }
 
-    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
+        if (event.name == SchemaKeys.CUSTOM_BREADCRUMB && !shouldAddCustomBreadcrumbs()) {
+            return false
+        }
         return true
     }
+
+    private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)
+
+    private fun shouldAddViewBreadcrumbs() =
+        enabledComponents.contains(SessionGatingKeys.BREADCRUMBS_VIEWS)
 }

@@ -238,7 +238,7 @@ internal class CurrentSessionSpanImplTests {
 
         // verify event was added to the span
         val testEvent = span.events.single()
-        assertEquals("custom-breadcrumb", testEvent.name)
+        assertEquals("emb-custom-breadcrumb", testEvent.name)
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
         assertEquals(
             mapOf(

@@ -32,7 +32,7 @@ internal class CustomBreadcrumbDataSourceTest {
     fun `add breadcrumb`() {
         source.logCustom("Hello, world!", 15000000000)
         with(writer.addedEvents.single()) {
-            assertEquals("custom-breadcrumb", this.schemaType.name)
+            assertEquals("emb-custom-breadcrumb", this.schemaType.name)
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
                 mapOf(

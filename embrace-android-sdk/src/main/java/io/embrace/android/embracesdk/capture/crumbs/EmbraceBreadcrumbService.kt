@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
 import android.util.Pair
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
@@ -29,18 +31,27 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val activityTracker: ActivityTracker,
+    sessionSpanWriter: SessionSpanWriter,
+    spanService: SpanService,
     private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val customBreadcrumbDataSource = LegacyCustomBreadcrumbDataSource(configService)
+    private val legacyCustomBreadcrumbDataSource = LegacyCustomBreadcrumbDataSource(configService)
+    private val customBreadcrumbDataSource =
+        CustomBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter)
     private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
     private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock)
-    private val fragmentBreadcrumbDataSource = LegacyFragmentBreadcrumbDataSource(configService, clock)
+    private val legacyFragmentBreadcrumbDataSource = LegacyFragmentBreadcrumbDataSource(configService, clock)
+    private val fragmentBreadcrumbDataSource = FragmentBreadcrumbDataSource(
+        configService.breadcrumbBehavior,
+        clock,
+        spanService
+    )
     private val pushNotificationBreadcrumbDataSource =
         PushNotificationBreadcrumbDataSource(configService, clock)
-    val fragmentStack = fragmentBreadcrumbDataSource.fragmentStack
+    val fragmentStack = legacyFragmentBreadcrumbDataSource.fragmentStack
 
     override fun logView(screen: String?, timestamp: Long) {
         viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)
@@ -50,8 +61,15 @@ internal class EmbraceBreadcrumbService(
         viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, true)
     }
 
-    override fun startView(name: String?): Boolean = fragmentBreadcrumbDataSource.startFragment(name)
-    override fun endView(name: String?): Boolean = fragmentBreadcrumbDataSource.endFragment(name)
+    override fun startView(name: String?): Boolean {
+        fragmentBreadcrumbDataSource.startFragment(name)
+        return legacyFragmentBreadcrumbDataSource.startFragment(name)
+    }
+
+    override fun endView(name: String?): Boolean {
+        fragmentBreadcrumbDataSource.endFragment(name)
+        return legacyFragmentBreadcrumbDataSource.endFragment(name)
+    }
 
     override fun logTap(
         point: Pair<Float?, Float?>,
@@ -63,6 +81,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun logCustom(message: String, timestamp: Long) {
+        legacyCustomBreadcrumbDataSource.logCustom(message, timestamp)
         customBreadcrumbDataSource.logCustom(message, timestamp)
     }
 
@@ -82,11 +101,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(
-        customBreadcrumbs = customBreadcrumbDataSource.getCapturedData(),
+        customBreadcrumbs = legacyCustomBreadcrumbDataSource.getCapturedData(),
         tapBreadcrumbs = tapBreadcrumbDataSource.getCapturedData(),
         viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
         webViewBreadcrumbs = webViewBreadcrumbDataSource.getCapturedData(),
-        fragmentBreadcrumbs = fragmentBreadcrumbDataSource.getCapturedData(),
+        fragmentBreadcrumbs = legacyFragmentBreadcrumbDataSource.getCapturedData(),
         rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
         pushNotifications = pushNotificationBreadcrumbDataSource.getCapturedData()
     )
@@ -129,14 +148,15 @@ internal class EmbraceBreadcrumbService(
         }
         viewBreadcrumbDataSource.onViewClose()
         fragmentBreadcrumbDataSource.onViewClose()
+        legacyFragmentBreadcrumbDataSource.onViewClose()
     }
 
     override fun cleanCollections() {
         viewBreadcrumbDataSource.cleanCollections()
         tapBreadcrumbDataSource.cleanCollections()
-        customBreadcrumbDataSource.cleanCollections()
+        legacyCustomBreadcrumbDataSource.cleanCollections()
         webViewBreadcrumbDataSource.cleanCollections()
-        fragmentBreadcrumbDataSource.cleanCollections()
+        legacyFragmentBreadcrumbDataSource.cleanCollections()
         pushNotificationBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
     }

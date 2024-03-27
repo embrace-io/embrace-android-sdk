@@ -321,7 +321,6 @@ bool emb_add_frame_info_to_json(JSON_Object *frame_object, emb_sframe *frame) {/
     RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kOffsetAddrKey, frame->offset_addr));
     RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kModuleAddrKey, frame->module_addr));
     RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kLineNumKey, frame->line_num));
-    RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kBuildIdKey, frame->build_id));
     return true;
 }
 

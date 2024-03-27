@@ -42,7 +42,6 @@ emb_process_stack(emb_env *env, siginfo_t *info, void *user_context) {
 
             data->frame_addr = frame.pc;
             const auto map_info = frame.map_info;
-            emb_strncpy(data->build_id, map_info->GetPrintableBuildID().c_str(), EMB_FRAME_STR_SIZE);
 
             // populate additional information.
             // FrameData
@@ -61,7 +60,6 @@ emb_process_stack(emb_env *env, siginfo_t *info, void *user_context) {
             data->offset = map_info->offset();
             data->flags = map_info->flags();
             emb_strncpy(data->full_name, map_info->GetFullName().c_str(), EMB_FRAME_STR_SIZE);
-            emb_strncpy(data->build_id, map_info->GetPrintableBuildID().c_str(), EMB_FRAME_STR_SIZE);
         }
     } else {
         return 0;

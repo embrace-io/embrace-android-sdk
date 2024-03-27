@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -39,7 +40,7 @@ internal fun EmbraceSpanData.assertNotPrivateSpan() = assertDoesNotHaveEmbraceAt
  * Assert [EmbraceSpanData] has the [EmbraceAttribute] defined by [embraceAttribute]
  */
 internal fun EmbraceSpanData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertEquals(embraceAttribute.attributeValue, attributes[embraceAttribute.otelAttributeName()])
+    assertTrue(hasEmbraceAttribute(embraceAttribute))
 }
 
 internal fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
@@ -101,7 +102,7 @@ internal fun StartSpanData.assertIsType(telemetryType: TelemetryType) = assertHa
  * Assert [StartSpanData] has the [EmbraceAttribute] defined by [embraceAttribute]
  */
 internal fun StartSpanData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertEquals(embraceAttribute.attributeValue, attributes[embraceAttribute.otelAttributeName()])
+    assertEquals(embraceAttribute.attributeValue, schemaType.attributes()[embraceAttribute.otelAttributeName()])
 }
 
 /**
@@ -113,5 +114,5 @@ internal fun LogEventData.assertIsType(telemetryType: TelemetryType) = assertHas
  * Assert [LogEventData] has the [EmbraceAttribute] defined by [embraceAttribute]
  */
 internal fun LogEventData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertEquals(embraceAttribute.attributeValue, attributes[embraceAttribute.otelAttributeName()])
+    assertEquals(embraceAttribute.attributeValue, schemaType.attributes()[embraceAttribute.otelAttributeName()])
 }

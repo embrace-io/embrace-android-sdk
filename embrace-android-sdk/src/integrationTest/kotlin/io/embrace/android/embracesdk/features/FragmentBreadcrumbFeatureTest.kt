@@ -2,9 +2,10 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.SchemaKeys
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName
 import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpans
+import io.embrace.android.embracesdk.internal.spans.toEmbraceObjectName
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -32,7 +33,7 @@ internal class FragmentBreadcrumbFeatureTest {
                 embrace.endView("AnotherView")
             })
 
-            val fragmentBreadcrumbs = message.findSpans("emb-${SchemaKeys.VIEW_BREADCRUMB}")
+            val fragmentBreadcrumbs = message.findSpans(SchemaDefaultName.VIEW_BREADCRUMB.toEmbraceObjectName())
             assertEquals(2, fragmentBreadcrumbs.size)
 
             val breadcrumb1 = fragmentBreadcrumbs[0]

@@ -27,7 +27,7 @@ internal class SpanDataSourceKtTest {
             1500000000000
         )
         data.assertIsType(EmbType.Ux.View)
-        assertEquals("my-view", data.attributes["view.name"])
+        assertEquals("my-view", data.schemaType.attributes()["view.name"])
 
         val span = service.startSpanCapture("") { data }
         checkNotNull(span)

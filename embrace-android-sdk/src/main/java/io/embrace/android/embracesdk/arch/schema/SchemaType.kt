@@ -1,25 +1,29 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.arch.schema.SchemaKeys.AEI_RECORD
-import io.embrace.android.embracesdk.arch.schema.SchemaKeys.CUSTOM_BREADCRUMB
-import io.embrace.android.embracesdk.arch.schema.SchemaKeys.LOG
-import io.embrace.android.embracesdk.arch.schema.SchemaKeys.VIEW_BREADCRUMB
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.AEI_RECORD
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.CUSTOM_BREADCRUMB
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.LOG
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.VIEW_BREADCRUMB
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 
-internal object SchemaKeys {
-    internal const val CUSTOM_BREADCRUMB = "emb-custom-breadcrumb"
-    internal const val VIEW_BREADCRUMB = "screen-view"
-    internal const val AEI_RECORD = "aei-record"
-    internal const val LOG = "emb-log"
-}
-
+/**
+ * The collections of attribute schemas used by the associated telemetry types.
+ *
+ * Each schema contains a [TelemetryType] that it is being applied to, as well as a [defaultName] used for the generated
+ * telemetry data object if a fixed one is being used.
+ */
 internal sealed class SchemaType(
     val telemetryType: TelemetryType,
-    val name: String,
+    val defaultName: String,
 ) {
-    abstract val attrs: Map<String, String>
+    protected abstract val attrs: Map<String, String>
+
+    /**
+     * The attributes defined fo this schema that should be used to populate telemetry objects
+     */
+    fun attributes(): Map<String, String> = attrs.plus(telemetryType.toOTelKeyValuePair())
 
     internal class CustomBreadcrumb(message: String) : SchemaType(
         EmbType.System.Breadcrumb,
@@ -59,4 +63,14 @@ internal sealed class SchemaType(
     ) {
         override val attrs = attributes.toMap()
     }
+}
+
+/**
+ * Note: Spans marked as internal will always be prefixed with "emb-", so the default name doesn't need to add this.
+ */
+internal object SchemaDefaultName {
+    internal const val CUSTOM_BREADCRUMB = "emb-custom-breadcrumb"
+    internal const val VIEW_BREADCRUMB = "screen-view"
+    internal const val AEI_RECORD = "emb-aei-record"
+    internal const val LOG = "emb-log"
 }

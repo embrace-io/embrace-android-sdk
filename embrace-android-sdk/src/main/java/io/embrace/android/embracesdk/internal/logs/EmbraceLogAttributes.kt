@@ -12,6 +12,11 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
         private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 
         /**
+         * Prefix added to all attribute keys for all session properties added by the SDK
+         */
+        private const val SESSION_PROPERTIES_NAME_PREFIX = EMBRACE_ATTRIBUTE_NAME_PREFIX + "properties."
+
+        /**
          * Attribute name for the application state (foreground/background) at the time the log was recorded
          */
         private const val APP_STATE_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "state"
@@ -70,6 +75,15 @@ internal class EmbraceLogAttributes(properties: Map<String, Any>?) {
         // Currently the backend only supports string attributes for logs
         properties?.forEach {
             attributes[it.key] = it.value.toString()
+        }
+    }
+
+    /**
+     * Add session properties as attributes to the log
+     */
+    fun setSessionProperties(sessionProperties: Map<String, String>) {
+        sessionProperties.forEach {
+            attributes["$SESSION_PROPERTIES_NAME_PREFIX${it.key}"] = it.value
         }
     }
 

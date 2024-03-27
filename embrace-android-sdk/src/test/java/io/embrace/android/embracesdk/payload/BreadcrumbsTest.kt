@@ -19,7 +19,6 @@ internal class BreadcrumbsTest {
                 TapBreadcrumb.TapBreadcrumbType.TAP
             )
         ),
-        customBreadcrumbs = listOf(CustomBreadcrumb("Custom", 1600000000)),
         webViewBreadcrumbs = listOf(WebViewBreadcrumb("WebView", 1600000000)),
         rnActionBreadcrumbs = listOf(
             RnActionBreadcrumb(
@@ -54,7 +53,6 @@ internal class BreadcrumbsTest {
         val obj = deserializeJsonFromResource<Breadcrumbs>("breadcrumbs_expected.json")
         assertNotNull(obj)
         assertNotNull(obj.viewBreadcrumbs?.single())
-        assertNotNull(obj.customBreadcrumbs?.single())
         assertNotNull(obj.tapBreadcrumbs?.single())
         assertNotNull(obj.rnActionBreadcrumbs?.single())
         assertNotNull(obj.pushNotifications?.single())

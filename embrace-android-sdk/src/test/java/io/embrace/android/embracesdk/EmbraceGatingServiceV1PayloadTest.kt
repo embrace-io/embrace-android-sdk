@@ -38,7 +38,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -215,11 +214,9 @@ internal class EmbraceGatingServiceV1PayloadTest {
             TapBreadcrumb.TapBreadcrumbType.TAP
         )
         val webViewBreadcrumb = WebViewBreadcrumb("web url", 0)
-        val customBreadcrumb = CustomBreadcrumb("custom breadcrumb", 0)
 
         val breadcrumbs = Breadcrumbs(
             tapBreadcrumbs = listOf(tapBreadcrumb),
-            customBreadcrumbs = listOf(customBreadcrumb),
             webViewBreadcrumbs = listOf(webViewBreadcrumb),
         )
 
@@ -238,7 +235,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
         assertNotNull(crumbs.tapBreadcrumbs)
         assertNotNull(crumbs.webViewBreadcrumbs)
-        assertNull(crumbs.customBreadcrumbs)
     }
 
     @Test

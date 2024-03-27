@@ -16,7 +16,7 @@
   },
   "d": "__EMBRACE_TEST_IGNORE__",
   "et": {
-    "st": "active",
+    "st": "foreground",
     "pr": {
       "error": "test property"
     },

@@ -123,7 +123,7 @@ internal class EmbraceInternalErrorService(
 
     private fun getApplicationState(): String = when {
         processStateService.isInBackground -> APPLICATION_STATE_BACKGROUND
-        else -> APPLICATION_STATE_ACTIVE
+        else -> APPLICATION_STATE_FOREGROUND
     }
 
     @Synchronized
@@ -136,7 +136,7 @@ internal class EmbraceInternalErrorService(
         /**
          * Signals to the API that the application was in the foreground.
          */
-        private const val APPLICATION_STATE_ACTIVE = "active"
+        private const val APPLICATION_STATE_FOREGROUND = "foreground"
 
         /**
          * Signals to the API that the application was in the background.

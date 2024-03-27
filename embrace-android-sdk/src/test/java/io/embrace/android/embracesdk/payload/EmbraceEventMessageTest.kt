@@ -19,7 +19,7 @@ internal class EmbraceEventMessageTest {
         type = EventType.WARNING_LOG,
         logExceptionType = LogExceptionType.NONE.value,
         screenshotTaken = false,
-        appState = "active",
+        appState = "foreground",
         customProperties = mapOf("Float" to 1, "String" to "TestString"),
         sessionProperties = mapOf()
     )

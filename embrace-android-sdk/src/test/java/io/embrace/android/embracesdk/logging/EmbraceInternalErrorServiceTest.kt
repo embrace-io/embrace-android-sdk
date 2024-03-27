@@ -39,7 +39,7 @@ internal class EmbraceInternalErrorServiceTest {
         val error = checkNotNull(service.currentExceptionError)
         assertEquals(1, error.occurrences)
         with(error.exceptionErrors.single()) {
-            assertEquals("active", state)
+            assertEquals("foreground", state)
             assertEquals(clock.now(), timestamp)
 
             // verify exc object

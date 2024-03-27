@@ -23,7 +23,7 @@ internal class EmbraceEventTest {
         type = EventType.WARNING_LOG,
         logExceptionType = LogExceptionType.NONE.value,
         screenshotTaken = false,
-        appState = "active",
+        appState = "foreground",
         customProperties = mapOf("Float" to 1, "String" to "TestString"),
         sessionProperties = mapOf()
     )
@@ -51,7 +51,7 @@ internal class EmbraceEventTest {
         assertEquals(EventType.WARNING_LOG, obj.type)
         assertEquals(LogExceptionType.NONE.value, obj.logExceptionType)
         assertEquals(false, obj.screenshotTaken)
-        assertEquals("active", obj.appState)
+        assertEquals("foreground", obj.appState)
         assertEquals(mapOf("Float" to 1.0, "String" to "TestString"), obj.customProperties)
         assertEquals(mapOf<String, Any>(), obj.sessionProperties)
     }

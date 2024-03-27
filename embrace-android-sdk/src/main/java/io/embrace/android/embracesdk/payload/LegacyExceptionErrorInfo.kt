@@ -30,7 +30,7 @@ internal data class LegacyExceptionErrorInfo(
     fun toNewPayload(): ExceptionErrorInfo {
         val mappedState = when (state) {
             "background" -> ExceptionErrorInfo.AppState.BACKGROUND
-            else -> ExceptionErrorInfo.AppState.ACTIVE
+            else -> ExceptionErrorInfo.AppState.FOREGROUND
         }
         return ExceptionErrorInfo(
             timestamp,

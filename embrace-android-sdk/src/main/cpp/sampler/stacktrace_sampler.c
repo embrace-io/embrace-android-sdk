@@ -52,6 +52,9 @@ static struct itimerspec timerspec = {0};
 /* alternative stack to avoid overflow when unwinding */
 static stack_t emb_sample_stack = {0};
 
+/* Mutex for sampler code that doesn't run in a signal handler */
+static pthread_mutex_t _emb_sampler_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 emb_interval *emb_current_interval() {
     return interval;
 }
@@ -201,9 +204,11 @@ static bool emb_install_signal_handler() {
 }
 
 void emb_set_unwinder(int unwinder) {
+    pthread_mutex_lock(&_emb_sampler_mutex);
     EMB_LOGDEV("Called emb_set_unwinder(), unwinder=%d", unwinder);
     unwind_type = unwinder;
     EMB_LOGDEV("Preparing to sample native thread.");
+    pthread_mutex_unlock(&_emb_sampler_mutex);
 }
 
 /**
@@ -228,9 +233,10 @@ static int raise_signal_on_target_thread() {
 }
 
 void emb_sigev_notify_function(union sigval sigval) {
+    pthread_mutex_lock(&_emb_sampler_mutex);
+
     if (has_reached_sample_limit()) {
         emb_stop_timer(timer_id, &timerspec);
-        return;
     } else {
         emb_sample *sample = emb_current_sample();
         if (sample != NULL) {
@@ -238,49 +244,65 @@ void emb_sigev_notify_function(union sigval sigval) {
         }
         raise_signal_on_target_thread();
     }
+    pthread_mutex_unlock(&_emb_sampler_mutex);
 }
 
 /**
  * Raises SIGUSR2 on the target thread.
  */
 int emb_start_thread_sampler(long interval_ms) {
+    pthread_mutex_lock(&_emb_sampler_mutex);
+
     EMB_LOGDEV("Called emb_start_thread_sampler().");
+    int result = 0;
     if (is_thread_sampler_started) {
-        return -1;
+        result = -1;
     }
-    is_thread_sampler_started = true;
+    if (result == 0) {
+        is_thread_sampler_started = true;
 
-    if (!is_installed()) {
-        return EMB_ERROR_NOT_INSTALLED;
+        if (!is_installed()) {
+            result = EMB_ERROR_NOT_INSTALLED;
+        }
     }
-    interval->num_samples = 0;
+    if (result == 0) {
+        interval->num_samples = 0;
 
-    EMB_LOGDEV("Starting timer for sampling.");
-    if (emb_start_timer(timer_id, &timerspec, 1, interval_ms) != 0) {
-        EMB_LOGERROR("Failure starting timer, errno=%d", errno);
-        return EMB_ERROR_TIMER_FAILED;
+        EMB_LOGDEV("Starting timer for sampling.");
+        if (emb_start_timer(timer_id, &timerspec, 1, interval_ms) != 0) {
+            EMB_LOGERROR("Failure starting timer, errno=%d", errno);
+            result = EMB_ERROR_TIMER_FAILED;
+        }
     }
-    return 0;
+    pthread_mutex_unlock(&_emb_sampler_mutex);
+    return result;
 }
 
 /**
  * Raises SIGUSR2 on the target thread.
  */
 int emb_stop_thread_sampler() {
+    pthread_mutex_lock(&_emb_sampler_mutex);
+
     EMB_LOGDEV("Called emb_stop_thread_sampler().");
+    int result = 0;
     if (!is_thread_sampler_started) {
-        return -1;
+        result = -1;
     }
-    is_thread_sampler_started = false;
+    if (result == 0) {
+        is_thread_sampler_started = false;
 
-    if (!is_installed()) {
-        return EMB_ERROR_NOT_INSTALLED;
+        if (!is_installed()) {
+            result = EMB_ERROR_NOT_INSTALLED;
+        }
     }
-
-    EMB_LOGDEV("Stopping timer.");
-    if (emb_stop_timer(timer_id, &timerspec) != 0) {
-        EMB_LOGERROR("Failure stopping timer, errno=%d", errno);
+    if (result == 0) {
+        EMB_LOGDEV("Stopping timer.");
+        if (emb_stop_timer(timer_id, &timerspec) != 0) {
+            EMB_LOGERROR("Failure stopping timer, errno=%d", errno);
+        }
     }
+    pthread_mutex_unlock(&_emb_sampler_mutex);
     return 0;
 }
 
@@ -290,26 +312,24 @@ bool emb_monitor_current_thread() {
     }
     EMB_LOGDEV("Called emb_monitor_current_thread().");
     bool result = true;
-    static pthread_mutex_t _emb_signal_mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&_emb_signal_mutex);
+    pthread_mutex_lock(&_emb_sampler_mutex);
 
     EMB_LOGINFO("Installing SIGUSR2 handler.");
     target_thread = pthread_self();
     EMB_LOGDEV("Target thread ID=%ld", target_thread);
     result = emb_install_signal_handler();
 
-    pthread_mutex_unlock(&_emb_signal_mutex);
+    pthread_mutex_unlock(&_emb_sampler_mutex);
     return result;
 }
 
 bool emb_setup_native_thread_sampler(emb_env *emb_env, bool _is32bit) {
     EMB_LOGDEV("Called emb_setup_native_thread_sampler().");
 
-    static pthread_mutex_t _emb_timer_mutex = PTHREAD_MUTEX_INITIALIZER;
     bool result = true;
     is32bit = _is32bit;
 
-    pthread_mutex_lock(&_emb_timer_mutex);
+    pthread_mutex_lock(&_emb_sampler_mutex);
     if (!is_installed()) {
         EMB_LOGINFO("Installing SIGUSR2 handler.");
         env = emb_env;
@@ -320,6 +340,6 @@ bool emb_setup_native_thread_sampler(emb_env *emb_env, bool _is32bit) {
             result = false;
         }
     }
-    pthread_mutex_unlock(&_emb_timer_mutex);
+    pthread_mutex_unlock(&_emb_sampler_mutex);
     return result;
 }

@@ -31,27 +31,15 @@ internal class FragmentBreadcrumbFeatureTest {
                 embrace.endView("MyView")
                 embrace.endView("AnotherView")
             })
-            val fragmentBreadcrumbs = checkNotNull(message.breadcrumbs?.fragmentBreadcrumbs).sortedBy { it.name }
+
+            val fragmentBreadcrumbs = message.findSpans("emb-${SchemaKeys.VIEW_BREADCRUMB}")
             assertEquals(2, fragmentBreadcrumbs.size)
 
             val breadcrumb1 = fragmentBreadcrumbs[0]
-            assertEquals("AnotherView", breadcrumb1.name)
-            assertEquals(startTime + 1000, breadcrumb1.start)
-            assertEquals(startTime + 3000, breadcrumb1.endTime)
+            assertEquals("MyView", breadcrumb1.findSpanAttribute("view.name"))
 
             val breadcrumb2 = fragmentBreadcrumbs[1]
-            assertEquals("MyView", breadcrumb2.name)
-            assertEquals(startTime, breadcrumb2.start)
-            assertEquals(startTime + 3000, breadcrumb2.endTime)
-
-            val fragmentSpans = message.findSpans("emb-${SchemaKeys.VIEW_BREADCRUMB}")
-            assertEquals(2, fragmentSpans.size)
-
-            val span1 = fragmentSpans[0]
-            assertEquals("MyView", span1.findSpanAttribute("view.name"))
-
-            val span2 = fragmentSpans[1]
-            assertEquals("AnotherView", span2.findSpanAttribute("view.name"))
+            assertEquals("AnotherView", breadcrumb2.findSpanAttribute("view.name"))
         }
     }
 }

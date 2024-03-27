@@ -38,6 +38,7 @@ add_library(# Sets the name of the library.
         unwinders/unwinder_stack.cpp
         safejni/safe_jni.c
         utils/system_clock.c
+        utils/string_utils.c
         utilities.c
         file_marker.c
         file_writer.c

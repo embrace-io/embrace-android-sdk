@@ -4,6 +4,7 @@
 #include "../utils/utilities.h"
 #include "../safejni/safe_jni.h"
 #include "../utils/emb_log.h"
+#include "../utils/string_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -141,10 +142,6 @@ static bool init_jni_cache(JNIEnv *env) {
     return cache->initialized;
 }
 
-void convert_to_hex_addr(uint64_t addr, char *buffer) {
-    snprintf(buffer, kEMBSampleAddrLen, "0x%lx", (unsigned long) addr);
-}
-
 static bool add_element_to_sample_list(JNIEnv *env, emb_sample *sample,
                                        jobject frames, int index) {
     bool success = false;
@@ -153,8 +150,8 @@ static bool add_element_to_sample_list(JNIEnv *env, emb_sample *sample,
     // convert pointers to hex addresses.
     char pc_buf[kEMBSampleAddrLen] = {0};
     char load_buf[kEMBSampleAddrLen] = {0};
-    convert_to_hex_addr(frame->pc, pc_buf);
-    convert_to_hex_addr(frame->so_load_addr, load_buf);
+    emb_convert_to_hex_addr(frame->pc, pc_buf);
+    emb_convert_to_hex_addr(frame->so_load_addr, load_buf);
 
     jstring pc = NULL;
     jstring so_load_addr = NULL;

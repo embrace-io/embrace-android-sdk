@@ -2,25 +2,11 @@
 #define EMBRACE_UNWINDER_DLINFO_H
 
 #include "sampler_unwinder_unwind.h"
+#include "../schema/unwind_state.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct {
-    uint64_t stack[kEMBSampleUnwindLimit]; // unwind up to 256, then copy everything to other struct.
-    uint16_t num_sframes;
-    uint8_t result;
-} emb_unwind_state;
-
-/**
- * Uses dladdr to get information on the shared object load address, symbol address, and path.
- * This information may not always be available.
- *
- * Returns the result from dladdr.
- * See: https://man7.org/linux/man-pages/man3/dladdr.3.html
- */
-int emb_get_dlinfo_for_ip(uint64_t ip, size_t index, emb_sample_stackframe *frame);
 
 /**
  * Uses dladdr to get information on the shared object load address, symbol address, and path

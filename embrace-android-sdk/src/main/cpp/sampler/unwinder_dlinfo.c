@@ -1,8 +1,8 @@
 #include <dlfcn.h>
 #include <string.h>
 #include "sampler_unwinder_unwind.h"
-#include "../utilities.h"
-#include "../emb_log.h"
+#include "../utils/utilities.h"
+#include "../utils/emb_log.h"
 #include "unwinder_dlinfo.h"
 #include "../utils/string_utils.h"
 

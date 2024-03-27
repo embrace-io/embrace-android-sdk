@@ -20,11 +20,11 @@ add_library(# Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         emb_ndk_crash_samples.cpp
-        emb_anr_manager.c
-        anr.c
-        emb_log.c
-        emb_ndk_manager.c
-        jni_util.c
+        anr/emb_anr_manager.c
+        anr/anr.c
+        utils/emb_log.c
+        jnibridge/emb_ndk_manager.c
+        safejni/jni_util.c
         signals/signal_utils.c
         signals/signals_c.c
         signals/signals_cpp.cpp
@@ -39,12 +39,12 @@ add_library(# Sets the name of the library.
         safejni/safe_jni.c
         utils/system_clock.c
         utils/string_utils.c
-        utilities.c
-        file_marker.c
-        file_writer.c
-        base_64_encoder.c
+        utils/utilities.c
+        crashmarker/file_marker.c
+        serializer/file_writer.c
+        3rdparty/base64/base_64_encoder.c
         3rdparty/parson/parson.c
-        cpuinfo.c
+        utils/cpuinfo.c
         )
 
 include_directories(

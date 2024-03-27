@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -70,6 +71,7 @@ internal class FragmentBreadcrumbDataSource(
 
     override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
         StartSpanData(
+            telemetryType = EmbType.Ux.View,
             schemaType = SchemaType.ViewBreadcrumb(name),
             spanStartTimeMs = start,
         )

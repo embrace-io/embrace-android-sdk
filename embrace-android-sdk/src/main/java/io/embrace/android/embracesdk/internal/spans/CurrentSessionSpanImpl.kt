@@ -95,7 +95,7 @@ internal class CurrentSessionSpanImpl(
     override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
         val event = obj.mapper()
-        return currentSession.addEvent(event.schemaType.name, event.spanStartTimeMs, event.attributes)
+        return currentSession.addEvent(event.name, event.spanStartTimeMs, event.attributes)
     }
 
     override fun addAttribute(attribute: SpanAttributeData): Boolean {

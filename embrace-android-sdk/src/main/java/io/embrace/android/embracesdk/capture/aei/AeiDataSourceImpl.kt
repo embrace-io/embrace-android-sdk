@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -209,6 +210,7 @@ internal class AeiDataSourceImpl(
         val message: AppExitInfoData = obj.applicationExits.single()
         val schemaType = SchemaType.AeiLog(message)
         return LogEventData(
+            telemetryType = EmbType.System.Exit,
             schemaType = schemaType,
             severity = Severity.INFO,
             message = message.trace ?: ""

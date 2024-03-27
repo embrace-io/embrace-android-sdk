@@ -231,7 +231,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `add event forwarded to span`() {
         currentSessionSpan.addEvent("test-event") {
-            SpanEventData(SchemaType.CustomBreadcrumb(this), 1000L)
+            SpanEventData(EmbType.System.Breadcrumb, SchemaType.CustomBreadcrumb(this), 1000L)
         }
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)

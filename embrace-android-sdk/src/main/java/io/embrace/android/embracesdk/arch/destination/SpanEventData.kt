@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch.destination
 
 import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 
 /**
  * Represents a span event that can be added to the current session span.
@@ -10,8 +11,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
  * @param spanStartTimeMs the start time of the span event in milliseconds.
  */
 internal class SpanEventData(
-    val schemaType: SchemaType,
+    telemetryType: TelemetryType,
+    schemaType: SchemaType,
     val spanStartTimeMs: Long
-) {
-    val attributes = schemaType.attrs.plus(schemaType.telemetryType.toOTelKeyValuePair())
-}
+) : TelemetryData by TelemetryDataImpl(telemetryType, schemaType)

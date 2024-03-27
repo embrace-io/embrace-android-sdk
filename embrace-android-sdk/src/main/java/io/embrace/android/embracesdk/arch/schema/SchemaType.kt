@@ -16,27 +16,23 @@ internal object SchemaKeys {
 }
 
 internal sealed class SchemaType(
-    val telemetryType: TelemetryType,
     val name: String,
 ) {
     abstract val attrs: Map<String, String>
 
     internal class CustomBreadcrumb(message: String) : SchemaType(
-        EmbType.System.Breadcrumb,
         CUSTOM_BREADCRUMB
     ) {
         override val attrs = mapOf("message" to message)
     }
 
     internal class ViewBreadcrumb(viewName: String) : SchemaType(
-        EmbType.Ux.View,
         VIEW_BREADCRUMB
     ) {
         override val attrs = mapOf("view.name" to viewName)
     }
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(
-        EmbType.System.Exit,
         AEI_RECORD
     ) {
         override val attrs = mapOf(
@@ -54,7 +50,6 @@ internal sealed class SchemaType(
     }
 
     internal class Log(attributes: EmbraceLogAttributes) : SchemaType(
-        EmbType.System.Log,
         LOG
     ) {
         override val attrs = attributes.toMap()

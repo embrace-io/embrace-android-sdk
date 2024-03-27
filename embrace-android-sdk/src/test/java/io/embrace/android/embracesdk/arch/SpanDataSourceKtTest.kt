@@ -23,8 +23,9 @@ internal class SpanDataSourceKtTest {
         service.initializeService(1500000000000)
 
         val data = StartSpanData(
-            SchemaType.ViewBreadcrumb("my-view"),
-            1500000000000
+            telemetryType = EmbType.Ux.View,
+            schemaType = SchemaType.ViewBreadcrumb("my-view"),
+            spanStartTimeMs = 1500000000000
         )
         data.assertIsType(EmbType.Ux.View)
         assertEquals("my-view", data.attributes["view.name"])

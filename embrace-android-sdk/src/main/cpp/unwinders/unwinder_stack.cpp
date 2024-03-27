@@ -5,7 +5,7 @@
 #include "unwinder_stack.h"
 #include <stdlib.h>
 #include <ucontext.h>
-#include "../utilities.h"
+#include "../utils/utilities.h"
 #include "../3rdparty/libunwindstack-ndk/MemoryLocal.h"
 #include "unwindstack/AndroidUnwinder.h"
 #include "../utils/string_utils.h"

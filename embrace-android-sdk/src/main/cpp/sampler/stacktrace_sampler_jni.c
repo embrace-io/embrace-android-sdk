@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <jni.h>
 #include "stacktrace_sampler.h"
-#include "../utilities.h"
+#include "../utils/utilities.h"
 #include "../safejni/safe_jni.h"
-#include "../emb_log.h"
+#include "../utils/emb_log.h"
 
 #ifdef __cplusplus
 extern "C" {

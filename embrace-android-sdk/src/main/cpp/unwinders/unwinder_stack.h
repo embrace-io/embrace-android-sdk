@@ -5,7 +5,7 @@
 #ifndef EMBRACE_NATIVE_CRASHES_UNWINDER_STACK_H
 #define EMBRACE_NATIVE_CRASHES_UNWINDER_STACK_H
 
-#include "../emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 #include <signal.h>
 #ifdef __cplusplus
 extern "C"

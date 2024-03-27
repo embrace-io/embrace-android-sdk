@@ -5,7 +5,7 @@
 #ifndef EMBRACE_NATIVE_CRASHES_EMB_NDK_MANAGER_H
 #define EMBRACE_NATIVE_CRASHES_EMB_NDK_MANAGER_H
 
-#include "stack_frames.h"
+#include "../schema/stack_frames.h"
 #include <stdbool.h>
 
 #ifdef CLANG_ANALYZE_ASYNCSAFE

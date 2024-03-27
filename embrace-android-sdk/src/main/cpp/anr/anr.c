@@ -10,8 +10,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/syscall.h>
-#include "safejni/safe_jni.h"
-#include "emb_log.h"
+#include "../safejni/safe_jni.h"
+#include "../utils/emb_log.h"
 
 static bool enabled = false;
 static bool installed = false;

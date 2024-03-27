@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 // reserve "1" for JVM crashes
 #define CRASH_MARKER_SOURCE_SIGNAL "2"

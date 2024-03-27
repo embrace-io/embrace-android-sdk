@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include "emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 bool emb_write_crash_to_file(emb_env *stack);
 emb_crash *emb_read_crash_from_file(const char *path);

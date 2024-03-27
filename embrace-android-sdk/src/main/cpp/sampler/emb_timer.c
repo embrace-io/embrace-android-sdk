@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include "emb_timer.h"
-#include "../emb_log.h"
+#include "../utils/emb_log.h"
 
 // see https://man7.org/linux/man-pages/man2/timer_create.2.html
 

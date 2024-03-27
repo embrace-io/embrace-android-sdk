@@ -2,7 +2,7 @@
 #define EMBRACE_NATIVE_STACKTRACE_SAMPLER_H
 
 #include "sampler_structs.h"
-#include "../emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 /**
  * Performs one-time initialization required to sample native threads

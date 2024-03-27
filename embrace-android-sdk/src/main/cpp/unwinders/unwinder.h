@@ -12,8 +12,8 @@ extern "C" {
 #include <stdbool.h>
 #include <sys/types.h>
 #include <asm/siginfo.h>
-#include "../emb_ndk_manager.h"
-#include "../stack_frames.h"
+#include "../jnibridge/emb_ndk_manager.h"
+#include "../schema/stack_frames.h"
 
 ssize_t emb_process_capture(emb_env *env, siginfo_t *info, void *user_context);
 

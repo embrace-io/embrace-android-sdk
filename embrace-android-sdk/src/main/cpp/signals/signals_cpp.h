@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "../emb_ndk_manager.h"
+#include "../jnibridge/emb_ndk_manager.h"
 
 bool emb_setup_cpp_sig_handler(emb_env *env);
 void emb_remove_cpp_sig_handler(void);

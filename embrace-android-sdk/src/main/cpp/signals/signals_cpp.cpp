@@ -10,11 +10,11 @@
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
-#include "../utilities.h"
+#include "../utils/utilities.h"
 #include "../unwinders/unwinder.h"
-#include "../file_marker.h"
-#include "../file_writer.h"
-#include "../emb_log.h"
+#include "../crashmarker/file_marker.h"
+#include "../serializer/file_writer.h"
+#include "../utils/emb_log.h"
 
 void emb_termination_handler();
 

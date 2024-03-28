@@ -1,15 +1,12 @@
 package io.embrace.android.embracesdk.logging
 
-internal class InternalErrorLogger(
+import android.util.Log
+
+internal class ReportingLoggerAction(
     private val internalErrorService: InternalErrorService,
-    private val logger: InternalEmbraceLogger.LoggerAction,
     private val logStrictMode: Boolean = false
 ) : InternalEmbraceLogger.LoggerAction {
 
-    // TODO: in future we should queue these messages up and add them to the payload when the
-    // exception service is ready,
-    // so that early error messages don't get lost. We should create a clickup task for this
-    // and add it to the Q2 stability work
     override fun log(
         msg: String,
         severity: InternalEmbraceLogger.Severity,
@@ -26,8 +23,9 @@ internal class InternalErrorLogger(
         if (finalThrowable != null) {
             try {
                 internalErrorService.handleInternalError(finalThrowable)
-            } catch (exc: Exception) {
-                logger.log(exc.localizedMessage ?: "", InternalEmbraceLogger.Severity.ERROR, null, false)
+            } catch (e: Throwable) {
+                // Yo dawg, I heard you like to handle internal errors...
+                Log.w(EMBRACE_TAG, msg, e)
             }
         }
     }

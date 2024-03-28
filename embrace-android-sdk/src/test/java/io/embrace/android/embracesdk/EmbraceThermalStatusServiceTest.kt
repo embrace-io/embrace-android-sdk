@@ -4,7 +4,6 @@ import android.os.PowerManager
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.ThermalState
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -19,8 +18,7 @@ internal class EmbraceThermalStatusServiceTest {
     fun setUp() {
         service = EmbraceThermalStatusService(
             BackgroundWorker(BlockableExecutorService()),
-            { 0 },
-            InternalEmbraceLogger()
+            { 0 }
         ) { mockPowerManager() }
     }
 

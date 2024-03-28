@@ -16,18 +16,17 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.system.mockActivity
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
 
 internal class EmbraceBreadcrumbServiceTest {
 
@@ -56,7 +55,7 @@ internal class EmbraceBreadcrumbServiceTest {
         )
         processStateService = FakeProcessStateService()
         activity = mockActivity()
-        memoryCleanerService = EmbraceMemoryCleanerService()
+        memoryCleanerService = EmbraceMemoryCleanerService(InternalEmbraceLogger())
         clock.setCurrentTime(MILLIS_FOR_2020_01_01)
         clock.tickSecond()
     }
@@ -79,7 +78,8 @@ internal class EmbraceBreadcrumbServiceTest {
             configService,
             FakeActivityTracker(),
             FakeCurrentSessionSpan(),
-            spanService
+            spanService,
+            InternalEmbraceLogger(),
         )
         service.logView("viewA", clock.now())
         clock.tickSecond()
@@ -102,25 +102,6 @@ internal class EmbraceBreadcrumbServiceTest {
         val webViews = checkNotNull(service.getBreadcrumbs().webViewBreadcrumbs)
         assertEquals("two webviews captured", 2, webViews.size)
         assertJsonMessage(service, "breadcrumb_webview.json")
-    }
-
-    internal inner class AddFragmentWorker(
-        private val startSignal: CountDownLatch,
-        private val doneSignal: CountDownLatch,
-        private val service: BreadcrumbService,
-        private val viewName: String?
-    ) : Runnable {
-        override fun run() {
-            try {
-                startSignal.await()
-                service.startView(viewName)
-                Thread.sleep((Math.random() * 100).toLong())
-                service.endView(viewName)
-                doneSignal.countDown()
-            } catch (ex: InterruptedException) {
-                Assert.fail("worker thread died")
-            }
-        }
     }
 
     // TO DO: refactor BreadCrumbService to avoid accessing internal implementation
@@ -312,7 +293,8 @@ internal class EmbraceBreadcrumbServiceTest {
             configService,
             activityTracker,
             FakeCurrentSessionSpan(),
-            spanService
+            spanService,
+            InternalEmbraceLogger(),
         )
         service.addFirstViewBreadcrumbForSession(5)
         val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
@@ -325,7 +307,8 @@ internal class EmbraceBreadcrumbServiceTest {
         configService,
         FakeActivityTracker(),
         FakeCurrentSessionSpan(),
-        spanService
+        spanService,
+        InternalEmbraceLogger(),
     )
 
     companion object {

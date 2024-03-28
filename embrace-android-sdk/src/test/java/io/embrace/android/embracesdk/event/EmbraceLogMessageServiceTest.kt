@@ -107,11 +107,11 @@ internal class EmbraceLogMessageServiceTest {
                 cfg
             }
         )
-        gatingService = EmbraceGatingService(configService)
+        gatingService = EmbraceGatingService(configService, logcat)
         sessionIdTracker.setActiveSessionId("session-123", true)
         metadataService.setAppForeground()
         metadataService.setAppId("appId")
-        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
+        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService, logcat)
     }
 
     private fun getLogMessageService(): EmbraceLogMessageService {

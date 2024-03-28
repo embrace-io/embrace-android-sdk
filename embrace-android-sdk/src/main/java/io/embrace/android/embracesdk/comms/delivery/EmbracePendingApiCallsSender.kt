@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -18,6 +18,7 @@ internal class EmbracePendingApiCallsSender(
     private val scheduledWorker: ScheduledWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
+    private val logger: InternalEmbraceLogger
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
     private val pendingApiCalls: PendingApiCalls by lazy {
@@ -28,7 +29,6 @@ internal class EmbracePendingApiCallsSender(
     private lateinit var sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
     init {
-        logger.logDeveloper(TAG, "Starting DeliveryRetryManager")
         networkConnectivityService.addNetworkConnectivityListener(this)
         lastNetworkStatus = networkConnectivityService.getCurrentNetworkStatus()
         scheduledWorker.submit(this::scheduleApiCallsDelivery)
@@ -49,8 +49,6 @@ internal class EmbracePendingApiCallsSender(
     }
 
     override fun scheduleRetry(response: ApiResponse) {
-        logger.logDeveloper(TAG, "Scheduling api call for retry")
-
         when (response) {
             is ApiResponse.Incomplete -> {
                 scheduleApiCallsDelivery(RETRY_PERIOD)
@@ -136,8 +134,6 @@ internal class EmbracePendingApiCallsSender(
             return
         }
         try {
-            logger.logDeveloper(TAG, "Sending Pending API calls")
-
             val failedApiCallsToRetry = mutableListOf<PendingApiCall>()
             var applyExponentialBackoff = false
 
@@ -198,12 +194,8 @@ internal class EmbracePendingApiCallsSender(
      * Send the request for a PendingApiCall.
      */
     private fun sendPendingApiCall(call: PendingApiCall): ApiResponse? {
-        val payload: SerializationAction? = cacheManager.loadPayloadAsAction(call.cachedPayloadFilename)
-        if (payload == null) {
-            // If payload is null, the file could have been removed. We don't have to retry this call.
-            logger.logDeveloper(TAG, "Could not retrieve cached api payload")
-            return null
-        }
+        // If payload is null, the file could have been removed. We don't have to retry this call.
+        val payload: SerializationAction = cacheManager.loadPayloadAsAction(call.cachedPayloadFilename)
         return sendMethod(call.apiRequest, payload)
     }
 
@@ -233,6 +225,5 @@ internal class EmbracePendingApiCallsSender(
     }
 }
 
-private const val TAG = "EmbracePendingApiCallsSender"
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds

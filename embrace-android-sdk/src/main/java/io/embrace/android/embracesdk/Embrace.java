@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.webkit.ConsoleMessage;
@@ -15,8 +13,6 @@ import java.util.Map;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
@@ -41,9 +37,6 @@ public final class Embrace implements EmbraceAndroidApi {
     private static final Embrace embrace = new Embrace();
 
     private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-impl-init", EmbraceImpl::new);
-
-    @NonNull
-    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
 
     static final String NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE = " cannot be invoked because it contains null parameters";
 
@@ -560,13 +553,13 @@ public final class Embrace implements EmbraceAndroidApi {
                                     @NonNull Boolean hasData) {
         if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
             impl.logPushNotification(
-                title,
-                body,
-                topic,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
+                    title,
+                    body,
+                    topic,
+                    id,
+                    notificationPriority,
+                    messageDeliveredPriority,
+                    PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
             );
         }
     }
@@ -576,8 +569,6 @@ public final class Embrace implements EmbraceAndroidApi {
         if (verifyNonNullParameters("trackWebViewPerformance", tag, consoleMessage)) {
             if (consoleMessage.message() != null) {
                 trackWebViewPerformance(tag, consoleMessage.message());
-            } else {
-                logger.logDebug("Empty WebView console message.");
             }
         }
     }
@@ -652,9 +643,7 @@ public final class Embrace implements EmbraceAndroidApi {
             if (param == null) {
                 final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
                 if (isStarted()) {
-                    internalEmbraceLogger.logError(errorMessage, new IllegalArgumentException(errorMessage), true);
-                } else {
-                    internalEmbraceLogger.logSDKNotInitialized(errorMessage);
+                    impl.getEmbraceInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
                 }
                 return false;
             }

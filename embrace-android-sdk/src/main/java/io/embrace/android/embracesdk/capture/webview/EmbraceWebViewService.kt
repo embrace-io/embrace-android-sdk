@@ -2,14 +2,15 @@ package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
 import java.util.EnumMap
 
 internal class EmbraceWebViewService(
     val configService: ConfigService,
-    private val serializer: EmbraceSerializer
+    private val serializer: EmbraceSerializer,
+    private val logger: InternalEmbraceLogger
 ) : WebViewService {
 
     /**
@@ -21,7 +22,7 @@ internal class EmbraceWebViewService(
         if (message.contains(MESSAGE_KEY_FOR_METRICS)) {
             collectWebVital(message, tag)
         } else {
-            InternalStaticEmbraceLogger.logger.logDebug("WebView console message ignored.")
+            logger.logDebug("WebView console message ignored.")
         }
     }
 
@@ -30,10 +31,8 @@ internal class EmbraceWebViewService(
     }
 
     private fun collectWebVital(message: String, tag: String) {
-        InternalStaticEmbraceLogger.logger.logDeveloper("EmbraceWebViewService", "Collecting web metric")
-
         if (webViewInfoMap.size >= configService.webViewVitalsBehavior.getMaxWebViewVitals()) {
-            InternalStaticEmbraceLogger.logger.logDebug("Max webview vitals per session exceeded")
+            logger.logDebug("Max webview vitals per session exceeded")
             return
         }
         val collectedWebVitals = parseWebVital(message)
@@ -91,10 +90,10 @@ internal class EmbraceWebViewService(
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
                 return serializer.fromJson(message, WebViewInfo::class.java)
             } else {
-                InternalStaticEmbraceLogger.logger.logError("Web Vital info is too large to parse")
+                logger.logError("Web Vital info is too large to parse")
             }
         } catch (e: Exception) {
-            InternalStaticEmbraceLogger.logger.logError("Cannot parse Web Vital", e)
+            logger.logError("Cannot parse Web Vital", e)
         }
         return null
     }

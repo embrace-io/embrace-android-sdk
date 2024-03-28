@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 
 /**
@@ -38,11 +37,6 @@ internal interface CoreModule {
     val appFramework: AppFramework
 
     /**
-     * Returns an interface that logs messages
-     */
-    val logger: InternalEmbraceLogger
-
-    /**
      * Returns the service registry. This is used to register services that need to be closed
      */
     val serviceRegistry: ServiceRegistry
@@ -67,7 +61,8 @@ internal interface CoreModule {
 
 internal class CoreModuleImpl(
     ctx: Context,
-    override val appFramework: AppFramework
+    override val appFramework: AppFramework,
+    logger: InternalEmbraceLogger
 ) : CoreModule {
 
     override val context: Context by singleton {
@@ -82,8 +77,6 @@ internal class CoreModuleImpl(
         get() = context.packageManager.getPackageInfo(context.packageName, 0)
 
     override val application by singleton { context as Application }
-
-    override val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 
     override val serviceRegistry: ServiceRegistry by singleton {
         ServiceRegistry(logger)

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -41,7 +41,8 @@ internal class EmbraceCrashService(
     private val gatingService: GatingService,
     private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
-    private val clock: Clock
+    private val clock: Clock,
+    private val logger: InternalEmbraceLogger
 ) : CrashService {
 
     private var mainCrashHandled = false
@@ -49,7 +50,6 @@ internal class EmbraceCrashService(
 
     init {
         if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() && !ApkToolsConfig.IS_EXCEPTION_CAPTURE_DISABLED) {
-            logDeveloper("EmbraceCrashService", "crash handler enabled")
             registerExceptionHandler()
         }
     }
@@ -63,16 +63,11 @@ internal class EmbraceCrashService(
      * @param exception the exception thrown by the thread
      */
     override fun handleCrash(thread: Thread, exception: Throwable) {
-        logDeveloper("EmbraceCrashService", "Attempting to handle crash")
         if (!mainCrashHandled) {
             mainCrashHandled = true
 
             // Stop ANR tracking first to avoid capture ANR when crash message is being sent
             anrService?.forceAnrTrackingStopOnCrash()
-            logDeveloper(
-                "EmbraceCrashService",
-                "JsException is present: ${if (jsException != null) "true" else "false"}"
-            )
 
             // Check if the unity crash id exists. If so, means that the native crash capture
             // is enabled for an Unity build. When a native crash occurs and the NDK sends an
@@ -80,15 +75,10 @@ internal class EmbraceCrashService(
             val unityCrashId = ndkService.getUnityCrashId()
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crash = if (unityCrashId != null) {
-                logDeveloper(
-                    "EmbraceCrashService",
-                    "unityCrashId is $unityCrashId"
-                )
-                CrashFactory.ofThrowable(exception, jsException, crashNumber, unityCrashId)
+                CrashFactory.ofThrowable(logger, exception, jsException, crashNumber, unityCrashId)
             } else {
-                CrashFactory.ofThrowable(exception, jsException, crashNumber)
+                CrashFactory.ofThrowable(logger, exception, jsException, crashNumber)
             }
-            logDeveloper("EmbraceCrashService", "crashId = " + crash.crashId)
 
             val sessionId = sessionIdTracker.getActiveSessionId()
 
@@ -125,7 +115,6 @@ internal class EmbraceCrashService(
 
             // Sanitize crash event
             val crashEvent = gatingService.gateEventMessage(versionedEvent)
-            logDeveloper("EmbraceCrashService", "Attempting to send event...")
 
             // Send the crash. This is not guaranteed to succeed since the process is terminating
             // and the request is made on a background executor, but data analysis shows that
@@ -146,9 +135,8 @@ internal class EmbraceCrashService(
      * exceptions and forward them to the Embrace API as crashes.
      */
     private fun registerExceptionHandler() {
-        logDeveloper("EmbraceCrashService", "registerExceptionHandler")
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this)
+        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
         Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
     }
 
@@ -158,7 +146,6 @@ internal class EmbraceCrashService(
      * @param exception the unhandled JS exception
      */
     override fun logUnhandledJsException(exception: JsException) {
-        logDeveloper("EmbraceCrashService", "logUnhandledJsException")
         this.jsException = exception
     }
 

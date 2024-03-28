@@ -4,8 +4,11 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.assertions.assertInternalErrorLogged
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.TraceparentGeneratorTest.Companion.validPattern
+import io.embrace.android.embracesdk.internalErrorService
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -134,6 +137,25 @@ internal class PublicApiTest {
             repeat(100) {
                 assertTrue(validPattern.matches(embrace.generateW3cTraceparent()))
             }
+        }
+    }
+
+    @Test
+    fun `static logger and SDK logger instance log to the same internal error service`() {
+        with(testRule) {
+            embrace.start(harness.fakeCoreModule.context)
+            InternalStaticEmbraceLogger.logger.logError("not-used", RuntimeException("static"), true)
+            assertInternalErrorLogged(
+                checkNotNull(internalErrorService()).currentExceptionError,
+                checkNotNull(RuntimeException::class.qualifiedName),
+                "static"
+            )
+            harness.initModule.logger.logError("not-used", RuntimeException("non-static"), true)
+            assertInternalErrorLogged(
+                checkNotNull(internalErrorService()).currentExceptionError,
+                checkNotNull(RuntimeException::class.qualifiedName),
+                "non-static"
+            )
         }
     }
 }

@@ -7,8 +7,11 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -23,19 +26,33 @@ import java.util.concurrent.TimeoutException
 internal class ModuleInitBootstrapperTest {
 
     private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
+    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
 
     @Before
     fun setup() {
-        moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> FakeCoreModule() })
+        logger = InternalEmbraceLogger()
+        coreModule = FakeCoreModule(logger = logger)
+        moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _, _ -> coreModule }, logger = logger)
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
     @Test
     fun `test default implementation`() {
-        val moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> FakeCoreModule() })
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            coreModuleSupplier = { _, _, _ -> coreModule },
+            logger = InternalEmbraceLogger()
+        )
         with(moduleInitBootstrapper) {
-            assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+            assertTrue(
+                moduleInitBootstrapper.init(
+                    context = context,
+                    enableIntegrationTesting = false,
+                    appFramework = Embrace.AppFramework.NATIVE,
+                    sdkStartTimeMs = 0L,
+                )
+            )
             assertTrue(initModule is InitModuleImpl)
             assertTrue(openTelemetryModule is OpenTelemetryModuleImpl)
             assertTrue(workerThreadModule is WorkerThreadModuleImpl)
@@ -51,29 +68,79 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `cannot initialize twice`() {
-        assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
-        assertFalse(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
+        assertFalse(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
+    }
+
+    @Test
+    fun `internal error service hooked up to both static and non-static SDK instance`() {
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
+
+        InternalStaticEmbraceLogger.logger.logError("not-used", RuntimeException("static"), true)
+        logger.logError("not-used", RuntimeException("non-static"), true)
+
+        assertEquals(
+            2,
+            moduleInitBootstrapper.sdkObservabilityModule.internalErrorService.currentExceptionError?.exceptionErrors?.size
+        )
     }
 
     @Test
     fun `async init returns normally and without failure`() {
-        assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
         moduleInitBootstrapper.waitForAsyncInit()
     }
 
     @Test
     fun `async init throws exception if it waiting for too long`() {
-        val fakeClock = FakeClock()
-        val fakeInitModule = FakeInitModule(clock = fakeClock)
-        val fakeCoreModule = FakeCoreModule()
-        val fakeWorkerThreadModule =
-            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
+        val fakeInitModule = FakeInitModule(clock = FakeClock())
+        val fakeCoreModule = FakeCoreModule(logger = logger)
+        val fakeWorkerThreadModule = FakeWorkerThreadModule(
+            fakeInitModule = fakeInitModule,
+            name = WorkerName.BACKGROUND_REGISTRATION
+        )
         val bootstrapper = ModuleInitBootstrapper(
             initModule = fakeInitModule,
-            coreModuleSupplier = { _, _ -> fakeCoreModule },
-            workerThreadModuleSupplier = { _ -> fakeWorkerThreadModule }
+            coreModuleSupplier = { _, _, _ -> fakeCoreModule },
+            workerThreadModuleSupplier = { _, -> fakeWorkerThreadModule },
+            logger = InternalEmbraceLogger()
         )
-        assertTrue(bootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            bootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
         assertThrows(TimeoutException::class.java) {
             bootstrapper.waitForAsyncInit(500L, TimeUnit.MILLISECONDS)
         }

@@ -116,7 +116,7 @@ internal class EmbraceNdkServiceTest {
         deliveryService = FakeDeliveryService()
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
-        sessionProperties = EmbraceSessionProperties(preferencesService, configService)
+        sessionProperties = EmbraceSessionProperties(preferencesService, configService, InternalEmbraceLogger())
         appFramework = Embrace.AppFramework.NATIVE
         sharedObjectLoader = mockk()
         logger = InternalEmbraceLogger()

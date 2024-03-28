@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
@@ -29,7 +28,7 @@ internal class SessionOrchestratorImpl(
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : SessionOrchestrator {
 
     private val lock = Any()
@@ -70,7 +69,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, timestamp, coldStart)
             },
             earlyTerminationCondition = {
-                return@transitionState shouldRunOnForeground(state)
+                return@transitionState shouldRunOnForeground(state, logger)
             }
         )
     }
@@ -86,7 +85,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.startPayloadWithState(ProcessState.BACKGROUND, timestamp, false)
             },
             earlyTerminationCondition = {
-                return@transitionState shouldRunOnBackground(state)
+                return@transitionState shouldRunOnBackground(state, logger)
             }
         )
     }
@@ -108,7 +107,8 @@ internal class SessionOrchestratorImpl(
                     configService,
                     clock,
                     activeSession,
-                    state
+                    state,
+                    logger
                 )
             }
         )
@@ -210,7 +210,8 @@ internal class SessionOrchestratorImpl(
                 sessionId,
                 timestamp,
                 !inForeground,
-                transitionType.name
+                transitionType.name,
+                logger
             )
 
             // et voila! a new session is born
@@ -261,7 +262,7 @@ internal class SessionOrchestratorImpl(
         timestamp: Long,
         inBackground: Boolean,
         stateChange: String,
-        logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+        logger: InternalEmbraceLogger
     ) {
         val type = when {
             inBackground -> "background"

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -17,7 +18,8 @@ internal sealed class FinalEnvelopeParams(
     crashId: String?,
     val endType: SessionSnapshotType,
     val isCacheAttempt: Boolean,
-    val captureSpans: Boolean
+    val captureSpans: Boolean,
+    val logger: InternalEmbraceLogger
 ) {
 
     val crashId: String? = when {
@@ -38,6 +40,7 @@ internal sealed class FinalEnvelopeParams(
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
         endType: SessionSnapshotType,
+        logger: InternalEmbraceLogger,
         captureSpans: Boolean = true,
         crashId: String? = null,
     ) : FinalEnvelopeParams(
@@ -47,7 +50,8 @@ internal sealed class FinalEnvelopeParams(
         crashId,
         endType,
         lifeEventType == null,
-        captureSpans
+        captureSpans,
+        logger
     ) {
         override val terminationTime: Long? = null
         override val receivedTermination: Boolean? = null
@@ -63,6 +67,7 @@ internal sealed class FinalEnvelopeParams(
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
         endType: SessionSnapshotType,
+        logger: InternalEmbraceLogger,
         captureSpans: Boolean = true,
         crashId: String? = null,
     ) : FinalEnvelopeParams(
@@ -72,7 +77,8 @@ internal sealed class FinalEnvelopeParams(
         crashId,
         endType,
         endType == SessionSnapshotType.PERIODIC_CACHE,
-        captureSpans
+        captureSpans,
+        logger
     ) {
 
         override val terminationTime: Long? = when {
@@ -92,7 +98,7 @@ internal sealed class FinalEnvelopeParams(
         }
 
         override fun getStartupEventInfo(eventService: EventService) = when {
-            initial.isColdStart -> captureDataSafely(eventService::getStartupMomentInfo)
+            initial.isColdStart -> captureDataSafely(logger, eventService::getStartupMomentInfo)
             else -> null
         }
     }

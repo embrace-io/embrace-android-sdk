@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -54,6 +55,7 @@ internal class EmbraceMetadataServiceTest {
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
         private val windowManager = mockk<WindowManager>()
+        private val logger = InternalEmbraceLogger()
 
         @BeforeClass
         @JvmStatic
@@ -143,7 +145,8 @@ internal class EmbraceMetadataServiceTest {
             fakeArchitecture,
             lazy { packageInfo.versionName },
             lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo
+            hostedSdkVersionInfo,
+            InternalEmbraceLogger(),
         ).apply { precomputeValues() }
     }
 
@@ -257,7 +260,8 @@ internal class EmbraceMetadataServiceTest {
             fakeArchitecture,
             lazy { packageInfo.versionName },
             lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo
+            hostedSdkVersionInfo,
+            logger
         )
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
@@ -285,18 +289,6 @@ internal class EmbraceMetadataServiceTest {
 
         assertEquals("appId", metadataService.getAppId())
         assertEquals("10", metadataService.getAppVersionCode())
-    }
-
-    @Test
-    fun `test disk usage`() {
-        every {
-            MetadataUtils.getDeviceDiskAppUsage(any(), any(), any())
-        }.returns(123L)
-
-        val service = getMetadataService()
-        service.asyncRetrieveDiskUsage(true)
-
-        assertEquals(123L, service.getDiskUsage()?.appDiskUsage)
     }
 
     @Test

@@ -98,7 +98,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
         configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
         internalEmbraceLogger = InternalEmbraceLogger()
         gatingService = EmbraceGatingService(
-            configService
+            configService,
+            InternalEmbraceLogger()
         )
     }
 
@@ -181,7 +182,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
                 "\"mts_st\"" +
                 "]" +
                 "}}",
-            EmbraceSerializer()
+            EmbraceSerializer(),
+            InternalEmbraceLogger()
         )
 
         cfg = buildCustomRemoteConfig(
@@ -190,7 +192,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
         )
 
         gatingService = EmbraceGatingService(
-            configService
+            configService,
+            internalEmbraceLogger
         )
     }
 

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.utils
 
 import android.os.Parcelable
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.Serializable
 
 /**
@@ -22,25 +22,25 @@ internal object PropertyUtils {
      * @return a normalized Map of the provided properties.
      */
     @JvmStatic
-    fun sanitizeProperties(properties: Map<String?, Any?>?): Map<String, Any> {
+    fun sanitizeProperties(properties: Map<String?, Any?>?, logger: InternalEmbraceLogger): Map<String, Any> {
         properties ?: return emptyMap()
 
         if (properties.size > MAX_PROPERTY_SIZE) {
-            logWarning("The maximum number of properties is $MAX_PROPERTY_SIZE, the rest will be ignored.")
+            logger.logWarning("The maximum number of properties is $MAX_PROPERTY_SIZE, the rest will be ignored.")
         }
         return properties.entries
             .filter { it.key != null }
             .take(MAX_PROPERTY_SIZE)
-            .associate { Pair(it.key ?: "null", checkIfSerializable(it.key ?: "", it.value)) }
+            .associate { Pair(it.key ?: "null", checkIfSerializable(it.key ?: "", it.value, logger)) }
     }
 
-    private fun checkIfSerializable(key: String, value: Any?): Any {
+    private fun checkIfSerializable(key: String, value: Any?, logger: InternalEmbraceLogger): Any {
         if (value == null) {
             return "null"
         }
         if (!(value is Parcelable || value is Serializable)) {
             val msg = "The property with key $key has an entry that cannot be serialized. It will be ignored."
-            logWarning(msg)
+            logger.logWarning(msg)
             return "not serializable"
         }
         return value

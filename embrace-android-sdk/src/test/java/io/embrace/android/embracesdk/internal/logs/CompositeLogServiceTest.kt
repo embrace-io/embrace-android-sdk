@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +35,8 @@ internal class CompositeLogServiceTest {
         compositeLogService = CompositeLogService(
             v1LogService = v1LogService,
             v2LogService = v2LogService,
-            configService = configService
+            configService = configService,
+            logger = InternalEmbraceLogger()
         )
     }
 

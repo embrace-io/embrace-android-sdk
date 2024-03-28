@@ -4,7 +4,6 @@ import android.text.TextUtils
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 
 /**
@@ -15,7 +14,7 @@ internal class LegacyCustomBreadcrumbDataSource(
     private val store: BreadcrumbDataStore<CustomBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
     },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : DataCaptureService<List<CustomBreadcrumb>> by store {
 
     fun logCustom(message: String, timestamp: Long) {

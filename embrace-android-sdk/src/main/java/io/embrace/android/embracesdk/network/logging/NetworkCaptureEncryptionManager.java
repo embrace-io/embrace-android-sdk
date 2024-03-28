@@ -19,7 +19,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 
 /**
  * API to encrypt/decrypt data
@@ -31,6 +31,12 @@ class NetworkCaptureEncryptionManager {
     private static final int mEncryptionBlockSize = 245;
     private static final int mDecryptionBlockSize = 256;
 
+    @NonNull
+    private final InternalEmbraceLogger logger;
+
+    NetworkCaptureEncryptionManager(@NonNull InternalEmbraceLogger logger) {
+        this.logger = logger;
+    }
 
     /**
      * @return encrypted data in Base64 String or null if any error occur.
@@ -42,11 +48,11 @@ class NetworkCaptureEncryptionManager {
             if (publicKey != null) {
                 return encrypt(data, publicKey);
             } else {
-                InternalStaticEmbraceLogger.logError("wrong public key");
+                logger.logError("wrong public key");
                 return null;
             }
         } catch (Exception e) {
-            InternalStaticEmbraceLogger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e);
             return null;
         }
     }
@@ -68,7 +74,7 @@ class NetworkCaptureEncryptionManager {
             result += encodedString;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException |
                  IllegalBlockSizeException | IOException e) {
-            InternalStaticEmbraceLogger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e);
         }
         return result;
     }
@@ -91,7 +97,7 @@ class NetworkCaptureEncryptionManager {
             result = new String(decodedData, UTF_8);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  BadPaddingException | IllegalBlockSizeException | IOException e) {
-            InternalStaticEmbraceLogger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e);
         }
         return result;
     }

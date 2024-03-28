@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 /**
@@ -17,7 +17,8 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 internal class CompositeLogService(
     private val v1LogService: LogMessageService,
     private val v2LogService: LogService,
-    private val configService: ConfigService
+    private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger
 ) : LogMessageService {
 
     private val useV2LogService: Boolean
@@ -51,7 +52,7 @@ internal class CompositeLogService(
             // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
             // in EventType.
             if (type.getSeverity() == null) {
-                InternalStaticEmbraceLogger.logError("Invalid event type for log: $type")
+                logger.logError("Invalid event type for log: $type")
                 return
             }
             val severity = type.getSeverity() ?: Severity.INFO

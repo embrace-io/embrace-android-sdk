@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockIntent
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -67,7 +68,8 @@ internal class EmbracePowerSaveModeServiceTest {
         service = EmbracePowerSaveModeService(
             context,
             worker,
-            fakeClock
+            fakeClock,
+            InternalEmbraceLogger()
         ) { powerManager }
     }
 

@@ -36,7 +36,7 @@ internal class InternalInterfaceModuleImpl(
             crashModule.crashService,
             essentialServiceModule.metadataService,
             essentialServiceModule.hostedSdkVersionInfo,
-            coreModule.logger
+            initModule.logger
         )
     }
 
@@ -45,7 +45,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             essentialServiceModule.hostedSdkVersionInfo,
-            coreModule.logger
+            initModule.logger
         )
     }
 
@@ -54,7 +54,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             essentialServiceModule.hostedSdkVersionInfo,
-            coreModule.logger
+            initModule.logger
         )
     }
 }

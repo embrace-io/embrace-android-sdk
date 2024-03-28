@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-
 /**
  * Represents a session that is cached on disk. The cached session encodes information in its
  * filename such as sessionId, timestamp, and payload version. This allows the SDK to process
@@ -41,20 +39,18 @@ internal class CachedSession private constructor(
          */
         fun fromFilename(filename: String): CachedSession? {
             val values = filename.split('.')
-            if (values.size < 4 || values.size > 5) {
-                InternalStaticEmbraceLogger.logError("Unrecognized cached file: $filename")
-                return null
-            }
-            val v2Payload = isV2Payload(filename)
-            val encodedInfo = when {
-                v2Payload -> values.take(4)
-                else -> values
-            }
+            if (values.size == 4 || values.size == 5) {
+                val v2Payload = isV2Payload(filename)
+                val encodedInfo = when {
+                    v2Payload -> values.take(4)
+                    else -> values
+                }
 
-            val timestamp = encodedInfo[1].toLongOrNull()
-            timestamp?.also { ts ->
-                val sessionId = encodedInfo[2]
-                return create(sessionId, ts, v2Payload)
+                val timestamp = encodedInfo[1].toLongOrNull()
+                timestamp?.also { ts ->
+                    val sessionId = encodedInfo[2]
+                    return create(sessionId, ts, v2Payload)
+                }
             }
             return null
         }

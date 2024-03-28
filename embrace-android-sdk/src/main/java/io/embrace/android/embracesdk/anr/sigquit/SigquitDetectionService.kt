@@ -36,10 +36,6 @@ internal class SigquitDetectionService(
     }
 
     fun initializeGoogleAnrTracking() {
-        logger.logDeveloper(
-            "EmbraceAnrService",
-            "Deciding whether to initialize Google ANR Tracking"
-        )
         if (configService.anrBehavior.isGoogleAnrCaptureEnabled()) {
             setupGoogleAnrTracking()
         } else {
@@ -51,12 +47,11 @@ internal class SigquitDetectionService(
 
     private fun setupGoogleAnrTracking() {
         if (configService.anrBehavior.isGoogleAnrCaptureEnabled() && !googleAnrTrackerInstalled.getAndSet(true)) {
-            ThreadUtils.runOnMainThread { setupGoogleAnrHandler() }
+            ThreadUtils.runOnMainThread(logger) { setupGoogleAnrHandler() }
         }
     }
 
     fun setupGoogleAnrHandler() {
-        logger.logDeveloper("EmbraceAnrService", "Setting up Google ANR Handler")
         // TODO: split up the ANR tracking and NDK crash reporter libs
         if (!sharedObjectLoader.loadEmbraceNative()) {
             googleAnrTrackerInstalled.set(false)

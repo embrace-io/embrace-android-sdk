@@ -3,12 +3,13 @@ package io.embrace.android.embracesdk.capture.memory
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.Closeable
 
 internal class ComponentCallbackService(
     private val application: Application,
-    private val memoryService: MemoryService
+    private val memoryService: MemoryService,
+    private val logger: InternalEmbraceLogger
 ) : ComponentCallbacks2, Closeable {
 
     init {
@@ -22,15 +23,11 @@ internal class ComponentCallbackService(
      * @param trimLevel the context of the trim, giving a hint of the amount of trimming.
      */
     override fun onTrimMemory(trimLevel: Int) {
-        InternalStaticEmbraceLogger.logDeveloper(
-            "ComponentCallbackService",
-            "onTrimMemory(). TrimLevel: $trimLevel"
-        )
         if (trimLevel == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             try {
                 memoryService.onMemoryWarning()
             } catch (ex: Exception) {
-                InternalStaticEmbraceLogger.logDebug(
+                logger.logDebug(
                     "Failed to handle onTrimMemory (low memory) event",
                     ex
                 )
@@ -45,7 +42,7 @@ internal class ComponentCallbackService(
         try {
             application.applicationContext.unregisterComponentCallbacks(this)
         } catch (ex: Exception) {
-            InternalStaticEmbraceLogger.logDebug(
+            logger.logDebug(
                 "Error when closing ComponentCallbackService",
                 ex
             )

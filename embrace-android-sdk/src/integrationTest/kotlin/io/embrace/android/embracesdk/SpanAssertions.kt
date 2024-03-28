@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -27,6 +28,13 @@ internal fun EmbraceSpanEvent.findEventAttribute(key: String): String =
     checkNotNull(attributes[key]) {
         "Attribute not found: $key"
     }
+
+/**
+ * Finds the event attribute matching the name.
+ */
+internal fun Log.findLogAttribute(key: String): String =
+    attributes?.single { it.key == key }?.data
+        ?: throw IllegalArgumentException("Attribute not found: $key")
 
 /**
  * Finds the emb-session span.

@@ -112,7 +112,7 @@ internal class SpanServiceImpl(
 
     private fun getSpanName(name: String, internal: Boolean): String =
         if (internal) {
-            name.toEmbraceSpanName()
+            name.toEmbraceObjectName()
         } else {
             name
         }

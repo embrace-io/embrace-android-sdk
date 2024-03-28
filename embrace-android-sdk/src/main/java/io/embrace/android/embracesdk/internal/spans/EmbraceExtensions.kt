@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Prefix added to [Span] names for all Spans recorded internally by the SDK
  */
-private const val EMBRACE_SPAN_NAME_PREFIX = "emb-"
+private const val EMBRACE_OBJECT_NAME_PREFIX = "emb-"
 
 /**
  * Prefix added to all [Span] attribute keys for all attributes added by the SDK
@@ -118,9 +118,9 @@ internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): Attribu
 }
 
 /**
- * Return the appropriate internal Embrace Span name given the current value
+ * Return the appropriate name used for telemetry created by Embrace given the current value
  */
-internal fun String.toEmbraceSpanName(): String = EMBRACE_SPAN_NAME_PREFIX + this
+internal fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
 
 /**
  * Return the appropriate internal Embrace attribute name given the current string
@@ -131,6 +131,12 @@ internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PR
  * Return the appropriate internal Embrace attribute usage name given the current string
  */
 internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
+
+internal fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    embraceAttribute.attributeValue == attributes[embraceAttribute.otelAttributeName()]
+
+internal fun EmbraceSpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    embraceAttribute.attributeValue == attributes[embraceAttribute.otelAttributeName()]
 
 internal fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.otelAttributeName()] == embraceAttribute.attributeValue

@@ -95,7 +95,7 @@ internal class CurrentSessionSpanImpl(
     override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
         val event = obj.mapper()
-        return currentSession.addEvent(event.schemaType.name, event.spanStartTimeMs, event.attributes)
+        return currentSession.addEvent(event.schemaType.defaultName, event.spanStartTimeMs, event.schemaType.attributes())
     }
 
     override fun addAttribute(attribute: SpanAttributeData): Boolean {
@@ -109,7 +109,7 @@ internal class CurrentSessionSpanImpl(
     private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
         traceCount.set(0)
 
-        val spanName = "session".toEmbraceSpanName()
+        val spanName = "session".toEmbraceObjectName()
         return EmbraceSpanImpl(
             spanName = spanName,
             openTelemetryClock = openTelemetryClock,

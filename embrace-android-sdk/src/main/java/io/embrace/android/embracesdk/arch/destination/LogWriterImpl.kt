@@ -15,7 +15,7 @@ internal class LogWriterImpl(private val logger: Logger) : LogWriter {
             .setSeverity(logEventData.severity.toOtelSeverity())
             .setSeverityText(logEventData.severity.name)
 
-        logEventData.attributes.forEach {
+        logEventData.schemaType.attributes().forEach {
             builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
         }
         builder.emit()

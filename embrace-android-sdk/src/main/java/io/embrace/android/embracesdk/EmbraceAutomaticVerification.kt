@@ -9,7 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
@@ -61,7 +61,7 @@ internal class EmbraceAutomaticVerification(
         private const val EMBRACE_CONTACT_EMAIL = "support@embrace.io"
         private const val VERIFY_INTEGRATION_DELAY = 200L
         private const val ON_FOREGROUND_TIMEOUT = 5000L
-        internal val instance = EmbraceAutomaticVerification(logger = InternalStaticEmbraceLogger.logger)
+        internal val instance = EmbraceAutomaticVerification(logger = logger)
     }
 
     fun verifyIntegration() {

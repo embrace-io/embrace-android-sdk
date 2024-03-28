@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fcm.swazzle.callback.com.android.fcm;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logDebug;
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logError;
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
 
 import androidx.annotation.NonNull;
 
@@ -19,10 +18,10 @@ public final class FirebaseSwazzledHooks {
     @SuppressWarnings("MethodNameCheck")
     @InternalApi
     public static void _onMessageReceived(@NonNull RemoteMessage message) {
-        logDebug("Embrace received push notification message");
+        logger.logDebug("Embrace received push notification message");
 
         if (!Embrace.getInstance().isStarted()) {
-            logError("Embrace received push notification data before the SDK was started");
+            logger.logError("Embrace received push notification data before the SDK was started");
             return;
         }
 
@@ -38,21 +37,21 @@ public final class FirebaseSwazzledHooks {
             try {
                 messageId = message.getMessageId();
             } catch (Exception e) {
-                logError("Failed to capture FCM messageId", e);
+                logger.logError("Failed to capture FCM messageId", e);
             }
 
             String topic = null;
             try {
                 topic = message.getFrom();
             } catch (Exception e) {
-                logError("Failed to capture FCM topic", e);
+                logger.logError("Failed to capture FCM topic", e);
             }
 
             Integer messagePriority = null;
             try {
                 messagePriority = message.getPriority();
             } catch (Exception e) {
-                logError("Failed to capture FCM message priority", e);
+                logger.logError("Failed to capture FCM message priority", e);
             }
 
             RemoteMessage.Notification notification = null;
@@ -60,7 +59,7 @@ public final class FirebaseSwazzledHooks {
             try {
                 notification = message.getNotification();
             } catch (Exception e) {
-                logError("Failed to capture FCM RemoteMessage Notification", e);
+                logger.logError("Failed to capture FCM RemoteMessage Notification", e);
             }
 
             String title = null;
@@ -70,19 +69,19 @@ public final class FirebaseSwazzledHooks {
                 try {
                     title = notification.getTitle();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM title", e);
+                    logger.logError("Failed to capture FCM title", e);
                 }
 
                 try {
                     body = notification.getBody();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM body", e);
+                    logger.logError("Failed to capture FCM body", e);
                 }
 
                 try {
                     notificationPriority = notification.getNotificationPriority();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM notificationPriority", e);
+                    logger.logError("Failed to capture FCM notificationPriority", e);
                 }
             }
 
@@ -91,20 +90,20 @@ public final class FirebaseSwazzledHooks {
 
             try {
                 Embrace.getInstance().logPushNotification(
-                    title,
-                    body,
-                    topic,
-                    messageId,
-                    notificationPriority,
-                    messagePriority,
-                    hasNotification,
-                    hasData
+                        title,
+                        body,
+                        topic,
+                        messageId,
+                        notificationPriority,
+                        messagePriority,
+                        hasNotification,
+                        hasData
                 );
             } catch (Exception e) {
-                logError("Failed to log push Notification", e);
+                logger.logError("Failed to log push Notification", e);
             }
         } catch (Exception e) {
-            logError("Push Notification Error", e);
+            logger.logError("Push Notification Error", e);
         }
     }
 }

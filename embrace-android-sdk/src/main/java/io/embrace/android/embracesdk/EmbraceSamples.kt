@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger
 import io.embrace.android.embracesdk.samples.EmbraceCrashSamples
 
 /**
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.samples.EmbraceCrashSamples
 public object EmbraceSamples {
 
     private val embraceCrashSamples = EmbraceCrashSamples
-    private val embraceAutomaticVerification = EmbraceAutomaticVerification(logger = InternalStaticEmbraceLogger.logger)
+    private val embraceAutomaticVerification = EmbraceAutomaticVerification(logger = logger)
 
     /**
      * Starts an automatic verification of the following Embrace features:

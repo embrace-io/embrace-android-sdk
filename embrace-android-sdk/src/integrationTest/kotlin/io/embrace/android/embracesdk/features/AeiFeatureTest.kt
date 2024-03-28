@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.recordSession
 import io.mockk.every
 import io.mockk.mockk
-import java.io.InputStream
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

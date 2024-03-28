@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
+
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 /**
  * Custom implementation of URLStreamHandlerFactory that is able to return URLStreamHandlers that log network data to
@@ -25,7 +25,7 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
             handlers.put(PROTOCOL_HTTP, new EmbraceHttpUrlStreamHandler(newUrlStreamHandler(CLASS_HTTP_OKHTTP_STREAM_HANDLER)));
             handlers.put(PROTOCOL_HTTPS, new EmbraceHttpsUrlStreamHandler(newUrlStreamHandler(CLASS_HTTPS_OKHTTP_STREAM_HANDLER)));
         } catch (Exception ex) {
-            InternalStaticEmbraceLogger.logError("Failed initialize EmbraceUrlStreamHandlerFactory", ex);
+            logger.logError("Failed initialize EmbraceUrlStreamHandlerFactory", ex);
         }
     }
 
@@ -35,9 +35,7 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
         } catch (Exception e) {
             // We catch Exception here instead of the specific exceptions that can be thrown due to a change in the way some
             // of these exceptions are compiled on different OS versions.
-
-            // TODO: Uncomment this after supporting dependency injection for EmbLogger.
-            // EmbLogger.logError("Failed to instantiate new URLStreamHandler instance: " + className, e);
+            logger.logError("Failed to instantiate new URLStreamHandler instance: " + className, e);
             return null;
         }
     }

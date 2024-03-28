@@ -17,6 +17,7 @@
 #include "../file_writer.h"
 #include "signal_utils.h"
 #include "../emb_log.h"
+#include "../utils/string_utils.h"
 
 #define EMB_SIG_HANDLER_COUNT 6
 #define EMB_TMP_BUF_SIZE 1024

@@ -2,31 +2,33 @@
 #include <stdio.h>
 #include <assert.h>
 #include <jni.h>
-#include <string.h>
+#include <string_utils.h>
+#include <android/log.h>
+
+#define GREATEST_FPRINTF(ignore, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "EmbraceNdkTest", fmt, ##__VA_ARGS__)
+
 #include <greatest/greatest.h>
-#include "utilities.h"
+#include "utils/string_utils.h"
 
 /* Add definitions that need to be in the test runner's main file. */
 GREATEST_MAIN_DEFS();
 
-TEST example_test_case(void) {
-    char dst[16];
-    char src[] = "Hello, World!";
-    emb_strncpy(dst, src, sizeof(src));
+/* Forward declarations of test suites. These should live in separate files to avoid
+ * bloating this file. */
+SUITE(suite_utilities);
 
-    ASSERT_STR_EQ(dst, "Hello, World!");
-    PASS();
-}
-
-int run_test_case(enum greatest_test_res (*test_case)(void)) {
+/* Runs a suite of tests and returns 0 if they succeeded, 1 otherwise.*/
+int run_test_suite(void (*suite)(void)) {
     int argc = 0;
     char *argv[] = {};
     GREATEST_MAIN_BEGIN();
-    RUN_TEST(test_case);
+    RUN_SUITE(suite);
     GREATEST_MAIN_END();
 }
 
-JNIEXPORT int JNICALL Java_io_embrace_android_embracesdk_ndk_EmbraceNativeLayerTest_run(
-        JNIEnv *_env, jobject _this) {
-    return run_test_case(example_test_case);
+/* JNI functions to bind to the instrumentation tests. Each invocation runs a test suite. */
+
+JNIEXPORT int JNICALL
+Java_io_embrace_android_embracesdk_ndk_utils_StringUtilsTestSuite_run(JNIEnv *_env, jobject _this) {
+    return run_test_suite(suite_utilities);
 }

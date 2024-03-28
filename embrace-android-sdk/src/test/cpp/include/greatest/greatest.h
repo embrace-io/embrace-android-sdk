@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <string_utils.h>
 #include <ctype.h>
 
 /***********

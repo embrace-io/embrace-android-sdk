@@ -4,6 +4,7 @@
 #include "../utilities.h"
 #include "../emb_log.h"
 #include "unwinder_dlinfo.h"
+#include "../utils/string_utils.h"
 
 // controls whether extra debug info is logged for development purposes
 #define EMB_LOG_DLADDR_INFO false

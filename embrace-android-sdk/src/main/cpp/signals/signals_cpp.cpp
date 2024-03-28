@@ -2,6 +2,7 @@
 // Created by Eric Lanz on 5/5/20.
 //
 
+#include "../utils/string_utils.h"
 #include "signals_cpp.h"
 #include <cxxabi.h>
 #include <exception>

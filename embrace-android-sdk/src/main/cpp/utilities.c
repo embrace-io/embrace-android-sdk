@@ -11,18 +11,6 @@
 #include "utilities.h"
 #include "emb_log.h"
 
-void emb_strncpy(char *dst, const char *src, size_t len) {
-    int i = 0;
-    while (i <= len) {
-        char current = src[i];
-        dst[i] = current;
-        if (current == '\0') {
-            break;
-        }
-        i++;
-    }
-}
-
 void emb_set_report_paths(emb_env *env, const char *session_id) {
     snprintf(env->report_path, EMB_PATH_SIZE, "%s/emb_ndk.%s.%s.%" PRId64 ".crash", env->base_path,
             CRASH_REPORT_CURRENT_VERSION, session_id, env->crash.start_ts);

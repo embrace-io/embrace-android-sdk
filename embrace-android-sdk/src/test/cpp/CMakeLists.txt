@@ -10,5 +10,6 @@ include_directories(
 )
 add_library(embrace-native-test SHARED
         main.c
+        testcases/utilities/test_string_utils.c
 )
 target_link_libraries(embrace-native-test embrace-native)

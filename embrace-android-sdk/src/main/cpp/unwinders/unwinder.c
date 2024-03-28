@@ -6,6 +6,7 @@
 #include "unwinder_stack.h"
 #include "../utilities.h"
 #include "../emb_log.h"
+#include "../utils/string_utils.h"
 #include <dlfcn.h>
 
 void emb_fix_fileinfo(ssize_t frame_count,

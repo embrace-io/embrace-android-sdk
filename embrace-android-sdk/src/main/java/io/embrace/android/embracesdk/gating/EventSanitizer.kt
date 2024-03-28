@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOG_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
 
 internal class EventSanitizer(
@@ -12,29 +11,16 @@ internal class EventSanitizer(
 ) : Sanitizable<Event> {
 
     override fun sanitize(): Event {
-        InternalStaticEmbraceLogger.logger.logDeveloper("EventSanitizer", "sanitize")
         var customPropertiesMap = event.customProperties
         var sessionPropertiesMap = event.sessionProperties
 
-        InternalStaticEmbraceLogger.logger.logDeveloper(
-            "EventSanitizer",
-            "isLogEvent: " + isLogEvent()
-        )
         if (isLogEvent()) {
             if (!shouldSendLogProperties()) {
-                InternalStaticEmbraceLogger.logger.logDeveloper(
-                    "EventSanitizer",
-                    "not shouldSendLogProperties"
-                )
                 customPropertiesMap = null
             }
         }
 
         if (!shouldSendSessionProperties()) {
-            InternalStaticEmbraceLogger.logger.logDeveloper(
-                "EventSanitizer",
-                "not shouldSendSessionProperties"
-            )
             sessionPropertiesMap = null
         }
 

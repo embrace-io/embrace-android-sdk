@@ -64,7 +64,8 @@ internal class SessionModuleImpl(
             openTelemetryModule.spanSink,
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
-            dataCaptureServiceModule.startupService
+            dataCaptureServiceModule.startupService,
+            initModule.logger
         )
     }
 
@@ -72,7 +73,8 @@ internal class SessionModuleImpl(
         V2PayloadMessageCollator(
             essentialServiceModule.gatingService,
             v1PayloadMessageCollator,
-            payloadModule.sessionEnvelopeSource
+            payloadModule.sessionEnvelopeSource,
+            initModule.logger
         )
     }
 
@@ -91,13 +93,14 @@ internal class SessionModuleImpl(
     }
 
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
-        PeriodicSessionCacher(workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE))
+        PeriodicSessionCacher(workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE), initModule.logger)
     }
 
     override val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
         PeriodicBackgroundActivityCacher(
             initModule.clock,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE)
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            initModule.logger
         )
     }
 
@@ -105,7 +108,8 @@ internal class SessionModuleImpl(
         PayloadFactoryImpl(
             v1PayloadMessageCollator,
             v2PayloadMessageCollator,
-            essentialServiceModule.configService
+            essentialServiceModule.configService,
+            initModule.logger
         )
     }
 
@@ -123,7 +127,7 @@ internal class SessionModuleImpl(
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
         val dataSources = dataSourceModule.getDataSources()
-        DataCaptureOrchestrator(dataSources).apply {
+        DataCaptureOrchestrator(dataSources, initModule.logger).apply {
             essentialServiceModule.configService.addListener(this)
         }
     }
@@ -139,7 +143,8 @@ internal class SessionModuleImpl(
             deliveryModule.deliveryService,
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
-            dataCaptureOrchestrator
+            dataCaptureOrchestrator,
+            initModule.logger
         )
     }
 }

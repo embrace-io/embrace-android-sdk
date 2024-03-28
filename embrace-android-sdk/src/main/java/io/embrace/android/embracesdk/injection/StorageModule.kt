@@ -40,6 +40,7 @@ internal class StorageModuleImpl(
         ApiResponseCache(
             coreModule.jsonSerializer,
             storageService,
+            initModule.logger
         )
     }
 
@@ -47,7 +48,7 @@ internal class StorageModuleImpl(
         EmbraceCacheService(
             storageService,
             coreModule.jsonSerializer,
-            coreModule.logger
+            initModule.logger
         )
     }
 
@@ -55,7 +56,7 @@ internal class StorageModuleImpl(
         EmbraceDeliveryCacheManager(
             cacheService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
-            coreModule.logger
+            initModule.logger
         )
     }
 

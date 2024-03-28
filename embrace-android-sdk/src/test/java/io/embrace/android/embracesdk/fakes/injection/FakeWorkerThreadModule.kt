@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 
 internal class FakeWorkerThreadModule(
-    fakeInitModule: FakeInitModule,
-    private val name: WorkerName,
+    fakeInitModule: FakeInitModule = FakeInitModule(),
+    private val name: WorkerName? = null,
     private val base: WorkerThreadModule = WorkerThreadModuleImpl(fakeInitModule)
 ) : WorkerThreadModule by base {
 

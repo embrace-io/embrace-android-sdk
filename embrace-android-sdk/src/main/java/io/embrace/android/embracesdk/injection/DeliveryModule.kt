@@ -10,6 +10,7 @@ internal interface DeliveryModule {
 }
 
 internal class DeliveryModuleImpl(
+    initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
@@ -22,7 +23,7 @@ internal class DeliveryModuleImpl(
             essentialServiceModule.apiService,
             workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
             coreModule.jsonSerializer,
-            coreModule.logger
+            initModule.logger
         )
     }
 }

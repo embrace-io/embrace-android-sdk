@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.net.BindException
@@ -61,10 +59,6 @@ internal class EmbraceInternalErrorService(
     ): Boolean {
         return if (throwable != null) {
             if (ignoredExceptionClasses.contains(throwable.javaClass)) {
-                logDeveloper(
-                    "EmbraceInternalErrorService",
-                    "Exception ignored: " + throwable.javaClass
-                )
                 true
             } else {
                 /* if Hashset#add returns true means that the throwable was properly added,
@@ -80,9 +74,7 @@ internal class EmbraceInternalErrorService(
 
     @Synchronized
     override fun handleInternalError(throwable: Throwable) {
-        logDebug("ignoreThrowableCause - handleInternalError")
         if (ignoredExceptionClasses.contains(throwable.javaClass)) {
-            logDeveloper("EmbraceInternalErrorService", "Exception ignored: " + throwable.javaClass)
             return
         } else {
             val capturedThrowable = HashSet<Throwable>()
@@ -100,7 +92,6 @@ internal class EmbraceInternalErrorService(
                     .toTypedArray()[0]
             )
         ) {
-            logDeveloper("EmbraceInternalErrorService", "Ignored exception: $throwable")
             return
         }
         if (err == null) {
@@ -109,10 +100,6 @@ internal class EmbraceInternalErrorService(
 
         // if the config service has not been set yet, capture the exception
         if (configService == null || configService?.dataCaptureEventBehavior?.isInternalExceptionCaptureEnabled() == true) {
-            logDeveloper(
-                "EmbraceInternalErrorService",
-                "Capturing exception, config service is not set yet: $throwable"
-            )
             err?.addException(
                 throwable,
                 getApplicationState(),

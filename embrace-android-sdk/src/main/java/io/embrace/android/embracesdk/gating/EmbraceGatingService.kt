@@ -4,8 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 
@@ -18,7 +17,8 @@ import io.embrace.android.embracesdk.payload.SessionMessage
  * Also defines if a full session data should be sent under certain conditions based on configurations.
  */
 internal class EmbraceGatingService(
-    private val configService: ConfigService
+    private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger
 ) : GatingService {
 
     /**
@@ -43,32 +43,23 @@ internal class EmbraceGatingService(
     override fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage {
         val components = configService.sessionBehavior.getSessionComponents()
         if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
-            InternalStaticEmbraceLogger.logDebug("Session gating feature enabled. Attempting to sanitize the session message")
+            logger.logDebug("Session gating feature enabled. Attempting to sanitize the session message")
 
             // check if the session has error logs IDs. If so, send the full session payload.
             if (sessionMessage.session.errorLogIds?.isNotEmpty() == true &&
                 configService.sessionBehavior.shouldSendFullForErrorLog()
             ) {
-                logDeveloper(
-                    "EmbraceGatingService",
-                    "Error logs detected - Sending full session payload"
-                )
                 return sessionMessage
             }
 
             // check if the session has a crash report id. If so, send the full session payload.
             if (sessionMessage.session.crashReportId != null) {
-                logDeveloper(
-                    "EmbraceGatingService",
-                    "Crash detected - Sending full session payload"
-                )
                 return sessionMessage
             }
 
             return SessionSanitizerFacade(sessionMessage, components).getSanitizedMessage()
         }
 
-        logDeveloper("EmbraceGatingService", "Gating feature disabled")
         return sessionMessage
     }
 
@@ -97,20 +88,15 @@ internal class EmbraceGatingService(
     override fun gateEventMessage(eventMessage: EventMessage): EventMessage {
         val components = configService.sessionBehavior.getSessionComponents()
         if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
-            InternalStaticEmbraceLogger.logDebug("Session gating feature enabled. Attempting to sanitize the event message")
+            logger.logDebug("Session gating feature enabled. Attempting to sanitize the event message")
 
             if (configService.sessionBehavior.shouldSendFullMessage(eventMessage)) {
-                logDeveloper(
-                    "EmbraceGatingService",
-                    "Crash or error detected - Sending full session payload"
-                )
                 return eventMessage
             }
 
             return EventSanitizerFacade(eventMessage, components).getSanitizedMessage()
         }
 
-        logDeveloper("EmbraceGatingService", "Gating feature disabled")
         return eventMessage
     }
 }

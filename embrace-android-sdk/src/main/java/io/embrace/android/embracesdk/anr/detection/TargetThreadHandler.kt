@@ -7,7 +7,7 @@ import android.os.MessageQueue
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logError
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
@@ -30,7 +30,8 @@ internal class TargetThreadHandler(
     private val anrMonitorThread: AtomicReference<Thread>,
     private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
-    private val clock: Clock
+    private val logger: InternalEmbraceLogger,
+    private val clock: Clock,
 ) : Handler(looper) {
 
     lateinit var action: (time: Long) -> Unit
@@ -65,7 +66,7 @@ internal class TargetThreadHandler(
                 }
             }
         } catch (ex: Exception) {
-            logError("ANR healthcheck failed in main (monitored) thread", ex, true)
+            logger.logError("ANR healthcheck failed in main (monitored) thread", ex, true)
         }
     }
 

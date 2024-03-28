@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
@@ -97,8 +98,9 @@ internal class PayloadFactorySessionTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
+        val logger = InternalEmbraceLogger()
         val v1Collator = mockk<V1PayloadMessageCollator>(relaxed = true)
-        val v2Collator = V2PayloadMessageCollator(FakeGatingService(), v1Collator, sessionEnvelopeSource)
-        service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService())
+        val v2Collator = V2PayloadMessageCollator(FakeGatingService(), v1Collator, sessionEnvelopeSource, logger)
+        service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService(), logger)
     }
 }

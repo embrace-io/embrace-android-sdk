@@ -15,13 +15,14 @@ internal class DataSourceModuleImplTest {
 
     @Test
     fun `test default behavior`() {
+        val fakeInitModule = FakeInitModule()
         val module = DataSourceModuleImpl(
-            FakeEssentialServiceModule(),
-            FakeInitModule(),
+            fakeInitModule,
             FakeOpenTelemetryModule(),
+            FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
-            FakeWorkerThreadModule(FakeInitModule(), WorkerName.BACKGROUND_REGISTRATION)
+            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
         )
         assertNotNull(module.getDataSources())
         assertNotNull(module.customBreadcrumbDataSource)

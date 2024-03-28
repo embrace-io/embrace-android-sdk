@@ -4,7 +4,6 @@ import android.util.Pair
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 /**
@@ -12,10 +11,10 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
  */
 internal class TapBreadcrumbDataSource(
     private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<TapBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getTapBreadcrumbLimit()
     },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataCaptureService<List<TapBreadcrumb>> by store {
 
     fun logTap(

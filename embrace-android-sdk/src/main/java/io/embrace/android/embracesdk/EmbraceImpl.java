@@ -52,7 +52,6 @@ import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -99,13 +98,13 @@ final class EmbraceImpl {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @NonNull
-    private final InternalEmbraceLogger internalEmbraceLogger = InternalStaticEmbraceLogger.logger;
-
-    @NonNull
     private final ModuleInitBootstrapper moduleInitBootstrapper;
 
     @NonNull
     private final Clock sdkClock;
+
+    @NonNull
+    private final InternalEmbraceLogger internalEmbraceLogger;
 
     /**
      * Custom app ID that overrides the one specified at build time
@@ -210,6 +209,7 @@ final class EmbraceImpl {
     EmbraceImpl(@NonNull ModuleInitBootstrapper bs) {
         moduleInitBootstrapper = bs;
         sdkClock = moduleInitBootstrapper.getInitModule().getClock();
+        internalEmbraceLogger = moduleInitBootstrapper.getInitModule().getLogger();
         tracer = moduleInitBootstrapper.getOpenTelemetryModule().getEmbraceTracer();
         uninitializedSdkInternalInterface =
             LazyKt.lazy(
@@ -264,7 +264,7 @@ final class EmbraceImpl {
         }
 
         final long startTimeMs = sdkClock.now();
-        internalEmbraceLogger.logDeveloper("Embrace", "Starting SDK for framework " + framework.name());
+        internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
         moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
@@ -378,7 +378,6 @@ final class EmbraceImpl {
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
         if (!essentialServiceModule.getProcessStateService().isInBackground()) {
-            internalEmbraceLogger.logDeveloper("Embrace", "Sending startup moment");
             dataContainerModule.getEventService().sendStartupMoment();
         }
 
@@ -659,7 +658,7 @@ final class EmbraceImpl {
                      @Nullable String identifier,
                      @Nullable Map<String, Object> properties) {
         if (checkSdkStartedAndLogPublicApiUsage("start_moment")) {
-            eventService.startEvent(name, identifier, normalizeProperties(properties));
+            eventService.startEvent(name, identifier, normalizeProperties(properties, internalEmbraceLogger));
             onActivityReported();
         }
     }
@@ -675,7 +674,7 @@ final class EmbraceImpl {
      */
     void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
         if (checkSdkStartedAndLogPublicApiUsage("end_moment")) {
-            eventService.endEvent(name, identifier, normalizeProperties(properties));
+            eventService.endEvent(name, identifier, normalizeProperties(properties, internalEmbraceLogger));
             onActivityReported();
         }
     }
@@ -868,7 +867,7 @@ final class EmbraceImpl {
                     message,
                     type,
                     logExceptionType,
-                    normalizeProperties(properties),
+                    normalizeProperties(properties, internalEmbraceLogger),
                     stackTraceElements,
                     customStackTrace,
                     appFramework,
@@ -1220,11 +1219,11 @@ final class EmbraceImpl {
     }
 
     @Nullable
-    private Map<String, Object> normalizeProperties(@Nullable Map<String, ?> properties) {
+    private Map<String, Object> normalizeProperties(@Nullable Map<String, ?> properties, @Nullable InternalEmbraceLogger logger) {
         Map<String, Object> normalizedProperties = new HashMap<>();
         if (properties != null) {
             try {
-                normalizedProperties = PropertyUtils.sanitizeProperties(properties);
+                normalizedProperties = PropertyUtils.sanitizeProperties(properties, logger);
             } catch (Exception e) {
                 internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
             }

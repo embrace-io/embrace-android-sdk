@@ -23,14 +23,15 @@ internal interface PayloadModule {
 }
 
 internal class PayloadModuleImpl(
-    private val essentialServiceModule: EssentialServiceModule,
-    private val coreModule: CoreModule,
-    private val androidServicesModule: AndroidServicesModule,
+    initModule: InitModule,
+    coreModule: CoreModule,
+    androidServicesModule: AndroidServicesModule,
+    essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,
-    private val nativeModule: NativeModule,
-    private val otelModule: OpenTelemetryModule,
-    private val sdkObservabilityModule: SdkObservabilityModule
+    nativeModule: NativeModule,
+    otelModule: OpenTelemetryModule,
+    sdkObservabilityModule: SdkObservabilityModule
 ) : PayloadModule {
 
     private val backgroundWorker =
@@ -52,7 +53,8 @@ internal class PayloadModuleImpl(
                 systemServiceModule.windowManager,
                 androidServicesModule.preferencesService,
                 backgroundWorker,
-                essentialServiceModule.cpuInfoDelegate
+                essentialServiceModule.cpuInfoDelegate,
+                initModule.logger
             ),
             essentialServiceModule.metadataService
         )
@@ -64,7 +66,8 @@ internal class PayloadModuleImpl(
             nativeModule.nativeThreadSamplerService,
             otelModule.spanSink,
             otelModule.currentSessionSpan,
-            otelModule.spanRepository
+            otelModule.spanRepository,
+            initModule.logger
         )
     }
 

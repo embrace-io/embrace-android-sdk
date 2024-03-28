@@ -40,7 +40,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val logger: InternalEmbraceLogger,
     private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
-    internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(preferencesService::deviceIdentifier)
+    internal val thresholdCheck: BehaviorThresholdCheck =
+        BehaviorThresholdCheck(preferencesService::deviceIdentifier)
 ) : ConfigService, ProcessStateListener {
 
     /**
@@ -164,7 +165,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      * This is deferred to lessen it´s impact upon startup.
      */
     private fun performInitialConfigLoad() {
-        logger.logDeveloper("EmbraceConfigService", "performInitialConfigLoad")
         backgroundWorker.submit(runnable = ::loadConfigFromCache)
     }
 
@@ -173,16 +173,12 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
 
     fun loadConfigFromCache() {
-        logger.logDeveloper("EmbraceConfigService", "Attempting to load config from cache")
         val cachedConfig = apiService.getCachedConfig()
         val obj = cachedConfig.remoteConfig
 
         if (obj != null) {
             val oldConfig = configProp
-            logger.logDeveloper("EmbraceConfigService", "Loaded config from cache")
             updateConfig(oldConfig, obj)
-        } else {
-            logger.logDeveloper("EmbraceConfigService", "config not found in local cache")
         }
     }
 
@@ -196,7 +192,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             synchronized(lock) {
                 if (configRequiresRefresh() && configRetryIsSafe()) {
                     lastRefreshConfigAttempt = clock.now()
-                    logger.logDeveloper("EmbraceConfigService", "Attempting to update config")
                     // Attempt to asynchronously update the config if it is out of date
                     refreshConfig()
                 }
@@ -205,11 +200,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     }
 
     private fun refreshConfig() {
-        logger.logDeveloper("EmbraceConfigService", "Attempting to refresh config")
         val previousConfig = configProp
         backgroundWorker.submit {
-            logger.logDeveloper("EmbraceConfigService", "Updating config in background thread")
-
             // Ensure that another thread didn't refresh it already in the meantime
             if (configRequiresRefresh()) {
                 try {
@@ -220,7 +212,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
                         lastUpdated = clock.now()
                     }
                     configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
-                    logger.logDeveloper("EmbraceConfigService", "Config updated")
                 } catch (ex: Exception) {
                     configRetrySafeWindow =
                         min(
@@ -240,14 +231,12 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         if (newConfig != previousConfig) {
             configProp = newConfig
             persistConfig()
-            logger.logDeveloper("EmbraceConfigService", "Notify listeners about new config")
             // Only notify listeners if the config has actually changed value
             notifyListeners()
         }
     }
 
     private fun persistConfig() {
-        logger.logDeveloper("EmbraceConfigService", "persistConfig")
         // TODO: future get rid of these prefs from PrefService entirely?
         preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
         preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isEnabled()

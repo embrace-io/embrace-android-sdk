@@ -9,11 +9,13 @@ import io.embrace.android.embracesdk.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal class FakeInitModule(
     clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = FakeOpenTelemetryClock(clock),
-    initModule: InitModule = InitModuleImpl(clock = clock, openTelemetryClock = openTelemetryClock)
+    logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    initModule: InitModule = InitModuleImpl(clock = clock, openTelemetryClock = openTelemetryClock, logger = logger)
 ) : InitModule by initModule {
     val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule)
 

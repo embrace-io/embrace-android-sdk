@@ -31,7 +31,6 @@ internal interface AnrModule {
 
 internal class AnrModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     workerModule: WorkerThreadModule,
 ) : AnrModule {
@@ -40,7 +39,7 @@ internal class AnrModuleImpl(
     private val configService = essentialServiceModule.configService
 
     override val googleAnrTimestampRepository: GoogleAnrTimestampRepository by singleton {
-        GoogleAnrTimestampRepository(coreModule.logger)
+        GoogleAnrTimestampRepository(initModule.logger)
     }
 
     override val anrService: AnrService by singleton {
@@ -50,7 +49,7 @@ internal class AnrModuleImpl(
             EmbraceAnrService(
                 configService = configService,
                 looper = looper,
-                logger = coreModule.logger,
+                logger = initModule.logger,
                 sigquitDetectionService = sigquitDetectionService,
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
@@ -83,7 +82,8 @@ internal class AnrModuleImpl(
             anrMonitorWorker = anrMonitorWorker,
             anrMonitorThread = workerModule.anrMonitorThread,
             configService = configService,
-            clock = initModule.clock
+            logger = initModule.logger,
+            clock = initModule.clock,
         )
     }
 
@@ -93,7 +93,8 @@ internal class AnrModuleImpl(
             clock = initModule.clock,
             state = state,
             targetThread = looper.thread,
-            anrMonitorThread = workerModule.anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread,
+            logger = initModule.logger,
         )
     }
 
@@ -105,7 +106,8 @@ internal class AnrModuleImpl(
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorThread = workerModule.anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread,
+            logger = initModule.logger,
         )
     }
 
@@ -113,16 +115,16 @@ internal class AnrModuleImpl(
         val filesDelegate = FilesDelegate()
 
         SigquitDetectionService(
-            sharedObjectLoader = SharedObjectLoader(),
+            sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
             findGoogleThread = FindGoogleThread(
-                coreModule.logger,
+                initModule.logger,
                 GetThreadsInCurrentProcess(filesDelegate),
                 GetThreadCommand(filesDelegate)
             ),
-            googleAnrHandlerNativeDelegate = GoogleAnrHandlerNativeDelegate(googleAnrTimestampRepository, coreModule.logger),
+            googleAnrHandlerNativeDelegate = GoogleAnrHandlerNativeDelegate(googleAnrTimestampRepository, initModule.logger),
             googleAnrTimestampRepository = googleAnrTimestampRepository,
             configService = configService,
-            logger = coreModule.logger
+            logger = initModule.logger
         )
     }
 }

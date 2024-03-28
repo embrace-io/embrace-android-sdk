@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -39,7 +40,11 @@ internal typealias UnimplementedConfig = Unit?
 /**
  * Function that returns an instance of [CoreModule]. Matches the signature of the constructor for [CoreModuleImpl]
  */
-internal typealias CoreModuleSupplier = (context: Context, appFramework: Embrace.AppFramework) -> CoreModule
+internal typealias CoreModuleSupplier = (
+    context: Context,
+    appFramework: Embrace.AppFramework,
+    logger: InternalEmbraceLogger
+) -> CoreModule
 
 /**
  * Function that returns an instance of [WorkerThreadModule]. Matches the signature of the constructor for [WorkerThreadModuleImpl]
@@ -105,6 +110,7 @@ internal typealias DataCaptureServiceModuleSupplier = (
  * Function that returns an instance of [DeliveryModule]. Matches the signature of the constructor for [DeliveryModuleImpl]
  */
 internal typealias DeliveryModuleSupplier = (
+    initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
@@ -117,7 +123,6 @@ internal typealias DeliveryModuleSupplier = (
 
 internal typealias AnrModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     workerModule: WorkerThreadModule,
 ) -> AnrModule
@@ -152,6 +157,7 @@ internal typealias CustomerLogModuleSupplier = (
  */
 
 internal typealias NativeModuleSupplier = (
+    initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
@@ -167,7 +173,6 @@ internal typealias NativeModuleSupplier = (
 internal typealias DataContainerModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
@@ -186,9 +191,9 @@ internal typealias DataContainerModuleSupplier = (
  */
 
 internal typealias DataSourceModuleSupplier = (
-    essentialServiceModule: EssentialServiceModule,
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
+    essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
@@ -235,9 +240,10 @@ internal typealias CrashModuleSupplier = (
  * Function that returns an instance of [PayloadModule]. Matches the signature of the constructor for [PayloadModuleImpl]
  */
 internal typealias PayloadModuleSupplier = (
-    essentialServiceModule: EssentialServiceModule,
+    initModule: InitModule,
     coreModule: CoreModule,
     androidServicesModule: AndroidServicesModule,
+    essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,

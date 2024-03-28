@@ -15,8 +15,6 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
@@ -90,11 +88,10 @@ internal class EmbraceLogMessageService(
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
         val networkEventTimestamp = clock.now()
         if (networkCaptureCall == null) {
-            logDebug("NetworkCaptureCall is null, nothing to log")
+            logger.logDebug("NetworkCaptureCall is null, nothing to log")
             return
         }
         try {
-            logDeveloper("EmbraceRemoteLogger", "Attempting to log network data")
             backgroundWorker.submit {
                 synchronized(lock) {
                     val id = getEmbUuid()
@@ -110,16 +107,11 @@ internal class EmbraceLogMessageService(
                         networkConnectivityService.ipAddress,
                         sessionId
                     )
-                    logDeveloper("EmbraceRemoteLogger", "Attempt to Send NETWORK Event")
                     deliveryService.sendNetworkCall(networkEvent)
-                    logDeveloper(
-                        "EmbraceRemoteLogger",
-                        "LogNetwork api call running in background job"
-                    )
                 }
             }
         } catch (ex: Exception) {
-            logDebug("Failed to log network call using Embrace SDK.", ex)
+            logger.logDebug("Failed to log network call using Embrace SDK.", ex)
         }
     }
 
@@ -137,7 +129,6 @@ internal class EmbraceLogMessageService(
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        logDeveloper("EmbraceRemoteLogger", "Attempting to log")
         val timestamp = clock.now()
         val stacktraces = Stacktraces(
             if (stackTraceElements != null) getWrappedStackTrace(stackTraceElements) else getWrappedStackTrace(),
@@ -150,7 +141,6 @@ internal class EmbraceLogMessageService(
         // As the event is sent asynchronously and user info may change, preserve the user info
         // at the time of the log call
         val logUserInfo = userService.getUserInfo()
-        logDeveloper("EmbraceRemoteLogger", "Added user info to log")
         backgroundWorker.submit {
             synchronized(lock) {
                 if (!configService.dataCaptureEventBehavior.isLogMessageEnabled(message)) {
@@ -159,13 +149,8 @@ internal class EmbraceLogMessageService(
                 }
                 val id = getEmbUuid()
                 if (type == EventType.INFO_LOG) {
-                    logDeveloper("EmbraceRemoteLogger", "New INFO log")
                     logsInfoCount.incrementAndGet()
                     if (infoLogIds.size < configService.logMessageBehavior.getInfoLogLimit()) {
-                        logDeveloper(
-                            "EmbraceRemoteLogger",
-                            "Logging INFO log number $logsInfoCount"
-                        )
                         infoLogIds[timestamp] = id
                     } else {
                         logger.logWarning("Info Log limit has been reached.")
@@ -174,10 +159,6 @@ internal class EmbraceLogMessageService(
                 } else if (type == EventType.WARNING_LOG) {
                     logsWarnCount.incrementAndGet()
                     if (warningLogIds.size < configService.logMessageBehavior.getWarnLogLimit()) {
-                        logDeveloper(
-                            "EmbraceRemoteLogger",
-                            "Logging WARNING log number $logsWarnCount"
-                        )
                         warningLogIds[timestamp] = id
                     } else {
                         logger.logWarning("Warning Log limit has been reached.")
@@ -186,10 +167,6 @@ internal class EmbraceLogMessageService(
                 } else if (type == EventType.ERROR_LOG) {
                     logsErrorCount.incrementAndGet()
                     if (errorLogIds.size < configService.logMessageBehavior.getErrorLogLimit()) {
-                        logDeveloper(
-                            "EmbraceRemoteLogger",
-                            "Logging ERROR log number $logsErrorCount"
-                        )
                         errorLogIds[timestamp] = id
                     } else {
                         logger.logWarning("Error Log limit has been reached.")
@@ -201,19 +178,16 @@ internal class EmbraceLogMessageService(
                 }
                 val processedMessage: String
                 if (framework == AppFramework.UNITY) {
-                    logDeveloper("EmbraceRemoteLogger", "Process Unity Log message")
                     processedMessage = processUnityLogMessage(message)
                     if (logExceptionType == LogExceptionType.UNHANDLED) {
                         unhandledExceptionCount.incrementAndGet()
                     }
                 } else if (framework == AppFramework.FLUTTER) {
-                    logDeveloper("EmbraceRemoteLogger", "Process Flutter Log message")
                     processedMessage = processLogMessage(message)
                     if (logExceptionType == LogExceptionType.UNHANDLED) {
                         unhandledExceptionCount.incrementAndGet()
                     }
                 } else {
-                    logDeveloper("EmbraceRemoteLogger", "Process simple Log message")
                     processedMessage = processLogMessage(message)
                 }
 
@@ -258,9 +232,7 @@ internal class EmbraceLogMessageService(
 
                 // Sanitize log event
                 val logEvent = gatingService.gateEventMessage(eventMessage)
-                logDeveloper("EmbraceRemoteLogger", "Attempt to Send log Event")
                 deliveryService.sendLog(logEvent)
-                logDeveloper("EmbraceRemoteLogger", "LogEvent api call running in background job")
             }
         }
     }
@@ -297,12 +269,6 @@ internal class EmbraceLogMessageService(
     override fun getErrorLogsAttemptedToSend(): Int = logsErrorCount.get()
 
     override fun getUnhandledExceptionsSent(): Int {
-        if (unhandledExceptionCount.get() > 0) {
-            logDeveloper(
-                "EmbraceRemoteLogger",
-                "UnhandledException number: $unhandledExceptionCount"
-            )
-        }
         return unhandledExceptionCount.get()
     }
 
@@ -311,10 +277,6 @@ internal class EmbraceLogMessageService(
         maxLength: Int = configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
     ): String {
         return if (message.length > maxLength) {
-            logDeveloper(
-                "EmbraceRemoteLogger",
-                "Message length exceeds the allowed max length"
-            )
             val endChars = "..."
 
             // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
@@ -325,7 +287,6 @@ internal class EmbraceLogMessageService(
             logger.logWarning("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars
         } else {
-            logDeveloper("EmbraceRemoteLogger", "Allowed message length")
             message
         }
     }
@@ -345,27 +306,15 @@ internal class EmbraceLogMessageService(
         return when (type) {
             EventType.INFO_LOG -> {
                 val shouldGate = configService.sessionBehavior.shouldGateInfoLog()
-                logDeveloper(
-                    "EmbraceRemoteLogger",
-                    "Should gate INFO log: $shouldGate"
-                )
                 shouldGate
             }
 
             EventType.WARNING_LOG -> {
                 val shouldGate = configService.sessionBehavior.shouldGateWarnLog()
-                logDeveloper(
-                    "EmbraceRemoteLogger",
-                    "Should gate WARN log: $shouldGate"
-                )
                 shouldGate
             }
 
             else -> {
-                logDeveloper(
-                    "EmbraceRemoteLogger",
-                    "Should gate log: false"
-                )
                 false
             }
         }
@@ -380,7 +329,6 @@ internal class EmbraceLogMessageService(
         warningLogIds.clear()
         errorLogIds.clear()
         networkLogIds.clear()
-        logDeveloper("EmbraceRemoteLogger", "Collections cleaned")
     }
 
     companion object {
@@ -399,7 +347,6 @@ internal class EmbraceLogMessageService(
         fun getWrappedStackTrace(
             stackTraceElements: Array<StackTraceElement> = Thread.currentThread().stackTrace
         ): List<String> {
-            logDeveloper("EmbraceRemoteLogger", "Processing wrapped stack trace")
             val augmentedStackReturnAddresses: MutableList<String> = ArrayList()
             for (element in stackTraceElements) {
                 augmentedStackReturnAddresses.add(element.toString())

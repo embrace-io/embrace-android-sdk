@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Severity
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger.Severity
 import java.util.LinkedList
 
 internal class FakeLoggerAction : InternalEmbraceLogger.LoggerAction {

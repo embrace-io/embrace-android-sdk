@@ -72,9 +72,10 @@ internal class EssentialServiceModuleImplTest {
     fun testConfigServiceProvider() {
         val fakeConfigService = FakeConfigService()
         val initModule = InitModuleImpl()
+        val fakeCoreModule = FakeCoreModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
-            coreModule = FakeCoreModule(),
+            coreModule = fakeCoreModule,
             workerThreadModule = WorkerThreadModuleImpl(initModule),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),

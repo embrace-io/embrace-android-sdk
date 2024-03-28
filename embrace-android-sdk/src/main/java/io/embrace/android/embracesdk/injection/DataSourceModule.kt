@@ -29,9 +29,9 @@ internal interface DataSourceModule {
 }
 
 internal class DataSourceModuleImpl(
-    essentialServiceModule: EssentialServiceModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
+    essentialServiceModule: EssentialServiceModule,
     @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
     @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
     @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
@@ -43,7 +43,8 @@ internal class DataSourceModuleImpl(
         DataSourceState({
             CustomBreadcrumbDataSource(
                 breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
-                writer = otelModule.currentSessionSpan
+                writer = otelModule.currentSessionSpan,
+                logger = initModule.logger
             )
         })
     }
@@ -54,7 +55,8 @@ internal class DataSourceModuleImpl(
                 FragmentBreadcrumbDataSource(
                     configService.breadcrumbBehavior,
                     initModule.clock,
-                    otelModule.spanService
+                    otelModule.spanService,
+                    initModule.logger
                 )
             },
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }

@@ -65,7 +65,8 @@ internal class PayloadFactoryImplTest {
             spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
-            startupService = FakeStartupService()
+            startupService = FakeStartupService(),
+            logger = initModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(
             FakeGatingService(),
@@ -74,12 +75,14 @@ internal class PayloadFactoryImplTest {
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),
                 FakeSessionPayloadSource()
-            )
+            ),
+            initModule.logger
         )
         factory = PayloadFactoryImpl(
             v1payloadMessageCollator = v1Collator,
             v2payloadMessageCollator = v2Collator,
-            configService = configService
+            configService = configService,
+            logger = initModule.logger
         )
     }
 

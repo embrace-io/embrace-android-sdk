@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -30,7 +29,7 @@ internal class LivenessCheckScheduler internal constructor(
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
     private val blockedThreadDetector: BlockedThreadDetector,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
+    private val logger: InternalEmbraceLogger,
     private val anrMonitorThread: AtomicReference<Thread>
 ) {
 

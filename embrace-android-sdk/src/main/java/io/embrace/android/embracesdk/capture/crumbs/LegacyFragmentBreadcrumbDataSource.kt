@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.utils.filter
 import java.util.Collections
@@ -17,8 +15,7 @@ internal class LegacyFragmentBreadcrumbDataSource(
     private val clock: Clock,
     private val store: BreadcrumbDataStore<FragmentBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getFragmentBreadcrumbLimit()
-    },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    }
 ) : DataCaptureService<List<FragmentBreadcrumb>> by store {
 
     companion object {

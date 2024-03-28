@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.memory
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.MemoryWarning
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
@@ -19,10 +18,6 @@ internal class EmbraceMemoryService(
     private var offset = 0
 
     override fun onMemoryWarning() {
-        InternalStaticEmbraceLogger.logDeveloper(
-            "EmbraceMemoryService",
-            "Memory warning number: $offset"
-        )
         if (offset < MAX_CAPTURED_MEMORY_WARNINGS) {
             memoryTimestamps[offset] = clock.now()
             offset++

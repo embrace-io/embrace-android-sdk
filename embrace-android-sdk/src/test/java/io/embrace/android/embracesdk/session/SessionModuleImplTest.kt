@@ -24,30 +24,30 @@ import org.junit.Test
 
 internal class SessionModuleImplTest {
 
-    private val fakeInitModule = FakeInitModule()
-
-    private val workerThreadModule = FakeWorkerThreadModule(fakeInitModule, WorkerName.BACKGROUND_REGISTRATION)
-
-    private val configService = FakeConfigService()
     private val initModule = FakeInitModule()
     private val otelModule = FakeOpenTelemetryModule()
     private val systemServiceModule = FakeSystemServiceModule()
     private val androidServicesModule = FakeAndroidServicesModule()
+    private val configService = FakeConfigService()
+    private val workerThreadModule = FakeWorkerThreadModule(
+        fakeInitModule = initModule,
+        name = WorkerName.BACKGROUND_REGISTRATION
+    )
 
     @Test
     fun testDefaultImplementations() {
         val essentialServiceModule = FakeEssentialServiceModule(configService = configService)
         val dataSourceModule = DataSourceModuleImpl(
-            essentialServiceModule,
             initModule,
             otelModule,
+            essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
             workerThreadModule
         )
         val module = SessionModuleImpl(
-            fakeInitModule,
-            fakeInitModule.openTelemetryModule,
+            initModule,
+            initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),
@@ -75,17 +75,17 @@ internal class SessionModuleImplTest {
     fun testEnabledBehaviors() {
         val essentialServiceModule = createEnabledBehavior()
         val dataSourceModule = DataSourceModuleImpl(
-            essentialServiceModule,
             initModule,
             otelModule,
+            essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
             workerThreadModule
         )
 
         val module = SessionModuleImpl(
-            fakeInitModule,
-            fakeInitModule.openTelemetryModule,
+            initModule,
+            initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),

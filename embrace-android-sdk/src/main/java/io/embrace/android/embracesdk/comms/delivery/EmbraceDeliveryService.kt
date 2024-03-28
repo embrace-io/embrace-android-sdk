@@ -29,7 +29,6 @@ internal class EmbraceDeliveryService(
 ) : DeliveryService {
 
     companion object {
-        private const val TAG = "EmbraceDeliveryService"
         private const val SEND_SESSION_TIMEOUT = 1L
         private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
@@ -145,11 +144,6 @@ internal class EmbraceDeliveryService(
         nativeCrashData: NativeCrashData,
         sessionMessage: SessionMessage
     ): SessionMessage {
-        logger.logDeveloper(
-            TAG,
-            "Attaching native crash ${nativeCrashData.nativeCrashId} to session ${sessionMessage.session.sessionId}"
-        )
-
         val session = sessionMessage.session.copy(crashReportId = nativeCrashData.nativeCrashId)
         return sessionMessage.copy(session = session)
     }

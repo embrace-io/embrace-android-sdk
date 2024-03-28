@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import kotlin.math.pow
 
 /**
@@ -39,7 +38,6 @@ internal class BehaviorThresholdCheck(
      */
     fun isBehaviorEnabled(pctEnabled: Float): Boolean {
         if (pctEnabled <= 0 || pctEnabled > 100) {
-            logger.logDeveloper("EmbraceConfigService", "behaviour enabled")
             return false
         }
         val deviceId = getNormalizedLargeDeviceId()
@@ -63,8 +61,6 @@ internal class BehaviorThresholdCheck(
         val radix = 16
         val space = (radix.toDouble().pow(digits.toDouble()) - 1).toInt()
         val value = Integer.valueOf(finalChars, radix)
-        val normalizedDeviceId = value.toFloat() / space * 100
-        logger.logDeveloper("EmbraceConfigService", "normalizedDeviceId: $normalizedDeviceId")
-        return normalizedDeviceId
+        return value.toFloat() / space * 100
     }
 }

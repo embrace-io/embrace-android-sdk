@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -364,7 +365,8 @@ internal class EmbraceLogServiceTest {
             configService,
             appFramework,
             sessionIdTracker,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService())
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            InternalEmbraceLogger()
         )
     }
 

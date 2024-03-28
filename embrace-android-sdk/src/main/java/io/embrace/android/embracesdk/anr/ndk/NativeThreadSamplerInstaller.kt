@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -19,7 +18,7 @@ internal class NativeThreadSamplerNdkDelegate : EmbraceNativeThreadSamplerServic
 
 internal class NativeThreadSamplerInstaller(
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
+    private val logger: InternalEmbraceLogger,
 ) {
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
@@ -53,10 +52,6 @@ internal class NativeThreadSamplerInstaller(
         anrService: AnrService
     ) {
         if (isMonitoringCurrentThread()) {
-            logger.logDeveloper(
-                "NativeThreadSamplerInstaller",
-                "Skipping monitorCurrentThread as current thread already monitored."
-            )
             return
         } else {
             // disable monitoring since we can end up here if monitoring was enabled,
@@ -72,11 +67,6 @@ internal class NativeThreadSamplerInstaller(
 
         if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
             monitorCurrentThread(sampler, anrService)
-        } else {
-            InternalStaticEmbraceLogger.logDeveloper(
-                "NativeThreadSamplerInstaller",
-                "isNativeThreadAnrSamplingEnabled disabled."
-            )
         }
 
         // always install the handler. if config subsequently changes we take the decision
@@ -98,10 +88,6 @@ internal class NativeThreadSamplerInstaller(
         targetHandler?.post(
             Runnable {
                 if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled() && !isMonitoring.get()) {
-                    InternalStaticEmbraceLogger.logDeveloper(
-                        "NativeThreadSamplerInstaller",
-                        "Native Thread ANR Sampling Enabled, proceed to install"
-                    )
                     monitorCurrentThread(sampler, anrService)
                 }
             }
@@ -113,18 +99,9 @@ internal class NativeThreadSamplerInstaller(
             if (!isMonitoring.get()) {
                 logger.logInfo("Installing native sampling on '${Thread.currentThread().name}'")
                 if (sampler.monitorCurrentThread()) {
-                    InternalStaticEmbraceLogger.logDeveloper(
-                        "NativeThreadSamplerInstaller",
-                        "Native sampler installed"
-                    )
                     anrService.addBlockedThreadListener(sampler)
                     isMonitoring.set(true)
                 }
-            } else {
-                InternalStaticEmbraceLogger.logDeveloper(
-                    "NativeThreadSamplerInstaller",
-                    "NativeThreadSamplerService already installed"
-                )
             }
         }
     }

@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -133,6 +133,7 @@ internal class ModuleInitBootstrapper(
         enableIntegrationTesting: Boolean,
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
+        logger: InternalEmbraceLogger,
         customAppId: String? = null,
         configServiceProvider: Provider<ConfigService?> = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
@@ -145,8 +146,8 @@ internal class ModuleInitBootstrapper(
 
             synchronized(asyncInitTask) {
                 return if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, appFramework) }
-                    workerThreadModule = init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
+                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, appFramework, logger) }
+                    workerThreadModule = init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule, coreModule) }
 
                     val initTask = postInit(OpenTelemetryModule::class) {
                         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
@@ -280,7 +281,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(SdkObservabilityModule::class) {
                         serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
-                        InternalStaticEmbraceLogger.logger.addLoggerAction(sdkObservabilityModule.internalErrorLogger)
+                        coreModule.logger.addLoggerAction(sdkObservabilityModule.internalErrorLogger)
                     }
 
                     val sessionProperties = Systrace.traceSynchronous("session-properties-init") {
@@ -338,12 +339,12 @@ internal class ModuleInitBootstrapper(
                                                 anrModule.anrService
                                             )
                                         } else {
-                                            InternalStaticEmbraceLogger.logger.logWarning(
+                                            coreModule.logger.logWarning(
                                                 "nativeThreadSamplerInstaller not started, cannot sample current thread"
                                             )
                                         }
                                     } catch (t: Throwable) {
-                                        InternalStaticEmbraceLogger.logger.logError("Failed to sample current thread during ANRs", t)
+                                        coreModule.logger.logError("Failed to sample current thread during ANRs", t)
                                     }
                                 }
                             }
@@ -416,9 +417,10 @@ internal class ModuleInitBootstrapper(
 
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
-                            essentialServiceModule,
                             initModule,
                             openTelemetryModule,
+                            coreModule,
+                            essentialServiceModule,
                             systemServiceModule,
                             androidServicesModule,
                             workerThreadModule
@@ -429,6 +431,7 @@ internal class ModuleInitBootstrapper(
                         sessionModuleSupplier(
                             initModule,
                             openTelemetryModule,
+                            coreModule,
                             androidServicesModule,
                             essentialServiceModule,
                             nativeModule,
@@ -447,6 +450,7 @@ internal class ModuleInitBootstrapper(
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,
+                            coreModule,
                             storageModule,
                             essentialServiceModule,
                             deliveryModule,
@@ -515,9 +519,7 @@ internal class ModuleInitBootstrapper(
 
         synchronized(asyncInitTask) {
             if (isInitialized()) {
-                InternalStaticEmbraceLogger.logger.logDeveloper("Embrace", "Attempting to close services...")
                 coreModule.serviceRegistry.close()
-                InternalStaticEmbraceLogger.logger.logDeveloper("Embrace", "Services closed")
                 workerThreadModule.close()
                 essentialServiceModule.processStateService.close()
             } else {

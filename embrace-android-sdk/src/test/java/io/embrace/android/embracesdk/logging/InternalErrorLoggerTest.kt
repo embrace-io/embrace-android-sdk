@@ -44,7 +44,7 @@ internal class InternalErrorLoggerTest {
     @Test
     fun `if no throwable then do not handle exception`() {
         setupService()
-        internalErrorLogger.log("message", InternalStaticEmbraceLogger.Severity.DEBUG, null, true)
+        internalErrorLogger.log("message", InternalEmbraceLogger.Severity.DEBUG, null, true)
 
         verify { internalErrorService wasNot Called }
     }
@@ -53,7 +53,7 @@ internal class InternalErrorLoggerTest {
     fun `if throwable available, then do handle exception`() {
         setupService()
         val exception = Exception()
-        internalErrorLogger.log("message", InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
+        internalErrorLogger.log("message", InternalEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
     }
@@ -68,11 +68,11 @@ internal class InternalErrorLoggerTest {
             exceptionMessage
         )
 
-        internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
+        internalErrorLogger.log(msg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
         loggerAction.msgQueue.single {
-            it.msg == exceptionMessage && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+            it.msg == exceptionMessage && it.severity == InternalEmbraceLogger.Severity.ERROR &&
                 it.throwable == null && !it.logStacktrace
         }
     }
@@ -84,12 +84,12 @@ internal class InternalErrorLoggerTest {
         val msg = "message"
         every { internalErrorService.handleInternalError(exception) } throws RuntimeException()
 
-        internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
+        internalErrorLogger.log(msg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
 
         loggerAction.msgQueue.single {
-            it.msg == "" && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+            it.msg == "" && it.severity == InternalEmbraceLogger.Severity.ERROR &&
                 it.throwable == null && !it.logStacktrace
         }
     }
@@ -99,7 +99,7 @@ internal class InternalErrorLoggerTest {
         setupService(true)
         val exception = Exception()
         val errorMsg = "Error message"
-        internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, exception, true)
+        internalErrorLogger.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
     }
@@ -108,7 +108,7 @@ internal class InternalErrorLoggerTest {
     fun `if logStrictMode is enabled and a throwable is not available with ERROR severity then handle exception`() {
         setupService(true)
         val errorMsg = "Error message"
-        internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, null, true)
+        internalErrorLogger.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, null, true)
 
         verify(exactly = 1) {
             internalErrorService.handleInternalError(
@@ -121,7 +121,7 @@ internal class InternalErrorLoggerTest {
     fun `if logStrictMode is enabled and a throwable is not available with INFO severity then dont handle exception`() {
         setupService(true)
         val errorMsg = "Error message"
-        internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.INFO, null, true)
+        internalErrorLogger.log(errorMsg, InternalEmbraceLogger.Severity.INFO, null, true)
 
         verify(exactly = 0) { internalErrorService.handleInternalError(any() as Exception) }
     }
@@ -131,7 +131,7 @@ internal class InternalErrorLoggerTest {
         setupService(false)
         val exception = Exception()
         val errorMsg = "Error message"
-        internalErrorLogger.log(errorMsg, InternalStaticEmbraceLogger.Severity.ERROR, exception, true)
+        internalErrorLogger.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, exception, true)
 
         verify { internalErrorService.handleInternalError(exception) }
     }
@@ -148,12 +148,12 @@ internal class InternalErrorLoggerTest {
             exceptionMessage
         )
 
-        internalErrorLogger.log(msg, InternalStaticEmbraceLogger.Severity.DEBUG, exception, true)
+        internalErrorLogger.log(msg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
 
         verify { internalErrorService.handleInternalError(any() as InternalErrorLogger.LogStrictModeException) }
 
         loggerAction.msgQueue.single {
-            it.msg == exceptionMessage && it.severity == InternalStaticEmbraceLogger.Severity.ERROR &&
+            it.msg == exceptionMessage && it.severity == InternalEmbraceLogger.Severity.ERROR &&
                 it.throwable == null && !it.logStacktrace
         }
     }

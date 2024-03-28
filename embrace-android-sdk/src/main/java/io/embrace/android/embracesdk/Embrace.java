@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.webkit.ConsoleMessage;
@@ -560,13 +558,13 @@ public final class Embrace implements EmbraceAndroidApi {
                                     @NonNull Boolean hasData) {
         if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
             impl.logPushNotification(
-                title,
-                body,
-                topic,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
+                    title,
+                    body,
+                    topic,
+                    id,
+                    notificationPriority,
+                    messageDeliveredPriority,
+                    PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
             );
         }
     }
@@ -577,7 +575,7 @@ public final class Embrace implements EmbraceAndroidApi {
             if (consoleMessage.message() != null) {
                 trackWebViewPerformance(tag, consoleMessage.message());
             } else {
-                logger.logDebug("Empty WebView console message.");
+                internalEmbraceLogger.logDebug("Empty WebView console message.");
             }
         }
     }

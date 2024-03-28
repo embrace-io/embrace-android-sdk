@@ -85,7 +85,7 @@ internal class EventHandlerTest {
             sessionBehavior = fakeSessionBehavior { cfg },
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior { cfg }
         )
-        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService)
+        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService, logger)
 
         clock = FakeClock()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()

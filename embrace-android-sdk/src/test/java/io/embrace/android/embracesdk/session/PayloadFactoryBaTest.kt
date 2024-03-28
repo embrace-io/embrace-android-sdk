@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
@@ -100,7 +101,8 @@ internal class PayloadFactoryBaTest {
             "GrCPU",
             false,
             "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",
-            EmbraceSerializer()
+            EmbraceSerializer(),
+            InternalEmbraceLogger()
         )
 
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
@@ -163,6 +165,7 @@ internal class PayloadFactoryBaTest {
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val gatingService = FakeGatingService()
+        val logger = InternalEmbraceLogger()
         val collator = V1PayloadMessageCollator(
             gatingService,
             configService,
@@ -181,15 +184,16 @@ internal class PayloadFactoryBaTest {
             spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),
-            FakeStartupService()
+            FakeStartupService(),
+            logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        val v2Collator = V2PayloadMessageCollator(gatingService, collator, sessionEnvelopeSource)
-        return PayloadFactoryImpl(collator, v2Collator, configService).apply {
+        val v2Collator = V2PayloadMessageCollator(gatingService, collator, sessionEnvelopeSource, logger)
+        return PayloadFactoryImpl(collator, v2Collator, configService, logger).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
             }

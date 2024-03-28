@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceAutomaticVerification
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.json.JSONObject
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
@@ -28,7 +28,8 @@ import java.net.URL
  */
 internal class VerificationActions(
     private val embraceInstance: Embrace,
-    private val automaticVerificationChecker: AutomaticVerificationChecker
+    private val logger: InternalEmbraceLogger,
+    private val automaticVerificationChecker: AutomaticVerificationChecker,
 ) {
 
     companion object {
@@ -87,7 +88,7 @@ internal class VerificationActions(
      *  - Throw an Exception
      */
     fun runActions() {
-        InternalStaticEmbraceLogger.logger.logInfo("${EmbraceAutomaticVerification.TAG} Starting Verification...")
+        logger.logInfo("${EmbraceAutomaticVerification.TAG} Starting Verification...")
         embraceInstance.addBreadcrumb("This is a breadcrumb")
         actionsToVerify.forEach {
             verifyAction(it.first, it.second)
@@ -97,12 +98,12 @@ internal class VerificationActions(
     private fun verifyAction(action: () -> Unit, message: String) {
         currentStep++
         try {
-            InternalStaticEmbraceLogger.logger.logInfo(
+            logger.logInfo(
                 "${EmbraceAutomaticVerification.TAG} ✓ Step $currentStep/$totalSteps: $message"
             )
             action.invoke()
         } catch (e: Throwable) {
-            InternalStaticEmbraceLogger.logger.logError(
+            logger.logError(
                 "${EmbraceAutomaticVerification.TAG} -- $message ERROR ${e.localizedMessage}"
             )
             automaticVerificationChecker.addException(e)
@@ -162,7 +163,7 @@ internal class VerificationActions(
         val currentVersion = BuildConfig.VERSION_NAME
 
         if (ComparableVersion(currentVersion) < ComparableVersion(latestEmbraceVersion)) {
-            InternalStaticEmbraceLogger.logger.logWarning(
+            logger.logWarning(
                 "${EmbraceAutomaticVerification.TAG} Note that there is a newer version of Embrace available 🙌! " +
                     "You can read the changelog for $latestEmbraceVersion here: $embraceChangelogLink"
             )
@@ -191,7 +192,7 @@ internal class VerificationActions(
 
     private fun triggerAnr() {
         handler.post { Thread.sleep(ANR_DURATION_MILLIS) }
-        InternalStaticEmbraceLogger.logger.logInfo("${EmbraceAutomaticVerification.TAG} ANR Finished")
+        logger.logInfo("${EmbraceAutomaticVerification.TAG} ANR Finished")
     }
 
     private fun throwAnException() {

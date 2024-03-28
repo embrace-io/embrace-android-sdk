@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.Callable
@@ -47,7 +46,6 @@ internal class EmbracePreferencesService(
     private fun alterStartupStatus(status: String) {
         backgroundWorker.submit {
             Systrace.traceSynchronous("set-startup-status") {
-                logDeveloper("EmbracePreferencesService", "Startup key: $status")
                 prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
             }
         }
@@ -69,7 +67,6 @@ internal class EmbracePreferencesService(
     }
 
     private fun SharedPreferences.setStringPreference(key: String, value: String?) {
-        logDeveloper("EmbracePreferencesService", "Set $key: ${value ?: ""}")
         val editor = edit()
         editor.putString(key, value)
         editor.apply()
@@ -84,8 +81,6 @@ internal class EmbracePreferencesService(
     }
 
     private fun SharedPreferences.setLongPreference(key: String, value: Long?) {
-        logDeveloper("EmbracePreferencesService", "Set $key: ${value ?: ""}")
-
         if (value != null) {
             val editor = edit()
             editor.putLong(key, value)
@@ -102,7 +97,6 @@ internal class EmbracePreferencesService(
     }
 
     private fun SharedPreferences.setIntegerPreference(key: String, value: Int) {
-        logDeveloper("EmbracePreferencesService", "Set $key: $value")
         val editor = edit()
         editor.putInt(key, value)
         editor.apply()
@@ -119,7 +113,6 @@ internal class EmbracePreferencesService(
         key: String,
         value: Boolean?
     ) {
-        logDeveloper("EmbracePreferencesService", "Set $key: ${value ?: ""}")
         if (value != null) {
             val editor = edit()
             editor.putBoolean(key, value)
@@ -131,7 +124,6 @@ internal class EmbracePreferencesService(
         key: String,
         value: Set<String>?
     ) {
-        logDeveloper("EmbracePreferencesService", "Set $key: ${value ?: ""}")
         val editor = edit()
         editor.putStringSet(key, value)
         editor.apply()
@@ -145,7 +137,6 @@ internal class EmbracePreferencesService(
         key: String,
         value: Map<String, String>?
     ) {
-        logDeveloper("EmbracePreferencesService", "Set $key: ${value ?: ""}")
         val editor = edit()
         val mapString = when (value) {
             null -> null
@@ -182,10 +173,6 @@ internal class EmbracePreferencesService(
                 return deviceId
             }
             val newId = getEmbUuid()
-            logDeveloper(
-                "EmbracePreferencesService",
-                "Device ID is null, created new one: $newId"
-            )
             deviceIdentifier = newId
             return newId
         }
@@ -256,7 +243,6 @@ internal class EmbracePreferencesService(
             prefs.setIntegerPreference(key, ordinal)
             ordinal
         } catch (tr: Throwable) {
-            logDeveloper("EmbracePreferencesService", "Error incrementing $key", tr)
             -1
         }
     }

@@ -30,11 +30,12 @@ internal class AnrModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = InitModuleImpl()
+        val fakeCoreModule = FakeCoreModule()
         val module = AnrModuleImpl(
             initModule,
-            FakeCoreModule(),
+            fakeCoreModule,
             FakeEssentialServiceModule(),
-            WorkerThreadModuleImpl(initModule)
+            WorkerThreadModuleImpl(initModule, fakeCoreModule)
         )
         assertNotNull(module.anrService)
         assertNotNull(module.googleAnrTimestampRepository)
@@ -44,13 +45,14 @@ internal class AnrModuleImplTest {
     @Test
     fun testBehaviorDisabled() {
         val initModule = InitModuleImpl()
+        val fakeCoreModule = FakeCoreModule()
         val module = AnrModuleImpl(
             initModule,
-            FakeCoreModule(),
+            fakeCoreModule,
             FakeEssentialServiceModule(
                 configService = createConfigServiceWithAnrDisabled()
             ),
-            WorkerThreadModuleImpl(initModule)
+            WorkerThreadModuleImpl(initModule, fakeCoreModule)
         )
         assertTrue(module.anrService is NoOpAnrService)
         assertTrue(module.responsivenessMonitorService is NoOpResponsivenessMonitorService)

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.WebVitalType
 import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
@@ -40,7 +41,7 @@ internal class EmbraceWebViewServiceTest {
     fun setup() {
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
         configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
-        embraceWebViewService = EmbraceWebViewService(configService, EmbraceSerializer())
+        embraceWebViewService = EmbraceWebViewService(configService, EmbraceSerializer(), InternalEmbraceLogger())
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
@@ -15,13 +16,15 @@ internal class DataSourceModuleImplTest {
 
     @Test
     fun `test default behavior`() {
+        val fakeInitModule = FakeInitModule()
         val module = DataSourceModuleImpl(
-            FakeEssentialServiceModule(),
-            FakeInitModule(),
+            fakeInitModule,
             FakeOpenTelemetryModule(),
+            FakeCoreModule(),
+            FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
-            FakeWorkerThreadModule(FakeInitModule(), WorkerName.BACKGROUND_REGISTRATION)
+            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
         )
         assertNotNull(module.getDataSources())
         assertNotNull(module.customBreadcrumbDataSource)

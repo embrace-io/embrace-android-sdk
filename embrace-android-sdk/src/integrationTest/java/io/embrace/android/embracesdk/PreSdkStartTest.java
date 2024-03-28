@@ -14,7 +14,7 @@ public class PreSdkStartTest {
 
     @Rule
     public IntegrationTestRule testRule = new IntegrationTestRule(
-        () -> IntegrationTestRule.Companion.newHarness(false)
+        () -> IntegrationTestRule.Companion.newHarness(false, true)
     );
 
     @NonNull

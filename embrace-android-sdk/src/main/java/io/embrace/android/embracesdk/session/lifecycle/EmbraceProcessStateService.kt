@@ -7,8 +7,6 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.utils.ThreadUtils
 import io.embrace.android.embracesdk.utils.stream
@@ -20,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 internal class EmbraceProcessStateService(
     private val clock: Clock,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : ProcessStateService {
 
     /**
@@ -48,6 +46,7 @@ internal class EmbraceProcessStateService(
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
         ThreadUtils.runOnMainThread(
+            logger,
             Runnable {
                 ProcessLifecycleOwner.get().lifecycle
                     .addObserver(this@EmbraceProcessStateService)
@@ -61,7 +60,7 @@ internal class EmbraceProcessStateService(
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     override fun onForeground() {
-        logDebug("AppState: App entered foreground.")
+        logger.logDebug("AppState: App entered foreground.")
 
         if (!isInBackground) {
             val msg = "Unbalanced call to onForeground(). This will contribute to session loss."
@@ -86,7 +85,7 @@ internal class EmbraceProcessStateService(
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     override fun onBackground() {
-        logDebug("AppState: App entered background")
+        logger.logDebug("AppState: App entered background")
         isInBackground = true
         val timestamp = clock.now()
         invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
@@ -102,7 +101,7 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+            logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
         }
     }
 
@@ -115,11 +114,11 @@ internal class EmbraceProcessStateService(
 
     override fun close() {
         try {
-            logDebug("Shutting down EmbraceProcessStateService")
+            logger.logDebug("Shutting down EmbraceProcessStateService")
             listeners.clear()
             sessionOrchestrator = null
         } catch (ex: Exception) {
-            logDebug("Error when closing EmbraceProcessStateService", ex)
+            logger.logDebug("Error when closing EmbraceProcessStateService", ex)
         }
     }
 

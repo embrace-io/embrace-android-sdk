@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbsSanitizer
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class SessionSanitizerFacade(
@@ -10,10 +9,6 @@ internal class SessionSanitizerFacade(
 ) {
 
     fun getSanitizedMessage(): SessionMessage {
-        InternalStaticEmbraceLogger.logger.logDeveloper(
-            "SessionSanitizerFacade",
-            "getSanitizedMessage"
-        )
         val sanitizedSession = SessionSanitizer(sessionMessage.session, components).sanitize()
         val sanitizedUserInfo = UserInfoSanitizer(sessionMessage.userInfo, components).sanitize()
         val sanitizedPerformanceInfo = PerformanceInfoSanitizer(sessionMessage.performanceInfo, components).sanitize()

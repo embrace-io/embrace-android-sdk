@@ -48,8 +48,6 @@ internal class ApiClientImpl(
         request: ApiRequest,
         action: SerializationAction
     ): ApiResponse {
-        logger.logDeveloper("ApiClient", request.httpMethod.toString() + " " + request.url)
-        logger.logDeveloper("ApiClient", "Request details: $request")
         var connection: EmbraceConnection? = null
         return try {
             connection = request.toConnection()
@@ -87,20 +85,25 @@ internal class ApiClientImpl(
                     val responseBody = readResponseBodyAsString(connection.inputStream)
                     ApiResponse.Success(responseBody, responseHeaders)
                 }
+
                 HTTP_NOT_MODIFIED -> {
                     ApiResponse.NotModified
                 }
+
                 HTTP_ENTITY_TOO_LARGE -> {
                     ApiResponse.PayloadTooLarge
                 }
+
                 TOO_MANY_REQUESTS -> {
                     val endpoint = connection.url.endpoint()
                     val retryAfter = responseHeaders["Retry-After"]?.toLongOrNull()
                     ApiResponse.TooManyRequests(endpoint, retryAfter)
                 }
+
                 NO_HTTP_RESPONSE -> {
                     ApiResponse.Incomplete(IllegalStateException("Connection failed or unexpected response code"))
                 }
+
                 else -> {
                     ApiResponse.Failure(responseCode, responseHeaders)
                 }
@@ -114,20 +117,14 @@ internal class ApiClientImpl(
         var responseCode: Int? = null
         try {
             responseCode = connection.responseCode
-            logger.logDeveloper("ApiClient", "Response status: $responseCode")
         } catch (ex: IOException) {
-            logger.logDeveloper("ApiClient", "Connection failed or unexpected response code")
+            logger.logInfo("Connection failed or unexpected response code")
         }
         return responseCode ?: NO_HTTP_RESPONSE
     }
 
     private fun readHttpResponseHeaders(connection: EmbraceConnection): Map<String, String> {
-        val headers = connection.headerFields?.mapValues { it.value.joinToString() } ?: emptyMap()
-
-        headers.forEach { entry ->
-            logger.logDeveloper("ApiClient", "Response header: ${entry.key}: ${entry.value}")
-        }
-        return headers
+        return connection.headerFields?.mapValues { it.value.joinToString() } ?: emptyMap()
     }
 
     /**
@@ -138,13 +135,10 @@ internal class ApiClientImpl(
      */
     private fun readResponseBodyAsString(inputStream: InputStream?): String {
         return try {
-            val body = InputStreamReader(inputStream).buffered().use {
+            InputStreamReader(inputStream).buffered().use {
                 it.readText()
             }
-            logger.logDeveloper("ApiClient", "Successfully read response body.")
-            body
         } catch (ex: IOException) {
-            logger.logDeveloper("ApiClient", "Failed to read response body.", ex)
             throw IllegalStateException("Failed to read response body.", ex)
         }
     }

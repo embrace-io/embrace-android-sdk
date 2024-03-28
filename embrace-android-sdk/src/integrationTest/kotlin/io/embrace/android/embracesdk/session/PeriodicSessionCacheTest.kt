@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSavedSessionMessage
 import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.worker.WorkerName.*
+import io.embrace.android.embracesdk.worker.WorkerName.PERIODIC_CACHE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -29,7 +29,7 @@ internal class PeriodicSessionCacheTest {
         IntegrationTestRule.Harness(
             fakeClock = clock,
             initModule = fakeInitModule,
-            workerThreadModule = FakeWorkerThreadModule(fakeInitModule, PERIODIC_CACHE)
+            workerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = PERIODIC_CACHE)
         )
     }
 

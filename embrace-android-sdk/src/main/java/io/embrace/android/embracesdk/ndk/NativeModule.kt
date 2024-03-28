@@ -60,11 +60,12 @@ internal class NativeModuleImpl(
         Systrace.traceSynchronous("native-thread-sampler-init") {
             if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
                 EmbraceNativeThreadSamplerService(
-                    essentialServiceModule.configService,
-                    lazy { ndkService.getSymbolsForCurrentArch() },
+                    configService = essentialServiceModule.configService,
+                    symbols = lazy { ndkService.getSymbolsForCurrentArch() },
+                    logger = coreModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                     deviceArchitecture = essentialServiceModule.deviceArchitecture,
-                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader
+                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
                 )
             } else {
                 null
@@ -75,7 +76,10 @@ internal class NativeModuleImpl(
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
             if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
-                NativeThreadSamplerInstaller(sharedObjectLoader = essentialServiceModule.sharedObjectLoader)
+                NativeThreadSamplerInstaller(
+                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
+                    logger = coreModule.logger
+                )
             } else {
                 null
             }

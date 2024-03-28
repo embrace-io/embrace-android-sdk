@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.payload.extensions
 import android.util.Base64
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
@@ -23,6 +23,7 @@ internal object CrashFactory {
      * @return a crash
      */
     fun ofThrowable(
+        logger: InternalEmbraceLogger,
         throwable: Throwable?,
         jsException: JsException?,
         crashNumber: Int,
@@ -31,7 +32,7 @@ internal object CrashFactory {
         return Crash(
             crashId,
             exceptionInfo(throwable),
-            jsExceptions(jsException),
+            jsExceptions(jsException, logger),
             threadsInfo(),
             crashNumber
         )
@@ -66,7 +67,7 @@ internal object CrashFactory {
      * @return a list of [String] representing the javascript stacktrace of the crash.
      */
     @JvmStatic
-    private fun jsExceptions(jsException: JsException?): List<String>? {
+    private fun jsExceptions(jsException: JsException?, logger: InternalEmbraceLogger): List<String>? {
         var jsExceptions: List<String>? = null
         if (jsException != null) {
             try {
@@ -74,7 +75,7 @@ internal object CrashFactory {
                 val encodedString = Base64.encodeToString(jsonException, Base64.NO_WRAP)
                 jsExceptions = listOf(encodedString)
             } catch (ex: Exception) {
-                InternalStaticEmbraceLogger.logError(
+                logger.logError(
                     "Failed to parse javascript exception",
                     ex,
                     true

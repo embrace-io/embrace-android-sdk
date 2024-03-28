@@ -83,7 +83,8 @@ internal class AnrModuleImpl(
             anrMonitorWorker = anrMonitorWorker,
             anrMonitorThread = workerModule.anrMonitorThread,
             configService = configService,
-            clock = initModule.clock
+            logger = coreModule.logger,
+            clock = initModule.clock,
         )
     }
 
@@ -93,7 +94,8 @@ internal class AnrModuleImpl(
             clock = initModule.clock,
             state = state,
             targetThread = looper.thread,
-            anrMonitorThread = workerModule.anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread,
+            logger = coreModule.logger,
         )
     }
 
@@ -105,7 +107,8 @@ internal class AnrModuleImpl(
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorThread = workerModule.anrMonitorThread
+            anrMonitorThread = workerModule.anrMonitorThread,
+            logger = coreModule.logger,
         )
     }
 
@@ -113,7 +116,7 @@ internal class AnrModuleImpl(
         val filesDelegate = FilesDelegate()
 
         SigquitDetectionService(
-            sharedObjectLoader = SharedObjectLoader(),
+            sharedObjectLoader = SharedObjectLoader(logger = coreModule.logger),
             findGoogleThread = FindGoogleThread(
                 coreModule.logger,
                 GetThreadsInCurrentProcess(filesDelegate),

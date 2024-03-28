@@ -7,8 +7,7 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.annotation.ChecksSdkIntAtLeast
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.File
@@ -101,7 +100,8 @@ internal class DeviceImpl(
     private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
-    cpuInfoDelegate: CpuInfoDelegate
+    cpuInfoDelegate: CpuInfoDelegate,
+    private val logger: InternalEmbraceLogger
 ) : Device {
     override var isJailbroken: Boolean? = null
     override var screenResolution: String = ""
@@ -117,10 +117,6 @@ internal class DeviceImpl(
     )
 
     init {
-        logDeveloper(
-            "Device",
-            "Precomputing values asynchronously: Jailbroken/ScreenResolution/DiskUsage"
-        )
         asyncRetrieveIsJailbroken()
         asyncRetrieveScreenResolution()
     }
@@ -154,7 +150,7 @@ internal class DeviceImpl(
                 displayMetrics.heightPixels
             )
         } catch (ex: Exception) {
-            logDebug("Could not determine screen resolution", ex)
+            logger.logDebug("Could not determine screen resolution", ex)
             ""
         }
     }
@@ -183,9 +179,7 @@ internal class DeviceImpl(
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
     private fun checkIfIsJailbroken(): Boolean {
-        logDeveloper("Device", "Processing jailbroken")
         if (isEmulator()) {
-            logDeveloper("Device", "Device is an emulator, Jailbroken=false")
             return false
         }
         for (location in jailbreakLocations) {

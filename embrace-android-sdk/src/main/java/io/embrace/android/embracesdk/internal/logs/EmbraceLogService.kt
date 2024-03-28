@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.NavigableMap
@@ -29,24 +29,28 @@ internal class EmbraceLogService(
     private val configService: ConfigService,
     private val appFramework: AppFramework,
     private val sessionIdTracker: SessionIdTracker,
-    private val backgroundWorker: BackgroundWorker
+    private val backgroundWorker: BackgroundWorker,
+    private val logger: InternalEmbraceLogger
 ) : LogService {
 
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(
             Severity.INFO.name,
             clock,
-            configService.logMessageBehavior::getInfoLogLimit
+            configService.logMessageBehavior::getInfoLogLimit,
+            logger
         ),
         Severity.WARNING to LogCounter(
             Severity.WARNING.name,
             clock,
-            configService.logMessageBehavior::getWarnLogLimit
+            configService.logMessageBehavior::getWarnLogLimit,
+            logger
         ),
         Severity.ERROR to LogCounter(
             Severity.ERROR.name,
             clock,
-            configService.logMessageBehavior::getErrorLogLimit
+            configService.logMessageBehavior::getErrorLogLimit,
+            logger
         )
     )
 
@@ -180,7 +184,7 @@ internal class EmbraceLogService(
                 maxLength >= endChars.length -> maxLength - endChars.length
                 else -> LogMessageBehavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
             }
-            logWarning("Truncating message to ${message.length} characters")
+            logger.logWarning("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars
         } else {
             message
@@ -199,7 +203,8 @@ internal class EmbraceLogService(
 internal class LogCounter(
     private val name: String,
     private val clock: Clock,
-    private val getConfigLogLimit: (() -> Int)
+    private val getConfigLogLimit: (() -> Int),
+    private val logger: InternalEmbraceLogger
 ) {
     private val count = AtomicInteger(0)
     private val logIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
@@ -212,7 +217,7 @@ internal class LogCounter(
         if (logIds.size < getConfigLogLimit.invoke()) {
             logIds[timestamp] = messageId
         } else {
-            logWarning("$name log limit has been reached.")
+            logger.logWarning("$name log limit has been reached.")
             return false
         }
         return true

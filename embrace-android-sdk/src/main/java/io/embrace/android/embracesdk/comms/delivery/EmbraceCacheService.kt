@@ -47,7 +47,6 @@ internal class EmbraceCacheService(
      */
     override fun loadPayload(name: String): SerializationAction {
         return { stream ->
-            logger.logDeveloper(TAG, "Attempting to read bytes from $name")
             findLock(name).read {
                 val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
                 try {
@@ -87,10 +86,6 @@ internal class EmbraceCacheService(
 
     override fun deleteFile(name: String): Boolean {
         val success = findLock(name).write {
-            logger.logDeveloper(
-                "EmbraceCacheService",
-                "Attempting to delete file from cache: $name"
-            )
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
                 file.delete()
@@ -259,7 +254,6 @@ internal class EmbraceCacheService(
          * preserve backward compatibility, SESSION_FILE_PREFIX must be the start of OLD_VERSION_FILE_NAME
          */
         private const val OLD_VERSION_FILE_NAME = "last_session.json"
-        private const val TAG = "EmbraceCacheService"
 
         const val EMBRACE_PREFIX = "emb_"
         const val OLD_COPY_SUFFIX = "-old"

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -19,19 +20,20 @@ internal class SessionPayloadSourceImpl(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val spanRepository: SpanRepository
+    private val spanRepository: SpanRepository,
+    private val logger: InternalEmbraceLogger
 ) : SessionPayloadSource {
 
     override fun getSessionPayload(endType: SessionSnapshotType): SessionPayload {
         return SessionPayload(
             spans = retrieveSpanData(endType),
             spanSnapshots = retrieveSpanSnapshotData(),
-            internalError = captureDataSafely { internalErrorService.currentExceptionError?.toNewPayload() },
-            sharedLibSymbolMapping = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
+            internalError = captureDataSafely(logger) { internalErrorService.currentExceptionError?.toNewPayload() },
+            sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
         )
     }
 
-    private fun retrieveSpanData(endType: SessionSnapshotType): List<Span>? = captureDataSafely {
+    private fun retrieveSpanData(endType: SessionSnapshotType): List<Span>? = captureDataSafely(logger) {
         when (endType) {
             SessionSnapshotType.NORMAL_END -> currentSessionSpan.endSession(null)
             SessionSnapshotType.PERIODIC_CACHE -> spanSink.completedSpans()
@@ -39,7 +41,7 @@ internal class SessionPayloadSourceImpl(
         }.map(EmbraceSpanData::toNewPayload)
     }
 
-    private fun retrieveSpanSnapshotData(): List<Span>? = captureDataSafely {
+    private fun retrieveSpanSnapshotData(): List<Span>? = captureDataSafely(logger) {
         spanRepository.getActiveSpans().mapNotNull(PersistableEmbraceSpan::snapshot)
     }
 }

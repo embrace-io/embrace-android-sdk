@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
@@ -99,11 +100,13 @@ internal class SessionHandlerTest {
     private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var scheduledWorker: ScheduledWorker
+    private lateinit var logger: InternalEmbraceLogger
 
     @Before
     fun before() {
         executorService = BlockingScheduledExecutorService()
         scheduledWorker = ScheduledWorker(executorService)
+        logger = InternalEmbraceLogger()
         clock.setCurrentTime(now)
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
@@ -158,7 +161,8 @@ internal class SessionHandlerTest {
             initModule.openTelemetryModule.spanSink,
             initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),
-            FakeStartupService()
+            FakeStartupService(),
+            logger
         )
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
@@ -167,9 +171,10 @@ internal class SessionHandlerTest {
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = FakeSessionPayloadSource()
-            )
+            ),
+            logger
         )
-        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService)
+        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService, logger)
     }
 
     @After

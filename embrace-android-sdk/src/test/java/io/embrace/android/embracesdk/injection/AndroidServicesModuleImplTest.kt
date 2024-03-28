@@ -11,10 +11,11 @@ internal class AndroidServicesModuleImplTest {
     @Test
     fun testDefault() {
         val initModule = InitModuleImpl()
+        val coreModule = FakeCoreModule()
         val module = AndroidServicesModuleImpl(
             initModule = initModule,
-            coreModule = FakeCoreModule(),
-            workerThreadModule = WorkerThreadModuleImpl(initModule)
+            coreModule = coreModule,
+            workerThreadModule = WorkerThreadModuleImpl(initModule, coreModule)
         )
 
         assertTrue(module.preferencesService is EmbracePreferencesService)

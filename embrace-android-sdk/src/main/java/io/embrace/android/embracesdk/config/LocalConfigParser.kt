@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal object LocalConfigParser {
 
@@ -41,7 +41,8 @@ internal object LocalConfigParser {
         resources: AndroidResourcesService,
         packageName: String,
         customAppId: String?,
-        serializer: EmbraceSerializer
+        serializer: EmbraceSerializer,
+        logger: InternalEmbraceLogger
     ): LocalConfig {
         return try {
             val appId: String = customAppId ?: resources.getString(
@@ -73,7 +74,7 @@ internal object LocalConfigParser {
 
                 else -> null
             }
-            buildConfig(appId, ndkEnabled, sdkConfigJson, serializer)
+            buildConfig(appId, ndkEnabled, sdkConfigJson, serializer, logger)
         } catch (ex: Exception) {
             throw IllegalStateException("Failed to load local config from resources.", ex)
         }
@@ -83,7 +84,8 @@ internal object LocalConfigParser {
         appId: String?,
         ndkEnabled: Boolean,
         sdkConfigs: String?,
-        serializer: EmbraceSerializer
+        serializer: EmbraceSerializer,
+        logger: InternalEmbraceLogger
     ): LocalConfig {
         require(!appId.isNullOrEmpty()) { "Embrace AppId cannot be null or empty." }
 
@@ -91,13 +93,13 @@ internal object LocalConfigParser {
             ndkEnabled -> "enabled"
             else -> "disabled"
         }
-        InternalStaticEmbraceLogger.logInfo("Native crash capture is $enabledStr")
+        logger.logInfo("Native crash capture is $enabledStr")
         var configs: SdkLocalConfig? = null
         if (!sdkConfigs.isNullOrEmpty()) {
             try {
                 configs = serializer.fromJson(sdkConfigs, SdkLocalConfig::class.java)
             } catch (ex: Exception) {
-                InternalStaticEmbraceLogger.logError(
+                logger.logError(
                     "Failed to parse Embrace config from config json file.",
                     ex
                 )

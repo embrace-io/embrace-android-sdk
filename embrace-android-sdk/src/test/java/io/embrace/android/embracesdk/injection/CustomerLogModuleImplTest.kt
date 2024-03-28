@@ -16,15 +16,16 @@ internal class CustomerLogModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = InitModuleImpl()
+        val fakeCoreModule = FakeCoreModule()
         val module = CustomerLogModuleImpl(
             initModule,
-            FakeCoreModule(),
+            fakeCoreModule,
             FakeOpenTelemetryModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
             fakeEmbraceSessionProperties(),
-            WorkerThreadModuleImpl(initModule),
+            WorkerThreadModuleImpl(initModule, fakeCoreModule),
             FakePayloadModule(),
         )
 

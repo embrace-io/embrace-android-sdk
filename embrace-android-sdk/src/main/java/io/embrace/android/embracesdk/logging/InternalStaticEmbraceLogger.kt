@@ -1,20 +1,9 @@
 package io.embrace.android.embracesdk.logging
 
-import android.util.Log
-
-/**
- * Wrapper for the Android [Log] utility.
- * Can only be used internally, it's not part of the public API.
- */
-
 // Suppressing "Nothing to inline". These functions are used all around the codebase, pretty often, so we want them to
 // perform as fast as possible.
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalStaticEmbraceLogger private constructor() {
-
-    enum class Severity {
-        DEVELOPER, DEBUG, INFO, WARNING, ERROR, NONE
-    }
 
     companion object : InternalEmbraceLogger.LoggerAction {
 
@@ -22,46 +11,36 @@ internal class InternalStaticEmbraceLogger private constructor() {
         val logger = InternalEmbraceLogger()
 
         @JvmStatic
-        inline fun logDeveloper(className: String, msg: String, throwable: Throwable) {
-            log("[$className] $msg", Severity.DEVELOPER, throwable, true)
-        }
-
-        @JvmStatic
-        inline fun logDeveloper(className: String, msg: String) {
-            log("[$className] $msg", Severity.DEVELOPER, null, true)
-        }
-
-        @JvmStatic
         @JvmOverloads
         inline fun logDebug(msg: String, throwable: Throwable? = null) {
-            log(msg, Severity.DEBUG, throwable, true)
+            log(msg, InternalEmbraceLogger.Severity.DEBUG, throwable, true)
         }
 
         @JvmStatic
         inline fun logInfo(msg: String) {
-            log(msg, Severity.INFO, null, true)
+            log(msg, InternalEmbraceLogger.Severity.INFO, null, true)
         }
 
         @JvmStatic
         @JvmOverloads
         inline fun logWarning(msg: String, throwable: Throwable? = null) {
-            log(msg, Severity.WARNING, throwable, true)
+            log(msg, InternalEmbraceLogger.Severity.WARNING, throwable, true)
         }
 
         @JvmStatic
         @JvmOverloads
         inline fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-            log(msg, Severity.ERROR, throwable, logStacktrace)
+            log(msg, InternalEmbraceLogger.Severity.ERROR, throwable, logStacktrace)
         }
 
         // Log with INFO severity that always contains a throwable as an internal exception to be sent to Grafana
         inline fun logInfoWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-            log(msg, Severity.INFO, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
+            log(msg, InternalEmbraceLogger.Severity.INFO, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
         }
 
         // Log with WARNING severity that always contains a throwable as an internal exception to be sent to Grafana
         inline fun logWarningWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-            log(msg, Severity.WARNING, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
+            log(msg, InternalEmbraceLogger.Severity.WARNING, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
         }
 
         /**
@@ -76,13 +55,12 @@ internal class InternalStaticEmbraceLogger private constructor() {
         @JvmStatic
         override fun log(
             msg: String,
-            severity: Severity,
+            severity: InternalEmbraceLogger.Severity,
             throwable: Throwable?,
             logStacktrace: Boolean
-        ) =
-            logger.log(msg, severity, throwable, logStacktrace)
+        ) = logger.log(msg, severity, throwable, logStacktrace)
 
         @JvmStatic
-        fun setThreshold(severity: Severity) = logger.setThreshold(severity)
+        fun setThreshold(severity: InternalEmbraceLogger.Severity) = logger.setThreshold(severity)
     }
 }

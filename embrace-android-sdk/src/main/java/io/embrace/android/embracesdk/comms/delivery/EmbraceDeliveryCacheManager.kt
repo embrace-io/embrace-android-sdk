@@ -31,8 +31,6 @@ internal class EmbraceDeliveryCacheManager(
         private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"
 
         const val MAX_SESSIONS_CACHED = 64
-
-        private const val TAG = "DeliveryCacheManager"
     }
 
     // The session id is used as key for this map
@@ -98,7 +96,7 @@ internal class EmbraceDeliveryCacheManager(
         sessionFileIds.forEach { filename ->
             CachedSession.fromFilename(filename)?.let { cachedSession ->
                 cachedSessions[cachedSession.sessionId] = cachedSession
-            }
+            } ?: logger.logError("Unrecognized cached file: $filename")
         }
 
         return cachedSessions.values.toList()
@@ -138,7 +136,6 @@ internal class EmbraceDeliveryCacheManager(
      * Saves the [PendingApiCalls] map to a file named [PENDING_API_CALLS_FILE_NAME].
      */
     override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
-        logger.logDeveloper(TAG, "Saving pending api calls")
         backgroundWorker.submit {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
         }
@@ -167,7 +164,6 @@ internal class EmbraceDeliveryCacheManager(
      * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]
      */
     private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
-        logger.logDeveloper(TAG, "Loading old version of pending api calls")
         var cachedApiCallsPerEndpoint: PendingApiCalls? = null
         val loadPendingApiCallsQueue = runCatching {
             cacheService.loadOldPendingApiCalls(PENDING_API_CALLS_FILE_NAME)
@@ -237,7 +233,6 @@ internal class EmbraceDeliveryCacheManager(
                 if (!cachedSessions.containsKey(cachedSession.sessionId)) {
                     cachedSessions[cachedSession.sessionId] = cachedSession
                 }
-                logger.logDeveloper(TAG, "Session message successfully cached.")
             }
         } catch (ex: Throwable) {
             logger.logError("Failed to cache current active session", ex, true)

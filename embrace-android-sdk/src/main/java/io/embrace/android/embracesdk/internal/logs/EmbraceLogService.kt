@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
@@ -24,12 +25,13 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class EmbraceLogService(
     private val logWriter: LogWriter,
-    private val clock: Clock,
     private val metadataService: MetadataService,
     private val configService: ConfigService,
     private val appFramework: AppFramework,
     private val sessionIdTracker: SessionIdTracker,
-    private val backgroundWorker: BackgroundWorker
+    private val sessionProperties: EmbraceSessionProperties,
+    private val backgroundWorker: BackgroundWorker,
+    clock: Clock,
 ) : LogService {
 
     private val logCounters = mapOf(
@@ -138,6 +140,7 @@ internal class EmbraceLogService(
             sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
             metadataService.getAppState()?.let { attributes.setAppState(it) }
             attributes.setLogId(messageId)
+            attributes.setSessionProperties(sessionProperties.get())
 
             val logEventData = LogEventData(
                 schemaType = SchemaType.Log(attributes),

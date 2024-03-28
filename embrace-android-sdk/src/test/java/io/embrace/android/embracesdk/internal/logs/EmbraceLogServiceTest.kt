@@ -13,12 +13,14 @@ import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -38,6 +40,7 @@ internal class EmbraceLogServiceTest {
         private lateinit var metadataService: FakeMetadataService
         private lateinit var configService: ConfigService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
+        private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var executor: ExecutorService
         private lateinit var tick: AtomicLong
         private lateinit var clock: Clock
@@ -59,6 +62,10 @@ internal class EmbraceLogServiceTest {
     fun setUp() {
         logWriter = FakeLogWriter()
         sessionIdTracker.setActiveSessionId("session-123", true)
+        sessionProperties = EmbraceSessionProperties(
+            FakePreferenceService(),
+            FakeConfigService()
+        )
         cfg = RemoteConfig()
         configService = FakeConfigService(
             sessionBehavior = fakeSessionBehavior {
@@ -170,6 +177,18 @@ internal class EmbraceLogServiceTest {
         assertEquals("session-123", log.attributes["emb.session_id"])
         assertEquals(LogExceptionType.UNHANDLED.value, log.attributes["emb.exception_type"])
         log.assertIsType(EmbType.System.Log)
+    }
+
+    @Test
+    fun `test session properties are added correctly to a log`() {
+        sessionProperties.add("session_prop_1", "session_val_1", false)
+        sessionProperties.add("session_prop_2", "session_val_2", false)
+        val logService = getLogService()
+        logService.log("Hello world", Severity.INFO, null)
+
+        val log = logWriter.logEvents.single()
+        assertEquals("session_val_1", log.attributes["emb.properties.session_prop_1"])
+        assertEquals("session_val_2", log.attributes["emb.properties.session_prop_2"])
     }
 
     @Test
@@ -359,12 +378,13 @@ internal class EmbraceLogServiceTest {
     private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
         return EmbraceLogService(
             logWriter,
-            clock,
             metadataService,
             configService,
             appFramework,
             sessionIdTracker,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService())
+            sessionProperties,
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            clock,
         )
     }
 

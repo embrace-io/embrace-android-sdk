@@ -74,12 +74,13 @@ internal class CustomerLogModuleImpl(
     private val v2LogService: LogService by singleton {
         EmbraceLogService(
             openTelemetryModule.logWriter,
-            initModule.clock,
             essentialServiceModule.metadataService,
             essentialServiceModule.configService,
             coreModule.appFramework,
             essentialServiceModule.sessionIdTracker,
-            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
+            sessionProperties,
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
+            initModule.clock,
         )
     }
 

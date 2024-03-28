@@ -150,7 +150,7 @@ internal class EmbraceNdkService(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         synchronized(lock) {
             if (isInstalled) {
-                updateAppState(APPLICATION_STATE_ACTIVE)
+                updateAppState(APPLICATION_STATE_FOREGROUND)
             }
         }
     }
@@ -642,7 +642,7 @@ internal class EmbraceNdkService(
         /**
          * Signals to the API that the application was in the foreground.
          */
-        private const val APPLICATION_STATE_ACTIVE = "active"
+        private const val APPLICATION_STATE_FOREGROUND = "foreground"
 
         /**
          * Signals to the API that the application was in the background.

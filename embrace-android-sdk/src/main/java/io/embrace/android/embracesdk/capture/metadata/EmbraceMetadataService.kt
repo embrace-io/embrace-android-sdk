@@ -301,8 +301,8 @@ internal class EmbraceMetadataService private constructor(
             logDeveloper("EmbraceMetadataService", "App state: BACKGROUND")
             "background"
         } else {
-            logDeveloper("EmbraceMetadataService", "App state: ACTIVE")
-            "active"
+            logDeveloper("EmbraceMetadataService", "App state: FOREGROUND")
+            "foreground"
         }
     }
 

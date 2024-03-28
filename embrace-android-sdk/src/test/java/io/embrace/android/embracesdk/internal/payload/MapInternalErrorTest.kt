@@ -33,7 +33,7 @@ internal class MapInternalErrorTest {
 
         val error = checkNotNull(output.errors).single()
         assertEquals(0L, error.timestamp)
-        assertEquals(AppState.ACTIVE, error.appState)
+        assertEquals(AppState.FOREGROUND, error.appState)
 
         val exception = checkNotNull(error.exceptions).single()
         assertEquals("name", exception.name)

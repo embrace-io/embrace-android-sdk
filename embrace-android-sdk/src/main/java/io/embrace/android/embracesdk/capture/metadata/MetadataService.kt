@@ -104,7 +104,7 @@ internal interface MetadataService {
     fun isOsUpdated(): Boolean
 
     /**
-     * Returns 'active' if the application is in the foreground, or 'background' if the app is in
+     * Returns 'foreground' if the application is in the foreground, or 'background' if the app is in
      * the background.
      *
      * @return the current state of the app

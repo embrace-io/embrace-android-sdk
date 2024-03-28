@@ -401,7 +401,7 @@ internal class EmbraceNdkServiceTest {
 
         initializeService()
         embraceNdkService.onForeground(true, 10)
-        verify(exactly = 1) { delegate._updateAppState("active") }
+        verify(exactly = 1) { delegate._updateAppState("foreground") }
     }
 
     @Test
@@ -409,7 +409,7 @@ internal class EmbraceNdkServiceTest {
         enableNdk(false)
         initializeService()
         embraceNdkService.onForeground(true, 100)
-        verify(exactly = 0) { delegate._updateAppState("active") }
+        verify(exactly = 0) { delegate._updateAppState("foreground") }
     }
 
     @Test

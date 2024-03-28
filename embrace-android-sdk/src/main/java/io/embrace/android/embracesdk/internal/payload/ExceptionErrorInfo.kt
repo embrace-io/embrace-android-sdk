@@ -30,11 +30,11 @@ internal data class ExceptionErrorInfo(
     /**
      * The app state at the time of the error (foreground/background). Previous name: s.e.rep.s
      *
-     * Values: ACTIVE,BACKGROUND
+     * Values: FOREGROUND, BACKGROUND
      */
     internal enum class AppState(val value: String) {
-        @Json(name = "active")
-        ACTIVE("active"),
+        @Json(name = "foreground")
+        FOREGROUND("foreground"),
 
         @Json(name = "background")
         BACKGROUND("background")

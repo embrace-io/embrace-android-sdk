@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -18,7 +19,8 @@ internal class CustomBreadcrumbDataSourceTest {
         writer = FakeCurrentSessionSpan()
         source = CustomBreadcrumbDataSource(
             FakeConfigService().breadcrumbBehavior,
-            writer
+            writer,
+            InternalEmbraceLogger(),
         )
     }
 

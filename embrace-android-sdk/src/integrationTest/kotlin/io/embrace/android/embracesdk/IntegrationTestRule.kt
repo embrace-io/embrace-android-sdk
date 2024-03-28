@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.injection.SystemServiceModuleImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -103,8 +104,8 @@ internal class IntegrationTestRule(
                 ModuleInitBootstrapper(
                     initModule = initModule,
                     openTelemetryModule  = initModule.openTelemetryModule,
-                    coreModuleSupplier = { _, _ -> fakeCoreModule },
-                    workerThreadModuleSupplier = { workerThreadModule },
+                    coreModuleSupplier = { _, _, _ -> fakeCoreModule },
+                    workerThreadModuleSupplier = { _, _ -> workerThreadModule },
                     systemServiceModuleSupplier = { _, _ -> systemServiceModule },
                     androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
@@ -124,7 +125,6 @@ internal class IntegrationTestRule(
      * Teardown the Embrace SDK, closing any resources as required
      */
     override fun after() {
-        InternalStaticEmbraceLogger.logger.setToDefault()
         Embrace.getImpl().stop()
     }
 
@@ -138,8 +138,9 @@ internal class IntegrationTestRule(
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: FakeInitModule = FakeInitModule(clock = fakeClock),
         val openTelemetryModule: OpenTelemetryModule = initModule.openTelemetryModule,
-        val fakeCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework),
-        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
+        val logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+        val fakeCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = logger),
+        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule, fakeCoreModule),
         val fakeConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             sdkModeBehavior = fakeSdkModeBehavior(
@@ -207,7 +208,16 @@ internal class IntegrationTestRule(
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
 
-        fun newHarness(startImmediately: Boolean) = Harness(startImmediately = startImmediately)
+        @JvmOverloads
+        fun newHarness(startImmediately: Boolean, useStaticLogger: Boolean = false): Harness {
+            val logger = if (useStaticLogger) {
+                InternalStaticEmbraceLogger.logger
+            } else {
+                InternalEmbraceLogger()
+            }
+
+            return Harness(startImmediately = startImmediately, logger = logger)
+        }
 
         private val DEFAULT_SDK_LOCAL_CONFIG = SdkLocalConfig(
             networking = NetworkLocalConfig(

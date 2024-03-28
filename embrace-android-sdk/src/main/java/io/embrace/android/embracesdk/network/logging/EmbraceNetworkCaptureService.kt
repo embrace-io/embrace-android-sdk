@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfi
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -21,14 +21,15 @@ internal class EmbraceNetworkCaptureService(
     private val preferencesService: PreferencesService,
     private val logMessageService: LogMessageService,
     private val configService: ConfigService,
-    private val serializer: EmbraceSerializer
+    private val serializer: EmbraceSerializer,
+    private val logger: InternalEmbraceLogger
 ) : NetworkCaptureService {
 
     companion object {
         const val NETWORK_ERROR_CODE = -1
     }
 
-    private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager() }
+    private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager(logger) }
 
     /**
      * Returns the network capture rule that matches the URL and method of the network call.
@@ -38,13 +39,13 @@ internal class EmbraceNetworkCaptureService(
     override fun getNetworkCaptureRules(url: String, method: String): Set<NetworkCaptureRuleRemoteConfig> {
         val networkCaptureRules = configService.networkBehavior.getNetworkCaptureRules().toMutableSet()
         if (networkCaptureRules.isEmpty()) {
-            InternalStaticEmbraceLogger.logger.logDebug("No network capture rules")
+            logger.logDebug("No network capture rules")
             return emptySet()
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
         if (url.contentEquals(configService.sdkEndpointBehavior.getData(metadataService.getAppId()))) {
-            InternalStaticEmbraceLogger.logger.logDebug("Cannot intercept Embrace endpoints")
+            logger.logDebug("Cannot intercept Embrace endpoints")
             return emptySet()
         }
 
@@ -62,7 +63,7 @@ internal class EmbraceNetworkCaptureService(
         networkCaptureRules.removeAll(rulesToRemove)
         applicableRules.removeAll(rulesToRemove)
 
-        InternalStaticEmbraceLogger.logger.logDebug("Capture rule is: $applicableRules")
+        logger.logDebug("Capture rule is: $applicableRules")
         return applicableRules
     }
 
@@ -119,7 +120,7 @@ internal class EmbraceNetworkCaptureService(
                 // if the network captured match at least one rule criteria, we logged that body and finish the foreach.
                 return
             } else {
-                InternalStaticEmbraceLogger.logger.logDebug("The captured data doesn't match the rule criteria")
+                logger.logDebug("The captured data doesn't match the rule criteria")
             }
         }
     }

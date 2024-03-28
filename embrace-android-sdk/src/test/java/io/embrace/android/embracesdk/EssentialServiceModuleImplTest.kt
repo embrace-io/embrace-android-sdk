@@ -40,7 +40,7 @@ internal class EssentialServiceModuleImplTest {
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            workerThreadModule = WorkerThreadModuleImpl(initModule, coreModule),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
@@ -72,10 +72,11 @@ internal class EssentialServiceModuleImplTest {
     fun testConfigServiceProvider() {
         val fakeConfigService = FakeConfigService()
         val initModule = InitModuleImpl()
+        val fakeCoreModule = FakeCoreModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
-            coreModule = FakeCoreModule(),
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            coreModule = fakeCoreModule,
+            workerThreadModule = WorkerThreadModuleImpl(initModule, fakeCoreModule),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),

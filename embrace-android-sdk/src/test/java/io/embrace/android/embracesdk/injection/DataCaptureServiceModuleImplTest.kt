@@ -42,7 +42,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             createEnabledBehavior(),
-            WorkerThreadModuleImpl(initModule),
+            WorkerThreadModuleImpl(initModule, coreModule),
             FakeVersionChecker(true)
         )
 
@@ -64,7 +64,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             FakeEssentialServiceModule(),
-            WorkerThreadModuleImpl(initModule),
+            WorkerThreadModuleImpl(initModule, coreModule),
             FakeVersionChecker(false)
         )
 
@@ -80,7 +80,7 @@ internal class DataCaptureServiceModuleImplTest {
             coreModule,
             systemServiceModule,
             createDisabledBehavior(),
-            WorkerThreadModuleImpl(initModule),
+            WorkerThreadModuleImpl(initModule, coreModule),
             FakeVersionChecker(true)
         )
 

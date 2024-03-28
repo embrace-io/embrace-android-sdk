@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicReference
 
@@ -38,7 +37,7 @@ internal class BlockedThreadDetector(
     var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
+    private val logger: InternalEmbraceLogger,
     private val anrMonitorThread: AtomicReference<Thread>
 ) {
     private val heartbeatResponseMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatResponse")
@@ -140,7 +139,6 @@ internal class BlockedThreadDetector(
         // the current time so that we can start monitoring for ANRs again.
         // https://developer.android.com/guide/components/activities/process-lifecycle
         if (monitorThreadLag > MONITOR_THREAD_TIMEOUT_MS) {
-            logger.logDeveloper("EmbraceAnrService", "Exceeded monitor thread timeout")
             val now = clock.now()
             state.lastTargetThreadResponseMs = now
             state.lastMonitorThreadResponseMs = now

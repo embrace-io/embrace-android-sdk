@@ -9,9 +9,7 @@ import android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PowerModeInterval
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -20,6 +18,7 @@ internal class EmbracePowerSaveModeService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
+    private val logger: InternalEmbraceLogger,
     powerManagerProvider: Provider<PowerManager?>
 ) : BroadcastReceiver(), PowerSaveModeService, ProcessStateListener {
 
@@ -45,10 +44,9 @@ internal class EmbracePowerSaveModeService(
                 try {
                     if (powerManager != null) {
                         context.registerReceiver(this, powerSaveIntentFilter)
-                        logDeveloper(tag, "registered power save mode changed")
                     }
                 } catch (ex: Exception) {
-                    InternalStaticEmbraceLogger.logError(
+                    logger.logError(
                         "Failed to register: $tag broadcast receiver. Power save mode status will be unavailable.",
                         ex
                     )
@@ -64,7 +62,6 @@ internal class EmbracePowerSaveModeService(
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        logDeveloper(tag, "onReceive")
         try {
             when (intent.action) {
                 ACTION_POWER_SAVE_MODE_CHANGED ->
@@ -76,7 +73,7 @@ internal class EmbracePowerSaveModeService(
                     )
             }
         } catch (ex: Exception) {
-            InternalStaticEmbraceLogger.logError("Failed to handle " + intent.action, ex)
+            logger.logError("Failed to handle " + intent.action, ex)
         }
     }
 
@@ -110,7 +107,7 @@ internal class EmbracePowerSaveModeService(
     }
 
     override fun close() {
-        logDebug("Stopping $tag")
+        logger.logDebug("Stopping $tag")
         context.unregisterReceiver(this)
     }
 

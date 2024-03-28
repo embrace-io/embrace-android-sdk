@@ -8,7 +8,6 @@ import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
 import io.embrace.android.embracesdk.payload.Interval
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
@@ -43,7 +42,6 @@ internal class EmbraceNetworkConnectivityService(
     override fun onReceive(context: Context, intent: Intent) = handleNetworkStatus(true)
 
     override fun getCapturedData(): List<Interval> {
-        logger.logDeveloper("EmbraceNetworkConnectivityService", "getNetworkInterfaceIntervals")
         val endTime = clock.now()
         synchronized(this) {
             val results: MutableList<Interval> = ArrayList()
@@ -59,7 +57,6 @@ internal class EmbraceNetworkConnectivityService(
 
     private fun handleNetworkStatus(notifyListeners: Boolean, timestamp: Long = clock.now()) {
         try {
-            logger.logDeveloper("EmbraceNetworkConnectivityService", "handleNetworkStatus")
             val networkStatus = getCurrentNetworkStatus()
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
@@ -84,32 +81,19 @@ internal class EmbraceNetworkConnectivityService(
                 // Network is reachable
                 when (networkInfo.type) {
                     ConnectivityManager.TYPE_WIFI -> {
-                        logger.logDeveloper(
-                            "EmbraceNetworkConnectivityService",
-                            "Network connected to WIFI"
-                        )
                         networkStatus = NetworkStatus.WIFI
                     }
 
                     ConnectivityManager.TYPE_MOBILE -> {
-                        logger.logDeveloper(
-                            "EmbraceNetworkConnectivityService",
-                            "Network connected to MOBILE"
-                        )
                         networkStatus = NetworkStatus.WAN
                     }
 
                     else -> {
-                        logger.logDeveloper(
-                            "EmbraceNetworkConnectivityService",
-                            "Network is reachable but type is not WIFI or MOBILE"
-                        )
                         networkStatus = NetworkStatus.UNKNOWN
                     }
                 }
             } else {
                 // Network is not reachable
-                logger.logDeveloper("EmbraceNetworkConnectivityService", "Network not reachable")
                 networkStatus = NetworkStatus.NOT_REACHABLE
             }
         } catch (e: java.lang.Exception) {
@@ -146,12 +130,10 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun close() {
         context.unregisterReceiver(this)
-        logger.logDeveloper("EmbraceNetworkConnectivityService", "closed")
     }
 
     override fun cleanCollections() {
         networkReachable.clear()
-        logger.logDeveloper("EmbraceNetworkConnectivityService", "Collections cleaned")
     }
 
     /**
@@ -188,7 +170,7 @@ internal class EmbraceNetworkConnectivityService(
                 }
             }
         } catch (ex: Exception) {
-            logDebug("Cannot get IP Address")
+            logger.logDebug("Cannot get IP Address")
         }
         return null
     }

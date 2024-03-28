@@ -51,7 +51,8 @@ internal class DataContainerModuleImpl(
                 deliveryModule.deliveryService,
                 essentialServiceModule.metadataService,
                 essentialServiceModule.sessionIdTracker,
-                essentialServiceModule.userService
+                essentialServiceModule.userService,
+                coreModule.logger
             )
         } else {
             NoOpApplicationExitInfoService()
@@ -69,7 +70,8 @@ internal class DataContainerModuleImpl(
             anrModule.googleAnrTimestampRepository,
             applicationExitInfoService,
             nativeModule.nativeThreadSamplerService,
-            anrModule.responsivenessMonitorService
+            anrModule.responsivenessMonitorService,
+            coreModule.logger
         )
     }
 

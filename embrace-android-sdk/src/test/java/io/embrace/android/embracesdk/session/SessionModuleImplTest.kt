@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
@@ -24,30 +25,34 @@ import org.junit.Test
 
 internal class SessionModuleImplTest {
 
-    private val fakeInitModule = FakeInitModule()
-
-    private val workerThreadModule = FakeWorkerThreadModule(fakeInitModule, WorkerName.BACKGROUND_REGISTRATION)
-
-    private val configService = FakeConfigService()
     private val initModule = FakeInitModule()
     private val otelModule = FakeOpenTelemetryModule()
+    private val fakeCoreModule = FakeCoreModule()
     private val systemServiceModule = FakeSystemServiceModule()
     private val androidServicesModule = FakeAndroidServicesModule()
+    private val configService = FakeConfigService()
+    private val workerThreadModule = FakeWorkerThreadModule(
+        fakeInitModule = initModule,
+        name = WorkerName.BACKGROUND_REGISTRATION,
+        fakeCoreModule = fakeCoreModule
+    )
 
     @Test
     fun testDefaultImplementations() {
         val essentialServiceModule = FakeEssentialServiceModule(configService = configService)
         val dataSourceModule = DataSourceModuleImpl(
-            essentialServiceModule,
             initModule,
             otelModule,
+            fakeCoreModule,
+            essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
             workerThreadModule
         )
         val module = SessionModuleImpl(
-            fakeInitModule,
-            fakeInitModule.openTelemetryModule,
+            initModule,
+            initModule.openTelemetryModule,
+            fakeCoreModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),
@@ -75,17 +80,19 @@ internal class SessionModuleImplTest {
     fun testEnabledBehaviors() {
         val essentialServiceModule = createEnabledBehavior()
         val dataSourceModule = DataSourceModuleImpl(
-            essentialServiceModule,
             initModule,
             otelModule,
+            fakeCoreModule,
+            essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
             workerThreadModule
         )
 
         val module = SessionModuleImpl(
-            fakeInitModule,
-            fakeInitModule.openTelemetryModule,
+            initModule,
+            initModule.openTelemetryModule,
+            fakeCoreModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),

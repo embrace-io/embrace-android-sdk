@@ -14,10 +14,11 @@ internal class StorageModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = InitModuleImpl()
+        val coreModule = FakeCoreModule()
         val module = StorageModuleImpl(
             initModule = initModule,
-            coreModule = FakeCoreModule(),
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            coreModule = coreModule,
+            workerThreadModule = WorkerThreadModuleImpl(initModule, coreModule),
         )
 
         assertNotNull(module.storageService)

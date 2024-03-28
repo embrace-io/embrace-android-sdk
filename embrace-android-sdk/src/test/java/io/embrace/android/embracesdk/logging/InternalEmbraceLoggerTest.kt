@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.logging
 
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Severity
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger.Severity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

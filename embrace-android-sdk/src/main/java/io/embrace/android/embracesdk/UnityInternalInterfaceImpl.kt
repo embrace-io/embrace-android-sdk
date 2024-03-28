@@ -28,13 +28,11 @@ internal class UnityInternalInterfaceImpl(
                 )
                 return
             }
-            if (unitySdkVersion == null) {
-                logger.logDeveloper("Embrace", "Unity SDK version is null.")
-                return
+            if (unitySdkVersion != null) {
+                hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
+                hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
+                hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
             }
-            hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
-            hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
-            hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
         } else {
             logger.logSDKNotInitialized("set Unity metadata")
         }

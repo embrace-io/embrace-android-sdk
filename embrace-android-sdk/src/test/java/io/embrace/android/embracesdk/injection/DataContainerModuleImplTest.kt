@@ -20,11 +20,12 @@ internal class DataContainerModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
+        val coreModule = FakeCoreModule()
         val module = DataContainerModuleImpl(
             initModule,
             initModule.openTelemetryModule,
-            FakeCoreModule(),
-            WorkerThreadModuleImpl(initModule),
+            coreModule,
+            WorkerThreadModuleImpl(initModule, coreModule),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),

@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.isV2Payload
@@ -45,6 +46,7 @@ internal class PayloadFactoryImplTest {
             )
         )
         val initModule = FakeInitModule()
+        val fakeCoreModule = FakeCoreModule()
         val v1Collator = V1PayloadMessageCollator(
             gatingService = FakeGatingService(),
             configService = FakeConfigService(),
@@ -65,7 +67,8 @@ internal class PayloadFactoryImplTest {
             spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
-            startupService = FakeStartupService()
+            startupService = FakeStartupService(),
+            logger = fakeCoreModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(
             FakeGatingService(),
@@ -74,12 +77,14 @@ internal class PayloadFactoryImplTest {
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),
                 FakeSessionPayloadSource()
-            )
+            ),
+            fakeCoreModule.logger
         )
         factory = PayloadFactoryImpl(
             v1payloadMessageCollator = v1Collator,
             v2payloadMessageCollator = v2Collator,
-            configService = configService
+            configService = configService,
+            logger = fakeCoreModule.logger
         )
     }
 

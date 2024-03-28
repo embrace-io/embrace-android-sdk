@@ -40,6 +40,7 @@ internal class StorageModuleImpl(
         ApiResponseCache(
             coreModule.jsonSerializer,
             storageService,
+            coreModule.logger
         )
     }
 

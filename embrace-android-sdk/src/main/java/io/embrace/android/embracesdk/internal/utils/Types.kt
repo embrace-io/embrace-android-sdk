@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -39,12 +40,16 @@ internal typealias UnimplementedConfig = Unit?
 /**
  * Function that returns an instance of [CoreModule]. Matches the signature of the constructor for [CoreModuleImpl]
  */
-internal typealias CoreModuleSupplier = (context: Context, appFramework: Embrace.AppFramework) -> CoreModule
+internal typealias CoreModuleSupplier = (
+    context: Context,
+    appFramework: Embrace.AppFramework,
+    logger: InternalEmbraceLogger
+) -> CoreModule
 
 /**
  * Function that returns an instance of [WorkerThreadModule]. Matches the signature of the constructor for [WorkerThreadModuleImpl]
  */
-internal typealias WorkerThreadModuleSupplier = (initModule: InitModule) -> WorkerThreadModule
+internal typealias WorkerThreadModuleSupplier = (initModule: InitModule, coreModule: CoreModule) -> WorkerThreadModule
 
 /**
  * Function that returns an instance of [SystemServiceModule]. Matches the signature of the constructor for [SystemServiceModuleImpl]
@@ -186,9 +191,10 @@ internal typealias DataContainerModuleSupplier = (
  */
 
 internal typealias DataSourceModuleSupplier = (
-    essentialServiceModule: EssentialServiceModule,
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
+    coreModule: CoreModule,
+    essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
@@ -201,6 +207,7 @@ internal typealias DataSourceModuleSupplier = (
 internal typealias SessionModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
+    coreModule: CoreModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
@@ -221,6 +228,7 @@ internal typealias SessionModuleSupplier = (
 
 internal typealias CrashModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,

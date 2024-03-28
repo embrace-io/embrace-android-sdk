@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Component to load native binaries
  */
-internal class SharedObjectLoader {
+internal class SharedObjectLoader(
+    private val logger: InternalEmbraceLogger
+) {
     val loaded = AtomicBoolean(false)
 
     /**
@@ -24,7 +26,7 @@ internal class SharedObjectLoader {
                     }
                     loaded.set(true)
                 } catch (exc: UnsatisfiedLinkError) {
-                    InternalStaticEmbraceLogger.logError("Failed to load SO file embrace-native", exc)
+                    logger.logError("Failed to load SO file embrace-native", exc)
                     return false
                 }
             }

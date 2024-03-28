@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -360,7 +359,7 @@ internal class EmbraceCacheServiceTest {
         assertEquals(1, filesAgain.size)
         assertEquals(files[0], filesAgain[0])
 
-        val errors = loggerAction.msgQueue.filter { it.severity == InternalStaticEmbraceLogger.Severity.ERROR }
+        val errors = loggerAction.msgQueue.filter { it.severity == InternalEmbraceLogger.Severity.ERROR }
         assertEquals("The following errors were logged: $errors", 0, errors.size)
     }
 

@@ -219,10 +219,6 @@ internal class EmbraceNetworkLoggingService(
                 // Track the number of calls for each domain (or configured suffix)
                 suffix?.let {
                     callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
-                    logger.logDeveloper(
-                        "EmbraceNetworkLoggingService",
-                        "Call per domain $domain ${countPerSuffix.requestCount + 1}"
-                    )
                 }
             }
         }

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertFalse
@@ -23,19 +24,31 @@ import java.util.concurrent.TimeoutException
 internal class ModuleInitBootstrapperTest {
 
     private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
+    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
 
     @Before
     fun setup() {
-        moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> FakeCoreModule() })
+        logger = InternalEmbraceLogger()
+        coreModule = FakeCoreModule(logger = logger)
+        moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _, _ -> coreModule })
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
     @Test
     fun `test default implementation`() {
-        val moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> FakeCoreModule() })
+        val moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _, _ -> coreModule })
         with(moduleInitBootstrapper) {
-            assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+            assertTrue(
+                moduleInitBootstrapper.init(
+                    context = context,
+                    enableIntegrationTesting = false,
+                    appFramework = Embrace.AppFramework.NATIVE,
+                    sdkStartTimeMs = 0L,
+                    logger = logger
+                )
+            )
             assertTrue(initModule is InitModuleImpl)
             assertTrue(openTelemetryModule is OpenTelemetryModuleImpl)
             assertTrue(workerThreadModule is WorkerThreadModuleImpl)
@@ -51,29 +64,63 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `cannot initialize twice`() {
-        assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
-        assertFalse(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+                logger = coreModule.logger
+            )
+        )
+        assertFalse(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+                logger = coreModule.logger
+            )
+        )
     }
 
     @Test
     fun `async init returns normally and without failure`() {
-        assertTrue(moduleInitBootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+                logger = coreModule.logger
+            )
+        )
         moduleInitBootstrapper.waitForAsyncInit()
     }
 
     @Test
     fun `async init throws exception if it waiting for too long`() {
-        val fakeClock = FakeClock()
-        val fakeInitModule = FakeInitModule(clock = fakeClock)
-        val fakeCoreModule = FakeCoreModule()
-        val fakeWorkerThreadModule =
-            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
+        val fakeInitModule = FakeInitModule(clock = FakeClock())
+        val fakeCoreModule = FakeCoreModule(logger = logger)
+        val fakeWorkerThreadModule = FakeWorkerThreadModule(
+            fakeInitModule = fakeInitModule,
+            fakeCoreModule = fakeCoreModule,
+            name = WorkerName.BACKGROUND_REGISTRATION
+        )
         val bootstrapper = ModuleInitBootstrapper(
             initModule = fakeInitModule,
-            coreModuleSupplier = { _, _ -> fakeCoreModule },
-            workerThreadModuleSupplier = { _ -> fakeWorkerThreadModule }
+            coreModuleSupplier = { _, _, _ -> fakeCoreModule },
+            workerThreadModuleSupplier = { _, _ -> fakeWorkerThreadModule }
         )
-        assertTrue(bootstrapper.init(context, false, Embrace.AppFramework.NATIVE, 0L))
+        assertTrue(
+            bootstrapper.init(
+                context = context,
+                enableIntegrationTesting = false,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+                logger = fakeCoreModule.logger
+            )
+        )
         assertThrows(TimeoutException::class.java) {
             bootstrapper.waitForAsyncInit(500L, TimeUnit.MILLISECONDS)
         }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -13,7 +14,8 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal class V2PayloadMessageCollator(
     private val gatingService: GatingService,
     private val v1Collator: V1PayloadMessageCollator,
-    private val sessionEnvelopeSource: SessionEnvelopeSource
+    private val sessionEnvelopeSource: SessionEnvelopeSource,
+    private val logger: InternalEmbraceLogger
 ) : PayloadMessageCollator {
 
     override fun buildInitialSession(params: InitialEnvelopeParams): Session {
@@ -27,7 +29,8 @@ internal class V2PayloadMessageCollator(
             lifeEventType = params.lifeEventType,
             crashId = params.crashId,
             endType = params.endType,
-            captureSpans = false
+            captureSpans = false,
+            logger = logger
         )
         return v1Collator.buildFinalSessionMessage(newParams)
             .convertToV2Payload(newParams.endType)
@@ -40,7 +43,8 @@ internal class V2PayloadMessageCollator(
             lifeEventType = params.lifeEventType,
             crashId = params.crashId,
             endType = params.endType,
-            captureSpans = false
+            captureSpans = false,
+            logger = logger
         )
         return v1Collator.buildFinalBackgroundActivityMessage(newParams)
             .convertToV2Payload(newParams.endType)

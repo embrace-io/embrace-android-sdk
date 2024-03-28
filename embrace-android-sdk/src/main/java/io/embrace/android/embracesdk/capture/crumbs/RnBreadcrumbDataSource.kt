@@ -4,7 +4,6 @@ import android.text.TextUtils
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
 
 /**
@@ -12,10 +11,10 @@ import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
  */
 internal class RnBreadcrumbDataSource(
     private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<RnActionBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
     },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataCaptureService<List<RnActionBreadcrumb>> by store {
 
     fun logRnAction(

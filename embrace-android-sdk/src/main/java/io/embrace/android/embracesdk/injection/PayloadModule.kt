@@ -52,7 +52,8 @@ internal class PayloadModuleImpl(
                 systemServiceModule.windowManager,
                 androidServicesModule.preferencesService,
                 backgroundWorker,
-                essentialServiceModule.cpuInfoDelegate
+                essentialServiceModule.cpuInfoDelegate,
+                coreModule.logger
             ),
             essentialServiceModule.metadataService
         )
@@ -64,7 +65,8 @@ internal class PayloadModuleImpl(
             nativeModule.nativeThreadSamplerService,
             otelModule.spanSink,
             otelModule.currentSessionSpan,
-            otelModule.spanRepository
+            otelModule.spanRepository,
+            coreModule.logger
         )
     }
 

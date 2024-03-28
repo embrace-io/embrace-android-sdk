@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -9,7 +9,10 @@ import java.util.concurrent.TimeUnit
  * Verifies if the last run crashed.
  * This is done by checking if the crash marker file exists.
  */
-internal class LastRunCrashVerifier(private val crashFileMarker: CrashFileMarker) {
+internal class LastRunCrashVerifier(
+    private val crashFileMarker: CrashFileMarker,
+    private val logger: InternalEmbraceLogger
+) {
 
     private var didLastRunCrashFuture: Future<Boolean>? = null
     private var didLastRunCrash: Boolean? = null
@@ -22,7 +25,7 @@ internal class LastRunCrashVerifier(private val crashFileMarker: CrashFileMarker
             try {
                 future.get(2, TimeUnit.SECONDS)
             } catch (e: Throwable) {
-                InternalStaticEmbraceLogger.logError("[Embrace] didLastRunCrash: error while getting the result", e)
+                logger.logError("[Embrace] didLastRunCrash: error while getting the result", e)
                 null
             }
         } ?: readAndCleanMarker()

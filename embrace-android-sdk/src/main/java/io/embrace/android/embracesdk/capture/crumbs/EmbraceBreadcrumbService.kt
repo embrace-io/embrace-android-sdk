@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
@@ -33,22 +32,23 @@ internal class EmbraceBreadcrumbService(
     private val activityTracker: ActivityTracker,
     sessionSpanWriter: SessionSpanWriter,
     spanService: SpanService,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     private val customBreadcrumbDataSource =
-        CustomBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter)
-    private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService)
-    private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService)
-    private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService)
-    private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock)
+        CustomBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
+    private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService, logger)
+    private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
+    private val tapBreadcrumbDataSource = TapBreadcrumbDataSource(configService, logger)
+    private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
     private val fragmentBreadcrumbDataSource = FragmentBreadcrumbDataSource(
         configService.breadcrumbBehavior,
         clock,
-        spanService
+        spanService,
+        logger
     )
     private val pushNotificationBreadcrumbDataSource =
-        PushNotificationBreadcrumbDataSource(configService, clock)
+        PushNotificationBreadcrumbDataSource(configService, clock, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
         viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)

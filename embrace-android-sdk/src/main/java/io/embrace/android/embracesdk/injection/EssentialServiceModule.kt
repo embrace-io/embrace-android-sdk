@@ -35,7 +35,6 @@ import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -92,7 +91,8 @@ internal class EssentialServiceModuleImpl(
             coreModule.resources,
             coreModule.context.packageName,
             customAppId,
-            coreModule.jsonSerializer
+            coreModule.jsonSerializer,
+            coreModule.logger
         )
     }
 
@@ -105,7 +105,6 @@ internal class EssentialServiceModuleImpl(
             // some customers have trailing white-space for the app version.
             lazyPackageInfo.value.versionName.toString().trim { it <= ' ' }
         } catch (e: Exception) {
-            logDeveloper("EssentialServiceModule", "Cannot set appVersionName, setting UNKNOWN_VALUE", e)
             UNKNOWN_VALUE
         }
     }
@@ -115,7 +114,6 @@ internal class EssentialServiceModuleImpl(
         try {
             lazyPackageInfo.value.versionCode.toString()
         } catch (e: Exception) {
-            logDeveloper("EssentialServiceModule", "Cannot set appVersionCode, setting UNKNOWN_VALUE", e)
             UNKNOWN_VALUE
         }
     }
@@ -125,7 +123,9 @@ internal class EssentialServiceModuleImpl(
     private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
 
     private val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck(androidServicesModule.preferencesService::deviceIdentifier)
+        BehaviorThresholdCheck(
+            androidServicesModule.preferencesService::deviceIdentifier
+        )
 
     private val backgroundWorker =
         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
@@ -137,7 +137,7 @@ internal class EssentialServiceModuleImpl(
         workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
 
     override val memoryCleanerService: MemoryCleanerService by singleton {
-        EmbraceMemoryCleanerService()
+        EmbraceMemoryCleanerService(logger = coreModule.logger)
     }
 
     override val orientationService: OrientationService by singleton {
@@ -147,12 +147,12 @@ internal class EssentialServiceModuleImpl(
 
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
-            EmbraceProcessStateService(initModule.clock)
+            EmbraceProcessStateService(initModule.clock, coreModule.logger)
         }
     }
 
     override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
-        ActivityLifecycleTracker(coreModule.application, orientationService)
+        ActivityLifecycleTracker(coreModule.application, orientationService, coreModule.logger)
     }
 
     override val configService: ConfigService by singleton {
@@ -172,7 +172,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val sharedObjectLoader: SharedObjectLoader by singleton {
-        SharedObjectLoader()
+        SharedObjectLoader(coreModule.logger)
     }
 
     override val cpuInfoDelegate: CpuInfoDelegate by singleton {
@@ -208,7 +208,8 @@ internal class EssentialServiceModuleImpl(
                 deviceArchitecture,
                 lazyAppVersionName,
                 lazyAppVersionCode,
-                hostedSdkVersionInfo
+                hostedSdkVersionInfo,
+                coreModule.logger
             )
         }
     }
@@ -245,7 +246,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val gatingService: GatingService by singleton {
-        EmbraceGatingService(configService)
+        EmbraceGatingService(configService, coreModule.logger)
     }
 
     override val userService: UserService by singleton {
@@ -281,7 +282,8 @@ internal class EssentialServiceModuleImpl(
                 networkConnectivityService,
                 pendingApiCallsWorker,
                 storageModule.deliveryCacheManager,
-                initModule.clock
+                initModule.clock,
+                coreModule.logger
             )
         }
     }
@@ -315,7 +317,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {
-        SessionIdTrackerImpl(systemServiceModule.activityManager)
+        SessionIdTrackerImpl(systemServiceModule.activityManager, coreModule.logger)
     }
 }
 

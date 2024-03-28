@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -146,7 +147,7 @@ internal class NetworkBehaviorTest {
     @Test
     fun testGetCapturePublicKey() {
         val json = ResourceReader.readResourceAsText("public_key_config.json")
-        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer())
+        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), InternalEmbraceLogger())
         val behavior = fakeNetworkBehavior(localCfg = localConfig::sdkConfig)
         assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
     }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -10,7 +11,8 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal class PayloadFactoryImpl(
     private val v1payloadMessageCollator: V1PayloadMessageCollator,
     private val v2payloadMessageCollator: V2PayloadMessageCollator,
-    private val configService: ConfigService
+    private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger
 ) : PayloadFactory {
 
     private val collator: PayloadMessageCollator
@@ -63,7 +65,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp,
                 lifeEventType = LifeEventType.MANUAL,
-                endType = SessionSnapshotType.NORMAL_END
+                endType = SessionSnapshotType.NORMAL_END,
+                logger = logger
             )
         )
     }
@@ -104,7 +107,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp,
                 lifeEventType = LifeEventType.STATE,
-                endType = SessionSnapshotType.NORMAL_END
+                endType = SessionSnapshotType.NORMAL_END,
+                logger = logger
             )
         )
     }
@@ -121,7 +125,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp - 1,
                 lifeEventType = LifeEventType.BKGND_STATE,
-                endType = SessionSnapshotType.NORMAL_END
+                endType = SessionSnapshotType.NORMAL_END,
+                logger = logger
             )
         )
     }
@@ -137,7 +142,8 @@ internal class PayloadFactoryImpl(
                 endTime = timestamp,
                 lifeEventType = LifeEventType.STATE,
                 crashId = crashId,
-                endType = SessionSnapshotType.JVM_CRASH
+                endType = SessionSnapshotType.JVM_CRASH,
+                logger = logger
             )
         )
     }
@@ -156,7 +162,8 @@ internal class PayloadFactoryImpl(
                 endTime = timestamp,
                 lifeEventType = LifeEventType.BKGND_STATE,
                 crashId = crashId,
-                endType = SessionSnapshotType.JVM_CRASH
+                endType = SessionSnapshotType.JVM_CRASH,
+                logger = logger
             )
         )
     }
@@ -170,7 +177,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp,
                 lifeEventType = LifeEventType.STATE,
-                endType = SessionSnapshotType.PERIODIC_CACHE
+                endType = SessionSnapshotType.PERIODIC_CACHE,
+                logger = logger
             )
         )
     }
@@ -184,7 +192,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endTime = timestamp,
                 lifeEventType = null,
-                endType = SessionSnapshotType.PERIODIC_CACHE
+                endType = SessionSnapshotType.PERIODIC_CACHE,
+                logger = logger
             )
         )
     }

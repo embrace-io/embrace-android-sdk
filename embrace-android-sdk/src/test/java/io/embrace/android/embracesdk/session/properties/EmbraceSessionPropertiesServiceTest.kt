@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.properties
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -15,7 +16,8 @@ internal class EmbraceSessionPropertiesServiceTest {
 
     @Before
     fun setUp() {
-        props = EmbraceSessionProperties(FakePreferenceService(), FakeConfigService())
+        val logger = InternalEmbraceLogger()
+        props = EmbraceSessionProperties(FakePreferenceService(), FakeConfigService(), logger)
         ndkService = FakeNdkService()
         service = EmbraceSessionPropertiesService(ndkService, props)
     }

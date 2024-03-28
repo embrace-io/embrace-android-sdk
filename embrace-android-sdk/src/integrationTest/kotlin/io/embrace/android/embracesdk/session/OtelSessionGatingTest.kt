@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.IntegrationTestRule.*
+import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.hasEvent
 import io.embrace.android.embracesdk.hasSpan
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -43,8 +44,9 @@ internal class OtelSessionGatingTest {
         FakeConfigService(
             sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = gatingConfig)
-            }
-        )
+            },
+        ),
+        InternalEmbraceLogger()
     )
 
     @Rule

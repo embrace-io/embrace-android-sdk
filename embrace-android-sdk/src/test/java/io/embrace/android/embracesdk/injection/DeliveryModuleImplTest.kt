@@ -11,9 +11,10 @@ internal class DeliveryModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val fakeCoreModule = FakeCoreModule()
         val module = DeliveryModuleImpl(
-            FakeCoreModule(),
-            WorkerThreadModuleImpl(InitModuleImpl()),
+            fakeCoreModule,
+            WorkerThreadModuleImpl(InitModuleImpl(), fakeCoreModule),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
         )

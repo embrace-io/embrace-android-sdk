@@ -4,7 +4,6 @@ import android.net.http.HttpResponseCache
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.Closeable
 import java.io.IOException
@@ -20,10 +19,10 @@ import java.net.URI
  * means the eTag can be set in the request header & we can avoid unnecessary work on the client
  * & on the server.
  */
-internal class ApiResponseCache @JvmOverloads constructor(
+internal class ApiResponseCache(
     private val serializer: EmbraceSerializer,
     private val storageService: StorageService,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : Closeable {
 
     companion object {

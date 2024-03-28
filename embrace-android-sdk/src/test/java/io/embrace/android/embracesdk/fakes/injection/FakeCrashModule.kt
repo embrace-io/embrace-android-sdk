@@ -8,7 +8,11 @@ import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandl
 import io.mockk.mockk
 
 internal class FakeCrashModule : CrashModule {
-    override val lastRunCrashVerifier = LastRunCrashVerifier(CrashFileMarker(mockk(relaxed = true)))
+    override val lastRunCrashVerifier = LastRunCrashVerifier(
+        CrashFileMarker(mockk(relaxed = true), mockk(relaxed = true)),
+        mockk(relaxed = true)
+    )
     override val crashService = FakeCrashService()
-    override val automaticVerificationExceptionHandler = AutomaticVerificationExceptionHandler(null)
+    override val automaticVerificationExceptionHandler =
+        AutomaticVerificationExceptionHandler(null, mockk(relaxed = true))
 }

@@ -16,14 +16,15 @@ internal class NativeModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val coreModule = FakeCoreModule()
         val module = NativeModuleImpl(
-            FakeCoreModule(),
+            coreModule,
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
             FakeAndroidServicesModule(),
             fakeEmbraceSessionProperties(),
-            WorkerThreadModuleImpl(InitModuleImpl())
+            WorkerThreadModuleImpl(InitModuleImpl(), coreModule)
         )
         assertNotNull(module.ndkService)
         assertNull(module.nativeThreadSamplerService)

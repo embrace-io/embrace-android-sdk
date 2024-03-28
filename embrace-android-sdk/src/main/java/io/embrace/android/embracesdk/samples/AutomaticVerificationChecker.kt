@@ -2,11 +2,13 @@ package io.embrace.android.embracesdk.samples
 
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.File
 import java.io.FileNotFoundException
 
-internal class AutomaticVerificationChecker {
+internal class AutomaticVerificationChecker(
+    private val logger: InternalEmbraceLogger
+) {
     private val fileName = "emb_marker_file.txt"
     private val verificationResult = VerificationResult()
     private lateinit var file: File
@@ -60,14 +62,14 @@ internal class AutomaticVerificationChecker {
                 }
             }
         } catch (e: FileNotFoundException) {
-            InternalStaticEmbraceLogger.logger.logError("cannot open file", e)
+            logger.logError("cannot open file", e)
         }
         return null
     }
 
     fun addException(e: Throwable) {
         verificationResult.exceptions.add(e)
-        file.writeText(serializer.toJson(verificationResult).toString())
+        file.writeText(serializer.toJson(verificationResult))
     }
 
     fun getExceptions(): List<Throwable> {

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_ORIENTATIO
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
 import io.embrace.android.embracesdk.payload.Session
 
 internal class SessionSanitizer(
@@ -17,8 +16,6 @@ internal class SessionSanitizer(
 
     @Suppress("ComplexMethod")
     override fun sanitize(): Session {
-        logger.logDeveloper("SessionSanitizer", "sanitize")
-
         val properties = when {
             !shouldSendSessionProperties() -> null
             else -> session.properties

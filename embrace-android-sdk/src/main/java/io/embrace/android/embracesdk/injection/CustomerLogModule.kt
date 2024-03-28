@@ -43,7 +43,8 @@ internal class CustomerLogModuleImpl(
             androidServicesModule.preferencesService,
             logMessageService,
             essentialServiceModule.configService,
-            coreModule.jsonSerializer
+            coreModule.jsonSerializer,
+            coreModule.logger
         )
     }
 
@@ -79,12 +80,13 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.configService,
             coreModule.appFramework,
             essentialServiceModule.sessionIdTracker,
-            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
+            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
+            coreModule.logger
         )
     }
 
     override val logMessageService: LogMessageService by singleton {
-        CompositeLogService(v1LogService, v2LogService, essentialServiceModule.configService)
+        CompositeLogService(v1LogService, v2LogService, essentialServiceModule.configService, coreModule.logger)
     }
 
     override val logOrchestrator: LogOrchestrator by singleton {

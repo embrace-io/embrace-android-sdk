@@ -84,7 +84,8 @@ internal class EmbraceMetadataReactNativeTest {
         deviceArchitecture,
         lazy { "" },
         lazy { "" },
-        hostedSdkVersionInfo
+        hostedSdkVersionInfo,
+        InternalEmbraceLogger(),
     )
 
     @Test

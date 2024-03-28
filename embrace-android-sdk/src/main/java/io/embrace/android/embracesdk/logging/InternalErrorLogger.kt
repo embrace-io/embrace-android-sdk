@@ -12,12 +12,12 @@ internal class InternalErrorLogger(
     // and add it to the Q2 stability work
     override fun log(
         msg: String,
-        severity: InternalStaticEmbraceLogger.Severity,
+        severity: InternalEmbraceLogger.Severity,
         throwable: Throwable?,
         logStacktrace: Boolean
     ) {
         val finalThrowable = when {
-            logStrictMode && severity == InternalStaticEmbraceLogger.Severity.ERROR && throwable == null -> LogStrictModeException(
+            logStrictMode && severity == InternalEmbraceLogger.Severity.ERROR && throwable == null -> LogStrictModeException(
                 msg
             )
             else -> throwable
@@ -27,13 +27,12 @@ internal class InternalErrorLogger(
             try {
                 internalErrorService.handleInternalError(finalThrowable)
             } catch (exc: Exception) {
-                logger.log(exc.localizedMessage ?: "", InternalStaticEmbraceLogger.Severity.ERROR, null, false)
+                logger.log(exc.localizedMessage ?: "", InternalEmbraceLogger.Severity.ERROR, null, false)
             }
         }
     }
 
     class LogStrictModeException(msg: String) : Exception(msg)
-    class IntegrationModeException(msg: String) : Exception(msg)
     class InternalError(msg: String) : Exception(msg)
     class NotAnException(msg: String) : Exception(msg)
 }

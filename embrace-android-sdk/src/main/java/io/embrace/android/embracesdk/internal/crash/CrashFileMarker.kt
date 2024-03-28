@@ -1,14 +1,16 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import java.io.File
-import java.lang.Exception
 
 /**
  * CrashFileMarker uses a file to indicate that a crash has occurred. This file is accessed in the
  * next launch of the app to determine if a crash occurred in the previous launch.
  */
-internal class CrashFileMarker(private val markerFile: Lazy<File>) {
+internal class CrashFileMarker(
+    private val markerFile: Lazy<File>,
+    private val logger: InternalEmbraceLogger
+) {
 
     private val lock = Any()
 
@@ -66,7 +68,7 @@ internal class CrashFileMarker(private val markerFile: Lazy<File>) {
             markerFile.value.writeText(CRASH_MARKER_SOURCE_JVM)
             true
         } catch (e: Exception) {
-            InternalStaticEmbraceLogger.logError("Error creating the marker file: ${markerFile.value.path}", e)
+            logger.logError("Error creating the marker file: ${markerFile.value.path}", e)
             false
         }
     }
@@ -75,14 +77,14 @@ internal class CrashFileMarker(private val markerFile: Lazy<File>) {
         return try {
             val deleted = markerFile.value.delete()
             if (!deleted) {
-                InternalStaticEmbraceLogger.logError(
+                logger.logError(
                     "Error deleting the marker file: ${markerFile.value.path}.",
                     Throwable("File not deleted")
                 )
             }
             deleted
         } catch (e: SecurityException) {
-            InternalStaticEmbraceLogger.logError("Error deleting the marker file: ${markerFile.value.path}.", e)
+            logger.logError("Error deleting the marker file: ${markerFile.value.path}.", e)
             false
         }
     }
@@ -91,7 +93,7 @@ internal class CrashFileMarker(private val markerFile: Lazy<File>) {
         return try {
             return markerFile.value.exists()
         } catch (e: SecurityException) {
-            InternalStaticEmbraceLogger.logError("Error checking the marker file: ${markerFile.value.path}", e)
+            logger.logError("Error checking the marker file: ${markerFile.value.path}", e)
             null
         }
     }

@@ -36,7 +36,7 @@ internal class NativeThreadSamplerInstallerTest {
 
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
         configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
-        installer = NativeThreadSamplerInstaller(sharedObjectLoader = sharedObjectLoader)
+        installer = NativeThreadSamplerInstaller(sharedObjectLoader = sharedObjectLoader, mockk(relaxed = true))
         every { sharedObjectLoader.loadEmbraceNative() } returns true
     }
 

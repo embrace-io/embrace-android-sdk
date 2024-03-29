@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
@@ -16,7 +16,7 @@ internal class EmbraceSpanBuilder(
     telemetryType: TelemetryType,
     parent: EmbraceSpan?
 ) {
-    val embraceAttributes = mutableListOf<EmbraceAttribute>(telemetryType)
+    val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
 
     /**
      * Extract the parent span from an [EmbraceSpan] and set it as the parent
@@ -36,8 +36,8 @@ internal class EmbraceSpanBuilder(
 
     fun startSpan(startTimeMs: Long): Span {
         val startedSpan = otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS).startSpan()
-        embraceAttributes.forEach { embraceAttribute ->
-            startedSpan.setEmbraceAttribute(embraceAttribute)
+        fixedAttributes.forEach { attribute ->
+            startedSpan.setFixedAttribute(attribute)
         }
         return startedSpan
     }
@@ -59,10 +59,10 @@ internal class EmbraceSpanBuilder(
     }
 
     /**
-     * Sets an [EmbraceAttribute] on the given [SpanBuilder] and return it
+     * Sets an [FixedAttribute] on the given [SpanBuilder] and return it
      */
-    private fun setEmbraceAttribute(embraceAttribute: EmbraceAttribute): EmbraceSpanBuilder {
-        embraceAttributes.add(embraceAttribute)
+    private fun setEmbraceAttribute(fixedAttribute: FixedAttribute): EmbraceSpanBuilder {
+        fixedAttributes.add(fixedAttribute)
         return this
     }
 }

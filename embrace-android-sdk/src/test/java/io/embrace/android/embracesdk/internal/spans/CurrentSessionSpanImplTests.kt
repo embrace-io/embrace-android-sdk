@@ -180,8 +180,8 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                AppTerminationCause.Crash.toOTelKeyValuePair(),
-                EmbType.Ux.Session.toOTelKeyValuePair()
+                AppTerminationCause.Crash.toEmbraceKeyValuePair(),
+                EmbType.Ux.Session.toEmbraceKeyValuePair()
             ),
             private = true
         )
@@ -193,7 +193,7 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.toOTelKeyValuePair()
+                EmbType.Performance.Default.toEmbraceKeyValuePair()
             ),
             key = true
         )
@@ -242,7 +242,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
         assertEquals(
             mapOf(
-                EmbType.System.Breadcrumb.toOTelKeyValuePair(),
+                EmbType.System.Breadcrumb.toEmbraceKeyValuePair(),
                 "message" to "test-event"
             ),
             testEvent.attributes

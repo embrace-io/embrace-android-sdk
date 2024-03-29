@@ -23,7 +23,7 @@ internal sealed class SchemaType(
     /**
      * The attributes defined fo this schema that should be used to populate telemetry objects
      */
-    fun attributes(): Map<String, String> = attrs.plus(telemetryType.toOTelKeyValuePair())
+    fun attributes(): Map<String, String> = attrs.plus(telemetryType.toEmbraceKeyValuePair())
 
     internal class CustomBreadcrumb(message: String) : SchemaType(
         EmbType.System.Breadcrumb,

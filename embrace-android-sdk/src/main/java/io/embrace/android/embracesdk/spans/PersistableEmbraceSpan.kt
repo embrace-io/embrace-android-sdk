@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 
 /**
@@ -13,5 +13,5 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
      */
     fun snapshot(): Span?
 
-    fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean
+    fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean
 }

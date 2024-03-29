@@ -38,7 +38,7 @@ internal class CustomBreadcrumbDataSourceTest {
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    EmbType.System.Breadcrumb.toOTelKeyValuePair(),
+                    EmbType.System.Breadcrumb.toEmbraceKeyValuePair(),
                     "message" to "Hello, world!"
                 ),
                 schemaType.attributes()

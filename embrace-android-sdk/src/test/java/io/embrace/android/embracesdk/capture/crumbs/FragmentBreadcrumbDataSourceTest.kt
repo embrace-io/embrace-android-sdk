@@ -41,7 +41,7 @@ internal class FragmentBreadcrumbDataSourceTest {
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                EmbType.Ux.View.toOTelKeyValuePair(),
+                EmbType.Ux.View.toEmbraceKeyValuePair(),
             ),
             span.attributes
         )
@@ -59,7 +59,7 @@ internal class FragmentBreadcrumbDataSourceTest {
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                EmbType.Ux.View.toOTelKeyValuePair()
+                EmbType.Ux.View.toEmbraceKeyValuePair()
             ),
             span.attributes
         )

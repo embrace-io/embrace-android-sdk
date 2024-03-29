@@ -2,15 +2,15 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setEmbraceAttribute
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -26,7 +26,7 @@ internal class FakePersistableEmbraceSpan(
     private val fakeClock: FakeClock = FakeClock()
 ) : PersistableEmbraceSpan {
 
-    val attributes = mutableMapOf(type.toOTelKeyValuePair())
+    val attributes = mutableMapOf(type.toEmbraceKeyValuePair())
     val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     var started = false
     var stopped = false
@@ -62,7 +62,7 @@ internal class FakePersistableEmbraceSpan(
             status = if (errorCode == null) {
                 Span.Status.OK
             } else {
-                setEmbraceAttribute(errorCode.fromErrorCode())
+                setFixedAttribute(errorCode.fromErrorCode())
                 Span.Status.ERROR
             }
             spanEndTimeMs = endTimeMs ?: fakeClock.now()
@@ -107,8 +107,8 @@ internal class FakePersistableEmbraceSpan(
         }
     }
 
-    override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-        attributes.hasEmbraceAttribute(embraceAttribute)
+    override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
+        attributes.hasFixedAttribute(fixedAttribute)
 
     /**
      * Should only used if this is being used to fake a session span

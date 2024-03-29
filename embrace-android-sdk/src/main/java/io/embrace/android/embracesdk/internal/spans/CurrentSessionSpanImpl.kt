@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -85,7 +85,7 @@ internal class CurrentSessionSpanImpl(
             } else {
                 val crashTime = openTelemetryClock.now().nanosToMillis()
                 spanRepository.failActiveSpans(crashTime)
-                endingSessionSpan.setEmbraceAttribute(appTerminationCause)
+                endingSessionSpan.setFixedAttribute(appTerminationCause)
                 endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
             }
             return spanSink.flushSpans()

@@ -39,7 +39,10 @@ object Versions {
     val ndk = "21.4.7075529"
 
     @JvmField
-    val openTelemetry = "1.35.0"
+    val openTelemetryCore = "1.35.0"
+
+    @JvmField
+    val openTelementrySemConv = "1.24.0-alpha"
 
     @JvmField
     val moshi = "1.12.0"

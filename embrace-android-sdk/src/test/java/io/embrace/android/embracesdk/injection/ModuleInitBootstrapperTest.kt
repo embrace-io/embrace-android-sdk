@@ -8,10 +8,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -83,26 +81,6 @@ internal class ModuleInitBootstrapperTest {
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
-        )
-    }
-
-    @Test
-    fun `internal error service hooked up to both static and non-static SDK instance`() {
-        assertTrue(
-            moduleInitBootstrapper.init(
-                context = context,
-                enableIntegrationTesting = false,
-                appFramework = Embrace.AppFramework.NATIVE,
-                sdkStartTimeMs = 0L,
-            )
-        )
-
-        InternalStaticEmbraceLogger.logger.logError("not-used", RuntimeException("static"), true)
-        logger.logError("not-used", RuntimeException("non-static"), true)
-
-        assertEquals(
-            2,
-            moduleInitBootstrapper.sdkObservabilityModule.internalErrorService.currentExceptionError?.exceptionErrors?.size
         )
     }
 

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.system.mockActivity
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
@@ -33,8 +33,8 @@ internal class EmbraceAutomaticVerificationTest {
         fun beforeClass() {
             mockkStatic(ScheduledExecutorService::class)
             mockkStatic(ExecutorService::class)
-            mockkStatic(EmbraceImpl::class)
             mockkStatic(Embrace::class)
+            mockkStatic(EmbraceImpl::class)
         }
 
         @AfterClass
@@ -46,8 +46,8 @@ internal class EmbraceAutomaticVerificationTest {
 
     @Before
     fun setup() {
-        every { Embrace.getImpl() } returns mockk(relaxed = true)
-        embraceSamples = EmbraceAutomaticVerification(scheduledExecutorService, InternalEmbraceLogger())
+        every { Embrace.getInstance().internalInterface } answers { mockk<EmbraceInternalInterface>(relaxed = true) }
+        embraceSamples = EmbraceAutomaticVerification(scheduledExecutorService)
     }
 
     @After

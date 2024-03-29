@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
 import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
 
 import android.annotation.TargetApi;
 import android.os.Build;
@@ -621,7 +620,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                     );
                 }
             } catch (Exception e) {
-                logger.logError("Error logging native network request", e);
+                logError(e);
             }
         }
     }
@@ -698,7 +697,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             try {
                 traceId = getRequestProperty(embrace.getTraceIdHeader());
             } catch (Exception e) {
-                logger.logDebug("Failed to retrieve actual trace id header. Current: " + traceId);
+                Embrace.getInstance().getInternalInterface().logWarning(
+                        "Failed to retrieve actual trace id header. Current: " + traceId, null, null);
             }
         }
     }
@@ -926,5 +926,9 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     private boolean shouldCaptureNetworkData() {
         return (hasNetworkCaptureRules() && (enableWrapIoStreams || inputStreamAccessException != null)) &&
             (networkCaptureData.get() == null || networkCaptureData.get().getCapturedResponseBody() == null);
+    }
+
+    private void logError(@NonNull Throwable t) {
+        Embrace.getInstance().getInternalInterface().logInternalError(t);
     }
 }

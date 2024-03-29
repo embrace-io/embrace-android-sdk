@@ -8,8 +8,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
@@ -34,8 +32,7 @@ import kotlin.system.exitProcess
  *
  */
 internal class EmbraceAutomaticVerification(
-    private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
-    private val logger: InternalEmbraceLogger
+    private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 ) : ActivityLifecycleListener, ProcessStateListener {
     private val handler = Handler(Looper.getMainLooper())
 
@@ -45,9 +42,9 @@ internal class EmbraceAutomaticVerification(
 
     internal lateinit var processStateService: ProcessStateService
 
-    var automaticVerificationChecker = AutomaticVerificationChecker(logger)
+    var automaticVerificationChecker = AutomaticVerificationChecker()
 
-    var verificationActions = VerificationActions(Embrace.getInstance(), logger, automaticVerificationChecker)
+    var verificationActions = VerificationActions(Embrace.getInstance(), automaticVerificationChecker)
 
     /**
      * This flag track if the verification result popup was displayed or not,
@@ -61,7 +58,7 @@ internal class EmbraceAutomaticVerification(
         private const val EMBRACE_CONTACT_EMAIL = "support@embrace.io"
         private const val VERIFY_INTEGRATION_DELAY = 200L
         private const val ON_FOREGROUND_TIMEOUT = 5000L
-        internal val instance = EmbraceAutomaticVerification(logger = logger)
+        internal val instance = EmbraceAutomaticVerification()
     }
 
     fun verifyIntegration() {
@@ -93,7 +90,7 @@ internal class EmbraceAutomaticVerification(
                 TimeUnit.MILLISECONDS
             )
         } catch (e: RejectedExecutionException) {
-            logger.logError("$TAG - Start verification rejected", e)
+            logInternalError(e, "Start verification rejected")
         }
     }
 
@@ -107,23 +104,23 @@ internal class EmbraceAutomaticVerification(
                     verificationActions.runActions()
                 } else {
                     // the verification was already started
-                    logger.logInfo("$TAG Verification almost ready...")
+                    logInfo("Verification almost ready...")
                     handler.postDelayed({
                         verifyLifecycle()
                     }, ON_FOREGROUND_TIMEOUT)
                 }
             } catch (e: IOException) {
-                logger.logError("$TAG Embrace SDK cannot run the verification in this moment", e)
+                logInternalError(e, "Embrace SDK cannot run the verification in this moment")
                 showToast(activity, activity.getString(R.string.automatic_verification_not_started))
             }
         } else {
-            logger.logError("$TAG Embrace SDK cannot run the verification in this moment, Activity is not present")
+            logError("Embrace SDK cannot run the verification in this moment, Activity is not present")
         }
     }
 
     private fun verifyLifecycle() {
         if (!foregroundEventTriggered) {
-            logger.logError("$TAG OnForeground event was not triggered")
+            logError("OnForeground event was not triggered")
             val exceptionsService = checkNotNull(Embrace.getImpl().internalErrorService)
             if (verifyIfInitializerIsDisabled()) {
                 exceptionsService.handleInternalError(
@@ -141,7 +138,7 @@ internal class EmbraceAutomaticVerification(
 
     fun runEndSession() {
         Embrace.getInstance().endSession()
-        logger.logInfo("$TAG End session manually")
+        logInfo("End session manually")
     }
 
     /**
@@ -150,7 +147,7 @@ internal class EmbraceAutomaticVerification(
      * @return true if it detects that ProcessLifecycleInitializer is disabled, false otherwise
      */
     private fun verifyIfInitializerIsDisabled(): Boolean {
-        logger.logInfo("Trying to verify lifecycle annotations")
+        logInfo("Trying to verify lifecycle annotations")
         try {
             val appInitializerClass: Class<*>?
             try {
@@ -173,7 +170,7 @@ internal class EmbraceAutomaticVerification(
                 return false
             }
         } catch (e: Exception) {
-            logger.logWarning("$TAG Could not verify if lifecycle annotations are working: $e")
+            logWarning("Could not verify if lifecycle annotations are working: $e")
         }
         return false
     }
@@ -196,7 +193,7 @@ internal class EmbraceAutomaticVerification(
             }
             exitProcess(exitStatus)
         } else {
-            logger.logError("Cannot restart app, activity is not present")
+            logError("Cannot restart app, activity is not present")
         }
     }
 
@@ -212,7 +209,7 @@ internal class EmbraceAutomaticVerification(
             }
 
             if (isResultDisplayed) {
-                logger.logDebug("onForeground called but the result was already displayed")
+                logInfo("onForeground called but the result was already displayed")
                 return
             }
 
@@ -223,7 +220,7 @@ internal class EmbraceAutomaticVerification(
                 automaticVerificationChecker.deleteFile()
             }, ON_FOREGROUND_DELAY)
         } else {
-            logger.logError("Cannot restart app, activity is not present")
+            logError("Cannot restart app, activity is not present")
         }
     }
 
@@ -240,13 +237,13 @@ internal class EmbraceAutomaticVerification(
 
         automaticVerificationChecker.isVerificationCorrect()?.also { isCorrect ->
             if (isCorrect) {
-                logger.logInfo("$TAG Successful - Embrace is ready to go! 🎉")
+                logInfo("Successful - Embrace is ready to go! 🎉")
                 showSuccessDialog()
             } else {
-                logger.logInfo("$TAG Error - Something is wrong with the Embrace Configuration ⚠️")
+                logError("Error - Something is wrong with the Embrace Configuration ⚠️")
                 showDialogWithError()
             }
-        } ?: logger.logError("Cannot display end message")
+        } ?: logError("Cannot display end message")
     }
 
     private fun showToast(activity: Activity, message: String) {
@@ -272,7 +269,7 @@ internal class EmbraceAutomaticVerification(
                 }
             dialogBuilder.create().show()
         } else {
-            logger.logInfo("Verification success! - Cannot display popup")
+            logInfo("Verification success!")
         }
     }
 
@@ -306,7 +303,7 @@ internal class EmbraceAutomaticVerification(
                 }
             dialogBuilder.create().show()
         } else {
-            logger.logError("Verification error - Cannot display popup")
+            logError("Verification error - Cannot display popup")
         }
     }
 
@@ -330,5 +327,21 @@ internal class EmbraceAutomaticVerification(
         errorLog += "\n\n-----------------\n\n"
         errorLog += errorMessage
         return errorLog
+    }
+
+    private fun logInfo(message: String) {
+        Embrace.getInstance().internalInterface.logInfo("$TAG $message", null)
+    }
+
+    private fun logWarning(message: String) {
+        Embrace.getInstance().internalInterface.logWarning("$TAG $message", null, null)
+    }
+    private fun logError(message: String) {
+        Embrace.getInstance().internalInterface.logError("$TAG $message", null, null, false)
+    }
+
+    private fun logInternalError(t: Throwable, message: String? = null) {
+        message?.let { logError(message) }
+        Embrace.getInstance().internalInterface.logInternalError(t)
     }
 }

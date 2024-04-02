@@ -6,9 +6,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
-import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so
@@ -19,18 +17,13 @@ internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration
 ) {
-    private val resource: Resource = Resource.getDefault().toBuilder()
-        .put(ServiceIncubatingAttributes.SERVICE_NAME, configuration.serviceName)
-        .put(ServiceIncubatingAttributes.SERVICE_VERSION, configuration.serviceVersion)
-        .build()
-
     private val sdk = Systrace.traceSynchronous("otel-sdk-init") {
         OpenTelemetrySdk
             .builder()
             .setTracerProvider(
                 SdkTracerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addSpanProcessor(configuration.spanProcessor)
                     .setClock(openTelemetryClock)
                     .build()
@@ -38,7 +31,7 @@ internal class OpenTelemetrySdk(
             .setLoggerProvider(
                 SdkLoggerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addLogRecordProcessor(configuration.logProcessor)
                     .setClock(openTelemetryClock)
                     .build()

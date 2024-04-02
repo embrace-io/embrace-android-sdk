@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -34,7 +35,13 @@ internal class SpanTest {
             )
             val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
             assertEquals(1, exportedSpans.size)
-            assertEquals(1, exportedSpans[0].attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
+            val exportedSpan = exportedSpans[0]
+            assertEquals(1, exportedSpan.attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
+            exportedSpan.resource.assertExpectedAttributes(
+                serviceName = harness.openTelemetryModule.openTelemetryConfiguration.serviceName,
+                serviceVersion = harness.openTelemetryModule.openTelemetryConfiguration.serviceVersion,
+                systemInfo = harness.initModule.systemInfo
+            )
         }
     }
 }

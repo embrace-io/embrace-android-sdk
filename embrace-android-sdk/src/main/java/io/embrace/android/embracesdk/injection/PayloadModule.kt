@@ -53,6 +53,7 @@ internal class PayloadModuleImpl(
                 systemServiceModule.windowManager,
                 androidServicesModule.preferencesService,
                 backgroundWorker,
+                initModule.systemInfo,
                 essentialServiceModule.cpuInfoDelegate,
                 initModule.logger
             ),

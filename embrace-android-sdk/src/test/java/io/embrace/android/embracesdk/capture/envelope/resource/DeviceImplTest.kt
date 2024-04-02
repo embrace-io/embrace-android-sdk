@@ -4,6 +4,7 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -62,6 +63,7 @@ internal class DeviceImplTest {
             windowManager,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            SystemInfo(),
             cpuInfoDelegate,
             InternalEmbraceLogger(),
         )
@@ -75,6 +77,7 @@ internal class DeviceImplTest {
             windowManager,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            SystemInfo(),
             cpuInfoDelegate,
             InternalEmbraceLogger(),
         )
@@ -88,6 +91,7 @@ internal class DeviceImplTest {
             windowManager,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            SystemInfo(),
             cpuInfoDelegate,
             InternalEmbraceLogger(),
         )

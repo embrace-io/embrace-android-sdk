@@ -195,6 +195,7 @@ internal class EssentialServiceModuleImpl(
             EmbraceMetadataService.ofContext(
                 coreModule.context,
                 AppEnvironment(coreModule.context.applicationInfo).environment,
+                initModule.systemInfo,
                 coreModule.buildInfo,
                 configService,
                 coreModule.appFramework,

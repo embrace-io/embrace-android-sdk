@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -42,6 +43,7 @@ internal class EmbraceMetadataService private constructor(
     private val windowManager: WindowManager?,
     private val packageManager: PackageManager,
     private val storageStatsManager: StorageStatsManager?,
+    private val systemInfo: SystemInfo,
     private val buildInfo: BuildInfo,
     private val configService: ConfigService,
     private val environment: AppEnvironment.Environment,
@@ -162,7 +164,7 @@ internal class EmbraceMetadataService private constructor(
             if (storedIsJailbroken != null) {
                 isJailbroken = storedIsJailbroken
             } else {
-                isJailbroken = MetadataUtils.isJailbroken()
+                isJailbroken = isJailbroken()
                 preferencesService.jailbroken = isJailbroken
             }
         }
@@ -236,15 +238,15 @@ internal class EmbraceMetadataService private constructor(
             else -> 0
         }
         return DeviceInfo(
-            MetadataUtils.getDeviceManufacturer(),
-            MetadataUtils.getModel(),
+            systemInfo.deviceManufacturer,
+            systemInfo.deviceModel,
             deviceArchitecture.architecture,
             isJailbroken(),
             MetadataUtils.getLocale(),
             storageCapacityBytes,
-            MetadataUtils.getOperatingSystemType(),
-            MetadataUtils.getOperatingSystemVersion(),
-            MetadataUtils.getOperatingSystemVersionCode(),
+            systemInfo.osName,
+            systemInfo.osVersion,
+            systemInfo.androidOsApiLevel.toInt(),
             getScreenResolution(),
             MetadataUtils.getTimezoneId(),
             MetadataUtils.getNumberOfCores(),
@@ -351,7 +353,7 @@ internal class EmbraceMetadataService private constructor(
 
     override fun applicationStartupComplete() {
         val appVersion = getAppVersionName()
-        val osVersion = Build.VERSION.RELEASE
+        val osVersion = systemInfo.osVersion
         val localDeviceId = getDeviceId()
         val installDate = clock.now()
         logger.logDebug(
@@ -390,6 +392,7 @@ internal class EmbraceMetadataService private constructor(
         fun ofContext(
             context: Context,
             environment: AppEnvironment.Environment,
+            systemInfo: SystemInfo,
             buildInfo: BuildInfo,
             configService: ConfigService,
             appFramework: AppFramework,
@@ -419,7 +422,7 @@ internal class EmbraceMetadataService private constructor(
                 val osUpdated = (
                     lastKnownOsVersion != null &&
                         !lastKnownOsVersion.equals(
-                            Build.VERSION.RELEASE,
+                            systemInfo.osVersion,
                             ignoreCase = true
                         )
                     )
@@ -452,6 +455,7 @@ internal class EmbraceMetadataService private constructor(
                 windowManager,
                 context.packageManager,
                 storageStatsManager,
+                systemInfo,
                 buildInfo,
                 configService,
                 environment,
@@ -540,8 +544,6 @@ internal class EmbraceMetadataService private constructor(
             // if the hashing of the JS bundle URL fails, returns the default bundle ID
             return defaultBundleId
         }
-
-        fun isEmulator(): Boolean = MetadataUtils.isEmulator()
 
         private fun hashBundleToMd5(bundle: ByteArray): String {
             val hashBundle: String

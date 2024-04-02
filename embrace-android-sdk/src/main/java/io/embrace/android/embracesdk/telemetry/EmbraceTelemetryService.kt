@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.telemetry
 
-import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.capture.envelope.resource.isEmulator
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.spans.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
@@ -9,9 +10,10 @@ import java.util.concurrent.ConcurrentHashMap
  * Service for tracking usage of public APIs, and different internal metrics about the app.
  */
 internal class EmbraceTelemetryService(
-    private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
+    private val systemInfo: SystemInfo
 ) : TelemetryService {
 
+    private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
@@ -65,7 +67,7 @@ internal class EmbraceTelemetryService(
             runCatching { KotlinVersion.CURRENT.toString() }.getOrDefault("unknown")
 
         appAttributesMap["is_emulator".toEmbraceAttributeName()] =
-            runCatching { EmbraceMetadataService.isEmulator().toString() }.getOrDefault("unknown")
+            runCatching { isEmulator(systemInfo).toString() }.getOrDefault("unknown")
 
         return appAttributesMap
     }

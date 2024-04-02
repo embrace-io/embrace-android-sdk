@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
@@ -96,7 +97,6 @@ internal class EmbraceMetadataServiceTest {
             every { preferencesService.osVersion }.returns("os-version")
 
             // to test Device Info:
-            every { MetadataUtils.isJailbroken() }.returns(true)
             every { preferencesService.jailbroken }.returns(true)
             every { preferencesService.screenResolution }.returns("200x300")
         }
@@ -132,6 +132,7 @@ internal class EmbraceMetadataServiceTest {
         return EmbraceMetadataService.ofContext(
             context,
             AppEnvironment.Environment.UNKNOWN,
+            SystemInfo(),
             buildInfo,
             configService,
             framework,
@@ -222,13 +223,8 @@ internal class EmbraceMetadataServiceTest {
 
         val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
-        verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
-        verify(exactly = 1) { MetadataUtils.getModel() }
         verify(exactly = 1) { MetadataUtils.getLocale() }
         verify(exactly = 1) { MetadataUtils.getInternalStorageTotalCapacity(any()) }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemType() }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
         verify(exactly = 1) { MetadataUtils.getNumberOfCores() }
 
@@ -247,6 +243,7 @@ internal class EmbraceMetadataServiceTest {
         val metadataService = EmbraceMetadataService.ofContext(
             context,
             AppEnvironment.Environment.PROD,
+            SystemInfo(),
             buildInfo,
             configService,
             Embrace.AppFramework.NATIVE,
@@ -266,13 +263,8 @@ internal class EmbraceMetadataServiceTest {
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
-        verify(exactly = 1) { MetadataUtils.getDeviceManufacturer() }
-        verify(exactly = 1) { MetadataUtils.getModel() }
         verify(exactly = 1) { MetadataUtils.getLocale() }
         verify(exactly = 1) { MetadataUtils.getInternalStorageTotalCapacity(any()) }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemType() }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemVersion() }
-        verify(exactly = 1) { MetadataUtils.getOperatingSystemVersionCode() }
         verify(exactly = 1) { MetadataUtils.getTimezoneId() }
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }

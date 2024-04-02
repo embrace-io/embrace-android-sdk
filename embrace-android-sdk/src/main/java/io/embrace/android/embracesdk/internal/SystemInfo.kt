@@ -16,7 +16,7 @@ internal data class SystemInfo(
     val deviceModel: String = getDeviceModel()
 )
 
-private fun getOsVersion(): String {
+internal fun getOsVersion(): String {
     return try {
         Build.VERSION.SDK_INT.toString()
     } catch (t: Throwable) {
@@ -24,7 +24,7 @@ private fun getOsVersion(): String {
     }
 }
 
-private fun getOsVersionName(): String {
+internal fun getOsVersionName(): String {
     return try {
         Build.VERSION.RELEASE
     } catch (t: Throwable) {
@@ -32,7 +32,7 @@ private fun getOsVersionName(): String {
     }
 }
 
-private fun getDeviceManufacturer(): String {
+internal fun getDeviceManufacturer(): String {
     return try {
         Build.MANUFACTURER
     } catch (t: Throwable) {
@@ -40,14 +40,14 @@ private fun getDeviceManufacturer(): String {
     }
 }
 
-private fun getDeviceModel(): String {
+internal fun getDeviceModel(): String {
     return try {
         Build.MODEL
     } catch (t: Throwable) {
         ""
     }
 }
-private fun getOsBuild(): String {
+internal fun getOsBuild(): String {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         Build.VERSION.BASE_OS
     } else {

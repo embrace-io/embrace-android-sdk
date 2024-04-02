@@ -17,7 +17,7 @@ internal class DeliveryModuleImplTest {
         val module = DeliveryModuleImpl(
             initModule,
             coreModule,
-            WorkerThreadModuleImpl(InitModuleImpl()),
+            WorkerThreadModuleImpl(FakeInitModule()),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
         )

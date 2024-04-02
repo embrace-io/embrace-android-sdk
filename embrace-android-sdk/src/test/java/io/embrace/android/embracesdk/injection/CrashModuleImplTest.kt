@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
@@ -16,7 +17,7 @@ internal class CrashModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val module = CrashModuleImpl(
-            InitModuleImpl(),
+            FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
@@ -15,7 +16,7 @@ internal class PayloadModuleImplTest {
 
     @Test
     fun `module default values`() {
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val coreModule = FakeCoreModule()
         val module = PayloadModuleImpl(
             initModule,

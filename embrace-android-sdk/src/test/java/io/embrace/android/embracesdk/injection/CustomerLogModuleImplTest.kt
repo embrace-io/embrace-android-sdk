@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -15,7 +16,7 @@ internal class CustomerLogModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val fakeCoreModule = FakeCoreModule()
         val module = CustomerLogModuleImpl(
             initModule,

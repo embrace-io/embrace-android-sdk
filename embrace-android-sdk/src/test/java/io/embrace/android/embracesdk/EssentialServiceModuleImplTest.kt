@@ -11,11 +11,11 @@ import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
-import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
@@ -36,7 +36,7 @@ internal class EssentialServiceModuleImplTest {
         every { Looper.getMainLooper() } returns mockk(relaxed = true)
 
         val coreModule = FakeCoreModule()
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
             coreModule = coreModule,
@@ -71,7 +71,7 @@ internal class EssentialServiceModuleImplTest {
     @Test
     fun testConfigServiceProvider() {
         val fakeConfigService = FakeConfigService()
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val fakeCoreModule = FakeCoreModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,

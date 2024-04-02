@@ -6,7 +6,6 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
-import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 
 /**
@@ -29,7 +28,7 @@ internal class OpenTelemetrySdk(
             .setTracerProvider(
                 SdkTracerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addSpanProcessor(configuration.spanProcessor)
                     .setClock(openTelemetryClock)
                     .build()
@@ -37,7 +36,7 @@ internal class OpenTelemetrySdk(
             .setLoggerProvider(
                 SdkLoggerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addLogRecordProcessor(configuration.logProcessor)
                     .setClock(openTelemetryClock)
                     .build()

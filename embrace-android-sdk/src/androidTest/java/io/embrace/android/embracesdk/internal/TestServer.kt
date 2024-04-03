@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.EmbraceEndpoint
-import java.net.HttpURLConnection
-import java.util.concurrent.TimeUnit
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 /**
  * Mock network response to be delivered when calling an endpoint.
@@ -38,6 +38,7 @@ public class TestServer {
     }
 
     public fun stop() {
+        mockWebServer.dispatcher.shutdown()
         mockWebServer.shutdown()
     }
 

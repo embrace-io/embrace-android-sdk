@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.TestServerResponse
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.utils.BitmapFactory
 import io.embrace.android.embracesdk.utils.JsonValidator
+import logTestMessage
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -33,7 +34,6 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import logTestMessage
 
 /**
  * The default Base test class, which all tests using TestServer should inherit from. This
@@ -43,9 +43,9 @@ import logTestMessage
 internal open class BaseTest {
 
     private lateinit var pendingApiCallsFilePath: String
+    private lateinit var testServer: TestServer
     lateinit var mContext: EmbraceContext
     protected val serializer = EmbraceSerializer()
-    private val testServer: TestServer = TestServer()
     private var fileObserver: EmbraceFileObserver? = null
     private val storageDir by lazy { File(mContext.filesDir, "embrace") }
 
@@ -57,6 +57,7 @@ internal open class BaseTest {
     @Before
     fun beforeEach() {
         logTestMessage("Starting test server")
+        testServer = TestServer()
         testServer.start(getDefaultNetworkResponses())
 
         if (Looper.myLooper() == null) {
@@ -88,10 +89,14 @@ internal open class BaseTest {
 
     @After
     fun afterEach() {
-        logTestMessage("Stop Embrace")
-        Embrace.getImpl().stop()
+        // Purge mock server dispatcher queue first so no pending requests run
+        logTestMessage("Test run completed. Purging test server...")
         testServer.stop()
+        logTestMessage("Stopping Embrace...")
+        Embrace.getImpl().stop()
+        logTestMessage("Stopping file monitoring....")
         fileObserver?.stopWatching()
+        logTestMessage("Test case ended. Nothing should happen from this test case from this point forward.")
     }
 
     private fun clearCacheFolder() {

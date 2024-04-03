@@ -36,8 +36,7 @@ internal class FragmentBreadcrumbDataSourceTest {
         dataSource.startFragment("my_fragment")
 
         val span = spanService.createdSpans.single()
-        assertEquals("screen-view", span.name)
-        assertEquals(EmbType.Performance.Default, span.type)
+        assertEquals(EmbType.Ux.View, span.type)
         assertTrue(span.isRecording)
         assertEquals(
             mapOf(
@@ -55,8 +54,7 @@ internal class FragmentBreadcrumbDataSourceTest {
         dataSource.endFragment("my_fragment")
 
         val span = spanService.createdSpans.single()
-        assertEquals("screen-view", span.name)
-        assertEquals(EmbType.Performance.Default, span.type)
+        assertEquals(EmbType.Ux.View, span.type)
         assertFalse(span.isRecording)
         assertEquals(
             mapOf(

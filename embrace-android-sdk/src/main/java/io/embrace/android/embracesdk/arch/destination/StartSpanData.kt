@@ -12,6 +12,4 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
 internal class StartSpanData(
     val schemaType: SchemaType,
     val spanStartTimeMs: Long,
-) {
-    val attributes = schemaType.attrs.plus(schemaType.telemetryType.toOTelKeyValuePair())
-}
+)

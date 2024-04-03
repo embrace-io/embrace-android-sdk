@@ -16,6 +16,4 @@ internal class LogEventData(
     val schemaType: SchemaType,
     val severity: Severity,
     val message: String
-) {
-    val attributes = schemaType.attrs.plus(schemaType.telemetryType.toOTelKeyValuePair())
-}
+)

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
+import io.embrace.android.embracesdk.internal.spans.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
@@ -279,7 +279,7 @@ internal class EmbraceEventService(
 
     companion object {
         const val STARTUP_EVENT_NAME = "_startup"
-        private val STARTUP_SPAN_NAME = "startup-moment".toEmbraceSpanName()
+        private val STARTUP_SPAN_NAME = "startup-moment".toEmbraceObjectName()
 
         internal fun getInternalEventKey(eventName: String, identifier: String?): String =
             when (identifier) {

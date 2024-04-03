@@ -118,7 +118,7 @@ internal class FakePersistableEmbraceSpan(
             schemaType = SchemaType.CustomBreadcrumb(name),
             spanStartTimeMs = timestampMs ?: fakeClock.now()
         )
-        addEvent(customBreadcrumb.schemaType.name, customBreadcrumb.spanStartTimeMs, attributes)
+        addEvent(customBreadcrumb.schemaType.defaultName, customBreadcrumb.spanStartTimeMs, attributes)
     }
 
     companion object {

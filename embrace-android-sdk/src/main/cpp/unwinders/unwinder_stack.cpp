@@ -2,13 +2,13 @@
 // Created by Eric Lanz on 5/12/20.
 //
 
-#include "string.h"
 #include "unwinder_stack.h"
 #include <stdlib.h>
 #include <ucontext.h>
 #include "../utilities.h"
 #include "../3rdparty/libunwindstack-ndk/MemoryLocal.h"
 #include "unwindstack/AndroidUnwinder.h"
+#include "../utils/string_utils.h"
 
 ssize_t
 emb_process_stack(emb_env *env, siginfo_t *info, void *user_context) {

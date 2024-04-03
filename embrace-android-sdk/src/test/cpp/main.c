@@ -17,6 +17,7 @@ GREATEST_MAIN_DEFS();
  * bloating this file. */
 SUITE(suite_utilities);
 SUITE(suite_unwinder_dlinfo);
+SUITE(suite_sampler_stack_unwind);
 
 /* Runs a suite of tests and returns 0 if they succeeded, 1 otherwise.*/
 int run_test_suite(void (*suite)(void)) {
@@ -38,3 +39,9 @@ JNIEXPORT int JNICALL
 Java_io_embrace_android_embracesdk_ndk_sampler_UnwinderDlinfoTestSuite_run(JNIEnv *_env, jobject _this) {
     return run_test_suite(suite_unwinder_dlinfo);
 }
+
+JNIEXPORT int JNICALL
+Java_io_embrace_android_embracesdk_ndk_sampler_SamplerStackUnwindTestSuite_run(JNIEnv *_env, jobject _this) {
+    return run_test_suite(suite_sampler_stack_unwind);
+}
+

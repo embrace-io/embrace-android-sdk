@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkRequests
@@ -26,7 +26,8 @@ internal class EmbracePerformanceInfoService(
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val applicationExitInfoService: ApplicationExitInfoService?,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val responsivenessMonitorService: ResponsivenessMonitorService?
+    private val responsivenessMonitorService: ResponsivenessMonitorService?,
+    private val logger: InternalEmbraceLogger
 ) : PerformanceInfoService {
 
     override fun getSessionPerformanceInfo(
@@ -35,33 +36,29 @@ internal class EmbracePerformanceInfoService(
         coldStart: Boolean,
         receivedTermination: Boolean?
     ): PerformanceInfo {
-        logDeveloper(
-            "EmbracePerformanceInfoService",
-            "Session performance info start time: $sessionStart"
-        )
         val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
 
         return info.copy(
-            appExitInfoData = captureDataSafely {
+            appExitInfoData = captureDataSafely(logger) {
                 captureAppExitInfoData(coldStart, applicationExitInfoService)
             },
-            networkRequests = captureDataSafely { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
-            anrIntervals = captureDataSafely { anrService?.getCapturedData()?.toList() },
-            googleAnrTimestamps = captureDataSafely {
+            networkRequests = captureDataSafely(logger) { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
+            anrIntervals = captureDataSafely(logger) { anrService?.getCapturedData()?.toList() },
+            googleAnrTimestamps = captureDataSafely(logger) {
                 googleAnrTimestampRepository.getGoogleAnrTimestamps(
                     sessionStart,
                     sessionLastKnownTime
                 ).toList()
             },
-            powerSaveModeIntervals = captureDataSafely {
+            powerSaveModeIntervals = captureDataSafely(logger) {
                 powerSaveModeService.getCapturedData()?.toList()
             },
-            nativeThreadAnrIntervals = captureDataSafely {
+            nativeThreadAnrIntervals = captureDataSafely(logger) {
                 nativeThreadSamplerService?.getCapturedIntervals(
                     receivedTermination
                 )
             },
-            responsivenessMonitorSnapshots = captureDataSafely { responsivenessMonitorService?.getCapturedData() }
+            responsivenessMonitorSnapshots = captureDataSafely(logger) { responsivenessMonitorService?.getCapturedData() }
         )
     }
 
@@ -82,15 +79,13 @@ internal class EmbracePerformanceInfoService(
         endTime: Long,
         coldStart: Boolean
     ): PerformanceInfo {
-        logDeveloper("EmbracePerformanceInfoService", "Building performance info")
-
         return PerformanceInfo(
-            diskUsage = captureDataSafely { metadataService.getDiskUsage()?.copy() },
-            memoryWarnings = captureDataSafely { memoryService.getCapturedData()?.toList() },
-            networkInterfaceIntervals = captureDataSafely {
+            diskUsage = captureDataSafely(logger) { metadataService.getDiskUsage()?.copy() },
+            memoryWarnings = captureDataSafely(logger) { memoryService.getCapturedData()?.toList() },
+            networkInterfaceIntervals = captureDataSafely(logger) {
                 networkConnectivityService.getCapturedData()?.toList()
             },
-            powerSaveModeIntervals = captureDataSafely {
+            powerSaveModeIntervals = captureDataSafely(logger) {
                 powerSaveModeService.getCapturedData()?.toList()
             },
         )

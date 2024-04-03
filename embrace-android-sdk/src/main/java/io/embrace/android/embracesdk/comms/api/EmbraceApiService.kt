@@ -156,8 +156,6 @@ internal class EmbraceApiService(
         noinline onComplete: ((successful: Boolean) -> Unit)? = null,
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
-        logger.logDeveloper(TAG, "Post event")
-
         val action: SerializationAction = { stream ->
             ConditionalGzipOutputStream(stream).use {
                 if (type != null) {
@@ -230,5 +228,3 @@ internal class EmbraceApiService(
     private fun executePost(request: ApiRequest, action: SerializationAction) =
         apiClient.executePost(request, action)
 }
-
-private const val TAG = "EmbraceApiService"

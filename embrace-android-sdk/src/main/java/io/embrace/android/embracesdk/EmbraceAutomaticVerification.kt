@@ -8,7 +8,8 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
@@ -33,7 +34,8 @@ import kotlin.system.exitProcess
  *
  */
 internal class EmbraceAutomaticVerification(
-    private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
+    private val logger: InternalEmbraceLogger
 ) : ActivityLifecycleListener, ProcessStateListener {
     private val handler = Handler(Looper.getMainLooper())
 
@@ -43,9 +45,9 @@ internal class EmbraceAutomaticVerification(
 
     internal lateinit var processStateService: ProcessStateService
 
-    var automaticVerificationChecker = AutomaticVerificationChecker()
+    var automaticVerificationChecker = AutomaticVerificationChecker(logger)
 
-    var verificationActions = VerificationActions(Embrace.getInstance(), automaticVerificationChecker)
+    var verificationActions = VerificationActions(Embrace.getInstance(), logger, automaticVerificationChecker)
 
     /**
      * This flag track if the verification result popup was displayed or not,
@@ -59,7 +61,7 @@ internal class EmbraceAutomaticVerification(
         private const val EMBRACE_CONTACT_EMAIL = "support@embrace.io"
         private const val VERIFY_INTEGRATION_DELAY = 200L
         private const val ON_FOREGROUND_TIMEOUT = 5000L
-        internal val instance = EmbraceAutomaticVerification()
+        internal val instance = EmbraceAutomaticVerification(logger = InternalStaticEmbraceLogger.logger)
     }
 
     fun verifyIntegration() {
@@ -154,10 +156,6 @@ internal class EmbraceAutomaticVerification(
             try {
                 appInitializerClass = Class.forName("androidx.startup.AppInitializer")
             } catch (cnfe: ClassNotFoundException) {
-                logger.logDeveloper(
-                    "EmbraceAutomaticVerification",
-                    "AppInitializer not found. Assuming that appCompat < 1.4.1"
-                )
                 return false
             }
 
@@ -172,10 +170,6 @@ internal class EmbraceAutomaticVerification(
                 val result = isEagerlyInitialized.invoke(appInitializer, lifecycleInitializerClass) as Boolean
                 return result.not()
             } ?: run {
-                logger.logDeveloper(
-                    "EmbraceAutomaticVerification",
-                    "Null application object, can not verify lifecycle annotations"
-                )
                 return false
             }
         } catch (e: Exception) {

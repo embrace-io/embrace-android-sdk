@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
@@ -45,6 +46,7 @@ internal class V1PayloadMessageCollator(
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService,
+    private val logger: InternalEmbraceLogger,
 ) : PayloadMessageCollator {
 
     /**
@@ -77,20 +79,20 @@ internal class V1PayloadMessageCollator(
         val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
             false -> null
             else -> BetaFeatures(
-                thermalStates = captureDataSafely(thermalStatusService::getCapturedData),
+                thermalStates = captureDataSafely(logger, thermalStatusService::getCapturedData),
             )
         }
 
         val endSession = base.copy(
             isEndedCleanly = endType.endedCleanly,
-            networkLogIds = captureDataSafely {
+            networkLogIds = captureDataSafely(logger) {
                 logMessageService.findNetworkLogIds(
                     initial.startTime,
                     endTime
                 )
             },
-            properties = captureDataSafely(sessionPropertiesService::getProperties),
-            webViewInfo = captureDataSafely(webViewService::getCapturedData),
+            properties = captureDataSafely(logger, sessionPropertiesService::getProperties),
+            webViewInfo = captureDataSafely(logger, webViewService::getCapturedData),
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
@@ -98,7 +100,7 @@ internal class V1PayloadMessageCollator(
             startupDuration = startupInfo?.duration,
             startupThreshold = startupInfo?.threshold,
             betaFeatures = betaFeatures,
-            symbols = captureDataSafely { nativeThreadSamplerService?.getNativeSymbols() }
+            symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
         )
         val envelope = buildWrapperEnvelope(params, endSession, initial.startTime, endTime)
         return gatingService.gateSessionMessage(envelope)
@@ -126,29 +128,29 @@ internal class V1PayloadMessageCollator(
         val startTime = initial.startTime
         return initial.copy(
             endTime = endTime,
-            eventIds = captureDataSafely {
+            eventIds = captureDataSafely(logger) {
                 eventService.findEventIdsForSession()
             },
-            infoLogIds = captureDataSafely { logMessageService.findInfoLogIds(startTime, endTime) },
-            warningLogIds = captureDataSafely {
+            infoLogIds = captureDataSafely(logger) { logMessageService.findInfoLogIds(startTime, endTime) },
+            warningLogIds = captureDataSafely(logger) {
                 logMessageService.findWarningLogIds(
                     startTime,
                     endTime
                 )
             },
-            errorLogIds = captureDataSafely {
+            errorLogIds = captureDataSafely(logger) {
                 logMessageService.findErrorLogIds(
                     startTime,
                     endTime
                 )
             },
-            infoLogsAttemptedToSend = captureDataSafely(logMessageService::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(logMessageService::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(logMessageService::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(internalErrorService::currentExceptionError),
+            infoLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getInfoLogsAttemptedToSend),
+            warnLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getWarnLogsAttemptedToSend),
+            errorLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getErrorLogsAttemptedToSend),
+            exceptionError = captureDataSafely(logger, internalErrorService::currentExceptionError),
             lastHeartbeatTime = endTime,
             endType = lifeEventType,
-            unhandledExceptions = captureDataSafely(logMessageService::getUnhandledExceptionsSent),
+            unhandledExceptions = captureDataSafely(logger, logMessageService::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
     }
@@ -159,7 +161,7 @@ internal class V1PayloadMessageCollator(
         startTime: Long,
         endTime: Long,
     ): SessionMessage {
-        val spans: List<EmbraceSpanData>? = captureDataSafely {
+        val spans: List<EmbraceSpanData>? = captureDataSafely(logger) {
             when {
                 !params.captureSpans -> null
                 !params.isCacheAttempt -> {
@@ -173,22 +175,22 @@ internal class V1PayloadMessageCollator(
                 else -> spanSink.completedSpans()
             }
         }
-        val breadcrumbs = captureDataSafely {
+        val breadcrumbs = captureDataSafely(logger) {
             when {
                 !params.isCacheAttempt -> breadcrumbService.flushBreadcrumbs()
                 else -> breadcrumbService.getBreadcrumbs()
             }
         }
-        val spanSnapshots = captureDataSafely {
+        val spanSnapshots = captureDataSafely(logger) {
             spanRepository.getActiveSpans().mapNotNull { it.snapshot() }
         }
 
         return SessionMessage(
             session = finalPayload,
-            userInfo = captureDataSafely(userService::getUserInfo),
-            appInfo = captureDataSafely(metadataService::getAppInfo),
-            deviceInfo = captureDataSafely(metadataService::getDeviceInfo),
-            performanceInfo = captureDataSafely {
+            userInfo = captureDataSafely(logger, userService::getUserInfo),
+            appInfo = captureDataSafely(logger, metadataService::getAppInfo),
+            deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
+            performanceInfo = captureDataSafely(logger) {
                 performanceInfoService.getSessionPerformanceInfo(
                     startTime,
                     endTime,

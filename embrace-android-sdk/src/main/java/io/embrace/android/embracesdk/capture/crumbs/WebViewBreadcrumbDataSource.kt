@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 /**
@@ -11,10 +10,10 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
  */
 internal class WebViewBreadcrumbDataSource(
     private val configService: ConfigService,
+    private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<WebViewBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getWebViewBreadcrumbLimit()
     },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataCaptureService<List<WebViewBreadcrumb>> by store {
 
     companion object {

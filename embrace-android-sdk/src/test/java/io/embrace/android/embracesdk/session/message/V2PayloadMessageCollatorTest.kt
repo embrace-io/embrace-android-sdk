@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
@@ -33,6 +34,7 @@ import org.junit.Test
 internal class V2PayloadMessageCollatorTest {
 
     private lateinit var initModule: FakeInitModule
+    private lateinit var coreModule: FakeCoreModule
     private lateinit var v1collator: V1PayloadMessageCollator
     private lateinit var v2collator: V2PayloadMessageCollator
     private lateinit var gatingService: FakeGatingService
@@ -45,6 +47,7 @@ internal class V2PayloadMessageCollatorTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
+        coreModule = FakeCoreModule()
         gatingService = FakeGatingService()
         v1collator = V1PayloadMessageCollator(
             gatingService = gatingService,
@@ -65,13 +68,14 @@ internal class V2PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
+            logger = initModule.logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        v2collator = V2PayloadMessageCollator(gatingService, v1collator, sessionEnvelopeSource)
+        v2collator = V2PayloadMessageCollator(gatingService, v1collator, sessionEnvelopeSource, initModule.logger)
     }
 
     @Test
@@ -117,6 +121,7 @@ internal class V2PayloadMessageCollatorTest {
                 15000000000,
                 Session.LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
+                initModule.logger,
                 true,
                 "crashId"
             )
@@ -144,6 +149,7 @@ internal class V2PayloadMessageCollatorTest {
                 15000000000,
                 Session.LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
+                initModule.logger,
                 true,
                 "crashId",
             )

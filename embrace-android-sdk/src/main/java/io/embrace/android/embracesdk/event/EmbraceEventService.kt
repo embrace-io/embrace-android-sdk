@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDeveloper
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
@@ -83,7 +82,6 @@ internal class EmbraceEventService(
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
-        logDeveloper("EmbraceEventService", "coldStart: $coldStart")
         if (coldStart) {
             // Using the system current timestamp here as the startup timestamp is related to the
             // the actual SDK starts ( when the app context starts ). The app context can start
@@ -96,20 +94,14 @@ internal class EmbraceEventService(
     override fun applicationStartupComplete() {
         if (processStartedByNotification) {
             activeEvents.remove(STARTUP_EVENT_NAME)
-            logDeveloper("EmbraceEventService", "Application startup started by data notification")
         } else if (configService.startupBehavior.isAutomaticEndEnabled()) {
-            logDeveloper("EmbraceEventService", "Automatically ending startup event")
             endEvent(STARTUP_EVENT_NAME)
-        } else {
-            logDeveloper("EmbraceEventService", "Application startup automatically end is disabled")
         }
     }
 
     override fun sendStartupMoment() {
-        logDeveloper("EmbraceEventService", "sendStartupMoment")
         synchronized(this) {
             if (startupSent) {
-                logDeveloper("EmbraceEventService", "Startup is already sent")
                 return
             }
             startupSent = true
@@ -148,14 +140,11 @@ internal class EmbraceEventService(
     ) {
         var sanitizedStartTime = startTime
         try {
-            logDeveloper("EmbraceEventService", "Start event: $name")
             if (!eventHandler.isAllowedToStart(name)) {
-                logDeveloper("EmbraceEventService", "Event handler not allowed to start ")
                 return
             }
             val eventKey = getInternalEventKey(name, identifier)
             if (activeEvents.containsKey(eventKey)) {
-                logDeveloper("EmbraceEventService", "Ending previous event with same name")
                 endEvent(name, identifier, false, null)
             }
             val now = clock.now()
@@ -175,7 +164,6 @@ internal class EmbraceEventService(
 
             // event started, update active events
             activeEvents[eventKey] = eventDescription
-            logDeveloper("EmbraceEventService", "Event started : $name")
         } catch (ex: Exception) {
             logger.logError(
                 "Cannot start event with name: $name, identifier: $identifier due to an exception",
@@ -208,7 +196,6 @@ internal class EmbraceEventService(
         properties: Map<String, Any>?
     ) {
         try {
-            logDeveloper("EmbraceEventService", "Ending event: $name")
             val eventKey = getInternalEventKey(name, identifier)
             val originEventDescription: EventDescription? = when {
                 late -> activeEvents[eventKey]
@@ -234,7 +221,6 @@ internal class EmbraceEventService(
                 if (!late) {
                     logStartupSpan()
                 }
-                logDeveloper("EmbraceEventService", "Ending Startup Ending")
                 startupEventInfo = eventHandler.buildStartupEventInfo(
                     originEventDescription.event,
                     event

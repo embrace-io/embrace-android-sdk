@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
@@ -33,6 +34,7 @@ import org.junit.Test
 internal class V1PayloadMessageCollatorTest {
 
     private lateinit var initModule: FakeInitModule
+    private lateinit var coreModule: FakeCoreModule
     private lateinit var collator: PayloadMessageCollator
     private lateinit var gatingService: FakeGatingService
 
@@ -44,6 +46,7 @@ internal class V1PayloadMessageCollatorTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
+        coreModule = FakeCoreModule()
         gatingService = FakeGatingService()
         collator = V1PayloadMessageCollator(
             gatingService = gatingService,
@@ -64,6 +67,7 @@ internal class V1PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
+            logger = initModule.logger
         )
     }
 
@@ -110,6 +114,7 @@ internal class V1PayloadMessageCollatorTest {
                 15000000000,
                 LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
+                initModule.logger,
                 true,
                 "crashId"
             )
@@ -137,6 +142,7 @@ internal class V1PayloadMessageCollatorTest {
                 15000000000,
                 LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
+                initModule.logger,
                 true,
                 "crashId"
             )

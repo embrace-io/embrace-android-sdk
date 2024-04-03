@@ -1,28 +1,14 @@
 package io.embrace.android.embracesdk.capture.metadata;
 
-import android.annotation.TargetApi;
-import android.app.usage.StorageStats;
-import android.app.usage.StorageStatsManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Process;
 import android.os.StatFs;
-import android.os.storage.StorageManager;
-import android.util.DisplayMetrics;
-import android.view.Display;
-import android.view.WindowManager;
-
-import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 /**
  * Utilities for retrieving metadata from the device's {@link Context}. This metadata is passed
@@ -96,27 +82,6 @@ final class MetadataUtils {
     }
 
     /**
-     * Gets the device's screen resolution.
-     *
-     * @param windowManager the {@link WindowManager} from the {@link Context}
-     * @return the device's screen resolution
-     */
-    @Nullable
-    @SuppressWarnings("deprecation")
-    static String getScreenResolution(WindowManager windowManager) {
-        try {
-            InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Computing screen resolution");
-            Display display = windowManager.getDefaultDisplay();
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            display.getMetrics(displayMetrics);
-            return String.format(Locale.US, "%dx%d", displayMetrics.widthPixels, displayMetrics.heightPixels);
-        } catch (Exception ex) {
-            InternalStaticEmbraceLogger.logDebug("Could not determine screen resolution", ex);
-            return null;
-        }
-    }
-
-    /**
      * Gets a ID of the device's timezone, e.g. 'Europe/London'.
      *
      * @return the ID of the device's timezone
@@ -142,44 +107,7 @@ final class MetadataUtils {
      * @return the total free capacity of the internal storage of the device in bytes
      */
     static long getInternalStorageFreeCapacity(StatFs statFs) {
-        InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Getting internal storage free capacity");
         return statFs.getFreeBytes();
-    }
-
-    /**
-     * Attempts to determine the disk usage of the app on the device.
-     * <p>
-     * If the disk usage cannot be determined, null is returned.
-     *
-     * @param storageStatsManager the {@link StorageStatsManager}
-     * @param packageManager      the {@link PackageManager}
-     * @param contextPackageName  the name of the package from the {@link Context}
-     * @return optionally the disk usage of the app on the device
-     */
-    @TargetApi(Build.VERSION_CODES.O)
-    @Nullable
-    @SuppressWarnings("deprecation")
-    static Long getDeviceDiskAppUsage(
-        StorageStatsManager storageStatsManager,
-        PackageManager packageManager,
-        String contextPackageName) {
-        InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Getting device disk app usage");
-        try {
-            PackageInfo packageInfo = packageManager.getPackageInfo(contextPackageName, 0);
-            if (packageInfo != null && packageInfo.packageName != null) {
-                StorageStats stats = storageStatsManager.queryStatsForPackage(
-                    StorageManager.UUID_DEFAULT,
-                    packageInfo.packageName,
-                    Process.myUserHandle());
-                return stats.getAppBytes() + stats.getDataBytes() + stats.getCacheBytes();
-            } else {
-                InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Cannot get disk usage, packageInfo is null");
-            }
-        } catch (Exception ex) {
-            // The package name and storage volume should always exist
-            InternalStaticEmbraceLogger.logError("Error retrieving device disk usage", ex);
-        }
-        return null;
     }
 
     /**
@@ -189,10 +117,7 @@ final class MetadataUtils {
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
     static boolean isJailbroken() {
-        InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Processing jailbroken");
-
         if (isEmulator()) {
-            InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Device is an emulator, Jailbroken=false");
             return false;
         }
 
@@ -211,7 +136,7 @@ final class MetadataUtils {
      * @return true if the device is detected to be an emulator, false otherwise
      */
     static boolean isEmulator() {
-        boolean isEmulator = Build.FINGERPRINT.startsWith("generic") ||
+        return Build.FINGERPRINT.startsWith("generic") ||
             Build.FINGERPRINT.startsWith("unknown") ||
             Build.FINGERPRINT.contains("emulator") ||
             Build.MODEL.contains("google_sdk") ||
@@ -221,9 +146,6 @@ final class MetadataUtils {
             Build.MANUFACTURER.contains("Genymotion") ||
             Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
             "google_sdk".equals(Build.PRODUCT);
-
-        InternalStaticEmbraceLogger.logDeveloper("MetadataUtils", "Device is an Emulator = " + isEmulator);
-        return isEmulator;
     }
 
     /**

@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.EmbraceAutomaticVerification
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 /**
  * Exception Handler that verifies if a VerifyIntegrationException was received,
  * in order to execute restartAppFromPendingIntent
  */
-internal class AutomaticVerificationExceptionHandler constructor(
-    private val defaultHandler: Thread.UncaughtExceptionHandler?
+internal class AutomaticVerificationExceptionHandler(
+    private val defaultHandler: Thread.UncaughtExceptionHandler?,
+    private val logger: InternalEmbraceLogger
 ) :
 
     Thread.UncaughtExceptionHandler {
@@ -17,7 +18,7 @@ internal class AutomaticVerificationExceptionHandler constructor(
         if (exception.cause?.cause?.javaClass == VerifyIntegrationException::class.java) {
             EmbraceAutomaticVerification.instance.restartAppFromPendingIntent()
         }
-        InternalStaticEmbraceLogger.logDebug(
+        logger.logDebug(
             "Finished handling exception. Delegating to default handler.",
             exception
         )

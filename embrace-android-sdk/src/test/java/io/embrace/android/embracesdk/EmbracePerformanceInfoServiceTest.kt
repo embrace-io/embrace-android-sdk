@@ -46,7 +46,8 @@ internal class EmbracePerformanceInfoServiceTest {
             googleAnrTimestampRepository,
             applicationExitInfoService,
             null,
-            monitoringServiceRule
+            monitoringServiceRule,
+            InternalEmbraceLogger()
         )
         googleAnrTimestampRepository.add(150209234099)
     }

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -153,7 +152,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     private fun getErrorLogs() = loggerAction
         .msgQueue
-        .filter { it.severity == InternalStaticEmbraceLogger.Severity.ERROR }
+        .filter { it.severity == InternalEmbraceLogger.Severity.ERROR }
         .toList()
 
     companion object {

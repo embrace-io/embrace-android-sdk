@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.id
 
 import io.embrace.android.embracesdk.FakeNdkService
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -13,7 +14,7 @@ internal class SessionIdTrackerImplTest {
 
     @Before
     fun setUp() {
-        tracker = SessionIdTrackerImpl(null)
+        tracker = SessionIdTrackerImpl(null, InternalEmbraceLogger())
         ndkService = FakeNdkService()
     }
 

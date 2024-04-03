@@ -74,7 +74,6 @@ internal class EmbraceAnrService(
         stacktraceSampler.setConfigService(configService)
         sigquitDetectionService.configService = configService
         targetThreadHeartbeatScheduler.configService = configService
-        logger.logDeveloper("EmbraceAnrService", "Finish initialization")
         sigquitDetectionService.initializeGoogleAnrTracking()
         startAnrCapture()
     }
@@ -139,7 +138,6 @@ internal class EmbraceAnrService(
     internal fun processAnrTick(timestamp: Long) {
         // Check if ANR capture is enabled
         if (!configService.anrBehavior.isAnrCaptureEnabled()) {
-            logger.logDeveloper("EmbraceAnrService", "ANR capture is disabled, ignoring ANR tick")
             return
         }
 

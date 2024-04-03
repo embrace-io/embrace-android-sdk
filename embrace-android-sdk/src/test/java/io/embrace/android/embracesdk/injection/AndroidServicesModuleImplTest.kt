@@ -11,9 +11,10 @@ internal class AndroidServicesModuleImplTest {
     @Test
     fun testDefault() {
         val initModule = InitModuleImpl()
+        val coreModule = FakeCoreModule()
         val module = AndroidServicesModuleImpl(
             initModule = initModule,
-            coreModule = FakeCoreModule(),
+            coreModule = coreModule,
             workerThreadModule = WorkerThreadModuleImpl(initModule)
         )
 

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 
 /**
@@ -15,10 +16,12 @@ import io.embrace.android.embracesdk.payload.CustomBreadcrumb
  */
 internal class CustomBreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
-    writer: SessionSpanWriter
+    writer: SessionSpanWriter,
+    logger: InternalEmbraceLogger
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
-    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
+    logger = logger,
+    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getCustomBreadcrumbLimit)
 ),
     SpanEventMapper<CustomBreadcrumb> {
 

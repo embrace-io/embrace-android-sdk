@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +25,8 @@ internal class DataCaptureOrchestratorTest {
                     configGate = { enabled },
                     currentSessionType = null
                 )
-            )
+            ),
+            InternalEmbraceLogger()
         )
     }
 

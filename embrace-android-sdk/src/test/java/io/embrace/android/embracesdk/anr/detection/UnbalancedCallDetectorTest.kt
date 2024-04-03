@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -77,7 +76,7 @@ internal class UnbalancedCallDetectorTest {
 
     private fun verifyInternalErrorLogs(expectedCount: Int) {
         val messages = action.msgQueue.filter { msg ->
-            msg.severity == InternalStaticEmbraceLogger.Severity.ERROR && msg.logStacktrace
+            msg.severity == InternalEmbraceLogger.Severity.ERROR && msg.logStacktrace
         }
         assertEquals(expectedCount, messages.size)
     }

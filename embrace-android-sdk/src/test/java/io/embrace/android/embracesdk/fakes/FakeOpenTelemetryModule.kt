@@ -26,7 +26,7 @@ internal class FakeOpenTelemetryModule(
     override val tracer: Tracer
         get() = TODO()
     override val spanService: SpanService
-        get() = TODO()
+        get() = FakeSpanService()
     override val embraceTracer: EmbraceTracer
         get() = TODO()
     override val internalTracer: InternalTracer

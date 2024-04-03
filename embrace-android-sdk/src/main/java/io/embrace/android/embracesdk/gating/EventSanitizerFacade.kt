@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.gating
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 
 internal class EventSanitizerFacade(
@@ -9,10 +8,6 @@ internal class EventSanitizerFacade(
 ) {
 
     fun getSanitizedMessage(): EventMessage {
-        InternalStaticEmbraceLogger.logger.logDeveloper(
-            "EventSanitizerFacade",
-            "getSanitizedMessage"
-        )
         val sanitizedEvent = EventSanitizer(eventMessage.event, components).sanitize()
         val sanitizedUserInfo = UserInfoSanitizer(eventMessage.userInfo, components).sanitize()
         val sanitizedPerformanceInfo =

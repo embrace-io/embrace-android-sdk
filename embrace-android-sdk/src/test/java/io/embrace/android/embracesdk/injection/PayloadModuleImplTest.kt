@@ -16,12 +16,14 @@ internal class PayloadModuleImplTest {
     @Test
     fun `module default values`() {
         val initModule = InitModuleImpl()
+        val coreModule = FakeCoreModule()
         val module = PayloadModuleImpl(
-            FakeEssentialServiceModule(),
-            FakeCoreModule(),
+            initModule,
+            coreModule,
             FakeAndroidServicesModule(),
+            FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            WorkerThreadModuleImpl(initModule),
             FakeNativeModule(),
             FakeOpenTelemetryModule(),
             FakeSdkObservabilityModule()

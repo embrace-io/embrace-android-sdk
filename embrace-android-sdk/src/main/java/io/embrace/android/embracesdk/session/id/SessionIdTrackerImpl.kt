@@ -2,11 +2,12 @@ package io.embrace.android.embracesdk.session.id
 
 import android.app.ActivityManager
 import android.os.Build
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class SessionIdTrackerImpl(
-    private val activityManager: ActivityManager?
+    private val activityManager: ActivityManager?,
+    private val logger: InternalEmbraceLogger
 ) : SessionIdTracker {
 
     @Volatile
@@ -44,7 +45,7 @@ internal class SessionIdTrackerImpl(
                 try {
                     activityManager?.setProcessStateSummary(sessionId.toByteArray())
                 } catch (e: Throwable) {
-                    InternalStaticEmbraceLogger.logError("Couldn't set Process State Summary", e)
+                    logger.logError("Couldn't set Process State Summary", e)
                 }
             }
         }

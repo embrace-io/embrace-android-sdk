@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
@@ -12,7 +11,7 @@ import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
  */
 internal class DataCaptureOrchestrator(
     private val dataSourceState: List<DataSourceState>,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) : ConfigListener {
 
     override fun onConfigChange(configService: ConfigService) {

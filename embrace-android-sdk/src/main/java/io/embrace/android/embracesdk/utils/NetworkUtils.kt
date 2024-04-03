@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.utils
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarning
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.Charset
@@ -22,17 +20,14 @@ internal object NetworkUtils {
     @JvmStatic
     fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {
-            logDebug("Ignoring null traceId")
             return null
         }
 
         if (!Charset.forName("US-ASCII").newEncoder().canEncode(traceId)) {
-            logDebug("Relative path must not contain unicode characters. Relative path $traceId will be ignored.")
             return null
         }
 
         return if (traceId.length > TRACE_ID_MAXIMUM_ALLOWED_LENGTH) {
-            logWarning("Truncating traceId to ${traceId.length} characters")
             traceId.substring(0, TRACE_ID_MAXIMUM_ALLOWED_LENGTH)
         } else {
             traceId

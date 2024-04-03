@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 
 /**
@@ -13,10 +12,10 @@ import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 internal class ViewBreadcrumbDataSource(
     private val configService: ConfigService,
     private val clock: Clock,
+    private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<ViewBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getViewBreadcrumbLimit()
     },
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
 ) : DataCaptureService<List<ViewBreadcrumb>> by store {
 
     /**

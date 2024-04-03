@@ -12,9 +12,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logDebug
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logInfoWithException
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Companion.logWarningWithException
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
@@ -35,6 +33,7 @@ internal class EmbraceApplicationExitInfoService(
     private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
+    private val logger: InternalEmbraceLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker
 ) : ApplicationExitInfoService, ConfigListener {
 
@@ -60,7 +59,7 @@ internal class EmbraceApplicationExitInfoService(
             try {
                 processApplicationExitInfo()
             } catch (exc: Throwable) {
-                logWarningWithException(
+                logger.logWarningWithException(
                     "AEI - Failed to process AEIs due to unexpected error",
                     exc,
                     true
@@ -112,7 +111,7 @@ internal class EmbraceApplicationExitInfoService(
                 ?: return emptyList()
 
         if (historicalProcessExitReasons.size > SDK_AEI_SEND_LIMIT) {
-            logInfoWithException("AEI - size greater than $SDK_AEI_SEND_LIMIT")
+            logger.logInfoWithException("AEI - size greater than $SDK_AEI_SEND_LIMIT")
             historicalProcessExitReasons = historicalProcessExitReasons.take(SDK_AEI_SEND_LIMIT)
         }
 
@@ -196,25 +195,25 @@ internal class EmbraceApplicationExitInfoService(
             val trace = readTraceAsString(appExitInfo)
 
             if (trace == null) {
-                logDebug("AEI - No info trace collected")
+                logger.logDebug("AEI - No info trace collected")
                 return null
             }
 
             val traceMaxLimit = configService.appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
-                logInfoWithException("AEI - Blob size was reduced. Current size is ${trace.length} and the limit is $traceMaxLimit")
+                logger.logInfoWithException("AEI - Blob size was reduced. Current size is ${trace.length} and the limit is $traceMaxLimit")
                 return AppExitInfoBehavior.CollectTracesResult.TooLarge(trace.take(traceMaxLimit))
             }
 
             return AppExitInfoBehavior.CollectTracesResult.Success(trace)
         } catch (e: IOException) {
-            logWarningWithException("AEI - IOException: ${e.message}", e, true)
+            logger.logWarningWithException("AEI - IOException: ${e.message}", e, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
         } catch (e: OutOfMemoryError) {
-            logWarningWithException("AEI - Out of Memory: ${e.message}", e, true)
+            logger.logWarningWithException("AEI - Out of Memory: ${e.message}", e, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
         } catch (tr: Throwable) {
-            logWarningWithException("AEI - An error occurred: ${tr.message}", tr, true)
+            logger.logWarningWithException("AEI - An error occurred: ${tr.message}", tr, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
         }
     }
@@ -224,7 +223,7 @@ internal class EmbraceApplicationExitInfoService(
             val bytes = appExitInfo.traceInputStream?.readBytes()
 
             if (bytes == null) {
-                logDebug("AEI - No info trace collected")
+                logger.logDebug("AEI - No info trace collected")
                 return null
             }
             return bytesToUTF8String(bytes)
@@ -294,7 +293,7 @@ internal class EmbraceApplicationExitInfoService(
             backgroundExecution?.cancel(true)
             backgroundExecution = null
         } catch (t: Throwable) {
-            logWarningWithException(
+            logger.logWarningWithException(
                 "AEI - Failed to disable EmbraceApplicationExitInfoService work",
                 t
             )

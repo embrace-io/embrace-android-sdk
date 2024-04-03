@@ -107,7 +107,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val componentCallbackService: ComponentCallbackService by singleton {
         Systrace.traceSynchronous("component-callback-service-init") {
-            ComponentCallbackService(coreModule.application, memoryService)
+            ComponentCallbackService(coreModule.application, memoryService, initModule.logger)
         }
     }
 
@@ -118,7 +118,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                     coreModule.context,
                     backgroundWorker,
                     initModule.clock,
-                    powerManagerProvider
+                    initModule.logger,
+                    powerManagerProvider,
                 )
             } else {
                 NoOpPowerSaveModeService()
@@ -127,7 +128,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val webviewService: WebViewService by singleton {
-        EmbraceWebViewService(configService, coreModule.jsonSerializer)
+        EmbraceWebViewService(configService, coreModule.jsonSerializer, initModule.logger)
     }
 
     override val breadcrumbService: BreadcrumbService by singleton {
@@ -138,7 +139,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 essentialServiceModule.activityLifecycleTracker,
                 openTelemetryModule.currentSessionSpan,
                 openTelemetryModule.spanService,
-                coreModule.logger
+                initModule.logger
             )
         }
     }
@@ -146,7 +147,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val pushNotificationService: PushNotificationCaptureService by singleton {
         PushNotificationCaptureService(
             breadcrumbService,
-            coreModule.logger
+            initModule.logger
         )
     }
 
@@ -157,7 +158,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 EmbraceThermalStatusService(
                     backgroundWorker,
                     initModule.clock,
-                    coreModule.logger,
                     powerManagerProvider
                 )
             } else {
@@ -180,14 +180,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             spanService = openTelemetryModule.spanService,
             backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             versionChecker = versionChecker,
-            logger = coreModule.logger
+            logger = initModule.logger
         )
     }
 
     override val startupTracker: StartupTracker by singleton {
         StartupTracker(
             appStartupTraceEmitter = appStartupTraceEmitter,
-            logger = coreModule.logger,
+            logger = initModule.logger,
             versionChecker = versionChecker,
         )
     }

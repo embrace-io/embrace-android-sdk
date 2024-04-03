@@ -1,16 +1,31 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.injection.CoreModule
+import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 internal class WorkerThreadModuleImplTest {
 
-    private val initModule = InitModuleImpl()
+    private lateinit var action: FakeLoggerAction
+    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var initModule: InitModule
+    private lateinit var coreModule: CoreModule
+
+    @Before
+    fun setup() {
+        action = FakeLoggerAction()
+        logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
+        initModule = InitModuleImpl(logger = logger)
+        coreModule = FakeCoreModule(logger = logger)
+    }
 
     @Test
     fun testModule() {
@@ -44,8 +59,6 @@ internal class WorkerThreadModuleImplTest {
 
     @Test
     fun `rejected execution policy`() {
-        val action = FakeLoggerAction()
-        InternalStaticEmbraceLogger.logger.addLoggerAction(action)
         val module = WorkerThreadModuleImpl(initModule)
         val worker = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
         module.close()
@@ -54,6 +67,5 @@ internal class WorkerThreadModuleImplTest {
         val msg = action.msgQueue.single().msg
         assertTrue(msg.startsWith("Rejected execution of"))
         assertNotNull(future)
-        InternalStaticEmbraceLogger.logger.setToDefault()
     }
 }

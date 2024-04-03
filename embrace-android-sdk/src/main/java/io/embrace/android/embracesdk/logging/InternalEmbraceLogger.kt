@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.Severity
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -14,13 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 // perform as fast as possible.
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
-    private val defaultLogger = AndroidLogger()
-    private val loggerActions = CopyOnWriteArrayList<LoggerAction>()
-
-    init {
-        setToDefault()
-    }
-
+    private val loggerActions = CopyOnWriteArrayList<LoggerAction>(listOf(AndroidLogger()))
     private var threshold = Severity.INFO
 
     interface LoggerAction {
@@ -29,11 +22,6 @@ internal class InternalEmbraceLogger {
 
     inline fun addLoggerAction(action: LoggerAction) {
         loggerActions.add(action)
-    }
-
-    @JvmOverloads
-    inline fun logDeveloper(className: String, msg: String, throwable: Throwable? = null) {
-        log("[$className] $msg", Severity.DEVELOPER, throwable, true)
     }
 
     @JvmOverloads
@@ -92,17 +80,13 @@ internal class InternalEmbraceLogger {
         }
     }
 
-    private fun shouldTriggerLoggerActions(severity: Severity) =
-        ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED || severity >= threshold
-
     fun setThreshold(severity: Severity) {
         threshold = severity
     }
 
-    internal fun setToDefault() {
-        if (loggerActions.isNotEmpty()) {
-            loggerActions.clear()
-        }
-        loggerActions.add(defaultLogger)
+    private fun shouldTriggerLoggerActions(severity: Severity) = ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED || severity >= threshold
+
+    enum class Severity {
+        DEVELOPER, DEBUG, INFO, WARNING, ERROR, NONE
     }
 }

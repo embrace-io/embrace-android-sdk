@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.mapThreadState
@@ -23,7 +22,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val configService: ConfigService,
     private val symbols: Lazy<Map<String, String>?>,
     private val random: Random = Random(),
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger,
+    private val logger: InternalEmbraceLogger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
     private val scheduledWorker: ScheduledWorker,
     private val deviceArchitecture: DeviceArchitecture,
@@ -58,10 +57,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     override fun setupNativeSampler(): Boolean {
         return if (sharedObjectLoader.loadEmbraceNative()) {
-            logger.logDeveloper(
-                "EmbraceNativeThreadSamplerService",
-                "Target thread found, attempting to install NativeThreadSampler"
-            )
             delegate.setupNativeThreadSampler(deviceArchitecture.is32BitDevice)
         } else {
             logger.logWarning("Embrace native binary load failed. Native thread sampler setup aborted.")
@@ -75,17 +70,11 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     }
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-        logger.logDeveloper("EmbraceNativeThreadSamplerService", "onThreadBlocked")
-
         // use consistent config for the duration of this ANR interval.
         val anrBehavior = configService.anrBehavior
         ignored = !containsAllowedStackframes(anrBehavior, targetThread.stackTrace)
         if (ignored || shouldSkipNewSample(anrBehavior)) {
             // we've reached the data capture limit - ignore any thread blocked intervals.
-            logger.logDeveloper(
-                "NativeThreadSamplerInstaller",
-                "Data capture limit reached. Ignoring thread blocked intervals."
-            )
             ignored = true
             return
         }
@@ -95,7 +84,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         val offset = random.nextInt(factor)
         count = (factor - offset) % factor
 
-        logger.logDeveloper("EmbraceNativeThreadSamplerService", "add NativeThreadSample samples")
         intervals.add(
             NativeThreadAnrInterval(
                 targetThread.id,
@@ -111,8 +99,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     }
 
     override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-        logger.logDeveloper("EmbraceNativeThreadSamplerService", "onThreadBlockedInterval")
-
         val limit = configService.anrBehavior.getMaxStacktracesPerInterval()
         if (count >= limit) {
             logger.logDebug("ANR stacktrace not captured. Maximum allowed ticks per ANR interval reached.")
@@ -120,10 +106,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         }
 
         if (ignored || !configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
-            logger.logDeveloper(
-                "NativeThreadSamplerInstaller",
-                "Ignoring thread blocked interval"
-            )
             return
         }
         if (count % factor == 0) {
@@ -133,11 +115,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
                 sampling = true
 
                 // start sampling the native thread
-                logger.logDeveloper(
-                    "EmbraceNativeThreadSamplerService",
-                    "Initiating sampling of the target thread"
-                )
-
                 val anrBehavior = configService.anrBehavior
                 val unwinder = anrBehavior.getNativeThreadAnrSamplingUnwinder()
                 val intervalMs = anrBehavior.getNativeThreadAnrSamplingIntervalMs()
@@ -153,24 +130,10 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     }
 
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-        logger.logDeveloper(
-            "EmbraceNativeThreadSamplerService",
-            "Thread unblocked: ${thread.id}"
-        )
-
         if (sampling) {
             scheduledWorker.submit {
-                logger.logDeveloper(
-                    "EmbraceNativeThreadSamplerService",
-                    "Fetching samples on JVM bg thread"
-                )
                 fetchIntervals()
             }
-        } else {
-            logger.logDeveloper(
-                "NativeThreadSamplerInstaller",
-                "Ignoring thread blocked interval"
-            )
         }
 
         ignored = true
@@ -180,11 +143,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private fun fetchIntervals() {
         currentInterval?.let { interval ->
             delegate.finishSampling()?.let { samples ->
-                logger.logDeveloper(
-                    "EmbraceNativeThreadSamplerService",
-                    "Fetched samples. Count=${samples.size}"
-                )
-
                 interval.samples?.run {
                     clear()
                     addAll(samples)
@@ -194,10 +152,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     }
 
     override fun cleanCollections() {
-        logger.logDeveloper(
-            "EmbraceNativeThreadSamplerService",
-            "Clean collections"
-        )
         intervals = mutableListOf()
     }
 
@@ -210,10 +164,6 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     override fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>? {
         if (!configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
-            logger.logDeveloper(
-                "EmbraceNativeThreadSamplerService",
-                "Native thread Sampling not enabled"
-            )
             return null
         }
 
@@ -243,19 +193,9 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         stacktrace: Array<StackTraceElement>
     ): Boolean {
         if (anrBehavior.isNativeThreadAnrSamplingAllowlistIgnored()) {
-            logger.logDeveloper(
-                "EmbraceNativeThreadSamplerService",
-                "Ignore native thread ANR sampling allow list"
-            )
             return true
         }
         val allowlist = anrBehavior.getNativeThreadAnrSamplingAllowlist()
-
-        logger.logDeveloper(
-            "EmbraceNativeThreadSamplerService",
-            "getNativeThreadAnrSamplingAllowlist size: " + allowlist.size
-        )
-
         return stacktrace.any { frame ->
             allowlist.any { allowed ->
                 frame.methodName == allowed.method && frame.className == allowed.clz

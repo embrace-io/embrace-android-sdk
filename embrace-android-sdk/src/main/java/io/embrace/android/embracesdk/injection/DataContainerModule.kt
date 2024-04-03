@@ -27,7 +27,6 @@ internal interface DataContainerModule {
 internal class DataContainerModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
@@ -51,7 +50,8 @@ internal class DataContainerModuleImpl(
                 deliveryModule.deliveryService,
                 essentialServiceModule.metadataService,
                 essentialServiceModule.sessionIdTracker,
-                essentialServiceModule.userService
+                essentialServiceModule.userService,
+                initModule.logger
             )
         } else {
             NoOpApplicationExitInfoService()
@@ -69,7 +69,8 @@ internal class DataContainerModuleImpl(
             anrModule.googleAnrTimestampRepository,
             applicationExitInfoService,
             nativeModule.nativeThreadSamplerService,
-            anrModule.responsivenessMonitorService
+            anrModule.responsivenessMonitorService,
+            initModule.logger
         )
     }
 
@@ -83,7 +84,7 @@ internal class DataContainerModuleImpl(
             performanceInfoService,
             essentialServiceModule.userService,
             sessionProperties,
-            coreModule.logger,
+            initModule.logger,
             workerThreadModule,
             initModule.clock,
             openTelemetryModule.spanService

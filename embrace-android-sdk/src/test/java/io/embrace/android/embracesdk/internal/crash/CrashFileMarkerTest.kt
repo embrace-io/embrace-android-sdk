@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.crash
 
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -37,7 +38,7 @@ internal class CrashFileMarkerTest {
         testFile = File(tempFolder.root.path, CrashFileMarker.CRASH_MARKER_FILE_NAME)
         mockFile = testFile
         markerLazyFile = lazy { mockFile }
-        crashMarker = CrashFileMarker(markerLazyFile)
+        crashMarker = CrashFileMarker(markerLazyFile, InternalEmbraceLogger())
     }
 
     @After

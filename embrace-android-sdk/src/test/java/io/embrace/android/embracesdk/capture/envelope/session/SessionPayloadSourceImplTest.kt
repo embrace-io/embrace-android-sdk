@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
@@ -46,7 +47,8 @@ internal class SessionPayloadSourceImplTest {
             FakeNativeThreadSamplerService(),
             sink,
             currentSessionSpan,
-            spanRepository
+            spanRepository,
+            InternalEmbraceLogger(),
         )
     }
 

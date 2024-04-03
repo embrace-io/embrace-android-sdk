@@ -32,11 +32,11 @@ internal class CrashModuleImpl(
         val markerFile = lazy {
             storageModule.storageService.getFileForWrite(CrashFileMarker.CRASH_MARKER_FILE_NAME)
         }
-        CrashFileMarker(markerFile)
+        CrashFileMarker(markerFile, initModule.logger)
     }
 
     override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
-        LastRunCrashVerifier(crashMarker)
+        LastRunCrashVerifier(crashMarker, initModule.logger)
     }
 
     override val crashService: CrashService by singleton {
@@ -54,12 +54,13 @@ internal class CrashModuleImpl(
             essentialServiceModule.gatingService,
             androidServicesModule.preferencesService,
             crashMarker,
-            initModule.clock
+            initModule.clock,
+            initModule.logger
         )
     }
 
     override val automaticVerificationExceptionHandler: AutomaticVerificationExceptionHandler by singleton {
         val prevHandler = Thread.getDefaultUncaughtExceptionHandler()
-        AutomaticVerificationExceptionHandler(prevHandler)
+        AutomaticVerificationExceptionHandler(prevHandler, initModule.logger)
     }
 }

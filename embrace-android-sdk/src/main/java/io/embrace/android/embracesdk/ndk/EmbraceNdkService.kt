@@ -111,14 +111,12 @@ internal class EmbraceNdkService(
     }
 
     override fun updateSessionId(newSessionId: String) {
-        logger.logDeveloper("EmbraceNDKService", "NDK update (session ID): $newSessionId")
         if (isInstalled) {
             delegate._updateSessionId(newSessionId)
         }
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
-        logger.logDeveloper("EmbraceNDKService", "NDK update: (session properties): $properties")
         if (isInstalled) {
             backgroundWorker.submit {
                 updateDeviceMetaData()
@@ -127,7 +125,6 @@ internal class EmbraceNdkService(
     }
 
     override fun onUserInfoUpdate() {
-        logger.logDeveloper("EmbraceNDKService", "NDK update (user)")
         if (isInstalled) {
             backgroundWorker.submit {
                 updateDeviceMetaData()
@@ -222,17 +219,10 @@ internal class EmbraceNdkService(
             CrashFileMarker.CRASH_MARKER_FILE_NAME
         ).absolutePath
 
-        logger.logDeveloper("EmbraceNDKService", "Creating report path at $reportBasePath")
-
         // Assign the native crash id to the unity crash id. Then when a unity crash occurs, the
         // Embrace crash service will set the unity crash id to the java crash.
         val nativeCrashId: String = unityCrashId ?: getEmbUuid()
         val is32bit = deviceArchitecture.is32BitDevice
-        logger.logDeveloper(
-            "EmbraceNDKService",
-            "Installing signal handlers. 32bit=$is32bit, crashId=$nativeCrashId"
-        )
-
         val initialMetaData = Systrace.traceSynchronous("init-native-crash-metadata") {
             serializer.toJson(
                 NativeCrashMetadata(
@@ -271,7 +261,6 @@ internal class EmbraceNdkService(
     ): List<NativeCrashDataError?>? {
         if (errorFile != null) {
             val absolutePath = errorFile.absolutePath
-            logger.logDeveloper("EmbraceNDKService", "Processing error file at $absolutePath")
             val errorsRaw = delegate._getErrors(absolutePath)
             if (errorsRaw != null) {
                 try {
@@ -284,11 +273,7 @@ internal class EmbraceNdkService(
                             ", errorFilePath=" + absolutePath + "}"
                     )
                 }
-            } else {
-                logger.logDeveloper("EmbraceNDKService", "Failed to load errorsRaw.")
             }
-        } else {
-            logger.logDeveloper("EmbraceNDKService", "Failed to find error file for crash.")
         }
         return null
     }
@@ -298,18 +283,10 @@ internal class EmbraceNdkService(
      */
     private fun getMapFileContent(mapFile: File?): String? {
         if (mapFile != null) {
-            logger.logDeveloper(
-                "EmbraceNDKService",
-                "Processing map file at " + mapFile.absolutePath
-            )
             val mapContents = readMapFile(mapFile)
             if (mapContents != null) {
                 return mapContents
-            } else {
-                logger.logDeveloper("EmbraceNDKService", "Failed to load mapContents.")
             }
-        } else {
-            logger.logDeveloper("EmbraceNDKService", "Failed to find map file for crash.")
         }
         return null
     }
@@ -322,15 +299,12 @@ internal class EmbraceNdkService(
      * @return Crash data, if a native crash file was found
      */
     override fun checkForNativeCrash(): NativeCrashData? {
-        logger.logDeveloper("EmbraceNDKService", "Processing native crash check runnable.")
         var nativeCrash: NativeCrashData? = null
         val matchingFiles = repository.sortNativeCrashes(false)
-        logger.logDeveloper("EmbraceNDKService", "Found " + matchingFiles.size + " native crashes.")
         for (crashFile in matchingFiles) {
             try {
                 val path = crashFile.path
                 val crashRaw = delegate._getCrashReport(path)
-                logger.logDeveloper("EmbraceNDKService", "Processing native crash at $path")
                 if (crashRaw != null) {
                     nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
                 } else {
@@ -341,20 +315,11 @@ internal class EmbraceNdkService(
                     val errors = getNativeCrashErrors(nativeCrash, errorFile)
                     if (errors != null) {
                         nativeCrash.errors = errors
-                    } else {
-                        logger.logDeveloper(
-                            "EmbraceNDKService",
-                            "Failed to find error file for crash."
-                        )
                     }
-                } else {
-                    logger.logDeveloper("EmbraceNDKService", "Failed to find error file for crash.")
                 }
                 val mapFile = repository.mapFileForCrash(crashFile)
                 if (mapFile != null && nativeCrash != null) {
                     nativeCrash.map = getMapFileContent(mapFile)
-                } else {
-                    logger.logDeveloper("EmbraceNDKService", "Failed to find map file for crash.")
                 }
 
                 // Retrieve deobfuscated symbols
@@ -364,7 +329,6 @@ internal class EmbraceNdkService(
                         logger.logError("Failed to find symbols for native crash - stacktraces will not symbolicate correctly.")
                     } else {
                         nativeCrash.symbols = symbols.toMap()
-                        logger.logDeveloper("EmbraceNDKService", "Added symbols for native crash")
                     }
                     sendNativeCrash(nativeCrash)
                 }
@@ -478,7 +442,6 @@ internal class EmbraceNdkService(
 
     private fun cleanOldCrashFiles() {
         backgroundWorker.submit {
-            logger.logDeveloper("EmbraceNDKService", "Processing clean of old crash files.")
             val sortedFiles = repository.sortNativeCrashes(true)
             val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
             if (deleteCount > 0) {
@@ -499,34 +462,18 @@ internal class EmbraceNdkService(
             val errorFiles = getNativeErrorFiles()
             for (errorFile in errorFiles) {
                 if (hasNativeCrashFile(errorFile)) {
-                    logger.logDeveloper(
-                        "EmbraceNDKService",
-                        "Skipping error file as it has a matching crash file " + errorFile.absolutePath
-                    )
                     continue
                 }
                 errorFile.delete()
-                logger.logDeveloper(
-                    "EmbraceNDKService",
-                    "Deleting error file as it has no matching crash file " + errorFile.absolutePath
-                )
             }
 
             // delete map files that don't have matching crash files
             val mapFiles = getNativeMapFiles()
             for (mapFile in mapFiles) {
                 if (hasNativeCrashFile(mapFile)) {
-                    logger.logDeveloper(
-                        "EmbraceNDKService",
-                        "Skipping map file as it has a matching crash file " + mapFile.absolutePath
-                    )
                     continue
                 }
                 mapFile.delete()
-                logger.logDeveloper(
-                    "EmbraceNDKService",
-                    "Deleting map file as it has no matching crash file " + mapFile.absolutePath
-                )
             }
         }
     }
@@ -543,7 +490,6 @@ internal class EmbraceNdkService(
     }
 
     private fun sendNativeCrash(nativeCrash: NativeCrashData) {
-        logger.logDeveloper("EmbraceNDKService", "Constructing EventMessage from native crash.")
         val metadata = nativeCrash.metadata
 
         val nativeCrashEvent = Event(
@@ -578,15 +524,7 @@ internal class EmbraceNdkService(
             nativeCrash.getCrash(nativeCrashNumber)
         )
         try {
-            logger.logDeveloper(
-                "EmbraceNDKService",
-                "About to send EventMessage from native crash."
-            )
             deliveryService.sendCrash(nativeCrashMessageEvent, false)
-            logger.logDeveloper(
-                "EmbraceNDKService",
-                "Finished send attempt for EventMessage from native crash."
-            )
         } catch (ex: Exception) {
             logger.logError(
                 "Failed to report native crash to the api {sessionId=" + nativeCrash.sessionId +
@@ -597,7 +535,6 @@ internal class EmbraceNdkService(
     }
 
     private fun updateAppState(newAppState: String) {
-        logger.logDeveloper("EmbraceNDKService", "NDK update (app state): $newAppState")
         delegate._updateAppState(newAppState)
     }
 
@@ -606,7 +543,6 @@ internal class EmbraceNdkService(
      */
     private fun updateDeviceMetaData() {
         var newDeviceMetaData = getMetaData(true)
-        logger.logDeveloper("EmbraceNDKService", "NDK update (metadata): $newDeviceMetaData")
         if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
             logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
             newDeviceMetaData = getMetaData(false)

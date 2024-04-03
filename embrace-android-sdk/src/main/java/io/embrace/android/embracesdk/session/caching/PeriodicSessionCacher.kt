@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session.caching
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -11,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 internal class PeriodicSessionCacher(
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker,
-    private val logger: InternalEmbraceLogger = InternalStaticEmbraceLogger.logger
+    private val logger: InternalEmbraceLogger
 ) {
 
     companion object {

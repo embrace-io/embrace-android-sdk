@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -81,8 +81,8 @@ internal fun Span.setSequenceId(id: Long): Span {
     return this
 }
 
-internal fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Span {
-    setAttribute(embraceAttribute.otelAttributeName(), embraceAttribute.attributeValue)
+internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span {
+    setAttribute(fixedAttribute.key.name, fixedAttribute.value)
     return this
 }
 
@@ -95,7 +95,7 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null)
         setStatus(StatusCode.OK)
     } else {
         setStatus(StatusCode.ERROR)
-        setEmbraceAttribute(errorCode.fromErrorCode())
+        setFixedAttribute(errorCode.fromErrorCode())
     }
 
     if (endTimeMs != null) {
@@ -132,16 +132,16 @@ internal fun String.toEmbraceAttributeName(): String = EMBRACE_ATTRIBUTE_NAME_PR
  */
 internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX + this
 
-internal fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.attributeValue == attributes[embraceAttribute.otelAttributeName()]
+internal fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+    fixedAttribute.value == attributes[fixedAttribute.key.name]
 
-internal fun EmbraceSpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.attributeValue == attributes[embraceAttribute.otelAttributeName()]
+internal fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+    fixedAttribute.value == attributes[fixedAttribute.key.name]
 
-internal fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    this[embraceAttribute.otelAttributeName()] == embraceAttribute.attributeValue
+internal fun Map<String, String>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+    this[fixedAttribute.key.name] == fixedAttribute.value
 
-internal fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
-    this[embraceAttribute.otelAttributeName()] = embraceAttribute.attributeValue
+internal fun MutableMap<String, String>.setFixedAttribute(fixedAttribute: FixedAttribute): Map<String, String> {
+    this[fixedAttribute.key.name] = fixedAttribute.value
     return this
 }

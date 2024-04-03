@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttribute
+import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
@@ -32,7 +32,9 @@ internal class EmbraceSpanImpl(
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val schemaAttributes = spanBuilder.embraceAttributes.associate { it.toOTelKeyValuePair() }.toMutableMap()
+    private val schemaAttributes = spanBuilder.fixedAttributes.associate {
+        it.toEmbraceKeyValuePair()
+    }.toMutableMap()
     private val attributes = ConcurrentHashMap<String, String>()
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
@@ -160,7 +162,8 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = allAttributes().hasEmbraceAttribute(embraceAttribute)
+    override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
+        allAttributes().hasFixedAttribute(fixedAttribute)
 
     private fun allAttributes(): Map<String, String> = attributes + schemaAttributes
 
@@ -188,8 +191,8 @@ internal class EmbraceSpanImpl(
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH
 
-        internal fun EmbraceSpan.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): EmbraceSpan {
-            addAttribute(embraceAttribute.otelAttributeName(), embraceAttribute.attributeValue)
+        internal fun EmbraceSpan.setFixedAttribute(fixedAttribute: FixedAttribute): EmbraceSpan {
+            addAttribute(fixedAttribute.key.name, fixedAttribute.value)
             return this
         }
     }

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.arch.schema
 
 internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
-    override val attributeName: String = "type"
-    override val attributeValue = type + (subtype?.run { ".$this" } ?: "")
+    override val key = EmbraceAttributeKey(id = "type")
+    override val value = type + (subtype?.run { ".$this" } ?: "")
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
@@ -44,4 +44,4 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
  * a visual event around a UI element. ux is the type, and view is the subtype. This tells the
  * backend that it can assume the data in the event follows a particular schema.
  */
-internal interface TelemetryType : EmbraceAttribute
+internal interface TelemetryType : FixedAttribute

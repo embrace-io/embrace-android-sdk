@@ -137,7 +137,7 @@ internal class EmbraceDeliveryServiceTest {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.toOTelKeyValuePair()
+                EmbType.Performance.Default.toEmbraceKeyValuePair()
             )
         )
     }

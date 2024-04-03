@@ -8,9 +8,9 @@ import java.util.Locale
  */
 internal sealed class ErrorCodeAttribute(
     errorCode: ErrorCode
-) : EmbraceAttribute {
-    override val attributeName: String = "error_code"
-    override val attributeValue: String = errorCode.name.toLowerCase(Locale.ENGLISH)
+) : FixedAttribute {
+    override val key = EmbraceAttributeKey(id = "error_code")
+    override val value: String = errorCode.name.toLowerCase(Locale.ENGLISH)
 
     internal object Failure : ErrorCodeAttribute(ErrorCode.FAILURE)
 

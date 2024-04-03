@@ -31,8 +31,8 @@ internal class FakeSpanData(
     private var attributes: Attributes =
         Attributes.builder().fromMap(
             mapOf(
-                EmbType.Performance.Default.toOTelKeyValuePair(),
-                KeySpan.toOTelKeyValuePair(),
+                EmbType.Performance.Default.toEmbraceKeyValuePair(),
+                KeySpan.toEmbraceKeyValuePair(),
                 Pair("my-key", "my-value")
             )
         ).build(),

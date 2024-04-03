@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 internal class SpanSanitizer(
@@ -39,11 +39,11 @@ internal class SpanSanitizer(
     }
 
     private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
-        return !(span.hasEmbraceAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs())
+        return !(span.hasFixedAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs())
     }
 
     private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
-        return !(event.hasEmbraceAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs())
+        return !(event.hasFixedAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs())
     }
 
     private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)

@@ -20,8 +20,8 @@ internal class SystemInfoTest {
         with(SystemInfo()) {
             assertEquals("android", osName)
             assertEquals("linux", osType)
-            assertEquals("33", osVersion)
-            assertEquals("13", osVersionName)
+            assertEquals("33", androidOsApiLevel)
+            assertEquals("13", osVersion)
             assertSame(Build.VERSION.BASE_OS, osBuild)
         }
     }
@@ -32,8 +32,8 @@ internal class SystemInfoTest {
         with(SystemInfo()) {
             assertEquals("android", osName)
             assertEquals("linux", osType)
-            assertEquals("21", osVersion)
-            assertEquals("5.0.2", osVersionName)
+            assertEquals("21", androidOsApiLevel)
+            assertEquals("5.0.2", osVersion)
             assertEquals("", osBuild)
         }
     }

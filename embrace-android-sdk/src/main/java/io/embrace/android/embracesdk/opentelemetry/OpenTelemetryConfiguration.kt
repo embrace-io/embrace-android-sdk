@@ -13,6 +13,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
@@ -28,10 +29,10 @@ internal class OpenTelemetryConfiguration(
         .put(ServiceIncubatingAttributes.SERVICE_NAME, serviceName)
         .put(ServiceIncubatingAttributes.SERVICE_VERSION, serviceVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
-        .put(OsIncubatingAttributes.OS_DESCRIPTION, systemInfo.osVersionName)
-        .put(OsIncubatingAttributes.OS_TYPE, systemInfo.osType)
         .put(OsIncubatingAttributes.OS_VERSION, systemInfo.osVersion)
+        .put(OsIncubatingAttributes.OS_TYPE, systemInfo.osType)
         .put(OsIncubatingAttributes.OS_BUILD_ID, systemInfo.osBuild)
+        .put(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
         .put(DeviceIncubatingAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
         .put(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
         .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)

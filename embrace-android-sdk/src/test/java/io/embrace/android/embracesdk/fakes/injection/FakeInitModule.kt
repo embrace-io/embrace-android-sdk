@@ -17,7 +17,7 @@ internal class FakeInitModule(
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = FakeOpenTelemetryClock(clock),
     logger: InternalEmbraceLogger = InternalEmbraceLogger(),
     systemInfo: SystemInfo = SystemInfo(
-        osVersionName = "Fake Android Version",
+        osVersion = "Fake Android Version",
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
     ),

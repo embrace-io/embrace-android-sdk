@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
 
@@ -30,8 +30,7 @@ class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
             return new URL(connection.getURL().getProtocol(), connection.getURL().getHost(),
                 connection.getURL().getPort(), pathOverride + "?" + connection.getURL().getQuery()).toString();
         } catch (MalformedURLException e) {
-            InternalStaticEmbraceLogger.logError("Failed to override path of " +
-                connection.getURL() + " with " + pathOverride);
+            logger.logError("Failed to override path of " + connection.getURL() + " with " + pathOverride);
             return connection.getURL().toString();
         }
     }

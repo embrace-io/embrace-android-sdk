@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
+
 import androidx.annotation.NonNull;
 
 import java.lang.reflect.Field;
@@ -14,7 +16,6 @@ import java.net.URLStreamHandlerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.utils.exceptions.Unchecked;
 
 /**
@@ -47,10 +48,10 @@ class StreamHandlerFactoryInstaller {
             Object existingFactory = getFactoryField().get(null);
             if (existingFactory == null) {
                 // No factory is registered, so we can simply register the Embrace factory
-                InternalStaticEmbraceLogger.logInfo("Registering EmbraceUrlStreamHandlerFactory.");
+                logger.logInfo("Registering EmbraceUrlStreamHandlerFactory.");
                 URL.setURLStreamHandlerFactory(new EmbraceUrlStreamHandlerFactory());
             } else {
-                InternalStaticEmbraceLogger.logInfo("Existing URLStreamHandlerFactory detected " +
+                logger.logInfo("Existing URLStreamHandlerFactory detected " +
                     "(" + existingFactory.getClass().getName() + "). Wrapping with Embrace factory " +
                     "to enable network traffic interception.");
                 WrappingFactory wrappingFactory = new WrappingFactory((URLStreamHandlerFactory) existingFactory, enableRequestSizeCapture);
@@ -61,11 +62,11 @@ class StreamHandlerFactoryInstaller {
             // Catching Throwable as URL.setURLStreamHandlerFactory throws an Error which we want to
             // handle, rather than kill the application if we are unable to swap the factory.
             String msg = "Error during wrapping of UrlStreamHandlerFactory. Will attempt to set the default Embrace factory";
-            InternalStaticEmbraceLogger.logWarning(msg, ex);
+            logger.logWarning(msg, ex);
             try {
                 URL.setURLStreamHandlerFactory(new EmbraceUrlStreamHandlerFactory());
             } catch (Throwable ex2) {
-                InternalStaticEmbraceLogger.logDebug("Failed to register EmbraceUrlStreamHandlerFactory. Network capture disabled.", ex2);
+                logger.logDebug("Failed to register EmbraceUrlStreamHandlerFactory. Network capture disabled.", ex2);
             }
         }
     }
@@ -135,7 +136,7 @@ class StreamHandlerFactoryInstaller {
                 parentHandler = parent.createURLStreamHandler(protocol);
             } catch (Exception ex) {
                 String msg = "Exception when trying to create stream handler with parent factory for protocol: " + protocol;
-                InternalStaticEmbraceLogger.logDebug(msg, ex);
+                logger.logDebug(msg, ex);
                 return new EmbraceUrlStreamHandlerFactory().createURLStreamHandler(protocol);
             }
             if (parentHandler == null) {
@@ -153,7 +154,7 @@ class StreamHandlerFactoryInstaller {
                         return wrapConnection(parentConnection);
                     } catch (Exception ex) {
                         String msg = "Exception when opening connection for protocol: " + protocol + " and URL: " + url;
-                        InternalStaticEmbraceLogger.logDebug(msg, ex);
+                        logger.logDebug(msg, ex);
                         throw Unchecked.propagate(ex);
                     }
                 }
@@ -167,7 +168,7 @@ class StreamHandlerFactoryInstaller {
                         return wrapConnection(parentConnection);
                     } catch (Exception ex) {
                         String msg = "Exception when opening connection for protocol: " + protocol + " and URL: " + url;
-                        InternalStaticEmbraceLogger.logDebug(msg, ex);
+                        logger.logDebug(msg, ex);
                         throw Unchecked.propagate(ex);
                     }
                 }
@@ -189,7 +190,7 @@ class StreamHandlerFactoryInstaller {
                         }
                     } else {
                         // We do not support wrapping this connection type
-                        InternalStaticEmbraceLogger.logDebug("Cannot wrap unsupported protocol: " + protocol);
+                        logger.logDebug("Cannot wrap unsupported protocol: " + protocol);
                         return parentConnection;
                     }
                 }

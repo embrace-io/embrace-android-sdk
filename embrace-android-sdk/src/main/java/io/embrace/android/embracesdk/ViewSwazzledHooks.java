@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk;
 
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
+
 import android.util.Pair;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType;
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 /**
  * @hide
@@ -35,10 +36,10 @@ public final class ViewSwazzledHooks {
         } catch (NoSuchMethodError exception) {
             // The customer may be overwriting View with their own implementation, and some of the
             // methods we use are missing.
-            InternalStaticEmbraceLogger.logError("Could not log onClickEvent. Some methods are missing. ",
+            logger.logError("Could not log onClickEvent. Some methods are missing. ",
                 exception);
         } catch (Exception exception) {
-            InternalStaticEmbraceLogger.logError("Could not log onClickEvent.", exception);
+            logger.logError("Could not log onClickEvent.", exception);
         }
     }
 

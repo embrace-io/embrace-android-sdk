@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
 import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
 
 import android.annotation.TargetApi;
 import android.os.Build;
@@ -34,7 +35,6 @@ import javax.net.ssl.SSLSocketFactory;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
 import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
@@ -621,7 +621,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                     );
                 }
             } catch (Exception e) {
-                InternalStaticEmbraceLogger.logError("Error logging native network request", e);
+                logger.logError("Error logging native network request", e);
             }
         }
     }
@@ -698,7 +698,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             try {
                 traceId = getRequestProperty(embrace.getTraceIdHeader());
             } catch (Exception e) {
-                InternalStaticEmbraceLogger.logDebug("Failed to retrieve actual trace id header. Current: " + traceId);
+                logger.logDebug("Failed to retrieve actual trace id header. Current: " + traceId);
             }
         }
     }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -8,7 +10,6 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger;
 
 @InternalApi
 public class EmbraceHttpPathOverride {
@@ -54,31 +55,31 @@ public class EmbraceHttpPathOverride {
 
     private static Boolean validatePathOverride(String path) {
         if (path == null) {
-            InternalStaticEmbraceLogger.logError("URL relative path cannot be null");
+            logger.logError("URL relative path cannot be null");
             return false;
         }
-        if (path.length() == 0) {
-            InternalStaticEmbraceLogger.logError("Relative path must have non-zero length");
+        if (path.isEmpty()) {
+            logger.logError("Relative path must have non-zero length");
             return false;
         }
         if (path.length() > RELATIVE_PATH_MAX_LENGTH) {
-            InternalStaticEmbraceLogger.logError(String.format(Locale.US,
-                "Relative path %s is greater than the maximum allowed length of %d. It will be ignored",
-                path, RELATIVE_PATH_MAX_LENGTH));
+            logger.logError(String.format(Locale.US,
+                    "Relative path %s is greater than the maximum allowed length of %d. It will be ignored",
+                    path, RELATIVE_PATH_MAX_LENGTH));
             return false;
         }
         if (!StandardCharsets.US_ASCII.newEncoder().canEncode(path)) {
-            InternalStaticEmbraceLogger.logError("Relative path must not contain unicode " +
-                "characters. Relative path " + path + " will be ignored.");
+            logger.logError("Relative path must not contain unicode " +
+                    "characters. Relative path " + path + " will be ignored.");
             return false;
         }
         if (!path.startsWith("/")) {
-            InternalStaticEmbraceLogger.logError("Relative path must start with a /");
+            logger.logError("Relative path must start with a /");
             return false;
         }
         if (!RELATIVE_PATH_PATTERN.matcher(path).matches()) {
-            InternalStaticEmbraceLogger.logError("Relative path contains invalid chars. " +
-                "Relative path " + path + " will be ignored.");
+            logger.logError("Relative path contains invalid chars. " +
+                    "Relative path " + path + " will be ignored.");
             return false;
         }
 

@@ -1,6 +1,5 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.capture.memory
 
-import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import org.junit.Assert

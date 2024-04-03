@@ -62,7 +62,7 @@ internal sealed class SchemaType(
         override val attrs = attributes.toMap()
     }
 
-    internal class MemoryWarning() : SchemaType(
+    internal class MemoryWarning : SchemaType(
         EmbType.Performance.MemoryWarning,
         MEMORY_WARNING
     ) {

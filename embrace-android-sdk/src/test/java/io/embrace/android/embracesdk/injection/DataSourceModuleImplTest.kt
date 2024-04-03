@@ -26,6 +26,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.getDataSources())
         assertNotNull(module.customBreadcrumbDataSource)
         assertNotNull(module.fragmentBreadcrumbDataSource)
-        assertEquals(2, module.getDataSources().size)
+        assertNotNull(module.memoryWarningDataSource)
+        assertEquals(3, module.getDataSources().size)
     }
 }

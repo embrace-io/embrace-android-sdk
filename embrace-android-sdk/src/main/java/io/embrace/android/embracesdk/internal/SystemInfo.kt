@@ -11,22 +11,30 @@ internal data class SystemInfo(
     val osType: String = OsIncubatingAttributes.OsTypeValues.LINUX,
     val osBuild: String = getOsBuild(),
     val osVersion: String = getOsVersion(),
-    val osVersionName: String = getOsVersionName(),
+    val androidOsApiLevel: String = getOsApiLevel(),
     val deviceManufacturer: String = getDeviceManufacturer(),
     val deviceModel: String = getDeviceModel()
 )
 
+internal fun getOsBuild(): String {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        Build.VERSION.BASE_OS
+    } else {
+        ""
+    }
+}
+
 internal fun getOsVersion(): String {
     return try {
-        Build.VERSION.SDK_INT.toString()
+        Build.VERSION.RELEASE
     } catch (t: Throwable) {
         ""
     }
 }
 
-internal fun getOsVersionName(): String {
+internal fun getOsApiLevel(): String {
     return try {
-        Build.VERSION.RELEASE
+        Build.VERSION.SDK_INT.toString()
     } catch (t: Throwable) {
         ""
     }
@@ -44,13 +52,6 @@ internal fun getDeviceModel(): String {
     return try {
         Build.MODEL
     } catch (t: Throwable) {
-        ""
-    }
-}
-internal fun getOsBuild(): String {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        Build.VERSION.BASE_OS
-    } else {
         ""
     }
 }

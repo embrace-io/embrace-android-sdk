@@ -282,8 +282,8 @@ internal class ModuleInitBootstrapper(
 
                     postInit(SdkObservabilityModule::class) {
                         serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
-                        initModule.logger.addLoggerAction(sdkObservabilityModule.internalErrorLogger)
-                        InternalStaticEmbraceLogger.logger.addLoggerAction(sdkObservabilityModule.internalErrorLogger)
+                        initModule.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
+                        InternalStaticEmbraceLogger.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
                     }
 
                     val sessionProperties = Systrace.traceSynchronous("session-properties-init") {

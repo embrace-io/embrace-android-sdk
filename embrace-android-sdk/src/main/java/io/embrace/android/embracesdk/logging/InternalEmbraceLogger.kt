@@ -13,14 +13,14 @@ import java.util.concurrent.CopyOnWriteArrayList
 // perform as fast as possible.
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
-    private val loggerActions = CopyOnWriteArrayList<LoggerAction>(listOf(AndroidLogger()))
+    private val loggerActions = CopyOnWriteArrayList<LoggerAction>(listOf(AndroidLoggingAction()))
     private var threshold = Severity.INFO
 
     interface LoggerAction {
         fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
     }
 
-    inline fun addLoggerAction(action: LoggerAction) {
+    fun addLoggerAction(action: LoggerAction) {
         loggerActions.add(action)
     }
 
@@ -45,12 +45,12 @@ internal class InternalEmbraceLogger {
 
     // Log with INFO severity that always contains a throwable as an internal exception to be sent to Grafana
     inline fun logInfoWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.INFO, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
+        log(msg, Severity.INFO, throwable ?: ReportingLoggerAction.NotAnException(msg), logStacktrace)
     }
 
     // Log with WARNING severity that always contains a throwable as an internal exception to be sent to Grafana
     inline fun logWarningWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.WARNING, throwable ?: InternalErrorLogger.NotAnException(msg), logStacktrace)
+        log(msg, Severity.WARNING, throwable ?: ReportingLoggerAction.NotAnException(msg), logStacktrace)
     }
 
     fun logSDKNotInitialized(action: String) {
@@ -87,6 +87,6 @@ internal class InternalEmbraceLogger {
     private fun shouldTriggerLoggerActions(severity: Severity) = ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED || severity >= threshold
 
     enum class Severity {
-        DEVELOPER, DEBUG, INFO, WARNING, ERROR, NONE
+        DEBUG, INFO, WARNING, ERROR, NONE
     }
 }

@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 
-private const val EMBRACE_TAG = "[Embrace]"
-private const val DEVELOPER_EMBRACE_TAG = "[EmbraceDev]"
+internal const val EMBRACE_TAG = "[Embrace]"
 
-internal class AndroidLogger : InternalEmbraceLogger.LoggerAction {
+internal class AndroidLoggingAction : InternalEmbraceLogger.LoggerAction {
     override fun log(
         msg: String,
         severity: InternalEmbraceLogger.Severity,
@@ -17,8 +16,8 @@ internal class AndroidLogger : InternalEmbraceLogger.LoggerAction {
             InternalEmbraceLogger.Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, exception)
             InternalEmbraceLogger.Severity.INFO -> Log.i(EMBRACE_TAG, msg, exception)
             InternalEmbraceLogger.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, exception)
-            InternalEmbraceLogger.Severity.DEVELOPER -> Log.d(DEVELOPER_EMBRACE_TAG, msg, exception)
-            else -> Log.e(EMBRACE_TAG, msg, exception)
+            InternalEmbraceLogger.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, exception)
+            else -> Log.v(EMBRACE_TAG, msg, exception)
         }
     }
 }

@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.okhttp3.swazzle.callback.okhttp3;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
-
 import java.util.List;
 
+import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor;
@@ -35,13 +34,13 @@ public final class OkHttpClient {
          */
         @SuppressWarnings("MethodNameCheck")
         public static void _preBuild(okhttp3.OkHttpClient.Builder thiz) {
-            logger.logDebug("Embrace OkHTTP Wrapper; onPrebuild");
+            logInfo("Embrace OkHTTP Wrapper; onPrebuild");
             addEmbraceInterceptors(thiz);
         }
 
         @SuppressWarnings("MethodNameCheck")
         public static void _constructorOnPostBody(okhttp3.OkHttpClient.Builder thiz) {
-            logger.logDebug("Embrace OkHTTP Wrapper; onPostBody");
+            logInfo("Embrace OkHTTP Wrapper; onPostBody");
             addEmbraceInterceptors(thiz);
         }
 
@@ -52,16 +51,15 @@ public final class OkHttpClient {
          */
         private static void addEmbraceInterceptors(okhttp3.OkHttpClient.Builder thiz) {
             try {
-                logger.logDebug("Embrace OkHTTP Wrapper; Adding interceptors");
+                logInfo("Embrace OkHTTP Wrapper; Adding interceptors");
                 addInterceptor(thiz.interceptors(), new EmbraceOkHttp3ApplicationInterceptor());
                 addInterceptor(thiz.networkInterceptors(), new EmbraceOkHttp3NetworkInterceptor());
             } catch (NoSuchMethodError exception) {
                 // The customer may be overwriting OkHttpClient with their own implementation, and some of the
                 // methods we use are missing.
-                logger.logError("Altered OkHttpClient implementation, could not add OkHttp interceptor. ",
-                    exception);
+                logError("Altered OkHttpClient implementation, could not add OkHttp interceptor. ", exception);
             } catch (Exception exception) {
-                logger.logError("Could not add OkHttp interceptor. ", exception);
+                logError("Could not add OkHttp interceptor. ", exception);
             }
         }
 
@@ -76,8 +74,8 @@ public final class OkHttpClient {
             if (interceptors != null && !containsInstance(interceptors, interceptor.getClass())) {
                 interceptors.add(0, interceptor);
             } else {
-                logger.logDebug(
-                    "Not adding interceptor [" + interceptor.getClass().getSimpleName() + "]"
+                logInfo(
+                        "Not adding interceptor [" + interceptor.getClass().getSimpleName() + "]"
                 );
             }
         }
@@ -94,13 +92,22 @@ public final class OkHttpClient {
                                                     Class<? extends T> clazz) {
             for (T classInstance : elementsList) {
                 if (clazz.isInstance(classInstance)) {
-                    logger.logDebug(
-                        "[" + clazz.getSimpleName() + "] already present in list"
+                    logInfo(
+                            "[" + clazz.getSimpleName() + "] already present in list"
                     );
                     return true;
                 }
             }
             return false;
+        }
+
+        private static void logInfo(String message) {
+            Embrace.getInstance().getInternalInterface().logInfo(message, null);
+        }
+
+        private static void logError(String message, Throwable throwable) {
+            Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
+            Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }
     }
 }

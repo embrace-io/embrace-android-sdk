@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -16,6 +15,7 @@ import java.net.URLStreamHandlerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.utils.exceptions.Unchecked;
 
 /**
@@ -48,12 +48,12 @@ class StreamHandlerFactoryInstaller {
             Object existingFactory = getFactoryField().get(null);
             if (existingFactory == null) {
                 // No factory is registered, so we can simply register the Embrace factory
-                logger.logInfo("Registering EmbraceUrlStreamHandlerFactory.");
+                Embrace.getInstance().getInternalInterface().logInfo("Registering EmbraceUrlStreamHandlerFactory.", null);
                 URL.setURLStreamHandlerFactory(new EmbraceUrlStreamHandlerFactory());
             } else {
-                logger.logInfo("Existing URLStreamHandlerFactory detected " +
+                Embrace.getInstance().getInternalInterface().logInfo("Existing URLStreamHandlerFactory detected " +
                     "(" + existingFactory.getClass().getName() + "). Wrapping with Embrace factory " +
-                    "to enable network traffic interception.");
+                    "to enable network traffic interception.", null);
                 WrappingFactory wrappingFactory = new WrappingFactory((URLStreamHandlerFactory) existingFactory, enableRequestSizeCapture);
                 clearFactory();
                 URL.setURLStreamHandlerFactory(wrappingFactory);
@@ -62,11 +62,11 @@ class StreamHandlerFactoryInstaller {
             // Catching Throwable as URL.setURLStreamHandlerFactory throws an Error which we want to
             // handle, rather than kill the application if we are unable to swap the factory.
             String msg = "Error during wrapping of UrlStreamHandlerFactory. Will attempt to set the default Embrace factory";
-            logger.logWarning(msg, ex);
+            logError(msg, ex);
             try {
                 URL.setURLStreamHandlerFactory(new EmbraceUrlStreamHandlerFactory());
             } catch (Throwable ex2) {
-                logger.logDebug("Failed to register EmbraceUrlStreamHandlerFactory. Network capture disabled.", ex2);
+                logError("Failed to register EmbraceUrlStreamHandlerFactory. Network capture disabled.", ex2);
             }
         }
     }
@@ -104,6 +104,13 @@ class StreamHandlerFactoryInstaller {
         }
     }
 
+    static void logError(@NonNull String message, @Nullable Throwable throwable) {
+        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
+        if (throwable != null) {
+            Embrace.getInstance().getInternalInterface().logInternalError(throwable);
+        }
+    }
+
     /**
      * A factory which generates a {@link URLConnection}, wrapping the {@link URLConnection} provided
      * by the wrapped factory. The Embrace network logging is performed, then we delegate to the
@@ -136,7 +143,7 @@ class StreamHandlerFactoryInstaller {
                 parentHandler = parent.createURLStreamHandler(protocol);
             } catch (Exception ex) {
                 String msg = "Exception when trying to create stream handler with parent factory for protocol: " + protocol;
-                logger.logDebug(msg, ex);
+                logError(msg, ex);
                 return new EmbraceUrlStreamHandlerFactory().createURLStreamHandler(protocol);
             }
             if (parentHandler == null) {
@@ -154,7 +161,7 @@ class StreamHandlerFactoryInstaller {
                         return wrapConnection(parentConnection);
                     } catch (Exception ex) {
                         String msg = "Exception when opening connection for protocol: " + protocol + " and URL: " + url;
-                        logger.logDebug(msg, ex);
+                        logError(msg, ex);
                         throw Unchecked.propagate(ex);
                     }
                 }
@@ -168,7 +175,7 @@ class StreamHandlerFactoryInstaller {
                         return wrapConnection(parentConnection);
                     } catch (Exception ex) {
                         String msg = "Exception when opening connection for protocol: " + protocol + " and URL: " + url;
-                        logger.logDebug(msg, ex);
+                        logError(msg, ex);
                         throw Unchecked.propagate(ex);
                     }
                 }
@@ -190,7 +197,7 @@ class StreamHandlerFactoryInstaller {
                         }
                     } else {
                         // We do not support wrapping this connection type
-                        logger.logDebug("Cannot wrap unsupported protocol: " + protocol);
+                        logError("Cannot wrap unsupported protocol: " + protocol, null);
                         return parentConnection;
                     }
                 }

@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk;
 
-import static io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger.logger;
-
 import android.webkit.ConsoleMessage;
 
 import androidx.annotation.NonNull;
@@ -19,6 +17,6 @@ public final class WebViewChromeClientSwazzledHooks {
 
     @SuppressWarnings("MethodNameCheck")
     public static void _preOnConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-        logger.logInfo("webview _preOnConsoleMessage");
+        Embrace.getInstance().getInternalInterface().logInfo("webview _preOnConsoleMessage", null);
     }
 }

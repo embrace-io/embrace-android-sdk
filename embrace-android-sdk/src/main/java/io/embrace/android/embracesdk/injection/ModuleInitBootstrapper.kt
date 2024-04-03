@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -283,7 +282,6 @@ internal class ModuleInitBootstrapper(
                     postInit(SdkObservabilityModule::class) {
                         serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
                         initModule.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
-                        InternalStaticEmbraceLogger.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
                     }
 
                     val sessionProperties = Systrace.traceSynchronous("session-properties-init") {

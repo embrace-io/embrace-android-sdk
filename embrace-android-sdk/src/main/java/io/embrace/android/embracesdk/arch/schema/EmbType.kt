@@ -12,6 +12,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object Default : Performance(null)
 
         internal object Network : Performance("network_request")
+
+        internal object MemoryWarning : Performance("memory_warning")
     }
 
     /**

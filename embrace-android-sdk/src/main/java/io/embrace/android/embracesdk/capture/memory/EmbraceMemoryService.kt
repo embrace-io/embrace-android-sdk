@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.memory
 
+import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalStaticEmbraceLogger
 import io.embrace.android.embracesdk.payload.MemoryWarning
@@ -12,9 +13,11 @@ import java.util.concurrent.ConcurrentSkipListMap
  * Stores memory warnings when the [ActivityService] detects a memory trim event.
  */
 internal class EmbraceMemoryService(
-    private val clock: Clock
+    private val clock: Clock,
+    sessionSpanWriter: SessionSpanWriter
 ) : MemoryService {
 
+    private val memoryWarningDataSource = MemoryWarningDataSource(sessionSpanWriter)
     private val memoryTimestamps = LongArray(MAX_CAPTURED_MEMORY_WARNINGS)
     private var offset = 0
 
@@ -23,8 +26,10 @@ internal class EmbraceMemoryService(
             "EmbraceMemoryService",
             "Memory warning number: $offset"
         )
+        val memoryWarningTimestamp = clock.now()
+        memoryWarningDataSource.onMemoryWarning(memoryWarningTimestamp)
         if (offset < MAX_CAPTURED_MEMORY_WARNINGS) {
-            memoryTimestamps[offset] = clock.now()
+            memoryTimestamps[offset] = memoryWarningTimestamp
             offset++
         }
     }
@@ -42,6 +47,6 @@ internal class EmbraceMemoryService(
     }
 
     companion object {
-        private const val MAX_CAPTURED_MEMORY_WARNINGS = 100
+        const val MAX_CAPTURED_MEMORY_WARNINGS = 100
     }
 }

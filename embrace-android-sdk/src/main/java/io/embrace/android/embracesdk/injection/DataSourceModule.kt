@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.CustomBreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentBreadcrumbDataSource
+import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -26,6 +27,8 @@ internal interface DataSourceModule {
     val customBreadcrumbDataSource: DataSourceState
 
     val fragmentBreadcrumbDataSource: DataSourceState
+
+    val memoryWarningDataSource: DataSourceState
 }
 
 internal class DataSourceModuleImpl(
@@ -58,6 +61,15 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+        )
+    }
+
+    override val memoryWarningDataSource: DataSourceState by dataSource {
+        DataSourceState(
+            factory = {
+                MemoryWarningDataSource(otelModule.currentSessionSpan)
+            },
+            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() }
         )
     }
 

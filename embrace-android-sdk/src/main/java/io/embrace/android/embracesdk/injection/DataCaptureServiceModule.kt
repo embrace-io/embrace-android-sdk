@@ -99,7 +99,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val memoryService: MemoryService by singleton {
         if (configService.autoDataCaptureBehavior.isMemoryServiceEnabled()) {
-            EmbraceMemoryService(initModule.clock)
+            EmbraceMemoryService(
+                clock = initModule.clock,
+                sessionSpanWriter = openTelemetryModule.currentSessionSpan
+            )
         } else {
             NoOpMemoryService()
         }

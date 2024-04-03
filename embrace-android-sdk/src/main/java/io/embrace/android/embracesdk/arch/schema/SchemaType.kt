@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.schema
 import io.embrace.android.embracesdk.arch.schema.SchemaKeys.AEI_RECORD
 import io.embrace.android.embracesdk.arch.schema.SchemaKeys.CUSTOM_BREADCRUMB
 import io.embrace.android.embracesdk.arch.schema.SchemaKeys.LOG
+import io.embrace.android.embracesdk.arch.schema.SchemaKeys.MEMORY_WARNING
 import io.embrace.android.embracesdk.arch.schema.SchemaKeys.VIEW_BREADCRUMB
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -13,6 +14,7 @@ internal object SchemaKeys {
     internal const val VIEW_BREADCRUMB = "screen-view"
     internal const val AEI_RECORD = "aei-record"
     internal const val LOG = "emb-log"
+    internal const val MEMORY_WARNING = "emb-memory-warning"
 }
 
 internal sealed class SchemaType(
@@ -58,5 +60,12 @@ internal sealed class SchemaType(
         LOG
     ) {
         override val attrs = attributes.toMap()
+    }
+
+    internal class MemoryWarning() : SchemaType(
+        EmbType.Performance.MemoryWarning,
+        MEMORY_WARNING
+    ) {
+        override val attrs = emptyMap<String, String>()
     }
 }

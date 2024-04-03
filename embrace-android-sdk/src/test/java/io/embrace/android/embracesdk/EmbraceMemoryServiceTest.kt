@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -16,7 +17,7 @@ internal class EmbraceMemoryServiceTest {
     @Before
     fun setUp() {
         fakeClock.setCurrentTime(100L)
-        embraceMemoryService = EmbraceMemoryService(fakeClock)
+        embraceMemoryService = EmbraceMemoryService(fakeClock, FakeCurrentSessionSpan())
     }
 
     @After

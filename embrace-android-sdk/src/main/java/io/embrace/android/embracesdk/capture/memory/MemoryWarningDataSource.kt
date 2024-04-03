@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.memory
 
-import android.util.Log
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
@@ -22,7 +21,6 @@ internal class MemoryWarningDataSource(
     SpanEventMapper<MemoryWarning> {
 
     fun onMemoryWarning(timestamp: Long) {
-        Log.e("Leandroid", "Logging memory warning")
         alterSessionSpan(
             inputValidation = { true },
             captureAction = {

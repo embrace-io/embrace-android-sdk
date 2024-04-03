@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Wrapper for the Android [Log] utility.
@@ -12,7 +13,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 // perform as fast as possible.
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
-    private val loggerActions = mutableListOf<LoggerAction>(AndroidLoggingAction())
+    private val loggerActions = CopyOnWriteArrayList<LoggerAction>(listOf(AndroidLoggingAction()))
     private var threshold = Severity.INFO
 
     interface LoggerAction {

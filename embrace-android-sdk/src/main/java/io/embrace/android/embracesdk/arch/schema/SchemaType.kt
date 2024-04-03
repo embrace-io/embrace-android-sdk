@@ -14,7 +14,7 @@ internal object SchemaKeys {
     internal const val VIEW_BREADCRUMB = "screen-view"
     internal const val AEI_RECORD = "aei-record"
     internal const val LOG = "emb-log"
-    internal const val MEMORY_WARNING = "emb-memory-warning"
+    internal const val MEMORY_WARNING = "memory-warning"
 }
 
 internal sealed class SchemaType(

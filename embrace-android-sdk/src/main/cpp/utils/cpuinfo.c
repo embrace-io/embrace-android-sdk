@@ -5,7 +5,7 @@
 #include <jni.h>
 #include <stdbool.h>
 #include "emb_log.h"
-#include "safejni/safe_jni.h"
+#include "../safejni/safe_jni.h"
 
 // defined PROP_VALUE_MAX  92 in system_properties.h
 // https://android.googlesource.com/platform/bionic/+/466dbe4/libc/include/sys/system_properties.h

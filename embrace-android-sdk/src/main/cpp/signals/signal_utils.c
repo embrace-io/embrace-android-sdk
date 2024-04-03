@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include "signal_utils.h"
-#include "../emb_log.h"
+#include "../utils/emb_log.h"
 
 #define EMB_ALT_STACK_SIZE SIGSTKSZ * 2
 

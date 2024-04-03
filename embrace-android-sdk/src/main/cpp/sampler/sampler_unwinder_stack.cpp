@@ -4,7 +4,7 @@
 #include <ucontext.h>
 #include <dlfcn.h>
 #include <unwindstack/RegsArm64.h>
-#include "../utilities.h"
+#include "../utils/utilities.h"
 #include "unwinder_dlinfo.h"
 #include "unwindstack/AndroidUnwinder.h"
 

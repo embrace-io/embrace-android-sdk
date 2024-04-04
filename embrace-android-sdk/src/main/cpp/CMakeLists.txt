@@ -35,7 +35,7 @@ add_library(# Sets the name of the library.
         sampler/unwinder_dlinfo.c
         sampler/emb_timer.c
         unwinders/unwinder.c
-        unwinders/unwinder_stack.cpp
+        unwinders/stack_unwinder.cpp
         safejni/safe_jni.c
         utils/system_clock.c
         utils/string_utils.c

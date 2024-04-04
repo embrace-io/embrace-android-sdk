@@ -1,6 +1,10 @@
 Contributing
 ============
 
+## Contributing License Agreement
+Before code can be accepted all contributors must complete our [Individual Contributor License Agreement (CLA).](https://forms.gle/SjXadmUcVwh6NrU68)
+
+## Pull Request
 If you would like to contribute code you can do so through GitHub by
 forking the repository and sending a pull request.
 

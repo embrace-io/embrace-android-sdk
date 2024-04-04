@@ -105,7 +105,7 @@ size_t emb_unwind_with_libunwind(emb_env *_env, emb_sample *sample, bool is32bit
         sample->result = calculate_unwind_result(code);
     }
 
-    // copy frames from temporary unwind_state struct to more permament emb_sample
+    // copy frames from temporary unwind_state struct to more permanent emb_sample
     // (allows truncating the stack)
     emb_copy_frames(sample, unwind_state);
     emb_symbolicate_stacktrace(sample);

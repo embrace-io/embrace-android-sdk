@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include "signals_c.h"
-#include "../unwinders/unwinder.h"
+#include "../unwinders/stack_unwinder.h"
 #include "../utils/utilities.h"
 #include "../crashmarker/file_marker.h"
 #include "../serializer/file_writer.h"
@@ -97,7 +97,7 @@ void emb_handle_signal(int signum, siginfo_t *info, void *user_context) __asyncs
     env->crash.sig_no = info->si_signo;
     env->crash.fault_addr = (uintptr_t) info->si_addr;
     env->crash.unhandled_count++;
-    env->crash.capture.num_sframes = emb_process_capture(env, info, user_context);
+    env->crash.capture.num_sframes = emb_unwind_stack(env, user_context);
 
     struct emb_sig_handler_entry *entry = find_handler_by_signum(signum);
 

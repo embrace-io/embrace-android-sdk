@@ -11,7 +11,7 @@
 #include <string>
 #include <unistd.h>
 #include "../utils/utilities.h"
-#include "../unwinders/unwinder.h"
+#include "../unwinders/stack_unwinder.h"
 #include "../crashmarker/file_marker.h"
 #include "../serializer/file_writer.h"
 #include "../utils/emb_log.h"
@@ -111,7 +111,7 @@ void emb_termination_handler() {
     _emb_env->currently_handling = true;
     _emb_env->crash.unhandled = true;
     _emb_env->crash.unhandled_count++;
-    _emb_env->crash.capture.num_sframes = emb_process_capture(_emb_env, nullptr, nullptr);
+    _emb_env->crash.capture.num_sframes = emb_unwind_stack(_emb_env, nullptr);
 
     std::type_info *type_info = __cxxabiv1::__cxa_current_exception_type();
     if (type_info != nullptr) {

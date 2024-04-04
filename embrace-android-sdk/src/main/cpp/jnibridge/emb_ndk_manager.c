@@ -7,7 +7,6 @@
 #include "../serializer/file_writer.h"
 #include "../signals/signals_c.h"
 #include "../signals/signals_cpp.h"
-#include "../unwinders/unwinder.h"
 #include "../utils/utilities.h"
 #include "inttypes.h"
 #include "../safejni/jni_util.h"

@@ -44,6 +44,9 @@ static inline void emb_copy_frame_data(unwindstack::AndroidUnwinderData &android
         data->offset = map_info->offset();
         data->flags = map_info->flags();
         emb_strncpy(data->full_name, map_info->GetFullName().c_str(), EMB_FRAME_STR_SIZE);
+
+        // calculate line number
+        data->line_num = data->pc - data->start;
     }
 }
 

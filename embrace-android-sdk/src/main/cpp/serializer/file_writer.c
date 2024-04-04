@@ -305,22 +305,22 @@ bool emb_add_exc_to_json(const emb_exception *exception, JSON_Array *frames_obje
 }
 
 bool emb_add_frame_info_to_json(JSON_Object *frame_object, emb_sframe *frame) {// module name
-    if (strlen(frame->filename) == 0) {
+    if (strlen(frame->full_name) == 0) {
         RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kFilenameKey, kDefaultNULLFallbackString));
     } else {
-        RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kFilenameKey, frame->filename));
+        RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kFilenameKey, frame->full_name));
     }
     // symbol name
-    if (strlen(frame->method) == 0) {
+    if (strlen(frame->function_name) == 0) {
         RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kMethodKey, kDefaultNULLFallbackString));
     } else {
-        RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kMethodKey, frame->method));
+        RETURN_ON_JSON_FAILURE(json_object_set_string(frame_object, kMethodKey, frame->function_name));
     }
-    // TODO: lu vs u?
-    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kFrameAddrKey, frame->frame_addr));
-    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kOffsetAddrKey, frame->offset_addr));
-    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kModuleAddrKey, frame->module_addr));
-    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kLineNumKey, frame->line_num));
+
+    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kFrameAddrKey, frame->pc));
+    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kOffsetAddrKey, frame->offset));
+    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kModuleAddrKey, frame->start));
+    RETURN_ON_JSON_FAILURE(json_object_set_number(frame_object, kModuleAddrKey, frame->line_num));
     return true;
 }
 

@@ -1,4 +1,5 @@
 #include "string_utils.h"
+#include "../schema/stack_frames.h"
 
 void emb_strncpy(char *dst, const char *src, size_t len) {
     if (dst == NULL || src == NULL) {
@@ -13,4 +14,8 @@ void emb_strncpy(char *dst, const char *src, size_t len) {
         }
         i++;
     }
+}
+
+void emb_convert_to_hex_addr(uint64_t addr, char *buffer) {
+    snprintf(buffer, kEMBSampleAddrLen, "0x%lx", (unsigned long) addr);
 }

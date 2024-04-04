@@ -55,7 +55,7 @@ internal class V1PayloadMessageCollator(
      */
     override fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
         Session(
-            sessionId = Uuid.getEmbUuid(),
+            sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             messageType = Session.MESSAGE_TYPE_END,

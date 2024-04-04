@@ -45,3 +45,10 @@ Java_io_embrace_android_embracesdk_ndk_sampler_SamplerStackUnwindTestSuite_run(J
     return run_test_suite(suite_sampler_stack_unwind);
 }
 
+void emb_setup_fake_intervals();
+
+JNIEXPORT void JNICALL
+Java_io_embrace_android_embracesdk_ndk_sampler_SamplerJniCallTestSuite_run(JNIEnv *_env, jobject _this) {
+    emb_setup_fake_intervals();
+}
+

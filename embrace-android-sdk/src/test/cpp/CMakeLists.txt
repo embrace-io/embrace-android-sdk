@@ -18,5 +18,6 @@ add_library(embrace-native-test SHARED
         testcases/utilities/test_string_utils.c
         testcases/sampler/test_unwinder_dlinfo.c
         testcases/sampler/test_sampler_stack_unwind.c
+        testcases/sampler/test_sampler_jni_call.c
 )
 target_link_libraries(embrace-native-test embrace-native)

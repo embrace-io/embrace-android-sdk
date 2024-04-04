@@ -22,7 +22,7 @@ internal open class NativeTestSuite {
     fun runNativeTestSuite(action: () -> Int) {
         val status = action()
         assertEquals(
-            "Native layer test failed with status ${status}. Search logcat for 'EmbraceNdkTest' to see the native test results.",
+            "Native layer test failed with status ${status}. Search logcat for 'Embrace' to see the native test results.",
             0,
             status
         )

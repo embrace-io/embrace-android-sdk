@@ -5,7 +5,7 @@
 #include <string_utils.h>
 #include <android/log.h>
 
-#define GREATEST_FPRINTF(ignore, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "EmbraceNdkTest", fmt, ##__VA_ARGS__)
+#define GREATEST_FPRINTF(ignore, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "Embrace", fmt, ##__VA_ARGS__)
 
 #include <greatest/greatest.h>
 #include "utils/string_utils.h"
@@ -19,6 +19,7 @@ SUITE(suite_utilities);
 SUITE(suite_unwinder_dlinfo);
 SUITE(suite_sampler_stack_unwind);
 SUITE(suite_file_writer);
+SUITE(suite_stacktrace_sampler);
 
 /* Runs a suite of tests and returns 0 if they succeeded, 1 otherwise.*/
 int run_test_suite(void (*suite)(void)) {
@@ -62,3 +63,9 @@ Java_io_embrace_android_embracesdk_ndk_serializer_FileWriterTestSuite_run(JNIEnv
     emb_setup_file_writer_tests(abs_path, expected_json);
     return run_test_suite(suite_file_writer);
 }
+
+JNIEXPORT int JNICALL
+Java_io_embrace_android_embracesdk_ndk_sampler_StacktraceSamplerTestSuite_run(JNIEnv *_env, jobject _this) {
+    return run_test_suite(suite_stacktrace_sampler);
+}
+

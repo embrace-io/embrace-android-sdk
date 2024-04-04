@@ -20,5 +20,6 @@ add_library(embrace-native-test SHARED
         testcases/sampler/test_sampler_stack_unwind.c
         testcases/sampler/test_sampler_jni_call.c
         testcases/serializer/test_file_writer.c
+        testcases/sampler/test_stacktrace_sampler.c
 )
 target_link_libraries(embrace-native-test embrace-native)

@@ -152,7 +152,7 @@ static bool has_reached_sample_limit() {
 /**
  * Handles EMB_TARGET_THREAD_SIGNUM signals sent on the target thread.
  */
-static void emb_handle_target_signal(int signum, siginfo_t *info, void *user_context) __asyncsafe {
+void emb_handle_target_signal(int signum, siginfo_t *info, void *user_context) __asyncsafe {
     if (has_reached_sample_limit()) {
         return;
     }

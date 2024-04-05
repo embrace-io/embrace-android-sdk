@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import android.util.Pair
 import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import android.util.Pair
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType

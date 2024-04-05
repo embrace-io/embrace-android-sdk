@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk;
 
-import android.util.Pair;
+import kotlin.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

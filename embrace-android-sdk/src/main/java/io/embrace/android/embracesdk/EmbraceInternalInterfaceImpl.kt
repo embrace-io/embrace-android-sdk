@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
-import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig

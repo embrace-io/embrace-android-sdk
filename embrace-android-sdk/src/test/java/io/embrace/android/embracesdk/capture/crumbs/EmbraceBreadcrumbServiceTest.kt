@@ -108,7 +108,7 @@ internal class EmbraceBreadcrumbServiceTest {
     @Test
     fun testCleanCollections() {
         val service = initializeBreadcrumbService()
-        service.logTap(android.util.Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
+        service.logTap(Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
         service.logRnAction("MyAction", 0, 5, mapOf("key" to "value"), 100, "success")
         service.logPushNotification(
             "title",
@@ -191,7 +191,7 @@ internal class EmbraceBreadcrumbServiceTest {
     @Test
     fun testLogTap() {
         val service = initializeBreadcrumbService()
-        service.logTap(android.util.Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
+        service.logTap(Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
 
         val crumbs = checkNotNull(service.getBreadcrumbs().tapBreadcrumbs)
         val breadcrumb = checkNotNull(crumbs.single())

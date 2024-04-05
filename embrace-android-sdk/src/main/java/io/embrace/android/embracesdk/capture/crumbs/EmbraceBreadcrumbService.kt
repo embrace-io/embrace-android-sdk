@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
-import android.util.Pair
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock

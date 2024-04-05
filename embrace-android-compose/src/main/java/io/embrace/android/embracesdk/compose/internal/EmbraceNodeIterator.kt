@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.compose.internal
 
-import android.util.Pair
 import android.view.View
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.AndroidComposeView

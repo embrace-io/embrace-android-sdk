@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.internal
 
-import android.util.Pair
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.annotation.InternalApi

@@ -50,11 +50,11 @@ internal class TapBreadcrumb(
 
     override fun getStartTime(): Long = timestamp
 
-    internal enum class TapBreadcrumbType {
+    internal enum class TapBreadcrumbType(val value: String) {
         @Json(name = "s")
-        TAP,
+        TAP("tap"),
 
         @Json(name = "l")
-        LONG_PRESS
+        LONG_PRESS("long_press")
     }
 }

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.schema
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.AEI_RECORD
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.CUSTOM_BREADCRUMB
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.LOG
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.TAP_BREADCRUMB
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.VIEW_BREADCRUMB
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -39,6 +40,27 @@ internal sealed class SchemaType(
         override val attrs = mapOf("view.name" to viewName)
     }
 
+    /**
+     * Represents a tap breadcrumb event.
+     * @param viewName The name of the view that the tap event occurred in.
+     * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
+     * @param coords The coordinates of the tap event.
+     */
+    internal class TapBreadcrumb(
+        viewName: String?,
+        type: String = "tap",
+        coords: String
+    ) : SchemaType(
+        EmbType.Ux.Tap,
+        TAP_BREADCRUMB
+    ) {
+        override val attrs = mapOf(
+            "view.name" to viewName,
+            "tap.type" to type,
+            "tap.coords" to coords
+        ).toNonNullMap()
+    }
+
     internal class AeiLog(message: AppExitInfoData) : SchemaType(
         EmbType.System.Exit,
         AEI_RECORD
@@ -71,6 +93,7 @@ internal sealed class SchemaType(
 internal object SchemaDefaultName {
     internal const val CUSTOM_BREADCRUMB = "emb-custom-breadcrumb"
     internal const val VIEW_BREADCRUMB = "screen-view"
+    internal const val TAP_BREADCRUMB = "emb-ui-tap"
     internal const val AEI_RECORD = "emb-aei-record"
     internal const val LOG = "emb-log"
 }

@@ -20,7 +20,6 @@ internal class SessionSanitizerFacadeTest {
         emptyList(),
         emptyList(),
         emptyList(),
-        emptyList(),
         emptyList()
     )
 
@@ -83,7 +82,6 @@ internal class SessionSanitizerFacadeTest {
 
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
         assertNotNull(crumbs.viewBreadcrumbs)
-        assertNotNull(crumbs.tapBreadcrumbs)
         assertNotNull(crumbs.webViewBreadcrumbs)
 
         assertNotNull(sanitizedMessage.userInfo?.personas)
@@ -118,7 +116,6 @@ internal class SessionSanitizerFacadeTest {
 
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
         assertNull(crumbs.viewBreadcrumbs)
-        assertNull(crumbs.tapBreadcrumbs)
         assertNull(crumbs.webViewBreadcrumbs)
 
         assertNull(sanitizedMessage.userInfo?.personas)

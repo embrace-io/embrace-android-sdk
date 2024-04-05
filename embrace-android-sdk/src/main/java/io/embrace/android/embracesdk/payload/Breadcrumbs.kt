@@ -22,12 +22,6 @@ internal data class Breadcrumbs(
     val viewBreadcrumbs: List<ViewBreadcrumb>? = null,
 
     /**
-     * List of breadcrumbs which relate to screen taps.
-     */
-    @Json(name = "tb")
-    val tapBreadcrumbs: List<TapBreadcrumb>? = null,
-
-    /**
      * List of webview breadcrumbs.
      */
     @Json(name = "wv")

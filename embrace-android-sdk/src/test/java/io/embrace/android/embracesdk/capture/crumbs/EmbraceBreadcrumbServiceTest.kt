@@ -121,12 +121,10 @@ internal class EmbraceBreadcrumbServiceTest {
         )
         service.logView("test", clock.now())
         service.logWebView("https://example.com/path1", clock.now())
-        service.logCustom("a breadcrumb", clock.now())
         service.startView("a")
         service.endView("a")
 
         val breadcrumbs = service.getBreadcrumbs()
-        assertEquals(1, breadcrumbs.tapBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.rnActionBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.pushNotifications?.size)
         assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
@@ -135,7 +133,6 @@ internal class EmbraceBreadcrumbServiceTest {
         service.cleanCollections()
 
         val breadcrumbsAfterClean = service.getBreadcrumbs()
-        assertEquals(0, breadcrumbsAfterClean.tapBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.rnActionBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
@@ -186,17 +183,6 @@ internal class EmbraceBreadcrumbServiceTest {
         val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
         val breadcrumb = checkNotNull(crumbs.single())
         assertEquals("b", breadcrumb.screen)
-    }
-
-    @Test
-    fun testLogTap() {
-        val service = initializeBreadcrumbService()
-        service.logTap(Pair(0f, 0f), "MyView", 0, TapBreadcrumb.TapBreadcrumbType.TAP)
-
-        val crumbs = checkNotNull(service.getBreadcrumbs().tapBreadcrumbs)
-        val breadcrumb = checkNotNull(crumbs.single())
-        assertEquals("MyView", breadcrumb.tappedElementName)
-        assertEquals(TapBreadcrumb.TapBreadcrumbType.TAP, breadcrumb.type)
     }
 
     @Test

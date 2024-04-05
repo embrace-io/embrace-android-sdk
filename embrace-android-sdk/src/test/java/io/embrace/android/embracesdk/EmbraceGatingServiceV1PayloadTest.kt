@@ -209,16 +209,9 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
     @Test
     fun `test gate breadcrumbs from remote config`() {
-        val tapBreadcrumb = TapBreadcrumb(
-            Pair(0.0f, 0.0f),
-            "",
-            0,
-            TapBreadcrumb.TapBreadcrumbType.TAP
-        )
         val webViewBreadcrumb = WebViewBreadcrumb("web url", 0)
 
         val breadcrumbs = Breadcrumbs(
-            tapBreadcrumbs = listOf(tapBreadcrumb),
             webViewBreadcrumbs = listOf(webViewBreadcrumb),
         )
 
@@ -235,7 +228,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val sanitizedMessage = gatingService.gateSessionMessage(message)
 
         val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNotNull(crumbs.tapBreadcrumbs)
         assertNotNull(crumbs.webViewBreadcrumbs)
     }
 

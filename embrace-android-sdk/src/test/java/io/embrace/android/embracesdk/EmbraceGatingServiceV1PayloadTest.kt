@@ -45,7 +45,6 @@ import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 import io.embrace.android.embracesdk.utils.at

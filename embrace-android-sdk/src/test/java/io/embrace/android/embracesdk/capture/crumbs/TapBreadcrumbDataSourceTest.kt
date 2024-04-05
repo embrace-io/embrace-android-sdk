@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import android.util.Pair
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
@@ -43,10 +42,26 @@ internal class TapBreadcrumbDataSourceTest {
                     EmbType.Ux.Tap.toEmbraceKeyValuePair(),
                     "view.name" to "my-button-id",
                     "tap.type" to "tap",
-                    "tap.coords" to "0,0"
+                    "tap.coords" to "126,309"
                 ),
                 schemaType.attributes()
             )
         }
+    }
+
+
+
+    @Test
+    fun `limit not exceeded`() {
+        val point = Pair(126f, 309f)
+        repeat(150) { k ->
+            source.logTap(
+                point,
+                "my-button-$k",
+                15000000000,
+                TapBreadcrumb.TapBreadcrumbType.TAP
+            )
+        }
+        Assert.assertEquals(100, writer.addedEvents.size)
     }
 }

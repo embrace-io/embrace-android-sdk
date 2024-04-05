@@ -3,10 +3,6 @@ package io.embrace.android.embracesdk.opentelemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
-import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
-import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
-import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -30,17 +26,15 @@ internal class OpenTelemetryConfigurationTest {
             systemInfo = systemInfo
         )
 
-        with(configuration) {
-            assertEquals(serviceName, resource.getAttribute(ServiceIncubatingAttributes.SERVICE_NAME))
-            assertEquals(serviceVersion, resource.getAttribute(ServiceIncubatingAttributes.SERVICE_VERSION))
-            assertEquals(systemInfo.osName, resource.getAttribute(OsIncubatingAttributes.OS_NAME))
-            assertEquals(systemInfo.osVersion, resource.getAttribute(OsIncubatingAttributes.OS_VERSION))
-            assertEquals(systemInfo.osType, resource.getAttribute(OsIncubatingAttributes.OS_TYPE))
-            assertEquals(systemInfo.osBuild, resource.getAttribute(OsIncubatingAttributes.OS_BUILD_ID))
-            assertEquals(systemInfo.androidOsApiLevel, resource.getAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL))
-            assertEquals(systemInfo.deviceManufacturer, resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER))
-            assertEquals(systemInfo.deviceModel, resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER))
-            assertEquals(systemInfo.deviceModel, resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME))
-        }
+        assertEquals(configuration.embraceServiceName, configuration.resource.getAttribute(serviceName))
+        assertEquals(configuration.embraceVersionName, configuration.resource.getAttribute(serviceVersion))
+        assertEquals(systemInfo.osName, configuration.resource.getAttribute(osName))
+        assertEquals(systemInfo.osVersion, configuration.resource.getAttribute(osVersion))
+        assertEquals(systemInfo.osType, configuration.resource.getAttribute(osType))
+        assertEquals(systemInfo.osBuild, configuration.resource.getAttribute(osBuildId))
+        assertEquals(systemInfo.androidOsApiLevel, configuration.resource.getAttribute(androidApiLevel))
+        assertEquals(systemInfo.deviceManufacturer, configuration.resource.getAttribute(deviceManufacturer))
+        assertEquals(systemInfo.deviceModel, configuration.resource.getAttribute(deviceModelIdentifier))
+        assertEquals(systemInfo.deviceModel, configuration.resource.getAttribute(deviceModelName))
     }
 }

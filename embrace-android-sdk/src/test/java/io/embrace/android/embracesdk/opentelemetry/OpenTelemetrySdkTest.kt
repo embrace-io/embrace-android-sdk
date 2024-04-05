@@ -47,8 +47,8 @@ internal class OpenTelemetrySdkTest {
     fun `check resource added by default tracer`() {
         sdk.getOpenTelemetryTracer().spanBuilder("test").startSpan().end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
-            serviceName = configuration.serviceName,
-            serviceVersion = configuration.serviceVersion,
+            expectedServiceName = configuration.embraceServiceName,
+            expectedServiceVersion = configuration.embraceVersionName,
             systemInfo = systemInfo
         )
     }
@@ -57,8 +57,8 @@ internal class OpenTelemetrySdkTest {
     fun `check resource added by default logger`() {
         sdk.getOpenTelemetryLogger().logRecordBuilder().emit()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
-            serviceName = configuration.serviceName,
-            serviceVersion = configuration.serviceVersion,
+            expectedServiceName = configuration.embraceServiceName,
+            expectedServiceVersion = configuration.embraceVersionName,
             systemInfo = systemInfo
         )
     }

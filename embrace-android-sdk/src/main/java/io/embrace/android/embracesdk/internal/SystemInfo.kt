@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.internal
 
 import android.os.Build
-import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 
 /**
  * Information about the the device or OS that can be retrieved without disk or platform API access
  */
 internal data class SystemInfo(
     val osName: String = "android",
-    val osType: String = OsIncubatingAttributes.OsTypeValues.LINUX,
+    val osType: String = "linux",
     val osBuild: String = getOsBuild(),
     val osVersion: String = getOsVersion(),
     val androidOsApiLevel: String = getOsApiLevel(),

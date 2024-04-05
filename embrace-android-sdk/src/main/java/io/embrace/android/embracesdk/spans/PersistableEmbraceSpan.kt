@@ -14,4 +14,9 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
     fun snapshot(): Span?
 
     fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean
+
+    /**
+     * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
+     */
+    fun getAttributeWithKey(key: String): String?
 }

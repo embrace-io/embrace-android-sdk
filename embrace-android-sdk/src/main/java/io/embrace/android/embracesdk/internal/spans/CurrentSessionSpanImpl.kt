@@ -71,13 +71,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan
-            .get()
-            ?.snapshot()
-            ?.attributes
-            ?.firstOrNull { it.key == sessionIdAttributeName }
-            ?.data
-            ?: ""
+        return sessionSpan.get()?.getAttributeWithKey(sessionIdAttributeName) ?: ""
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {

@@ -19,8 +19,8 @@ internal class OpenTelemetrySdk(
     configuration: OpenTelemetryConfiguration
 ) {
     private val resource: Resource = Resource.getDefault().toBuilder()
-        .put("service.name", configuration.serviceName)
-        .put("service.version", configuration.serviceVersion)
+        .put(serviceName, configuration.serviceName)
+        .put(serviceVersion, configuration.serviceVersion)
         .build()
 
     private val sdk = Systrace.traceSynchronous("otel-sdk-init") {

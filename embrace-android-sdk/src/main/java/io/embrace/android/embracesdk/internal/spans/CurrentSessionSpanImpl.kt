@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicInteger
@@ -32,9 +33,9 @@ internal class CurrentSessionSpanImpl(
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val sessionSpan: AtomicReference<EmbraceSpan?> = AtomicReference(null)
+    private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
 
-    private val currentSessionId: AtomicReference<String> = AtomicReference("")
+    private val sessionIdAttributeName = "session_id".toEmbraceAttributeName()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(sessionSpan) {
@@ -70,7 +71,13 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return currentSessionId.get()
+        return sessionSpan
+            .get()
+            ?.snapshot()
+            ?.attributes
+            ?.firstOrNull { it.key == sessionIdAttributeName }
+            ?.data
+            ?: ""
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
@@ -116,9 +123,8 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
+    private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
         traceCount.set(0)
-        currentSessionId.set(Uuid.getEmbUuid())
 
         return embraceSpanFactorySupplier().create(
             name = "session",
@@ -126,7 +132,7 @@ internal class CurrentSessionSpanImpl(
             internal = true
         ).apply {
             start(startTimeMs = startTimeMs)
-            addAttribute("session_id".toEmbraceAttributeName(), currentSessionId.get())
+            addAttribute(sessionIdAttributeName, Uuid.getEmbUuid())
         }
     }
 }

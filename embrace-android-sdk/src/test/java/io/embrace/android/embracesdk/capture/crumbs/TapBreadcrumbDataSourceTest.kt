@@ -35,7 +35,7 @@ internal class TapBreadcrumbDataSourceTest {
             TapBreadcrumb.TapBreadcrumbType.TAP
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals("emb-ui-tap", schemaType.defaultName)
+            Assert.assertEquals("ui-tap", schemaType.defaultName)
             Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             Assert.assertEquals(
                 mapOf(

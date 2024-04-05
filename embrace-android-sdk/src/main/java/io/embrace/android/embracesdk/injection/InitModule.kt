@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -30,13 +31,19 @@ internal interface InitModule {
      * Logger used by the SDK
      */
     val logger: InternalEmbraceLogger
+
+    /**
+     * Info about the system available at startup time without expensive disk or API calls
+     */
+    val systemInfo: SystemInfo
 }
 
 internal class InitModuleImpl(
     override val clock: io.embrace.android.embracesdk.internal.clock.Clock =
         NormalizedIntervalClock(systemClock = SystemClock()),
     override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(embraceClock = clock),
-    override val logger: InternalEmbraceLogger = InternalEmbraceLogger()
+    override val logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    override val systemInfo: SystemInfo = SystemInfo()
 ) : InitModule {
 
     override val telemetryService: TelemetryService by singleton {

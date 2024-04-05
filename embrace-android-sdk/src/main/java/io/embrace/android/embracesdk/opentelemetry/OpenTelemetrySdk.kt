@@ -6,7 +6,6 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
-import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 
 /**
@@ -18,18 +17,13 @@ internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration
 ) {
-    private val resource: Resource = Resource.getDefault().toBuilder()
-        .put(serviceName, configuration.serviceName)
-        .put(serviceVersion, configuration.serviceVersion)
-        .build()
-
     private val sdk = Systrace.traceSynchronous("otel-sdk-init") {
         OpenTelemetrySdk
             .builder()
             .setTracerProvider(
                 SdkTracerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addSpanProcessor(configuration.spanProcessor)
                     .setClock(openTelemetryClock)
                     .build()
@@ -37,7 +31,7 @@ internal class OpenTelemetrySdk(
             .setLoggerProvider(
                 SdkLoggerProvider
                     .builder()
-                    .addResource(resource)
+                    .addResource(configuration.resource)
                     .addLogRecordProcessor(configuration.logProcessor)
                     .setClock(openTelemetryClock)
                     .build()
@@ -46,12 +40,12 @@ internal class OpenTelemetrySdk(
     }
 
     private val tracer = Systrace.traceSynchronous("otel-tracer-init") {
-        sdk.getTracer(configuration.serviceName, configuration.serviceVersion)
+        sdk.getTracer(configuration.embraceServiceName, configuration.embraceVersionName)
     }
 
     private val logger by lazy {
         Systrace.traceSynchronous("otel-logger-init") {
-            sdk.logsBridge.loggerBuilder(configuration.serviceName).build()
+            sdk.logsBridge.loggerBuilder(configuration.embraceServiceName).build()
         }
     }
 

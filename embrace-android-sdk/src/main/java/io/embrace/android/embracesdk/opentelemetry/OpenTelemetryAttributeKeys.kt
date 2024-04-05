@@ -9,5 +9,16 @@ import io.opentelemetry.api.common.AttributeKey
  * This workaround will be used until we can resolve that issue.
  */
 
+internal val androidApiLevel: AttributeKey<String> = AttributeKey.stringKey("android.os.api_level")
+
+internal val deviceManufacturer: AttributeKey<String> = AttributeKey.stringKey("device.manufacturer")
+internal val deviceModelIdentifier: AttributeKey<String> = AttributeKey.stringKey("os.model.identifier")
+internal val deviceModelName: AttributeKey<String> = AttributeKey.stringKey("os.model.name")
+
+internal val osName: AttributeKey<String> = AttributeKey.stringKey("os.name")
+internal val osVersion: AttributeKey<String> = AttributeKey.stringKey("os.version")
+internal val osType: AttributeKey<String> = AttributeKey.stringKey("os.type")
+internal val osBuildId: AttributeKey<String> = AttributeKey.stringKey("os.build_id")
+
 internal val serviceName: AttributeKey<String> = AttributeKey.stringKey("service.name")
 internal val serviceVersion: AttributeKey<String> = AttributeKey.stringKey("service.version")

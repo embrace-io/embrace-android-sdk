@@ -47,7 +47,7 @@ internal interface Device {
     val model: String?
 
     /**
-     * Gets the operating system of the device. This is hard-coded to Android OS.
+     * Gets the operating system of the device. This is hard-coded to 'android'.
      *
      * @return the device's operating system
      */
@@ -207,7 +207,7 @@ internal class DeviceImpl(
     override val model: String = systemInfo.deviceModel
 
     /**
-     * Gets the operating system of the device. This is hard-coded to Android OS.
+     * Gets the operating system of the device. This is hard-coded to 'android'.
      *
      * @return the device's operating system
      */

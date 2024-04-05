@@ -27,7 +27,7 @@
             "jb": false,
             "lc": "en_US",
             "ms": "812531712",
-            "os": "Android OS",
+            "os": "android",
             "ov": "12",
             "oc": "32",
             "sr": "1080x2176",

@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName
-import io.embrace.android.embracesdk.findEvent
+import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -24,7 +24,7 @@ internal class CustomBreadcrumbFeatureTest {
             val message = checkNotNull(harness.recordSession {
                 embrace.addBreadcrumb("Hello, world!")
             })
-            val breadcrumb = message.findSessionSpan().findEvent(SchemaDefaultName.CUSTOM_BREADCRUMB)
+            val breadcrumb = message.findSessionSpan().findEventOfType(EmbType.System.Breadcrumb)
             assertEquals("Hello, world!", breadcrumb.attributes["message"])
         }
     }

@@ -363,7 +363,6 @@ internal class AeiDataSourceImplTest {
 
     private fun getAeiLogAttrs(): Map<String, String> {
         val logEventData = logWriter.logEvents.single()
-        assertEquals("emb-aei-record", logEventData.schemaType.defaultName)
         assertEquals(Severity.INFO, logEventData.severity)
         logEventData.assertIsType(EmbType.System.Exit)
         return logEventData.schemaType.attributes()

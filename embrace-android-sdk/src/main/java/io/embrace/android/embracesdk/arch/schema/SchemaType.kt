@@ -88,12 +88,12 @@ internal sealed class SchemaType(
 }
 
 /**
- * Note: Spans marked as internal will always be prefixed with "emb-", so the default name doesn't need to add this.
+ * Objects generated with a schema will always have the "emb-" prefixed added so the default name doesn't need to add it.
  */
 internal object SchemaDefaultName {
-    internal const val CUSTOM_BREADCRUMB = "emb-custom-breadcrumb"
+    internal const val CUSTOM_BREADCRUMB = "breadcrumb"
     internal const val VIEW_BREADCRUMB = "screen-view"
     internal const val TAP = "ui-tap"
-    internal const val AEI_RECORD = "emb-aei-record"
-    internal const val LOG = "emb-log"
+    internal const val AEI_RECORD = "aei-record"
+    internal const val LOG = "log"
 }

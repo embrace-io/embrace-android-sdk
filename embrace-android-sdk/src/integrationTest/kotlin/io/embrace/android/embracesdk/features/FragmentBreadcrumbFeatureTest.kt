@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpanAttribute
-import io.embrace.android.embracesdk.findSpans
-import io.embrace.android.embracesdk.internal.spans.toEmbraceObjectName
+import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -22,9 +22,9 @@ internal class FragmentBreadcrumbFeatureTest {
     @Test
     fun `fragment breadcrumb feature`() {
         with(testRule) {
-            var startTime: Long = 0
+            var startTimeMs: Long = 0
             val message = checkNotNull(harness.recordSession {
-                startTime = harness.fakeClock.now()
+                startTimeMs = harness.fakeClock.now()
                 embrace.startView("MyView")
                 harness.fakeClock.tick(1000L)
                 embrace.startView("AnotherView")
@@ -33,14 +33,24 @@ internal class FragmentBreadcrumbFeatureTest {
                 embrace.endView("AnotherView")
             })
 
-            val fragmentBreadcrumbs = message.findSpans(SchemaDefaultName.VIEW_BREADCRUMB.toEmbraceObjectName())
+            val fragmentBreadcrumbs = message.findSpansOfType(EmbType.Ux.View)
             assertEquals(2, fragmentBreadcrumbs.size)
 
             val breadcrumb1 = fragmentBreadcrumbs[0]
-            assertEquals("MyView", breadcrumb1.findSpanAttribute("view.name"))
+
+            with(breadcrumb1) {
+                assertEquals("MyView", findSpanAttribute("view.name"))
+                assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
+                assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
+            }
 
             val breadcrumb2 = fragmentBreadcrumbs[1]
-            assertEquals("AnotherView", breadcrumb2.findSpanAttribute("view.name"))
+            with(breadcrumb2) {
+                assertEquals("AnotherView", findSpanAttribute("view.name"))
+                assertEquals(startTimeMs + 1000L, startTimeNanos.nanosToMillis())
+                assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
+            }
+
         }
     }
 }

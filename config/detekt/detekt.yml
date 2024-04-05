@@ -48,6 +48,9 @@ potential-bugs:
   ElseCaseInsteadOfExhaustiveWhen:
     active: true
 style:
+  ForbiddenImport:
+    active: true
+    imports: [ 'android.util.Pair' ]
   ForbiddenComment:
     active: false
   MagicNumber:

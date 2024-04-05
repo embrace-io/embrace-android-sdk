@@ -9,5 +9,5 @@ import io.opentelemetry.api.common.AttributeKey
  * This workaround will be used until we can resolve that issue.
  */
 
-internal val serviceName = AttributeKey.stringKey("service.name")
-internal val serviceVersion = AttributeKey.stringKey("service.version")
+internal val serviceName: AttributeKey<String> = AttributeKey.stringKey("service.name")
+internal val serviceVersion: AttributeKey<String> = AttributeKey.stringKey("service.version")

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class CustomBreadcrumbTest {
+internal class BreadcrumbTest {
 
     private val info = CustomBreadcrumb(
         "test",

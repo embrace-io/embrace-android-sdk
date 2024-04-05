@@ -9,15 +9,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class CustomBreadcrumbDataSourceTest {
+internal class BreadcrumbDataSourceTest {
 
-    private lateinit var source: CustomBreadcrumbDataSource
+    private lateinit var source: BreadcrumbDataSource
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
         writer = FakeCurrentSessionSpan()
-        source = CustomBreadcrumbDataSource(
+        source = BreadcrumbDataSource(
             FakeConfigService().breadcrumbBehavior,
             writer,
             InternalEmbraceLogger(),

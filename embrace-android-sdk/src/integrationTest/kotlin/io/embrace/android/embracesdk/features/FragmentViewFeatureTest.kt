@@ -13,14 +13,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class FragmentBreadcrumbFeatureTest {
+internal class FragmentViewFeatureTest {
 
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
-    fun `fragment breadcrumb feature`() {
+    fun `fragment view feature`() {
         with(testRule) {
             var startTimeMs: Long = 0
             val message = checkNotNull(harness.recordSession {

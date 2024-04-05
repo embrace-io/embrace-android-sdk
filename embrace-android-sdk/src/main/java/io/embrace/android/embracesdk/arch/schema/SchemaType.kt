@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.arch.schema
 
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.AEI_RECORD
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.CUSTOM_BREADCRUMB
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.BREADCRUMB
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.LOG
 import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.TAP
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.VIEW_BREADCRUMB
+import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.VIEW
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -26,16 +26,16 @@ internal sealed class SchemaType(
      */
     fun attributes(): Map<String, String> = attrs.plus(telemetryType.toEmbraceKeyValuePair())
 
-    internal class CustomBreadcrumb(message: String) : SchemaType(
+    internal class Breadcrumb(message: String) : SchemaType(
         EmbType.System.Breadcrumb,
-        CUSTOM_BREADCRUMB
+        BREADCRUMB
     ) {
         override val attrs = mapOf("message" to message)
     }
 
-    internal class ViewBreadcrumb(viewName: String) : SchemaType(
+    internal class View(viewName: String) : SchemaType(
         EmbType.Ux.View,
-        VIEW_BREADCRUMB
+        VIEW
     ) {
         override val attrs = mapOf("view.name" to viewName)
     }
@@ -91,8 +91,8 @@ internal sealed class SchemaType(
  * Objects generated with a schema will always have the "emb-" prefixed added so the default name doesn't need to add it.
  */
 internal object SchemaDefaultName {
-    internal const val CUSTOM_BREADCRUMB = "breadcrumb"
-    internal const val VIEW_BREADCRUMB = "screen-view"
+    internal const val BREADCRUMB = "breadcrumb"
+    internal const val VIEW = "screen-view"
     internal const val TAP = "ui-tap"
     internal const val AEI_RECORD = "aei-record"
     internal const val LOG = "log"

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 /**
  * Captures custom breadcrumbs.
  */
-internal class TapBreadcrumbDataSource(
+internal class TapDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     private val logger: InternalEmbraceLogger
@@ -54,7 +54,7 @@ internal class TapBreadcrumbDataSource(
 
     override fun toSpanEventData(obj: TapBreadcrumb): SpanEventData {
         return SpanEventData(
-            SchemaType.TapBreadcrumb(
+            SchemaType.Tap(
                 obj.tappedElementName ?: "",
                 (obj.type ?: TapBreadcrumb.TapBreadcrumbType.TAP).value,
                 obj.location ?: ""

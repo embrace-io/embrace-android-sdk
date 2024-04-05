@@ -12,13 +12,13 @@ import org.junit.Test
 
 internal class TapBreadcrumbDataSourceTest {
 
-    private lateinit var source: TapBreadcrumbDataSource
+    private lateinit var source: TapDataSource
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
         writer = FakeCurrentSessionSpan()
-        source = TapBreadcrumbDataSource(
+        source = TapDataSource(
             FakeConfigService().breadcrumbBehavior,
             writer,
             InternalEmbraceLogger(),

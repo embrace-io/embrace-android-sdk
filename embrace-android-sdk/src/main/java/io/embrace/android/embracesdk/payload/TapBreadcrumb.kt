@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import android.util.Pair
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb

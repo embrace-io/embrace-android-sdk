@@ -100,7 +100,7 @@ internal class EmbraceInternalInterfaceTest {
                 )
             )
 
-            logComposeTap(android.util.Pair.create(0.0f, 0.0f), "")
+            logComposeTap(Pair(0.0f, 0.0f), "")
             assertFalse(shouldCaptureNetworkBody("", ""))
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
@@ -223,7 +223,7 @@ internal class EmbraceInternalInterfaceTest {
         with(testRule) {
             embrace.start(harness.fakeCoreModule.context)
             val session = harness.recordSession {
-                embrace.internalInterface.logComposeTap(android.util.Pair.create(expectedX, expectedY), expectedElementName)
+                embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
             }
 
             val tapBreadcrumb = checkNotNull(session?.breadcrumbs?.tapBreadcrumbs?.last())

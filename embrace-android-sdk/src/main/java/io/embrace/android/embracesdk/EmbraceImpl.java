@@ -5,7 +5,6 @@ import static io.embrace.android.embracesdk.event.EmbraceEventService.STARTUP_EV
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -72,6 +71,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import kotlin.Pair;
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this

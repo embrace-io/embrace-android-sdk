@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import android.util.Pair
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior

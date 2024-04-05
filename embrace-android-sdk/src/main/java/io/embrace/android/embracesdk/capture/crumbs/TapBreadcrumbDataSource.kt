@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import android.util.Pair
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger

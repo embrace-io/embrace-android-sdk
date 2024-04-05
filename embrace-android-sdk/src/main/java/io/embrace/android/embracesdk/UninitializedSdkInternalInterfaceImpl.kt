@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
-import android.util.Pair
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData

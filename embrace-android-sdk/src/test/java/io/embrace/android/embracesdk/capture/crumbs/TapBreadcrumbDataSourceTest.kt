@@ -49,8 +49,6 @@ internal class TapBreadcrumbDataSourceTest {
         }
     }
 
-
-
     @Test
     fun `limit not exceeded`() {
         val point = Pair(126f, 309f)

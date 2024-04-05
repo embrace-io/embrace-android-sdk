@@ -47,6 +47,8 @@ internal class InitModuleImpl(
 ) : InitModule {
 
     override val telemetryService: TelemetryService by singleton {
-        EmbraceTelemetryService()
+        EmbraceTelemetryService(
+            systemInfo = systemInfo
+        )
     }
 }

@@ -7,6 +7,7 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.annotation.ChecksSdkIntAtLeast
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -100,6 +101,7 @@ internal class DeviceImpl(
     private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
+    private val systemInfo: SystemInfo,
     cpuInfoDelegate: CpuInfoDelegate,
     private val logger: InternalEmbraceLogger
 ) : Device {
@@ -179,7 +181,7 @@ internal class DeviceImpl(
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
     private fun checkIfIsJailbroken(): Boolean {
-        if (isEmulator()) {
+        if (isEmulator(systemInfo)) {
             return false
         }
         for (location in jailbreakLocations) {
@@ -191,52 +193,32 @@ internal class DeviceImpl(
     }
 
     /**
-     * Tries to determine whether the device is an emulator by looking for known models and
-     * manufacturers which correspond to emulators.
-     *
-     * @return true if the device is detected to be an emulator, false otherwise
-     */
-    private fun isEmulator(): Boolean {
-        val isEmulator = Build.FINGERPRINT.startsWith("generic") ||
-            Build.FINGERPRINT.startsWith("unknown") ||
-            Build.FINGERPRINT.contains("emulator") ||
-            Build.MODEL.contains("google_sdk") ||
-            Build.MODEL.contains("sdk_gphone64") ||
-            Build.MODEL.contains("Emulator") ||
-            Build.MODEL.contains("Android SDK built for") ||
-            Build.MANUFACTURER.contains("Genymotion") ||
-            Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
-            Build.PRODUCT.equals("google_sdk")
-        return isEmulator
-    }
-
-    /**
      * Gets the name of the manufacturer of the device.
      *
      * @return the name of the device manufacturer
      */
-    override val manufacturer: String? = Build.MANUFACTURER
+    override val manufacturer: String = systemInfo.deviceManufacturer
 
     /**
      * Gets the name of the model of the device.
      *
      * @return the name of the model of the device
      */
-    override val model: String? = Build.MODEL
+    override val model: String = systemInfo.deviceModel
 
     /**
      * Gets the operating system of the device. This is hard-coded to Android OS.
      *
      * @return the device's operating system
      */
-    override val operatingSystemType: String = "Android OS"
+    override val operatingSystemType: String = systemInfo.osName
 
     /**
      * Gets the version of the installed operating system on the device.
      *
      * @return the version of the operating system
      */
-    override val operatingSystemVersion: String? = Build.VERSION.RELEASE
+    override val operatingSystemVersion: String = systemInfo.osVersion
 
     /**
      * Gets the version code of the running Android SDK.
@@ -244,7 +226,7 @@ internal class DeviceImpl(
      * @return the running Android SDK version code
      */
     @ChecksSdkIntAtLeast(parameter = 0)
-    override val operatingSystemVersionCode: Int = Build.VERSION.SDK_INT
+    override val operatingSystemVersionCode: Int = systemInfo.androidOsApiLevel.toInt()
 
     /**
      * Get the number of available cores for device info
@@ -265,3 +247,21 @@ internal class DeviceImpl(
 
     override val eglInfo: String? = cpuInfoDelegate.getEgl()
 }
+
+/**
+ * Tries to determine whether the device is an emulator by looking for known models and
+ * manufacturers which correspond to emulators.
+ *
+ * @return true if the device is detected to be an emulator, false otherwise
+ */
+internal fun isEmulator(systemInfo: SystemInfo): Boolean =
+    Build.FINGERPRINT.startsWith("generic") ||
+        Build.FINGERPRINT.startsWith("unknown") ||
+        Build.FINGERPRINT.contains("emulator") ||
+        systemInfo.deviceModel.contains("google_sdk") ||
+        systemInfo.deviceModel.contains("sdk_gphone64") ||
+        systemInfo.deviceModel.contains("Emulator") ||
+        systemInfo.deviceModel.contains("Android SDK built for") ||
+        systemInfo.deviceManufacturer.contains("Genymotion") ||
+        Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
+        Build.PRODUCT.equals("google_sdk")

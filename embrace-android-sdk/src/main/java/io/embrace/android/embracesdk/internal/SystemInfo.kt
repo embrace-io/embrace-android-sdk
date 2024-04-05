@@ -6,7 +6,7 @@ import android.os.Build
  * Information about the the device or OS that can be retrieved without disk or platform API access
  */
 internal data class SystemInfo(
-    val osName: String = "android",
+    val osName: String = "Android OS",
     val osType: String = "linux",
     val osBuild: String = getOsBuild(),
     val osVersion: String = getOsVersion(),

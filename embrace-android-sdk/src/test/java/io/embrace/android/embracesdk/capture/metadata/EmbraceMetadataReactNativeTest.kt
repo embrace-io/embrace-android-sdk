@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -71,6 +72,7 @@ internal class EmbraceMetadataReactNativeTest {
     private fun getMetadataService() = EmbraceMetadataService.ofContext(
         context,
         AppEnvironment.Environment.PROD,
+        SystemInfo(),
         buildInfo,
         configService,
         appFramework,

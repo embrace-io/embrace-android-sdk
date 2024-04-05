@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.telemetry
 
+import io.embrace.android.embracesdk.internal.SystemInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -7,11 +8,11 @@ import org.junit.Test
 
 internal class EmbraceTelemetryServiceTest {
 
-    private var embraceTelemetryService = EmbraceTelemetryService()
+    private lateinit var embraceTelemetryService: TelemetryService
 
     @Before
     fun setUp() {
-        embraceTelemetryService = EmbraceTelemetryService()
+        embraceTelemetryService = EmbraceTelemetryService(systemInfo = SystemInfo())
     }
 
     @Test

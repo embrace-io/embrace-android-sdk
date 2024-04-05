@@ -5,6 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
+import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
+import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
+import io.embrace.android.embracesdk.opentelemetry.embSequenceId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -36,8 +39,8 @@ internal class SpanTest {
             val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
             assertEquals(1, exportedSpans.size)
             val exportedSpan = exportedSpans[0]
-            assertEquals(1, exportedSpan.attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
-            assertEquals(1, exportedSpan.attributes.asMap().keys.filter { it.key == "emb.process_identifier" }.size)
+            exportedSpan.assertHasEmbraceAttribute(embSequenceId, "2")
+            exportedSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.initModule.processIdentifier)
             exportedSpan.resource.assertExpectedAttributes(
                 expectedServiceName = harness.openTelemetryModule.openTelemetryConfiguration.embraceServiceName,
                 expectedServiceVersion = harness.openTelemetryModule.openTelemetryConfiguration.embraceVersionName,

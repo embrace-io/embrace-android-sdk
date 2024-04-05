@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
+import io.embrace.android.embracesdk.opentelemetry.embSequenceId
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.ReadWriteSpan
@@ -21,8 +23,8 @@ internal class EmbraceSpanProcessor(
     private val counter = AtomicLong(1)
 
     override fun onStart(parentContext: Context, span: ReadWriteSpan) {
-        span.setSequenceId(counter.getAndIncrement())
-        span.setProcessIdentifier(processIdentifier)
+        span.setEmbraceAttribute(embSequenceId, counter.getAndIncrement().toString())
+        span.setEmbraceAttribute(embProcessIdentifier, processIdentifier)
     }
 
     override fun onEnd(span: ReadableSpan) {

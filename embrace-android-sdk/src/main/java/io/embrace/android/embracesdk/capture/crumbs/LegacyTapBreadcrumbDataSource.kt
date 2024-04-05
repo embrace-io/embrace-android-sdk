@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 /**
  * Captures tap breadcrumbs.
  */
-internal class TapBreadcrumbDataSource(
+internal class LegacyTapBreadcrumbDataSource(
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<TapBreadcrumb> = BreadcrumbDataStore {

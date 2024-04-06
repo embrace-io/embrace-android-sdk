@@ -20,11 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSpanImpl(
-    private val spanName: String,
-    private val openTelemetryClock: Clock,
     private val spanBuilder: EmbraceSpanBuilder,
-    override val parent: EmbraceSpan? = null,
-    private val spanRepository: SpanRepository? = null
+    private val openTelemetryClock: Clock,
+    private val spanRepository: SpanRepository
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -40,6 +38,8 @@ internal class EmbraceSpanImpl(
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
     private val eventCount = AtomicInteger(0)
+
+    override val parent: EmbraceSpan? = spanBuilder.parent
 
     override val traceId: String?
         get() = startedSpan.get()?.spanContext?.traceId
@@ -150,7 +150,7 @@ internal class EmbraceSpanImpl(
                 traceId = traceId,
                 spanId = spanId,
                 parentSpanId = parent?.spanId,
-                name = spanName,
+                name = spanBuilder.spanName,
                 startTimeUnixNano = spanStartTimeMs?.millisToNanos(),
                 endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
                 status = status,
@@ -177,16 +177,6 @@ internal class EmbraceSpanImpl(
         internal const val MAX_ATTRIBUTE_COUNT = 50
         internal const val MAX_ATTRIBUTE_KEY_LENGTH = 50
         internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 200
-
-        internal fun inputsValid(
-            name: String,
-            events: List<EmbraceSpanEvent>? = null,
-            attributes: Map<String, String>? = null
-        ) =
-            name.isNotBlank() &&
-                name.length <= MAX_NAME_LENGTH &&
-                (events == null || events.size <= MAX_EVENT_COUNT) &&
-                (attributes == null || attributes.size <= MAX_ATTRIBUTE_COUNT)
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH

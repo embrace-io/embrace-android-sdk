@@ -3,7 +3,9 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.assertSpanPayload
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -239,10 +241,11 @@ internal class TracingApiTest {
                 private = true
             )
 
-            assertEquals(1, checkNotNull(sessionMessage.spanSnapshots).size)
-            val snapshot = sessionMessage.spanSnapshots.first()
-
-            snapshot.assertSpanPayload(
+            assertEquals(2, checkNotNull(sessionMessage.spanSnapshots).size)
+            val snapshots = sessionMessage.spanSnapshots.associateBy { it.name }
+            val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
+            unendingSpanSnapshot.assertIsTypePerformance()
+            unendingSpanSnapshot.assertSpanPayload(
                 expectedStartTimeMs = testStartTimeMs + 700,
                 expectedEndTimeMs = null,
                 expectedParentId = null,
@@ -256,7 +259,15 @@ internal class TracingApiTest {
                 ),
                 key = true
             )
-            snapshot.assertIsTypePerformance()
+
+            val sessionSpanSnapshot = checkNotNull(snapshots["emb-session"])
+            sessionSpanSnapshot.assertIsType(EmbType.Ux.Session)
+            sessionSpanSnapshot.assertSpanPayload(
+                expectedStartTimeMs = sessionEndTime,
+                expectedEndTimeMs = null,
+                expectedParentId = null,
+                private = true
+            )
         }
     }
 

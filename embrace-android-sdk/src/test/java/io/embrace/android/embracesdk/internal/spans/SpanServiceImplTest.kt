@@ -46,10 +46,13 @@ internal class SpanServiceImplTest {
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spansService = SpanServiceImpl(
-            openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = initModule.openTelemetryModule.spanRepository,
             currentSessionSpan = currentSessionSpan,
-            tracer = initModule.openTelemetryModule.tracer
+            embraceSpanFactory = EmbraceSpanFactoryImpl(
+                tracer = initModule.openTelemetryModule.tracer,
+                openTelemetryClock = initModule.openTelemetryClock,
+                spanRepository = initModule.openTelemetryModule.spanRepository
+            )
         )
         spansService.initializeService(initModule.clock.now())
     }

@@ -6,19 +6,15 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation of the core logic for [SpanService]
  */
 internal class SpanServiceImpl(
-    private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val embraceSpanFactory: EmbraceSpanFactory,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val tracer: Tracer,
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 
@@ -33,15 +29,11 @@ internal class SpanServiceImpl(
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? {
         return if (inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            EmbraceSpanImpl(
-                spanBuilder = tracer.embraceSpanBuilder(
-                    name = name,
-                    type = type,
-                    internal = internal,
-                    parent = parent
-                ),
-                openTelemetryClock = openTelemetryClock,
-                spanRepository = spanRepository
+            embraceSpanFactory.create(
+                name = name,
+                type = type,
+                internal = internal,
+                parent = parent
             )
         } else {
             null
@@ -98,16 +90,20 @@ internal class SpanServiceImpl(
             return false
         }
 
-        return if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            tracer.embraceSpanBuilder(name = name, type = type, internal = internal, parent = parent)
-                .startSpan(startTimeMs)
-                .setAllAttributes(Attributes.builder().fromMap(attributes).build())
-                .addEvents(events)
-                .endSpan(errorCode, endTimeMs)
-            true
-        } else {
-            false
+        if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+            val newSpan = embraceSpanFactory.create(name = name, type = type, internal = internal, parent = parent)
+            if (newSpan.start(startTimeMs)) {
+                attributes.forEach {
+                    newSpan.addAttribute(it.key, it.value)
+                }
+                events.forEach {
+                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                }
+                return newSpan.stop(errorCode, endTimeMs)
+            }
         }
+
+        return false
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)

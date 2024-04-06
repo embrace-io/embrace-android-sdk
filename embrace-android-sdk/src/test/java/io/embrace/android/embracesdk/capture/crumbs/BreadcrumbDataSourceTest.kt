@@ -34,7 +34,7 @@ internal class BreadcrumbDataSourceTest {
     fun `add breadcrumb`() {
         source.logCustom("Hello, world!", 15000000000)
         with(writer.addedEvents.single()) {
-            assertEquals("breadcrumb", schemaType.defaultName)
+            assertEquals(EmbType.System.Breadcrumb, schemaType.telemetryType)
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
                 mapOf(

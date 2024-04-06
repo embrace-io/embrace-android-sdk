@@ -1,10 +1,5 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.AEI_RECORD
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.BREADCRUMB
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.LOG
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.TAP
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName.VIEW
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -12,12 +7,12 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 /**
  * The collections of attribute schemas used by the associated telemetry types.
  *
- * Each schema contains a [TelemetryType] that it is being applied to, as well as a [defaultName] used for the generated
- * telemetry data object if a fixed one is being used.
+ * Each schema contains a [TelemetryType] that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
+ * telemetry data object if the same, fixed name is used for every instance.
  */
 internal sealed class SchemaType(
     val telemetryType: TelemetryType,
-    val defaultName: String,
+    val fixedObjectName: String = "",
 ) {
     protected abstract val attrs: Map<String, String>
 
@@ -27,15 +22,15 @@ internal sealed class SchemaType(
     fun attributes(): Map<String, String> = attrs.plus(telemetryType.toEmbraceKeyValuePair())
 
     internal class Breadcrumb(message: String) : SchemaType(
-        EmbType.System.Breadcrumb,
-        BREADCRUMB
+        telemetryType = EmbType.System.Breadcrumb,
+        fixedObjectName = "breadcrumb"
     ) {
         override val attrs = mapOf("message" to message)
     }
 
     internal class View(viewName: String) : SchemaType(
-        EmbType.Ux.View,
-        VIEW
+        telemetryType = EmbType.Ux.View,
+        fixedObjectName = "screen-view"
     ) {
         override val attrs = mapOf("view.name" to viewName)
     }
@@ -51,8 +46,8 @@ internal sealed class SchemaType(
         type: String = "tap",
         coords: String
     ) : SchemaType(
-        EmbType.Ux.Tap,
-        TAP
+        telemetryType = EmbType.Ux.Tap,
+        fixedObjectName = "ui-tap"
     ) {
         override val attrs = mapOf(
             "view.name" to viewName,
@@ -61,10 +56,7 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class AeiLog(message: AppExitInfoData) : SchemaType(
-        EmbType.System.Exit,
-        AEI_RECORD
-    ) {
+    internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val attrs = mapOf(
             "session-id" to message.sessionId,
             "session-id-error" to message.sessionIdError,
@@ -79,21 +71,7 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class Log(attributes: EmbraceLogAttributes) : SchemaType(
-        EmbType.System.Log,
-        LOG
-    ) {
+    internal class Log(attributes: EmbraceLogAttributes) : SchemaType(EmbType.System.Log) {
         override val attrs = attributes.toMap()
     }
-}
-
-/**
- * Objects generated with a schema will always have the "emb-" prefixed added so the default name doesn't need to add it.
- */
-internal object SchemaDefaultName {
-    internal const val BREADCRUMB = "breadcrumb"
-    internal const val VIEW = "screen-view"
-    internal const val TAP = "ui-tap"
-    internal const val AEI_RECORD = "aei-record"
-    internal const val LOG = "log"
 }

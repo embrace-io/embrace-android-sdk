@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService

@@ -22,12 +22,6 @@ internal data class Breadcrumbs(
     val viewBreadcrumbs: List<ViewBreadcrumb>? = null,
 
     /**
-     * List of webview breadcrumbs.
-     */
-    @Json(name = "wv")
-    val webViewBreadcrumbs: List<WebViewBreadcrumb>? = null,
-
-    /**
      * List of RN Action breadcrumbs.
      */
     @Json(name = "rna")

@@ -10,7 +10,6 @@ internal class BreadcrumbsTest {
 
     private val info = Breadcrumbs(
         viewBreadcrumbs = listOf(ViewBreadcrumb("View", 1600000000)),
-        webViewBreadcrumbs = listOf(WebViewBreadcrumb("WebView", 1600000000)),
         rnActionBreadcrumbs = listOf(
             RnActionBreadcrumb(
                 "RnAction",
@@ -46,7 +45,6 @@ internal class BreadcrumbsTest {
         assertNotNull(obj.viewBreadcrumbs?.single())
         assertNotNull(obj.rnActionBreadcrumbs?.single())
         assertNotNull(obj.pushNotifications?.single())
-        assertNotNull(obj.webViewBreadcrumbs?.single())
     }
 
     @Test

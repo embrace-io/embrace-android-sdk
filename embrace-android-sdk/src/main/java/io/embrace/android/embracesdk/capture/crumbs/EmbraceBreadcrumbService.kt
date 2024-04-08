@@ -84,12 +84,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun logWebView(url: String?, startTime: Long) {
-        legacyWebViewBreadcrumbDataSource.logWebView(url, startTime)
+        webViewBreadcrumbDataSource.logWebView(url, startTime)
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(
         viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
-        webViewBreadcrumbs = legacyWebViewBreadcrumbDataSource.getCapturedData(),
         rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
         pushNotifications = pushNotificationBreadcrumbDataSource.getCapturedData()
     )
@@ -136,7 +135,6 @@ internal class EmbraceBreadcrumbService(
 
     override fun cleanCollections() {
         viewBreadcrumbDataSource.cleanCollections()
-        legacyWebViewBreadcrumbDataSource.cleanCollections()
         pushNotificationBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
     }

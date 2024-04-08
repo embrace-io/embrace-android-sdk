@@ -11,7 +11,6 @@ internal class BreadcrumbsSanitizerTest {
     private val breadcrumbs = Breadcrumbs(
         emptyList(),
         emptyList(),
-        emptyList(),
         emptyList()
     )
 
@@ -28,7 +27,6 @@ internal class BreadcrumbsSanitizerTest {
         val result = BreadcrumbsSanitizer(breadcrumbs, components).sanitize()
 
         assertNotNull(result?.viewBreadcrumbs)
-        assertNotNull(result?.webViewBreadcrumbs)
     }
 
     @Test
@@ -39,6 +37,5 @@ internal class BreadcrumbsSanitizerTest {
         val result = BreadcrumbsSanitizer(breadcrumbs, components).sanitize()
 
         assertNull(result?.viewBreadcrumbs)
-        assertNull(result?.webViewBreadcrumbs)
     }
 }

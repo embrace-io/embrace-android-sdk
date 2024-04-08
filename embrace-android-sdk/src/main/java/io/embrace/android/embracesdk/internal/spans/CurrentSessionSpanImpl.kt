@@ -113,16 +113,14 @@ internal class CurrentSessionSpanImpl(
     private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
         traceCount.set(0)
 
-        val spanName = "session".toEmbraceObjectName()
         return EmbraceSpanImpl(
-            spanName = spanName,
-            openTelemetryClock = openTelemetryClock,
             spanBuilder = tracerSupplier().embraceSpanBuilder(
-                name = spanName,
+                name = "session",
                 type = EmbType.Ux.Session,
-                internal = true,
-                parent = null
-            )
+                internal = true
+            ),
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository
         ).apply {
             start(startTimeMs = startTimeMs)
         }

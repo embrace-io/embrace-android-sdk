@@ -43,13 +43,12 @@ internal class EmbraceSpanImplTest {
         openTelemetryClock = fakeInitModule.openTelemetryClock
         spanRepository = SpanRepository()
         embraceSpan = EmbraceSpanImpl(
-            spanName = EXPECTED_SPAN_NAME,
-            openTelemetryClock = fakeInitModule.openTelemetryClock,
             spanBuilder = tracer.embraceSpanBuilder(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false
             ),
+            openTelemetryClock = fakeInitModule.openTelemetryClock,
             spanRepository = spanRepository
         )
         fakeClock.tick(100)
@@ -117,29 +116,6 @@ internal class EmbraceSpanImplTest {
                 expectedStatus = Span.Status.ERROR
             )
             validateStoppedSpan()
-        }
-    }
-
-    @Test
-    fun `validate usage without SpanRepository`() {
-        with(
-            EmbraceSpanImpl(
-                spanName = EXPECTED_SPAN_NAME,
-                openTelemetryClock = openTelemetryClock,
-                spanBuilder = tracer.embraceSpanBuilder(
-                    name = EXPECTED_SPAN_NAME,
-                    type = EmbType.Performance.Default,
-                    internal = false
-                ),
-            )
-        ) {
-            assertTrue(start())
-            assertTrue(isRecording)
-            assertTrue(stop())
-            assertFalse(isRecording)
-            assertNotNull(traceId)
-            assertNotNull(spanId)
-            assertNotNull(snapshot())
         }
     }
 

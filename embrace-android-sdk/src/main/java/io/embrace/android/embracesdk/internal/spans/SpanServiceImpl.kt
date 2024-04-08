@@ -32,13 +32,15 @@ internal class SpanServiceImpl(
     override fun initialized(): Boolean = initialized.get()
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? {
-        return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val spanName = createSpanName(name = name, internal = internal)
+        return if (inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             EmbraceSpanImpl(
-                spanName = spanName,
+                spanBuilder = tracer.embraceSpanBuilder(
+                    name = name,
+                    type = type,
+                    internal = internal,
+                    parent = parent
+                ),
                 openTelemetryClock = openTelemetryClock,
-                spanBuilder = tracer.embraceSpanBuilder(name = spanName, type = type, internal = internal, parent = parent),
-                parent = parent,
                 spanRepository = spanRepository
             )
         } else {
@@ -96,8 +98,8 @@ internal class SpanServiceImpl(
             return false
         }
 
-        return if (EmbraceSpanImpl.inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            tracer.embraceSpanBuilder(name = createSpanName(name, internal), type = type, internal = internal, parent = parent)
+        return if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+            tracer.embraceSpanBuilder(name = name, type = type, internal = internal, parent = parent)
                 .startSpan(startTimeMs)
                 .setAllAttributes(Attributes.builder().fromMap(attributes).build())
                 .addEvents(events)
@@ -110,12 +112,14 @@ internal class SpanServiceImpl(
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
 
-    private fun createSpanName(name: String, internal: Boolean): String =
-        if (internal) {
-            name.toEmbraceObjectName()
-        } else {
-            name
-        }
+    private fun inputsValid(
+        name: String,
+        events: List<EmbraceSpanEvent>? = null,
+        attributes: Map<String, String>? = null
+    ) = name.isNotBlank() &&
+        name.length <= EmbraceSpanImpl.MAX_NAME_LENGTH &&
+        (events == null || events.size <= EmbraceSpanImpl.MAX_EVENT_COUNT) &&
+        (attributes == null || attributes.size <= EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT)
 
     companion object {
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500

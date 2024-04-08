@@ -43,14 +43,7 @@ internal fun Tracer.embraceSpanBuilder(
     type: TelemetryType,
     internal: Boolean,
     parent: EmbraceSpan? = null
-): EmbraceSpanBuilder {
-    val builder = EmbraceSpanBuilder(spanBuilder(name), type, parent)
-    return if (internal) {
-        builder.makePrivate()
-    } else {
-        builder
-    }
-}
+): EmbraceSpanBuilder = EmbraceSpanBuilder(tracer = this, name = name, telemetryType = type, internal = internal, parent = parent)
 
 /**
  * Add the given list of [EmbraceSpanEvent] if they are valid

@@ -33,7 +33,7 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
      */
     internal sealed class System(subtype: String) : EmbType("sys", subtype) {
 
-        internal object Breadcrumb : System("custom_breadcrumb")
+        internal object Breadcrumb : System("breadcrumb")
 
         internal object Log : System("log")
 

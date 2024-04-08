@@ -37,11 +37,26 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         internal object Breadcrumb : System("breadcrumb")
 
-        internal object Log : System("log")
+        internal object Log : System("log") {
+            /**
+             * Attribute name for a unique id identifying the log
+             */
+            val embLogId = EmbraceAttributeKey("log_id")
+        }
 
         internal object Exception : System("exception")
 
-        internal object FlutterException : System("flutter_exception")
+        internal object FlutterException : System("flutter_exception") {
+            /**
+             * Attribute name for the exception context in a log representing an exception
+             */
+            val embFlutterExceptionContext = EmbraceAttributeKey("exception.context")
+
+            /**
+             * Attribute name for the exception library in a log representing an exception
+             */
+            val embFlutterExceptionLibrary = EmbraceAttributeKey("exception.library")
+        }
 
         internal object Exit : System("exit")
     }

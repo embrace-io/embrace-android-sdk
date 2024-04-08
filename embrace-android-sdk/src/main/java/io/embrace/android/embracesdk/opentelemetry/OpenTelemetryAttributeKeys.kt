@@ -22,3 +22,7 @@ internal val osBuildId: AttributeKey<String> = AttributeKey.stringKey("os.build_
 
 internal val serviceName: AttributeKey<String> = AttributeKey.stringKey("service.name")
 internal val serviceVersion: AttributeKey<String> = AttributeKey.stringKey("service.version")
+
+internal val exceptionMessage: AttributeKey<String> = AttributeKey.stringKey("exception.message")
+internal val exceptionStacktrace: AttributeKey<String> = AttributeKey.stringKey("exception.stacktrace")
+internal val exceptionType: AttributeKey<String> = AttributeKey.stringKey("exception.type")

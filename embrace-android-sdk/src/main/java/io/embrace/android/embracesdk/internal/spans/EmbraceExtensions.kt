@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -35,16 +36,6 @@ private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 
 /**
- * Attribute name for the monotonically increasing sequence ID given to completed [Span] that expected to sent to the server
- */
-private const val SEQUENCE_ID_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "sequence_id"
-
-/**
- * Attribute name for the unique ID assigned to each app instance
- */
-private const val PROCESS_IDENTIFIER_ATTRIBUTE_NAME = EMBRACE_ATTRIBUTE_NAME_PREFIX + "process_identifier"
-
-/**
  * Creates a new [SpanBuilder] that marks the resulting span as private if [internal] is true
  */
 internal fun Tracer.embraceSpanBuilder(
@@ -78,26 +69,12 @@ internal fun Span.addEvents(events: List<EmbraceSpanEvent>): Span {
     return this
 }
 
-/**
- * Monotonically increasing ID given to completed [Span] that expected to sent to the server. Can be used to track data loss on the server.
- */
-internal fun Span.setSequenceId(id: Long): Span {
-    setAttribute(SEQUENCE_ID_ATTRIBUTE_NAME, id)
+internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
+    setAttribute(key.name, value)
     return this
 }
 
-/**
- * Set the unique ID for this app launch
- */
-internal fun Span.setProcessIdentifier(id: String): Span {
-    setAttribute(PROCESS_IDENTIFIER_ATTRIBUTE_NAME, id)
-    return this
-}
-
-internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span {
-    setAttribute(fixedAttribute.key.name, fixedAttribute.value)
-    return this
-}
+internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
 
 /**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]

@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class CustomBreadcrumbFeatureTest {
+internal class BreadcrumbFeatureTest {
 
     @Rule
     @JvmField

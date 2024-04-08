@@ -114,11 +114,11 @@ internal class FakePersistableEmbraceSpan(
      * Should only used if this is being used to fake a session span
      */
     fun addCustomBreadcrumb(name: String, timestampMs: Long?) {
-        val customBreadcrumb = SpanEventData(
-            schemaType = SchemaType.CustomBreadcrumb(name),
+        val breadcrumb = SpanEventData(
+            schemaType = SchemaType.Breadcrumb(name),
             spanStartTimeMs = timestampMs ?: fakeClock.now()
         )
-        addEvent(customBreadcrumb.schemaType.defaultName, customBreadcrumb.spanStartTimeMs, attributes)
+        addEvent(breadcrumb.schemaType.defaultName, breadcrumb.spanStartTimeMs, attributes)
     }
 
     companion object {

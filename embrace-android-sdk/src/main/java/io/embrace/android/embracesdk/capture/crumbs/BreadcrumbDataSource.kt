@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 
 /**
- * Captures custom breadcrumbs.
+ * Captures breadcrumbs.
  */
-internal class CustomBreadcrumbDataSource(
+internal class BreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     logger: InternalEmbraceLogger
@@ -39,7 +39,7 @@ internal class CustomBreadcrumbDataSource(
 
     override fun toSpanEventData(obj: CustomBreadcrumb): SpanEventData {
         return SpanEventData(
-            SchemaType.CustomBreadcrumb(obj.message ?: ""),
+            SchemaType.Breadcrumb(obj.message ?: ""),
             obj.timestamp.millisToNanos()
         )
     }

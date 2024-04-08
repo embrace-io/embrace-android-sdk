@@ -15,9 +15,9 @@ import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
- * Captures fragment breadcrumbs.
+ * Captures fragment views.
  */
-internal class FragmentBreadcrumbDataSource(
+internal class FragmentViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService,
@@ -73,7 +73,7 @@ internal class FragmentBreadcrumbDataSource(
 
     override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
         StartSpanData(
-            schemaType = SchemaType.ViewBreadcrumb(name),
+            schemaType = SchemaType.View(name),
             spanStartTimeMs = start,
         )
     }

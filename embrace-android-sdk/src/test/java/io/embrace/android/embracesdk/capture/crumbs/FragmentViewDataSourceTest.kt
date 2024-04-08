@@ -11,19 +11,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class FragmentBreadcrumbDataSourceTest {
+internal class FragmentViewDataSourceTest {
 
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
-    private lateinit var dataSource: FragmentBreadcrumbDataSource
+    private lateinit var dataSource: FragmentViewDataSource
 
     @Before
     fun setUp() {
         configService = FakeConfigService()
         clock = FakeClock()
         spanService = FakeSpanService()
-        dataSource = FragmentBreadcrumbDataSource(
+        dataSource = FragmentViewDataSource(
             configService.breadcrumbBehavior,
             clock,
             spanService,

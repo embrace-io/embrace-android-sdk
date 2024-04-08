@@ -34,13 +34,13 @@ internal class EmbraceBreadcrumbService(
     private val logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val customBreadcrumbDataSource =
-        CustomBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
+    private val breadcrumbDataSource =
+        BreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
     private val webViewBreadcrumbDataSource = WebViewBreadcrumbDataSource(configService, logger)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
     private val legacyTapBreadcrumbDataSource = LegacyTapBreadcrumbDataSource(configService, logger)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
-    private val fragmentBreadcrumbDataSource = FragmentBreadcrumbDataSource(
+    private val fragmentViewDataSource = FragmentViewDataSource(
         configService.breadcrumbBehavior,
         clock,
         spanService,
@@ -58,11 +58,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun startView(name: String?): Boolean {
-        return fragmentBreadcrumbDataSource.startFragment(name)
+        return fragmentViewDataSource.startFragment(name)
     }
 
     override fun endView(name: String?): Boolean {
-        return fragmentBreadcrumbDataSource.endFragment(name)
+        return fragmentViewDataSource.endFragment(name)
     }
 
     override fun logTap(
@@ -75,7 +75,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun logCustom(message: String, timestamp: Long) {
-        customBreadcrumbDataSource.logCustom(message, timestamp)
+        breadcrumbDataSource.logCustom(message, timestamp)
     }
 
     override fun logRnAction(
@@ -138,7 +138,7 @@ internal class EmbraceBreadcrumbService(
             return
         }
         viewBreadcrumbDataSource.onViewClose()
-        fragmentBreadcrumbDataSource.onViewClose()
+        fragmentViewDataSource.onViewClose()
     }
 
     override fun cleanCollections() {

@@ -25,8 +25,8 @@ internal class DataSourceModuleImplTest {
             FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
         )
         assertNotNull(module.getDataSources())
-        assertNotNull(module.customBreadcrumbDataSource)
-        assertNotNull(module.fragmentBreadcrumbDataSource)
+        assertNotNull(module.breadcrumbDataSource)
+        assertNotNull(module.fragmentViewDataSource)
         assertEquals(2, module.getDataSources().size)
     }
 }

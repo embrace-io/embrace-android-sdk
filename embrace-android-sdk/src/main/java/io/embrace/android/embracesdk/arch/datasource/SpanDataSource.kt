@@ -40,7 +40,7 @@ internal interface SpanDataSource : DataSource<SpanService> {
 internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanData): EmbraceSpan? {
     val data = obj.mapper()
     return startSpan(
-        name = data.schemaType.defaultName,
+        name = data.schemaType.fixedObjectName,
         type = data.schemaType.telemetryType,
         startTimeMs = data.spanStartTimeMs
     )?.apply {

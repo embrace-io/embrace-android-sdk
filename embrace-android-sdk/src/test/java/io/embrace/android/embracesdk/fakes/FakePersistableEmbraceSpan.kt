@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
-import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
@@ -109,17 +107,6 @@ internal class FakePersistableEmbraceSpan(
 
     override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
-
-    /**
-     * Should only used if this is being used to fake a session span
-     */
-    fun addCustomBreadcrumb(name: String, timestampMs: Long?) {
-        val breadcrumb = SpanEventData(
-            schemaType = SchemaType.Breadcrumb(name),
-            spanStartTimeMs = timestampMs ?: fakeClock.now()
-        )
-        addEvent(breadcrumb.schemaType.defaultName, breadcrumb.spanStartTimeMs, attributes)
-    }
 
     companion object {
         fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =

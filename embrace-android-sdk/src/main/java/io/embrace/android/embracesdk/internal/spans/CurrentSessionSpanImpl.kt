@@ -96,7 +96,7 @@ internal class CurrentSessionSpanImpl(
         val currentSession = sessionSpan.get() ?: return false
         val event = obj.mapper()
         return currentSession.addEvent(
-            event.schemaType.defaultName.toEmbraceObjectName(),
+            event.schemaType.fixedObjectName.toEmbraceObjectName(),
             event.spanStartTimeMs,
             event.schemaType.attributes()
         )

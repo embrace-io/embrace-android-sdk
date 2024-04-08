@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
@@ -36,6 +37,13 @@ internal interface InitModule {
      * Info about the system available at startup time without expensive disk or API calls
      */
     val systemInfo: SystemInfo
+
+    /**
+     * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.
+     * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
+     * this out by proximity for stitched sessions.
+     */
+    val processIdentifier: String
 }
 
 internal class InitModuleImpl(
@@ -51,4 +59,6 @@ internal class InitModuleImpl(
             systemInfo = systemInfo
         )
     }
+
+    override val processIdentifier: String = IdGenerator.generateLaunchInstanceId()
 }

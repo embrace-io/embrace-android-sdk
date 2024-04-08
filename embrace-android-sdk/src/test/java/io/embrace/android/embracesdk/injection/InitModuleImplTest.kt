@@ -21,6 +21,7 @@ internal class InitModuleImplTest {
         assertTrue(initModule.clock is NormalizedIntervalClock)
         assertTrue(initModule.telemetryService is EmbraceTelemetryService)
         assertEquals(initModule.systemInfo, SystemInfo())
+        assertEquals(initModule.processIdentifier.length, 16)
     }
 
     @Test

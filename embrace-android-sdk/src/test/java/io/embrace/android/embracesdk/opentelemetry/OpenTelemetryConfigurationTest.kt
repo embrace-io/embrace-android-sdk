@@ -23,7 +23,8 @@ internal class OpenTelemetryConfigurationTest {
         val configuration = OpenTelemetryConfiguration(
             spanSink = SpanSinkImpl(),
             logSink = LogSinkImpl(),
-            systemInfo = systemInfo
+            systemInfo = systemInfo,
+            processIdentifier = "fakeProcessIdentifier"
         )
 
         assertEquals(configuration.embraceServiceName, configuration.resource.getAttribute(serviceName))

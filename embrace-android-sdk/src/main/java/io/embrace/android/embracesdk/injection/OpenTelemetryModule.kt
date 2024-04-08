@@ -96,7 +96,8 @@ internal class OpenTelemetryModuleImpl(
         OpenTelemetryConfiguration(
             spanSink,
             logSink,
-            initModule.systemInfo
+            initModule.systemInfo,
+            initModule.processIdentifier,
         )
     }
 

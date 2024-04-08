@@ -30,7 +30,8 @@ internal class OpenTelemetrySdkTest {
         configuration = OpenTelemetryConfiguration(
             spanSink = spanSink,
             logSink = logSink,
-            systemInfo = systemInfo
+            systemInfo = systemInfo,
+            processIdentifier = "fakeProcessIdentifier"
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()

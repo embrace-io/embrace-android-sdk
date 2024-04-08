@@ -17,7 +17,8 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 internal class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
-    systemInfo: SystemInfo
+    systemInfo: SystemInfo,
+    processIdentifier: String
 ) {
     val embraceServiceName = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceVersionName = BuildConfig.VERSION_NAME
@@ -38,7 +39,10 @@ internal class OpenTelemetryConfiguration(
     private val logExporters = mutableListOf<LogRecordExporter>(EmbraceLogRecordExporter(logSink))
 
     val spanProcessor: SpanProcessor by lazy {
-        EmbraceSpanProcessor(SpanExporter.composite(spanExporters))
+        EmbraceSpanProcessor(
+            SpanExporter.composite(spanExporters),
+            processIdentifier
+        )
     }
 
     val logProcessor: LogRecordProcessor by lazy {

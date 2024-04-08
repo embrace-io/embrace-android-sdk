@@ -37,6 +37,7 @@ internal class SpanTest {
             assertEquals(1, exportedSpans.size)
             val exportedSpan = exportedSpans[0]
             assertEquals(1, exportedSpan.attributes.asMap().keys.filter { it.key == "emb.sequence_id" }.size)
+            assertEquals(1, exportedSpan.attributes.asMap().keys.filter { it.key == "emb.process_identifier" }.size)
             exportedSpan.resource.assertExpectedAttributes(
                 expectedServiceName = harness.openTelemetryModule.openTelemetryConfiguration.embraceServiceName,
                 expectedServiceVersion = harness.openTelemetryModule.openTelemetryConfiguration.embraceVersionName,

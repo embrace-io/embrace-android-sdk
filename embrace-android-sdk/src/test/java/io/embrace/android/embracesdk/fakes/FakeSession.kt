@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -41,7 +42,7 @@ internal fun fakeV1EndedSessionMessageWithSnapshot(): SessionMessage = SessionMe
         endTime = 161000400000L
     ),
     spans = listOfNotNull(testSpan),
-    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()),
+    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
 )
 
 internal fun fakeV2SessionMessage(): SessionMessage = SessionMessage(

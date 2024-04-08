@@ -46,23 +46,51 @@ internal fun Map<String, String>.toNewPayload(): List<Attribute> =
 internal fun List<Attribute>.toOldPayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-internal fun Span.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
-    val newAttributes = attributes?.toOldPayload()?.toMutableMap()?.apply {
-        setFixedAttribute(ErrorCodeAttribute.Failure)
-        if (hasFixedAttribute(EmbType.Ux.Session)) {
-            setFixedAttribute(AppTerminationCause.Crash)
-        }
-    } ?: emptyMap()
-
+internal fun Span.toOldPayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
         parentSpanId = parentSpanId ?: SpanId.getInvalid(),
         name = name ?: "",
         startTimeNanos = startTimeUnixNano ?: 0,
+        endTimeNanos = endTimeUnixNano ?: 0L,
+        status = when (status) {
+            Span.Status.UNSET -> StatusCode.UNSET
+            Span.Status.OK -> StatusCode.OK
+            Span.Status.ERROR -> StatusCode.ERROR
+            else -> StatusCode.UNSET
+        },
+        events = events?.map { it.toOldPayload() } ?: emptyList(),
+        attributes = attributes?.toOldPayload() ?: emptyMap()
+    )
+}
+
+internal fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
+    val newAttributes = mutableMapOf<String, String>().apply {
+        setFixedAttribute(ErrorCodeAttribute.Failure)
+        if (hasFixedAttribute(EmbType.Ux.Session)) {
+            setFixedAttribute(AppTerminationCause.Crash)
+        }
+    }
+
+    return copy(
         endTimeNanos = endTimeMs.millisToNanos(),
         status = StatusCode.ERROR,
-        events = events?.map { it.toOldPayload() } ?: emptyList(),
-        attributes = newAttributes
+        attributes = attributes.plus(newAttributes)
+    )
+}
+
+internal fun Span.toFailedSpan(endTimeMs: Long): Span {
+    val newAttributes = mutableMapOf<String, String>().apply {
+        setFixedAttribute(ErrorCodeAttribute.Failure)
+        if (hasFixedAttribute(EmbType.Ux.Session)) {
+            setFixedAttribute(AppTerminationCause.Crash)
+        }
+    }
+
+    return copy(
+        endTimeUnixNano = endTimeMs.millisToNanos(),
+        status = Span.Status.ERROR,
+        attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
     )
 }

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessageWithSnapshot
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
@@ -132,7 +131,7 @@ internal class EmbraceDeliveryServiceTest {
         val snapshot = checkNotNull(sessionWithSnapshot.spanSnapshots).single()
         assertEmbraceSpanData(
             span = sentSession.spans?.single { it.spanId == snapshot.spanId },
-            expectedStartTimeMs = checkNotNull(snapshot.startTimeUnixNano?.nanosToMillis()),
+            expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos.nanosToMillis()),
             expectedEndTimeMs = checkNotNull(sessionWithSnapshot.session.endTime),
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
@@ -146,7 +145,7 @@ internal class EmbraceDeliveryServiceTest {
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         val startedSnapshot = EmbraceSpanData(perfSpanSnapshot)
         val completedSpan = startedSnapshot.copy(status = StatusCode.OK, endTimeNanos = startedSnapshot.startTimeNanos + 10000000L)
-        val snapshots = listOfNotNull(startedSnapshot.toNewPayload())
+        val snapshots = listOfNotNull(startedSnapshot)
         val spans = listOf(completedSpan)
         val messedUpSession = fakeV1EndedSessionMessage().copy(spans = spans, spanSnapshots = snapshots)
         assertEquals(1, messedUpSession.spans?.size)

@@ -53,16 +53,40 @@ internal class SpanMapperTest {
         assertEquals(snapshot.spanId, failedSpan.spanId)
         assertEquals(snapshot.parentSpanId, failedSpan.parentSpanId)
         assertEquals(snapshot.name, failedSpan.name)
-        assertEquals(snapshot.startTimeUnixNano, failedSpan.startTimeNanos)
+        assertEquals(snapshot.startTimeUnixNano, failedSpan.startTimeUnixNano)
+        assertEquals(terminationTimeMs, failedSpan.endTimeUnixNano?.nanosToMillis())
+        assertEquals(Span.Status.ERROR, checkNotNull(failedSpan.status))
+        assertEquals(snapshot.events?.single(), failedSpan.events?.single())
+        failedSpan.assertError(ErrorCode.FAILURE)
+        failedSpan.assertIsTypePerformance()
+        failedSpan.assertIsKeySpan()
+        failedSpan.assertNotPrivateSpan()
+        val attributesOfFailedSpan = failedSpan.attributes?.associate { it.key to it.data } ?: emptyMap()
+        checkNotNull(snapshot.attributes).forEach {
+            assertEquals(attributesOfFailedSpan[it.key], it.data)
+        }
+    }
+
+    @Test
+    fun `terminating span snapshot as old payload works as expected`() {
+        val snapshot = EmbraceSpanData(FakeSpanData.perfSpanSnapshot)
+        val terminationTimeMs = snapshot.startTimeNanos.nanosToMillis() + 60000L
+        val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
+
+        assertEquals(snapshot.traceId, failedSpan.traceId)
+        assertEquals(snapshot.spanId, failedSpan.spanId)
+        assertEquals(snapshot.parentSpanId, failedSpan.parentSpanId)
+        assertEquals(snapshot.name, failedSpan.name)
+        assertEquals(snapshot.startTimeNanos, failedSpan.startTimeNanos)
         assertEquals(terminationTimeMs, failedSpan.endTimeNanos.nanosToMillis())
         assertEquals(StatusCode.ERROR, checkNotNull(failedSpan.status))
-        assertEquals(snapshot.events?.single(), failedSpan.events.single().toNewPayload())
+        assertEquals(snapshot.events.single(), failedSpan.events.single())
         failedSpan.assertError(ErrorCode.FAILURE)
         failedSpan.assertIsTypePerformance()
         failedSpan.assertIsKeySpan()
         failedSpan.assertNotPrivateSpan()
         checkNotNull(snapshot.attributes).forEach {
-            assertEquals(failedSpan.attributes[it.key], it.data)
+            assertEquals(failedSpan.attributes[it.key], it.value)
         }
     }
 }

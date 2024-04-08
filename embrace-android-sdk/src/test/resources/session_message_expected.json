@@ -49,11 +49,13 @@
     {
       "trace_id": "snapshot-trace-id",
       "span_id": "snapshot-span-id",
+      "parent_span_id": "0000000000000000",
       "name": "snapshot",
       "start_time_unix_nano": 1692201601000,
-      "status": "Unset",
+      "end_time_unix_nano": 0,
+      "status": "UNSET",
       "events": [],
-      "attributes": []
+      "attributes": {}
     }
   ],
   "v": 13

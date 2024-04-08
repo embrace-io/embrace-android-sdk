@@ -7,18 +7,17 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.assertions.assertSpanPayload
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -245,27 +244,31 @@ internal class TracingApiTest {
             val snapshots = sessionMessage.spanSnapshots.associateBy { it.name }
             val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
             unendingSpanSnapshot.assertIsTypePerformance()
-            unendingSpanSnapshot.assertSpanPayload(
+            assertEmbraceSpanData(
+                span = unendingSpanSnapshot,
                 expectedStartTimeMs = testStartTimeMs + 700,
-                expectedEndTimeMs = null,
-                expectedParentId = null,
+                expectedEndTimeMs = 0L,
+                expectedParentId = SpanId.getInvalid(),
+                expectedStatus = StatusCode.UNSET,
                 expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
                 expectedEvents = listOfNotNull(
                     EmbraceSpanEvent.create(
                         name = "unending-event",
                         timestampMs = testStartTimeMs + 800,
                         attributes = null
-                    )?.toNewPayload()
+                    )
                 ),
                 key = true
             )
 
             val sessionSpanSnapshot = checkNotNull(snapshots["emb-session"])
             sessionSpanSnapshot.assertIsType(EmbType.Ux.Session)
-            sessionSpanSnapshot.assertSpanPayload(
+            assertEmbraceSpanData(
+                span = sessionSpanSnapshot,
                 expectedStartTimeMs = sessionEndTime,
-                expectedEndTimeMs = null,
-                expectedParentId = null,
+                expectedEndTimeMs = 0L,
+                expectedParentId = SpanId.getInvalid(),
+                expectedStatus = StatusCode.UNSET,
                 private = true
             )
         }

@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.telemetry.TelemetryService
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -21,7 +20,7 @@ internal class CurrentSessionSpanImpl(
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
-    private val tracerSupplier: Provider<Tracer>,
+    private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
 ) : CurrentSessionSpan, SessionSpanWriter {
 
     /**
@@ -113,14 +112,10 @@ internal class CurrentSessionSpanImpl(
     private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
         traceCount.set(0)
 
-        return EmbraceSpanImpl(
-            spanBuilder = tracerSupplier().embraceSpanBuilder(
-                name = "session",
-                type = EmbType.Ux.Session,
-                internal = true
-            ),
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository
+        return embraceSpanFactorySupplier().create(
+            name = "session",
+            type = EmbType.Ux.Session,
+            internal = true
         ).apply {
             start(startTimeMs = startTimeMs)
         }

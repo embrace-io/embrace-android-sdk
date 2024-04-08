@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
@@ -114,23 +116,29 @@ internal class OpenTelemetryModuleImpl(
         openTelemetrySdk.getOpenTelemetryTracer()
     }
 
+    private val embraceSpanFactory: EmbraceSpanFactory by singleton {
+        EmbraceSpanFactoryImpl(
+            tracer = tracer,
+            openTelemetryClock = initModule.openTelemetryClock,
+            spanRepository = spanRepository
+        )
+    }
+
     override val currentSessionSpan: CurrentSessionSpan by lazy {
         CurrentSessionSpanImpl(
             openTelemetryClock = initModule.openTelemetryClock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
-            tracerSupplier = { tracer }
+            embraceSpanFactorySupplier = { embraceSpanFactory }
         )
     }
 
     override val spanService: SpanService by singleton {
         EmbraceSpanService(
-            openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = spanRepository,
             currentSessionSpan = currentSessionSpan,
-            tracerSupplier = { tracer },
-        )
+        ) { embraceSpanFactory }
     }
 
     override val embraceTracer: EmbraceTracer by singleton {

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 /**
  * Captures webview breadcrumbs.
  */
-internal class WebViewBreadcrumbDataSource(
+internal class LegacyWebViewBreadcrumbDataSource(
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
     private val store: BreadcrumbDataStore<WebViewBreadcrumb> = BreadcrumbDataStore {

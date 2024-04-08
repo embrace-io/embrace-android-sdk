@@ -25,6 +25,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object View : Ux("view")
 
         internal object Tap : Ux("tap")
+
+        internal object WebView : Ux("webview")
     }
 
     /**

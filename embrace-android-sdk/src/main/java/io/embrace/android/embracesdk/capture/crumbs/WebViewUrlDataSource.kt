@@ -10,11 +10,12 @@ import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 
 /**
  * Captures custom breadcrumbs.
  */
-internal class TapDataSource(
+internal class WebViewUrlDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     private val logger: InternalEmbraceLogger
@@ -23,43 +24,43 @@ internal class TapDataSource(
     logger = logger,
     limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getTapBreadcrumbLimit)
 ),
-    SpanEventMapper<TapBreadcrumb> {
+    SpanEventMapper<WebViewBreadcrumb> {
 
-    fun logTap(
-        point: Pair<Float?, Float?>,
-        element: String,
-        timestamp: Long,
-        type: TapBreadcrumb.TapBreadcrumbType
-    ) {
+    companion object {
+        private const val QUERY_PARAMETER_DELIMITER = "?"
+    }
+
+    fun logWebView(url: String?, startTime: Long) {
         try {
-            val finalPoint =
-                if (breadcrumbBehavior.isTapCoordinateCaptureEnabled()) {
-                    point
-                } else {
-                    Pair(0.0f, 0.0f)
-                }
             alterSessionSpan(
                 inputValidation = {
-                    true
+                    breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() && url != null
                 },
                 captureAction = {
-                    val crumb = TapBreadcrumb(finalPoint, element, timestamp, type)
+                    // Check if web view query params should be captured.
+                    var parsedUrl: String = url ?: ""
+                    if (!breadcrumbBehavior.isQueryParamCaptureEnabled()) {
+                        val queryOffset = url?.indexOf(QUERY_PARAMETER_DELIMITER) ?: 0
+                        if (queryOffset > 0) {
+                            parsedUrl = url?.substring(0, queryOffset) ?: ""
+                        }
+                    }
+
+                    val crumb = WebViewBreadcrumb(parsedUrl, startTime)
                     addEvent(crumb, ::toSpanEventData)
                 }
             )
         } catch (ex: Exception) {
-            logger.logError("Failed to log tap breadcrumb for element $element", ex)
+            logger.logError("Failed to log WebView breadcrumb for url $url")
         }
     }
 
-    override fun toSpanEventData(obj: TapBreadcrumb): SpanEventData {
+    override fun toSpanEventData(obj: WebViewBreadcrumb): SpanEventData {
         return SpanEventData(
-            SchemaType.Tap(
-                obj.tappedElementName ?: "",
-                (obj.type ?: TapBreadcrumb.TapBreadcrumbType.TAP).value,
-                obj.location ?: ""
+            SchemaType.WebViewUrl(
+                obj.url
             ),
-            obj.timestamp.millisToNanos()
+            obj.startTime.millisToNanos()
         )
     }
 }

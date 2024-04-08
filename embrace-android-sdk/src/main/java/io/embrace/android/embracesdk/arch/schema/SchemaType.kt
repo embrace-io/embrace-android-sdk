@@ -56,6 +56,17 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
+    internal class WebViewUrl(
+        url: String
+    ) : SchemaType(
+        telemetryType = EmbType.Ux.WebView,
+        fixedObjectName = "web-view"
+    ) {
+        override val attrs = mapOf(
+            "webview.url" to url
+        ).toNonNullMap()
+    }
+
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val attrs = mapOf(
             "session-id" to message.sessionId,

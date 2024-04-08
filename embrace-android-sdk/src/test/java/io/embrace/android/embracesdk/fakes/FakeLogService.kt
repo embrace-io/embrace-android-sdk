@@ -7,11 +7,12 @@ import io.embrace.android.embracesdk.internal.logs.LogService
 
 internal class FakeLogService : LogService {
 
-    val loggedMessages = mutableListOf<String>()
-    val loggedExceptions = mutableListOf<String>()
+    val logs = mutableListOf<String>()
+    val exceptions = mutableListOf<String>()
+    val flutterExceptions = mutableListOf<String>()
 
     override fun log(message: String, severity: Severity, properties: Map<String, Any>?) {
-        loggedMessages.add(message)
+        logs.add(message)
     }
 
     override fun logException(
@@ -19,15 +20,26 @@ internal class FakeLogService : LogService {
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
+        stackTrace: String?,
         framework: Embrace.AppFramework,
-        context: String?,
-        library: String?,
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        loggedExceptions.add(message)
+        exceptions.add(message)
+    }
+
+    override fun logFlutterException(
+        message: String,
+        severity: Severity,
+        logExceptionType: LogExceptionType,
+        properties: Map<String, Any>?,
+        stackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
+        context: String?,
+        library: String?,
+    ) {
+        flutterExceptions.add(message)
     }
 
     override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {

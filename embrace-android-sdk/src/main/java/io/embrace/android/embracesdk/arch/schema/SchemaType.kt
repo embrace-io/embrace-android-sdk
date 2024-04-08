@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.internal.logs.EmbraceLogAttributes
+import io.embrace.android.embracesdk.internal.logs.ExceptionAttributes
+import io.embrace.android.embracesdk.internal.logs.FlutterExceptionAttributes
+import io.embrace.android.embracesdk.internal.logs.LogAttributes
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 
@@ -71,7 +73,19 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class Log(attributes: EmbraceLogAttributes) : SchemaType(EmbType.System.Log) {
+    internal class Log(attributes: LogAttributes) : SchemaType(EmbType.System.Log) {
+        override val attrs = attributes.toMap()
+    }
+
+    internal class Exception(attributes: ExceptionAttributes) : SchemaType(
+        EmbType.System.Exception
+    ) {
+        override val attrs = attributes.toMap()
+    }
+
+    internal class FlutterException(attributes: FlutterExceptionAttributes) : SchemaType(
+        EmbType.System.FlutterException
+    ) {
         override val attrs = attributes.toMap()
     }
 }

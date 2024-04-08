@@ -28,11 +28,8 @@ internal interface LogService : BaseLogService {
      * @param message            the message to log
      * @param logExceptionType   whether the log is a handled exception, unhandled, or non an exception
      * @param properties         custom properties to send as part of the event
-     * @param stackTraceElements the stacktrace elements of a throwable
-     * @param customStackTrace   stacktrace string for non-JVM exceptions
+     * @param stackTrace         stacktrace string for non-JVM exceptions
      * @param framework          the app framework (Native, Unity, etc) for the exception
-     * @param context            context for a Dart exception from the Flutter SDK
-     * @param library            library from a Dart exception from the Flutter SDK
      * @param exceptionName      the exception name of a Throwable is it is present
      * @param exceptionMessage   the exception message of a Throwable is it is present
      */
@@ -42,12 +39,37 @@ internal interface LogService : BaseLogService {
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
+        stackTrace: String?,
         framework: AppFramework,
-        context: String?,
-        library: String?,
         exceptionName: String?,
         exceptionMessage: String?
+    )
+
+    /**
+     * Creates a log for a Flutter exception.
+     *
+     * @param message           the message to log
+     * @param severity          severity associated to the log, one INFO, WARNING, or ERROR
+     * @param logExceptionType  whether the log is a handled exception, unhandled, or non an exception
+     * @param properties        custom properties to send as part of the event
+     * @param stackTrace        stacktrace string for non-JVM exceptions
+     * @param context           the context of the exception
+     * @param library           the library of the exception
+     * @param exceptionName     the exception name of a Throwable is it is present
+     * @param exceptionMessage  the exception message of a Throwable is it is present
+     * @param context           the context of the exception
+     * @param library           the library of the exception
+     *
+     */
+    fun logFlutterException(
+        message: String,
+        severity: Severity,
+        logExceptionType: LogExceptionType,
+        properties: Map<String, Any>?,
+        stackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
+        context: String?,
+        library: String?,
     )
 }

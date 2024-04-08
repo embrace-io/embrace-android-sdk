@@ -1,14 +1,17 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
- * Finds the span event matching the name.
+ * Finds the first Span Event matching the given [TelemetryType]
  */
-internal fun EmbraceSpanData.findEvent(name: String): EmbraceSpanEvent =
-    checkNotNull(events.single { it.name == name }) {
+internal fun EmbraceSpanData.findEventOfType(telemetryType: TelemetryType): EmbraceSpanEvent =
+    checkNotNull(events.single { it.attributes.hasFixedAttribute(telemetryType) }) {
         "Event not found: $name"
     }
 
@@ -29,36 +32,35 @@ internal fun EmbraceSpanEvent.findEventAttribute(key: String): String =
     }
 
 /**
- * Finds the emb-session span.
+ * Returns true if an event exists with the given [TelemetryType]
  */
-internal fun SessionMessage.findSessionSpan(): EmbraceSpanData = findSpan("emb-session")
+internal fun EmbraceSpanData.hasEventOfType(telemetryType: TelemetryType): Boolean =
+    events.find { it.attributes.hasFixedAttribute(telemetryType) } != null
 
 /**
- * Finds the span matching the name.
+ * Returns the Session Span
  */
-internal fun SessionMessage.findSpan(name: String): EmbraceSpanData =
-    checkNotNull(spans?.single { it.name == name }) {
-        "Span not found: $name"
+internal fun SessionMessage.findSessionSpan(): EmbraceSpanData = findSpanOfType(EmbType.Ux.Session)
+
+/**
+ * Finds the span matching the given [TelemetryType].
+ */
+internal fun SessionMessage.findSpanOfType(telemetryType: TelemetryType): EmbraceSpanData =
+    checkNotNull(spans?.single { it.hasFixedAttribute(telemetryType) }) {
+        "Span of type not found: ${telemetryType.key}"
     }
 
 /**
- * Finds the span matching the name.
+ * Finds the span matching the given [TelemetryType].
  */
-internal fun SessionMessage.findSpans(name: String): List<EmbraceSpanData> =
-    checkNotNull(spans?.filter { it.name == name }) {
-        "Could not find spans: $name"
+internal fun SessionMessage.findSpansOfType(telemetryType: TelemetryType): List<EmbraceSpanData> =
+    checkNotNull(spans?.filter { it.hasFixedAttribute(telemetryType) }) {
+        "Spans of type not found: ${telemetryType.key}"
     }
 
 /**
- * Returns true if a span exists with the given name.
+ * Returns true if a span exists with the given [TelemetryType].
  */
-internal fun SessionMessage.hasSpan(name: String): Boolean {
-    return spans?.singleOrNull { it.name == name } != null
-}
-
-/**
- * Returns true if an event exists with the given name.
- */
-internal fun EmbraceSpanData.hasEvent(name: String): Boolean {
-    return events.singleOrNull { it.name == name } != null
+internal fun SessionMessage.hasSpanOfType(telemetryType: TelemetryType): Boolean {
+    return spans?.find { it.attributes.hasFixedAttribute(telemetryType) } != null
 }

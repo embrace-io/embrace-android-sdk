@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -237,8 +238,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        val testEvent = span.events.single()
-        assertEquals("emb-custom-breadcrumb", testEvent.name)
+        val testEvent = span.findEventOfType(EmbType.System.Breadcrumb)
         assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
         assertEquals(
             mapOf(

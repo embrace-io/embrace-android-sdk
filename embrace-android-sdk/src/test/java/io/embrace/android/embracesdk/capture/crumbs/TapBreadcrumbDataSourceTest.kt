@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -35,9 +36,9 @@ internal class TapBreadcrumbDataSourceTest {
             TapBreadcrumb.TapBreadcrumbType.TAP
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals("ui-tap", schemaType.defaultName)
-            Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
-            Assert.assertEquals(
+            assertEquals("ui-tap", schemaType.defaultName)
+            assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
+            assertEquals(
                 mapOf(
                     EmbType.Ux.Tap.toEmbraceKeyValuePair(),
                     "view.name" to "my-button-id",

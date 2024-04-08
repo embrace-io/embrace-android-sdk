@@ -33,7 +33,7 @@ internal class SpanServiceImpl(
 
     override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? {
         return if (EmbraceSpanImpl.inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val spanName = getSpanName(name = name, internal = internal)
+            val spanName = createSpanName(name = name, internal = internal)
             EmbraceSpanImpl(
                 spanName = spanName,
                 openTelemetryClock = openTelemetryClock,
@@ -97,7 +97,7 @@ internal class SpanServiceImpl(
         }
 
         return if (EmbraceSpanImpl.inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            tracer.embraceSpanBuilder(name = getSpanName(name, internal), type = type, internal = internal, parent = parent)
+            tracer.embraceSpanBuilder(name = createSpanName(name, internal), type = type, internal = internal, parent = parent)
                 .startSpan(startTimeMs)
                 .setAllAttributes(Attributes.builder().fromMap(attributes).build())
                 .addEvents(events)
@@ -110,7 +110,7 @@ internal class SpanServiceImpl(
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
 
-    private fun getSpanName(name: String, internal: Boolean): String =
+    private fun createSpanName(name: String, internal: Boolean): String =
         if (internal) {
             name.toEmbraceObjectName()
         } else {

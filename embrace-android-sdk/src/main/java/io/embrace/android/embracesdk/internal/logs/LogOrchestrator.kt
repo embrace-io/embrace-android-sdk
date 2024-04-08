@@ -53,7 +53,11 @@ internal class LogOrchestrator(
         if (!shouldSendLogs) {
             return false
         }
+        flush()
+        return true
+    }
 
+    fun flush() {
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
         firstLogInBatchTime.set(0)
@@ -62,8 +66,6 @@ internal class LogOrchestrator(
         if (!envelope.data.logs.isNullOrEmpty()) {
             deliveryService.sendLogs(envelope)
         }
-
-        return true
     }
 
     private fun scheduleCheck() {
@@ -88,6 +90,7 @@ internal class LogOrchestrator(
         val firstLogInBatchTime = firstLogInBatchTime.get()
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME
     }
+
     companion object {
         const val MAX_LOGS_PER_BATCH = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds

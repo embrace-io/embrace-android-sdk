@@ -173,7 +173,11 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             )
-    )
+    ) {
+        fun logWebView(url: String) {
+            Embrace.getImpl().logWebView(url)
+        }
+    }
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L

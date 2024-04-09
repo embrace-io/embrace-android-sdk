@@ -115,6 +115,7 @@ internal class OtelSessionGatingTest {
             embrace.startView("MyActivity")
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
+            harness.logWebView("https://example.com")
             harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }

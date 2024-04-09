@@ -11,7 +11,7 @@ internal class TelemetryAttributes(
     private val sessionProperties: EmbraceSessionProperties? = null,
     private val customAttributes: Map<String, String>? = null
 ) {
-    private val map: MutableMap<String, String> = mutableMapOf()
+    private val map: MutableMap<AttributeKey<String>, String> = mutableMapOf()
 
     /**
      * Return a snapshot of the current values of the attributes set on this as a [Map]. Schema keys will always overwrite any previous
@@ -20,15 +20,15 @@ internal class TelemetryAttributes(
     fun snapshot(): Map<String, String> =
         (customAttributes ?: emptyMap())
             .plus(sessionProperties?.get()?.mapKeys { "properties.".toEmbraceAttributeName() + it.key } ?: emptyMap())
-            .plus(map.mapKeys { it.key })
+            .plus(map.mapKeys { it.key.key })
 
     fun setAttribute(key: EmbraceAttributeKey, value: String) {
-        map[key.name] = value
+        setAttribute(key.attributeKey, value)
     }
 
     fun setAttribute(key: AttributeKey<String>, value: String) {
-        map[key.key] = value
+        map[key] = value
     }
 
-    fun getAttribute(key: EmbraceAttributeKey): String? = map[key.name]
+    fun getAttribute(key: EmbraceAttributeKey): String? = map[key.attributeKey]
 }

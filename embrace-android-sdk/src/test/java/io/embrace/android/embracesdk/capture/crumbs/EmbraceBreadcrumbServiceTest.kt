@@ -104,6 +104,7 @@ internal class EmbraceBreadcrumbServiceTest {
             PushNotificationBreadcrumb.NotificationType.NOTIFICATION
         )
         service.logView("test", clock.now())
+        service.logCustom("a breadcrumb", clock.now())
         service.logWebView("https://example.com/path1", clock.now())
         service.startView("a")
         service.endView("a")

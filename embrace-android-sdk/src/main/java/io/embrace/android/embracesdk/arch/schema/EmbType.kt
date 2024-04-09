@@ -37,12 +37,7 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         internal object Breadcrumb : System("breadcrumb")
 
-        internal object Log : System("log") {
-            /**
-             * Attribute name for a unique id identifying the log
-             */
-            val embLogId = EmbraceAttributeKey("log_id")
-        }
+        internal object Log : System("log")
 
         internal object Exception : System("exception")
 

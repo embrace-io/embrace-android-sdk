@@ -38,6 +38,8 @@ internal class TelemetryAttributesTest {
         assertEquals(2, attributes.size)
         assertEquals(sessionId, attributes[embSessionId.name])
         assertEquals("exceptionValue", attributes[exceptionType.key])
+        assertEquals(sessionId, telemetryAttributes.getAttribute(embSessionId))
+        assertEquals("exceptionValue", telemetryAttributes.getAttribute(exceptionType))
     }
 
     @Test

@@ -31,4 +31,6 @@ internal class TelemetryAttributes(
     }
 
     fun getAttribute(key: EmbraceAttributeKey): String? = map[key.attributeKey]
+
+    fun getAttribute(key: AttributeKey<String>): String? = map[key]
 }

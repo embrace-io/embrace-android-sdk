@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
+import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -21,6 +23,12 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
+import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
+import io.embrace.android.embracesdk.opentelemetry.exceptionType
+import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
@@ -97,23 +105,23 @@ internal class EmbraceLogServiceTest {
         assertEquals("Hello world", first.message)
         assertEquals(Severity.INFO, first.severity)
         assertEquals("bar", first.schemaType.attributes()["foo"])
-        assertNotNull(first.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", first.schemaType.attributes()["emb.session_id"])
-        assertNull(first.schemaType.attributes()["emb.exception_type"])
+        assertNotNull(first.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", first.schemaType.attributes()[embSessionId.name])
+        assertNull(first.schemaType.attributes()[exceptionType.key])
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
         assertEquals(Severity.WARNING, second.severity)
-        assertNotNull(second.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", second.schemaType.attributes()["emb.session_id"])
-        assertNull(second.schemaType.attributes()["emb.exception_type"])
+        assertNotNull(second.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", second.schemaType.attributes()[embSessionId.name])
+        assertNull(second.schemaType.attributes()[exceptionType.key])
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
         assertEquals(Severity.ERROR, third.severity)
-        assertNotNull(third.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", third.schemaType.attributes()["emb.session_id"])
-        assertNull(third.schemaType.attributes()["emb.exception_type"])
+        assertNotNull(third.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", third.schemaType.attributes()[embSessionId.name])
+        assertNull(third.schemaType.attributes()[exceptionType.key])
         third.assertIsType(EmbType.System.Log)
     }
 
@@ -137,12 +145,12 @@ internal class EmbraceLogServiceTest {
         assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertNotNull(log.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
-        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
-        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
-        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
+        assertNotNull(log.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
+        assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
+        assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
         log.assertIsType(EmbType.System.Exception)
     }
 
@@ -167,14 +175,14 @@ internal class EmbraceLogServiceTest {
         assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertNotNull(log.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
-        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
-        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
-        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
-        assertEquals("context", log.schemaType.attributes()["emb.exception.context"])
-        assertEquals("library", log.schemaType.attributes()["emb.exception.library"])
+        assertNotNull(log.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
+        assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
+        assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
+        assertEquals("context", log.schemaType.attributes()[embFlutterExceptionContext.name])
+        assertEquals("library", log.schemaType.attributes()[embFlutterExceptionLibrary.name])
         log.assertIsType(EmbType.System.FlutterException)
     }
 
@@ -198,12 +206,12 @@ internal class EmbraceLogServiceTest {
         assertEquals(1, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
-        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
-        assertNotNull(log.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
-        assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
+        assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
+        assertNotNull(log.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
+        assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         log.assertIsType(EmbType.System.Exception)
     }
 
@@ -222,14 +230,14 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `Embrace properties can not be overridden by custom properties`() {
         val logService = getLogService()
-        val props = mapOf("emb.session_id" to "session-456")
+        val props = mapOf(embSessionId.name to "session-456")
         logService.log("Hello world", Severity.INFO, props)
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.INFO, log.severity)
-        assertNotNull(log.schemaType.attributes()["emb.log_id"])
-        assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
+        assertNotNull(log.schemaType.attributes()[logRecordUid.key])
+        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
     }
 
     @Test
@@ -319,12 +327,12 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Unity".repeat(1000), log.message) // log limit higher on unity
         assertEquals(Severity.INFO, log.severity)
-        assertNotNull(log.schemaType.attributes()["emb.log_id"])
+        assertNotNull(log.schemaType.attributes()[logRecordUid.key])
 
-        assertEquals("my stacktrace", log.schemaType.attributes()["exception.stacktrace"])
-        assertEquals(null, log.schemaType.attributes()["exception.type"])
-        assertEquals(null, log.schemaType.attributes()["exception.message"])
-        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        assertEquals("my stacktrace", log.schemaType.attributes()[exceptionStacktrace.key])
+        assertEquals(null, log.schemaType.attributes()[exceptionType.key])
+        assertEquals(null, log.schemaType.attributes()[exceptionMessage.key])
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals(0, logService.getUnhandledExceptionsSent())
     }
 

@@ -19,7 +19,6 @@ internal class BreadcrumbsSanitizerTest {
     fun `test if it keeps breadcrumbs`() {
         // enabled components contains everything about breadcrumbs
         val components = setOf(
-            SessionGatingKeys.BREADCRUMBS_TAPS,
             SessionGatingKeys.BREADCRUMBS_VIEWS,
             SessionGatingKeys.BREADCRUMBS_CUSTOM_VIEWS,
             SessionGatingKeys.BREADCRUMBS_WEB_VIEWS,

@@ -15,6 +15,8 @@ internal val deviceManufacturer: AttributeKey<String> = AttributeKey.stringKey("
 internal val deviceModelIdentifier: AttributeKey<String> = AttributeKey.stringKey("os.model.identifier")
 internal val deviceModelName: AttributeKey<String> = AttributeKey.stringKey("os.model.name")
 
+internal val logRecordUid: AttributeKey<String> = AttributeKey.stringKey("log.record.uid")
+
 internal val osName: AttributeKey<String> = AttributeKey.stringKey("os.name")
 internal val osVersion: AttributeKey<String> = AttributeKey.stringKey("os.version")
 internal val osType: AttributeKey<String> = AttributeKey.stringKey("os.type")

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.Log.embLogId
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.arch.schema.SchemaType.FlutterException
@@ -26,6 +25,7 @@ import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
+import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -197,7 +197,7 @@ internal class EmbraceLogService(
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
 
-        attributes.setAttribute(embLogId, Uuid.getEmbUuid())
+        attributes.setAttribute(logRecordUid, Uuid.getEmbUuid())
         sessionIdTracker.getActiveSessionId()?.let { attributes.setAttribute(embSessionId, it) }
         metadataService.getAppState()?.let { attributes.setAttribute(embState, it) }
 
@@ -227,7 +227,7 @@ internal class EmbraceLogService(
             return
         }
 
-        val logId = attributes.getAttribute(embLogId)
+        val logId = attributes.getAttribute(logRecordUid)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed(logId)) {
             return
         }

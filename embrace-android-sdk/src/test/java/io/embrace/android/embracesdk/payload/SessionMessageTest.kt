@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSpanSnapshot
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -38,7 +39,7 @@ internal class SessionMessageTest {
         )
     )
 
-    private val spanSnapshots = listOfNotNull(testSpanSnapshot)
+    private val spanSnapshots = listOfNotNull(testSpanSnapshot.toOldPayload())
 
     private val info = SessionMessage(
         session,

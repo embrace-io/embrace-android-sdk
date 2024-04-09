@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 
 /**
@@ -56,7 +55,7 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     val spans: List<EmbraceSpanData>? = null,
 
     @Json(name = "span_snapshots")
-    val spanSnapshots: List<Span>? = null,
+    val spanSnapshots: List<EmbraceSpanData>? = null,
 
     @Json(name = "v")
     val version: Int? = ApiClient.MESSAGE_VERSION,

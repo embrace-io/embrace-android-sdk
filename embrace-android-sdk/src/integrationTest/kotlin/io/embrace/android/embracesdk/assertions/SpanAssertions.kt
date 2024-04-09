@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -13,8 +14,10 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
 /**
@@ -26,6 +29,7 @@ internal fun assertEmbraceSpanData(
     expectedEndTimeMs: Long,
     expectedParentId: String,
     expectedTraceId: String? = null,
+    expectedStatus: StatusCode = StatusCode.OK,
     expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<EmbraceSpanEvent> = emptyList(),
@@ -42,11 +46,14 @@ internal fun assertEmbraceSpanData(
         } else {
             assertEquals(32, traceId.length)
         }
-        if (expectedErrorCode == null) {
-            assertSuccessful()
-        } else {
+
+        if (expectedErrorCode != null) {
             assertError(expectedErrorCode)
+        } else {
+            assertEquals(expectedStatus, status)
+            assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
         }
+
         expectedCustomAttributes.forEach { entry ->
             assertEquals(entry.value, attributes[entry.key])
         }

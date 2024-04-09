@@ -14,10 +14,11 @@ internal class TelemetryAttributes(
     private val map: MutableMap<String, String> = mutableMapOf()
 
     /**
-     * Return a snapshot of the current values of the attributes set on this as a [Map]
+     * Return a snapshot of the current values of the attributes set on this as a [Map]. Schema keys will always overwrite any previous
+     * entries set on the object.
      */
     fun snapshot(): Map<String, String> =
-        mutableMapOf<String, String>().plus(customAttributes ?: emptyMap())
+        (customAttributes ?: emptyMap())
             .plus(sessionProperties?.get()?.mapKeys { "properties.".toEmbraceAttributeName() + it.key } ?: emptyMap())
             .plus(map.mapKeys { it.key })
 

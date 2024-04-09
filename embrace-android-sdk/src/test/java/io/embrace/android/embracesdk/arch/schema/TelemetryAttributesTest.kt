@@ -78,4 +78,16 @@ internal class TelemetryAttributesTest {
         assertEquals("newTempVal", attributes["emb.properties.temp"])
         assertEquals(newSessionId, attributes[embSessionId.name])
     }
+
+    @Test
+    fun `schema attribute values take priority if the same key is used`() {
+        val newSessionId = Uuid.getEmbUuid()
+        telemetryAttributes = TelemetryAttributes(
+            customAttributes = mapOf(embSessionId.name to sessionId)
+        )
+        telemetryAttributes.setAttribute(embSessionId, newSessionId)
+        val attributes = telemetryAttributes.snapshot()
+        assertEquals(1, attributes.size)
+        assertEquals(newSessionId, attributes[embSessionId.name])
+    }
 }

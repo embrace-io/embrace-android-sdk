@@ -20,7 +20,6 @@ internal class BreadcrumbsSanitizerTest {
         val components = setOf(
             SessionGatingKeys.BREADCRUMBS_VIEWS,
             SessionGatingKeys.BREADCRUMBS_CUSTOM_VIEWS,
-            SessionGatingKeys.BREADCRUMBS_WEB_VIEWS,
             SessionGatingKeys.BREADCRUMBS_CUSTOM,
         )
 

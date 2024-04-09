@@ -1,6 +1,5 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.anr
 
-import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService

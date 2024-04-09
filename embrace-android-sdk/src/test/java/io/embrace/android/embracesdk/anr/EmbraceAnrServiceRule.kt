@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.anr
 
 import android.os.Looper
-import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler

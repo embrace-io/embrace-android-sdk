@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.anr
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock

@@ -21,7 +21,7 @@ internal class WebViewUrlDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getTapBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getWebViewBreadcrumbLimit)
 ),
     SpanEventMapper<WebViewBreadcrumb> {
 
@@ -33,7 +33,7 @@ internal class WebViewUrlDataSource(
         try {
             alterSessionSpan(
                 inputValidation = {
-                    breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() && url != null
+                    url != null
                 },
                 captureAction = {
                     // Check if web view query params should be captured.

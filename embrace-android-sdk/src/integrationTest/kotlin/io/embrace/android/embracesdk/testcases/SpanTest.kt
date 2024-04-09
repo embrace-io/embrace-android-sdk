@@ -32,20 +32,25 @@ internal class SpanTest {
             val fakeSpanExporter = FakeSpanExporter()
             embrace.addSpanExporter(fakeSpanExporter)
             embrace.start(harness.fakeCoreModule.context)
+            embrace.startSpan("test")?.stop()
             assertTrue(
                 "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
                 fakeSpanExporter.awaitSpanExport(1)
             )
-            val exportedSpans = fakeSpanExporter.exportedSpans.filter { it.name == "emb-sdk-init" }
-            assertEquals(1, exportedSpans.size)
-            val exportedSpan = exportedSpans[0]
-            exportedSpan.assertHasEmbraceAttribute(embSequenceId, "2")
+            // Verify that 2 spans have been logged - one private and one non-private
+            assertEquals(2, harness.openTelemetryModule.spanSink.completedSpans().size)
+
+            // Verify that only 1 span is exported - the non-private one
+            val exportedSpan = fakeSpanExporter.exportedSpans.single()
+            assertEquals("test", exportedSpan.name)
+            exportedSpan.assertHasEmbraceAttribute(embSequenceId, "3")
             exportedSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.initModule.processIdentifier)
             exportedSpan.resource.assertExpectedAttributes(
                 expectedServiceName = harness.openTelemetryModule.openTelemetryConfiguration.embraceServiceName,
                 expectedServiceVersion = harness.openTelemetryModule.openTelemetryConfiguration.embraceVersionName,
                 systemInfo = harness.initModule.systemInfo
             )
+
         }
     }
 }

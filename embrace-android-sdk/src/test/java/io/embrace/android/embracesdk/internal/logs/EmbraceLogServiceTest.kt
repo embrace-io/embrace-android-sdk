@@ -123,30 +123,59 @@ internal class EmbraceLogServiceTest {
         val exception = NullPointerException("exception message")
 
         logService.logException(
-            "Hello world",
-            Severity.WARNING,
-            LogExceptionType.HANDLED,
-            null,
-            exception.stackTrace,
-            null,
-            AppFramework.NATIVE,
-            null,
-            null,
-            exception.javaClass.simpleName,
-            exception.message,
+            message = "Hello world",
+            severity = Severity.WARNING,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTrace = exception.stackTrace.joinToString(", "),
+            framework = AppFramework.NATIVE,
+            exceptionName = exception.javaClass.simpleName,
+            exceptionMessage = exception.message,
         )
 
         val log = logWriter.logEvents.single()
         assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertEquals("NullPointerException", log.schemaType.attributes()["emb.exception_name"])
-        assertEquals("exception message", log.schemaType.attributes()["emb.exception_message"])
-        assertEquals(AppFramework.NATIVE.value.toString(), log.schemaType.attributes()["emb.app_framework"])
         assertNotNull(log.schemaType.attributes()["emb.log_id"])
         assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
-        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_type"])
-        log.assertIsType(EmbType.System.Log)
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
+        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
+        log.assertIsType(EmbType.System.Exception)
+    }
+
+    @Test
+    fun testFlutterExceptionLog() {
+        val logService = getLogService()
+        val exception = NullPointerException("exception message")
+
+        logService.logFlutterException(
+            message = "Hello world",
+            severity = Severity.WARNING,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTrace = exception.stackTrace.joinToString(", "),
+            exceptionName = exception.javaClass.simpleName,
+            exceptionMessage = exception.message,
+            context = "context",
+            library = "library",
+        )
+
+        val log = logWriter.logEvents.single()
+        assertEquals(0, logService.getUnhandledExceptionsSent())
+        assertEquals("Hello world", log.message)
+        assertEquals(Severity.WARNING, log.severity)
+        assertNotNull(log.schemaType.attributes()["emb.log_id"])
+        assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
+        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
+        assertEquals("context", log.schemaType.attributes()["emb.exception.context"])
+        assertEquals("library", log.schemaType.attributes()["emb.exception.library"])
+        log.assertIsType(EmbType.System.FlutterException)
     }
 
     @Test
@@ -155,30 +184,27 @@ internal class EmbraceLogServiceTest {
         val exception = NullPointerException("exception message")
 
         logService.logException(
-            "Hello world",
-            Severity.WARNING,
-            LogExceptionType.UNHANDLED,
-            null,
-            exception.stackTrace,
-            null,
-            AppFramework.UNITY,
-            null,
-            null,
-            exception.javaClass.simpleName,
-            exception.message,
+            message = "Hello world",
+            severity = Severity.WARNING,
+            logExceptionType = LogExceptionType.UNHANDLED,
+            properties = null,
+            stackTrace = exception.stackTrace.joinToString(", "),
+            framework = AppFramework.UNITY,
+            exceptionName = exception.javaClass.simpleName,
+            exceptionMessage = exception.message,
         )
 
         val log = logWriter.logEvents.single()
         assertEquals(1, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
-        assertEquals("NullPointerException", log.schemaType.attributes()["emb.exception_name"])
-        assertEquals("exception message", log.schemaType.attributes()["emb.exception_message"])
-        assertEquals(AppFramework.UNITY.value.toString(), log.schemaType.attributes()["emb.app_framework"])
+        assertEquals("NullPointerException", log.schemaType.attributes()["exception.type"])
+        assertEquals("exception message", log.schemaType.attributes()["exception.message"])
+        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()["exception.stacktrace"])
         assertNotNull(log.schemaType.attributes()["emb.log_id"])
         assertEquals("session-123", log.schemaType.attributes()["emb.session_id"])
-        assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()["emb.exception_type"])
-        log.assertIsType(EmbType.System.Log)
+        assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        log.assertIsType(EmbType.System.Exception)
     }
 
     @Test
@@ -277,29 +303,29 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testLoggingUnityMessage() {
-        val logMessageService = getLogService(appFramework = AppFramework.UNITY)
+        val logService = getLogService(appFramework = AppFramework.UNITY)
 
-        logMessageService.logException(
-            "Unity".repeat(1000),
-            Severity.INFO,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            "my stacktrace",
-            AppFramework.UNITY,
-            null,
-            null,
-            null,
-            null
+        logService.logException(
+            message = "Unity".repeat(1000),
+            severity = Severity.INFO,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTrace = "my stacktrace",
+            framework = AppFramework.UNITY,
+            exceptionName = null,
+            exceptionMessage = null,
         )
 
         val log = logWriter.logEvents.single()
         assertEquals("Unity".repeat(1000), log.message) // log limit higher on unity
-        // TBD: Assert stacktrace
-        assertEquals(AppFramework.UNITY.value.toString(), log.schemaType.attributes()["emb.app_framework"])
-        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_type"])
-        // TBD: Assert unhandled exceptions
-        // assertEquals(0, logMessageService.getUnhandledExceptionsSent())
+        assertEquals(Severity.INFO, log.severity)
+        assertNotNull(log.schemaType.attributes()["emb.log_id"])
+
+        assertEquals("my stacktrace", log.schemaType.attributes()["exception.stacktrace"])
+        assertEquals(null, log.schemaType.attributes()["exception.type"])
+        assertEquals(null, log.schemaType.attributes()["exception.message"])
+        assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()["emb.exception_handling"])
+        assertEquals(0, logService.getUnhandledExceptionsSent())
     }
 
     @Test

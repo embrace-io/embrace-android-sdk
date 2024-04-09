@@ -61,9 +61,18 @@ internal class EmbraceLogService(
     override fun log(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
-        addLogEventData(message, severity, EmbraceLogAttributes(properties))
+        backgroundWorker.submit {
+            val attributes = LogAttributes(properties)
+            populateLogAttributes(attributes)
+            addLogEventData(
+                message,
+                severity,
+                attributes,
+                SchemaType.Log(attributes),
+            )
+        }
     }
 
     override fun logException(
@@ -71,26 +80,64 @@ internal class EmbraceLogService(
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
+        stackTrace: String?,
         framework: AppFramework,
+        exceptionName: String?,
+        exceptionMessage: String?,
+    ) {
+        backgroundWorker.submit {
+            if (logExceptionType == LogExceptionType.UNHANDLED) {
+                unhandledExceptionsCount++
+            }
+            val attributes = ExceptionAttributes(properties)
+            populateLogExceptionAttributes(
+                attributes,
+                logExceptionType,
+                stackTrace,
+                exceptionName,
+                exceptionMessage,
+            )
+            addLogEventData(
+                message,
+                severity,
+                attributes,
+                SchemaType.Exception(attributes),
+            )
+        }
+    }
+
+    override fun logFlutterException(
+        message: String,
+        severity: Severity,
+        logExceptionType: LogExceptionType,
+        properties: Map<String, Any>?,
+        stackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
         context: String?,
         library: String?,
-        exceptionName: String?,
-        exceptionMessage: String?
     ) {
-        if (logExceptionType == LogExceptionType.UNHANDLED) {
-            unhandledExceptionsCount++
+        backgroundWorker.submit {
+            if (logExceptionType == LogExceptionType.UNHANDLED) {
+                unhandledExceptionsCount++
+            }
+            val attributes = FlutterExceptionAttributes(properties)
+            populateLogFlutterExceptionAttributes(
+                attributes,
+                logExceptionType,
+                stackTrace,
+                exceptionName,
+                exceptionMessage,
+                context,
+                library,
+            )
+            addLogEventData(
+                message,
+                severity,
+                attributes,
+                SchemaType.FlutterException(attributes),
+            )
         }
-        val attributes = EmbraceLogAttributes(properties)
-        attributes.setExceptionType(logExceptionType)
-        attributes.setAppFramework(framework)
-        // TBD: Add stacktrace elements
-        exceptionName?.let { attributes.setExceptionName(it) }
-        exceptionMessage?.let { attributes.setExceptionMessage(it) }
-        context?.let { attributes.setExceptionContext(it) }
-        library?.let { attributes.setExceptionLibrary(it) }
-        addLogEventData(message, severity, attributes)
     }
 
     override fun getInfoLogsAttemptedToSend(): Int {
@@ -125,35 +172,74 @@ internal class EmbraceLogService(
         logCounters.forEach { it.value.clear() }
     }
 
+    /**
+     * Populates Log common attributes.
+     * Set these after the adding custom properties to attributes,
+     * so they can't be overridden.
+     */
+    private fun populateLogAttributes(attributes: LogAttributes) {
+        attributes.setLogId(Uuid.getEmbUuid())
+        sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
+        metadataService.getAppState()?.let { attributes.setAppState(it) }
+        attributes.setSessionProperties(sessionProperties.get())
+    }
+
+    private fun populateLogExceptionAttributes(
+        attributes: ExceptionAttributes,
+        logExceptionType: LogExceptionType,
+        stackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
+    ) {
+        populateLogAttributes(attributes)
+        attributes.setExceptionHandling(logExceptionType)
+        stackTrace?.let { attributes.setExceptionStacktrace(it) }
+        exceptionName?.let { attributes.setExceptionName(it) }
+        exceptionMessage?.let { attributes.setExceptionMessage(it) }
+    }
+
+    private fun populateLogFlutterExceptionAttributes(
+        attributes: FlutterExceptionAttributes,
+        logExceptionType: LogExceptionType,
+        stackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
+        context: String?,
+        library: String?,
+    ) {
+        populateLogExceptionAttributes(
+            attributes,
+            logExceptionType,
+            stackTrace,
+            exceptionName,
+            exceptionMessage,
+        )
+        context?.let { attributes.setContext(it) }
+        library?.let { attributes.setLibrary(it) }
+    }
+
     private fun addLogEventData(
         message: String,
         severity: Severity,
-        attributes: EmbraceLogAttributes,
+        attributes: LogAttributes,
+        schemaType: SchemaType,
     ) {
         if (shouldLogBeGated(severity)) {
             return
         }
 
-        backgroundWorker.submit {
-            val messageId = Uuid.getEmbUuid()
-            if (!logCounters.getValue(severity).addIfAllowed(messageId)) {
-                return@submit
-            }
-
-            // Set these after the custom properties so they can't be overridden
-            sessionIdTracker.getActiveSessionId()?.let { attributes.setSessionId(it) }
-            metadataService.getAppState()?.let { attributes.setAppState(it) }
-            attributes.setLogId(messageId)
-            attributes.setSessionProperties(sessionProperties.get())
-
-            val logEventData = LogEventData(
-                schemaType = SchemaType.Log(attributes),
-                message = trimToMaxLength(message),
-                severity = severity,
-            )
-
-            logWriter.addLog(logEventData) { logEventData }
+        val logId = attributes.getLogId() ?: return
+        if (!logCounters.getValue(severity).addIfAllowed(logId)) {
+            return
         }
+
+        val logEventData = LogEventData(
+            schemaType = schemaType,
+            message = trimToMaxLength(message),
+            severity = severity,
+        )
+
+        logWriter.addLog(logEventData) { logEventData }
     }
 
     /**
@@ -213,12 +299,12 @@ internal class LogCounter(
     private val logIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
     private val cache = CacheableValue<List<String>> { logIds.size }
 
-    fun addIfAllowed(messageId: String): Boolean {
+    fun addIfAllowed(logId: String): Boolean {
         val timestamp = clock.now()
         count.incrementAndGet()
 
         if (logIds.size < getConfigLogLimit.invoke()) {
-            logIds[timestamp] = messageId
+            logIds[timestamp] = logId
         } else {
             logger.logWarning("$name log limit has been reached.")
             return false

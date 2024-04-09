@@ -35,12 +35,15 @@ internal class OpenTelemetryConfiguration(
         .put(deviceModelName, systemInfo.deviceModel)
         .build()
 
-    private val spanExporters = mutableListOf<SpanExporter>(EmbraceSpanExporter(spanSink))
+    private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val logExporters = mutableListOf<LogRecordExporter>(EmbraceLogRecordExporter(logSink))
 
     val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
-            SpanExporter.composite(spanExporters),
+            EmbraceSpanExporter(
+                spanSink = spanSink,
+                externalSpanExporter = SpanExporter.composite(externalSpanExporters)
+            ),
             processIdentifier
         )
     }
@@ -50,7 +53,7 @@ internal class OpenTelemetryConfiguration(
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {
-        spanExporters.add(spanExporter)
+        externalSpanExporters.add(spanExporter)
     }
 
     fun addLogExporter(logExporter: LogRecordExporter) {

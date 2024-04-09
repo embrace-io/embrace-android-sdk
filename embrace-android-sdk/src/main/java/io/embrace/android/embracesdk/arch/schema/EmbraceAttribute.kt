@@ -33,6 +33,11 @@ internal class EmbraceAttributeKey(
     } else {
         id.toEmbraceAttributeName()
     }
+
+    /**
+     * The [AttributeKey] equivalent for this object to be used in conjunction with OTel objects
+     */
+    val attributeKey: AttributeKey<String> = otelAttributeKey ?: AttributeKey.stringKey(name)
 }
 
 /**

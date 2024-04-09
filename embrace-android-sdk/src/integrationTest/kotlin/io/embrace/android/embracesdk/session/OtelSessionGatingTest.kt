@@ -106,7 +106,7 @@ internal class OtelSessionGatingTest {
         assertNotNull(sessionSpan)
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.System.Breadcrumb))
         assertEquals(!gated, payload.hasSpanOfType(EmbType.Ux.View))
-        assertEquals(!gated, payload.hasSpanOfType(EmbType.Ux.Tap))
+        assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {

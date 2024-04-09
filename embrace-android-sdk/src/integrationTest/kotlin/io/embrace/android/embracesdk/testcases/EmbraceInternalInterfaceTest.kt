@@ -7,9 +7,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
-import io.embrace.android.embracesdk.arch.schema.SchemaDefaultName
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
-import io.embrace.android.embracesdk.findEvent
+import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
@@ -229,7 +229,7 @@ internal class EmbraceInternalInterfaceTest {
                 embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
             })
 
-            val tapBreadcrumb = session.findSessionSpan().findEvent(SchemaDefaultName.TAP_BREADCRUMB)
+            val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
             assertEquals("button", tapBreadcrumb.attributes["view.name"])
             assertEquals("10,99", tapBreadcrumb.attributes["tap.coords"])
             assertEquals("tap", tapBreadcrumb.attributes["tap.type"])

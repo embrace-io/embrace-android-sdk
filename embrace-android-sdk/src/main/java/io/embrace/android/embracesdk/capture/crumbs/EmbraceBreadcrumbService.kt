@@ -39,7 +39,7 @@ internal class EmbraceBreadcrumbService(
     private val legacyWebViewBreadcrumbDataSource = LegacyWebViewBreadcrumbDataSource(configService, logger)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
     private val tapBreadcrumbDataSource =
-        TapBreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
+        TapDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
     private val fragmentViewDataSource = FragmentViewDataSource(
         configService.breadcrumbBehavior,

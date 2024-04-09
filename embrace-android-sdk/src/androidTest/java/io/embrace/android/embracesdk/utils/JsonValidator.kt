@@ -131,9 +131,16 @@ internal object JsonValidator {
             return false
         }
 
-        jsonArray1.forEachIndexed { index, entry ->
-            if (!areJsonElementsEquals(entry, jsonArray2.get(index), sb)) {
-                sb.append("Different array value at position: $index. ")
+        jsonArray1.forEach { array1Entry ->
+            var found = false
+            jsonArray2.forEach { array2Entry ->
+                // use another string builder to avoid appending to the main one
+                if (areJsonElementsEquals(array1Entry, array2Entry, StringBuilder())) {
+                    found = true
+                }
+            }
+            if (!found) {
+                sb.append("Array element not found in observed array: $array1Entry.")
                 return false
             }
         }

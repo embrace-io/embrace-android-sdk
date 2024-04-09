@@ -204,11 +204,11 @@
   },
   "metadata": {
     "email": "user@email.com",
-    "locale": "es_US",
+    "locale": "__EMBRACE_TEST_IGNORE__",
     "personas": [
       "first_day"
     ],
-    "timezone_description": "America/Argentina/Buenos_Aires",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
     "user_id": "some id",
     "username": "John Doe"
   },
@@ -292,45 +292,7 @@
       }
     ]
   },
-  "span_snapshots": [
-    {
-      "attributes": [
-        {
-          "key": "emb.session_id",
-          "value": "__EMBRACE_TEST_IGNORE__"
-        },
-        {
-          "key": "emb.type",
-          "value": "ux.session"
-        },
-        {
-          "key": "emb.private",
-          "value": "true"
-        }
-      ],
-      "events": [
-        {
-          "attributes": [
-            {
-              "key": "message",
-              "value": "a message"
-            },
-            {
-              "key": "emb.type",
-              "value": "sys.breadcrumb"
-            }
-          ],
-          "name": "emb-breadcrumb",
-          "time_unix_nano": "__EMBRACE_TEST_IGNORE__"
-        }
-      ],
-      "name": "emb-session",
-      "span_id": "__EMBRACE_TEST_IGNORE__",
-      "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-      "status": "__EMBRACE_TEST_IGNORE__",
-      "trace_id": "__EMBRACE_TEST_IGNORE__"
-    }
-  ],
+  "span_snapshots": "__EMBRACE_TEST_IGNORE__",
   "type": "session",
   "version": "0.1.0"
 }

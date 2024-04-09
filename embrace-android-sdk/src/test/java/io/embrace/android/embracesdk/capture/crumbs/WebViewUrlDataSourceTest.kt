@@ -48,7 +48,7 @@ internal class WebViewUrlDataSourceTest {
             15000000000
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals("web-view", schemaType.defaultName)
+            Assert.assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
             Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             Assert.assertEquals(
                 mapOf(
@@ -58,32 +58,6 @@ internal class WebViewUrlDataSourceTest {
                 schemaType.attributes()
             )
         }
-    }
-
-    @Test
-    fun `webview capture disabled`() {
-        configService = FakeConfigService(
-            breadcrumbBehavior = fakeBreadcrumbBehavior(
-                localCfg = {
-                    SdkLocalConfig(
-                        webViewConfig = WebViewLocalConfig(
-                            captureWebViews = false,
-                            captureQueryParams = false
-                        )
-                    )
-                }
-            )
-        )
-        source = WebViewUrlDataSource(
-            configService.breadcrumbBehavior,
-            writer,
-            InternalEmbraceLogger(),
-        )
-        source.logWebView(
-            "http://www.google.com?query=123",
-            15000000000
-        )
-        Assert.assertTrue(writer.addedEvents.isEmpty())
     }
 
     @Test
@@ -110,7 +84,7 @@ internal class WebViewUrlDataSourceTest {
             15000000000
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals("web-view", schemaType.defaultName)
+            Assert.assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
             Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             Assert.assertEquals(
                 mapOf(

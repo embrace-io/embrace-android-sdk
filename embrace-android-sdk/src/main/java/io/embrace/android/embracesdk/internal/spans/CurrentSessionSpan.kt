@@ -18,4 +18,9 @@ internal interface CurrentSessionSpan : Initializable, SessionSpanWriter {
      * Returns true if a span with the given parameters can be started in the current session
      */
     fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean
+
+    /**
+     * Returns the current session ID
+     */
+    fun getSessionId(): String
 }

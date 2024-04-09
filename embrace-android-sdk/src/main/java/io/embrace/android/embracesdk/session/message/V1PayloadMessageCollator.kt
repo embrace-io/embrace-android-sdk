@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.BetaFeatures
@@ -55,7 +54,7 @@ internal class V1PayloadMessageCollator(
      */
     override fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
         Session(
-            sessionId = Uuid.getEmbUuid(),
+            sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             messageType = Session.MESSAGE_TYPE_END,

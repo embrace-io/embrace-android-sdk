@@ -108,6 +108,8 @@ internal class FakePersistableEmbraceSpan(
     override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
+    override fun getAttributeWithKey(key: String): String? = "Test Attribute"
+
     companion object {
         fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(

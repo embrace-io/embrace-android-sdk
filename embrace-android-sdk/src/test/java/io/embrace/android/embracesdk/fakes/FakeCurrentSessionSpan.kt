@@ -39,4 +39,8 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
         return true
     }
+
+    override fun getSessionId(): String {
+        return "testSessionId"
+    }
 }

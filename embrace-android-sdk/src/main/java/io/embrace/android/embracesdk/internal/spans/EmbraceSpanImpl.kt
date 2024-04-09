@@ -165,6 +165,8 @@ internal class EmbraceSpanImpl(
     override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
         allAttributes().hasFixedAttribute(fixedAttribute)
 
+    override fun getAttributeWithKey(key: String): String? = allAttributes()[key]
+
     private fun allAttributes(): Map<String, String> = attributes + schemaAttributes
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null

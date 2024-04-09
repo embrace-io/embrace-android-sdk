@@ -8,8 +8,10 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicInteger
@@ -31,7 +33,9 @@ internal class CurrentSessionSpanImpl(
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val sessionSpan: AtomicReference<EmbraceSpan?> = AtomicReference(null)
+    private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
+
+    private val sessionIdAttributeName = "session_id".toEmbraceAttributeName()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(sessionSpan) {
@@ -64,6 +68,10 @@ internal class CurrentSessionSpanImpl(
                 traceCount.getAndIncrement() < SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION
             }
         }
+    }
+
+    override fun getSessionId(): String {
+        return sessionSpan.get()?.getAttributeWithKey(sessionIdAttributeName) ?: ""
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
@@ -109,7 +117,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeMs: Long): EmbraceSpan {
+    private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
         traceCount.set(0)
 
         return embraceSpanFactorySupplier().create(
@@ -118,6 +126,7 @@ internal class CurrentSessionSpanImpl(
             internal = true
         ).apply {
             start(startTimeMs = startTimeMs)
+            addAttribute(sessionIdAttributeName, Uuid.getEmbUuid())
         }
     }
 }

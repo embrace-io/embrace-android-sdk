@@ -46,9 +46,9 @@ internal class SpanSanitizer(
     private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
         return !(
             (event.hasFixedAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs()) ||
-            (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||
-            (event.hasFixedAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
-        )
+                (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||
+                (event.hasFixedAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
+            )
     }
 
     private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)

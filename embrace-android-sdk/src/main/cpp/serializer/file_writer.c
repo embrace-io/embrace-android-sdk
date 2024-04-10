@@ -395,6 +395,9 @@ bool emb_add_b64_value_to_json(JSON_Object *root_object, const JSON_Value *crash
 }
 
 char *emb_errors_to_json(emb_error *errors) {
+    if (errors == NULL) {
+        return NULL;
+    }
     EMB_LOGDEV("Starting serialization of emb_error struct to JSON string.");
     char *serialized_string = NULL;
     emb_error *cur_error = errors;
@@ -440,7 +443,7 @@ char *emb_errors_to_json(emb_error *errors) {
     }
     EMB_LOGDEV("Converted %d errors.", count);
     EMB_LOGDEV("Serializing final JSON string.");
-    serialized_string = json_serialize_to_string_pretty(errors_value);
+    serialized_string = json_serialize_to_string(errors_value);
     json_value_free(errors_value);
     return serialized_string;
 }

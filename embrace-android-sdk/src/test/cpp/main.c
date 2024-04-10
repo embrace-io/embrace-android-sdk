@@ -18,6 +18,7 @@ GREATEST_MAIN_DEFS();
 SUITE(suite_utilities);
 SUITE(suite_unwinder_dlinfo);
 SUITE(suite_sampler_stack_unwind);
+SUITE(suite_file_writer);
 
 /* Runs a suite of tests and returns 0 if they succeeded, 1 otherwise.*/
 int run_test_suite(void (*suite)(void)) {
@@ -52,3 +53,12 @@ Java_io_embrace_android_embracesdk_ndk_sampler_SamplerJniCallTestSuite_run(JNIEn
     emb_setup_fake_intervals();
 }
 
+void emb_setup_file_writer_tests(const char *path, const char *json);
+
+JNIEXPORT int JNICALL
+Java_io_embrace_android_embracesdk_ndk_serializer_FileWriterTestSuite_run(JNIEnv *_env, jobject _this, jstring path, jstring json) {
+    const char *abs_path = (*_env)->GetStringUTFChars(_env, path, NULL);
+    const char *expected_json = (*_env)->GetStringUTFChars(_env, json, NULL);
+    emb_setup_file_writer_tests(abs_path, expected_json);
+    return run_test_suite(suite_file_writer);
+}

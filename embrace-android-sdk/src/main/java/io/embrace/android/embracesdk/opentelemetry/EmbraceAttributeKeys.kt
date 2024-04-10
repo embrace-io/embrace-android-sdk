@@ -20,7 +20,7 @@ internal val embProcessIdentifier: EmbraceAttributeKey = EmbraceAttributeKey("pr
 /**
  * Attribute name for the unique ID assigned to each app instance
  */
-internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey("sequence_id")
+internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequence_id", isPrivate = true)
 
 /**
  * Attribute name for the Embrace Sesssion

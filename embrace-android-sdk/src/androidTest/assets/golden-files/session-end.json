@@ -17,7 +17,6 @@
   "br": {
     "rna": [],
     "pn": [],
-    "tb": [],
     "vb": [
       {
         "vn": "io.embrace.android.embracesdk.TestActivity",

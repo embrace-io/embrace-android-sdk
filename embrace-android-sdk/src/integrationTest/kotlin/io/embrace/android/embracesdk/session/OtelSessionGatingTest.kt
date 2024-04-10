@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
@@ -105,12 +106,14 @@ internal class OtelSessionGatingTest {
         assertNotNull(sessionSpan)
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.System.Breadcrumb))
         assertEquals(!gated, payload.hasSpanOfType(EmbType.Ux.View))
+        assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
         harness.recordSession {
             embrace.addBreadcrumb("Hello, world!")
             embrace.startView("MyActivity")
+            embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
             harness.fakeClock.tick(10000) // enough to trigger new session
             action()

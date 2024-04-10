@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
+import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -24,6 +25,8 @@ internal interface DataSourceModule {
     fun getDataSources(): List<DataSourceState>
 
     val breadcrumbDataSource: DataSourceState
+
+    val tapDataSource: DataSourceState
 
     val fragmentViewDataSource: DataSourceState
 }
@@ -47,6 +50,18 @@ internal class DataSourceModuleImpl(
                 logger = initModule.logger
             )
         })
+    }
+
+    override val tapDataSource: DataSourceState by dataSource {
+        DataSourceState(
+            factory = {
+                TapDataSource(
+                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger
+                )
+            }
+        )
     }
 
     override val fragmentViewDataSource: DataSourceState by dataSource {

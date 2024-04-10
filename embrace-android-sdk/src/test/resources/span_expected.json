@@ -1,6 +1,6 @@
 {
   "attributes": {
-    "emb.sequence_id": "3",
+    "emb.private.sequence_id": "3",
     "emb.type": "perf"
   },
   "end_time_unix_nano": 1681972471871000000,

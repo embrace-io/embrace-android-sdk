@@ -91,7 +91,6 @@ internal class EmbraceBreadcrumbService(
     override fun getBreadcrumbs() = Breadcrumbs(
         viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
         rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
-        pushNotifications = pushNotificationBreadcrumbDataSource.getCapturedData()
     )
 
     override fun flushBreadcrumbs(): Breadcrumbs {
@@ -108,7 +107,7 @@ internal class EmbraceBreadcrumbService(
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
         type: NotificationType
-    ) = pushNotificationBreadcrumbDataSource.logPushNotification(
+    ) = pushNotificationDataSource.logPushNotification(
         title,
         body,
         topic,
@@ -136,7 +135,6 @@ internal class EmbraceBreadcrumbService(
 
     override fun cleanCollections() {
         viewBreadcrumbDataSource.cleanCollections()
-        pushNotificationBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
     }
 

@@ -4,9 +4,16 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.findEventOfType
+import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.IdGeneratorTest.Companion.validPattern
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.recordSession
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

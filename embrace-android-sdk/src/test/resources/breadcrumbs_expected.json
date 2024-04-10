@@ -14,14 +14,5 @@
       "pz": 0,
       "o": "output"
     }
-  ],
-  "pn": [
-    {
-      "ti": "PushNotification",
-      "bd": "body",
-      "tp": "from",
-      "id": "id",
-      "ts": 1600000000
-    }
   ]
 }

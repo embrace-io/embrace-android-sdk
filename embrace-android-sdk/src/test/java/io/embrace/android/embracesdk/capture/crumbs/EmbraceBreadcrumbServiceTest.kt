@@ -111,14 +111,12 @@ internal class EmbraceBreadcrumbServiceTest {
 
         val breadcrumbs = service.getBreadcrumbs()
         assertEquals(1, breadcrumbs.rnActionBreadcrumbs?.size)
-        assertEquals(1, breadcrumbs.pushNotifications?.size)
         assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
 
         service.cleanCollections()
 
         val breadcrumbsAfterClean = service.getBreadcrumbs()
         assertEquals(0, breadcrumbsAfterClean.rnActionBreadcrumbs?.size)
-        assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
     }
 
@@ -161,28 +159,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertNull(service.getLastViewBreadcrumbScreenName())
         service.logView("test", 0)
         assertEquals("test", service.getLastViewBreadcrumbScreenName())
-    }
-
-    @Test
-    fun testLogPushNotification() {
-        val service = initializeBreadcrumbService()
-        service.logPushNotification(
-            "title",
-            "body",
-            "topic",
-            "id",
-            5,
-            9,
-            PushNotificationBreadcrumb.NotificationType.NOTIFICATION
-        )
-
-        val crumbs = checkNotNull(service.getBreadcrumbs().pushNotifications)
-        val breadcrumb = checkNotNull(crumbs.single())
-        assertNull(breadcrumb.title)
-        assertNull(breadcrumb.body)
-        assertNull(breadcrumb.from)
-        assertEquals("id", breadcrumb.id)
-        assertEquals(5, breadcrumb.priority)
     }
 
     @Test

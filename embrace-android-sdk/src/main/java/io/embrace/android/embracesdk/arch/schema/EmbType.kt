@@ -12,6 +12,10 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object Default : Performance(null)
 
         internal object Network : Performance("network_request")
+
+        internal object ThreadBlockage : Performance("thread_blockage")
+
+        internal object ThreadBlockageSample : Performance("thread_blockage_sample")
     }
 
     /**

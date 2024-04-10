@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 
@@ -16,7 +17,7 @@ internal sealed class SchemaType(
     protected abstract val attrs: Map<String, String>
 
     /**
-     * The attributes defined fo this schema that should be used to populate telemetry objects
+     * The attributes defined for this schema that should be used to populate telemetry objects
      */
     fun attributes(): Map<String, String> = attrs.plus(telemetryType.toEmbraceKeyValuePair())
 
@@ -32,6 +33,46 @@ internal sealed class SchemaType(
         fixedObjectName = "screen-view"
     ) {
         override val attrs = mapOf("view.name" to viewName)
+    }
+
+    /**
+     * Represents a span in which a thread was blocked.
+     */
+    internal class ThreadBlockage(
+        threadPriority: Int,
+        lastKnownTimeMs: Long,
+        intervalCode: Int
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.ThreadBlockage,
+        fixedObjectName = "thread_blockage"
+    ) {
+        override val attrs = mapOf(
+            "thread_priority" to threadPriority.toString(),
+            "last_known_time_unix_nano" to lastKnownTimeMs.millisToNanos().toString(),
+            "interval_code" to intervalCode.toString()
+        )
+    }
+
+    /**
+     * Represents a point in time when a thread was blocked.
+     */
+    internal class ThreadBlockageSample(
+        sampleOverheadMs: Long,
+        frameCount: Int,
+        stacktrace: String,
+        sampleCode: Int,
+        threadState: Thread.State
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.ThreadBlockageSample,
+        fixedObjectName = "thread_blockage_sample"
+    ) {
+        override val attrs = mapOf(
+            "sample_overhead" to sampleOverheadMs.millisToNanos().toString(),
+            "frame_count" to frameCount.toString(),
+            "stacktrace" to stacktrace,
+            "sample_code" to sampleCode.toString(),
+            "thread_state" to threadState.toString()
+        )
     }
 
     /**

@@ -20,7 +20,8 @@ internal class EmbraceSpanBuilder(
     name: String,
     telemetryType: TelemetryType,
     internal: Boolean,
-    val parent: EmbraceSpan?
+    private: Boolean,
+    val parent: EmbraceSpan?,
 ) {
     val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     val spanName = if (internal) {
@@ -44,7 +45,7 @@ internal class EmbraceSpanBuilder(
             }
         }
 
-        if (internal) {
+        if (private) {
             fixedAttributes.add(PrivateSpan)
         }
     }

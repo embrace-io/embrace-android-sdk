@@ -237,7 +237,7 @@ internal class TracingApiTest {
                 expectedStartTimeMs = testStartTimeMs + 100,
                 expectedEndTimeMs = sessionEndTime,
                 expectedParentId = SpanId.getInvalid(),
-                private = true
+                private = false
             )
 
             assertEquals(2, checkNotNull(sessionMessage.spanSnapshots).size)
@@ -269,7 +269,7 @@ internal class TracingApiTest {
                 expectedEndTimeMs = 0L,
                 expectedParentId = SpanId.getInvalid(),
                 expectedStatus = StatusCode.UNSET,
-                private = true
+                private = false
             )
         }
     }

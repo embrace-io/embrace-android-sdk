@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -165,7 +166,7 @@ internal class EmbraceSpanImpl(
     override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
         allAttributes().hasFixedAttribute(fixedAttribute)
 
-    override fun getAttributeWithKey(key: String): String? = allAttributes()[key]
+    override fun getAttribute(key: EmbraceAttributeKey): String? = allAttributes()[key.name]
 
     private fun allAttributes(): Map<String, String> = attributes + schemaAttributes
 

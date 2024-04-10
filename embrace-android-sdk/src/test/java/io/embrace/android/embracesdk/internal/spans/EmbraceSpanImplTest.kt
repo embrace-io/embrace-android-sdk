@@ -46,7 +46,8 @@ internal class EmbraceSpanImplTest {
             spanBuilder = tracer.embraceSpanBuilder(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
-                internal = false
+                internal = false,
+                private = false
             ),
             openTelemetryClock = fakeInitModule.openTelemetryClock,
             spanRepository = spanRepository

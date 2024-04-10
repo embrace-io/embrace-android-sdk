@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 
@@ -18,5 +19,5 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
-    fun getAttributeWithKey(key: String): String?
+    fun getAttribute(key: EmbraceAttributeKey): String?
 }

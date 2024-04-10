@@ -15,6 +15,7 @@ internal interface EmbraceSpanFactory {
         name: String,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean = internal,
         parent: EmbraceSpan? = null
     ): PersistableEmbraceSpan
 }
@@ -29,9 +30,16 @@ internal class EmbraceSpanFactoryImpl(
         name: String,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         parent: EmbraceSpan?
     ): PersistableEmbraceSpan = EmbraceSpanImpl(
-        spanBuilder = tracer.embraceSpanBuilder(name, type, internal, parent),
+        spanBuilder = tracer.embraceSpanBuilder(
+            name = name,
+            type = type,
+            internal = internal,
+            private = private,
+            parent = parent
+        ),
         openTelemetryClock = openTelemetryClock,
         spanRepository = spanRepository
     )

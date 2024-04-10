@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -108,7 +109,7 @@ internal class FakePersistableEmbraceSpan(
     override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
-    override fun getAttributeWithKey(key: String): String? = "Test Attribute"
+    override fun getAttribute(key: EmbraceAttributeKey): String? = attributes[key.name]
 
     companion object {
         fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =

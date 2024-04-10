@@ -48,8 +48,16 @@ internal fun Tracer.embraceSpanBuilder(
     name: String,
     type: TelemetryType,
     internal: Boolean,
+    private: Boolean,
     parent: EmbraceSpan? = null
-): EmbraceSpanBuilder = EmbraceSpanBuilder(tracer = this, name = name, telemetryType = type, internal = internal, parent = parent)
+): EmbraceSpanBuilder = EmbraceSpanBuilder(
+    tracer = this,
+    name = name,
+    telemetryType = type,
+    internal = internal,
+    private = private,
+    parent = parent,
+)
 
 /**
  * Add the given list of [EmbraceSpanEvent] if they are valid

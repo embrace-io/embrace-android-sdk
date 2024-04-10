@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
@@ -34,8 +35,6 @@ internal class CurrentSessionSpanImpl(
      * The span that models the lifetime of the current session or background activity
      */
     private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
-
-    private val sessionIdAttributeName = "session_id".toEmbraceAttributeName()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(sessionSpan) {
@@ -71,7 +70,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getAttributeWithKey(sessionIdAttributeName) ?: ""
+        return sessionSpan.get()?.getAttribute(embSessionId) ?: ""
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
@@ -123,10 +122,11 @@ internal class CurrentSessionSpanImpl(
         return embraceSpanFactorySupplier().create(
             name = "session",
             type = EmbType.Ux.Session,
-            internal = true
+            internal = true,
+            private = false
         ).apply {
             start(startTimeMs = startTimeMs)
-            addAttribute(sessionIdAttributeName, Uuid.getEmbUuid())
+            addAttribute(embSessionId.name, Uuid.getEmbUuid())
         }
     }
 }

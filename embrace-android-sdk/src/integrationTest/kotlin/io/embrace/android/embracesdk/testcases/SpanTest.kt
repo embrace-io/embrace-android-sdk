@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
 import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.opentelemetry.embSequenceId
+import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -37,20 +38,29 @@ internal class SpanTest {
                 "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
                 fakeSpanExporter.awaitSpanExport(1)
             )
-            // Verify that 2 spans have been logged - one private and one non-private
+            // Verify that 2 spans have been logged - the exported ones and the private not-exported emb-sdk-init
             assertEquals(2, harness.openTelemetryModule.spanSink.completedSpans().size)
 
-            // Verify that only 1 span is exported - the non-private one
-            val exportedSpan = fakeSpanExporter.exportedSpans.single()
-            assertEquals("test", exportedSpan.name)
-            exportedSpan.assertHasEmbraceAttribute(embSequenceId, "3")
-            exportedSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.initModule.processIdentifier)
-            exportedSpan.resource.assertExpectedAttributes(
-                expectedServiceName = harness.openTelemetryModule.openTelemetryConfiguration.embraceServiceName,
-                expectedServiceVersion = harness.openTelemetryModule.openTelemetryConfiguration.embraceVersionName,
-                systemInfo = harness.initModule.systemInfo
-            )
-
+            harness.recordSession {
+                assertTrue(
+                    "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
+                    fakeSpanExporter.awaitSpanExport(2)
+                )
+                // Verify that only 2 span is exported - the test one as well as the session span that ended
+                assertEquals(2, fakeSpanExporter.exportedSpans.size)
+                val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
+                val testSpan = checkNotNull(exportedSpans["test"])
+                testSpan.assertHasEmbraceAttribute(embSequenceId, "3")
+                testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.initModule.processIdentifier)
+                testSpan.resource.assertExpectedAttributes(
+                    expectedServiceName = harness.openTelemetryModule.openTelemetryConfiguration.embraceServiceName,
+                    expectedServiceVersion = harness.openTelemetryModule.openTelemetryConfiguration.embraceVersionName,
+                    systemInfo = harness.initModule.systemInfo
+                )
+                val sessionSpan = checkNotNull(exportedSpans["emb-session"])
+                sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")
+                testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.initModule.processIdentifier)
+            }
         }
     }
 }

@@ -184,7 +184,7 @@ internal class CurrentSessionSpanImplTests {
                 AppTerminationCause.Crash.toEmbraceKeyValuePair(),
                 EmbType.Ux.Session.toEmbraceKeyValuePair()
             ),
-            private = true
+            private = false
         )
 
         assertEmbraceSpanData(

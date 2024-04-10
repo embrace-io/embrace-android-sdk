@@ -13,10 +13,6 @@
           {
             "key": "emb.type",
             "value": "ux.session"
-          },
-          {
-            "key": "emb.private",
-            "value": "true"
           }
         ],
         "events": "__EMBRACE_TEST_IGNORE__",
@@ -43,7 +39,7 @@
             "value": "perf"
           },
           {
-            "key": "emb.sequence_id",
+            "key": "emb.private.sequence_id",
             "value": "2"
           },
           {
@@ -75,7 +71,7 @@
             "value": "perf"
           },
           {
-            "key": "emb.sequence_id",
+            "key": "emb.private.sequence_id",
             "value": "3"
           }
         ],
@@ -119,7 +115,7 @@
             "value": "4.9.3"
           },
           {
-            "key": "emb.sequence_id",
+            "key": "emb.private.sequence_id",
             "value": "1"
           },
           {
@@ -141,10 +137,6 @@
           {
             "key": "emb.usage.add_user_persona",
             "value": "1"
-          },
-          {
-            "key": "emb.private",
-            "value": "true"
           }
         ],
         "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",

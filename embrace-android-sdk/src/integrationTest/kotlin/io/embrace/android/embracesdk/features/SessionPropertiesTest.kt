@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -28,9 +29,9 @@ internal class SessionPropertiesTest {
             })
 
             with(checkNotNull(session1.spans?.find { it.hasFixedAttribute(EmbType.Ux.Session) })) {
-                assertEquals("thurr", attributes["always"])
-                assertEquals("permVal", attributes["perm"])
-                assertEquals("tempVal", attributes["temp"])
+                assertEquals("thurr", getSessionProperty("always"))
+                assertEquals("permVal", getSessionProperty("perm"))
+                assertEquals("tempVal", getSessionProperty("temp"))
             }
 
             val session2 = checkNotNull(harness.recordSession {
@@ -39,10 +40,10 @@ internal class SessionPropertiesTest {
             })
 
             with(checkNotNull(session2.spans?.find { it.hasFixedAttribute(EmbType.Ux.Session) })) {
-                assertEquals("thurr", attributes["always"])
-                assertEquals("value", attributes["newTemp"])
-                assertNull(attributes["perm"])
-                assertNull(attributes["temp"])
+                assertEquals("thurr", getSessionProperty("always"))
+                assertEquals("value", getSessionProperty("newTemp"))
+                assertNull(getSessionProperty("perm"))
+                assertNull(getSessionProperty("temp"))
             }
 
             val attributesFromSdk = checkNotNull(embrace.getSessionProperties())

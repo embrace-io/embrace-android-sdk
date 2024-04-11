@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
@@ -223,8 +224,8 @@ internal class EmbraceLogServiceTest {
         logService.log("Hello world", Severity.INFO, null)
 
         val log = logWriter.logEvents.single()
-        assertEquals("session_val_1", log.schemaType.attributes()["emb.properties.session_prop_1"])
-        assertEquals("session_val_2", log.schemaType.attributes()["emb.properties.session_prop_2"])
+        assertEquals("session_val_1", log.schemaType.attributes().getSessionProperty("session_prop_1"))
+        assertEquals("session_val_2", log.schemaType.attributes().getSessionProperty("session_prop_2"))
     }
 
     @Test

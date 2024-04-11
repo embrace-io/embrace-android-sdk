@@ -11,8 +11,8 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
 
     var initializedCallCount = 0
     var addedEvents = mutableListOf<SpanEventData>()
-    var addedAttributes = mutableListOf<SpanAttributeData>()
     var spanData = listOf<EmbraceSpanData>()
+    private var addedAttributes = mutableListOf<SpanAttributeData>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -45,4 +45,8 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     override fun getSessionId(): String {
         return "testSessionId"
     }
+
+    fun getAttribute(key: String): String? = addedAttributes.find { it.key == key }?.value
+
+    fun attributeCount(): Int = addedAttributes.size
 }

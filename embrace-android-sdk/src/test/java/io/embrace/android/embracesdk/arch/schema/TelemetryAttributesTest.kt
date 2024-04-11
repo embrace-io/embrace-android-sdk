@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.arch.schema
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
@@ -54,11 +55,11 @@ internal class TelemetryAttributesTest {
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals("attributeValue", attributes["custom"])
-        assertEquals("permVal", attributes["emb.properties.perm"])
-        assertEquals("tempVal", attributes["emb.properties.temp"])
+        assertEquals("permVal", attributes.getSessionProperty("perm"))
+        assertEquals("tempVal", attributes.getSessionProperty("temp"))
         assertEquals(sessionId, attributes[embSessionId.name])
         sessionProperties.add("temp", "newVal", false)
-        assertEquals("newVal", telemetryAttributes.snapshot()["emb.properties.temp"])
+        assertEquals("newVal", telemetryAttributes.snapshot().getSessionProperty("temp"))
     }
 
     @Test
@@ -76,8 +77,8 @@ internal class TelemetryAttributesTest {
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(3, attributes.size)
-        assertEquals("newPermVal", attributes["emb.properties.perm"])
-        assertEquals("newTempVal", attributes["emb.properties.temp"])
+        assertEquals("newPermVal", attributes.getSessionProperty("perm"))
+        assertEquals("newTempVal", attributes.getSessionProperty("temp"))
         assertEquals(newSessionId, attributes[embSessionId.name])
     }
 

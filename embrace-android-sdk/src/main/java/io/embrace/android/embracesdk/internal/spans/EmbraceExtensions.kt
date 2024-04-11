@@ -37,6 +37,11 @@ private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
 private const val EMBRACE_PRIVATE_ATTRIBUTE_NAME_PREFIX = "emb.private."
 
 /**
+ * Prefix added to all Embrace attribute keys that represent session properties that are set via the SDK
+ */
+private const val EMBRACE_SESSION_PROPERTY_NAME_PREFIX = "emb.properties."
+
+/**
  * Prefix added to all attribute keys for all usage attributes added by the SDK
  */
 private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
@@ -131,6 +136,8 @@ internal fun String.toEmbraceAttributeName(isPrivate: Boolean = false): String {
     return prefix + this
 }
 
+internal fun String.toSessionPropertyAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this
+
 /**
  * Return the appropriate internal Embrace attribute usage name given the current string
  */
@@ -145,6 +152,8 @@ internal fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): 
 internal fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 
+internal fun EmbraceSpanData.getSessionProperty(key: String): String? = attributes[key.toSessionPropertyAttributeName()]
+
 internal fun Map<String, String>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     this[fixedAttribute.key.name] == fixedAttribute.value
 
@@ -152,3 +161,5 @@ internal fun MutableMap<String, String>.setFixedAttribute(fixedAttribute: FixedA
     this[fixedAttribute.key.name] = fixedAttribute.value
     return this
 }
+
+internal fun Map<String, String>.getSessionProperty(key: String): String? = this[key.toSessionPropertyAttributeName()]

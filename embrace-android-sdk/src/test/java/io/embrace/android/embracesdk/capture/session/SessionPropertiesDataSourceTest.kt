@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.capture.session
 
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,9 +27,9 @@ internal class SessionPropertiesDataSourceTest {
     @Test
     fun `add and remove custom property`() {
         assertTrue(dataSource.addProperty("blah", "value"))
-        assertEquals(SpanAttributeData("blah", "value"), fakeCurrentSessionSpan.addedAttributes.single())
+        assertEquals("value", fakeCurrentSessionSpan.getAttribute("blah".toSessionPropertyAttributeName()))
         assertTrue(dataSource.removeProperty("blah"))
         assertFalse(dataSource.removeProperty("blah"))
-        assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
+        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
     }
 }

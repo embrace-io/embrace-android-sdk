@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
+import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
@@ -28,6 +29,7 @@ internal interface DataSourceModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
     val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
+    val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -76,6 +78,20 @@ internal class DataSourceModuleImpl(
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
         )
     }
+
+    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                SessionPropertiesDataSource(
+                    sessionBehavior = configService.sessionBehavior,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger
+                )
+            }
+        )
+    }
+
+    /* Implementation details */
 
     private val configService = essentialServiceModule.configService
     override fun getDataSources(): List<DataSourceState<*>> = values

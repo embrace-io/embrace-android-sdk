@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -36,7 +37,8 @@ internal class CompositeLogServiceTest {
             v1LogService = v1LogService,
             v2LogService = v2LogService,
             configService = configService,
-            logger = InternalEmbraceLogger()
+            logger = InternalEmbraceLogger(),
+            serializer = EmbraceSerializer()
         )
     }
 
@@ -114,10 +116,49 @@ internal class CompositeLogServiceTest {
             exceptionName = null,
             exceptionMessage = null
         )
-        // Currently, log exceptions must be sent through v1. Invert this validation once
-        // the backend can read exceptions sent as OTel logs
+        assertEquals(0, v1LogService.loggedMessages.size)
+        assertEquals(1, v2LogService.exceptions.size)
+    }
+
+    @Test
+    fun testFlutterExceptionV1() {
+        compositeLogService.log(
+            message = "Dart error",
+            type = EventType.ERROR_LOG,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTraceElements = null,
+            customStackTrace = null,
+            framework = Embrace.AppFramework.FLUTTER,
+            context = "exception context",
+            library = "exception library",
+            exceptionName = null,
+            exceptionMessage = null
+        )
         assertEquals(1, v1LogService.loggedMessages.size)
+        assertEquals(0, v2LogService.logs.size)
+    }
+
+    @Test
+    fun testFlutterExceptionV2() {
+        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        compositeLogService.log(
+            message = "Dart error",
+            type = EventType.ERROR_LOG,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTraceElements = null,
+            customStackTrace = null,
+            framework = Embrace.AppFramework.FLUTTER,
+            context = "exception context",
+            library = "exception library",
+            exceptionName = null,
+            exceptionMessage = null
+        )
+        assertEquals(0, v1LogService.loggedMessages.size)
+        assertEquals(0, v2LogService.logs.size)
         assertEquals(0, v2LogService.exceptions.size)
+        assertEquals(1, v2LogService.flutterExceptions.size)
     }
 
     @Test

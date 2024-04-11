@@ -2,17 +2,20 @@ package io.embrace.android.embracesdk
 
 import android.os.Handler
 import android.os.Looper
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 import logTestMessage
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -81,61 +84,52 @@ internal class AnrIntegrationTest : BaseTest() {
         waitForRequest(RequestValidator(EmbraceEndpoint.SESSIONS) { request ->
             val payload = readBodyAsSessionMessage(request)
             assertNotNull(payload)
-            val perfInfo by lazy { serializer.toJson(payload.performanceInfo) }
-            val intervals = checkNotNull(payload.performanceInfo?.anrIntervals) {
-                "No ANR intervals in payload. p=$perfInfo"
+            val spans = checkNotNull(payload.spans?.filter { it.name == "emb-thread-blockage" }) {
+                "No ANR spans in payload."
             }
-            validateIntervals(intervals)
+            validateSpans(spans)
         })
     }
 
-    private fun validateIntervals(intervals: List<AnrInterval>) {
-        // validate that the intervals are roughly the right size. this can vary depending on
+    private fun validateSpans(spans: List<EmbraceSpanData>) {
+        // validate that the spans are roughly the right size. this can vary depending on
         // the underlying OS performance
-        val size = intervals.size
+        val size = spans.size
         assertTrue(size >= EXPECTED_INTERVALS - 1 && size <= EXPECTED_INTERVALS + 1)
 
-        // validate each interval contains the fields we would expect
-        intervals.forEachIndexed { _, interval ->
-            assertNotNull(interval.startTime)
-            interval.endTime?.let { endTime ->
-                assertTrue(endTime > checkNotNull(interval.startTime))
-            }
-            assertEquals(AnrInterval.Type.UI, interval.type)
-            assertNotNull(interval.code)
+        // validate each span contains the fields we would expect
+        spans.forEachIndexed { _, span ->
+            val intervalCode = checkNotNull(span.attributes["emb.interval_code"]).toInt()
+            assertNotNull(intervalCode)
 
-            if (interval.code == AnrInterval.CODE_DEFAULT) {
-                val samples = checkNotNull(interval.anrSampleList?.samples)
-                validateSamples(samples)
+            if (intervalCode == AnrInterval.CODE_DEFAULT) {
+                val events = checkNotNull(span.events)
+                validateSamples(events)
             } else {
-                assertNull(interval.anrSampleList?.samples)
+                assertTrue(span.events.isEmpty())
             }
         }
     }
 
-    private fun validateSamples(samples: List<AnrSample>) {
+    private fun validateSamples(samples: List<EmbraceSpanEvent>) {
         // validate the samples all recorded their overhead
-        assertTrue(samples.all { checkNotNull(it.sampleOverheadMs) >= 0 })
+        assertTrue(samples.all { checkNotNull(it.attributes["emb.sample_overhead"]).toInt() >= 0 })
 
         // validate that all timestamps are ascending
-        assertTrue(samples == samples.sortedBy(AnrSample::timestamp))
+        assertTrue(samples == samples.sortedBy(EmbraceSpanEvent::timestampNanos))
 
         // validate the samples have the expected code
-        assertTrue(samples.take(MAX_SAMPLES).all { it.code == AnrSample.CODE_DEFAULT })
+        assertTrue(samples.take(MAX_SAMPLES).all { it.attributes["emb.sample_code"]?.toInt() == AnrSample.CODE_DEFAULT })
         val remaining = samples.size - MAX_SAMPLES
 
         if (remaining > 0) {
             assertTrue(
                 samples.subList(MAX_SAMPLES, samples.size)
-                    .all { it.code == AnrSample.CODE_SAMPLE_LIMIT_REACHED })
+                    .all { it.attributes["emb.sample_code"]?.toInt() == AnrSample.CODE_SAMPLE_LIMIT_REACHED })
         } else {
             // validate that threads contains method names
-            val threads: List<List<ThreadInfo>> = samples.mapNotNull(AnrSample::threads)
-            val nonEmptyThreads: List<List<String>> = threads
-                .filter(List<ThreadInfo>::isNotEmpty)
-                .flatten()
-                .map { checkNotNull(it.lines) }
-            assertTrue(nonEmptyThreads.size >= 0)
+            val threads: List<String> = samples.mapNotNull { it.attributes["emb.stacktrace"] }
+            assertTrue(threads.isNotEmpty())
         }
     }
 

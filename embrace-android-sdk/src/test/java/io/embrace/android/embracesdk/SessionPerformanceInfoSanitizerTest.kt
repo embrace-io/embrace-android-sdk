@@ -25,10 +25,7 @@ internal class SessionPerformanceInfoSanitizerTest {
         )
 
         val result = PerformanceInfoSanitizer(sessionPerformanceInfo, components).sanitize()
-
         assertNotNull(result?.networkRequests)
-
-        assertNotNull(result?.anrIntervals)
         assertNotNull(result?.networkInterfaceIntervals)
         assertNotNull(result?.diskUsage)
     }
@@ -38,10 +35,7 @@ internal class SessionPerformanceInfoSanitizerTest {
         val components = setOf<String>()
 
         val result = PerformanceInfoSanitizer(sessionPerformanceInfo, components).sanitize()
-
         assertNull(result?.networkRequests)
-
-        assertNull(result?.anrIntervals)
         assertNull(result?.networkInterfaceIntervals)
         assertNull(result?.memoryWarnings)
         assertNull(result?.diskUsage)

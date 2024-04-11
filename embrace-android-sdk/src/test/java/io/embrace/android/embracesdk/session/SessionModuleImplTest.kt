@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
@@ -53,7 +52,6 @@ internal class SessionModuleImplTest {
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
-            fakeEmbraceSessionProperties(),
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             FakeSdkObservabilityModule(),
@@ -91,7 +89,6 @@ internal class SessionModuleImplTest {
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
-            fakeEmbraceSessionProperties(),
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             FakeSdkObservabilityModule(),

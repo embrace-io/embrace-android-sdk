@@ -43,6 +43,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -51,7 +52,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  * the SDK during initialization.
  */
 internal interface EssentialServiceModule {
-
     val memoryCleanerService: MemoryCleanerService
     val orientationService: OrientationService
     val processStateService: ProcessStateService
@@ -70,6 +70,7 @@ internal interface EssentialServiceModule {
     val networkConnectivityService: NetworkConnectivityService
     val pendingApiCallsSender: PendingApiCallsSender
     val sessionIdTracker: SessionIdTracker
+    val sessionProperties: EmbraceSessionProperties
 }
 
 internal class EssentialServiceModuleImpl(
@@ -319,6 +320,16 @@ internal class EssentialServiceModuleImpl(
 
     override val sessionIdTracker: SessionIdTracker by singleton {
         SessionIdTrackerImpl(systemServiceModule.activityManager, initModule.logger)
+    }
+
+    override val sessionProperties: EmbraceSessionProperties by singleton {
+        Systrace.traceSynchronous("session-properties-init") {
+            EmbraceSessionProperties(
+                androidServicesModule.preferencesService,
+                configService,
+                initModule.logger
+            )
+        }
     }
 }
 

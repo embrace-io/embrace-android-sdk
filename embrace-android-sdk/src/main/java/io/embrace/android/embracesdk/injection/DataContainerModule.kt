@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -36,7 +35,6 @@ internal class DataContainerModuleImpl(
     customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
-    sessionProperties: EmbraceSessionProperties,
     sdkStartTimeMs: Long
 ) : DataContainerModule {
 
@@ -83,7 +81,7 @@ internal class DataContainerModuleImpl(
             essentialServiceModule.sessionIdTracker,
             performanceInfoService,
             essentialServiceModule.userService,
-            sessionProperties,
+            essentialServiceModule.sessionProperties,
             initModule.logger,
             workerThreadModule,
             initModule.clock,

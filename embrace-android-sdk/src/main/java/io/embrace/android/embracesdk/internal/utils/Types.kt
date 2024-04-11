@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.io.OutputStream
 
@@ -147,7 +146,6 @@ internal typealias CustomerLogModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
-    sessionProperties: EmbraceSessionProperties,
     workerThreadModule: WorkerThreadModule,
     payloadModule: PayloadModule,
 ) -> CustomerLogModule
@@ -163,7 +161,6 @@ internal typealias NativeModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    sessionProperties: EmbraceSessionProperties,
     workerThreadModule: WorkerThreadModule
 ) -> NativeModule
 
@@ -182,7 +179,6 @@ internal typealias DataContainerModuleSupplier = (
     customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
-    sessionProperties: EmbraceSessionProperties,
     startTime: Long
 ) -> DataContainerModule
 
@@ -211,7 +207,6 @@ internal typealias SessionModuleSupplier = (
     nativeModule: NativeModule,
     dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    sessionProperties: EmbraceSessionProperties,
     dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
     sdkObservabilityModule: SdkObservabilityModule,
@@ -248,7 +243,7 @@ internal typealias PayloadModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
-    sdkObservabilityModule: SdkObservabilityModule
+    sdkObservabilityModule: SdkObservabilityModule,
 ) -> PayloadModule
 
 /**

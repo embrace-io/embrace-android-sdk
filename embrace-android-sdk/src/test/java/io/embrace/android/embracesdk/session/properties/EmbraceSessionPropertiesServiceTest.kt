@@ -49,4 +49,13 @@ internal class EmbraceSessionPropertiesServiceTest {
         assertEquals(emptyMap<String, String>(), ndkService.propUpdates.last())
         assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
     }
+
+    @Test
+    fun `populate session span with all set properties`() {
+        props.add("key", "value", true)
+        props.add("tempKey", "tempValue", false)
+        assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
+        assertTrue(service.populateCurrentSession())
+        assertEquals(2, fakeCurrentSessionSpan.addedAttributes.size)
+    }
 }

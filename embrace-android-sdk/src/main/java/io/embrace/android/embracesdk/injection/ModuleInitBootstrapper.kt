@@ -353,7 +353,7 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             openTelemetryModule,
                             sdkObservabilityModule
-                        )
+                        ) { sessionModule.sessionPropertiesService }
                     }
 
                     customerLogModule = init(CustomerLogModule::class) {
@@ -431,6 +431,10 @@ internal class ModuleInitBootstrapper(
                             dataSourceModule,
                             payloadModule
                         )
+                    }
+
+                    workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
+                        sessionModule.sessionPropertiesService.populateCurrentSession()
                     }
 
                     crashModule = init(CrashModule::class) {

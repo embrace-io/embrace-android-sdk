@@ -32,4 +32,6 @@ internal class EmbraceSessionPropertiesService(
     }
 
     override fun getProperties(): Map<String, String> = sessionProperties.get()
+
+    override fun populateCurrentSession(): Boolean = sessionPropertiesDataSource?.addProperties(getProperties()) ?: false
 }

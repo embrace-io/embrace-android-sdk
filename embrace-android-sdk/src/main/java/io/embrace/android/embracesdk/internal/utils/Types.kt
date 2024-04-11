@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import java.io.OutputStream
 
@@ -244,6 +245,7 @@ internal typealias PayloadModuleSupplier = (
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     sdkObservabilityModule: SdkObservabilityModule,
+    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
 ) -> PayloadModule
 
 /**

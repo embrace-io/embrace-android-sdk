@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.envelope.session
 
+import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
@@ -49,7 +50,7 @@ internal class SessionPayloadSourceImplTest {
             currentSessionSpan,
             spanRepository,
             InternalEmbraceLogger(),
-        )
+        ) { FakeSessionPropertiesService() }
     }
 
     @Test

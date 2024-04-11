@@ -12,4 +12,6 @@ internal class FakeSessionPropertiesService : SessionPropertiesService {
     }
 
     override fun getProperties(): Map<String, String> = emptyMap()
+
+    override fun populateCurrentSession(): Boolean = true
 }

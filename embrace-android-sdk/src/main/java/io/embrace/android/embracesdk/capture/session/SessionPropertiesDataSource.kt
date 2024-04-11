@@ -27,6 +27,16 @@ internal class SessionPropertiesDataSource(
             }
         )
 
+    fun addProperties(properties: Map<String, String>): Boolean =
+        alterSessionSpan(
+            inputValidation = { true },
+            captureAction = {
+                properties.forEach { property ->
+                    addCustomAttribute(SpanAttributeData(property.key, property.value))
+                }
+            }
+        )
+
     fun removeProperty(key: String): Boolean {
         var success = false
         alterSessionSpan(

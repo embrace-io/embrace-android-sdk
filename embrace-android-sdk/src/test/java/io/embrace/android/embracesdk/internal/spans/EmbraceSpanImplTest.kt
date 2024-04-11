@@ -183,6 +183,16 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `check adding and removing custom attributes`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            assertTrue(addAttribute("test", "value"))
+            assertTrue(removeCustomAttribute("test"))
+            assertFalse(removeCustomAttribute("test"))
+        }
+    }
+
+    @Test
     fun `check attribute limits`() {
         with(embraceSpan) {
             assertTrue(start())

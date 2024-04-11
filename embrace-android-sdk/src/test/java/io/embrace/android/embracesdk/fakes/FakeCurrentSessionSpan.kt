@@ -22,10 +22,9 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
         return true
     }
 
-    override fun addAttribute(attribute: SpanAttributeData): Boolean {
-        addedAttributes.add(attribute)
-        return true
-    }
+    override fun addCustomAttribute(attribute: SpanAttributeData): Boolean = addedAttributes.add(attribute)
+
+    override fun removeCustomAttribute(key: String): Boolean = addedAttributes.removeIf { it.key == key }
 
     override fun initialized(): Boolean {
         initializedCallCount++

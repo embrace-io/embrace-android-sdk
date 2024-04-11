@@ -108,9 +108,14 @@ internal class CurrentSessionSpanImpl(
         )
     }
 
-    override fun addAttribute(attribute: SpanAttributeData): Boolean {
+    override fun addCustomAttribute(attribute: SpanAttributeData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
         return currentSession.addAttribute(attribute.key, attribute.value)
+    }
+
+    override fun removeCustomAttribute(key: String): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.removeCustomAttribute(key)
     }
 
     /**

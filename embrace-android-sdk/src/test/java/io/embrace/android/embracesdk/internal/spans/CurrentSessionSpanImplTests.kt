@@ -251,7 +251,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add attribute forwarded to span`() {
-        currentSessionSpan.addAttribute(SpanAttributeData("my_key", "my_value"))
+        currentSessionSpan.addCustomAttribute(SpanAttributeData("my_key", "my_value"))
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
 

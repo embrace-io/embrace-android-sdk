@@ -14,10 +14,18 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
      */
     fun snapshot(): Span?
 
+    /**
+     * Checks to see if the given span has a particular [FixedAttribute]
+     */
     fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean
 
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
     fun getAttribute(key: EmbraceAttributeKey): String?
+
+    /**
+     * Remove the custom attribute with the given key name
+     */
+    fun removeCustomAttribute(key: String): Boolean
 }

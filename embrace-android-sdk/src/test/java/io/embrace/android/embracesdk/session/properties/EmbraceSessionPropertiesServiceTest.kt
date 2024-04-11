@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -57,5 +58,29 @@ internal class EmbraceSessionPropertiesServiceTest {
         assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
         assertTrue(service.populateCurrentSession())
         assertEquals(2, fakeCurrentSessionSpan.addedAttributes.size)
+    }
+
+    @Test
+    fun addSessionPropertyInvalidKey() {
+        assertFalse(service.addProperty("", "value", false))
+        assertTrue(service.getProperties().isEmpty())
+    }
+
+    @Test
+    fun addSessionPropertyKeyTooLong() {
+        val longKey = "a".repeat(129)
+        assertTrue(service.addProperty(longKey, "value", false))
+        assertEquals(1, service.getProperties().size.toLong())
+        val key = "a".repeat(125) + "..."
+        assertEquals("value", service.getProperties()[key])
+    }
+
+    @Test
+    fun addSessionPropertyValueTooLong() {
+        val longValue = "a".repeat(1025)
+        assertTrue(service.addProperty("key", longValue, false))
+        assertEquals(1, service.getProperties().size.toLong())
+        val value = "a".repeat(1021) + "..."
+        assertEquals(value, service.getProperties()["key"])
     }
 }

@@ -33,44 +33,8 @@ internal class EmbraceSessionProperties(
         return permanentProperties().containsKey(key) || temporary.containsKey(key)
     }
 
-    private fun isValidKey(key: String?): Boolean {
-        if (key == null) {
-            logger.logError("Session property key cannot be null")
-            return false
-        }
-        if (key == "") {
-            logger.logError("Session property key cannot be empty string")
-            return false
-        }
-        return true
-    }
-
-    private fun isValidValue(key: String?): Boolean {
-        if (key == null) {
-            logger.logError("Session property value cannot be null")
-            return false
-        }
-        return true
-    }
-
-    private fun enforceLength(value: String, maxLength: Int): String {
-        if (value.length <= maxLength) {
-            return value
-        }
-        val endChars = "..."
-        return value.substring(0, maxLength - endChars.length) + endChars
-    }
-
-    fun add(key: String, value: String, isPermanent: Boolean): Boolean {
+    fun add(sanitizedKey: String, sanitizedValue: String, isPermanent: Boolean): Boolean {
         synchronized(permanentPropertiesReference) {
-            if (!isValidKey(key)) {
-                return false
-            }
-            val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
-            if (!isValidValue(value)) {
-                return false
-            }
-            val sanitizedValue = enforceLength(value, SESSION_PROPERTY_VALUE_LIMIT)
             val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
             if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
                 logger.logError("Session property count is at its limit. Rejecting.")
@@ -95,12 +59,8 @@ internal class EmbraceSessionProperties(
         }
     }
 
-    fun remove(key: String): Boolean {
+    fun remove(sanitizedKey: String): Boolean {
         synchronized(permanentPropertiesReference) {
-            if (!isValidKey(key)) {
-                return false
-            }
-            val sanitizedKey = enforceLength(key, SESSION_PROPERTY_KEY_LIMIT)
             var existed = false
             if (temporary.remove(sanitizedKey) != null) {
                 existed = true
@@ -123,15 +83,6 @@ internal class EmbraceSessionProperties(
     fun clearTemporary() = temporary.clear()
 
     companion object {
-        /**
-         * The maximum number of characters of a session property key
-         */
-        private const val SESSION_PROPERTY_KEY_LIMIT = 128
-
-        /**
-         * The maximum number of characters of a session property value
-         */
-        private const val SESSION_PROPERTY_VALUE_LIMIT = 1024
         private val NOT_LOADED = mutableMapOf<String, String>()
     }
 }

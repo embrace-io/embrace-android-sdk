@@ -31,7 +31,7 @@ internal class PayloadModuleImpl(
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
-    sdkObservabilityModule: SdkObservabilityModule
+    sdkObservabilityModule: SdkObservabilityModule,
 ) : PayloadModule {
 
     private val backgroundWorker =

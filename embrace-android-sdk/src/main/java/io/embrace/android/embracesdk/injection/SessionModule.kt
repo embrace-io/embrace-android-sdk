@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -36,7 +35,6 @@ internal class SessionModuleImpl(
     nativeModule: NativeModule,
     dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    sessionProperties: EmbraceSessionProperties,
     dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
     sdkObservabilityModule: SdkObservabilityModule,
@@ -81,7 +79,7 @@ internal class SessionModuleImpl(
     override val sessionPropertiesService: SessionPropertiesService by singleton {
         EmbraceSessionPropertiesService(
             nativeModule.ndkService,
-            sessionProperties
+            essentialServiceModule.sessionProperties
         )
     }
 
@@ -118,7 +116,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.memoryCleanerService,
             essentialServiceModule.userService,
             ndkService,
-            sessionProperties,
+            essentialServiceModule.sessionProperties,
             sdkObservabilityModule.internalErrorService,
             essentialServiceModule.networkConnectivityService,
             dataCaptureServiceModule.breadcrumbService,

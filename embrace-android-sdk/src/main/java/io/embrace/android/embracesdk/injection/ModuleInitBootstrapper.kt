@@ -29,7 +29,6 @@ import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.TaskPriority
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -284,14 +283,6 @@ internal class ModuleInitBootstrapper(
                         initModule.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
                     }
 
-                    val sessionProperties = Systrace.traceSynchronous("session-properties-init") {
-                        EmbraceSessionProperties(
-                            androidServicesModule.preferencesService,
-                            essentialServiceModule.configService,
-                            initModule.logger
-                        )
-                    }
-
                     nativeModule = init(NativeModule::class) {
                         nativeModuleSupplier(
                             initModule,
@@ -300,7 +291,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             deliveryModule,
                             androidServicesModule,
-                            sessionProperties,
                             workerThreadModule
                         )
                     }
@@ -374,7 +364,6 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             deliveryModule,
-                            sessionProperties,
                             workerThreadModule,
                             payloadModule
                         )
@@ -403,7 +392,6 @@ internal class ModuleInitBootstrapper(
                             customerLogModule,
                             deliveryModule,
                             nativeModule,
-                            sessionProperties,
                             sdkStartTimeMs
                         )
                     }
@@ -436,7 +424,6 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             dataContainerModule,
                             deliveryModule,
-                            sessionProperties,
                             dataCaptureServiceModule,
                             customerLogModule,
                             sdkObservabilityModule,

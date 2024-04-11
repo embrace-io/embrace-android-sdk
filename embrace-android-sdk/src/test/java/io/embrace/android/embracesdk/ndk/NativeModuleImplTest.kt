@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.ndk
 
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -25,7 +24,6 @@ internal class NativeModuleImplTest {
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
             FakeAndroidServicesModule(),
-            fakeEmbraceSessionProperties(),
             WorkerThreadModuleImpl(InitModuleImpl())
         )
         assertNotNull(module.ndkService)

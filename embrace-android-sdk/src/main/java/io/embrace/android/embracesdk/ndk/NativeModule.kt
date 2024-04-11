@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
@@ -29,7 +28,6 @@ internal class NativeModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    sessionProperties: EmbraceSessionProperties,
     workerThreadModule: WorkerThreadModule
 ) : NativeModule {
 
@@ -44,7 +42,7 @@ internal class NativeModuleImpl(
                 deliveryModule.deliveryService,
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
-                sessionProperties,
+                essentialServiceModule.sessionProperties,
                 coreModule.appFramework,
                 essentialServiceModule.sharedObjectLoader,
                 initModule.logger,

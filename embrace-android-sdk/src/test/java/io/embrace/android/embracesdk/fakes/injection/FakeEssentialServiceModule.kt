@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -37,6 +38,7 @@ import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),
@@ -55,9 +57,8 @@ internal class FakeEssentialServiceModule(
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(
-        FakePreferenceService(),
-    )
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),
+    override val sessionProperties: EmbraceSessionProperties = fakeEmbraceSessionProperties()
 ) : EssentialServiceModule {
 
     override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate()

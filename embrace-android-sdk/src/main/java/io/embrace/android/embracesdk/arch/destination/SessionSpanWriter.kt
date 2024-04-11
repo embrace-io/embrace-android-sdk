@@ -24,5 +24,12 @@ internal interface SessionSpanWriter {
      *
      * Returns true if the attribute was added, otherwise false.
      */
-    fun addAttribute(attribute: SpanAttributeData): Boolean
+    fun addCustomAttribute(attribute: SpanAttributeData): Boolean
+
+    /**
+     * Remove the attribute with the given key
+     *
+     * Returns true if attribute was removed, otherwise false.
+     */
+    fun removeCustomAttribute(key: String): Boolean
 }

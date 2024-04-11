@@ -36,7 +36,7 @@ internal class FakeDataSource(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         alterSessionSpan(inputValidation = { true }) {
-            addAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
+            addCustomAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
         }
     }
 

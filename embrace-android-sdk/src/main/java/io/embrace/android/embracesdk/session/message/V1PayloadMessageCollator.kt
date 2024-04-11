@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -164,7 +165,7 @@ internal class V1PayloadMessageCollator(
         endTime: Long,
     ): SessionMessage {
         val spans: List<EmbraceSpanData>? = captureDataSafely(logger) {
-            when {
+            val result = when {
                 !params.captureSpans -> null
                 !params.isCacheAttempt -> {
                     val appTerminationCause = when {
@@ -177,9 +178,10 @@ internal class V1PayloadMessageCollator(
                     }
                     spans
                 }
-
                 else -> spanSink.completedSpans()
             }
+            // add ANR spans if the payload is capturing spans.
+            result?.plus(anrOtelMapper.snapshot().map(Span::toOldPayload)) ?: result
         }
         val breadcrumbs = captureDataSafely(logger) {
             when {

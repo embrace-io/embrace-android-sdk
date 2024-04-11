@@ -14,11 +14,13 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
+import io.embrace.android.embracesdk.injection.AnrModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
@@ -91,6 +93,7 @@ internal class IntegrationTestRule(
      * Instance of the test harness that is recreating on every test iteration
      */
     lateinit var harness: Harness
+    lateinit var bootstrapper: ModuleInitBootstrapper
 
     /**
      * Setup the Embrace SDK so it's ready for testing.
@@ -98,20 +101,20 @@ internal class IntegrationTestRule(
     override fun before() {
         harness = harnessSupplier.invoke()
         with(harness) {
-            val embraceImpl = EmbraceImpl(
-                ModuleInitBootstrapper(
-                    initModule = initModule,
-                    openTelemetryModule = initModule.openTelemetryModule,
-                    coreModuleSupplier = { _, _, _ -> fakeCoreModule },
-                    systemServiceModuleSupplier = { _, _ -> systemServiceModule },
-                    androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
-                    workerThreadModuleSupplier = { _ -> workerThreadModule },
-                    storageModuleSupplier = { _, _, _ -> storageModule },
-                    essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
-                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
-                    deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
-                )
+            bootstrapper = ModuleInitBootstrapper(
+                initModule = initModule,
+                openTelemetryModule = initModule.openTelemetryModule,
+                coreModuleSupplier = { _, _, _ -> fakeCoreModule },
+                systemServiceModuleSupplier = { _, _ -> systemServiceModule },
+                androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
+                workerThreadModuleSupplier = { _ -> workerThreadModule },
+                storageModuleSupplier = { _, _, _ -> storageModule },
+                essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
+                deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
+                anrModuleSupplier = { _, _, _ -> fakeAnrModule }
             )
+            val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
                 embrace.start(fakeCoreModule.context, enableIntegrationTesting, appFramework)
@@ -136,7 +139,10 @@ internal class IntegrationTestRule(
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
         val initModule: FakeInitModule = FakeInitModule(clock = fakeClock),
         val openTelemetryModule: OpenTelemetryModule = initModule.openTelemetryModule,
-        val fakeCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = initModule.logger),
+        val fakeCoreModule: FakeCoreModule = FakeCoreModule(
+            appFramework = appFramework,
+            logger = initModule.logger
+        ),
         val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
         val fakeConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
@@ -199,6 +205,7 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),
+        val fakeAnrModule: AnrModule = FakeAnrModule(),
         val startImmediately: Boolean = true
     )
 

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal class SessionPropertiesDataSource(
@@ -23,7 +24,7 @@ internal class SessionPropertiesDataSource(
         alterSessionSpan(
             inputValidation = { true },
             captureAction = {
-                addCustomAttribute(SpanAttributeData(key, value))
+                addAttribute(key, value)
             }
         )
 
@@ -32,7 +33,7 @@ internal class SessionPropertiesDataSource(
             inputValidation = { true },
             captureAction = {
                 properties.forEach { property ->
-                    addCustomAttribute(SpanAttributeData(property.key, property.value))
+                    addAttribute(property.key, property.value)
                 }
             }
         )
@@ -42,9 +43,12 @@ internal class SessionPropertiesDataSource(
         alterSessionSpan(
             inputValidation = { true },
             captureAction = {
-                success = removeCustomAttribute(key)
+                success = removeCustomAttribute(key.toSessionPropertyAttributeName())
             }
         )
         return success
     }
+
+    private fun SessionSpanWriter.addAttribute(key: String, value: String) =
+        addCustomAttribute(SpanAttributeData(key.toSessionPropertyAttributeName(), value))
 }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.opentelemetry.api.common.AttributeKey
 
@@ -19,7 +19,7 @@ internal class TelemetryAttributes(
      */
     fun snapshot(): Map<String, String> =
         (customAttributes ?: emptyMap())
-            .plus(sessionProperties?.get()?.mapKeys { "properties.".toEmbraceAttributeName() + it.key } ?: emptyMap())
+            .plus(sessionProperties?.get()?.mapKeys { it.key.toSessionPropertyAttributeName() } ?: emptyMap())
             .plus(map.mapKeys { it.key.key })
 
     fun setAttribute(key: EmbraceAttributeKey, value: String) {

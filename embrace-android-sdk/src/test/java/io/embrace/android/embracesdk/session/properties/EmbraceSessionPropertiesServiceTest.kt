@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
@@ -43,21 +42,21 @@ internal class EmbraceSessionPropertiesServiceTest {
         assertEquals(expected, props.get())
         assertEquals(expected, ndkService.propUpdates.single())
         assertEquals(expected, service.getProperties())
-        assertEquals(SpanAttributeData("key", "value"), fakeCurrentSessionSpan.addedAttributes.first())
+        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
 
         service.removeProperty("key")
         assertEquals(emptyMap<String, String>(), props.get())
         assertEquals(emptyMap<String, String>(), ndkService.propUpdates.last())
-        assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
+        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
     }
 
     @Test
     fun `populate session span with all set properties`() {
         props.add("key", "value", true)
         props.add("tempKey", "tempValue", false)
-        assertTrue(fakeCurrentSessionSpan.addedAttributes.isEmpty())
+        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
         assertTrue(service.populateCurrentSession())
-        assertEquals(2, fakeCurrentSessionSpan.addedAttributes.size)
+        assertEquals(2, fakeCurrentSessionSpan.attributeCount())
     }
 
     @Test

@@ -13,6 +13,10 @@
           {
             "key": "emb.type",
             "value": "ux.session"
+          },
+          {
+            "key": "emb.private",
+            "value": "true"
           }
         ],
         "events": "__EMBRACE_TEST_IGNORE__",

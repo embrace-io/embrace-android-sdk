@@ -169,7 +169,11 @@ internal class V1PayloadMessageCollator(
                         finalPayload.crashReportId != null -> AppTerminationCause.Crash
                         else -> null
                     }
-                    currentSessionSpan.endSession(appTerminationCause)
+                    val spans = currentSessionSpan.endSession(appTerminationCause)
+                    if (appTerminationCause == null) {
+                        sessionPropertiesService.populateCurrentSession()
+                    }
+                    spans
                 }
 
                 else -> spanSink.completedSpans()

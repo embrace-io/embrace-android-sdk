@@ -9,10 +9,12 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 internal class SessionPayloadSourceImpl(
@@ -21,21 +23,32 @@ internal class SessionPayloadSourceImpl(
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
-    private val logger: InternalEmbraceLogger
+    private val logger: InternalEmbraceLogger,
+    private val sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
 ) : SessionPayloadSource {
 
     override fun getSessionPayload(endType: SessionSnapshotType): SessionPayload {
+        val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
+        val internalErrors = captureDataSafely(logger) { internalErrorService.currentExceptionError?.toNewPayload() }
+        val snapshots = retrieveSpanSnapshotData()
+
+        // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
+        val spans = retrieveSpanData(endType)
         return SessionPayload(
-            spans = retrieveSpanData(endType),
-            spanSnapshots = retrieveSpanSnapshotData(),
-            internalError = captureDataSafely(logger) { internalErrorService.currentExceptionError?.toNewPayload() },
-            sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
+            spans = spans,
+            spanSnapshots = snapshots,
+            internalError = internalErrors,
+            sharedLibSymbolMapping = sharedLibSymbolMapping
         )
     }
 
     private fun retrieveSpanData(endType: SessionSnapshotType): List<Span>? = captureDataSafely(logger) {
         when (endType) {
-            SessionSnapshotType.NORMAL_END -> currentSessionSpan.endSession(null)
+            SessionSnapshotType.NORMAL_END -> {
+                val flushedSpans = currentSessionSpan.endSession(null)
+                sessionPropertiesServiceProvider().populateCurrentSession()
+                flushedSpans
+            }
             SessionSnapshotType.PERIODIC_CACHE -> spanSink.completedSpans()
             SessionSnapshotType.JVM_CRASH -> currentSessionSpan.endSession(AppTerminationCause.Crash)
         }.map(EmbraceSpanData::toNewPayload)

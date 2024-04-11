@@ -32,4 +32,9 @@ internal interface SessionPropertiesService {
      * actual properties in the session. To modify session properties see addProperty.
      */
     fun getProperties(): Map<String, String>
+
+    /**
+     * Populate the current session with the existing session properties
+     */
+    fun populateCurrentSession(): Boolean
 }

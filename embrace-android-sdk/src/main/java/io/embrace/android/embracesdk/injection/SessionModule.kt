@@ -79,9 +79,8 @@ internal class SessionModuleImpl(
     override val sessionPropertiesService: SessionPropertiesService by singleton {
         EmbraceSessionPropertiesService(
             nativeModule.ndkService,
-            essentialServiceModule.sessionProperties,
-            dataSourceModule.sessionPropertiesDataSource.dataSource
-        )
+            essentialServiceModule.sessionProperties
+        ) { dataSourceModule.sessionPropertiesDataSource.dataSource }
     }
 
     private val ndkService by singleton {

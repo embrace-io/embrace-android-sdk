@@ -28,12 +28,6 @@ internal data class PerformanceInfo(
     val networkInterfaceIntervals: List<Interval>? = null,
 
     /**
-     * Periods during which the application was not responding (UI thread blocked for > 1 sec).
-     */
-    @Json(name = "anr")
-    val anrIntervals: List<AnrInterval>? = null,
-
-    /**
      * Timestamps where Google ANRs were triggered.
      */
     @Json(name = "ga")

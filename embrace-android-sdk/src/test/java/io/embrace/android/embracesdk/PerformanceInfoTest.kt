@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Interval
@@ -22,7 +21,6 @@ internal class PerformanceInfoTest {
     private val memoryWarnings: List<MemoryWarning> = emptyList()
     private val networkInterfaceIntervals: List<Interval> = emptyList()
     private val googleAnrTimestamps: List<Long> = emptyList()
-    private val anrIntervals: List<AnrInterval> = emptyList()
     private val appExitInfoData: List<AppExitInfoData> = emptyList()
     private val nativeThreadAnrIntervals: List<NativeThreadAnrInterval> = emptyList()
     private val powerSaveModeIntervals: List<PowerModeInterval> = emptyList()
@@ -46,7 +44,6 @@ internal class PerformanceInfoTest {
     }
 
     private fun verifyFields(performanceInfo: PerformanceInfo) {
-        assertEquals(anrIntervals, performanceInfo.anrIntervals)
         assertEquals(googleAnrTimestamps, performanceInfo.googleAnrTimestamps)
         assertEquals(memoryWarnings, performanceInfo.memoryWarnings)
         assertEquals(nativeThreadAnrIntervals, performanceInfo.nativeThreadAnrIntervals)
@@ -56,7 +53,6 @@ internal class PerformanceInfoTest {
     }
 
     private fun buildPerformanceInfo(): PerformanceInfo = PerformanceInfo(
-        anrIntervals = anrIntervals,
         appExitInfoData = appExitInfoData,
         diskUsage = diskUsage,
         googleAnrTimestamps = googleAnrTimestamps,

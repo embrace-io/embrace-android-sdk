@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -12,23 +14,20 @@ import kotlin.reflect.KProperty
  * Declares all the data sources that are used by the Embrace SDK.
  *
  * To add a new data source, simply define a new property of type [DataSourceState] using
- * the [dataSource] property delegate. It is important that you use this delegate as otherwise
+ * the [dataSourceState] property delegate. It is important that you use this delegate as otherwise
  * the property won't be propagated to the [DataCaptureOrchestrator].
  *
  * Data will then automatically be captured by the SDK.
  */
 internal interface DataSourceModule {
-
     /**
      * Returns a list of all the data sources that are defined in this module.
      */
-    fun getDataSources(): List<DataSourceState>
+    fun getDataSources(): List<DataSourceState<*>>
 
-    val breadcrumbDataSource: DataSourceState
-
-    val tapDataSource: DataSourceState
-
-    val fragmentViewDataSource: DataSourceState
+    val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
+    val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
+    val tapDataSource: DataSourceState<TapDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -40,9 +39,9 @@ internal class DataSourceModuleImpl(
     @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
-    private val values: MutableList<DataSourceState> = mutableListOf()
+    private val values: MutableList<DataSourceState<*>> = mutableListOf()
 
-    override val breadcrumbDataSource: DataSourceState by dataSource {
+    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState({
             BreadcrumbDataSource(
                 breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
@@ -52,7 +51,7 @@ internal class DataSourceModuleImpl(
         })
     }
 
-    override val tapDataSource: DataSourceState by dataSource {
+    override val tapDataSource: DataSourceState<TapDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 TapDataSource(
@@ -64,7 +63,7 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val fragmentViewDataSource: DataSourceState by dataSource {
+    override val fragmentViewDataSource: DataSourceState<FragmentViewDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 FragmentViewDataSource(
@@ -78,10 +77,8 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    /* Implementation details */
-
     private val configService = essentialServiceModule.configService
-    override fun getDataSources(): List<DataSourceState> = values
+    override fun getDataSources(): List<DataSourceState<*>> = values
 
     /**
      * Property delegate that adds the value to a
@@ -89,15 +86,16 @@ internal class DataSourceModuleImpl(
      * the data sources.
      */
     @Suppress("unused")
-    private fun dataSource(provider: () -> DataSourceState) = DataSourceDelegate(provider, values)
+    private fun <T : DataSource<*>> dataSourceState(provider: Provider<DataSourceState<T>>) =
+        DataSourceDelegate(provider = provider, values = values)
 }
 
-private class DataSourceDelegate(
-    provider: () -> DataSourceState,
-    values: MutableList<DataSourceState>,
-) : ReadOnlyProperty<Any?, DataSourceState> {
+private class DataSourceDelegate<S : DataSource<*>>(
+    provider: Provider<DataSourceState<S>>,
+    values: MutableList<DataSourceState<*>>,
+) : ReadOnlyProperty<Any?, DataSourceState<S>> {
 
-    private val value = provider()
+    private val value: DataSourceState<S> = provider()
 
     init {
         values.add(value)

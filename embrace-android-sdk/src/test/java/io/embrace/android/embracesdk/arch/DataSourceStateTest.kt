@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 internal class DataSourceStateTest {
@@ -19,6 +21,9 @@ internal class DataSourceStateTest {
             currentSessionType = null
         )
 
+        // data source not retrievable if not session type is null
+        assertNull(state.dataSource)
+
         // data capture is enabled by default.
         state.onConfigChange()
         state.onSessionTypeChange(null)
@@ -27,6 +32,7 @@ internal class DataSourceStateTest {
 
         // data capture enabled for a session
         state.onSessionTypeChange(SessionType.FOREGROUND)
+        assertSame(source, state.dataSource)
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
 
@@ -79,6 +85,9 @@ internal class DataSourceStateTest {
             configGate = { enabled },
             currentSessionType = SessionType.FOREGROUND
         )
+
+        // data source not retrievable if disabled
+        assertNull(state.dataSource)
 
         // data capture is disabled by default.
         assertEquals(0, source.enableDataCaptureCount)

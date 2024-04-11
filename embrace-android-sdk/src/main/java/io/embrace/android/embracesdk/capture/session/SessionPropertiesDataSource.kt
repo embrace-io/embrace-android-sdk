@@ -27,11 +27,14 @@ internal class SessionPropertiesDataSource(
             }
         )
 
-    fun removeProperty(key: String): Boolean =
+    fun removeProperty(key: String): Boolean {
+        var success = false
         alterSessionSpan(
             inputValidation = { true },
             captureAction = {
-                removeCustomAttribute(key)
+                success = removeCustomAttribute(key)
             }
         )
+        return success
+    }
 }

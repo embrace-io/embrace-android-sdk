@@ -429,7 +429,8 @@ internal class ModuleInitBootstrapper(
                             sdkObservabilityModule,
                             workerThreadModule,
                             dataSourceModule,
-                            payloadModule
+                            payloadModule,
+                            anrModule
                         )
                     }
 

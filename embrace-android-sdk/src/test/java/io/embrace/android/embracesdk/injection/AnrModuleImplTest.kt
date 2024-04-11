@@ -36,6 +36,7 @@ internal class AnrModuleImplTest {
             WorkerThreadModuleImpl(FakeInitModule())
         )
         assertNotNull(module.anrService)
+        assertNotNull(module.anrOtelMapper)
         assertNotNull(module.googleAnrTimestampRepository)
         assertNotNull(module.responsivenessMonitorService)
     }
@@ -52,6 +53,7 @@ internal class AnrModuleImplTest {
         assertTrue(module.anrService is NoOpAnrService)
         assertTrue(module.responsivenessMonitorService is NoOpResponsivenessMonitorService)
         assertNotNull(module.googleAnrTimestampRepository)
+        assertNotNull(module.anrOtelMapper)
     }
 
     private fun createConfigServiceWithAnrDisabled() = FakeConfigService(

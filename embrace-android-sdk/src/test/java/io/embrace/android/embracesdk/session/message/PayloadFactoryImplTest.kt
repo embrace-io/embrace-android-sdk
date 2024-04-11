@@ -2,9 +2,11 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
@@ -66,6 +68,7 @@ internal class PayloadFactoryImplTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
+            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
             logger = initModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(

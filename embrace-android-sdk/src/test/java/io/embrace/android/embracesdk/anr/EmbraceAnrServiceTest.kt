@@ -93,14 +93,18 @@ internal class EmbraceAnrServiceTest {
     fun testCleanCollections() {
         with(rule) {
             // assert the ANR interval was added
-            anrService.stacktraceSampler.anrIntervals.add(AnrInterval(0))
-            assertEquals(1, anrService.stacktraceSampler.anrIntervals.size)
+            val anrIntervals = anrService.stacktraceSampler.anrIntervals
+            anrIntervals.add(AnrInterval(startTime = 15000000, endTime = 15000100))
+            val inProgressInterval = AnrInterval(startTime = 15000000, lastKnownTime = 15000100)
+            anrIntervals.add(inProgressInterval)
+            assertEquals(2, anrIntervals.size)
 
             // the ANR interval should be removed here
             anrService.cleanCollections()
             anrExecutorService.shutdownNow()
             anrExecutorService.awaitTermination(1, TimeUnit.SECONDS)
-            assertEquals(0, anrService.stacktraceSampler.anrIntervals.size)
+            assertEquals(1, anrIntervals.size)
+            assertEquals(inProgressInterval, anrIntervals.single())
         }
     }
 

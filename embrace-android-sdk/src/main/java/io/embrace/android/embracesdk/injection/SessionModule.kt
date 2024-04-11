@@ -40,7 +40,8 @@ internal class SessionModuleImpl(
     sdkObservabilityModule: SdkObservabilityModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule
+    payloadModule: PayloadModule,
+    anrModule: AnrModule
 ) : SessionModule {
 
     override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
@@ -63,6 +64,7 @@ internal class SessionModuleImpl(
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService,
+            anrModule.anrOtelMapper,
             initModule.logger
         )
     }

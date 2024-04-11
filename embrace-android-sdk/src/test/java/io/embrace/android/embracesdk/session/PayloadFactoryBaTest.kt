@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -13,6 +14,7 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakeBackgroundActivity
+import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -185,6 +187,7 @@ internal class PayloadFactoryBaTest {
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
+            AnrOtelMapper(FakeAnrService()),
             logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(

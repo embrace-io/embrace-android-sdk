@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -67,6 +69,7 @@ internal class V1PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
+            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
             logger = initModule.logger
         )
     }

@@ -46,6 +46,7 @@ internal data class AnrInterval @JvmOverloads constructor(
     @Json(name = "c")
     val code: Int? = CODE_DEFAULT
 ) {
+
     /**
      * The type of thread not responding. Currently only the UI thread is monitored.
      */

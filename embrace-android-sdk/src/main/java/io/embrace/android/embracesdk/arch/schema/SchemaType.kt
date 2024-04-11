@@ -136,16 +136,16 @@ internal sealed class SchemaType(
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val attrs = mapOf(
-            "session-id" to message.sessionId,
-            "session-id-error" to message.sessionIdError,
-            "process-importance" to message.importance.toString(),
+            "session_id" to message.sessionId,
+            "session_id_error" to message.sessionIdError,
+            "process_importance" to message.importance.toString(),
             "pss" to message.pss.toString(),
-            "rs" to message.reason.toString(),
+            "reason" to message.reason.toString(),
             "rss" to message.rss.toString(),
-            "exit-status" to message.status.toString(),
+            "exit_status" to message.status.toString(),
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
-            "trace-status" to message.traceStatus
+            "trace_status" to message.traceStatus
         ).toNonNullMap()
     }
 

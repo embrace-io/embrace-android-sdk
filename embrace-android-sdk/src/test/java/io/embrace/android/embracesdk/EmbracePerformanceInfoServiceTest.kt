@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.fakes.FakeApplicationExitInfoService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
@@ -27,7 +26,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private val memoryService = FakeMemoryService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
-    private val applicationExitInfoService = FakeApplicationExitInfoService()
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
 
     @Before
@@ -38,7 +36,6 @@ internal class EmbracePerformanceInfoServiceTest {
             memoryService,
             metadataService,
             googleAnrTimestampRepository,
-            applicationExitInfoService,
             null,
             monitoringServiceRule,
             InternalEmbraceLogger()
@@ -67,7 +64,6 @@ internal class EmbracePerformanceInfoServiceTest {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, true, null)
         assertBasicPerfInfoIncluded(info)
         assertBasicSessionPerfInfoIncluded(info)
-        assertValueCopied(applicationExitInfoService.data, info.appExitInfoData)
     }
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {

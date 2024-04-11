@@ -113,14 +113,14 @@ internal class AeiDataSourceImplTest {
         // when getCapturedData is called
         val attrs = getAeiLogAttrs()
         assertEquals(TIMESTAMP.toString(), attrs["timestamp"])
-        assertEquals(SESSION_ID, attrs["session-id"])
-        assertEquals(IMPORTANCE.toString(), attrs["process-importance"])
+        assertEquals(SESSION_ID, attrs["session_id"])
+        assertEquals(IMPORTANCE.toString(), attrs["process_importance"])
         assertEquals(PSS.toString(), attrs["pss"])
         assertEquals(RSS.toString(), attrs["rss"])
-        assertEquals(STATUS.toString(), attrs["exit-status"])
+        assertEquals(STATUS.toString(), attrs["exit_status"])
         assertEquals(DESCRIPTION, attrs["description"])
-        assertEquals("", attrs["session-id-error"])
-        assertNull(attrs["trace-status"])
+        assertEquals("", attrs["session_id_error"])
+        assertNull(attrs["trace_status"])
 
         val logEventData = logWriter.logEvents.single()
         assertEquals(TRACE, logEventData.message)
@@ -217,8 +217,8 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
 
         // then the invalid session ID message should be added to the sessionIdError
-        assertEquals("invalid session ID: $invalidSessionId", attrs["session-id-error"])
-        assertEquals(invalidSessionId, attrs["session-id"])
+        assertEquals("invalid session ID: $invalidSessionId", attrs["session_id_error"])
+        assertEquals(invalidSessionId, attrs["session_id"])
     }
 
     @Test
@@ -258,7 +258,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull("", attrs["blob"])
-        assertEquals("oom: Ouch", attrs["trace-status"])
+        assertEquals("oom: Ouch", attrs["trace_status"])
     }
 
     @Test
@@ -279,7 +279,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull(attrs["blob"])
-        assertEquals("ioexception: Ouch", attrs["trace-status"])
+        assertEquals("ioexception: Ouch", attrs["trace_status"])
     }
 
     @Test
@@ -301,7 +301,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull(attrs["blob"])
-        assertEquals("error: $errorMessage", attrs["trace-status"])
+        assertEquals("error: $errorMessage", attrs["trace_status"])
     }
 
     @Test

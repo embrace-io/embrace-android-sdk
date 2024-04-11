@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
@@ -18,7 +19,8 @@ internal class CompositeLogService(
     private val v1LogService: LogMessageService,
     private val v2LogService: LogService,
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger
+    private val logger: InternalEmbraceLogger,
+    private val serializer: EmbraceSerializer
 ) : LogMessageService {
 
     private val useV2LogService: Boolean
@@ -63,22 +65,35 @@ internal class CompositeLogService(
                     properties
                 )
             } else {
-                // Currently, the backend is not processing exceptions as OTel logs, so we must
-                // use v1. When the backend is ready, this must be replaced with a call
-                // to v2LogService.logException().
-                v1LogService.log(
-                    message = message,
-                    type = type,
-                    logExceptionType = logExceptionType,
-                    properties = properties,
-                    stackTraceElements = stackTraceElements,
-                    customStackTrace = customStackTrace,
-                    framework = framework,
-                    context = context,
-                    library = library,
-                    exceptionName = exceptionName,
-                    exceptionMessage = exceptionMessage
-                )
+                val stacktrace = if (stackTraceElements != null) {
+                    serializer.toJson(stackTraceElements)
+                } else {
+                    customStackTrace
+                }
+                if (framework == Embrace.AppFramework.FLUTTER) {
+                    v2LogService.logFlutterException(
+                        message = message,
+                        severity = severity,
+                        logExceptionType = logExceptionType,
+                        properties = properties,
+                        stackTrace = stacktrace,
+                        exceptionName = exceptionName,
+                        exceptionMessage = exceptionMessage,
+                        context = context,
+                        library = library
+                    )
+                } else {
+                    v2LogService.logException(
+                        message = message,
+                        severity = severity,
+                        logExceptionType = logExceptionType,
+                        properties = properties,
+                        stackTrace = stacktrace,
+                        framework = framework,
+                        exceptionName = exceptionName,
+                        exceptionMessage = exceptionMessage
+                    )
+                }
             }
         } else {
             v1LogService.log(

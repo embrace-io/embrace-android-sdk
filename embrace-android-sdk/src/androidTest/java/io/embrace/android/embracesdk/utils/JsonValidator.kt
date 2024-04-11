@@ -45,33 +45,33 @@ internal object JsonValidator {
     }
 
     private fun areJsonElementsEquals(
-        jsonElement1: JsonElement,
-        jsonElement2: JsonElement,
+        expectedJson: JsonElement,
+        observedJson: JsonElement,
         sb: StringBuilder
     ): Boolean {
         when {
-            jsonElement1.isIgnored() || jsonElement2.isIgnored() -> return true
-            jsonElement1.isJsonObject && jsonElement2.isJsonObject -> {
+            expectedJson.isIgnored() || observedJson.isIgnored() -> return true
+            expectedJson.isJsonObject && observedJson.isJsonObject -> {
                 return areJsonObjectsEquals(
-                    jsonElement1.asJsonObject,
-                    jsonElement2.asJsonObject,
+                    expectedJson.asJsonObject,
+                    observedJson.asJsonObject,
                     sb
                 )
             }
 
-            jsonElement1.isJsonArray && jsonElement2.isJsonArray -> {
-                return areJsonArraysEquals(jsonElement1.asJsonArray, jsonElement2.asJsonArray, sb)
+            expectedJson.isJsonArray && observedJson.isJsonArray -> {
+                return areJsonArraysEquals(expectedJson.asJsonArray, observedJson.asJsonArray, sb)
             }
 
-            jsonElement1.isJsonPrimitive && jsonElement2.isJsonPrimitive -> {
+            expectedJson.isJsonPrimitive && observedJson.isJsonPrimitive -> {
                 return areJsonPrimitiveEquals(
-                    jsonElement1.asJsonPrimitive,
-                    jsonElement2.asJsonPrimitive,
+                    expectedJson.asJsonPrimitive,
+                    observedJson.asJsonPrimitive,
                     sb
                 )
             }
 
-            jsonElement1.isJsonNull && jsonElement2.isJsonNull -> {
+            expectedJson.isJsonNull && observedJson.isJsonNull -> {
                 return true
             }
 
@@ -122,25 +122,25 @@ internal object JsonValidator {
      * Arrays ordered in a different way are considered different.
      */
     private fun areJsonArraysEquals(
-        jsonArray1: JsonArray,
-        jsonArray2: JsonArray,
+        expectedJsonArray: JsonArray,
+        observedJsonArray: JsonArray,
         sb: StringBuilder
     ): Boolean {
-        if (jsonArray1.size() != jsonArray2.size()) {
+        if (expectedJsonArray.size() != observedJsonArray.size()) {
             sb.append("Different arrays size. ")
             return false
         }
 
-        jsonArray1.forEach { array1Entry ->
+        observedJsonArray.forEach { observedEntry ->
             var found = false
-            jsonArray2.forEach { array2Entry ->
+            expectedJsonArray.forEach { expectedEntry ->
                 // use another string builder to avoid appending to the main one
-                if (areJsonElementsEquals(array1Entry, array2Entry, StringBuilder())) {
+                if (areJsonElementsEquals(expectedEntry, observedEntry, StringBuilder())) {
                     found = true
                 }
             }
             if (!found) {
-                sb.append("Array element not found in observed array: $array1Entry.")
+                sb.append("Array element not found in observed array: $observedEntry.")
                 return false
             }
         }

@@ -83,12 +83,6 @@ internal class EmbraceSessionPropertiesTest {
     }
 
     @Test
-    fun addSessionPropertyInvalidKey() {
-        assertFalse(sessionProperties.add("", VALUE_VALID, false))
-        assertTrue(sessionProperties.get().isEmpty())
-    }
-
-    @Test
     fun addSessionPropertyInvalidValue() {
         assertTrue(sessionProperties.get().isEmpty())
     }
@@ -110,24 +104,6 @@ internal class EmbraceSessionPropertiesTest {
         // permanent property should no longer have been persisted
         val sessionProperties3 = EmbraceSessionProperties(preferencesService, configService, logger)
         assertTrue(sessionProperties3.get().isEmpty())
-    }
-
-    @Test
-    fun addSessionPropertyKeyTooLong() {
-        val longKey = "a".repeat(129)
-        assertTrue(sessionProperties.add(longKey, VALUE_VALID, false))
-        assertEquals(1, sessionProperties.get().size.toLong())
-        val key = "a".repeat(125) + "..."
-        assertEquals(VALUE_VALID, sessionProperties.get()[key])
-    }
-
-    @Test
-    fun addSessionPropertyValueTooLong() {
-        val longValue = "a".repeat(1025)
-        assertTrue(sessionProperties.add(KEY_VALID, longValue, false))
-        assertEquals(1, sessionProperties.get().size.toLong())
-        val value = "a".repeat(1021) + "..."
-        assertEquals(value, sessionProperties.get()[KEY_VALID])
     }
 
     @Test

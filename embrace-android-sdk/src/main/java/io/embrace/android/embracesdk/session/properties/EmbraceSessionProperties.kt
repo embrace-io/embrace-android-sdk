@@ -123,11 +123,14 @@ internal class EmbraceSessionProperties(
     fun clearTemporary() = temporary.clear()
 
     companion object {
-
         /**
-         * The maximum number of properties that can be attached to a session
+         * The maximum number of characters of a session property key
          */
         private const val SESSION_PROPERTY_KEY_LIMIT = 128
+
+        /**
+         * The maximum number of characters of a session property value
+         */
         private const val SESSION_PROPERTY_VALUE_LIMIT = 1024
         private val NOT_LOADED = mutableMapOf<String, String>()
     }

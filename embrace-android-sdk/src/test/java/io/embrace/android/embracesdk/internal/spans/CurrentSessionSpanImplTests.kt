@@ -250,12 +250,15 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
-    fun `add attribute forwarded to span`() {
+    fun `add and remove attribute forwarded to span`() {
         currentSessionSpan.addCustomAttribute(SpanAttributeData("my_key", "my_value"))
+        currentSessionSpan.addCustomAttribute(SpanAttributeData("missing", "my_value"))
+        currentSessionSpan.removeCustomAttribute("missing")
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
 
-        // verify attribute was added to the span
+        // verify attribute was added to the span if it wasn't removed
         assertEquals("my_value", span.attributes["my_key"])
+        assertNull(span.attributes["missing"])
     }
 }

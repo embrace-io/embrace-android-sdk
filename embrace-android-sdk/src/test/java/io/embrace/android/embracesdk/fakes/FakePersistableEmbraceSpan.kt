@@ -110,6 +110,7 @@ internal class FakePersistableEmbraceSpan(
         attributes.hasFixedAttribute(fixedAttribute)
 
     override fun getAttribute(key: EmbraceAttributeKey): String? = attributes[key.name]
+
     override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null
 
     companion object {

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -27,10 +28,12 @@ internal class EmbraceNetworkLoggingServiceTest {
     private lateinit var sdkLocalConfig: SdkLocalConfig
     private lateinit var remoteConfig: RemoteConfig
     private lateinit var networkCaptureService: FakeNetworkCaptureService
+    private lateinit var spanService: FakeSpanService
 
     @Before
     fun setUp() {
         networkCaptureService = FakeNetworkCaptureService()
+        spanService = FakeSpanService()
         logger = InternalEmbraceLogger()
         configService = FakeConfigService(
             networkBehavior = fakeNetworkBehavior(
@@ -456,7 +459,8 @@ internal class EmbraceNetworkLoggingServiceTest {
             EmbraceNetworkLoggingService(
                 configService,
                 logger,
-                networkCaptureService
+                networkCaptureService,
+                spanService
             )
     }
 

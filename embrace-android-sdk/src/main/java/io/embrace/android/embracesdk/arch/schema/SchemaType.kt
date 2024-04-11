@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.schema
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.payload.NetworkCallV2
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -192,6 +193,19 @@ internal sealed class SchemaType(
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
             "trace_status" to message.traceStatus
+        ).toNonNullMap()
+    }
+
+    internal class NetworkRequest(networkCallV2: NetworkCallV2) : SchemaType(EmbType.Performance.Network) {
+        override val attrs = mapOf(
+            "url.full" to networkCallV2.url,
+            "http.request.method" to networkCallV2.httpMethod,
+            "http.response.status_code" to networkCallV2.responseCode.toString(),
+            "http.request.body.size" to networkCallV2.bytesSent.toString(),
+            "http.response.body.size" to networkCallV2.bytesReceived.toString(),
+            "error.type" to networkCallV2.errorType,
+            "error.message" to networkCallV2.errorMessage,
+            "emb.w3c_traceparent" to networkCallV2.w3cTraceparent
         ).toNonNullMap()
     }
 

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
+import io.embrace.android.embracesdk.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
@@ -246,30 +248,16 @@ internal class EmbraceNetworkLoggingService(
     private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
         callsStorageLastUpdate.incrementAndGet()
         sessionNetworkCalls[callId] = networkCall
+        val networkRequestSchemaType = SchemaType.NetworkRequest(networkCall)
         spanService.recordCompletedSpan(
-            name = "emb-network-request-$callId",  //TODO: What name goes here?
+            name = "${networkCall.httpMethod} ${getUrlPath(networkCall.url)}",
             startTimeMs = networkCall.startTime,
             endTimeMs = networkCall.endTime,
             errorCode = null,
             parent = null,
-            attributes = getNetworkSpanAttributes(networkCall),
+            attributes = networkRequestSchemaType.attributes(),
             type = EmbType.Performance.Network,
         )
-    }
-
-    private fun getNetworkSpanAttributes(networkCall: NetworkCallV2): Map<String, String> {
-        val attributes = mutableMapOf<String, String>()
-        networkCall.url?.let { attributes["url"] = it }
-        networkCall.httpMethod?.let { attributes["http-method"] = it }
-        networkCall.responseCode?.let { attributes["response-code"] = it.toString() }
-        attributes["bytes-out"] = networkCall.bytesSent.toString()
-        attributes["bytes-received"] = networkCall.bytesReceived.toString()
-        attributes["duration"] = networkCall.duration.toString()
-        networkCall.traceId?.let { attributes["trace-id"] = it }
-        networkCall.errorType?.let { attributes["error-type"] = it }
-        networkCall.errorMessage?.let { attributes["error-message"] = it }
-        networkCall.w3cTraceparent?.let { attributes["w3c-traceparent"] = it }
-        return attributes
     }
 
     private fun clearNetworkCalls() {

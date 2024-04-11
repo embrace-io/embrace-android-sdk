@@ -95,4 +95,11 @@ internal object NetworkUtils {
             (if (pathPos < 0) 0 else pathPos) + suffix.length.coerceAtMost(terminalPos)
         )
     }
+
+    @JvmStatic
+    fun getUrlPath(url: String?): String? = try {
+        URL(url).path
+    } catch (exception: Exception) {
+        ""
+    }
 }

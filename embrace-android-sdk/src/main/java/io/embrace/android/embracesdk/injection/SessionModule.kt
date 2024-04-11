@@ -80,7 +80,7 @@ internal class SessionModuleImpl(
         EmbraceSessionPropertiesService(
             nativeModule.ndkService,
             essentialServiceModule.sessionProperties,
-            dataSourceModule.sessionPropertiesDataSource.enabledDataSource
+            dataSourceModule.sessionPropertiesDataSource.dataSource
         )
     }
 

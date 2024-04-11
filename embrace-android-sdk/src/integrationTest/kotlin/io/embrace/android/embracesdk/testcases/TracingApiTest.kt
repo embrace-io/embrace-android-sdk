@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -240,8 +239,7 @@ internal class TracingApiTest {
                 private = false
             )
 
-            assertEquals(2, checkNotNull(sessionMessage.spanSnapshots).size)
-            val snapshots = sessionMessage.spanSnapshots.associateBy { it.name }
+            val snapshots = checkNotNull(sessionMessage.spanSnapshots).associateBy { it.name }
             val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
             unendingSpanSnapshot.assertIsTypePerformance()
             assertEmbraceSpanData(

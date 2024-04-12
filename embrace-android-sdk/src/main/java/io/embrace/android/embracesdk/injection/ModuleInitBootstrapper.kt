@@ -219,7 +219,8 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             essentialServiceModule,
                             workerThreadModule,
-                            versionChecker
+                            versionChecker,
+                            dataSourceModule
                         )
                     }
 

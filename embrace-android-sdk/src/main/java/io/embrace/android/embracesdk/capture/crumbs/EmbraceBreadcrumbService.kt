@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
-import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
@@ -29,24 +28,16 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val activityTracker: ActivityTracker,
-    sessionSpanWriter: SessionSpanWriter,
-    spanService: SpanService,
-    private val logger: InternalEmbraceLogger
+    dataSourceModule: DataSourceModule,
+    logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val breadcrumbDataSource =
-        BreadcrumbDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
+    private val breadcrumbDataSource = dataSourceModule.breadcrumbDataSource
     private val legacyWebViewBreadcrumbDataSource = LegacyWebViewBreadcrumbDataSource(configService, logger)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
-    private val tapBreadcrumbDataSource =
-        TapDataSource(configService.breadcrumbBehavior, sessionSpanWriter, logger)
+    private val tapBreadcrumbDataSource = dataSourceModule.tapDataSource
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
-    private val fragmentViewDataSource = FragmentViewDataSource(
-        configService.breadcrumbBehavior,
-        clock,
-        spanService,
-        logger
-    )
+    private val fragmentViewDataSource = dataSourceModule.fragmentViewDataSource
     private val pushNotificationBreadcrumbDataSource =
         PushNotificationBreadcrumbDataSource(configService, clock, logger)
 
@@ -59,11 +50,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun startView(name: String?): Boolean {
-        return fragmentViewDataSource.startFragment(name)
+        return fragmentViewDataSource.dataSource?.startFragment(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {
-        return fragmentViewDataSource.endFragment(name)
+        return fragmentViewDataSource.dataSource?.endFragment(name) ?: false
     }
 
     override fun logTap(
@@ -72,11 +63,11 @@ internal class EmbraceBreadcrumbService(
         timestamp: Long,
         type: TapBreadcrumbType
     ) {
-        tapBreadcrumbDataSource.logTap(point, element, timestamp, type)
+        tapBreadcrumbDataSource.dataSource?.logTap(point, element, timestamp, type)
     }
 
     override fun logCustom(message: String, timestamp: Long) {
-        breadcrumbDataSource.logCustom(message, timestamp)
+        breadcrumbDataSource.dataSource?.logCustom(message, timestamp)
     }
 
     override fun logRnAction(
@@ -138,7 +129,7 @@ internal class EmbraceBreadcrumbService(
             return
         }
         viewBreadcrumbDataSource.onViewClose()
-        fragmentViewDataSource.onViewClose()
+        fragmentViewDataSource.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {

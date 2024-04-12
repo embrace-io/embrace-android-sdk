@@ -22,6 +22,8 @@ import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
+import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
@@ -108,7 +110,7 @@ internal class IntegrationTestRule(
                     workerThreadModuleSupplier = { _ -> workerThreadModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
                     essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
-                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
+                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _, _ -> dataCaptureServiceModule },
                     deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
                 )
             )
@@ -186,6 +188,14 @@ internal class IntegrationTestRule(
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,
             ) { fakeConfigService },
+        val dataSourceModule: DataSourceModule = DataSourceModuleImpl(
+            initModule = initModule,
+            otelModule = openTelemetryModule,
+            essentialServiceModule = essentialServiceModule,
+            systemServiceModule = systemServiceModule,
+            androidServicesModule = androidServicesModule,
+            workerThreadModule = workerThreadModule,
+        ),
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(
                 initModule = initModule,
@@ -193,7 +203,8 @@ internal class IntegrationTestRule(
                 coreModule = fakeCoreModule,
                 systemServiceModule = systemServiceModule,
                 essentialServiceModule = essentialServiceModule,
-                workerThreadModule = workerThreadModule
+                workerThreadModule = workerThreadModule,
+                dataSourceModule = dataSourceModule
             ),
         val fakeDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(

@@ -104,7 +104,8 @@ internal typealias DataCaptureServiceModuleSupplier = (
     systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule,
-    versionChecker: VersionChecker
+    versionChecker: VersionChecker,
+    dataSourceModule: DataSourceModule
 ) -> DataCaptureServiceModule
 
 /**

@@ -41,16 +41,16 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
-import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.IdGenerator;
+import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
-import io.embrace.android.embracesdk.logging.ReportingLoggerAction;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
+import io.embrace.android.embracesdk.logging.ReportingLoggerAction;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -72,6 +72,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.Pair;
+import kotlin.jvm.functions.Function0;
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -212,9 +213,9 @@ final class EmbraceImpl {
         internalEmbraceLogger = moduleInitBootstrapper.getInitModule().getLogger();
         tracer = moduleInitBootstrapper.getOpenTelemetryModule().getEmbraceTracer();
         uninitializedSdkInternalInterface =
-            LazyKt.lazy(
-                () -> new UninitializedSdkInternalInterfaceImpl(moduleInitBootstrapper.getOpenTelemetryModule().getInternalTracer())
-            );
+                LazyKt.lazy(
+                        () -> new UninitializedSdkInternalInterfaceImpl(moduleInitBootstrapper.getOpenTelemetryModule().getInternalTracer())
+                );
     }
 
     EmbraceImpl() {
@@ -238,19 +239,27 @@ final class EmbraceImpl {
     void start(@NonNull Context context,
                boolean enableIntegrationTesting,
                @NonNull Embrace.AppFramework appFramework) {
+        startInternal(context, enableIntegrationTesting, appFramework, () -> null);
+    }
+
+    void startInternal(@NonNull Context context,
+                       boolean enableIntegrationTesting,
+                       @NonNull Embrace.AppFramework appFramework,
+                       @NonNull Function0<ConfigService> configServiceProvider) {
         try {
             Systrace.startSynchronous("sdk-start");
-            startImpl(context, enableIntegrationTesting, appFramework);
+            startImpl(context, enableIntegrationTesting, appFramework, configServiceProvider);
             Systrace.endSynchronous();
         } catch (Throwable t) {
             internalEmbraceLogger.logError(
-                "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t, true);
+                    "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t, true);
         }
     }
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) {
+                           @NonNull Embrace.AppFramework framework,
+                           @NonNull Function0<ConfigService> configServiceProvider) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             internalEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -265,7 +274,7 @@ final class EmbraceImpl {
 
         final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId);
+        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 
@@ -328,8 +337,8 @@ final class EmbraceImpl {
         Systrace.startSynchronous("send-cached-sessions");
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
-            nativeModule.getNdkService(),
-            essentialServiceModule.getSessionIdTracker()
+                nativeModule.getNdkService(),
+                essentialServiceModule.getSessionIdTracker()
         );
         Systrace.endSynchronous();
 
@@ -337,12 +346,12 @@ final class EmbraceImpl {
         loadCrashVerifier(crashModule, moduleInitBootstrapper.getWorkerThreadModule());
 
         internalInterfaceModule = new InternalInterfaceModuleImpl(
-            moduleInitBootstrapper.getInitModule(),
-            moduleInitBootstrapper.getOpenTelemetryModule(),
-            coreModule,
-            essentialServiceModule,
-            this,
-            crashModule
+                moduleInitBootstrapper.getInitModule(),
+                moduleInitBootstrapper.getOpenTelemetryModule(),
+                coreModule,
+                essentialServiceModule,
+                this,
+                crashModule
         );
 
         embraceInternalInterface = internalInterfaceModule.getEmbraceInternalInterface();
@@ -364,7 +373,7 @@ final class EmbraceImpl {
 
 
         final String startMsg = "Embrace SDK started. App ID: " +
-            essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
+                essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
         internalEmbraceLogger.logInfo(startMsg);
 
         final long endTimeMs = sdkClock.now();
@@ -396,7 +405,7 @@ final class EmbraceImpl {
     private void loadCrashVerifier(CrashModule crashModule, WorkerThreadModule workerThreadModule) {
         crashVerifier = crashModule.getLastRunCrashVerifier();
         crashVerifier.readAndCleanMarkerAsync(
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
         );
     }
 
@@ -455,7 +464,7 @@ final class EmbraceImpl {
         }
         if (!appIdPattern.matcher(appId).find()) {
             internalEmbraceLogger.logError("Invalid app ID. Must be a 5-character string with " +
-                "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".");
+                    "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".");
             return false;
         }
 
@@ -715,19 +724,19 @@ final class EmbraceImpl {
     void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
         if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
             logNetworkRequestImpl(
-                callId,
-                request.getNetworkCaptureData(),
-                request.getUrl(),
-                request.getHttpMethod(),
-                request.getStartTime(),
-                request.getResponseCode(),
-                request.getEndTime(),
-                request.getErrorType(),
-                request.getErrorMessage(),
-                request.getTraceId(),
-                request.getW3cTraceparent(),
-                request.getBytesOut(),
-                request.getBytesIn()
+                    callId,
+                    request.getNetworkCaptureData(),
+                    request.getUrl(),
+                    request.getHttpMethod(),
+                    request.getStartTime(),
+                    request.getResponseCode(),
+                    request.getEndTime(),
+                    request.getErrorType(),
+                    request.getErrorMessage(),
+                    request.getTraceId(),
+                    request.getW3cTraceparent(),
+                    request.getBytesOut(),
+                    request.getBytesIn()
             );
         }
     }
@@ -747,33 +756,33 @@ final class EmbraceImpl {
                                        Long bytesIn) {
         if (configService.getNetworkBehavior().isUrlEnabled(url)) {
             if (errorType != null &&
-                errorMessage != null &&
-                !errorType.isEmpty() &&
-                !errorMessage.isEmpty()) {
+                    errorMessage != null &&
+                    !errorType.isEmpty() &&
+                    !errorMessage.isEmpty()) {
                 networkLoggingService.logNetworkError(
-                    callId,
-                    url,
-                    httpMethod,
-                    startTime,
-                    endTime != null ? endTime : 0,
-                    errorType,
-                    errorMessage,
-                    traceId,
-                    w3cTraceparent,
-                    networkCaptureData);
+                        callId,
+                        url,
+                        httpMethod,
+                        startTime,
+                        endTime != null ? endTime : 0,
+                        errorType,
+                        errorMessage,
+                        traceId,
+                        w3cTraceparent,
+                        networkCaptureData);
             } else {
                 networkLoggingService.logNetworkCall(
-                    callId,
-                    url,
-                    httpMethod,
-                    responseCode != null ? responseCode : 0,
-                    startTime,
-                    endTime != null ? endTime : 0,
-                    bytesOut,
-                    bytesIn,
-                    traceId,
-                    w3cTraceparent,
-                    networkCaptureData);
+                        callId,
+                        url,
+                        httpMethod,
+                        responseCode != null ? responseCode : 0,
+                        startTime,
+                        endTime != null ? endTime : 0,
+                        bytesOut,
+                        bytesIn,
+                        traceId,
+                        w3cTraceparent,
+                        networkCaptureData);
             }
             onActivityReported();
         }
@@ -783,14 +792,14 @@ final class EmbraceImpl {
                     @NonNull Severity severity,
                     @Nullable Map<String, ?> properties) {
         logMessage(
-            EventType.Companion.fromSeverity(severity),
-            message,
-            properties,
-            null,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
+                EventType.Companion.fromSeverity(severity),
+                message,
+                properties,
+                null,
+                null,
+                LogExceptionType.NONE,
+                null,
+                null
         );
     }
 
@@ -800,16 +809,16 @@ final class EmbraceImpl {
                       @Nullable String message) {
         String exceptionMessage = throwable.getMessage() != null ? throwable.getMessage() : "";
         logMessage(
-            EventType.Companion.fromSeverity(severity),
-            message != null ? message : exceptionMessage,
-            properties,
-            ThrowableUtilsKt.getSafeStackTrace(throwable),
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            throwable.getClass().getSimpleName(),
-            exceptionMessage);
+                EventType.Companion.fromSeverity(severity),
+                message != null ? message : exceptionMessage,
+                properties,
+                ThrowableUtilsKt.getSafeStackTrace(throwable),
+                null,
+                LogExceptionType.HANDLED,
+                null,
+                null,
+                throwable.getClass().getSimpleName(),
+                exceptionMessage);
     }
 
     void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
@@ -817,64 +826,64 @@ final class EmbraceImpl {
                              @Nullable Map<String, ?> properties,
                              @Nullable String message) {
         logMessage(
-            EventType.Companion.fromSeverity(severity),
-            message != null ? message : "",
-            properties,
-            stacktraceElements,
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            null,
-            message);
+                EventType.Companion.fromSeverity(severity),
+                message != null ? message : "",
+                properties,
+                stacktraceElements,
+                null,
+                LogExceptionType.HANDLED,
+                null,
+                null,
+                null,
+                message);
     }
 
     void logMessage(
-        @NonNull EventType type,
-        @NonNull String message,
-        @Nullable Map<String, ?> properties,
-        @Nullable StackTraceElement[] stackTraceElements,
-        @Nullable String customStackTrace,
-        @NonNull LogExceptionType logExceptionType,
-        @Nullable String context,
-        @Nullable String library) {
+            @NonNull EventType type,
+            @NonNull String message,
+            @Nullable Map<String, ?> properties,
+            @Nullable StackTraceElement[] stackTraceElements,
+            @Nullable String customStackTrace,
+            @NonNull LogExceptionType logExceptionType,
+            @Nullable String context,
+            @Nullable String library) {
         logMessage(type,
-            message,
-            properties,
-            stackTraceElements,
-            customStackTrace,
-            logExceptionType,
-            context,
-            library,
-            null,
-            null);
+                message,
+                properties,
+                stackTraceElements,
+                customStackTrace,
+                logExceptionType,
+                context,
+                library,
+                null,
+                null);
     }
 
     void logMessage(
-        @NonNull EventType type,
-        @NonNull String message,
-        @Nullable Map<String, ?> properties,
-        @Nullable StackTraceElement[] stackTraceElements,
-        @Nullable String customStackTrace,
-        @NonNull LogExceptionType logExceptionType,
-        @Nullable String context,
-        @Nullable String library,
-        @Nullable String exceptionName,
-        @Nullable String exceptionMessage) {
+            @NonNull EventType type,
+            @NonNull String message,
+            @Nullable Map<String, ?> properties,
+            @Nullable StackTraceElement[] stackTraceElements,
+            @Nullable String customStackTrace,
+            @NonNull LogExceptionType logExceptionType,
+            @Nullable String context,
+            @Nullable String library,
+            @Nullable String exceptionName,
+            @Nullable String exceptionMessage) {
         if (checkSdkStartedAndLogPublicApiUsage("log_message")) {
             try {
                 logMessageService.log(
-                    message,
-                    type,
-                    logExceptionType,
-                    normalizeProperties(properties, internalEmbraceLogger),
-                    stackTraceElements,
-                    customStackTrace,
-                    appFramework,
-                    context,
-                    library,
-                    exceptionName,
-                    exceptionMessage);
+                        message,
+                        type,
+                        logExceptionType,
+                        normalizeProperties(properties, internalEmbraceLogger),
+                        stackTraceElements,
+                        customStackTrace,
+                        appFramework,
+                        context,
+                        library,
+                        exceptionName,
+                        exceptionMessage);
                 onActivityReported();
             } catch (Exception ex) {
                 internalEmbraceLogger.logDebug("Failed to log message using Embrace SDK.", ex);
@@ -988,23 +997,23 @@ final class EmbraceImpl {
      * @param messageDeliveredPriority the priority of the message (as resolved on the server)
      */
     void logPushNotification(
-        @Nullable String title,
-        @Nullable String body,
-        @Nullable String topic,
-        @Nullable String id,
-        @Nullable Integer notificationPriority,
-        Integer messageDeliveredPriority,
-        PushNotificationBreadcrumb.NotificationType type) {
+            @Nullable String title,
+            @Nullable String body,
+            @Nullable String topic,
+            @Nullable String id,
+            @Nullable Integer notificationPriority,
+            Integer messageDeliveredPriority,
+            PushNotificationBreadcrumb.NotificationType type) {
 
         if (checkSdkStartedAndLogPublicApiUsage("log_push_notification")) {
             pushNotificationService.logPushNotification(
-                title,
-                body,
-                topic,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                type
+                    title,
+                    body,
+                    topic,
+                    id,
+                    notificationPriority,
+                    messageDeliveredPriority,
+                    type
             );
             onActivityReported();
         }
@@ -1206,9 +1215,9 @@ final class EmbraceImpl {
             AnrService service = anrService;
             if (service != null && nativeThreadSamplerInstaller != null) {
                 nativeThreadSamplerInstaller.monitorCurrentThread(
-                    nativeThreadSampler,
-                    configService,
-                    service
+                        nativeThreadSampler,
+                        configService,
+                        service
                 );
             } else {
                 internalEmbraceLogger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread");

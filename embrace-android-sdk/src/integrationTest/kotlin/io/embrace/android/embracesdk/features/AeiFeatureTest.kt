@@ -34,7 +34,7 @@ internal class AeiFeatureTest {
         setupFakeAeiData()
 
         with(testRule) {
-            testRule.embrace.start(ApplicationProvider.getApplicationContext())
+            testRule.startSdk(context = ApplicationProvider.getApplicationContext())
             val message = harness.recordSession()
             val deliveryService = harness.overriddenDeliveryModule.deliveryService
             val blobRecord = checkNotNull(deliveryService.blobMessages.single().applicationExits.single())

@@ -30,7 +30,7 @@ internal class UserFeaturesTest {
                 userEmailAddress = "custom@domain.com"
             }
 
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(harness.overriddenCoreModule.context)
             with(checkNotNull(harness.recordSession { })) {
                 assertUserInfo(preferenceService, "customId", "customUserName", "custom@domain.com")
             }

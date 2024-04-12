@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.OTelConfig
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.internal.EmbraceContext
@@ -52,7 +52,7 @@ internal open class BaseTest(useV2SessionPayload: Boolean = false) {
 
     private val remoteConfig = RemoteConfig(
         webViewVitals = WebViewVitals(100f, 100),
-        oTelConfig = OTelConfig(
+        oTelConfig = OTelRemoteConfig(
             useV2SessionPayload = useV2SessionPayload
         )
     )

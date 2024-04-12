@@ -121,5 +121,5 @@ internal data class RemoteConfig(
      * Settings defining the OTel configuration.
      */
     @Json(name = "otel_config")
-    val oTelConfig: OTelConfig? = null
+    val oTelConfig: OTelRemoteConfig? = null
 )

@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration to switch to OpenTelemetry payloads for session, logs, crashes, etc.
  */
 @JsonClass(generateAdapter = true)
-internal data class OTelConfig(
+internal data class OTelRemoteConfig(
     @Json(name = "use_v2_session_payload")
     val useV2SessionPayload: Boolean? = null,
 

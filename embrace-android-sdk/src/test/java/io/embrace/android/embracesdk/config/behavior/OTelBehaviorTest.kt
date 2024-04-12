@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.remote.OTelConfig
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import org.junit.Assert.assertFalse
@@ -10,7 +10,7 @@ import org.junit.Test
 internal class OTelBehaviorTest {
 
     private val remote = RemoteConfig(
-        oTelConfig = OTelConfig(
+        oTelConfig = OTelRemoteConfig(
             useV2SessionPayload = true,
             useV2LogPayload = true,
             useV2CrashPayload = true

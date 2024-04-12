@@ -98,7 +98,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `v2 payload generated`() {
-        oTelConfig = OTelRemoteConfig(useV2SessionPayload = true)
+        oTelConfig = OTelRemoteConfig(isStableEnabled = true)
         val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
         val sessionMessage = checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
         assertTrue(sessionMessage.isV2Payload())

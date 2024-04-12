@@ -8,12 +8,12 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 internal data class OTelRemoteConfig(
-    @Json(name = "use_v2_session_payload")
-    val useV2SessionPayload: Boolean? = null,
+    @Json(name = "stable")
+    val isStableEnabled: Boolean? = null,
 
-    @Json(name = "use_v2_log_payload")
-    val useV2LogPayload: Boolean? = null,
+    @Json(name = "beta")
+    val isBetaEnabled: Boolean? = null,
 
-    @Json(name = "use_v2_crash_payload")
-    val useV2CrashPayload: Boolean? = null,
+    @Json(name = "dev")
+    val isDevEnabled: Boolean? = null,
 )

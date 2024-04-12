@@ -16,17 +16,17 @@ internal class OTelBehavior(
     remoteSupplier
 ) {
     /**
-     * Whether to use the V2 payload format for sending sessions.
+     * Returns whether OTel Stable is enabled.
      */
-    fun useV2SessionPayload() = remote?.oTelConfig?.useV2SessionPayload ?: false
+    fun isStableEnabled() = remote?.oTelConfig?.isStableEnabled ?: false
 
     /**
-     * Whether to use the V2 payload format for sending logs.
+     * Returns whether OTel Beta is enabled.
      */
-    fun useV2LogPayload() = remote?.oTelConfig?.useV2LogPayload ?: false
+    fun isBetaEnabled() = remote?.oTelConfig?.isBetaEnabled ?: false
 
     /**
-     * Whether to use the V2 payload format for sending crashes.
+     * Returns whether OTel Dev is enabled.
      */
-    fun useV2CrashPayload() = remote?.oTelConfig?.useV2CrashPayload ?: false
+    fun isDevEnabled() = remote?.oTelConfig?.isDevEnabled ?: false
 }

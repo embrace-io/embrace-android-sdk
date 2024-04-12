@@ -53,7 +53,7 @@ internal open class BaseTest(useV2SessionPayload: Boolean = false) {
     private val remoteConfig = RemoteConfig(
         webViewVitals = WebViewVitals(100f, 100),
         oTelConfig = OTelRemoteConfig(
-            useV2SessionPayload = useV2SessionPayload
+            isStableEnabled = useV2SessionPayload
         )
     )
 

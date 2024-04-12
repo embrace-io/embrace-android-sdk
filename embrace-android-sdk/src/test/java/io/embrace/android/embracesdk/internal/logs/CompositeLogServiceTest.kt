@@ -63,7 +63,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testLogV2() {
-        oTelConfig = OTelRemoteConfig(useV2LogPayload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.INFO_LOG,
@@ -102,7 +102,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testLogExceptionV2() {
-        oTelConfig = OTelRemoteConfig(useV2LogPayload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.INFO_LOG,
@@ -141,7 +141,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testFlutterExceptionV2() {
-        oTelConfig = OTelRemoteConfig(useV2LogPayload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "Dart error",
             type = EventType.ERROR_LOG,
@@ -164,7 +164,7 @@ internal class CompositeLogServiceTest {
     @Test
     fun testWrongEventType() {
         // The log service can handle only INFO_LOG, WARNING_LOG and ERROR_LOG event types
-        oTelConfig = OTelRemoteConfig(useV2LogPayload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.CRASH,

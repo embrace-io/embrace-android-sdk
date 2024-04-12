@@ -11,27 +11,27 @@ internal class OTelBehaviorTest {
 
     private val remote = RemoteConfig(
         oTelConfig = OTelRemoteConfig(
-            useV2SessionPayload = true,
-            useV2LogPayload = true,
-            useV2CrashPayload = true
+            isStableEnabled = true,
+            isBetaEnabled = true,
+            isDevEnabled = true
         ),
     )
 
     @Test
     fun testDefaults() {
         with(fakeOTelBehavior()) {
-            assertFalse(useV2SessionPayload())
-            assertFalse(useV2LogPayload())
-            assertFalse(useV2CrashPayload())
+            assertFalse(isStableEnabled())
+            assertFalse(isBetaEnabled())
+            assertFalse(isDevEnabled())
         }
     }
 
     @Test
     fun testRemote() {
         with(fakeOTelBehavior(remoteCfg = { remote })) {
-            assertTrue(useV2SessionPayload())
-            assertTrue(useV2LogPayload())
-            assertTrue(useV2CrashPayload())
+            assertTrue(isStableEnabled())
+            assertTrue(isBetaEnabled())
+            assertTrue(isDevEnabled())
         }
     }
 }

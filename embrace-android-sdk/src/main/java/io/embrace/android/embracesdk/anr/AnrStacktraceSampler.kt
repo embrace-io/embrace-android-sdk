@@ -99,7 +99,7 @@ internal class AnrStacktraceSampler(
     override fun cleanCollections() {
         anrMonitorWorker.submit {
             enforceThread(anrMonitorThread)
-            anrIntervals.clear()
+            anrIntervals.removeAll { it.endTime != null }
         }
     }
 

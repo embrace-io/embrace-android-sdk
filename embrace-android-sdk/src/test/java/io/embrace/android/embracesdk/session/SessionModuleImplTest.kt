@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
@@ -57,7 +58,8 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule()
+            FakePayloadModule(),
+            FakeAnrModule()
         )
         assertNotNull(module.v1PayloadMessageCollator)
         assertNotNull(module.v2PayloadMessageCollator)
@@ -94,7 +96,8 @@ internal class SessionModuleImplTest {
             FakeSdkObservabilityModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule()
+            FakePayloadModule(),
+            FakeAnrModule()
         )
         assertNotNull(module.v1PayloadMessageCollator)
         assertNotNull(module.v2PayloadMessageCollator)

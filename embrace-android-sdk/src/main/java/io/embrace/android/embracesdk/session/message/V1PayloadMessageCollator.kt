@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session.message
 
+import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
@@ -46,6 +47,7 @@ internal class V1PayloadMessageCollator(
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService,
+    @Suppress("UnusedPrivateProperty") private val anrOtelMapper: AnrOtelMapper,
     private val logger: InternalEmbraceLogger,
 ) : PayloadMessageCollator {
 

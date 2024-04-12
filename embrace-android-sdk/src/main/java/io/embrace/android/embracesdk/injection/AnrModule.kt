@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
+import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.anr.NoOpAnrService
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 internal interface AnrModule {
     val googleAnrTimestampRepository: GoogleAnrTimestampRepository
     val anrService: AnrService
+    val anrOtelMapper: AnrOtelMapper
     val responsivenessMonitorService: ResponsivenessMonitorService
 }
 
@@ -60,6 +62,10 @@ internal class AnrModuleImpl(
         } else {
             NoOpAnrService()
         }
+    }
+
+    override val anrOtelMapper: AnrOtelMapper by singleton {
+        AnrOtelMapper(anrService)
     }
 
     override val responsivenessMonitorService: ResponsivenessMonitorService by singleton {

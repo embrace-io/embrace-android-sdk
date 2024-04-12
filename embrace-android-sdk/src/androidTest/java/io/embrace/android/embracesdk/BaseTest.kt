@@ -41,7 +41,11 @@ import java.util.zip.GZIPInputStream
  * class will reset the Embrace instance as well as the TestServer before each individual test
  * is run
  */
-internal open class BaseTest(useV2SessionPayload: Boolean = false) {
+internal open class BaseTest(
+    isOTelDevEnabled: Boolean = false,
+    isOTelBetaEnabled: Boolean = false,
+    isOTelStableEnabled: Boolean = false,
+) {
 
     private lateinit var pendingApiCallsFilePath: String
     private lateinit var testServer: TestServer
@@ -53,7 +57,9 @@ internal open class BaseTest(useV2SessionPayload: Boolean = false) {
     private val remoteConfig = RemoteConfig(
         webViewVitals = WebViewVitals(100f, 100),
         oTelConfig = OTelRemoteConfig(
-            isStableEnabled = useV2SessionPayload
+            isDevEnabled = isOTelDevEnabled,
+            isBetaEnabled = isOTelBetaEnabled,
+            isStableEnabled = isOTelStableEnabled
         )
     )
 

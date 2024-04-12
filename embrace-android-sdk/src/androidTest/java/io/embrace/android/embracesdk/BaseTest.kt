@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.config.remote.OTelConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.internal.EmbraceContext
 import io.embrace.android.embracesdk.internal.EmbraceFileObserver
@@ -41,7 +41,7 @@ import java.util.zip.GZIPInputStream
  * class will reset the Embrace instance as well as the TestServer before each individual test
  * is run
  */
-internal open class BaseTest(useV2Payload: Boolean = false) {
+internal open class BaseTest(useV2SessionPayload: Boolean = false) {
 
     private lateinit var pendingApiCallsFilePath: String
     private lateinit var testServer: TestServer
@@ -52,8 +52,8 @@ internal open class BaseTest(useV2Payload: Boolean = false) {
 
     private val remoteConfig = RemoteConfig(
         webViewVitals = WebViewVitals(100f, 100),
-        sessionConfig = SessionRemoteConfig(
-            useV2Payload = useV2Payload
+        oTelConfig = OTelConfig(
+            useV2SessionPayload = useV2SessionPayload
         )
     )
 

@@ -4,7 +4,7 @@ import logTestMessage
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionSpanTest : BaseTest(useV2Payload = true) {
+internal class SessionSpanTest : BaseTest(useV2SessionPayload = true) {
 
     @Before
     fun setup() {

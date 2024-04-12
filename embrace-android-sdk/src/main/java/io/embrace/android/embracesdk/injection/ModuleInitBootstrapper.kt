@@ -211,6 +211,17 @@ internal class ModuleInitBootstrapper(
                         essentialServiceModule.metadataService.precomputeValues()
                     }
 
+                    dataSourceModule = init(DataSourceModule::class) {
+                        dataSourceModuleSupplier(
+                            initModule,
+                            openTelemetryModule,
+                            essentialServiceModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            workerThreadModule
+                        )
+                    }
+
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(
                             initModule,
@@ -403,17 +414,6 @@ internal class ModuleInitBootstrapper(
                             dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
                             dataContainerModule.applicationExitInfoService
-                        )
-                    }
-
-                    dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            essentialServiceModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            workerThreadModule
                         )
                     }
 

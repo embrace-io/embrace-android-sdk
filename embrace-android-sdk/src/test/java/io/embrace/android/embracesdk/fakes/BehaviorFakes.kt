@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.config.behavior.OTelBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
@@ -146,7 +147,18 @@ internal fun fakeNetworkSpanForwardingBehavior(
     remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null }
 ) = NetworkSpanForwardingBehavior(thresholdCheck, remoteConfig)
 
+/**
+ * A fake [WebViewVitalsBehavior] that returns default values.
+ */
 internal fun fakeWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null },
 ) = WebViewVitalsBehavior(thresholdCheck, remoteCfg)
+
+/**
+ * A fake [OTelBehavior] that returns default values.
+ */
+internal fun fakeOTelBehavior(
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
+    remoteCfg: Provider<RemoteConfig?> = { null }
+) = OTelBehavior(thresholdCheck, remoteCfg)

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.config.behavior.OTelBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
@@ -40,6 +41,7 @@ internal class FakeConfigService(
     override var webViewVitalsBehavior: WebViewVitalsBehavior = fakeWebViewVitalsBehavior(),
     override var appExitInfoBehavior: AppExitInfoBehavior = fakeAppExitInfoBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior(),
+    override var oTelBehavior: OTelBehavior = fakeOTelBehavior()
 ) : ConfigService {
 
     val listeners = mutableSetOf<ConfigListener>()

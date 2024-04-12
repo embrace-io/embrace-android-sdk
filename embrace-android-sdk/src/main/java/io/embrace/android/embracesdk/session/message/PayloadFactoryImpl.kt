@@ -17,7 +17,7 @@ internal class PayloadFactoryImpl(
 
     private val collator: PayloadMessageCollator
         get() = when {
-            configService.sessionBehavior.useV2Payload() -> v2payloadMessageCollator
+            configService.oTelBehavior.isDevEnabled() -> v2payloadMessageCollator
             else -> v1payloadMessageCollator
         }
 

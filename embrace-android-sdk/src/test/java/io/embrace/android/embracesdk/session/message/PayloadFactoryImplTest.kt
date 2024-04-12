@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.isV2Payload
@@ -34,15 +34,15 @@ import org.junit.Test
 
 internal class PayloadFactoryImplTest {
 
-    private var sessionConfig = SessionRemoteConfig()
+    private var oTelConfig = OTelRemoteConfig()
     private lateinit var factory: PayloadFactoryImpl
 
     @Before
     fun setUp() {
         val configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            oTelBehavior = fakeOTelBehavior(
                 remoteCfg = {
-                    RemoteConfig(sessionConfig = sessionConfig)
+                    RemoteConfig(oTelConfig = oTelConfig)
                 }
             )
         )
@@ -98,7 +98,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `v2 payload generated`() {
-        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        oTelConfig = OTelRemoteConfig(isDevEnabled = true)
         val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
         val sessionMessage = checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
         assertTrue(sessionMessage.isV2Payload())

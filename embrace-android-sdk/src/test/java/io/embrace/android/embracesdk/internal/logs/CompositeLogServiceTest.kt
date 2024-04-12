@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import org.junit.Assert.assertEquals
@@ -17,7 +17,7 @@ import org.junit.Test
 
 internal class CompositeLogServiceTest {
 
-    private var sessionConfig = SessionRemoteConfig()
+    private var oTelConfig = OTelRemoteConfig()
     private lateinit var compositeLogService: CompositeLogService
     private lateinit var v1LogService: FakeLogMessageService
     private lateinit var v2LogService: FakeLogService
@@ -25,9 +25,9 @@ internal class CompositeLogServiceTest {
     @Before
     fun setUp() {
         val configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            oTelBehavior = fakeOTelBehavior(
                 remoteCfg = {
-                    RemoteConfig(sessionConfig = sessionConfig)
+                    RemoteConfig(oTelConfig = oTelConfig)
                 }
             )
         )
@@ -63,7 +63,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testLogV2() {
-        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.INFO_LOG,
@@ -102,7 +102,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testLogExceptionV2() {
-        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.INFO_LOG,
@@ -141,7 +141,7 @@ internal class CompositeLogServiceTest {
 
     @Test
     fun testFlutterExceptionV2() {
-        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "Dart error",
             type = EventType.ERROR_LOG,
@@ -164,7 +164,7 @@ internal class CompositeLogServiceTest {
     @Test
     fun testWrongEventType() {
         // The log service can handle only INFO_LOG, WARNING_LOG and ERROR_LOG event types
-        sessionConfig = SessionRemoteConfig(useV2Payload = true)
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.log(
             message = "simple log",
             type = EventType.CRASH,

@@ -33,7 +33,6 @@ internal class EmbraceBreadcrumbService(
     logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    private val legacyWebViewBreadcrumbDataSource = LegacyWebViewBreadcrumbDataSource(configService, logger)
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
     private val pushNotificationBreadcrumbDataSource =
@@ -84,7 +83,9 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun logWebView(url: String?, startTime: Long) {
-        webViewBreadcrumbDataSource.logWebView(url, startTime)
+        dataSourceModuleProvider()?.webViewUrlDataSource?.dataSource?.apply {
+            logWebView(url, startTime)
+        }
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(

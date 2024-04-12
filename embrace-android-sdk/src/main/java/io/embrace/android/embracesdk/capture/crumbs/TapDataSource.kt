@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 /**
  * Captures custom breadcrumbs.
  */
-internal open class TapDataSource(
+internal class TapDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     private val logger: InternalEmbraceLogger

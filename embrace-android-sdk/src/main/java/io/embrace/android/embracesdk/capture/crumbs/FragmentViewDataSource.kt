@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 /**
  * Captures fragment views.
  */
-internal open class FragmentViewDataSource(
+internal class FragmentViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService,

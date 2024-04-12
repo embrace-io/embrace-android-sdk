@@ -34,14 +34,13 @@ internal class EmbraceBreadcrumbService(
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
-    private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
-        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)
+        viewDataSource.changeView(screen, false)
     }
 
     override fun forceLogView(screen: String?, timestamp: Long) {
-        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, true)
+        viewDataSource.changeView(screen, true)
     }
 
     override fun startView(name: String?): Boolean {
@@ -130,18 +129,17 @@ internal class EmbraceBreadcrumbService(
         if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             return
         }
-        viewBreadcrumbDataSource.onViewClose()
         dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {
-        viewBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
     }
 
     override fun addFirstViewBreadcrumbForSession(startTime: Long) {
         val screen: String? = getLastViewBreadcrumbScreenName()
         if (screen != null) {
+            // how can a span start time be changed?
             replaceFirstSessionView(screen, startTime)
         } else {
             val foregroundActivity = activityTracker.foregroundActivity
@@ -154,10 +152,10 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun replaceFirstSessionView(screen: String, timestamp: Long) {
-        viewBreadcrumbDataSource.replaceFirstSessionView(screen, timestamp)
+    private fun replaceFirstSessionView(screen: String, timestamp: Long) {
+        // viewBreadcrumbDataSource.replaceFirstSessionView(screen, timestamp)
     }
 
-    override fun getLastViewBreadcrumbScreenName(): String? =
-        viewBreadcrumbDataSource.getLastViewBreadcrumbScreenName()
+    private fun getLastViewBreadcrumbScreenName(): String? = ""
+    // viewBreadcrumbDataSource.getLastViewBreadcrumbScreenName()
 }

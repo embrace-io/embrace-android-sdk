@@ -29,10 +29,10 @@ internal class ViewDataSource(
 ),
     StartSpanMapper<FragmentBreadcrumb> {
 
-    private val fragmentSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
+    private val viewSpans: LinkedHashMap<String, EmbraceSpan> = LinkedHashMap()
 
     /**
-     * Called when a fragment is started.
+     * Called when a view is started.
      */
     fun startView(name: String?): Boolean = captureSpanData(
         countsTowardsLimits = true,
@@ -40,27 +40,38 @@ internal class ViewDataSource(
         captureAction = {
             val crumb = FragmentBreadcrumb(checkNotNull(name), clock.now())
             startSpanCapture(crumb, ::toStartSpanData)?.apply {
-                fragmentSpans[name] = this
+                viewSpans[name] = this
             }
         }
     )
 
     /**
-     * Called when a fragment is ended.
+     * Called when a view is started, ending the last view.
+     */
+    fun changeView(name: String?, force: Boolean) {
+        val lastView = viewSpans.keys.lastOrNull()
+        if (force || name.equals(lastView, ignoreCase = true)) {
+            endView(lastView)
+        }
+        startView(name)
+    }
+
+    /**
+     * Called when a view is ended.
      */
     fun endView(name: String?): Boolean = captureSpanData(
         countsTowardsLimits = false,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
-            fragmentSpans.remove(name)?.stop()
+            viewSpans.remove(name)?.stop()
         }
     )
 
     /**
-     * Called when the activity is closed (and therefore all fragments are assumed to close).
+     * Called when the activity is closed (and therefore all views are assumed to close).
      */
     fun onViewClose() {
-        fragmentSpans.forEach { (_, span) ->
+        viewSpans.forEach { (_, span) ->
             captureSpanData(
                 countsTowardsLimits = false,
                 inputValidation = NoInputValidation,

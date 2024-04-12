@@ -130,17 +130,6 @@ internal class EmbraceBreadcrumbServiceTest {
     }
 
     @Test
-    fun testReplaceFirstSessionView() {
-        val service = initializeBreadcrumbService()
-        service.logView("a", 0)
-        service.replaceFirstSessionView("b", 2)
-
-        val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
-        val breadcrumb = checkNotNull(crumbs.single())
-        assertEquals("b", breadcrumb.screen)
-    }
-
-    @Test
     fun testLogRnAction() {
         val service = initializeBreadcrumbService()
         service.logRnAction("MyAction", 0, 5, mapOf("key" to "value"), 100, "success")
@@ -151,6 +140,28 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals("success", breadcrumb.output)
         assertEquals(100, breadcrumb.bytesSent)
         assertEquals(mapOf("key" to "value"), breadcrumb.properties)
+    }
+
+    @Test
+    fun testLogPushNotification() {
+        val service = initializeBreadcrumbService()
+        service.logPushNotification(
+            "title",
+            "body",
+            "topic",
+            "id",
+            5,
+            9,
+            PushNotificationBreadcrumb.NotificationType.NOTIFICATION
+        )
+
+        val crumbs = checkNotNull(service.getBreadcrumbs().pushNotifications)
+        val breadcrumb = checkNotNull(crumbs.single())
+        assertNull(breadcrumb.title)
+        assertNull(breadcrumb.body)
+        assertNull(breadcrumb.from)
+        assertEquals("id", breadcrumb.id)
+        assertEquals(5, breadcrumb.priority)
     }
 
     @Test

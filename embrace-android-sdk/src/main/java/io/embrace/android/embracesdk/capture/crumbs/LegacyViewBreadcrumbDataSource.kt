@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 /**
  * Captures tap breadcrumbs.
  */
-internal class ViewBreadcrumbDataSource(
+internal class LegacyViewBreadcrumbDataSource(
     private val configService: ConfigService,
     private val clock: Clock,
     private val logger: InternalEmbraceLogger,

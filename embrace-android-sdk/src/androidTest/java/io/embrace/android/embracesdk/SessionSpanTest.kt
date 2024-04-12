@@ -4,7 +4,7 @@ import logTestMessage
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionSpanTest : BaseTest(isOTelStableEnabled = true) {
+internal class SessionSpanTest : BaseTest(isOTelDevEnabled = true) {
 
     @Before
     fun setup() {

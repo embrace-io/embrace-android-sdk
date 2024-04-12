@@ -18,7 +18,7 @@ internal class OTelBehavior(
     /**
      * Returns whether OTel Stable is enabled.
      */
-    fun isStableEnabled() = remote?.oTelConfig?.isStableEnabled ?: false
+    fun isStableEnabled() = remote?.oTelConfig?.isStableEnabled ?: true
 
     /**
      * Returns whether OTel Beta is enabled.

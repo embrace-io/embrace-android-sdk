@@ -20,7 +20,7 @@ internal class OTelBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeOTelBehavior()) {
-            assertFalse(isStableEnabled())
+            assertTrue(isStableEnabled())
             assertFalse(isBetaEnabled())
             assertFalse(isDevEnabled())
         }

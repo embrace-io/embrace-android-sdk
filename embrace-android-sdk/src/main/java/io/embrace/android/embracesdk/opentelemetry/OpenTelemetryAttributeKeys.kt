@@ -28,3 +28,5 @@ internal val serviceVersion: AttributeKey<String> = AttributeKey.stringKey("serv
 internal val exceptionMessage: AttributeKey<String> = AttributeKey.stringKey("exception.message")
 internal val exceptionStacktrace: AttributeKey<String> = AttributeKey.stringKey("exception.stacktrace")
 internal val exceptionType: AttributeKey<String> = AttributeKey.stringKey("exception.type")
+
+internal val androidState: AttributeKey<String> = AttributeKey.stringKey("android.state")

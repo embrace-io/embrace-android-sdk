@@ -27,7 +27,3 @@ internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequ
  */
 internal val embSessionId: EmbraceAttributeKey = EmbraceAttributeKey("session_id")
 
-/**
- * Attribute name for the application state (foreground/background) at the time the log was recorded
- */
-internal val embState = EmbraceAttributeKey("state")

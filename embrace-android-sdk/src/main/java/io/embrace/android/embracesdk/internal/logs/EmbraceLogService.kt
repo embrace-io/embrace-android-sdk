@@ -19,9 +19,9 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.opentelemetry.androidState
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
@@ -199,7 +199,7 @@ internal class EmbraceLogService(
 
         attributes.setAttribute(logRecordUid, Uuid.getEmbUuid())
         sessionIdTracker.getActiveSessionId()?.let { attributes.setAttribute(embSessionId, it) }
-        metadataService.getAppState()?.let { attributes.setAttribute(embState, it) }
+        metadataService.getAppState()?.let { attributes.setAttribute(androidState, it) }
 
         return attributes
     }

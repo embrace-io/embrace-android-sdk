@@ -23,7 +23,7 @@ internal class EnvelopeResourceSourceImpl(
 
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
-            appVersion = packageInfo.versionName.toString().trim { it <= ' ' },
+            appVersion = packageInfo.versionName?.toString()?.trim { it <= ' ' } ?: "",
             bundleVersion = packageInfo.versionCode.toString(),
             appEcosystemId = packageInfo.packageName,
             appFramework = mapFramework(appFramework),

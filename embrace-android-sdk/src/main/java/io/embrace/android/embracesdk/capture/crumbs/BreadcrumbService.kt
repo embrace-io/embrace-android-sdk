@@ -128,11 +128,4 @@ internal interface BreadcrumbService {
         messageDeliveredPriority: Int,
         type: NotificationType
     )
-
-    /**
-     * This function adds the current view breadcrumb if the app comes from background to foreground
-     * or replaces the first session view breadcrumb possibly created before the session in order to
-     * have it in the session scope time.
-     */
-    fun addFirstViewBreadcrumbForSession(startTime: Long)
 }

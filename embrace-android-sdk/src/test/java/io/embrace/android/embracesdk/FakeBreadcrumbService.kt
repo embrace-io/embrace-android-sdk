@@ -27,9 +27,6 @@ internal class FakeBreadcrumbService : BreadcrumbService {
         logViewCalls.add(screen)
     }
 
-    override fun replaceFirstSessionView(screen: String, timestamp: Long) {
-    }
-
     override fun startView(name: String?): Boolean {
         return false
     }
@@ -63,11 +60,6 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     var viewBreadcrumbScreenName: String? = null
-
-    override fun getLastViewBreadcrumbScreenName(): String? {
-        return viewBreadcrumbScreenName
-    }
-
     override fun logPushNotification(
         title: String?,
         body: String?,
@@ -88,11 +80,5 @@ internal class FakeBreadcrumbService : BreadcrumbService {
                 0L
             )
         )
-    }
-
-    val firstViewBreadcrumbCalls = mutableListOf<Long>()
-
-    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
-        firstViewBreadcrumbCalls.add(startTime)
     }
 }

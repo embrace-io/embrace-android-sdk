@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.TapsLocalConfig
 import io.embrace.android.embracesdk.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -88,6 +87,21 @@ internal class EmbraceBreadcrumbServiceTest {
         assertJsonMessage(service, "breadcrumb_view.json")
     }
 
+    /*
+     * Web views
+     */
+    @Test
+    fun testWebViewCreate() {
+        val service = initializeBreadcrumbService()
+        clock.tickSecond()
+        service.logWebView("https://example.com/path1", clock.now())
+        clock.tickSecond()
+        service.logWebView("https://example.com/path2", clock.now())
+        val webViews = checkNotNull(service.getBreadcrumbs().webViewBreadcrumbs)
+        assertEquals("two webviews captured", 2, webViews.size)
+        assertJsonMessage(service, "breadcrumb_webview.json")
+    }
+
     // TO DO: refactor BreadCrumbService to avoid accessing internal implementation
     @Test
     fun testCleanCollections() {
@@ -111,22 +125,11 @@ internal class EmbraceBreadcrumbServiceTest {
 
         val breadcrumbs = service.getBreadcrumbs()
         assertEquals(1, breadcrumbs.rnActionBreadcrumbs?.size)
-        assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
 
         service.cleanCollections()
 
         val breadcrumbsAfterClean = service.getBreadcrumbs()
         assertEquals(0, breadcrumbsAfterClean.rnActionBreadcrumbs?.size)
-        assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
-    }
-
-    @Test
-    fun testForceLogView() {
-        val service = initializeBreadcrumbService()
-        service.forceLogView("a", 0)
-        val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
-        val breadcrumb = checkNotNull(crumbs.single())
-        assertEquals("a", breadcrumb.screen)
     }
 
     @Test
@@ -163,74 +166,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals("id", breadcrumb.id)
         assertEquals(5, breadcrumb.priority)
     }
-
-    @Test
-    fun testGetLastViewBreadcrumbScreenName() {
-        val service = initializeBreadcrumbService()
-        assertNull(service.getLastViewBreadcrumbScreenName())
-        service.logView("test", 0)
-        assertEquals("test", service.getLastViewBreadcrumbScreenName())
-    }
-
-    @Test
-    fun testOnViewEnabled() {
-        val service = initializeBreadcrumbService()
-        service.onView(mockActivity())
-
-        val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
-        val breadcrumb = checkNotNull(crumbs.single())
-        assertEquals("android.app.Activity", breadcrumb.screen)
-    }
-
-    @Test
-    fun testBreadcrumbLimitExceeded() {
-        val service = initializeBreadcrumbService()
-        repeat(110) { count ->
-            service.logView("a$count", count.toLong())
-        }
-
-        val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
-        assertEquals(100, crumbs.size)
-        assertEquals("a109", crumbs.first().screen)
-        assertEquals("a10", crumbs.last().screen)
-    }
-
-    @Test
-    fun `addFirstViewBreadcrumbForSession empty`() {
-        val service = initializeBreadcrumbService()
-        service.addFirstViewBreadcrumbForSession(0)
-        val crumbs = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs)
-        assertTrue(crumbs.isEmpty())
-    }
-
-    @Test
-    fun `addFirstViewBreadcrumbForSession last screen`() {
-        val service = initializeBreadcrumbService()
-        service.logView("MyView", 0)
-        service.addFirstViewBreadcrumbForSession(5)
-        val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
-        assertEquals("MyView", crumb.screen)
-        assertEquals(5L, crumb.start)
-    }
-
-    @Test
-    fun `addFirstViewBreadcrumbForSession activity tracker`() {
-        val activityTracker = FakeActivityTracker().apply {
-            foregroundActivity = mockActivity()
-        }
-        val service = EmbraceBreadcrumbService(
-            clock,
-            configService,
-            activityTracker,
-            { fakeDataSourceModule() },
-            InternalEmbraceLogger(),
-        )
-        service.addFirstViewBreadcrumbForSession(5)
-        val crumb = checkNotNull(service.getBreadcrumbs().viewBreadcrumbs).single()
-        assertEquals("MyMockActivity", crumb.screen)
-        assertEquals(5L, crumb.start)
-    }
-
     private fun initializeBreadcrumbService() = EmbraceBreadcrumbService(
         clock,
         configService,

@@ -29,7 +29,7 @@ internal interface DataSourceModule {
     fun getDataSources(): List<DataSourceState<*>>
 
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
-    val fragmentViewDataSource: DataSourceState<ViewDataSource>
+    val viewDataSource: DataSourceState<ViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
@@ -84,7 +84,7 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val fragmentViewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
+    override val viewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 ViewDataSource(

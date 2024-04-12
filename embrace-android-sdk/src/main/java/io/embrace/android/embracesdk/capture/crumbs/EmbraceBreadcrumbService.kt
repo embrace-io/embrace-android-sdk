@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.Notifica
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 
 /**
  * Handles the logging of breadcrumbs.
@@ -135,27 +134,4 @@ internal class EmbraceBreadcrumbService(
     override fun cleanCollections() {
         rnBreadcrumbDataSource.cleanCollections()
     }
-
-    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
-        val screen: String? = getLastViewBreadcrumbScreenName()
-        if (screen != null) {
-            // how can a span start time be changed?
-            replaceFirstSessionView(screen, startTime)
-        } else {
-            val foregroundActivity = activityTracker.foregroundActivity
-            if (foregroundActivity != null) {
-                forceLogView(
-                    foregroundActivity.localClassName,
-                    startTime
-                )
-            }
-        }
-    }
-
-    private fun replaceFirstSessionView(screen: String, timestamp: Long) {
-        // viewBreadcrumbDataSource.replaceFirstSessionView(screen, timestamp)
-    }
-
-    private fun getLastViewBreadcrumbScreenName(): String? = ""
-    // viewBreadcrumbDataSource.getLastViewBreadcrumbScreenName()
 }

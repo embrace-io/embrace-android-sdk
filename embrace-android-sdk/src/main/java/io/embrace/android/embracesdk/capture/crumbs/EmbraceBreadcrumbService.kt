@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -28,9 +29,7 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val activityTracker: ActivityTracker,
-    private val breadcrumbDataSourceProvider: Provider<BreadcrumbDataSource?>,
-    private val tapBreadcrumbDataSourceProvider: Provider<TapDataSource?>,
-    private val fragmentViewDataSourceProvider: Provider<FragmentViewDataSource?>,
+    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
     logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
@@ -49,12 +48,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun startView(name: String?): Boolean {
-        val ds = fragmentViewDataSourceProvider()
-        return ds?.startFragment(name) ?: false
+        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.startFragment(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {
-        return fragmentViewDataSourceProvider()?.endFragment(name) ?: false
+        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.endFragment(name) ?: false
     }
 
     override fun logTap(
@@ -63,13 +61,13 @@ internal class EmbraceBreadcrumbService(
         timestamp: Long,
         type: TapBreadcrumbType
     ) {
-        tapBreadcrumbDataSourceProvider()?.apply {
+        dataSourceModuleProvider()?.tapDataSource?.dataSource?.apply {
             logTap(point, element, timestamp, type)
         }
     }
 
     override fun logCustom(message: String, timestamp: Long) {
-        breadcrumbDataSourceProvider()?.apply {
+        dataSourceModuleProvider()?.breadcrumbDataSource?.dataSource?.apply {
             logCustom(message, timestamp)
         }
     }
@@ -133,7 +131,7 @@ internal class EmbraceBreadcrumbService(
             return
         }
         viewBreadcrumbDataSource.onViewClose()
-        fragmentViewDataSourceProvider()?.onViewClose()
+        dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {

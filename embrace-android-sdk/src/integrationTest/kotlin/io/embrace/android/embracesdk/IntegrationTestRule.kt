@@ -110,6 +110,7 @@ internal class IntegrationTestRule(
                     workerThreadModuleSupplier = { _ -> workerThreadModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
                     essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                    dataSourceModuleSupplier = { _, _, _, _, _, _ -> dataSourceModule },
                     dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _, _ -> dataCaptureServiceModule },
                     deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
                 )

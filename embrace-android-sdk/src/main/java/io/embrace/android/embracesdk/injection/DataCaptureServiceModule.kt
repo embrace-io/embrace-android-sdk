@@ -138,9 +138,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 initModule.clock,
                 configService,
                 essentialServiceModule.activityLifecycleTracker,
-                { dataSourceModule.breadcrumbDataSource.dataSource },
-                { dataSourceModule.tapDataSource.dataSource },
-                { dataSourceModule.fragmentViewDataSource.dataSource },
+                { dataSourceModule },
                 initModule.logger
             )
         }

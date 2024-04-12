@@ -39,12 +39,13 @@ internal class AnrOtelMapper(
 
     private fun mapIntervalToSpanAttributes(interval: AnrInterval): List<Attribute> {
         val attrs = mutableListOf<Attribute>()
+        attrs.add(Attribute("emb.type", "perf.thread_blockage"))
 
         interval.code?.let {
-            attrs.add(Attribute("emb.interval_code", it.toString()))
+            attrs.add(Attribute("interval_code", it.toString()))
         }
         interval.lastKnownTime?.let {
-            attrs.add(Attribute("emb.last_known_time_unix_nano", it.millisToNanos().toString()))
+            attrs.add(Attribute("last_known_time_unix_nano", it.millisToNanos().toString()))
         }
         return attrs
     }
@@ -55,20 +56,21 @@ internal class AnrOtelMapper(
 
     private fun mapSampleToSpanEvent(sample: AnrSample): SpanEvent {
         val attrs = mutableListOf<Attribute>()
+        attrs.add(Attribute("emb.type", "perf.thread_blockage_sample"))
 
         sample.sampleOverheadMs?.let {
-            attrs.add(Attribute("emb.sample_overhead", it.millisToNanos().toString()))
+            attrs.add(Attribute("sample_overhead", it.millisToNanos().toString()))
         }
         sample.code?.let {
-            attrs.add(Attribute("emb.sample_code", it.toString()))
+            attrs.add(Attribute("sample_code", it.toString()))
         }
         sample.threads?.singleOrNull()?.let { thread ->
-            attrs.add(Attribute("emb.thread_state", thread.state.toString()))
-            attrs.add(Attribute("emb.thread_priority", thread.priority.toString()))
+            attrs.add(Attribute("thread_state", thread.state.toString()))
+            attrs.add(Attribute("thread_priority", thread.priority.toString()))
 
             thread.lines?.let { lines ->
-                attrs.add(Attribute("emb.frame_count", lines.size.toString()))
-                attrs.add(Attribute("emb.stacktrace", lines.joinToString("\n")))
+                attrs.add(Attribute("frame_count", lines.size.toString()))
+                attrs.add(Attribute("stacktrace", lines.joinToString("\n")))
             }
         }
         return SpanEvent(

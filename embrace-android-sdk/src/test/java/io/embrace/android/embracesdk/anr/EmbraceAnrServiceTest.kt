@@ -101,7 +101,7 @@ internal class EmbraceAnrServiceTest {
 
             // the ANR interval should be removed here
             anrService.cleanCollections()
-            anrExecutorService.shutdownNow()
+            anrExecutorService.shutdown()
             anrExecutorService.awaitTermination(1, TimeUnit.SECONDS)
             assertEquals(1, anrIntervals.size)
             assertEquals(inProgressInterval, anrIntervals.single())

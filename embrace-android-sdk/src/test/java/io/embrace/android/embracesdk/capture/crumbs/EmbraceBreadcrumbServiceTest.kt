@@ -78,7 +78,9 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             FakeActivityTracker(),
-            dataSourceModule,
+            { dataSourceModule.breadcrumbDataSource.dataSource },
+            { dataSourceModule.tapDataSource.dataSource },
+            { dataSourceModule.fragmentViewDataSource.dataSource },
             InternalEmbraceLogger(),
         )
         service.logView("viewA", clock.now())
@@ -278,7 +280,9 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             activityTracker,
-            dataSourceModule,
+            { dataSourceModule.breadcrumbDataSource.dataSource },
+            { dataSourceModule.tapDataSource.dataSource },
+            { dataSourceModule.fragmentViewDataSource.dataSource },
             InternalEmbraceLogger(),
         )
         service.addFirstViewBreadcrumbForSession(5)
@@ -291,7 +295,9 @@ internal class EmbraceBreadcrumbServiceTest {
         clock,
         configService,
         FakeActivityTracker(),
-        dataSourceModule,
+        { dataSourceModule.breadcrumbDataSource.dataSource },
+        { dataSourceModule.tapDataSource.dataSource },
+        { dataSourceModule.fragmentViewDataSource.dataSource },
         InternalEmbraceLogger(),
     )
 

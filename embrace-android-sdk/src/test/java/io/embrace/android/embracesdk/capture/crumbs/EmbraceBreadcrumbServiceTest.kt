@@ -14,7 +14,9 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeBreadcrumbDataSource
+import io.embrace.android.embracesdk.fakes.injection.FakeFragmentDataSource
+import io.embrace.android.embracesdk.fakes.injection.FakeTapDataSource
 import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
@@ -31,7 +33,6 @@ import org.junit.Test
 internal class EmbraceBreadcrumbServiceTest {
 
     private lateinit var spanService: FakeSpanService
-    private var dataSourceModule = fakeDataSourceModule()
     private lateinit var configService: ConfigService
     private lateinit var processStateService: ProcessStateService
     private lateinit var memoryCleanerService: EmbraceMemoryCleanerService
@@ -78,9 +79,9 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             FakeActivityTracker(),
-            { dataSourceModule.breadcrumbDataSource.dataSource },
-            { dataSourceModule.tapDataSource.dataSource },
-            { dataSourceModule.fragmentViewDataSource.dataSource },
+            { FakeBreadcrumbDataSource() },
+            { FakeTapDataSource() },
+            { FakeFragmentDataSource() },
             InternalEmbraceLogger(),
         )
         service.logView("viewA", clock.now())
@@ -280,9 +281,9 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             activityTracker,
-            { dataSourceModule.breadcrumbDataSource.dataSource },
-            { dataSourceModule.tapDataSource.dataSource },
-            { dataSourceModule.fragmentViewDataSource.dataSource },
+            { FakeBreadcrumbDataSource() },
+            { FakeTapDataSource() },
+            { FakeFragmentDataSource() },
             InternalEmbraceLogger(),
         )
         service.addFirstViewBreadcrumbForSession(5)
@@ -295,9 +296,9 @@ internal class EmbraceBreadcrumbServiceTest {
         clock,
         configService,
         FakeActivityTracker(),
-        { dataSourceModule.breadcrumbDataSource.dataSource },
-        { dataSourceModule.tapDataSource.dataSource },
-        { dataSourceModule.fragmentViewDataSource.dataSource },
+        { FakeBreadcrumbDataSource() },
+        { FakeTapDataSource() },
+        { FakeFragmentDataSource() },
         InternalEmbraceLogger(),
     )
 

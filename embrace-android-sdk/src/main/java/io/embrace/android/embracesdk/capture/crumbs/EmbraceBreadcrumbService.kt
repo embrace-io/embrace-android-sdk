@@ -49,7 +49,8 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun startView(name: String?): Boolean {
-        return fragmentViewDataSourceProvider()?.startFragment(name) ?: false
+        val ds = fragmentViewDataSourceProvider()
+        return ds?.startFragment(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {

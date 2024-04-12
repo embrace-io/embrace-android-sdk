@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 /**
  * Captures breadcrumbs.
  */
-internal class BreadcrumbDataSource(
+internal open class BreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     logger: InternalEmbraceLogger

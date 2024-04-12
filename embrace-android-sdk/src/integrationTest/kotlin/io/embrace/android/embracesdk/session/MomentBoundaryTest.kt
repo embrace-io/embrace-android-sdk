@@ -104,5 +104,5 @@ internal class MomentBoundaryTest {
     }
 
     private fun IntegrationTestRule.fetchDeliveredEvents() =
-        harness.fakeDeliveryModule.deliveryService.sentMoments
+        harness.overriddenDeliveryModule.deliveryService.sentMoments
 }

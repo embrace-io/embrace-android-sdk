@@ -24,11 +24,11 @@ internal class FragmentViewFeatureTest {
         with(testRule) {
             var startTimeMs: Long = 0
             val message = checkNotNull(harness.recordSession {
-                startTimeMs = harness.fakeClock.now()
+                startTimeMs = harness.overriddenClock.now()
                 embrace.startView("MyView")
-                harness.fakeClock.tick(1000L)
+                harness.overriddenClock.tick(1000L)
                 embrace.startView("AnotherView")
-                harness.fakeClock.tick(2000L)
+                harness.overriddenClock.tick(2000L)
                 embrace.endView("MyView")
                 embrace.endView("AnotherView")
             })

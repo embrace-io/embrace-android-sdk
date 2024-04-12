@@ -25,12 +25,6 @@ internal data class UserInfo(
 ) {
 
     companion object {
-        const val PERSONA_NEW_USER = "new_user"
-        const val PERSONA_POWER_USER = "power_user"
-        const val PERSONA_LOGGED_IN = "logged_in"
-        const val PERSONA_VIP = "vip"
-        const val PERSONA_CREATOR = "content_creator"
-        const val PERSONA_TESTER = "tester"
         const val PERSONA_PAYER = "payer"
         const val PERSONA_FIRST_DAY_USER = "first_day"
 

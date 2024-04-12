@@ -44,7 +44,7 @@ import java.util.zip.GZIPInputStream
 internal open class BaseTest(
     isOTelDevEnabled: Boolean = false,
     isOTelBetaEnabled: Boolean = false,
-    isOTelStableEnabled: Boolean = false,
+    isOTelStableEnabled: Boolean = true,
 ) {
 
     private lateinit var pendingApiCallsFilePath: String

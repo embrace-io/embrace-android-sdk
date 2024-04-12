@@ -5,7 +5,6 @@ import android.os.Environment
 import android.os.StatFs
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import androidx.annotation.ChecksSdkIntAtLeast
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -33,39 +32,9 @@ internal interface Device {
     var screenResolution: String
 
     /**
-     * Gets the name of the manufacturer of the device.
-     *
-     * @return the name of the device manufacturer
+     * Get information about the device and OS known before the SDK starts up
      */
-    val manufacturer: String?
-
-    /**
-     * Gets the name of the model of the device.
-     *
-     * @return the name of the model of the device
-     */
-    val model: String?
-
-    /**
-     * Gets the operating system of the device. This is hard-coded to 'android'.
-     *
-     * @return the device's operating system
-     */
-    val operatingSystemType: String
-
-    /**
-     * Gets the version of the installed operating system on the device.
-     *
-     * @return the version of the operating system
-     */
-    val operatingSystemVersion: String?
-
-    /**
-     * Gets the version code of the running Android SDK.
-     *
-     * @return the running Android SDK version code
-     */
-    val operatingSystemVersionCode: Int
+    val systemInfo: SystemInfo
 
     /**
      * Get the number of available cores for device info
@@ -101,7 +70,7 @@ internal class DeviceImpl(
     private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
-    private val systemInfo: SystemInfo,
+    override val systemInfo: SystemInfo,
     cpuInfoDelegate: CpuInfoDelegate,
     private val logger: InternalEmbraceLogger
 ) : Device {
@@ -191,42 +160,6 @@ internal class DeviceImpl(
         }
         return false
     }
-
-    /**
-     * Gets the name of the manufacturer of the device.
-     *
-     * @return the name of the device manufacturer
-     */
-    override val manufacturer: String = systemInfo.deviceManufacturer
-
-    /**
-     * Gets the name of the model of the device.
-     *
-     * @return the name of the model of the device
-     */
-    override val model: String = systemInfo.deviceModel
-
-    /**
-     * Gets the operating system of the device. This is hard-coded to 'android'.
-     *
-     * @return the device's operating system
-     */
-    override val operatingSystemType: String = systemInfo.osName
-
-    /**
-     * Gets the version of the installed operating system on the device.
-     *
-     * @return the version of the operating system
-     */
-    override val operatingSystemVersion: String = systemInfo.osVersion
-
-    /**
-     * Gets the version code of the running Android SDK.
-     *
-     * @return the running Android SDK version code
-     */
-    @ChecksSdkIntAtLeast(parameter = 0)
-    override val operatingSystemVersionCode: Int = systemInfo.androidOsApiLevel.toInt()
 
     /**
      * Get the number of available cores for device info

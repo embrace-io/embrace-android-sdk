@@ -158,9 +158,13 @@ internal data class EnvelopeResource(
     @Json(name = "disk_total_capacity")
     val diskTotalCapacity: Long? = null,
 
-    /* A hardcoded string representing the operating system in use. Previous name: d.os */
+    /* A hardcoded string representing type of operating system in use. */
     @Json(name = "os_type")
     val osType: String? = null,
+
+    /* The user understood name of the OS - hardcoded to "android" for this SDK. Previous name: d.os */
+    @Json(name = "os_name")
+    val osName: String? = null,
 
     /* The human readable OS version string. Previous name: d.ov */
     @Json(name = "os_version")

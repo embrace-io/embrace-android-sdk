@@ -45,11 +45,11 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun startView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.startFragment(name) ?: false
+        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.startView(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.endFragment(name) ?: false
+        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.endView(name) ?: false
     }
 
     override fun logTap(
@@ -87,7 +87,6 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(
-        viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
         rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
     )
 

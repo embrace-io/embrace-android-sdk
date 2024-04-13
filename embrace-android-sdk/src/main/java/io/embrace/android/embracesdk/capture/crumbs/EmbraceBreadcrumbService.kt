@@ -35,8 +35,6 @@ internal class EmbraceBreadcrumbService(
 
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
     private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
-    private val pushNotificationBreadcrumbDataSource =
-        PushNotificationBreadcrumbDataSource(configService, clock, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
         viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)
@@ -107,14 +105,18 @@ internal class EmbraceBreadcrumbService(
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
         type: NotificationType
-    ) = pushNotificationDataSource.logPushNotification(
-        title,
-        body,
-        topic,
-        id,
-        notificationPriority,
-        type
-    )
+    ) {
+        dataSourceModuleProvider()?.pushNotificationDataSource?.dataSource?.apply {
+            logPushNotification(
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                type
+            )
+        }
+    }
 
     override fun onView(activity: Activity) {
         if (configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {

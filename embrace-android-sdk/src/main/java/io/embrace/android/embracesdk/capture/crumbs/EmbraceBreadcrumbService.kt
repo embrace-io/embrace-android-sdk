@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
-    private val activityTracker: ActivityTracker,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
     logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
@@ -35,19 +34,19 @@ internal class EmbraceBreadcrumbService(
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
-        viewDataSource.changeView(screen, false)
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, false)
     }
 
     override fun forceLogView(screen: String?, timestamp: Long) {
-        viewDataSource.changeView(screen, true)
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, true)
     }
 
     override fun startView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.startView(name) ?: false
+        return dataSourceModuleProvider()?.viewDataSource?.dataSource?.startView(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.endView(name) ?: false
+        return dataSourceModuleProvider()?.viewDataSource?.dataSource?.endView(name) ?: false
     }
 
     override fun logTap(
@@ -128,7 +127,7 @@ internal class EmbraceBreadcrumbService(
         if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             return
         }
-        dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.onViewClose()
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {

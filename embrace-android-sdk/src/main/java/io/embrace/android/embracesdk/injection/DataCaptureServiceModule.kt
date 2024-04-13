@@ -137,7 +137,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             EmbraceBreadcrumbService(
                 initModule.clock,
                 configService,
-                essentialServiceModule.activityLifecycleTracker,
                 { dataSourceModule },
                 initModule.logger
             )

@@ -44,7 +44,7 @@ internal class PublicApiTest {
             assertFalse(embrace.isStarted)
             startSdk(context = harness.overriddenCoreModule.context)
             assertEquals(AppFramework.NATIVE, harness.appFramework)
-            assertFalse(harness.essentialServiceModule.configService.isSdkDisabled())
+            assertFalse(harness.overriddenConfigService.isSdkDisabled())
             assertTrue(embrace.isStarted)
         }
     }
@@ -108,7 +108,7 @@ internal class PublicApiTest {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             harness.recordSession {
-                assertEquals(embrace.currentSessionId, harness.essentialServiceModule.sessionIdTracker.getActiveSessionId())
+                assertEquals(embrace.currentSessionId, harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId())
                 assertNotNull(embrace.currentSessionId)
             }
         }

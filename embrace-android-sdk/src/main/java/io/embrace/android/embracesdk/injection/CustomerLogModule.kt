@@ -76,7 +76,6 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.metadataService,
             essentialServiceModule.configService,
             coreModule.appFramework,
-            essentialServiceModule.sessionIdTracker,
             essentialServiceModule.sessionProperties,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,

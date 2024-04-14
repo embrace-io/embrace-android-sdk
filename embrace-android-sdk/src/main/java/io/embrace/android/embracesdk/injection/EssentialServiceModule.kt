@@ -337,7 +337,10 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val logWriter: LogWriter by singleton {
-        LogWriterImpl(openTelemetryModule.logger)
+        LogWriterImpl(
+            logger = openTelemetryModule.logger,
+            sessionIdTracker = sessionIdTracker,
+        )
     }
 }
 

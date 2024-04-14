@@ -58,6 +58,47 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         }
 
         internal object Exit : System("exit")
+
+        internal object Crash : System("android.crash") {
+            /**
+             * The list of [Throwable] that caused the exception responsible for a crash
+             */
+            val embAndroidCrashExceptionCause = EmbraceAttributeKey("android.crash.exception_cause")
+        }
+
+        internal object ReactNativeCrash : System("android.react_native_crash") {
+            /**
+             * The list JavaScript exceptions from the ReactNative layer
+             */
+            val embAndroidReactNativeCrashJsExceptions = EmbraceAttributeKey("android.react_native_crash.js_exceptions")
+        }
+
+        internal object NativeCrash : System("android.native_crash") {
+            /**
+             * Exception coming from the native layer
+             */
+            val embNativeCrashException = EmbraceAttributeKey("android.native_crash.exception")
+
+            /**
+             * Native symbols used to symbolicate a native crash
+             */
+            val embNativeCrashSymbols = EmbraceAttributeKey("android.native_crash.symbols")
+
+            /**
+             * Errors associated with the native crash
+             */
+            val embNativeCrashErrors = EmbraceAttributeKey("android.native_crash.errors")
+
+            /**
+             * Error encountered during stack unwinding
+             */
+            val embNativeCrashUnwindError = EmbraceAttributeKey("android.native_crash.unwind_error")
+
+            /**
+             *
+             */
+            val embNativeCrashMap = EmbraceAttributeKey("android.native_crash.map")
+        }
     }
 }
 

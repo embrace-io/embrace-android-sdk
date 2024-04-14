@@ -10,6 +10,7 @@ import io.opentelemetry.api.common.AttributeKey
  */
 
 internal val androidApiLevel: AttributeKey<String> = AttributeKey.stringKey("android.os.api_level")
+internal val androidState: AttributeKey<String> = AttributeKey.stringKey("android.state")
 
 internal val deviceManufacturer: AttributeKey<String> = AttributeKey.stringKey("device.manufacturer")
 internal val deviceModelIdentifier: AttributeKey<String> = AttributeKey.stringKey("os.model.identifier")

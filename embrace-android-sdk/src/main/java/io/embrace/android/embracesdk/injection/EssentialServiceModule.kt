@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Debug
+import io.embrace.android.embracesdk.arch.destination.LogWriter
+import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
@@ -71,10 +73,12 @@ internal interface EssentialServiceModule {
     val pendingApiCallsSender: PendingApiCallsSender
     val sessionIdTracker: SessionIdTracker
     val sessionProperties: EmbraceSessionProperties
+    val logWriter: LogWriter
 }
 
 internal class EssentialServiceModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
@@ -330,6 +334,10 @@ internal class EssentialServiceModuleImpl(
                 initModule.logger
             )
         }
+    }
+
+    override val logWriter: LogWriter by singleton {
+        LogWriterImpl(openTelemetryModule.logger)
     }
 }
 

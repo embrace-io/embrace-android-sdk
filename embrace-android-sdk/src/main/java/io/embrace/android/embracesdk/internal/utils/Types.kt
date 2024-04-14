@@ -82,6 +82,7 @@ internal typealias StorageModuleSupplier = (
  */
 internal typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,

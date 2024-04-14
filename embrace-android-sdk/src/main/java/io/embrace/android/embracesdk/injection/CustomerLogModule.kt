@@ -72,7 +72,7 @@ internal class CustomerLogModuleImpl(
 
     private val v2LogService: LogService by singleton {
         EmbraceLogService(
-            openTelemetryModule.logWriter,
+            essentialServiceModule.logWriter,
             essentialServiceModule.metadataService,
             essentialServiceModule.configService,
             coreModule.appFramework,

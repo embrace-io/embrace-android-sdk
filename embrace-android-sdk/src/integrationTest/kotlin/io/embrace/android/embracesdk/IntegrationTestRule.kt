@@ -107,7 +107,7 @@ internal class IntegrationTestRule(
                     androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
                     workerThreadModuleSupplier = { _ -> workerThreadModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
-                    essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
+                    essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
                     dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
                     deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
                 )
@@ -177,6 +177,7 @@ internal class IntegrationTestRule(
         val essentialServiceModule: EssentialServiceModule =
             EssentialServiceModuleImpl(
                 initModule = initModule,
+                openTelemetryModule = initModule.openTelemetryModule,
                 coreModule = fakeCoreModule,
                 workerThreadModule = workerThreadModule,
                 systemServiceModule = systemServiceModule,
@@ -184,8 +185,7 @@ internal class IntegrationTestRule(
                 storageModule = storageModule,
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,
-                configServiceProvider = { fakeConfigService }
-            ),
+            ) { fakeConfigService },
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(
                 initModule = initModule,

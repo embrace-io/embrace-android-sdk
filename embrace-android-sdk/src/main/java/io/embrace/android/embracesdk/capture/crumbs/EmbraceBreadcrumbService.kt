@@ -37,10 +37,6 @@ internal class EmbraceBreadcrumbService(
         dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, false)
     }
 
-    override fun forceLogView(screen: String?, timestamp: Long) {
-        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, true)
-    }
-
     override fun startView(name: String?): Boolean {
         return dataSourceModuleProvider()?.viewDataSource?.dataSource?.startView(name) ?: false
     }

@@ -23,10 +23,6 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     override fun logView(screen: String?, timestamp: Long) {
     }
 
-    override fun forceLogView(screen: String?, timestamp: Long) {
-        logViewCalls.add(screen)
-    }
-
     override fun startView(name: String?): Boolean {
         return false
     }

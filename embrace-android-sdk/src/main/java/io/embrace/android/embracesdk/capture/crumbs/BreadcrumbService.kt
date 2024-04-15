@@ -35,15 +35,6 @@ internal interface BreadcrumbService {
     fun logView(screen: String?, timestamp: Long)
 
     /**
-     * Unlike [EmbraceBreadcrumbService.logView]
-     * this function logs the view despite the previous one in the queue has the same screen name.
-     *
-     * @param screen    name of the screen.
-     * @param timestamp time of occurrence of the tap event.
-     */
-    fun forceLogView(screen: String?, timestamp: Long)
-
-    /**
      * Logs the start of a view. Must be matched by a call to
      * [EmbraceBreadcrumbService.endView].
      *

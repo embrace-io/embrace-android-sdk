@@ -51,7 +51,7 @@ internal class TracingApiTest {
         with(testRule) {
             harness.overriddenClock.tick(100L)
             embrace.addSpanExporter(spanExporter)
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))

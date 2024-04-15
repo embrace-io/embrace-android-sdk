@@ -115,7 +115,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `internal logging methods work as expected`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             val expectedProperties = mapOf(Pair("key", "value"))
             harness.recordSession {
                 embrace.internalInterface.logInfo("info", expectedProperties)
@@ -155,7 +155,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `network recording methods work as expected`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             val session = harness.recordSession {
                 harness.overriddenClock.tick()
                 harness.overriddenConfigService.updateListeners()
@@ -224,7 +224,7 @@ internal class EmbraceInternalInterfaceTest {
         val expectedElementName = "button"
 
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             val session = checkNotNull( harness.recordSession {
                 embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
             })
@@ -239,7 +239,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `access check methods work as expected`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             harness.recordSession {
                 assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
                 assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
@@ -252,7 +252,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `set process as started by notification works as expected`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             embrace.internalInterface.setProcessStartedByNotification()
             harness.recordSession(simulateAppStartup = true) { }
             assertEquals(EventType.START, harness.overriddenDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
@@ -262,7 +262,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `test sdk time`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
             harness.overriddenClock.tick()
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
@@ -274,7 +274,7 @@ internal class EmbraceInternalInterfaceTest {
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
         with(testRule) {
             assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
         }
     }
@@ -282,7 +282,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `internal tracing APIs work as expected`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             val sessionPayload = harness.recordSession {
                 with(embrace.internalInterface) {
                     val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))

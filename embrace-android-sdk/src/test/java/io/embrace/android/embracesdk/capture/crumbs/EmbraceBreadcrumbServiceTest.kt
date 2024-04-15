@@ -88,21 +88,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertJsonMessage(service, "breadcrumb_view.json")
     }
 
-    /*
-     * Web views
-     */
-    @Test
-    fun testWebViewCreate() {
-        val service = initializeBreadcrumbService()
-        clock.tickSecond()
-        service.logWebView("https://example.com/path1", clock.now())
-        clock.tickSecond()
-        service.logWebView("https://example.com/path2", clock.now())
-        val webViews = checkNotNull(service.getBreadcrumbs().webViewBreadcrumbs)
-        assertEquals("two webviews captured", 2, webViews.size)
-        assertJsonMessage(service, "breadcrumb_webview.json")
-    }
-
     // TO DO: refactor BreadCrumbService to avoid accessing internal implementation
     @Test
     fun testCleanCollections() {
@@ -119,6 +104,7 @@ internal class EmbraceBreadcrumbServiceTest {
             PushNotificationBreadcrumb.NotificationType.NOTIFICATION
         )
         service.logView("test", clock.now())
+        service.logCustom("a breadcrumb", clock.now())
         service.logWebView("https://example.com/path1", clock.now())
         service.startView("a")
         service.endView("a")
@@ -127,7 +113,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(1, breadcrumbs.rnActionBreadcrumbs?.size)
         assertEquals(1, breadcrumbs.pushNotifications?.size)
         assertEquals(1, breadcrumbs.viewBreadcrumbs?.size)
-        assertEquals(1, breadcrumbs.webViewBreadcrumbs?.size)
 
         service.cleanCollections()
 
@@ -135,7 +120,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(0, breadcrumbsAfterClean.rnActionBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
-        assertEquals(0, breadcrumbsAfterClean.webViewBreadcrumbs?.size)
     }
 
     @Test

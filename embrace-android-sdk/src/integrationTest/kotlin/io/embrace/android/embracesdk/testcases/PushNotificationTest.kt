@@ -107,10 +107,7 @@ internal class PushNotificationTest {
             harness.overriddenConfigService.breadcrumbBehavior = fakeBreadcrumbBehavior(
                 localCfg = { SdkLocalConfig(captureFcmPiiData = true) }
             )
-            System.out.println("harness ${harness.overriddenConfigService}")
-            harness.overriddenConfigService.updateListeners()
-            embrace.start(harness.overriddenCoreModule.context)
-            harness.overriddenConfigService.updateListeners()
+            startSdk()
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
             }

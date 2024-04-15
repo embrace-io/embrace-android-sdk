@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
+import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -30,6 +31,7 @@ internal interface DataSourceModule {
     val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
+    val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -90,6 +92,17 @@ internal class DataSourceModuleImpl(
                     logger = initModule.logger
                 )
             }
+        )
+    }
+
+    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                MemoryWarningDataSource(
+                    sessionSpanWriter =  otelModule.currentSessionSpan,
+                    logger = initModule.logger,
+                )},
+            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() }
         )
     }
 

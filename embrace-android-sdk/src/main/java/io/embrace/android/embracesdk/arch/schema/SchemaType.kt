@@ -107,6 +107,10 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
+    internal class MemoryWarning : SchemaType(EmbType.Performance.MemoryWarning) {
+        override val attrs = emptyMap<String, String>()
+    }
+
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val attrs = mapOf(
             "session-id" to message.sessionId,

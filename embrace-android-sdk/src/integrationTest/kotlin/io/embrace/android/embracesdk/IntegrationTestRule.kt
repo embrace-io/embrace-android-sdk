@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk
 
+import android.content.Context
+import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
+import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -117,7 +120,7 @@ internal class IntegrationTestRule(
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embrace.start(overriddenCoreModule.context, enableIntegrationTesting, appFramework)
+                embraceImpl.startInternal(overriddenCoreModule.context, enableIntegrationTesting, appFramework) { overriddenConfigService }
             }
         }
     }
@@ -127,6 +130,14 @@ internal class IntegrationTestRule(
      */
     override fun after() {
         Embrace.getImpl().stop()
+    }
+
+    fun startSdk(
+        context: Context = harness.overriddenCoreModule.context,
+        appFramework: AppFramework = harness.appFramework,
+        configServiceProvider: Provider<ConfigService> = { harness.overriddenConfigService }
+    ) {
+        Embrace.getImpl().startInternal(context, false, appFramework, configServiceProvider)
     }
 
     /**

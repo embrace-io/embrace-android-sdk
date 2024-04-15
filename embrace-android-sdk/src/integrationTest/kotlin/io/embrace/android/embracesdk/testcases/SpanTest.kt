@@ -32,7 +32,7 @@ internal class SpanTest {
         with(testRule) {
             val fakeSpanExporter = FakeSpanExporter()
             embrace.addSpanExporter(fakeSpanExporter)
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             embrace.startSpan("test")?.stop()
             assertTrue(
                 "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",

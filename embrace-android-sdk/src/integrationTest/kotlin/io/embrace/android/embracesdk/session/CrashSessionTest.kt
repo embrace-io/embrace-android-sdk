@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getLastSavedSessionMessage
 import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession

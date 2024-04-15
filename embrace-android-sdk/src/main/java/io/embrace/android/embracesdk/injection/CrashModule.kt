@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.capture.crash.CompositeCrashService
+import io.embrace.android.embracesdk.capture.crash.CrashDataSource
+import io.embrace.android.embracesdk.capture.crash.CrashDataSourceImpl
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
@@ -35,13 +38,8 @@ internal class CrashModuleImpl(
         CrashFileMarker(markerFile, initModule.logger)
     }
 
-    override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
-        LastRunCrashVerifier(crashMarker, initModule.logger)
-    }
-
-    override val crashService: CrashService by singleton {
+    private val crashServiceV1: CrashService by singleton {
         EmbraceCrashService(
-            essentialServiceModule.configService,
             sessionModule.sessionOrchestrator,
             sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
@@ -57,6 +55,34 @@ internal class CrashModuleImpl(
             initModule.clock,
             initModule.logger
         )
+    }
+
+    private val crashServiceV2: CrashDataSource by singleton {
+        CrashDataSourceImpl(
+            essentialServiceModule.configService,
+            sessionModule.sessionOrchestrator,
+            essentialServiceModule.sessionProperties,
+            anrModule.anrService,
+            nativeModule.ndkService,
+            essentialServiceModule.gatingService,
+            androidServicesModule.preferencesService,
+            crashMarker,
+            initModule.logger,
+            essentialServiceModule.logWriter,
+        )
+    }
+
+    override val crashService: CrashService by singleton {
+        CompositeCrashService(
+            crashServiceV1,
+            crashServiceV2,
+            essentialServiceModule.configService,
+            initModule.logger
+        )
+    }
+
+    override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
+        LastRunCrashVerifier(crashMarker, initModule.logger)
     }
 
     override val automaticVerificationExceptionHandler: AutomaticVerificationExceptionHandler by singleton {

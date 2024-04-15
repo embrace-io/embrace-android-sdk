@@ -1,10 +1,6 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
-import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandler
-import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -14,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -49,7 +44,6 @@ internal class EmbraceCrashServiceTest {
     private lateinit var eventService: FakeEventService
     private lateinit var anrService: FakeAnrService
     private lateinit var ndkService: FakeNdkService
-    private lateinit var configService: FakeConfigService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var logger: InternalEmbraceLogger
 
@@ -80,23 +74,10 @@ internal class EmbraceCrashServiceTest {
         localJsException = JsException("jsException", "Error", "Error", "")
     }
 
-    private fun setupForHandleCrash(crashHandlerEnabled: Boolean) {
-        configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                localCfg = {
-                    LocalConfig(
-                        "",
-                        false,
-                        SdkLocalConfig(crashHandler = CrashHandlerLocalConfig(crashHandlerEnabled))
-                    )
-                }
-            )
-        )
-
+    private fun setupForHandleCrash() {
         val gatingService = EmbraceGatingService(FakeConfigService(), logger)
 
         embraceCrashService = EmbraceCrashService(
-            configService,
             sessionOrchestrator,
             sessionPropertiesService,
             metadataService,
@@ -118,7 +99,7 @@ internal class EmbraceCrashServiceTest {
 
     @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with JSException`() {
-        setupForHandleCrash(true)
+        setupForHandleCrash()
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
 
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
@@ -139,7 +120,7 @@ internal class EmbraceCrashServiceTest {
     @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with unityId`() {
         crash = CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123")
-        setupForHandleCrash(false)
+        setupForHandleCrash()
         ndkService.lastUnityCrashId = "Unity123"
 
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
@@ -153,23 +134,11 @@ internal class EmbraceCrashServiceTest {
     @Test
     fun `test handleCrash calls mark() method when capture_last_run config is enabled`() {
         crash = CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123")
-        setupForHandleCrash(false)
+        setupForHandleCrash()
 
         embraceCrashService.handleCrash(Thread.currentThread(), testException)
 
         verify(exactly = 1) { crashMarker.mark() }
-    }
-
-    @Test
-    fun `test exception handler is registered with config option enabled`() {
-        setupForHandleCrash(true)
-        assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)
-    }
-
-    @Test
-    fun `test exception handler is not registered with config option disabled`() {
-        setupForHandleCrash(false)
-        assert(Thread.getDefaultUncaughtExceptionHandler() !is EmbraceUncaughtExceptionHandler)
     }
 
     @After

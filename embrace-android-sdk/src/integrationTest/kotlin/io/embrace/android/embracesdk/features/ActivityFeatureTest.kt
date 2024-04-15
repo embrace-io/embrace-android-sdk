@@ -51,9 +51,9 @@ internal class ActivityFeatureTest {
             val span1 = viewSpans[0]
 
             with(span1) {
-                Assert.assertEquals("MyView", findSpanAttribute("view.name"))
+                Assert.assertEquals("android.app.Activity", findSpanAttribute("view.name"))
                 Assert.assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
-                Assert.assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
+                Assert.assertEquals(startTimeMs + 30000L, endTimeNanos.nanosToMillis())
             }
         }
     }

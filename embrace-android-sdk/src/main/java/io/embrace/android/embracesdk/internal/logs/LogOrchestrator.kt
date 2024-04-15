@@ -9,13 +9,25 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-internal class LogOrchestrator(
+internal interface LogOrchestrator {
+
+    /**
+     * Flushes immediately any log still in the sink
+     */
+    fun flush()
+
+    companion object {
+        const val MAX_LOGS_PER_BATCH = 50
+    }
+}
+
+internal class LogOrchestratorImpl(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
     private val sink: LogSink,
     private val deliveryService: DeliveryService,
     private val logEnvelopeSource: LogEnvelopeSource,
-) {
+) : LogOrchestrator {
     @Volatile
     private var lastLogTime: AtomicLong = AtomicLong(0)
 
@@ -27,6 +39,17 @@ internal class LogOrchestrator(
 
     init {
         sink.callOnLogsStored(::onLogsAdded)
+    }
+
+    override fun flush() {
+        scheduledCheckFuture?.cancel(false)
+        scheduledCheckFuture = null
+        firstLogInBatchTime.set(0)
+
+        val envelope = logEnvelopeSource.getEnvelope()
+        if (!envelope.data.logs.isNullOrEmpty()) {
+            deliveryService.sendLogs(envelope)
+        }
     }
 
     private fun onLogsAdded() {
@@ -57,17 +80,6 @@ internal class LogOrchestrator(
         return true
     }
 
-    fun flush() {
-        scheduledCheckFuture?.cancel(false)
-        scheduledCheckFuture = null
-        firstLogInBatchTime.set(0)
-
-        val envelope = logEnvelopeSource.getEnvelope()
-        if (!envelope.data.logs.isNullOrEmpty()) {
-            deliveryService.sendLogs(envelope)
-        }
-    }
-
     private fun scheduleCheck() {
         val now = clock.now()
         val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime.get())
@@ -81,7 +93,7 @@ internal class LogOrchestrator(
     }
 
     private fun isMaxLogsPerBatchReached(): Boolean =
-        sink.completedLogs().size >= MAX_LOGS_PER_BATCH
+        sink.completedLogs().size >= LogOrchestrator.MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
         now - lastLogTime.get() > MAX_INACTIVITY_TIME
@@ -92,7 +104,6 @@ internal class LogOrchestrator(
     }
 
     companion object {
-        const val MAX_LOGS_PER_BATCH = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <errno.h>
-#include "../unwinders/unwinder_stack.h"
+#include "../unwinders/stack_unwinder.h"
 #include "sampler_unwinder_unwind.h"
 #include "sampler_unwinder_stack.h"
 #include "../signals/signal_utils.h"

@@ -29,15 +29,12 @@ static ssize_t emb_unwindstack_impl(emb_env *env, emb_unwind_state *sample, void
     }
 
     int frame_count = static_cast<int>(android_unwinder_data.frames.size());
-
     sample->num_sframes = frame_count;
-
     return frame_count;
 }
 
 size_t emb_unwind_with_libunwindstack(emb_env *env, emb_sample *sample,
                                       void *user_context) {
-
     emb_unwind_state _unwind_state = {0};
     emb_unwind_state *unwind_state = &_unwind_state;
     ssize_t frame_count = emb_unwindstack_impl(env, unwind_state, user_context);

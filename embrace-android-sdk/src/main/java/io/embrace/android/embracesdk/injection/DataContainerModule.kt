@@ -25,6 +25,7 @@ internal interface DataContainerModule {
 
 internal class DataContainerModuleImpl(
     initModule: InitModule,
+    @Suppress("UNUSED_PARAMETER")
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
@@ -84,8 +85,7 @@ internal class DataContainerModuleImpl(
             essentialServiceModule.sessionProperties,
             initModule.logger,
             workerThreadModule,
-            initModule.clock,
-            openTelemetryModule.spanService
+            initModule.clock
         )
     }
 }

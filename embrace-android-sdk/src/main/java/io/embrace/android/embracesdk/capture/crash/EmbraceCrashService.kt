@@ -125,7 +125,7 @@ internal class EmbraceCrashService(
             deliveryService.sendCrash(crashEvent, true)
 
             // Attempt to send any logs that are still waiting in the sink
-            logOrchestrator.flush()
+            logOrchestrator.flush(true)
 
             // End, cache and send the session
             sessionOrchestrator.endSessionWithCrash(crash.crashId)

@@ -15,6 +15,7 @@ internal interface DeliveryService {
     fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker)
     fun sendLog(eventMessage: EventMessage)
     fun sendLogs(logEnvelope: Envelope<LogPayload>)
+    fun saveLogs(logEnvelope: Envelope<LogPayload>)
     fun sendNetworkCall(networkEvent: NetworkEvent)
     fun sendCrash(crash: EventMessage, processTerminating: Boolean)
     fun sendAEIBlob(blobMessage: BlobMessage)

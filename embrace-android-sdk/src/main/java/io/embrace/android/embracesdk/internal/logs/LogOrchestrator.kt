@@ -14,7 +14,7 @@ internal interface LogOrchestrator {
     /**
      * Flushes immediately any log still in the sink
      */
-    fun flush()
+    fun flush(saveOnly: Boolean)
 
     companion object {
         const val MAX_LOGS_PER_BATCH = 50
@@ -41,14 +41,18 @@ internal class LogOrchestratorImpl(
         sink.callOnLogsStored(::onLogsAdded)
     }
 
-    override fun flush() {
+    override fun flush(saveOnly: Boolean) {
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
         firstLogInBatchTime.set(0)
 
         val envelope = logEnvelopeSource.getEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
-            deliveryService.sendLogs(envelope)
+            if (saveOnly) {
+                deliveryService.saveLogs(envelope)
+            } else {
+                deliveryService.sendLogs(envelope)
+            }
         }
     }
 
@@ -76,7 +80,7 @@ internal class LogOrchestratorImpl(
         if (!shouldSendLogs) {
             return false
         }
-        flush()
+        flush(false)
         return true
     }
 

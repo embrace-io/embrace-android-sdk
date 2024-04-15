@@ -55,7 +55,7 @@ internal class PushNotificationDataSource(
                 }
             )
         } catch (ex: Exception) {
-            logger.logError("Failed to log push notificaction $id", ex)
+            logger.logError("Failed to log push notification $id", ex)
         }
     }
 

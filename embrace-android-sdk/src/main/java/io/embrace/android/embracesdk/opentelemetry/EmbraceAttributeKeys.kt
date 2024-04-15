@@ -26,4 +26,3 @@ internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequ
  * Attribute name for the Embrace Sesssion
  */
 internal val embSessionId: EmbraceAttributeKey = EmbraceAttributeKey("session_id")
-

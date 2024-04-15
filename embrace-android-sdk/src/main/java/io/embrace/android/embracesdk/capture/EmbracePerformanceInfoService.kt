@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.aei.ApplicationExitInfoService
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
@@ -21,7 +20,6 @@ internal class EmbracePerformanceInfoService(
     private val networkConnectivityService: NetworkConnectivityService,
     private val networkLoggingService: NetworkLoggingService,
     private val powerSaveModeService: PowerSaveModeService,
-    private val memoryService: MemoryService,
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val applicationExitInfoService: ApplicationExitInfoService?,
@@ -81,7 +79,6 @@ internal class EmbracePerformanceInfoService(
     ): PerformanceInfo {
         return PerformanceInfo(
             diskUsage = captureDataSafely(logger) { metadataService.getDiskUsage()?.copy() },
-            memoryWarnings = captureDataSafely(logger) { memoryService.getCapturedData()?.toList() },
             networkInterfaceIntervals = captureDataSafely(logger) {
                 networkConnectivityService.getCapturedData()?.toList()
             },

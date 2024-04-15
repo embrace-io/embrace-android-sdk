@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_ANR
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CONNECTIVITY
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_LOW_MEMORY
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 
 internal class PerformanceInfoSanitizer(
@@ -15,7 +14,6 @@ internal class PerformanceInfoSanitizer(
         return info?.copy(
             anrIntervals = anrIntervals(info),
             networkInterfaceIntervals = networkInterfaceIntervals(info),
-            memoryWarnings = memoryWarnings(info),
             diskUsage = diskUsage(info),
             networkRequests = networkRequests(info),
             responsivenessMonitorSnapshots = threadMonitorSnapshots(info)
@@ -37,11 +35,6 @@ internal class PerformanceInfoSanitizer(
         else -> null
     }
 
-    private fun memoryWarnings(performanceInfo: PerformanceInfo) = when {
-        shouldSendLowMemoryWarnings() -> performanceInfo.memoryWarnings
-        else -> null
-    }
-
     private fun diskUsage(performanceInfo: PerformanceInfo) = when {
         shouldSendCurrentDiskUsage() -> performanceInfo.diskUsage
         else -> null
@@ -60,9 +53,6 @@ internal class PerformanceInfoSanitizer(
 
     private fun shouldSendNetworkConnectivityIntervals() =
         enabledComponents.contains(PERFORMANCE_CONNECTIVITY)
-
-    private fun shouldSendLowMemoryWarnings() =
-        enabledComponents.contains(PERFORMANCE_LOW_MEMORY)
 
     private fun shouldSendCapturedNetwork() =
         enabledComponents.contains(SessionGatingKeys.PERFORMANCE_NETWORK)

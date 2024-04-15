@@ -16,12 +16,6 @@ internal data class PerformanceInfo(
     val diskUsage: DiskUsage? = null,
 
     /**
-     * Occasions where the device reported that the memory is running low.
-     */
-    @Json(name = "mw")
-    val memoryWarnings: List<MemoryWarning>? = null,
-
-    /**
      * Periods during which the device was connected to WIFI, WAN, or no network.
      */
     @Json(name = "ns")

@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -43,7 +44,8 @@ internal class DataCaptureServiceModuleImplTest {
             systemServiceModule,
             createEnabledBehavior(),
             WorkerThreadModuleImpl(initModule),
-            FakeVersionChecker(true)
+            FakeVersionChecker(true),
+            fakeDataSourceModule()
         )
 
         assertTrue(module.memoryService is EmbraceMemoryService)
@@ -65,7 +67,8 @@ internal class DataCaptureServiceModuleImplTest {
             systemServiceModule,
             FakeEssentialServiceModule(),
             WorkerThreadModuleImpl(initModule),
-            FakeVersionChecker(false)
+            FakeVersionChecker(false),
+            fakeDataSourceModule()
         )
 
         assertNotNull(module.powerSaveModeService)
@@ -81,7 +84,8 @@ internal class DataCaptureServiceModuleImplTest {
             systemServiceModule,
             createDisabledBehavior(),
             WorkerThreadModuleImpl(initModule),
-            FakeVersionChecker(true)
+            FakeVersionChecker(true),
+            fakeDataSourceModule()
         )
 
         assertTrue(module.memoryService is NoOpMemoryService)

@@ -86,7 +86,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule,
-    versionChecker: VersionChecker = BuildVersionChecker
+    versionChecker: VersionChecker = BuildVersionChecker,
+    dataSourceModule: DataSourceModule
 ) : DataCaptureServiceModule {
 
     private val backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
@@ -137,8 +138,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 initModule.clock,
                 configService,
                 essentialServiceModule.activityLifecycleTracker,
-                openTelemetryModule.currentSessionSpan,
-                openTelemetryModule.spanService,
+                { dataSourceModule },
                 initModule.logger
             )
         }

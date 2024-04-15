@@ -234,7 +234,7 @@ internal class EmbraceLogService(
             severity = severity,
         )
 
-        logWriter.addLog(logEventData) { logEventData }
+        logWriter.addLog(logEventData)
     }
 
     /**

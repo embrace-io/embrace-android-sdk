@@ -24,7 +24,7 @@ internal class PersonaFeaturesTest {
     fun `personas found in metadata`() {
         with(testRule) {
             harness.androidServicesModule.preferencesService.userPersonas = setOf("preloaded")
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             embrace.setUserAsPayer()
             with(checkNotNull(harness.recordSession { embrace.addUserPersona("test") })) {
                 assertPersonaExists("preloaded")

@@ -30,7 +30,7 @@ public class PreSdkStartTest {
 
     @Test
     public void testStartWithNullAppFramework() {
-        embrace.start(testRule.harness.getFakeCoreModule().getContext(), false, null);
+        embrace.start(testRule.harness.getOverriddenCoreModule().getContext(), false, null);
         assertFalse(embrace.isStarted());
     }
 

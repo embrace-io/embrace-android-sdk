@@ -22,6 +22,8 @@ import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModuleImpl
+import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
@@ -100,21 +102,22 @@ internal class IntegrationTestRule(
         with(harness) {
             val embraceImpl = EmbraceImpl(
                 ModuleInitBootstrapper(
-                    initModule = initModule,
-                    openTelemetryModule = initModule.openTelemetryModule,
-                    coreModuleSupplier = { _, _, _ -> fakeCoreModule },
+                    initModule = overriddenInitModule,
+                    openTelemetryModule = overriddenInitModule.openTelemetryModule,
+                    coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
                     systemServiceModuleSupplier = { _, _ -> systemServiceModule },
                     androidServicesModuleSupplier = { _, _, _ -> androidServicesModule },
-                    workerThreadModuleSupplier = { _ -> workerThreadModule },
+                    workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                     storageModuleSupplier = { _, _, _ -> storageModule },
                     essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> essentialServiceModule },
-                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> dataCaptureServiceModule },
-                    deliveryModuleSupplier = { _, _, _, _, _ -> fakeDeliveryModule },
+                    dataSourceModuleSupplier = { _, _, _, _, _, _ -> dataSourceModule },
+                    dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _, _ -> dataCaptureServiceModule },
+                    deliveryModuleSupplier = { _, _, _, _, _ -> overriddenDeliveryModule },
                 )
             )
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embrace.start(fakeCoreModule.context, enableIntegrationTesting, appFramework)
+                embrace.start(overriddenCoreModule.context, enableIntegrationTesting, appFramework)
             }
         }
     }
@@ -131,17 +134,17 @@ internal class IntegrationTestRule(
      */
     internal class Harness(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
-        val fakeClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val enableIntegrationTesting: Boolean = false,
         val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
-        val initModule: FakeInitModule = FakeInitModule(clock = fakeClock),
-        val openTelemetryModule: OpenTelemetryModule = initModule.openTelemetryModule,
-        val fakeCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = initModule.logger),
-        val workerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(initModule),
-        val fakeConfigService: FakeConfigService = FakeConfigService(
+        val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
+        val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
+        val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
+        val overriddenCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = overriddenInitModule.logger),
+        val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),
+        val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             sdkModeBehavior = fakeSdkModeBehavior(
-                isDebug = fakeCoreModule.isDebug,
+                isDebug = overriddenCoreModule.isDebug,
                 localCfg = { DEFAULT_LOCAL_CONFIG }
             ),
             networkBehavior = fakeNetworkBehavior(
@@ -162,40 +165,50 @@ internal class IntegrationTestRule(
         ),
         val systemServiceModule: SystemServiceModule =
             SystemServiceModuleImpl(
-                coreModule = fakeCoreModule
+                coreModule = overriddenCoreModule
             ),
         val androidServicesModule: AndroidServicesModule = AndroidServicesModuleImpl(
-            initModule = initModule,
-            coreModule = fakeCoreModule,
-            workerThreadModule = workerThreadModule,
+            initModule = overriddenInitModule,
+            coreModule = overriddenCoreModule,
+            workerThreadModule = overriddenWorkerThreadModule,
         ),
         val storageModule: StorageModule = StorageModuleImpl(
-            initModule = initModule,
-            workerThreadModule = workerThreadModule,
-            coreModule = fakeCoreModule,
+            initModule = overriddenInitModule,
+            workerThreadModule = overriddenWorkerThreadModule,
+            coreModule = overriddenCoreModule,
         ),
         val essentialServiceModule: EssentialServiceModule =
             EssentialServiceModuleImpl(
-                initModule = initModule,
-                openTelemetryModule = initModule.openTelemetryModule,
-                coreModule = fakeCoreModule,
-                workerThreadModule = workerThreadModule,
+                initModule = overriddenInitModule,
+                openTelemetryModule = overriddenInitModule.openTelemetryModule,
+                coreModule = overriddenCoreModule,
+                workerThreadModule = overriddenWorkerThreadModule,
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
                 storageModule = storageModule,
                 customAppId = null,
                 enableIntegrationTesting = enableIntegrationTesting,
-            ) { fakeConfigService },
+                configServiceProvider = { overriddenConfigService }
+            ),
+        val dataSourceModule: DataSourceModule = DataSourceModuleImpl(
+            initModule = overriddenInitModule,
+            otelModule = overriddenOpenTelemetryModule,
+            essentialServiceModule = essentialServiceModule,
+            systemServiceModule = systemServiceModule,
+            androidServicesModule = androidServicesModule,
+            workerThreadModule = overriddenWorkerThreadModule,
+        ),
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(
-                initModule = initModule,
-                openTelemetryModule = initModule.openTelemetryModule,
-                coreModule = fakeCoreModule,
+                initModule = overriddenInitModule,
+                openTelemetryModule = overriddenInitModule.openTelemetryModule,
+                coreModule = overriddenCoreModule,
                 systemServiceModule = systemServiceModule,
                 essentialServiceModule = essentialServiceModule,
-                workerThreadModule = workerThreadModule
+                workerThreadModule = overriddenWorkerThreadModule,
+                dataSourceModule = dataSourceModule
             ),
-        val fakeDeliveryModule: FakeDeliveryModule =
+        val overriddenDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),

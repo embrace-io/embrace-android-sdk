@@ -3,7 +3,7 @@
 //
 
 #include "unwinder.h"
-#include "unwinder_stack.h"
+#include "stack_unwinder.h"
 #include "../utils/utilities.h"
 #include "../utils/emb_log.h"
 #include "../utils/string_utils.h"
@@ -31,7 +31,7 @@ void emb_fix_fileinfo(ssize_t frame_count,
 ssize_t emb_process_capture(emb_env *env, siginfo_t *info, void *user_context) {
     ssize_t frame_count;
 
-    frame_count = emb_process_stack(env, info, user_context);
+    frame_count = emb_unwind_stack(env, user_context);
 
     emb_fix_fileinfo(frame_count, env->crash.capture.stacktrace);
 

@@ -33,7 +33,8 @@ internal class EnvelopeResourceTest {
             deviceArchitecture = "arm64-v8a",
             jailbroken = false,
             diskTotalCapacity = 1000000000,
-            osType = "Android",
+            osType = "linux",
+            osName = "android",
             osVersion = "11",
             osCode = "30",
             screenResolution = "1080x1920",
@@ -65,7 +66,8 @@ internal class EnvelopeResourceTest {
         assertEquals("arm64-v8a", obj.deviceArchitecture)
         assertFalse(checkNotNull(obj.jailbroken))
         assertEquals(1000000000L, obj.diskTotalCapacity)
-        assertEquals("Android", obj.osType)
+        assertEquals("linux", obj.osType)
+        assertEquals("android", obj.osName)
         assertEquals("11", obj.osVersion)
         assertEquals("30", obj.osCode)
         assertEquals("1080x1920", obj.screenResolution)

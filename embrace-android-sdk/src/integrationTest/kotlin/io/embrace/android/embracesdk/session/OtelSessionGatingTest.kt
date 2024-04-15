@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
@@ -56,7 +55,7 @@ internal class OtelSessionGatingTest {
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
             Harness(
-                fakeDeliveryModule = FakeDeliveryModule(
+                overriddenDeliveryModule = FakeDeliveryModule(
                     deliveryService = GatedDeliveryService(gatingService)
                 )
             )
@@ -115,7 +114,7 @@ internal class OtelSessionGatingTest {
             embrace.startView("MyActivity")
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
-            harness.fakeClock.tick(10000) // enough to trigger new session
+            harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }
     }

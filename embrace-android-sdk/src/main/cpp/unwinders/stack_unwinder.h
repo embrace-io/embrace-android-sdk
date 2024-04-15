@@ -7,10 +7,15 @@
 
 #include "../jnibridge/emb_ndk_manager.h"
 #include <signal.h>
+
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
-ssize_t
-emb_process_stack(emb_env *env, siginfo_t *info, void *user_context);
+
+ssize_t emb_unwind_stack(emb_env *env, void *user_context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //EMBRACE_NATIVE_CRASHES_UNWINDER_STACK_H

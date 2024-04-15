@@ -10,11 +10,11 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.fakes.system.mockActivity
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
@@ -77,8 +77,7 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             FakeActivityTracker(),
-            FakeCurrentSessionSpan(),
-            spanService,
+            { fakeDataSourceModule() },
             InternalEmbraceLogger(),
         )
         service.logView("viewA", clock.now())
@@ -137,32 +136,6 @@ internal class EmbraceBreadcrumbServiceTest {
         assertEquals(0, breadcrumbsAfterClean.pushNotifications?.size)
         assertEquals(0, breadcrumbsAfterClean.viewBreadcrumbs?.size)
         assertEquals(0, breadcrumbsAfterClean.webViewBreadcrumbs?.size)
-    }
-
-    @Test
-    fun testGetBreadcrumbs() {
-        val service = initializeBreadcrumbService()
-        assertTrue(
-            "starting fragment should succeed",
-            service.startView("a")
-        )
-        clock.tickSecond()
-        assertTrue(
-            "ending fragment should succeed",
-            service.endView("a")
-        )
-        clock.tickSecond()
-        assertTrue(
-            "starting fragment should succeed",
-            service.startView("b")
-        )
-        clock.tickSecond()
-        service.onViewClose(activity)
-        val message = SessionMessage(
-            session = fakeSession(),
-            breadcrumbs = service.getBreadcrumbs()
-        )
-        assertJsonMatchesGoldenFile("breadcrumb_fragment.json", message)
     }
 
     @Test
@@ -278,8 +251,7 @@ internal class EmbraceBreadcrumbServiceTest {
             clock,
             configService,
             activityTracker,
-            FakeCurrentSessionSpan(),
-            spanService,
+            { fakeDataSourceModule() },
             InternalEmbraceLogger(),
         )
         service.addFirstViewBreadcrumbForSession(5)
@@ -292,8 +264,7 @@ internal class EmbraceBreadcrumbServiceTest {
         clock,
         configService,
         FakeActivityTracker(),
-        FakeCurrentSessionSpan(),
-        spanService,
+        { fakeDataSourceModule() },
         InternalEmbraceLogger(),
     )
 

@@ -161,8 +161,8 @@ internal class NetworkRequestApiTest {
     fun `disabled URLs not recorded`() {
         with(testRule) {
             harness.recordSession {
-                harness.fakeConfigService.updateListeners()
-                harness.fakeClock.tick(5)
+                harness.overriddenConfigService.updateListeners()
+                harness.overriddenClock.tick(5)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromCompletedRequest(
                         DISABLED_URL,
@@ -174,7 +174,7 @@ internal class NetworkRequestApiTest {
                         200
                     )
                 )
-                harness.fakeClock.tick(5)
+                harness.overriddenClock.tick(5)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromIncompleteRequest(
                         DISABLED_URL,
@@ -185,7 +185,7 @@ internal class NetworkRequestApiTest {
                         "Dang nothing there"
                     )
                 )
-                harness.fakeClock.tick(5)
+                harness.overriddenClock.tick(5)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromCompletedRequest(
                         URL,
@@ -209,8 +209,8 @@ internal class NetworkRequestApiTest {
         val expectedStartTime = START_TIME + 1
         with(testRule) {
             harness.recordSession {
-                harness.fakeConfigService.updateListeners()
-                harness.fakeClock.tick(5)
+                harness.overriddenConfigService.updateListeners()
+                harness.overriddenClock.tick(5)
 
                 val callId = UUID.randomUUID().toString()
                 embrace.internalInterface.recordAndDeduplicateNetworkRequest(
@@ -252,8 +252,8 @@ internal class NetworkRequestApiTest {
     fun `ensure network calls with the same start time are recorded properly`() {
         with(testRule) {
             harness.recordSession {
-                harness.fakeConfigService.updateListeners()
-                harness.fakeClock.tick(5)
+                harness.overriddenConfigService.updateListeners()
+                harness.overriddenClock.tick(5)
 
                 val request = EmbraceNetworkRequest.fromCompletedRequest(
                     URL,
@@ -285,9 +285,9 @@ internal class NetworkRequestApiTest {
     ) {
         with(testRule) {
             harness.recordSession {
-                harness.fakeClock.tick(2L)
-                harness.fakeConfigService.updateListeners()
-                harness.fakeClock.tick(5L)
+                harness.overriddenClock.tick(2L)
+                harness.overriddenConfigService.updateListeners()
+                harness.overriddenClock.tick(5L)
                 embrace.recordNetworkRequest(expectedRequest)
             }
 

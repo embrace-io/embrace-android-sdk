@@ -1,10 +1,15 @@
 package io.embrace.android.embracesdk.arch.destination
 
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.logs.Severity
 
-internal class LogWriterImpl(private val logger: Logger) : LogWriter {
+internal class LogWriterImpl(
+    private val logger: Logger,
+    private val sessionIdTracker: SessionIdTracker
+) : LogWriter {
 
     override fun <T> addLog(log: T, mapper: T.() -> LogEventData) {
         val logEventData = log.mapper()
@@ -18,6 +23,11 @@ internal class LogWriterImpl(private val logger: Logger) : LogWriter {
         logEventData.schemaType.attributes().forEach {
             builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
         }
+
+        sessionIdTracker.getActiveSessionId()?.let { sessionId ->
+            builder.setAttribute(embSessionId.attributeKey, sessionId)
+        }
+
         builder.emit()
     }
 

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
@@ -25,7 +24,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
@@ -34,6 +32,7 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -49,7 +48,6 @@ internal class EmbraceLogServiceTest {
         private lateinit var logWriter: FakeLogWriter
         private lateinit var metadataService: FakeMetadataService
         private lateinit var configService: ConfigService
-        private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var executor: ExecutorService
         private lateinit var tick: AtomicLong
@@ -59,7 +57,6 @@ internal class EmbraceLogServiceTest {
         @JvmStatic
         fun beforeClass() {
             metadataService = FakeMetadataService()
-            sessionIdTracker = FakeSessionIdTracker()
             executor = Executors.newSingleThreadExecutor()
             tick = AtomicLong(1609823408L)
             clock = Clock { tick.incrementAndGet() }
@@ -71,7 +68,6 @@ internal class EmbraceLogServiceTest {
     @Before
     fun setUp() {
         logWriter = FakeLogWriter()
-        sessionIdTracker.setActiveSessionId("session-123", true)
         sessionProperties = EmbraceSessionProperties(
             FakePreferenceService(),
             FakeConfigService(),
@@ -107,21 +103,18 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.INFO, first.severity)
         assertEquals("bar", first.schemaType.attributes()["foo"])
         assertNotNull(first.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", first.schemaType.attributes()[embSessionId.name])
         assertNull(first.schemaType.attributes()[exceptionType.key])
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
         assertEquals(Severity.WARNING, second.severity)
         assertNotNull(second.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", second.schemaType.attributes()[embSessionId.name])
         assertNull(second.schemaType.attributes()[exceptionType.key])
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
         assertEquals(Severity.ERROR, third.severity)
         assertNotNull(third.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", third.schemaType.attributes()[embSessionId.name])
         assertNull(third.schemaType.attributes()[exceptionType.key])
         third.assertIsType(EmbType.System.Log)
     }
@@ -147,7 +140,6 @@ internal class EmbraceLogServiceTest {
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
@@ -177,7 +169,6 @@ internal class EmbraceLogServiceTest {
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
@@ -211,7 +202,6 @@ internal class EmbraceLogServiceTest {
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
         assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
         assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         log.assertIsType(EmbType.System.Exception)
     }
@@ -231,14 +221,14 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `Embrace properties can not be overridden by custom properties`() {
         val logService = getLogService()
-        val props = mapOf(embSessionId.name to "session-456")
+        val props = mapOf(logRecordUid.key to "fakeUid")
         logService.log("Hello world", Severity.INFO, props)
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
-        assertEquals("session-123", log.schemaType.attributes()[embSessionId.name])
+        assertNotEquals("fakeUid", log.schemaType.attributes()[logRecordUid.key])
     }
 
     @Test
@@ -418,7 +408,6 @@ internal class EmbraceLogServiceTest {
             metadataService,
             configService,
             appFramework,
-            sessionIdTracker,
             sessionProperties,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             InternalEmbraceLogger(),

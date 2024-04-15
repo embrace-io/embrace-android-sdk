@@ -20,13 +20,11 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.opentelemetry.logRecordUid
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.NavigableMap
@@ -41,7 +39,6 @@ internal class EmbraceLogService(
     private val metadataService: MetadataService,
     private val configService: ConfigService,
     private val appFramework: AppFramework,
-    private val sessionIdTracker: SessionIdTracker,
     private val sessionProperties: EmbraceSessionProperties,
     private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
@@ -198,7 +195,6 @@ internal class EmbraceLogService(
         )
 
         attributes.setAttribute(logRecordUid, Uuid.getEmbUuid())
-        sessionIdTracker.getActiveSessionId()?.let { attributes.setAttribute(embSessionId, it) }
         metadataService.getAppState()?.let { attributes.setAttribute(embState, it) }
 
         return attributes

@@ -74,6 +74,7 @@ internal class DataSourceModuleImpl(
     override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
         DataSourceState(
             factory = {
+                System.out.println("DataSourceModuleImpl ${essentialServiceModule.configService}")
                 PushNotificationDataSource(
                     breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
                     initModule.clock,

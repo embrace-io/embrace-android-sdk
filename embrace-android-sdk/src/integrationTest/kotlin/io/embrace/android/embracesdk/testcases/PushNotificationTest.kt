@@ -4,20 +4,13 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.session.OtelSessionGatingTest
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,7 +31,7 @@ internal class PushNotificationTest {
     @Test
     fun `log push notification and data type`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
             }
@@ -51,7 +44,7 @@ internal class PushNotificationTest {
     @Test
     fun `log push data type`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
             }
@@ -64,7 +57,7 @@ internal class PushNotificationTest {
     @Test
     fun `log push notification no data type`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
             }
@@ -77,7 +70,7 @@ internal class PushNotificationTest {
     @Test
     fun `log push unknown type`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
             }
@@ -111,10 +104,13 @@ internal class PushNotificationTest {
     @Test
     fun `log push notification with pii`() {
         with(testRule) {
-            harness.fakeConfigService.breadcrumbBehavior = fakeBreadcrumbBehavior(
+            harness.overriddenConfigService.breadcrumbBehavior = fakeBreadcrumbBehavior(
                 localCfg = { SdkLocalConfig(captureFcmPiiData = true) }
             )
-            embrace.start(harness.fakeCoreModule.context)
+            System.out.println("harness ${harness.overriddenConfigService}")
+            harness.overriddenConfigService.updateListeners()
+            embrace.start(harness.overriddenCoreModule.context)
+            harness.overriddenConfigService.updateListeners()
             harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
             }

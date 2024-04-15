@@ -24,13 +24,13 @@ internal class UserFeaturesTest {
     @Test
     fun `user info setting and clearing`() {
         with(testRule) {
-            val preferenceService = harness.androidServicesModule.preferencesService.apply {
+            val preferenceService = harness.overriddenAndroidServicesModule.preferencesService.apply {
                 userIdentifier = "customId"
                 username = "customUserName"
                 userEmailAddress = "custom@domain.com"
             }
 
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk(harness.overriddenCoreModule.context)
             with(checkNotNull(harness.recordSession { })) {
                 assertUserInfo(preferenceService, "customId", "customUserName", "custom@domain.com")
             }

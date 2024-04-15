@@ -23,8 +23,8 @@ internal class PersonaFeaturesTest {
     @Test
     fun `personas found in metadata`() {
         with(testRule) {
-            harness.androidServicesModule.preferencesService.userPersonas = setOf("preloaded")
-            embrace.start(harness.overriddenCoreModule.context)
+            harness.overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
+            startSdk(context = harness.overriddenCoreModule.context)
             embrace.setUserAsPayer()
             with(checkNotNull(harness.recordSession { embrace.addUserPersona("test") })) {
                 assertPersonaExists("preloaded")
@@ -58,6 +58,9 @@ internal class PersonaFeaturesTest {
 
     private fun assertPersona(exists: Boolean, session: SessionMessage, persona: String) {
         assertEquals(exists, session.userInfo?.personas?.find { it == persona } != null)
-        assertEquals(exists, testRule.harness.androidServicesModule.preferencesService.userPersonas?.find { it == persona } != null)
+        assertEquals(
+            exists,
+            testRule.harness.overriddenAndroidServicesModule.preferencesService.userPersonas?.find { it == persona } != null
+        )
     }
 }

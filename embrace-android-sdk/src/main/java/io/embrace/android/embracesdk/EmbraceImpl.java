@@ -41,16 +41,16 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
-import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.IdGenerator;
+import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
-import io.embrace.android.embracesdk.logging.ReportingLoggerAction;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
+import io.embrace.android.embracesdk.logging.ReportingLoggerAction;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -72,6 +72,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.Pair;
+import kotlin.jvm.functions.Function0;
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -238,9 +239,16 @@ final class EmbraceImpl {
     void start(@NonNull Context context,
                boolean enableIntegrationTesting,
                @NonNull Embrace.AppFramework appFramework) {
+        startInternal(context, enableIntegrationTesting, appFramework, () -> null);
+    }
+
+    void startInternal(@NonNull Context context,
+                       boolean enableIntegrationTesting,
+                       @NonNull Embrace.AppFramework appFramework,
+                       @NonNull Function0<ConfigService> configServiceProvider) {
         try {
             Systrace.startSynchronous("sdk-start");
-            startImpl(context, enableIntegrationTesting, appFramework);
+            startImpl(context, enableIntegrationTesting, appFramework, configServiceProvider);
             Systrace.endSynchronous();
         } catch (Throwable t) {
             internalEmbraceLogger.logError(
@@ -250,7 +258,8 @@ final class EmbraceImpl {
 
     private void startImpl(@NonNull Context context,
                            boolean enableIntegrationTesting,
-                           @NonNull Embrace.AppFramework framework) {
+                           @NonNull Embrace.AppFramework framework,
+                           @NonNull Function0<ConfigService> configServiceProvider) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             internalEmbraceLogger.logWarning("Embrace SDK has already been initialized");
@@ -265,7 +274,7 @@ final class EmbraceImpl {
 
         final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId);
+        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 

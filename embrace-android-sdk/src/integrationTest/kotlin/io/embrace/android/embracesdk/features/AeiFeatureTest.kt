@@ -36,7 +36,7 @@ internal class AeiFeatureTest {
         with(testRule) {
             testRule.embrace.start(ApplicationProvider.getApplicationContext())
             val message = harness.recordSession()
-            val deliveryService = harness.fakeDeliveryModule.deliveryService
+            val deliveryService = harness.overriddenDeliveryModule.deliveryService
             val blobRecord = checkNotNull(deliveryService.blobMessages.single().applicationExits.single())
             val sessionRecord = checkNotNull(message?.performanceInfo?.appExitInfoData?.single())
             assertEquals(blobRecord.copy(trace = null), sessionRecord)

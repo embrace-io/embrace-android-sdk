@@ -2,16 +2,11 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifyBgActivityMessage
-import io.embrace.android.embracesdk.worker.WorkerName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +25,7 @@ internal class BackgroundActivityTest {
     fun `bg activity messages are recorded`() {
         with(testRule) {
             harness.recordSession()
-            harness.fakeClock.tick(30000)
+            harness.overriddenClock.tick(30000)
             harness.recordSession()
 
             // filter out dupes from overwritten saves

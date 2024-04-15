@@ -55,7 +55,7 @@ internal class OtelSessionGatingTest {
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
             Harness(
-                fakeDeliveryModule = FakeDeliveryModule(
+                overriddenDeliveryModule = FakeDeliveryModule(
                     deliveryService = GatedDeliveryService(gatingService)
                 )
             )
@@ -114,7 +114,7 @@ internal class OtelSessionGatingTest {
             embrace.startView("MyActivity")
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
-            harness.fakeClock.tick(10000) // enough to trigger new session
+            harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }
     }

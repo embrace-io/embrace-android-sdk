@@ -42,7 +42,7 @@ internal class PublicApiTest {
     fun `SDK can start`() {
         with(testRule) {
             assertFalse(embrace.isStarted)
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             assertEquals(AppFramework.NATIVE, harness.appFramework)
             assertFalse(harness.essentialServiceModule.configService.isSdkDisabled())
             assertTrue(embrace.isStarted)
@@ -53,7 +53,7 @@ internal class PublicApiTest {
     fun `SDK start defaults to native app framework`() {
         with(testRule) {
             assertFalse(embrace.isStarted)
-            embrace.start(harness.fakeCoreModule.context, false)
+            embrace.start(harness.overriddenCoreModule.context, false)
             assertEquals(AppFramework.NATIVE, harness.appFramework)
             assertTrue(embrace.isStarted)
         }
@@ -63,7 +63,7 @@ internal class PublicApiTest {
     fun `SDK disabled via the binary cannot start`() {
         with(testRule) {
             ApkToolsConfig.IS_SDK_DISABLED = true
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             assertFalse(embrace.isStarted)
         }
     }
@@ -71,8 +71,8 @@ internal class PublicApiTest {
     @Test
     fun `SDK disabled via config cannot start`() {
         with(testRule) {
-            harness.fakeConfigService.sdkDisabled = true
-            embrace.start(harness.fakeCoreModule.context)
+            harness.overriddenConfigService.sdkDisabled = true
+            embrace.start(harness.overriddenCoreModule.context)
             assertFalse(embrace.isStarted)
         }
     }
@@ -90,7 +90,7 @@ internal class PublicApiTest {
     @Test
     fun `custom appId cannot be set after start`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             assertTrue(embrace.isStarted)
             assertFalse(embrace.setAppId("xyz12"))
         }
@@ -106,7 +106,7 @@ internal class PublicApiTest {
     @Test
     fun `getCurrentSessionId returns sessionId when SDK is started and foreground session is active`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             harness.recordSession {
                 assertEquals(embrace.currentSessionId, harness.essentialServiceModule.sessionIdTracker.getActiveSessionId())
                 assertNotNull(embrace.currentSessionId)
@@ -117,7 +117,7 @@ internal class PublicApiTest {
     @Test
     fun `getCurrentSessionId returns sessionId when SDK is started and background session is active`() {
         with(testRule) {
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
             var foregroundSessionId: String? = null
             harness.recordSession {
                 foregroundSessionId = embrace.currentSessionId

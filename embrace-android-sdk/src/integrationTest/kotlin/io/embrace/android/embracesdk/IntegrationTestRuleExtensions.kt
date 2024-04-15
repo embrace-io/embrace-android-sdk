@@ -21,7 +21,7 @@ import org.junit.Assert.assertNotNull
  * away.
  */
 internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<EventMessage> {
-    val logs = fakeDeliveryModule.deliveryService.lastSentLogs
+    val logs = overriddenDeliveryModule.deliveryService.lastSentLogs
     return when (expectedSize) {
         null -> logs
         else -> returnIfConditionMet({ logs }) {
@@ -43,21 +43,21 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
  * Returns a list of [SessionMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
-    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "foreground" }
+    return overriddenDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "foreground" }
 }
 
 /**
  * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
-    return fakeDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "background" }
+    return overriddenDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "background" }
 }
 
 /**
  * Returns the last [SessionMessage] that was saved by the SDK.
  */
 internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMessage? {
-    return fakeDeliveryModule.deliveryService.lastSavedSession
+    return overriddenDeliveryModule.deliveryService.lastSavedSession
 }
 
 /**
@@ -95,7 +95,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
     action()
 
     // end session 30s later by entering background
-    fakeClock.tick(30000)
+    overriddenClock.tick(30000)
     activityController?.pause()
     activityService.onBackground()
     activityController?.stop()

@@ -202,9 +202,9 @@ internal class EmbraceInternalInterfaceImplTest {
             200
         )
 
-        internalImpl.recordAndDeduplicateNetworkRequest(callId, networkRequest)
+        internalImpl.recordURLConnectionNetworkRequest(callId, networkRequest)
         verify(exactly = 1) {
-            embraceImpl.recordAndDeduplicateNetworkRequest(callId, capture(captor))
+            embraceImpl.recordURLConnectionNetworkRequest(callId, capture(captor))
         }
 
         assertEquals(url, captor.captured.url)

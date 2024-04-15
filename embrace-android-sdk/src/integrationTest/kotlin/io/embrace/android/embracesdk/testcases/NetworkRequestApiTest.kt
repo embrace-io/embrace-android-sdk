@@ -4,9 +4,9 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getLastSentSessionMessage
+import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -213,7 +213,7 @@ internal class NetworkRequestApiTest {
                 harness.overriddenClock.tick(5)
 
                 val callId = UUID.randomUUID().toString()
-                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
+                embrace.internalInterface.recordURLConnectionNetworkRequest(
                     callId,
                     EmbraceNetworkRequest.fromCompletedRequest(
                         "$URL/bad",
@@ -225,7 +225,7 @@ internal class NetworkRequestApiTest {
                         200
                     )
                 )
-                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
+                embrace.internalInterface.recordURLConnectionNetworkRequest(
                     callId,
                     EmbraceNetworkRequest.fromCompletedRequest(
                         URL,

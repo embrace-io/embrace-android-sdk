@@ -99,7 +99,7 @@ internal class AnrIntegrationTest : BaseTest() {
 
         // validate each span contains the fields we would expect
         spans.forEachIndexed { _, span ->
-            val intervalCode = checkNotNull(span.attributes["emb.interval_code"]).toInt()
+            val intervalCode = checkNotNull(span.attributes["interval_code"]).toInt()
             assertNotNull(intervalCode)
 
             if (intervalCode == AnrInterval.CODE_DEFAULT) {
@@ -113,22 +113,22 @@ internal class AnrIntegrationTest : BaseTest() {
 
     private fun validateSamples(samples: List<EmbraceSpanEvent>) {
         // validate the samples all recorded their overhead
-        assertTrue(samples.all { checkNotNull(it.attributes["emb.sample_overhead"]).toInt() >= 0 })
+        assertTrue(samples.all { checkNotNull(it.attributes["sample_overhead"]).toInt() >= 0 })
 
         // validate that all timestamps are ascending
         assertTrue(samples == samples.sortedBy(EmbraceSpanEvent::timestampNanos))
 
         // validate the samples have the expected code
-        assertTrue(samples.take(MAX_SAMPLES).all { it.attributes["emb.sample_code"]?.toInt() == AnrSample.CODE_DEFAULT })
+        assertTrue(samples.take(MAX_SAMPLES).all { it.attributes["sample_code"]?.toInt() == AnrSample.CODE_DEFAULT })
         val remaining = samples.size - MAX_SAMPLES
 
         if (remaining > 0) {
             assertTrue(
                 samples.subList(MAX_SAMPLES, samples.size)
-                    .all { it.attributes["emb.sample_code"]?.toInt() == AnrSample.CODE_SAMPLE_LIMIT_REACHED })
+                    .all { it.attributes["sample_code"]?.toInt() == AnrSample.CODE_SAMPLE_LIMIT_REACHED })
         } else {
             // validate that threads contains method names
-            val threads: List<String> = samples.mapNotNull { it.attributes["emb.stacktrace"] }
+            val threads: List<String> = samples.mapNotNull { it.attributes["stacktrace"] }
             assertTrue(threads.isNotEmpty())
         }
     }

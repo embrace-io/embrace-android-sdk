@@ -6,7 +6,7 @@ internal class FakeLogOrchestrator : LogOrchestrator {
 
     var flushCalled = false
 
-    override fun flush() {
+    override fun flush(sync: Boolean) {
         flushCalled = true
     }
 }

@@ -117,7 +117,7 @@ internal class LogOrchestratorTest {
         verifyPayloadNotSent()
 
         // flush the logs
-        logOrchestrator.flush()
+        logOrchestrator.flush(false)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())

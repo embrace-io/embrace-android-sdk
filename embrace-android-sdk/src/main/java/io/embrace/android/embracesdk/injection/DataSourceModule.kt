@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
+import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -30,6 +31,7 @@ internal interface DataSourceModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
     val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
+    val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
     val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
 }
@@ -80,6 +82,19 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+        )
+    }
+
+    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                WebViewUrlDataSource(
+                    configService.breadcrumbBehavior,
+                    otelModule.currentSessionSpan,
+                    initModule.logger
+                )
+            },
+            configGate = { configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() }
         )
     }
 

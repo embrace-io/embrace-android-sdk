@@ -46,7 +46,8 @@ internal class SpanSanitizer(
     private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
         return !(
             (event.hasFixedAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs()) ||
-                (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs())
+                (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||
+                (event.hasFixedAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
             )
     }
 
@@ -56,4 +57,7 @@ internal class SpanSanitizer(
 
     private fun shouldAddViewBreadcrumbs() =
         enabledComponents.contains(SessionGatingKeys.BREADCRUMBS_VIEWS)
+
+    private fun shouldAddWebViewUrls() =
+        enabledComponents.contains(SessionGatingKeys.BREADCRUMBS_WEB_VIEWS)
 }

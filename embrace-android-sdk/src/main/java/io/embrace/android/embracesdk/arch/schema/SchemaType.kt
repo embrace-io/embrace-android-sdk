@@ -137,4 +137,16 @@ internal sealed class SchemaType(
     internal class FlutterException(attributes: TelemetryAttributes) : SchemaType(EmbType.System.FlutterException) {
         override val attrs = attributes.snapshot()
     }
+
+    internal class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
+        override val attrs = attributes.snapshot()
+    }
+
+    internal class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
+        override val attrs = attributes.snapshot()
+    }
+
+    internal class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
+        override val attrs = attributes.snapshot()
+    }
 }

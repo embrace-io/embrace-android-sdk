@@ -46,31 +46,31 @@ internal class TracingApiTest {
 
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
-        val testStartTimeMs = testRule.harness.fakeClock.now()
+        val testStartTimeMs = testRule.harness.overriddenClock.now()
         val spanExporter = FakeSpanExporter()
         with(testRule) {
-            harness.fakeClock.tick(100L)
+            harness.overriddenClock.tick(100L)
             embrace.addSpanExporter(spanExporter)
-            embrace.start(harness.fakeCoreModule.context)
+            startSdk(context = harness.overriddenCoreModule.context)
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionMessage = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
-                assertTrue(parentSpan.start(startTimeMs = harness.fakeClock.now() - 1L))
+                assertTrue(parentSpan.start(startTimeMs = harness.overriddenClock.now() - 1L))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
                 assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                 assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
-                    harness.fakeClock.tick(100L)
+                    harness.overriddenClock.tick(100L)
                     parentSpan.addEvent("parent event")
                     parentSpan.addEvent(
                         name = "parent event with attributes and bad input time",
-                        timestampMs = harness.fakeClock.now().millisToNanos(),
+                        timestampMs = harness.overriddenClock.now().millisToNanos(),
                         attributes = mapOf("key" to "value")
                     )
                     true
                 })
                 val failedOpStartTimeMs = embrace.internalInterface.getSdkCurrentTime()
-                harness.fakeClock.tick(200L)
-                parentSpan.addEvent(name = "delayed event", timestampMs = harness.fakeClock.now() - 50L, null)
+                harness.overriddenClock.tick(200L)
+                parentSpan.addEvent(name = "delayed event", timestampMs = harness.overriddenClock.now() - 50L, null)
                 val failedOpEndTimeMs = embrace.internalInterface.getSdkCurrentTime()
 
                 assertTrue(parentSpan.stop())
@@ -108,25 +108,25 @@ internal class TracingApiTest {
                     embrace.startSpan(
                         name = "bonus-span-2",
                         parent = parentSpan,
-                        startTimeMs = harness.fakeClock.now() + 10L
+                        startTimeMs = harness.overriddenClock.now() + 10L
                     )
                 )
-                assertTrue(bonusSpan.stop(endTimeMs = harness.fakeClock.now() + 1))
-                harness.fakeClock.tick(300L)
+                assertTrue(bonusSpan.stop(endTimeMs = harness.overriddenClock.now() + 1))
+                harness.overriddenClock.tick(300L)
                 assertTrue(bonusSpan2.stop())
                 val unendingSpan = checkNotNull(embrace.startSpan("unending-span"))
-                harness.fakeClock.tick(100L)
+                harness.overriddenClock.tick(100L)
                 unendingSpan.addAttribute("unending-key", "unending-value")
                 unendingSpan.addEvent("unending-event")
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            val sessionEndTime = harness.fakeClock.now()
+            val sessionEndTime = harness.overriddenClock.now()
             val session = checkNotNull(sessionMessage)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(session.spans) +
-                harness.openTelemetryModule.spanSink.completedSpans()
+                harness.overriddenOpenTelemetryModule.spanSink.completedSpans()
 
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session"])

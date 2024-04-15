@@ -11,8 +11,14 @@ internal class LogWriterImpl(
     private val sessionIdTracker: SessionIdTracker
 ) : LogWriter {
 
-    override fun <T> addLog(log: T, mapper: T.() -> LogEventData) {
-        val logEventData = log.mapper()
+    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?) {
+        val logEventData = if (log is LogEventData) {
+            log
+        } else if (mapper != null) {
+            log.mapper()
+        } else {
+            return
+        }
 
         // placeholder implementation: copied from PR #460
         val builder = logger.logRecordBuilder()

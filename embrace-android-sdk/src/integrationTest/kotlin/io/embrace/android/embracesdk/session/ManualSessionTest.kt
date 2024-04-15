@@ -34,7 +34,7 @@ internal class ManualSessionTest {
     fun `calling endSession ends stateful session`() {
         with(testRule) {
             harness.recordSession {
-                harness.fakeClock.tick(10000) // enough to trigger new session
+                harness.overriddenClock.tick(10000) // enough to trigger new session
                 embrace.endSession()
             }
             val messages = harness.getSentSessionMessages()
@@ -51,11 +51,11 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control enabled does not end sessions`() {
         with(testRule) {
-            harness.fakeConfigService.sessionBehavior = fakeSessionBehavior {
+            harness.overriddenConfigService.sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }
             harness.recordSession {
-                harness.fakeClock.tick(10000)
+                harness.overriddenClock.tick(10000)
                 embrace.endSession()
             }
             val messages = harness.getSentSessionMessages()
@@ -67,11 +67,11 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         with(testRule) {
-            harness.fakeConfigService.sessionBehavior = fakeSessionBehavior {
+            harness.overriddenConfigService.sessionBehavior = fakeSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }
             harness.recordSession {
-                harness.fakeClock.tick(1000) // not enough to trigger new session
+                harness.overriddenClock.tick(1000) // not enough to trigger new session
                 embrace.endSession()
             }
             val message = harness.getSentSessionMessages().single()

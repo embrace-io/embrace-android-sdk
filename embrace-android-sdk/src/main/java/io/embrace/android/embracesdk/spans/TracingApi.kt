@@ -56,8 +56,8 @@ internal interface TracingApi {
     )
 
     /**
-     * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time. Returns null if the [EmbraceSpan] cannot
-     * be created or started, like if the parent has been started.
+     * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time (epoch time in milliseconds).
+     * Returns null if the [EmbraceSpan] cannot be created or started, like if the parent has been started.
      */
     @BetaApi
     fun startSpan(
@@ -120,7 +120,8 @@ internal interface TracingApi {
     ): T
 
     /**
-     * Record a span with the given name as well as start and end times, which will be the root span of a new trace.
+     * Record a span with the given name, start time, and end time (epoch time in milliseconds). The created span will be the root span of
+     * a new trace.
      */
     @BetaApi
     fun recordCompletedSpan(
@@ -139,9 +140,9 @@ internal interface TracingApi {
         )
 
     /**
-     * Record a span with the given name, error code, as well as start and end times, which will be the root span of a new trace. A
-     * non-null [ErrorCode] can be passed in to denote the operation the span represents was ended unsuccessfully under the stated
-     * circumstances.
+     * Record a span with the given name, error code, start time, and end time (epoch time in milliseconds). The created span will be the
+     * root span of a new trace. A non-null [ErrorCode] can be passed in to denote the operation the span represents was ended
+     * unsuccessfully under the stated circumstances.
      */
     @BetaApi
     fun recordCompletedSpan(
@@ -161,8 +162,8 @@ internal interface TracingApi {
         )
 
     /**
-     * Record a span with the given name, parent, as well as start and end times. Passing in a parent that is null will result
-     * in a new trace with the new span as its root.
+     * Record a span with the given name, parent, start time, and end time (epoch time in milliseconds). Passing in a parent that is null
+     * will result in a new trace with the new span as its root.
      */
     @BetaApi
     fun recordCompletedSpan(
@@ -182,9 +183,9 @@ internal interface TracingApi {
         )
 
     /**
-     * Record a span with the given name, parent, error code, as well as start and end times. Passing in a parent that is null will result
-     * in a new trace with the new span as its root. A non-null [ErrorCode] can be passed in to denote the operation the span represents
-     * was ended unsuccessfully under the stated circumstances.
+     * Record a span with the given name, parent, error code, start time, and end time (epoch time in milliseconds). Passing in a parent
+     * that is null will result in a new trace with the new span as its root. A non-null [ErrorCode] can be passed in to denote the
+     * operation the span represents was ended unsuccessfully under the stated circumstances.
      */
     @BetaApi
     fun recordCompletedSpan(
@@ -204,9 +205,9 @@ internal interface TracingApi {
     )
 
     /**
-     * Record a span with the given name as well as start and end times, which will be the root span of a new trace. You can also pass in
-     * a [Map] with [String] keys and values to be used as the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be
-     * used as the events of the recorded span.
+     * Record a span with the given name, start time, and end time (epoch time in milliseconds). The created span will be the root span of
+     * a new trace. You can also pass in a [Map] with [String] keys and values to be used as the attributes of the recorded span, or
+     * a [List] of [EmbraceSpanEvent] to be used as the events of the recorded span.
      */
     @BetaApi
     fun recordCompletedSpan(
@@ -226,10 +227,11 @@ internal interface TracingApi {
     )
 
     /**
-     * Record a span with the given name, error code, parent, as well as start and end times. Passing in a parent that is null will result
-     * in a new trace with the new span as its root. A non-null [ErrorCode] can be passed in to denote the operation the span represents
-     * was ended unsuccessfully under the stated circumstances. You can also pass in a [Map] with [String] keys and values to be used as
-     * the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be used as the events of the recorded span.
+     * Record a span with the given name, error code, parent, start time, and end time (epoch time in milliseconds). Passing in a parent
+     * that is null will result in a new trace with the new span as its root. A non-null [ErrorCode] can be passed in to denote the
+     * operation the span represents was ended unsuccessfully under the stated circumstances. You can also pass in a [Map]
+     * with [String] keys and values to be used as the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be used
+     * as the events of the recorded span.
      */
     @BetaApi
     fun recordCompletedSpan(

@@ -55,7 +55,7 @@ internal class OtelSessionGatingTest {
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
             Harness(
-                fakeDeliveryModule = FakeDeliveryModule(
+                overriddenDeliveryModule = FakeDeliveryModule(
                     deliveryService = GatedDeliveryService(gatingService)
                 )
             )
@@ -106,6 +106,7 @@ internal class OtelSessionGatingTest {
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.System.Breadcrumb))
         assertEquals(!gated, payload.hasSpanOfType(EmbType.Ux.View))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
+        assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.WebView))
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
@@ -114,7 +115,8 @@ internal class OtelSessionGatingTest {
             embrace.startView("MyActivity")
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
-            harness.fakeClock.tick(10000) // enough to trigger new session
+            harness.logWebView("https://example.com")
+            harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }
     }

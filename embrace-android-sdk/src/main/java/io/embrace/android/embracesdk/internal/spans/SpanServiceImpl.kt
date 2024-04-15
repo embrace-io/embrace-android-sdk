@@ -27,12 +27,19 @@ internal class SpanServiceImpl(
 
     override fun initialized(): Boolean = initialized.get()
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? {
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: TelemetryType,
+        internal: Boolean,
+        private: Boolean
+    ): PersistableEmbraceSpan? {
         return if (inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             embraceSpanFactory.create(
                 name = name,
                 type = type,
                 internal = internal,
+                private = private,
                 parent = parent
             )
         } else {
@@ -45,12 +52,13 @@ internal class SpanServiceImpl(
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         code: () -> T
     ): T {
         val returnValue: T
-        val span = createSpan(name = name, parent = parent, type = type, internal = internal)
+        val span = createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
         try {
             val started = span?.start() ?: false
             if (started) {
@@ -82,6 +90,7 @@ internal class SpanServiceImpl(
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
@@ -91,7 +100,7 @@ internal class SpanServiceImpl(
         }
 
         if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val newSpan = embraceSpanFactory.create(name = name, type = type, internal = internal, parent = parent)
+            val newSpan = embraceSpanFactory.create(name = name, type = type, internal = internal, private = private, parent = parent)
             if (newSpan.start(startTimeMs)) {
                 attributes.forEach {
                     newSpan.addAttribute(it.key, it.value)

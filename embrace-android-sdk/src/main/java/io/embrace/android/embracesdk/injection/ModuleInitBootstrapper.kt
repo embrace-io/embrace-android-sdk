@@ -181,6 +181,7 @@ internal class ModuleInitBootstrapper(
                     essentialServiceModule = init(EssentialServiceModule::class) {
                         essentialServiceModuleSupplier(
                             initModule,
+                            openTelemetryModule,
                             coreModule,
                             workerThreadModule,
                             systemServiceModule,

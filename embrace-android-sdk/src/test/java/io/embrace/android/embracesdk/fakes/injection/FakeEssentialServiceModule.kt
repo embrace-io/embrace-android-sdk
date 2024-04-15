@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
+import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
@@ -21,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
@@ -58,7 +60,8 @@ internal class FakeEssentialServiceModule(
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),
-    override val sessionProperties: EmbraceSessionProperties = fakeEmbraceSessionProperties()
+    override val sessionProperties: EmbraceSessionProperties = fakeEmbraceSessionProperties(),
+    override val logWriter: LogWriter = FakeLogWriter()
 ) : EssentialServiceModule {
 
     override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate()

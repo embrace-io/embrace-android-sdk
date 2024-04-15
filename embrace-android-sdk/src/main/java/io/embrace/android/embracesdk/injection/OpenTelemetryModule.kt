@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -65,11 +63,6 @@ internal interface OpenTelemetryModule {
      * Implementation of internal tracing API
      */
     val internalTracer: InternalTracer
-
-    /**
-     * Writer for OTel log payloads
-     */
-    val logWriter: LogWriter
 
     /**
      * An instance of the OpenTelemetry component obtained from the wrapped SDK to create log records
@@ -153,10 +146,6 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             embraceTracer = embraceTracer
         )
-    }
-
-    override val logWriter: LogWriter by singleton {
-        LogWriterImpl(logger)
     }
 
     override val logger: Logger by lazy {

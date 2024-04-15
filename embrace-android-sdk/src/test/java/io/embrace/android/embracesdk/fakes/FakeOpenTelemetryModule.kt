@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -31,8 +30,6 @@ internal class FakeOpenTelemetryModule(
         get() = TODO()
     override val internalTracer: InternalTracer
         get() = TODO()
-    override val logWriter: LogWriter
-        get() = FakeLogWriter()
     override val logger: Logger
         get() = FakeOtelLogger()
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk
 
 import android.os.Looper
+import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
@@ -39,6 +41,7 @@ internal class EssentialServiceModuleImplTest {
         val initModule = InitModuleImpl()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
+            openTelemetryModule = FakeOpenTelemetryModule(),
             coreModule = coreModule,
             workerThreadModule = WorkerThreadModuleImpl(initModule),
             systemServiceModule = FakeSystemServiceModule(),
@@ -46,8 +49,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
             enableIntegrationTesting = false,
-            configServiceProvider = { null }
-        )
+        ) { null }
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
         assertTrue(module.orientationService is NoOpOrientationService)
@@ -67,6 +69,7 @@ internal class EssentialServiceModuleImplTest {
         assertTrue(module.networkConnectivityService is EmbraceNetworkConnectivityService)
         assertTrue(module.deviceArchitecture is DeviceArchitectureImpl)
         assertTrue(module.pendingApiCallsSender is EmbracePendingApiCallsSender)
+        assertTrue(module.logWriter is LogWriterImpl)
     }
 
     @Test
@@ -76,6 +79,7 @@ internal class EssentialServiceModuleImplTest {
         val fakeCoreModule = FakeCoreModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
+            openTelemetryModule = FakeOpenTelemetryModule(),
             coreModule = fakeCoreModule,
             workerThreadModule = WorkerThreadModuleImpl(initModule),
             systemServiceModule = FakeSystemServiceModule(),
@@ -83,8 +87,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = null,
             enableIntegrationTesting = false,
-            configServiceProvider = { fakeConfigService }
-        )
+        ) { fakeConfigService }
 
         assertSame(fakeConfigService, module.configService)
     }

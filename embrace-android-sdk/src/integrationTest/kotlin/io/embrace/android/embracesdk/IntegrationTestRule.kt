@@ -191,12 +191,12 @@ internal class IntegrationTestRule(
                 configServiceProvider = { overriddenConfigService }
             ),
         val dataSourceModule: DataSourceModule = DataSourceModuleImpl(
-            initModule = initModule,
-            otelModule = openTelemetryModule,
+            initModule = overriddenInitModule,
+            otelModule = overriddenOpenTelemetryModule,
             essentialServiceModule = essentialServiceModule,
             systemServiceModule = systemServiceModule,
             androidServicesModule = androidServicesModule,
-            workerThreadModule = workerThreadModule,
+            workerThreadModule = overriddenWorkerThreadModule,
         ),
         val dataCaptureServiceModule: DataCaptureServiceModule =
             DataCaptureServiceModuleImpl(

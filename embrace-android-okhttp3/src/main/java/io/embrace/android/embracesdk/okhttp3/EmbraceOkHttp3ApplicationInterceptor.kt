@@ -15,6 +15,7 @@ import java.io.IOException
  *
  * We used OkHttp application interceptor in this case because this interceptor
  * will be added first in the OkHttp3 interceptors stack. This allows us to catch network errors.
+ *
  * OkHttp network interceptors are added almost at the end of stack, they are closer to "the wire"
  * so they are not able to see network errors.
  *

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -171,6 +173,68 @@ internal class EmbraceNetworkLoggingService(
         processNetworkCall(callId, networkCall)
     }
 
+    override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+        if (networkRequest.isError()) {
+            logNetworkError(
+                UUID.randomUUID().toString(),   // temporary
+                networkRequest.url,
+                networkRequest.httpMethod,
+                networkRequest.startTime,
+                networkRequest.endTime,
+                networkRequest.errorType,
+                networkRequest.errorMessage,
+                networkRequest.traceId,
+                networkRequest.w3cTraceparent,
+                networkRequest.networkCaptureData
+            )
+        } else {
+            logNetworkCall(
+                UUID.randomUUID().toString(),   // temporary
+                networkRequest.url,
+                networkRequest.httpMethod,
+                networkRequest.responseCode ?: 0,
+                networkRequest.startTime,
+                networkRequest.endTime,
+                networkRequest.bytesOut,
+                networkRequest.bytesIn,
+                networkRequest.traceId,
+                networkRequest.w3cTraceparent,
+                networkRequest.networkCaptureData
+            )
+        }
+    }
+
+    override fun logURLConnectionNetworkRequest(callId: String, networkRequest: EmbraceNetworkRequest) {
+        if (networkRequest.isError()) {
+            logNetworkError(
+                callId,
+                networkRequest.url,
+                networkRequest.httpMethod,
+                networkRequest.startTime,
+                networkRequest.endTime,
+                networkRequest.errorType,
+                networkRequest.errorMessage,
+                networkRequest.traceId,
+                networkRequest.w3cTraceparent,
+                networkRequest.networkCaptureData
+            )
+        } else {
+            logNetworkCall(
+                callId,
+                networkRequest.url,
+                networkRequest.httpMethod,
+                networkRequest.responseCode ?: 0,
+                networkRequest.startTime,
+                networkRequest.endTime,
+                networkRequest.bytesOut,
+                networkRequest.bytesIn,
+                networkRequest.traceId,
+                networkRequest.w3cTraceparent,
+                networkRequest.networkCaptureData
+            )
+        }
+    }
+
     override fun cleanCollections() {
         clearNetworkCalls()
         // re-fetch limits in case they changed since they last time they were fetched
@@ -270,4 +334,6 @@ internal class EmbraceNetworkLoggingService(
             sessionNetworkCalls.clear()
         }
     }
+
+    private fun EmbraceNetworkRequest.isError() = !errorType.isNullOrEmpty() && !errorMessage.isNullOrEmpty()
 }

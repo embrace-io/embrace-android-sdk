@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 
 /**
@@ -72,4 +73,21 @@ internal interface NetworkLoggingService {
         w3cTraceparent: String?,
         networkCaptureData: NetworkCaptureData?
     )
+
+    /**
+     * Logs a network request. It might be a request that was completed successfully or one that failed.
+     *
+     * @param networkRequest the network request to log
+     */
+    fun logNetworkRequest(networkRequest: EmbraceNetworkRequest)
+
+    /**
+     * Logs a network request. It might be a request that was completed successfully or one that failed.
+     * This is only used by the EmbraceUrlConnectionDelegate, it will deduplicate requests based on the callId.
+     *
+     * @param callId                the ID with which the request will be identified internally. The session will only contain one recorded
+     *                              request with a given ID - last writer wins.
+     * @param request the request to be recorded
+     */
+    fun logURLConnectionNetworkRequest(callId: String, request: EmbraceNetworkRequest)
 }

@@ -23,8 +23,8 @@ import kotlin.math.abs
  * to Embrace.io.
  *
  * This interceptor will only intercept network request and responses from client app.
- * OkHttp network interceptors are added almost at the end of stack, they are closer to "Wire"
- * so they are able to see catch "real requests".
+ * OkHttp network interceptors are added almost at the end of stack, they are closer to "the wire"
+ * so they are able to see "real requests".
  *
  * Network Interceptors
  * - Able to operate on intermediate responses like redirects and retries.

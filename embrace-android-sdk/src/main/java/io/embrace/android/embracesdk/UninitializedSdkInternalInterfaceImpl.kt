@@ -62,7 +62,7 @@ internal class UninitializedSdkInternalInterfaceImpl(
     ) {
     }
 
-    override fun recordAndDeduplicateNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) {}
+    override fun recordURLConnectionNetworkRequest(callId: String, embraceNetworkRequest: EmbraceNetworkRequest) {}
 
     override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {}
 

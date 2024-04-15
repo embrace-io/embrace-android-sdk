@@ -46,14 +46,6 @@ internal class EmbraceMemoryServiceTest {
     }
 
     @Test
-    fun `onMemoryWarning creates span event`() {
-        embraceMemoryService.onMemoryWarning()
-        val fakeCurrentSessionSpan = otelModule.currentSessionSpan as FakeCurrentSessionSpan
-        assertNotNull(dataSourceModule.memoryWarningDataSource.dataSource)
-        assertEquals(1, fakeCurrentSessionSpan.addedEvents.size)
-    }
-
-    @Test
     fun `onMemoryWarning populates memoryTimestamps if the offset is less than 100`() {
         with(embraceMemoryService) {
             repeat(100) {

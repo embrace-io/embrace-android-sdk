@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.logs.Severity
 import org.junit.Assert.assertEquals
@@ -30,6 +31,25 @@ internal class LogWriterImplTest {
     }
 
     @Test
+    fun `check no-op if mapper function required`() {
+        val aeiInfo = AppExitInfoData(
+            sessionId = "fakeSessionid",
+            sessionIdError = null,
+            importance = null,
+            pss = null,
+            reason = null,
+            rss = null,
+            status = null,
+            timestamp = null,
+            trace = null,
+            description = null,
+            traceStatus = null
+        )
+        logWriterImpl.addLog(aeiInfo)
+        assertEquals(0, logger.builders.size)
+    }
+
+    @Test
     fun `check expected values added to every OTel log`() {
         sessionIdTracker.setActiveSessionId("session-id", true)
         val logEventData = LogEventData(
@@ -39,7 +59,7 @@ internal class LogWriterImplTest {
             severity = io.embrace.android.embracesdk.Severity.ERROR,
             message = "test"
         )
-        logWriterImpl.addLog(logEventData) { logEventData }
+        logWriterImpl.addLog(logEventData)
         with(logger.builders.single()) {
             assertEquals("test", body)
             assertEquals(Severity.ERROR, severity)

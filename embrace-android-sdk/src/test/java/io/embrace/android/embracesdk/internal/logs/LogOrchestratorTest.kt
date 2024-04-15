@@ -39,7 +39,7 @@ internal class LogOrchestratorTest {
         logSink = LogSinkImpl()
         deliveryService = FakeDeliveryService()
         clock.setCurrentTime(now)
-        logOrchestrator = LogOrchestrator(
+        logOrchestrator = LogOrchestratorImpl(
             scheduledWorker,
             clock,
             logSink,

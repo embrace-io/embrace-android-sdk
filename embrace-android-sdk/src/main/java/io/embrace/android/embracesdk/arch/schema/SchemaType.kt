@@ -124,16 +124,19 @@ internal sealed class SchemaType(
     }
 
     internal class NetworkRequest(networkCallV2: NetworkCallV2) : SchemaType(EmbType.Performance.Network) {
+        // TODO: This implementation does not add some fields to the attributes if they're null (i.e status code).
+        //  Do we expect fields to be always present in the attributes, even if they're null?
         override val attrs = mapOf(
             "url.full" to networkCallV2.url,
             "http.request.method" to networkCallV2.httpMethod,
-            "http.response.status_code" to networkCallV2.responseCode.toString(),
-            "http.request.body.size" to networkCallV2.bytesSent.toString(),
-            "http.response.body.size" to networkCallV2.bytesReceived.toString(),
+            "http.response.status_code" to networkCallV2.responseCode,
+            "http.request.body.size" to networkCallV2.bytesSent,
+            "http.response.body.size" to networkCallV2.bytesReceived,
             "error.type" to networkCallV2.errorType,
             "error.message" to networkCallV2.errorMessage,
-            "emb.w3c_traceparent" to networkCallV2.w3cTraceparent
-        ).toNonNullMap()
+            "emb.w3c_traceparent" to networkCallV2.w3cTraceparent,
+            "emb.trace_id" to networkCallV2.traceId
+        ).toNonNullMap().mapValues { it.value.toString() }
     }
 
     internal class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {

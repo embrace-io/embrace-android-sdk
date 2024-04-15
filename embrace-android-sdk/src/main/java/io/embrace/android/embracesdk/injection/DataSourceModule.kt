@@ -44,13 +44,15 @@ internal class DataSourceModuleImpl(
     private val values: MutableList<DataSourceState<*>> = mutableListOf()
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
-        DataSourceState({
-            BreadcrumbDataSource(
-                breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
-                writer = otelModule.currentSessionSpan,
-                logger = initModule.logger
-            )
-        })
+        DataSourceState(
+            factory = {
+                BreadcrumbDataSource(
+                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger
+                )
+            }
+        )
     }
 
     override val tapDataSource: DataSourceState<TapDataSource> by dataSourceState {

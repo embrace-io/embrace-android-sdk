@@ -53,6 +53,7 @@ internal class ModuleInitBootstrapper(
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = ::WorkerThreadModuleImpl,
     private val storageModuleSupplier: StorageModuleSupplier = ::StorageModuleImpl,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::EssentialServiceModuleImpl,
+    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::DataCaptureServiceModuleImpl,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::DeliveryModuleImpl,
     private val anrModuleSupplier: AnrModuleSupplier = ::AnrModuleImpl,
@@ -60,7 +61,6 @@ internal class ModuleInitBootstrapper(
     private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::CustomerLogModuleImpl,
     private val nativeModuleSupplier: NativeModuleSupplier = ::NativeModuleImpl,
     private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::DataContainerModuleImpl,
-    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
     private val sessionModuleSupplier: SessionModuleSupplier = ::SessionModuleImpl,
     private val crashModuleSupplier: CrashModuleSupplier = ::CrashModuleImpl,
     private val payloadModuleSupplier: PayloadModuleSupplier = ::PayloadModuleImpl,
@@ -211,6 +211,17 @@ internal class ModuleInitBootstrapper(
                         essentialServiceModule.metadataService.precomputeValues()
                     }
 
+                    dataSourceModule = init(DataSourceModule::class) {
+                        dataSourceModuleSupplier(
+                            initModule,
+                            openTelemetryModule,
+                            essentialServiceModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            workerThreadModule
+                        )
+                    }
+
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(
                             initModule,
@@ -219,7 +230,8 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             essentialServiceModule,
                             workerThreadModule,
-                            versionChecker
+                            versionChecker,
+                            dataSourceModule
                         )
                     }
 
@@ -402,17 +414,6 @@ internal class ModuleInitBootstrapper(
                             dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
                             dataContainerModule.applicationExitInfoService
-                        )
-                    }
-
-                    dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            essentialServiceModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            workerThreadModule
                         )
                     }
 

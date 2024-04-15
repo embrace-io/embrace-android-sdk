@@ -48,21 +48,21 @@ static inline void emb_copy_frame_data(unwindstack::AndroidUnwinderData &android
 }
 
 ssize_t emb_unwind_stack(emb_env *env, void *user_context) {
-    if (user_context == NULL) {
-        emb_log_last_error(env, EMB_ERROR_NO_USER_CONTEXT, 0);
-        return 0;
-    }
-
     unwindstack::AndroidUnwinder *unwinder = unwindstack::AndroidUnwinder::Create(getpid());
     unwindstack::AndroidUnwinderData android_unwinder_data = unwindstack::AndroidUnwinderData();
     emb_sframe *stacktrace = env->crash.capture.stacktrace;
+    bool unwindSuccessful;
 
-    bool unwindSuccessful = unwinder->Unwind(user_context, android_unwinder_data);
+    if (user_context != NULL) {
+        unwindSuccessful = unwinder->Unwind(user_context, android_unwinder_data);
+    } else { // fallback to local registers for C++ termination handler
+        unwindstack::Regs *regs = unwindstack::Regs::CreateFromLocal();
+        unwindSuccessful = unwinder->Unwind(regs, android_unwinder_data);
+    }
     env->crash.unwinder_error = android_unwinder_data.error.code;
 
     if (unwindSuccessful) {
         emb_copy_frame_data(android_unwinder_data, stacktrace);
-
     } else {
         return 0;
     }

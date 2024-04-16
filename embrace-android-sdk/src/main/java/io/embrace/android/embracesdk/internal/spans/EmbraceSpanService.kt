@@ -43,14 +43,21 @@ internal class EmbraceSpanService(
 
     override fun initialized(): Boolean = currentDelegate is SpanServiceImpl
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? =
-        currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal)
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: TelemetryType,
+        internal: Boolean,
+        private: Boolean
+    ): PersistableEmbraceSpan? =
+        currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
 
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         code: () -> T
@@ -59,6 +66,7 @@ internal class EmbraceSpanService(
         parent = parent,
         type = type,
         internal = internal,
+        private = private,
         attributes = attributes,
         events = events,
         code = code
@@ -71,6 +79,7 @@ internal class EmbraceSpanService(
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
@@ -81,6 +90,7 @@ internal class EmbraceSpanService(
         parent = parent,
         type = type,
         internal = internal,
+        private = private,
         attributes = attributes,
         events = events,
         errorCode = errorCode

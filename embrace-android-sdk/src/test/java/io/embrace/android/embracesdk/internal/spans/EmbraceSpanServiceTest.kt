@@ -140,9 +140,9 @@ internal class EmbraceSpanServiceTest {
         assertTrue(
             spanService.recordCompletedSpan(
                 name = expectedName,
-                parent = parentSpan,
                 startTimeMs = expectedStartTimeMs,
-                endTimeMs = expectedEndTimeMs
+                endTimeMs = expectedEndTimeMs,
+                parent = parentSpan
             )
         )
         assertTrue(parentSpan.stop())

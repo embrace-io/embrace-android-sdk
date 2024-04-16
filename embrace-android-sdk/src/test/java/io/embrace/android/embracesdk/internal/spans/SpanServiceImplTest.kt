@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
+import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -67,6 +68,29 @@ internal class SpanServiceImplTest {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertIsTypePerformance()
             assertIsKeySpan()
+            assertIsPrivateSpan()
+        }
+    }
+
+    @Test
+    fun `create trace that is internally logged but public`() {
+        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span", internal = true, private = false))
+        assertNull(embraceSpan.parent)
+        assertTrue(embraceSpan.start())
+        assertTrue(embraceSpan.stop())
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertNotPrivateSpan()
+        }
+    }
+
+    @Test
+    fun `create trace that is private but not considered internally logged`() {
+        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span", internal = false, private = true))
+        assertNull(embraceSpan.parent)
+        assertTrue(embraceSpan.start())
+        assertTrue(embraceSpan.stop())
+        with(verifyAndReturnSoleCompletedSpan("test-span")) {
+            assertIsPrivateSpan()
         }
     }
 
@@ -166,7 +190,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `start a span directly`() {
         spanSink.flushSpans()
-        val parent = checkNotNull(spansService.startSpan(name = "test-span"))
+        val parentStartTime = clock.now()
+        val parent = checkNotNull(spansService.startSpan(name = "test-span", private = false))
         val childStartTimeMs = clock.now() + 10L
         val child = checkNotNull(
             spansService.startSpan(
@@ -174,25 +199,33 @@ internal class SpanServiceImplTest {
                 parent = parent,
                 startTimeMs = childStartTimeMs,
                 type = EmbType.Ux.View,
-                internal = true
             )
         )
         clock.tick(40L)
         val childSpanEndTimeMs = clock.now()
         assertTrue(child.stop())
-        val completedSpans = spanSink.flushSpans()
-        assertEquals(1, completedSpans.size)
-        with(completedSpans[0]) {
+        with(spanSink.flushSpans().single()) {
+            assertEquals("emb-child-span", name)
+            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
+            assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
             assertIsPrivateSpan()
             assertNotKeySpan()
             assertIsType(EmbType.Ux.View)
-            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
+        }
+        clock.tick(10)
+        val parentEndTime = clock.now()
+        assertTrue(parent.stop())
+        with(spanSink.flushSpans().single()) {
+            assertEquals("emb-test-span", name)
+            assertEquals(parentStartTime, startTimeNanos.nanosToMillis())
+            assertEquals(parentEndTime, endTimeNanos.nanosToMillis())
+            assertNotPrivateSpan()
+            assertIsKeySpan()
         }
     }
 
     @Test
-    fun `record internal completed span with all the fixings`() {
+    fun `record internal but public completed span with all the fixings`() {
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
@@ -211,6 +244,7 @@ internal class SpanServiceImplTest {
             startTimeMs = expectedStartTimeMs,
             endTimeMs = expectedEndTimeMs,
             type = expectedType,
+            private = false,
             attributes = expectedAttributes,
             events = expectedEvents
         )
@@ -221,7 +255,7 @@ internal class SpanServiceImplTest {
             assertIsTypePerformance()
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertIsKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -239,9 +273,9 @@ internal class SpanServiceImplTest {
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
-                parent = parentSpan,
                 startTimeMs = expectedStartTimeMs,
-                endTimeMs = expectedEndTimeMs
+                endTimeMs = expectedEndTimeMs,
+                parent = parentSpan
             )
         )
 
@@ -271,9 +305,9 @@ internal class SpanServiceImplTest {
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
-                parent = parentSpan,
                 startTimeMs = expectedStartTimeMs,
-                endTimeMs = expectedEndTimeMs
+                endTimeMs = expectedEndTimeMs,
+                parent = parentSpan
             )
         )
     }
@@ -285,9 +319,9 @@ internal class SpanServiceImplTest {
         assertFalse(
             spansService.recordCompletedSpan(
                 name = expectedName,
-                parent = parentSpan,
                 startTimeMs = 10L,
-                endTimeMs = 100L
+                endTimeMs = 100L,
+                parent = parentSpan
             )
         )
     }
@@ -336,9 +370,9 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `record lambda running as trace`() {
+    fun `record lambda running as an internal but public trace`() {
         val returnThis = "yooooo"
-        val lambdaReturn = spansService.recordSpan(name = "test-span") {
+        val lambdaReturn = spansService.recordSpan(name = "test-span", private = false) {
             returnThis
         }
 
@@ -347,7 +381,7 @@ internal class SpanServiceImplTest {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertIsTypePerformance()
             assertIsKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
     }
 

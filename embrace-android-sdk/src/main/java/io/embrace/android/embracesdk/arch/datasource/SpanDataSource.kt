@@ -41,8 +41,8 @@ internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanD
     val data = obj.mapper()
     return startSpan(
         name = data.schemaType.fixedObjectName,
-        type = data.schemaType.telemetryType,
-        startTimeMs = data.spanStartTimeMs
+        startTimeMs = data.spanStartTimeMs,
+        type = data.schemaType.telemetryType
     )?.apply {
         data.schemaType.attributes().forEach {
             addAttribute(it.key, it.value)

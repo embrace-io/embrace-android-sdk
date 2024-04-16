@@ -42,7 +42,7 @@ internal class AeiFeatureTest {
 
             val logOrchestrator = bootstrapper.customerLogModule.logOrchestrator
             val deliveryService = harness.overriddenDeliveryModule.deliveryService
-            logOrchestrator.flush()
+            logOrchestrator.flush(false)
             val payload = deliveryService.lastSentLogPayloads.single()
             val log = checkNotNull(payload.data.logs?.single())
 

@@ -15,10 +15,6 @@ internal interface LogOrchestrator {
      * Flushes immediately any log still in the sink
      */
     fun flush(saveOnly: Boolean)
-
-    companion object {
-        const val MAX_LOGS_PER_BATCH = 50
-    }
 }
 
 internal class LogOrchestratorImpl(
@@ -97,7 +93,7 @@ internal class LogOrchestratorImpl(
     }
 
     private fun isMaxLogsPerBatchReached(): Boolean =
-        sink.completedLogs().size >= LogOrchestrator.MAX_LOGS_PER_BATCH
+        sink.completedLogs().size >= MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
         now - lastLogTime.get() > MAX_INACTIVITY_TIME
@@ -108,6 +104,7 @@ internal class LogOrchestratorImpl(
     }
 
     companion object {
+        const val MAX_LOGS_PER_BATCH = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

@@ -55,13 +55,13 @@ internal class LogOrchestratorTest {
         val logs = mutableListOf<LogRecordData>()
 
         // Fill the sink with max batch size - 1 logs
-        repeat(49) {
+        repeat(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1) {
             logs.add(FakeLogRecordData())
         }
         logSink.storeLogs(logs.toList())
 
         // Verify the logs are not sent
-        assertEquals(49, logSink.completedLogs().size)
+        assertEquals(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1, logSink.completedLogs().size)
         verifyPayloadNotSent()
 
         // Add one more log to reach max batch size
@@ -69,7 +69,7 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verifyPayload(50)
+        verifyPayload(LogOrchestratorImpl.MAX_LOGS_PER_BATCH)
     }
 
     @Test

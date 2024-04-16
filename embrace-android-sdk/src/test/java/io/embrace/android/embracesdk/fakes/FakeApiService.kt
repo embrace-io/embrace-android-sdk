@@ -24,7 +24,7 @@ internal class FakeApiService : ApiService {
     var throwExceptionSendSession: Boolean = false
     private val serializer = EmbraceSerializer()
     val logRequests = mutableListOf<EventMessage>()
-    val logPayloads = mutableListOf<LogPayload>()
+    val sentLogPayloads = mutableListOf<LogPayload>()
     val savedLogPayloads = mutableListOf<LogPayload>()
     val networkCallRequests = mutableListOf<NetworkEvent>()
     val eventRequests = mutableListOf<EventMessage>()
@@ -46,7 +46,7 @@ internal class FakeApiService : ApiService {
     }
 
     override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
-        logPayloads.add(logEnvelope.data)
+        sentLogPayloads.add(logEnvelope.data)
     }
 
     override fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>) {

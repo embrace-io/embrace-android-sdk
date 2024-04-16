@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.injection
 
+import android.os.Build
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.capture.aei.AeiDataSource
+import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
@@ -9,6 +12,7 @@ import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -36,6 +40,7 @@ internal interface DataSourceModule {
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
+    val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>
 }
 
@@ -45,7 +50,7 @@ internal class DataSourceModuleImpl(
     otelModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
-    @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
@@ -125,6 +130,33 @@ internal class DataSourceModuleImpl(
                 )
             }
         )
+    }
+
+    /* Implementation details */
+
+    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { aeiService },
+            configGate = { configService.isAppExitInfoCaptureEnabled() }
+        )
+    }
+
+    private val aeiService: AeiDataSourceImpl? by singleton {
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
+            AeiDataSourceImpl(
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                essentialServiceModule.configService.appExitInfoBehavior,
+                systemServiceModule.activityManager,
+                androidServicesModule.preferencesService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.sessionIdTracker,
+                essentialServiceModule.userService,
+                essentialServiceModule.logWriter,
+                initModule.logger
+            )
+        } else {
+            null
+        }
     }
 
     override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {

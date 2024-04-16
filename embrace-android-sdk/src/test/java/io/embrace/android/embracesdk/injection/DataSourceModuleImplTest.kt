@@ -33,7 +33,8 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.webViewUrlDataSource)
         assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.sessionPropertiesDataSource)
+        assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.lowPowerDataSource)
-        assertEquals(7, module.getDataSources().size)
+        assertEquals(8, module.getDataSources().size)
     }
 }

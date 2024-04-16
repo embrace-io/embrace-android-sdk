@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -30,6 +31,13 @@ internal fun EmbraceSpanEvent.findEventAttribute(key: String): String =
     checkNotNull(attributes[key]) {
         "Attribute not found: $key"
     }
+
+/**
+ * Finds the event attribute matching the name.
+ */
+internal fun Log.findLogAttribute(key: String): String =
+    attributes?.single { it.key == key }?.data
+        ?: throw IllegalArgumentException("Attribute not found: $key")
 
 /**
  * Returns true if an event exists with the given [TelemetryType]

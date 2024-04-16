@@ -35,23 +35,6 @@ internal interface BreadcrumbService {
     fun logView(screen: String?, timestamp: Long)
 
     /**
-     * Unlike [EmbraceBreadcrumbService.logView]
-     * this function logs the view despite the previous one in the queue has the same screen name.
-     *
-     * @param screen    name of the screen.
-     * @param timestamp time of occurrence of the tap event.
-     */
-    fun forceLogView(screen: String?, timestamp: Long)
-
-    /**
-     * this function replaces the first session view in order to have it the
-     * scope time of the session.
-     *
-     * @param timestamp time to set as beginning of the view.
-     */
-    fun replaceFirstSessionView(screen: String, timestamp: Long)
-
-    /**
      * Logs the start of a view. Must be matched by a call to
      * [EmbraceBreadcrumbService.endView].
      *
@@ -117,13 +100,6 @@ internal interface BreadcrumbService {
     fun logWebView(url: String?, startTime: Long)
 
     /**
-     * This function can be used to recover the last view breadcrumb registered.
-     *
-     * @return the last registered view breadcrumb in the queue.
-     */
-    fun getLastViewBreadcrumbScreenName(): String?
-
-    /**
      * Saves captured push notification information into session payload
      *
      * @param title                    the title of the notification as a string (or null)
@@ -143,11 +119,4 @@ internal interface BreadcrumbService {
         messageDeliveredPriority: Int,
         type: NotificationType
     )
-
-    /**
-     * This function adds the current view breadcrumb if the app comes from background to foreground
-     * or replaces the first session view breadcrumb possibly created before the session in order to
-     * have it in the session scope time.
-     */
-    fun addFirstViewBreadcrumbForSession(startTime: Long)
 }

@@ -15,13 +15,7 @@
     "sdk": "__EMBRACE_TEST_IGNORE__"
   },
   "br": {
-    "rna": [],
-    "vb": [
-      {
-        "vn": "io.embrace.android.embracesdk.TestActivity",
-        "st": "__EMBRACE_TEST_IGNORE__"
-      }
-    ]
+    "rna": []
   },
   "d": "__EMBRACE_TEST_IGNORE__",
   "p": {
@@ -35,11 +29,9 @@
       "as": "__EMBRACE_TEST_IGNORE__",
       "fs": "__EMBRACE_TEST_IGNORE__"
     },
-    "aei": "__EMBRACE_TEST_IGNORE__",
     "ga": [],
     "mw": [],
     "ns": "__EMBRACE_TEST_IGNORE__",
-    "lp": "__EMBRACE_TEST_IGNORE__",
     "rms": "__EMBRACE_TEST_IGNORE__"
   },
   "s": {

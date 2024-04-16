@@ -39,6 +39,13 @@ internal interface ApiService {
     fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>)
 
     /**
+     * Saves a list of OTel Logs to disk to be sent on restart.
+     *
+     * @param logEnvelope containing the logs
+     */
+    fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
+
+    /**
      * Sends an Application Exit Info (AEI) blob message to the API.
      *
      * @param blobMessage the blob message containing the AEI data

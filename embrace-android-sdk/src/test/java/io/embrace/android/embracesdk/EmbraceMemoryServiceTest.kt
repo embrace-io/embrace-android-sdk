@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
@@ -28,6 +29,7 @@ internal class EmbraceMemoryServiceTest {
         fakeClock.setCurrentTime(100L)
         dataSourceModule = DataSourceModuleImpl(
             initModule = FakeInitModule(),
+            coreModule = FakeCoreModule(),
             otelModule = otelModule,
             essentialServiceModule = FakeEssentialServiceModule(),
             systemServiceModule = FakeSystemServiceModule(),

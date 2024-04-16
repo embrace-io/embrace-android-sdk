@@ -129,6 +129,17 @@ internal class EmbraceApiService(
         post(logEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
     }
 
+    override fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>) {
+        val parameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+        val request: ApiRequest = mapper.logsEnvelopeRequest(logEnvelope)
+        val action: SerializationAction = { stream ->
+            ConditionalGzipOutputStream(stream).use {
+                serializer.toJson(logEnvelope, parameterizedType, it)
+            }
+        }
+        pendingApiCallsSender.savePendingApiCall(request, action, sync = true)
+    }
+
     override fun sendAEIBlob(blobMessage: BlobMessage) {
         post(blobMessage, mapper::aeiBlobRequest)
     }

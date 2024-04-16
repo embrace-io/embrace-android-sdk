@@ -3,12 +3,10 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.fakes.FakeApplicationExitInfoService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
-import io.embrace.android.embracesdk.fakes.FakePowerSaveModeService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -25,11 +23,9 @@ internal class EmbracePerformanceInfoServiceTest {
     private lateinit var service: EmbracePerformanceInfoService
     private val networkConnectivityService = FakeNetworkConnectivityService()
     private val networkLoggingService = FakeNetworkLoggingService()
-    private val powerSaveModeService = FakePowerSaveModeService()
     private val memoryService = FakeMemoryService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
-    private val applicationExitInfoService = FakeApplicationExitInfoService()
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
 
     @Before
@@ -37,11 +33,9 @@ internal class EmbracePerformanceInfoServiceTest {
         service = EmbracePerformanceInfoService(
             networkConnectivityService,
             networkLoggingService,
-            powerSaveModeService,
             memoryService,
             metadataService,
             googleAnrTimestampRepository,
-            applicationExitInfoService,
             null,
             monitoringServiceRule,
             InternalEmbraceLogger()
@@ -70,14 +64,12 @@ internal class EmbracePerformanceInfoServiceTest {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, true, null)
         assertBasicPerfInfoIncluded(info)
         assertBasicSessionPerfInfoIncluded(info)
-        assertValueCopied(applicationExitInfoService.data, info.appExitInfoData)
     }
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(metadataService.getDiskUsage(), info.diskUsage)
         assertValueCopied(memoryService.data, info.memoryWarnings)
         assertValueCopied(networkConnectivityService.data, info.networkInterfaceIntervals)
-        assertValueCopied(powerSaveModeService.data, info.powerSaveModeIntervals)
     }
 
     private fun assertBasicSessionPerfInfoIncluded(info: PerformanceInfo) {

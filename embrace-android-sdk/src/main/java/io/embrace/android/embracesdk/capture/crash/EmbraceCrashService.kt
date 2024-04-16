@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -29,6 +30,7 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
  */
 internal class EmbraceCrashService(
     configService: ConfigService,
+    private val logOrchestrator: LogOrchestrator,
     private val sessionOrchestrator: SessionOrchestrator,
     private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
@@ -121,6 +123,9 @@ internal class EmbraceCrashService(
             // a surprising % of crashes make it through based on the receive time. Therefore we
             // attempt to send the crash and if it fails, we will send it again on the next launch.
             deliveryService.sendCrash(crashEvent, true)
+
+            // Attempt to send any logs that are still waiting in the sink
+            logOrchestrator.flush(true)
 
             // End, cache and send the session
             sessionOrchestrator.endSessionWithCrash(crash.crashId)

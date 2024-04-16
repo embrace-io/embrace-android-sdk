@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
-import io.embrace.android.embracesdk.payload.ViewBreadcrumb
 import io.opentelemetry.api.trace.StatusCode
 
 internal fun fakeBackgroundActivityMessage(): SessionMessage {
@@ -17,9 +16,7 @@ internal fun fakeBackgroundActivityMessage(): SessionMessage {
     val userInfo = UserInfo("fake-user-id")
     val appInfo = AppInfo("fake-app-id")
     val deviceInfo = DeviceInfo("fake-manufacturer")
-    val breadcrumbs = Breadcrumbs(
-        viewBreadcrumbs = listOf(ViewBreadcrumb("fake-view", 1))
-    )
+    val breadcrumbs = Breadcrumbs()
     val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
     val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 

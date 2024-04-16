@@ -103,6 +103,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              */
             val embNativeCrashMap = EmbraceAttributeKey("android.native_crash.map")
         }
+
+        internal object LowPower : System("low_power")
     }
 }
 

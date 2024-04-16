@@ -182,4 +182,25 @@ internal class CompositeLogServiceTest {
         assertEquals(0, v2LogService.logs.size)
         assertEquals(0, v2LogService.exceptions.size)
     }
+
+    @Test
+    fun `exception properly in v2`() {
+        val exception = IllegalArgumentException("bad arg")
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
+        compositeLogService.log(
+            message = "log",
+            type = EventType.ERROR_LOG,
+            logExceptionType = LogExceptionType.UNHANDLED,
+            properties = null,
+            stackTraceElements = exception.stackTrace,
+            customStackTrace = null,
+            framework = Embrace.AppFramework.NATIVE,
+            context = null,
+            library = null,
+            exceptionName = exception.javaClass.name,
+            exceptionMessage = exception.message
+        )
+        assertEquals(0, v1LogService.loggedMessages.size)
+        v2LogService.exceptions.single().contains("IllegalArgumentException")
+    }
 }

@@ -66,7 +66,7 @@ internal class CompositeLogService(
                 )
             } else {
                 val stacktrace = if (stackTraceElements != null) {
-                    serializer.toJson(stackTraceElements)
+                    serializer.toJson(stackTraceElements.map(StackTraceElement::toString).take(200).toString())
                 } else {
                     customStackTrace
                 }

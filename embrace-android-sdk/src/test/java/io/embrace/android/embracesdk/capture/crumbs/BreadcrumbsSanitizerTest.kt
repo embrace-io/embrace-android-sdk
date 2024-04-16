@@ -10,7 +10,6 @@ internal class BreadcrumbsSanitizerTest {
 
     private val breadcrumbs = Breadcrumbs(
         emptyList(),
-        emptyList(),
         emptyList()
     )
 

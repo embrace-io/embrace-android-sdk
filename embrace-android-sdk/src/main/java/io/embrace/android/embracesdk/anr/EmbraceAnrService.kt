@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
@@ -107,10 +106,6 @@ internal class EmbraceAnrService(
         this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.stopMonitoringThread()
         }
-    }
-
-    override fun snapshot(): List<Span>? {
-        return null
     }
 
     override fun close() {

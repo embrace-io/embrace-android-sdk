@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture
 
-import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.aei.ApplicationExitInfoService
@@ -17,7 +16,6 @@ import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.session.captureDataSafely
 
 internal class EmbracePerformanceInfoService(
-    private val anrService: AnrService?,
     private val networkConnectivityService: NetworkConnectivityService,
     private val networkLoggingService: NetworkLoggingService,
     private val powerSaveModeService: PowerSaveModeService,
@@ -43,7 +41,6 @@ internal class EmbracePerformanceInfoService(
                 captureAppExitInfoData(coldStart, applicationExitInfoService)
             },
             networkRequests = captureDataSafely(logger) { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
-            anrIntervals = captureDataSafely(logger) { anrService?.getCapturedData()?.toList() },
             googleAnrTimestamps = captureDataSafely(logger) {
                 googleAnrTimestampRepository.getGoogleAnrTimestamps(
                     sessionStart,

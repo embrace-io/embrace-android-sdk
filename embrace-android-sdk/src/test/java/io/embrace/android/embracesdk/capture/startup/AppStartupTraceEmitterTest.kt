@@ -2,12 +2,17 @@ package io.embrace.android.embracesdk.capture.startup
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
+import io.embrace.android.embracesdk.arch.assertIsKeySpan
+import io.embrace.android.embracesdk.arch.schema.KeySpan
+import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -226,30 +231,12 @@ internal class AppStartupTraceEmitterTest {
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
-        with(trace) {
-            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(processInit) {
-            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
-            assertEquals(applicationInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(applicationInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(firstRender) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
+        assertTraceRoot(trace, DEFAULT_FAKE_CURRENT_TIME, traceEnd)
+        assertChildSpan(processInit, DEFAULT_FAKE_CURRENT_TIME, applicationInitEnd)
+        assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
+        assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
         assertEquals(0, loggerAction.msgQueue.size)
     }
@@ -280,26 +267,11 @@ internal class AppStartupTraceEmitterTest {
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
-        with(trace) {
-            assertEquals(DEFAULT_FAKE_CURRENT_TIME, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(sdkInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(firstRender) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
+        assertTraceRoot(trace, DEFAULT_FAKE_CURRENT_TIME, traceEnd)
+        assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
+        assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
         assertEquals(0, loggerAction.msgQueue.size)
     }
@@ -341,30 +313,12 @@ internal class AppStartupTraceEmitterTest {
             applicationInitStart
         }
 
-        with(trace) {
-            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(processInit) {
-            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
-            assertEquals(applicationInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(applicationInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityResume) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
+        assertTraceRoot(trace, traceStartMs, traceEnd)
+        assertChildSpan(processInit, traceStartMs, applicationInitEnd)
+        assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
+        assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
         assertEquals(0, loggerAction.msgQueue.size)
     }
@@ -399,26 +353,11 @@ internal class AppStartupTraceEmitterTest {
             sdkInitStart
         }
 
-        with(trace) {
-            assertEquals(traceStartMs, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-        with(embraceInit) {
-            assertEquals(sdkInitStart, startTimeNanos.nanosToMillis())
-            assertEquals(sdkInitEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityInitDelay) {
-            assertEquals(sdkInitEnd, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityStart, endTimeNanos.nanosToMillis())
-        }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityResume) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
+        assertTraceRoot(trace, traceStartMs, traceEnd)
+        assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
+        assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
         assertEquals(0, loggerAction.msgQueue.size)
     }
@@ -448,19 +387,12 @@ internal class AppStartupTraceEmitterTest {
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
         with(trace) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+            assertTraceRoot(this, startupActivityStart, traceEnd)
             assertEquals("60001", attributes["emb.activity-init-gap-ms"])
             assertEquals("30", attributes["emb.embrace-init-duration-ms"])
         }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(firstRender) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
         assertEquals(0, loggerAction.msgQueue.size)
     }
@@ -488,20 +420,26 @@ internal class AppStartupTraceEmitterTest {
         val activityResume = checkNotNull(spanMap["emb-activity-resume"])
 
         with(trace) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
+            assertTraceRoot(this, startupActivityStart, traceEnd)
             assertEquals("60001", attributes["emb.activity-init-gap-ms"])
             assertEquals("30", attributes["emb.embrace-init-duration-ms"])
         }
-        with(activityCreate) {
-            assertEquals(startupActivityStart, startTimeNanos.nanosToMillis())
-            assertEquals(startupActivityEnd, endTimeNanos.nanosToMillis())
-        }
-        with(activityResume) {
-            assertEquals(startupActivityEnd, startTimeNanos.nanosToMillis())
-            assertEquals(traceEnd, endTimeNanos.nanosToMillis())
-        }
-
+        assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
+        assertChildSpan(activityResume, startupActivityEnd, traceEnd)
         assertEquals(0, loggerAction.msgQueue.size)
+    }
+
+    private fun assertTraceRoot(trace: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {
+        assertEquals(expectedStartTimeNanos, trace.startTimeNanos.nanosToMillis())
+        assertEquals(expectedEndTimeNanos, trace.endTimeNanos.nanosToMillis())
+        trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+        trace.assertIsKeySpan()
+    }
+
+    private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {
+        assertEquals(expectedStartTimeNanos, span.startTimeNanos.nanosToMillis())
+        assertEquals(expectedEndTimeNanos, span.endTimeNanos.nanosToMillis())
+        span.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+        span.assertDoesNotHaveEmbraceAttribute(KeySpan)
     }
 }

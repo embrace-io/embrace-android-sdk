@@ -16,7 +16,6 @@
   },
   "br": {
     "rna": [],
-    "pn": [],
     "vb": [
       {
         "vn": "io.embrace.android.embracesdk.TestActivity",
@@ -32,7 +31,6 @@
         "r": []
       }
     },
-    "anr": [],
     "ds": {
       "as": "__EMBRACE_TEST_IGNORE__",
       "fs": "__EMBRACE_TEST_IGNORE__"

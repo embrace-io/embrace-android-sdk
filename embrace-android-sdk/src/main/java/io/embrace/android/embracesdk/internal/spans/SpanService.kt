@@ -20,7 +20,8 @@ internal interface SpanService : Initializable {
         name: String,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
-        internal: Boolean = true
+        internal: Boolean = true,
+        private: Boolean = internal,
     ): PersistableEmbraceSpan?
 
     /**
@@ -31,13 +32,15 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
         type: TelemetryType = EmbType.Performance.Default,
-        internal: Boolean = true
+        internal: Boolean = true,
+        private: Boolean = internal
     ): PersistableEmbraceSpan? {
         createSpan(
             name = name,
             parent = parent,
             type = type,
-            internal = internal
+            internal = internal,
+            private = private,
         )?.let { newSpan ->
             if (newSpan.start(startTimeMs)) {
                 return newSpan
@@ -56,6 +59,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
+        private: Boolean = internal,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
         code: () -> T
@@ -72,6 +76,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
+        private: Boolean = internal,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
         errorCode: ErrorCode? = null

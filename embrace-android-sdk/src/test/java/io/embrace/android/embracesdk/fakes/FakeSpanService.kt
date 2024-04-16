@@ -20,8 +20,9 @@ internal class FakeSpanService : SpanService {
         name: String,
         parent: EmbraceSpan?,
         type: TelemetryType,
-        internal: Boolean
-    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(null, name, type, internal).apply {
+        internal: Boolean,
+        private: Boolean
+    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(null, name, type, internal, private).apply {
         createdSpans.add(this)
     }
 
@@ -30,6 +31,7 @@ internal class FakeSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         code: () -> T
@@ -44,6 +46,7 @@ internal class FakeSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?

@@ -29,8 +29,9 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.tapDataSource)
         assertNotNull(module.fragmentViewDataSource)
         assertNotNull(module.webViewUrlDataSource)
+        assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.sessionPropertiesDataSource)
         assertNotNull(module.memoryWarningDataSource)
-        assertEquals(6, module.getDataSources().size)
+        assertEquals(7, module.getDataSources().size)
     }
 }

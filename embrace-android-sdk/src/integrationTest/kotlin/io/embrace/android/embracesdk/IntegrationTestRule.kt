@@ -17,11 +17,13 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
+import io.embrace.android.embracesdk.injection.AnrModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
@@ -90,6 +92,7 @@ internal class IntegrationTestRule(
      * Instance of the test harness that is recreating on every test iteration
      */
     lateinit var harness: Harness
+    lateinit var bootstrapper: ModuleInitBootstrapper
 
     /**
      * Setup the Embrace SDK so it's ready for testing.
@@ -97,16 +100,16 @@ internal class IntegrationTestRule(
     override fun before() {
         harness = harnessSupplier.invoke()
         with(harness) {
-            val embraceImpl = EmbraceImpl(
-                ModuleInitBootstrapper(
-                    initModule = overriddenInitModule,
-                    openTelemetryModule = overriddenInitModule.openTelemetryModule,
-                    coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
-                    workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
-                    androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-                    deliveryModuleSupplier = { _, _, _, _, _ -> overriddenDeliveryModule },
-                )
+            bootstrapper = ModuleInitBootstrapper(
+                initModule = overriddenInitModule,
+                openTelemetryModule = overriddenInitModule.openTelemetryModule,
+                coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
+                workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
+                androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
+                deliveryModuleSupplier = { _, _, _, _, _ -> overriddenDeliveryModule },
+                anrModuleSupplier = { _, _, _ -> fakeAnrModule }
             )
+            val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
                 embraceImpl.startInternal(overriddenCoreModule.context, enableIntegrationTesting, appFramework) { overriddenConfigService }
@@ -172,7 +175,8 @@ internal class IntegrationTestRule(
         val overriddenDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
-            )
+            ),
+        val fakeAnrModule: AnrModule = FakeAnrModule(),
     ) {
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)

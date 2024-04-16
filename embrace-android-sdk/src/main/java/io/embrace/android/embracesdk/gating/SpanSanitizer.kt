@@ -40,7 +40,11 @@ internal class SpanSanitizer(
     }
 
     private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
-        return !(span.hasFixedAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs())
+        return when {
+            span.hasFixedAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs() -> false
+            span.name == "emb-thread-blockage" && !shouldSendANRs() -> false
+            else -> true
+        }
     }
 
     private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
@@ -50,6 +54,9 @@ internal class SpanSanitizer(
                 (event.hasFixedAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
             )
     }
+
+    private fun shouldSendANRs() =
+        enabledComponents.contains(SessionGatingKeys.PERFORMANCE_ANR)
 
     private fun shouldAddCustomBreadcrumbs() = enabledComponents.contains(BREADCRUMBS_CUSTOM)
 

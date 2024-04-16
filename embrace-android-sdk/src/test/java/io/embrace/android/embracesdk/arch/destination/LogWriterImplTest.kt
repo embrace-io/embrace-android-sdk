@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.destination
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
@@ -19,14 +20,17 @@ internal class LogWriterImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: SessionIdTracker
     private lateinit var logWriterImpl: LogWriterImpl
+    private lateinit var metadataService: FakeMetadataService
 
     @Before
     fun setup() {
         sessionIdTracker = FakeSessionIdTracker()
         logger = FakeOpenTelemetryLogger()
+        metadataService = FakeMetadataService()
         logWriterImpl = LogWriterImpl(
             logger = logger,
-            sessionIdTracker = sessionIdTracker
+            sessionIdTracker = sessionIdTracker,
+            metadataService = metadataService,
         )
     }
 

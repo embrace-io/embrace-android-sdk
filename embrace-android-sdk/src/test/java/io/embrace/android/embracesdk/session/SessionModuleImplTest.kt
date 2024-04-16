@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
@@ -25,6 +26,7 @@ import org.junit.Test
 internal class SessionModuleImplTest {
 
     private val initModule = FakeInitModule()
+    private val coreModule = FakeCoreModule()
     private val otelModule = FakeOpenTelemetryModule()
     private val systemServiceModule = FakeSystemServiceModule()
     private val androidServicesModule = FakeAndroidServicesModule()
@@ -39,6 +41,7 @@ internal class SessionModuleImplTest {
         val essentialServiceModule = FakeEssentialServiceModule(configService = configService)
         val dataSourceModule = DataSourceModuleImpl(
             initModule,
+            coreModule,
             otelModule,
             essentialServiceModule,
             systemServiceModule,
@@ -76,6 +79,7 @@ internal class SessionModuleImplTest {
         val essentialServiceModule = createEnabledBehavior()
         val dataSourceModule = DataSourceModuleImpl(
             initModule,
+            coreModule,
             otelModule,
             essentialServiceModule,
             systemServiceModule,

@@ -7,8 +7,10 @@ import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -34,15 +36,17 @@ internal interface DataSourceModule {
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
+    val lowPowerDataSource: DataSourceState<LowPowerDataSource>
 }
 
 internal class DataSourceModuleImpl(
     initModule: InitModule,
+    coreModule: CoreModule,
     otelModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
-    @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
+    systemServiceModule: SystemServiceModule,
     @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
-    @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
+    workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState<*>> = mutableListOf()
@@ -120,6 +124,22 @@ internal class DataSourceModuleImpl(
                     logger = initModule.logger
                 )
             }
+        )
+    }
+
+    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                LowPowerDataSource(
+                    context = coreModule.context,
+                    backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    clock = initModule.clock,
+                    provider = { systemServiceModule.powerManager },
+                    spanService = otelModule.spanService,
+                    logger = initModule.logger
+                )
+            },
+            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
         )
     }
 

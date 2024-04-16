@@ -214,6 +214,7 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
+                            coreModule,
                             openTelemetryModule,
                             essentialServiceModule,
                             systemServiceModule,
@@ -246,7 +247,6 @@ internal class ModuleInitBootstrapper(
                             dataCaptureServiceModule.webviewService,
                             dataCaptureServiceModule.memoryService,
                             dataCaptureServiceModule.componentCallbackService,
-                            dataCaptureServiceModule.powerSaveModeService,
                             dataCaptureServiceModule.breadcrumbService,
                             dataCaptureServiceModule.pushNotificationService,
                             dataCaptureServiceModule.thermalStatusService

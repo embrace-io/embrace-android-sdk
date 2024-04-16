@@ -61,7 +61,6 @@ internal class DataContainerModuleImpl(
         EmbracePerformanceInfoService(
             essentialServiceModule.networkConnectivityService,
             customerLogModule.networkLoggingService,
-            dataCaptureServiceModule.powerSaveModeService,
             dataCaptureServiceModule.memoryService,
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,

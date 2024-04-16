@@ -23,7 +23,7 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
         this.sendMethod = sendMethod
     }
 
-    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction) {
+    override fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean) {
         val stream = ByteArrayOutputStream()
         action(stream)
         retryQueue.add(Pair(request, stream.toByteArray()))

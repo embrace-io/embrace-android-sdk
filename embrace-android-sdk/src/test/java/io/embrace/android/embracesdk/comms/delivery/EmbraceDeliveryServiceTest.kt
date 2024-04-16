@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
@@ -16,6 +18,9 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessageWithSnapshot
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Event
@@ -214,6 +219,20 @@ internal class EmbraceDeliveryServiceTest {
         assertEquals(obj, apiService.crashRequests.single())
     }
 
+    @Test
+    fun testSendLogs() {
+        deliveryService.sendLogs(logsEnvelope)
+        assertEquals(logsEnvelope.data, apiService.sentLogPayloads.single())
+        assertEquals(0, apiService.savedLogPayloads.size)
+    }
+
+    @Test
+    fun testSaveLogs() {
+        deliveryService.saveLogs(logsEnvelope)
+        assertEquals(logsEnvelope.data, apiService.savedLogPayloads.single())
+        assertEquals(0, apiService.sentLogPayloads.size)
+    }
+
     companion object {
         private val sessionMessage = fakeV1EndedSessionMessage()
         private val sessionFileName = CachedSession.create(
@@ -233,5 +252,17 @@ internal class EmbraceDeliveryServiceTest {
             sessionWithSnapshot.session.startTime,
             false
         ).filename
+        private val logsEnvelope = Envelope(
+            resource = FakeEnvelopeResourceSource().resource,
+            metadata = FakeEnvelopeMetadataSource().metadata,
+            version = "0.1.0",
+            type = "logs",
+            data = LogPayload(
+                logs = listOf(
+                    Log(),
+                    Log()
+                )
+            )
+        )
     }
 }

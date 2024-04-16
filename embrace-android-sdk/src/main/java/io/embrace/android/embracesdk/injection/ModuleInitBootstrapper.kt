@@ -447,7 +447,8 @@ internal class ModuleInitBootstrapper(
                             sessionModule,
                             anrModule,
                             dataContainerModule,
-                            androidServicesModule
+                            androidServicesModule,
+                            customerLogModule
                         )
                     }
 

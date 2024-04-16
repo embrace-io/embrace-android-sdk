@@ -78,6 +78,10 @@ internal class EmbraceDeliveryService(
         apiService.sendLogEnvelope(logEnvelope)
     }
 
+    override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
+        apiService.saveLogEnvelope(logEnvelope)
+    }
+
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         apiService.sendNetworkCall(networkEvent)
     }

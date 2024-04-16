@@ -298,6 +298,36 @@ internal class EmbraceApiServiceTest {
     }
 
     @Test
+    fun `save logs envelope is as expected`() {
+        val logsEnvelope = Envelope(
+            data = LogPayload(
+                logs = listOf(
+                    Log(
+                        traceId = "traceId",
+                        spanId = "spanId",
+                        timeUnixNano = 1234567890,
+                        severityText = "severityText",
+                        severityNumber = 1,
+                        body = "a message",
+                        attributes = listOf(Attribute("key", "value"))
+                    )
+                )
+            )
+        )
+
+        apiService.saveLogEnvelope(logsEnvelope)
+
+        assertEquals(0, fakeApiClient.sentRequests.size)
+        assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
+
+        val request = fakePendingApiCallsSender.retryQueue.single().first
+        val payload = fakePendingApiCallsSender.retryQueue.single().second
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v2/logs", request.url.toString())
+        val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+        assertArrayEquals(getGenericsExpectedPayloadSerialized(logsEnvelope, type), payload)
+    }
+
+    @Test
     fun `validate all API endpoint URLs`() {
         Endpoint.values().forEach {
             if (it.version == "v1") {

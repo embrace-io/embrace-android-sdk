@@ -20,6 +20,7 @@ internal open class FakeDeliveryService : DeliveryService {
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
+    val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val sentMoments: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
     var lastSentBackgroundActivities: MutableList<SessionMessage> = mutableListOf()
@@ -57,6 +58,10 @@ internal open class FakeDeliveryService : DeliveryService {
 
     override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
         lastSentLogPayloads.add(logEnvelope)
+    }
+
+    override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
+        lastSavedLogPayloads.add(logEnvelope)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

@@ -17,7 +17,6 @@ import org.junit.Test
 internal class SessionSanitizerFacadeTest {
 
     private val breadcrumbs = Breadcrumbs(
-        emptyList(),
         emptyList()
     )
 
@@ -78,9 +77,6 @@ internal class SessionSanitizerFacadeTest {
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
 
-        val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNotNull(crumbs.viewBreadcrumbs)
-
         assertNotNull(sanitizedMessage.userInfo?.personas)
 
         assertNotNull(sanitizedMessage.session.properties)
@@ -109,9 +105,6 @@ internal class SessionSanitizerFacadeTest {
         // uses an empty set for enabled components
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
-
-        val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNull(crumbs.viewBreadcrumbs)
 
         assertNull(sanitizedMessage.userInfo?.personas)
 

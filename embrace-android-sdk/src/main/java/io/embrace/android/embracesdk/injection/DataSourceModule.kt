@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
+import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
@@ -35,7 +35,7 @@ internal interface DataSourceModule {
     fun getDataSources(): List<DataSourceState<*>>
 
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
-    val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
+    val viewDataSource: DataSourceState<ViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
@@ -93,10 +93,10 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val fragmentViewDataSource: DataSourceState<FragmentViewDataSource> by dataSourceState {
+    override val viewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
         DataSourceState(
             factory = {
-                FragmentViewDataSource(
+                ViewDataSource(
                     configService.breadcrumbBehavior,
                     initModule.clock,
                     otelModule.spanService,

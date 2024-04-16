@@ -15,13 +15,7 @@
     "sdk": "__EMBRACE_TEST_IGNORE__"
   },
   "br": {
-    "rna": [],
-    "vb": [
-      {
-        "vn": "io.embrace.android.embracesdk.TestActivity",
-        "st": "__EMBRACE_TEST_IGNORE__"
-      }
-    ]
+    "rna": []
   },
   "d": "__EMBRACE_TEST_IGNORE__",
   "p": {

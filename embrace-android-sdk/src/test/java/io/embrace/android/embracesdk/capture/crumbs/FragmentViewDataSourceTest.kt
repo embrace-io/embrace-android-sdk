@@ -16,14 +16,14 @@ internal class FragmentViewDataSourceTest {
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
-    private lateinit var dataSource: FragmentViewDataSource
+    private lateinit var dataSource: ViewDataSource
 
     @Before
     fun setUp() {
         configService = FakeConfigService()
         clock = FakeClock()
         spanService = FakeSpanService()
-        dataSource = FragmentViewDataSource(
+        dataSource = ViewDataSource(
             configService.breadcrumbBehavior,
             clock,
             spanService,
@@ -33,7 +33,7 @@ internal class FragmentViewDataSourceTest {
 
     @Test
     fun `fragment with start`() {
-        dataSource.startFragment("my_fragment")
+        dataSource.startView("my_fragment")
 
         val span = spanService.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
@@ -49,9 +49,9 @@ internal class FragmentViewDataSourceTest {
 
     @Test
     fun `fragment with start and end`() {
-        dataSource.startFragment("my_fragment")
+        dataSource.startView("my_fragment")
         clock.tick(30000)
-        dataSource.endFragment("my_fragment")
+        dataSource.endView("my_fragment")
 
         val span = spanService.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
@@ -67,7 +67,7 @@ internal class FragmentViewDataSourceTest {
 
     @Test
     fun `end an unknown fragment`() {
-        assertTrue(dataSource.endFragment("my_fragment"))
+        assertTrue(dataSource.endView("my_fragment"))
         assertTrue(spanService.createdSpans.isEmpty())
     }
 }

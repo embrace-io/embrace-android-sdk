@@ -9,7 +9,6 @@ import org.junit.Test
 internal class BreadcrumbsTest {
 
     private val info = Breadcrumbs(
-        viewBreadcrumbs = listOf(ViewBreadcrumb("View", 1600000000)),
         rnActionBreadcrumbs = listOf(
             RnActionBreadcrumb(
                 "RnAction",
@@ -31,7 +30,6 @@ internal class BreadcrumbsTest {
     fun testDeserialization() {
         val obj = deserializeJsonFromResource<Breadcrumbs>("breadcrumbs_expected.json")
         assertNotNull(obj)
-        assertNotNull(obj.viewBreadcrumbs?.single())
         assertNotNull(obj.rnActionBreadcrumbs?.single())
     }
 

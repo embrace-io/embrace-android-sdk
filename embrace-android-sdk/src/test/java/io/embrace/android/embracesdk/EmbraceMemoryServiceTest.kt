@@ -12,9 +12,7 @@ import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.mockk.unmockkAll
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Test
 
 internal class EmbraceMemoryServiceTest {
 

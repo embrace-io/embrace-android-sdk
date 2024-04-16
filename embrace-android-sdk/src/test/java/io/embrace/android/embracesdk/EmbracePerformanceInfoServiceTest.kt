@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeApplicationExitInfoService
-import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
@@ -28,7 +27,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private val networkConnectivityService = FakeNetworkConnectivityService()
     private val networkLoggingService = FakeNetworkLoggingService()
     private val powerSaveModeService = FakePowerSaveModeService()
-    private val memoryService = FakeMemoryService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val applicationExitInfoService = FakeApplicationExitInfoService()

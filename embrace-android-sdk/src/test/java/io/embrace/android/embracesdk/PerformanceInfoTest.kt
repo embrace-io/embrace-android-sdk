@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Interval
-import io.embrace.android.embracesdk.payload.MemoryWarning
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
@@ -19,7 +18,6 @@ internal class PerformanceInfoTest {
 
     private val diskUsage: DiskUsage = DiskUsage(10000000, 2000000)
     private val networkRequests: NetworkRequests = NetworkRequests(NetworkSessionV2(emptyList(), emptyMap()))
-    private val memoryWarnings: List<MemoryWarning> = emptyList()
     private val networkInterfaceIntervals: List<Interval> = emptyList()
     private val googleAnrTimestamps: List<Long> = emptyList()
     private val anrIntervals: List<AnrInterval> = emptyList()

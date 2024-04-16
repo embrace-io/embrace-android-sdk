@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
-import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -114,9 +114,10 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = {
                 MemoryWarningDataSource(
-                    sessionSpanWriter =  otelModule.currentSessionSpan,
+                    sessionSpanWriter = otelModule.currentSessionSpan,
                     logger = initModule.logger,
-                )},
+                )
+            },
             configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() }
         )
     }

@@ -85,8 +85,8 @@ internal class CustomerLogModuleImpl(
 
     override val logMessageService: LogMessageService by singleton {
         CompositeLogService(
-            v1LogService,
-            v2LogService,
+            { v1LogService },
+            { v2LogService },
             essentialServiceModule.configService,
             initModule.logger,
             coreModule.jsonSerializer

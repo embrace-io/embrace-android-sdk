@@ -49,7 +49,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected URLConnection newEmbraceUrlConnection(URLConnection connection) {
-        if (!(connection instanceof HttpURLConnection)) {
+        if (!(connection instanceof HttpURLConnection) || !Embrace.getInstance().isStarted()) {
             return connection;
         }
 

@@ -21,6 +21,28 @@
         "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
         "status": "Unset",
         "trace_id": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "attributes": [
+          {
+            "key": "emb.type",
+            "value": "ux.view"
+          },
+          {
+            "key": "view.name",
+            "value": "io.embrace.android.embracesdk.internal.MockActivity"
+          },
+          {
+            "key": "emb.private",
+            "value": "true"
+          }
+        ],
+        "events": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-screen-view",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Unset",
+        "trace_id": "__EMBRACE_TEST_IGNORE__"
       }
     ],
     "spans": [

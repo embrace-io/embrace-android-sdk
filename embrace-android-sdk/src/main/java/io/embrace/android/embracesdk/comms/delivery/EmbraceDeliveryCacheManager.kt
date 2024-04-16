@@ -135,9 +135,17 @@ internal class EmbraceDeliveryCacheManager(
     /**
      * Saves the [PendingApiCalls] map to a file named [PENDING_API_CALLS_FILE_NAME].
      */
-    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
-        backgroundWorker.submit {
+    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls, sync: Boolean) {
+        if (sync) {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
+        } else {
+            backgroundWorker.submit {
+                cacheService.cacheObject(
+                    PENDING_API_CALLS_FILE_NAME,
+                    pendingApiCalls,
+                    PendingApiCalls::class.java
+                )
+            }
         }
     }
 

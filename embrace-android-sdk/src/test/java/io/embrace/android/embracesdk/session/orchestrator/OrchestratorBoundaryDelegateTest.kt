@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
@@ -21,7 +20,6 @@ internal class OrchestratorBoundaryDelegateTest {
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
-    private lateinit var breadcrumbService: FakeBreadcrumbService
 
     @Before
     fun setUp() {
@@ -33,15 +31,13 @@ internal class OrchestratorBoundaryDelegateTest {
         }
         internalErrorService = FakeInternalErrorService()
         networkConnectivityService = FakeNetworkConnectivityService()
-        breadcrumbService = FakeBreadcrumbService()
         delegate = OrchestratorBoundaryDelegate(
             memoryCleanerService,
             userService,
             ndkService,
             sessionProperties,
             internalErrorService,
-            networkConnectivityService,
-            breadcrumbService
+            networkConnectivityService
         )
     }
 
@@ -53,7 +49,6 @@ internal class OrchestratorBoundaryDelegateTest {
         assertEquals(1, userService.clearedCount)
         assertEquals(1, ndkService.userUpdateCount)
         assertEquals(1, networkConnectivityService.networkStatusOnSessionStartedCount)
-        assertEquals(1, breadcrumbService.firstViewBreadcrumbCalls.size)
     }
 
     @Test
@@ -64,6 +59,5 @@ internal class OrchestratorBoundaryDelegateTest {
         assertEquals(0, userService.clearedCount)
         assertEquals(0, ndkService.userUpdateCount)
         assertEquals(1, networkConnectivityService.networkStatusOnSessionStartedCount)
-        assertEquals(1, breadcrumbService.firstViewBreadcrumbCalls.size)
     }
 }

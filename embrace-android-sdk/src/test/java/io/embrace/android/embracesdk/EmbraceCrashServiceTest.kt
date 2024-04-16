@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -29,12 +30,14 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceCrashServiceTest {
 
     private lateinit var embraceCrashService: EmbraceCrashService
+    private lateinit var logOrchestrator: FakeLogOrchestrator
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var metadataService: FakeMetadataService
@@ -58,6 +61,7 @@ internal class EmbraceCrashServiceTest {
         mockkStatic(Crash::class)
         mockkObject(CrashFactory)
 
+        logOrchestrator = FakeLogOrchestrator()
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()
@@ -78,6 +82,7 @@ internal class EmbraceCrashServiceTest {
         val gatingService = EmbraceGatingService(FakeConfigService(), logger)
 
         embraceCrashService = EmbraceCrashService(
+            logOrchestrator,
             sessionOrchestrator,
             sessionPropertiesService,
             metadataService,
@@ -95,6 +100,19 @@ internal class EmbraceCrashServiceTest {
         )
 
         metadataService.setAppForeground()
+    }
+
+    @Test
+    fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
+        crash = CrashFactory.ofThrowable(logger, testException, null, 1)
+        setupForHandleCrash()
+
+        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+
+        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertNotNull(deliveryService.lastSentCrash)
+        assertTrue(logOrchestrator.flushCalled)
+        assertNotNull(sessionOrchestrator.crashId)
     }
 
     @Test

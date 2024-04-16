@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakePayloadFactory
@@ -98,8 +97,7 @@ internal class SessionOrchestratorTest {
                 ndkService,
                 sessionProperties,
                 internalErrorService,
-                FakeNetworkConnectivityService(),
-                FakeBreadcrumbService()
+                FakeNetworkConnectivityService()
             ),
             deliveryService,
             periodicSessionCacher,
@@ -287,8 +285,7 @@ internal class SessionOrchestratorTest {
                 ndkService,
                 sessionProperties,
                 internalErrorService,
-                FakeNetworkConnectivityService(),
-                FakeBreadcrumbService()
+                FakeNetworkConnectivityService()
             ),
             deliveryService,
             periodicSessionCacher,

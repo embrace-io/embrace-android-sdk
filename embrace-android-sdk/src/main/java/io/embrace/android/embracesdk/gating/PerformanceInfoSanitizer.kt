@@ -13,18 +13,12 @@ internal class PerformanceInfoSanitizer(
     Sanitizable<PerformanceInfo> {
     override fun sanitize(): PerformanceInfo? {
         return info?.copy(
-            anrIntervals = anrIntervals(info),
             networkInterfaceIntervals = networkInterfaceIntervals(info),
             memoryWarnings = memoryWarnings(info),
             diskUsage = diskUsage(info),
             networkRequests = networkRequests(info),
             responsivenessMonitorSnapshots = threadMonitorSnapshots(info)
         )
-    }
-
-    private fun anrIntervals(performanceInfo: PerformanceInfo) = when {
-        shouldSendANRs() -> performanceInfo.anrIntervals
-        else -> null
     }
 
     private fun threadMonitorSnapshots(performanceInfo: PerformanceInfo) = when {

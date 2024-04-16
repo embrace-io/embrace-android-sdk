@@ -1,16 +1,4 @@
 {
-  "vb": [
-    {
-      "vn": "View",
-      "st": 1600000000
-    }
-  ],
-  "wv": [
-    {
-      "u": "WebView",
-      "st": 1600000000
-    }
-  ],
   "rna": [
     {
       "n": "RnAction",
@@ -19,15 +7,6 @@
       "p": {},
       "pz": 0,
       "o": "output"
-    }
-  ],
-  "pn": [
-    {
-      "ti": "PushNotification",
-      "bd": "body",
-      "tp": "from",
-      "id": "id",
-      "ts": 1600000000
     }
   ]
 }

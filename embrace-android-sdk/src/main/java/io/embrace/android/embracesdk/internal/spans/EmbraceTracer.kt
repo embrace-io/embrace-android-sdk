@@ -35,9 +35,9 @@ internal class EmbraceTracer(
     ): T = spanService.recordSpan(
         name = name,
         parent = parent,
+        internal = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
-        internal = false,
         code = code
     )
 

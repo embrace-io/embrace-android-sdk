@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.anr
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.payload.AnrInterval
 
 internal class NoOpAnrService : AnrService {
@@ -25,9 +24,5 @@ internal class NoOpAnrService : AnrService {
     }
 
     override fun cleanCollections() {
-    }
-
-    override fun snapshot(): List<Span>? {
-        return emptyList()
     }
 }

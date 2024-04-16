@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
-import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
-import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
@@ -49,7 +47,6 @@ internal class DataCaptureServiceModuleImplTest {
         )
 
         assertTrue(module.memoryService is EmbraceMemoryService)
-        assertTrue(module.powerSaveModeService is EmbracePowerSaveModeService)
         assertTrue(module.webviewService is EmbraceWebViewService)
         assertTrue(module.breadcrumbService is EmbraceBreadcrumbService)
         assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
@@ -71,7 +68,6 @@ internal class DataCaptureServiceModuleImplTest {
             fakeDataSourceModule()
         )
 
-        assertNotNull(module.powerSaveModeService)
         assertTrue(module.thermalStatusService is NoOpThermalStatusService)
     }
 
@@ -89,7 +85,6 @@ internal class DataCaptureServiceModuleImplTest {
         )
 
         assertTrue(module.memoryService is NoOpMemoryService)
-        assertTrue(module.powerSaveModeService is NoOpPowerSaveModeService)
         assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
     }
 

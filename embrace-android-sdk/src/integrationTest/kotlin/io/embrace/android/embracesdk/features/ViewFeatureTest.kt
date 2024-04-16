@@ -13,14 +13,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class FragmentViewFeatureTest {
+internal class ViewFeatureTest {
 
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
-    fun `fragment view feature`() {
+    fun `view feature`() {
         with(testRule) {
             var startTimeMs: Long = 0
             val message = checkNotNull(harness.recordSession {
@@ -33,24 +33,23 @@ internal class FragmentViewFeatureTest {
                 embrace.endView("AnotherView")
             })
 
-            val fragmentBreadcrumbs = message.findSpansOfType(EmbType.Ux.View)
-            assertEquals(2, fragmentBreadcrumbs.size)
+            val viewSpans = message.findSpansOfType(EmbType.Ux.View)
+            assertEquals(2, viewSpans.size)
 
-            val breadcrumb1 = fragmentBreadcrumbs[0]
+            val span1 = viewSpans[0]
 
-            with(breadcrumb1) {
+            with(span1) {
                 assertEquals("MyView", findSpanAttribute("view.name"))
                 assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
                 assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
             }
 
-            val breadcrumb2 = fragmentBreadcrumbs[1]
-            with(breadcrumb2) {
+            val span2 = viewSpans[1]
+            with(span2) {
                 assertEquals("AnotherView", findSpanAttribute("view.name"))
                 assertEquals(startTimeMs + 1000L, startTimeNanos.nanosToMillis())
                 assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
             }
-
         }
     }
 }

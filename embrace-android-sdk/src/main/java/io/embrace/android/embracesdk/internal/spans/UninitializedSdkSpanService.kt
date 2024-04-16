@@ -23,13 +23,20 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun initialized(): Boolean = true
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, type: TelemetryType, internal: Boolean): PersistableEmbraceSpan? = null
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        type: TelemetryType,
+        internal: Boolean,
+        private: Boolean
+    ): PersistableEmbraceSpan? = null
 
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         code: () -> T
@@ -42,6 +49,7 @@ internal class UninitializedSdkSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
@@ -53,6 +61,7 @@ internal class UninitializedSdkSpanService : SpanService {
             parent = parent,
             type = type,
             internal = internal,
+            private = private,
             attributes = attributes,
             events = events,
             errorCode = errorCode
@@ -68,6 +77,7 @@ internal class UninitializedSdkSpanService : SpanService {
                         parent = parent,
                         type = type,
                         internal = internal,
+                        private = private,
                         attributes = attributes,
                         events = events,
                         errorCode = errorCode
@@ -120,6 +130,7 @@ internal class UninitializedSdkSpanService : SpanService {
         val parent: EmbraceSpan?,
         val type: TelemetryType,
         val internal: Boolean,
+        val private: Boolean,
         val attributes: Map<String, String>,
         val events: List<EmbraceSpanEvent>,
         val errorCode: ErrorCode?,

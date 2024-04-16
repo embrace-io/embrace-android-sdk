@@ -56,7 +56,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls) {
+    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls, sync: Boolean) {
         TODO("Not yet implemented")
     }
 

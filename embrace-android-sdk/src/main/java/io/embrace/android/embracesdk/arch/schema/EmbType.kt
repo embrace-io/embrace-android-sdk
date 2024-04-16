@@ -59,6 +59,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         internal object Exit : System("exit")
 
+        internal object PushNotification : System("push_notification")
+
         internal object Crash : System("android.crash") {
             /**
              * The list of [Throwable] that caused the exception responsible for a crash
@@ -99,6 +101,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              */
             val embNativeCrashMap = EmbraceAttributeKey("android.native_crash.map")
         }
+
+        internal object LowPower : System("low_power")
     }
 }
 

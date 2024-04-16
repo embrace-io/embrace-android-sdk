@@ -1,12 +1,20 @@
 package io.embrace.android.embracesdk.injection
 
+import android.os.Build
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.capture.aei.AeiDataSource
+import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
+import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
+import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
+import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -27,18 +35,23 @@ internal interface DataSourceModule {
     fun getDataSources(): List<DataSourceState<*>>
 
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
-    val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
+    val viewDataSource: DataSourceState<ViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
+    val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
+    val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
+    val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
+    val lowPowerDataSource: DataSourceState<LowPowerDataSource>
 }
 
 internal class DataSourceModuleImpl(
     initModule: InitModule,
+    coreModule: CoreModule,
     otelModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
-    @Suppress("UNUSED_PARAMETER") systemServiceModule: SystemServiceModule,
-    @Suppress("UNUSED_PARAMETER") androidServicesModule: AndroidServicesModule,
-    @Suppress("UNUSED_PARAMETER") workerThreadModule: WorkerThreadModule,
+    systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    workerThreadModule: WorkerThreadModule,
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState<*>> = mutableListOf()
@@ -67,10 +80,23 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val fragmentViewDataSource: DataSourceState<FragmentViewDataSource> by dataSourceState {
+    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
         DataSourceState(
             factory = {
-                FragmentViewDataSource(
+                PushNotificationDataSource(
+                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    initModule.clock,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger
+                )
+            }
+        )
+    }
+
+    override val viewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                ViewDataSource(
                     configService.breadcrumbBehavior,
                     initModule.clock,
                     otelModule.spanService,
@@ -78,6 +104,19 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+        )
+    }
+
+    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                WebViewUrlDataSource(
+                    configService.breadcrumbBehavior,
+                    otelModule.currentSessionSpan,
+                    initModule.logger
+                )
+            },
+            configGate = { configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() }
         )
     }
 
@@ -90,6 +129,49 @@ internal class DataSourceModuleImpl(
                     logger = initModule.logger
                 )
             }
+        )
+    }
+
+    /* Implementation details */
+
+    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { aeiService },
+            configGate = { configService.isAppExitInfoCaptureEnabled() }
+        )
+    }
+
+    private val aeiService: AeiDataSourceImpl? by singleton {
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
+            AeiDataSourceImpl(
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                essentialServiceModule.configService.appExitInfoBehavior,
+                systemServiceModule.activityManager,
+                androidServicesModule.preferencesService,
+                essentialServiceModule.metadataService,
+                essentialServiceModule.sessionIdTracker,
+                essentialServiceModule.userService,
+                essentialServiceModule.logWriter,
+                initModule.logger
+            )
+        } else {
+            null
+        }
+    }
+
+    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                LowPowerDataSource(
+                    context = coreModule.context,
+                    backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    clock = initModule.clock,
+                    provider = { systemServiceModule.powerManager },
+                    spanService = otelModule.spanService,
+                    logger = initModule.logger
+                )
+            },
+            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
         )
     }
 

@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -46,7 +45,6 @@ import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
-import io.embrace.android.embracesdk.payload.WebViewBreadcrumb
 import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -204,30 +202,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
         assertTrue(sessionBehavior.shouldSendFullForCrash())
         assertTrue(sessionBehavior.shouldSendFullForErrorLog())
-    }
-
-    @Test
-    fun `test gate breadcrumbs from remote config`() {
-        val webViewBreadcrumb = WebViewBreadcrumb("web url", 0)
-
-        val breadcrumbs = Breadcrumbs(
-            webViewBreadcrumbs = listOf(webViewBreadcrumb),
-        )
-
-        val message = SessionMessage(
-            session = fakeSession(),
-            userInfo = UserInfo(),
-            performanceInfo = PerformanceInfo(),
-            breadcrumbs = breadcrumbs
-        )
-
-        cfg =
-            buildCustomRemoteConfig(setOf(BREADCRUMBS_TAPS, BREADCRUMBS_WEB_VIEWS), null)
-
-        val sanitizedMessage = gatingService.gateSessionMessage(message)
-
-        val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNotNull(crumbs.webViewBreadcrumbs)
     }
 
     @Test
@@ -403,7 +377,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
     @Test
     fun `test gate performance info for Session`() {
         val performanceInfo = PerformanceInfo(
-            anrIntervals = listOf(),
             memoryWarnings = listOf(),
             networkInterfaceIntervals = listOf(),
             diskUsage = DiskUsage(100, null)
@@ -439,7 +412,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
         val perfInfo = checkNotNull(sanitizedMessage.performanceInfo)
-        assertNotNull(perfInfo.anrIntervals)
         assertNotNull(perfInfo.diskUsage)
         assertNotNull(perfInfo.memoryWarnings)
         assertNotNull(perfInfo.networkInterfaceIntervals)

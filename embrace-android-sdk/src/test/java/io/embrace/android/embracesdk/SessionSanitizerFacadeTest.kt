@@ -17,9 +17,6 @@ import org.junit.Test
 internal class SessionSanitizerFacadeTest {
 
     private val breadcrumbs = Breadcrumbs(
-        emptyList(),
-        emptyList(),
-        emptyList(),
         emptyList()
     )
 
@@ -80,10 +77,6 @@ internal class SessionSanitizerFacadeTest {
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
 
-        val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNotNull(crumbs.viewBreadcrumbs)
-        assertNotNull(crumbs.webViewBreadcrumbs)
-
         assertNotNull(sanitizedMessage.userInfo?.personas)
 
         assertNotNull(sanitizedMessage.session.properties)
@@ -99,7 +92,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.startupThreshold)
 
         assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
-        assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
@@ -113,10 +105,6 @@ internal class SessionSanitizerFacadeTest {
         // uses an empty set for enabled components
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
-
-        val crumbs = checkNotNull(sanitizedMessage.breadcrumbs)
-        assertNull(crumbs.viewBreadcrumbs)
-        assertNull(crumbs.webViewBreadcrumbs)
 
         assertNull(sanitizedMessage.userInfo?.personas)
 
@@ -133,7 +121,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.startupThreshold)
 
         assertNull(sanitizedMessage.performanceInfo?.networkRequests)
-        assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)

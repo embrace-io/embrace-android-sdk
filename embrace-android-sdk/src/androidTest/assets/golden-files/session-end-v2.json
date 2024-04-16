@@ -21,6 +21,28 @@
         "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
         "status": "Unset",
         "trace_id": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "attributes": [
+          {
+            "key": "emb.type",
+            "value": "ux.view"
+          },
+          {
+            "key": "view.name",
+            "value": "io.embrace.android.embracesdk.internal.MockActivity"
+          },
+          {
+            "key": "emb.private",
+            "value": "true"
+          }
+        ],
+        "events": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-screen-view",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Unset",
+        "trace_id": "__EMBRACE_TEST_IGNORE__"
       }
     ],
     "spans": [
@@ -50,34 +72,6 @@
         "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
         "events": "__EMBRACE_TEST_IGNORE__",
         "name": "emb-sdk-init",
-        "parent_span_id": "0000000000000000",
-        "span_id": "__EMBRACE_TEST_IGNORE__",
-        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "status": "Ok",
-        "trace_id": "__EMBRACE_TEST_IGNORE__"
-      },
-      {
-        "attributes": [
-          {
-            "key": "emb.key",
-            "value": "true"
-          },
-          {
-            "key": "emb.process_identifier",
-            "value": "__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key": "emb.type",
-            "value": "perf"
-          },
-          {
-            "key": "emb.private.sequence_id",
-            "value": "3"
-          }
-        ],
-        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "events": "__EMBRACE_TEST_IGNORE__",
-        "name": "emb-startup-moment",
         "parent_span_id": "0000000000000000",
         "span_id": "__EMBRACE_TEST_IGNORE__",
         "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",

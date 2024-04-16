@@ -275,7 +275,7 @@ internal class EmbracePendingApiCallsSenderTest {
                     )
                 )
             )
-            pendingApiCallsSender.savePendingApiCall(request) {}
+            pendingApiCallsSender.savePendingApiCall(request, {}, false)
             pendingApiCallsSender.scheduleRetry(
                 ApiResponse.Incomplete(
                     Throwable()
@@ -289,7 +289,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest(false).copy(logId = "is:session_id_0")
-        pendingApiCallsSender.savePendingApiCall(sessionRequest) {}
+        pendingApiCallsSender.savePendingApiCall(sessionRequest, {}, false)
         pendingApiCallsSender.scheduleRetry(ApiResponse.Incomplete(Throwable()))
         assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
     }

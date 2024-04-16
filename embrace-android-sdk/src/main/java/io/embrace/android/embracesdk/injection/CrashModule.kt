@@ -28,7 +28,8 @@ internal class CrashModuleImpl(
     sessionModule: SessionModule,
     anrModule: AnrModule,
     dataContainerModule: DataContainerModule,
-    androidServicesModule: AndroidServicesModule
+    androidServicesModule: AndroidServicesModule,
+    logModule: CustomerLogModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
@@ -40,6 +41,7 @@ internal class CrashModuleImpl(
 
     private val legacyCrashService: CrashService by singleton {
         EmbraceCrashService(
+            logModule.logOrchestrator,
             sessionModule.sessionOrchestrator,
             sessionModule.sessionPropertiesService,
             essentialServiceModule.metadataService,
@@ -60,6 +62,7 @@ internal class CrashModuleImpl(
     private val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
             essentialServiceModule.configService,
+            logModule.logOrchestrator,
             sessionModule.sessionOrchestrator,
             essentialServiceModule.sessionProperties,
             anrModule.anrService,

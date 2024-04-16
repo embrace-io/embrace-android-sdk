@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.ndk.NdkService
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -21,6 +20,7 @@ internal open class FakeDeliveryService : DeliveryService {
     var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
+    val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val sentMoments: MutableList<EventMessage> = mutableListOf()
     var sendBackgroundActivitiesInvokedCount: Int = 0
     var lastSentBackgroundActivities: MutableList<SessionMessage> = mutableListOf()
@@ -33,7 +33,6 @@ internal open class FakeDeliveryService : DeliveryService {
     var lastSavedSession: SessionMessage? = null
     var lastSnapshotType: SessionSnapshotType? = null
     val lastSentSessions: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
-    var blobMessages: MutableList<BlobMessage> = mutableListOf()
 
     override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
@@ -61,6 +60,10 @@ internal open class FakeDeliveryService : DeliveryService {
         lastSentLogPayloads.add(logEnvelope)
     }
 
+    override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
+        lastSavedLogPayloads.add(logEnvelope)
+    }
+
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         lastSentNetworkCall = networkEvent
     }
@@ -68,9 +71,5 @@ internal open class FakeDeliveryService : DeliveryService {
     override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
         lastSavedCrash = crash
         lastSentCrash = crash
-    }
-
-    override fun sendAEIBlob(blobMessage: BlobMessage) {
-        blobMessages.add(blobMessage)
     }
 }

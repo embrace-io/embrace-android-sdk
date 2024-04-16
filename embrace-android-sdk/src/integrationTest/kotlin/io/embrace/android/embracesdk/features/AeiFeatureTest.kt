@@ -8,6 +8,9 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.recordSession
 import io.mockk.every
 import io.mockk.mockk
@@ -35,22 +38,25 @@ internal class AeiFeatureTest {
 
         with(testRule) {
             testRule.startSdk(context = ApplicationProvider.getApplicationContext())
-            val message = harness.recordSession()
+            harness.recordSession()
+
+            val logOrchestrator = bootstrapper.customerLogModule.logOrchestrator
             val deliveryService = harness.overriddenDeliveryModule.deliveryService
-            val blobRecord = checkNotNull(deliveryService.blobMessages.single().applicationExits.single())
-            val sessionRecord = checkNotNull(message?.performanceInfo?.appExitInfoData?.single())
-            assertEquals(blobRecord.copy(trace = null), sessionRecord)
+            logOrchestrator.flush(false)
+            val payload = deliveryService.lastSentLogPayloads.single()
+            val log = checkNotNull(payload.data.logs?.single())
 
             // assert AEI fields populated
-            assertEquals(blobRecord.timestamp, 15000000000L)
-            assertEquals(blobRecord.sessionId, "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
-            assertEquals(blobRecord.importance, 125)
-            assertEquals(blobRecord.pss, 1509123409L)
-            assertEquals(blobRecord.reason, 4)
-            assertEquals(blobRecord.rss, 1123409L)
-            assertEquals(blobRecord.status, 1)
-            assertEquals(blobRecord.description, "testDescription")
-            assertEquals(blobRecord.trace, "testInputStream")
+            assertEquals(log.findLogAttribute("timestamp").toLong(), 15000000000L)
+            assertEquals(log.findLogAttribute("aei_session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
+            assertEquals(log.findLogAttribute("process_importance").toInt(), 125)
+            assertEquals(log.findLogAttribute("pss").toLong(), 1509123409L)
+            assertEquals(log.findLogAttribute("rss").toLong(), 1123409L)
+            assertEquals(log.findLogAttribute("exit_status").toInt(), 1)
+            assertEquals(log.findLogAttribute("description"), "testDescription")
+            assertEquals(log.findLogAttribute("reason").toInt(), 4)
+            assertEquals("testInputStream", log.body)
+            assertEquals("sys.exit", log.findLogAttribute("emb.type"))
         }
     }
 

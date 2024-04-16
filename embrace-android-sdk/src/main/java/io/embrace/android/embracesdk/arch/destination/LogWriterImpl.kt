@@ -23,7 +23,6 @@ internal class LogWriterImpl(
             return
         }
 
-        // placeholder implementation: copied from PR #460
         val builder = logger.logRecordBuilder()
             .setBody(logEventData.message)
             .setSeverity(logEventData.severity.toOtelSeverity())

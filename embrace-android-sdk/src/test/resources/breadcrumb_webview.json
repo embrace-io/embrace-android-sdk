@@ -10,19 +10,7 @@
     "sp": {}
   },
   "br": {
-    "vb": [],
-    "wv": [
-      {
-        "u": "https://example.com/path2",
-        "st": 1577836803000
-      },
-      {
-        "u": "https://example.com/path1",
-        "st": 1577836802000
-      }
-    ],
-    "rna": [],
-    "pn": []
+    "rna": []
   },
   "v": 13
 }

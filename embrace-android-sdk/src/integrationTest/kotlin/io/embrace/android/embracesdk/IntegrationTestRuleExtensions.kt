@@ -97,8 +97,8 @@ internal fun IntegrationTestRule.Harness.recordSession(
     // end session 30s later by entering background
     overriddenClock.tick(30000)
     activityController?.pause()
-    activityService.onBackground()
     activityController?.stop()
+    activityService.onBackground()
     return getLastSentSessionMessage()
 }
 

@@ -11,10 +11,9 @@ internal interface CrashService {
     /**
      * Handles crashes from the [EmbraceUncaughtExceptionHandler].
      *
-     * @param thread    the crashing thread
      * @param exception the exception thrown by the thread
      */
-    fun handleCrash(thread: Thread, exception: Throwable)
+    fun handleCrash(exception: Throwable)
 
     /**
      * Associates an unhandled JS exception with a crash

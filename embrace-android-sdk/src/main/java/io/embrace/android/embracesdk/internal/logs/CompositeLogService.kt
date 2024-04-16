@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
@@ -16,8 +17,8 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
  * only OTel logs, this class can be removed.
  */
 internal class CompositeLogService(
-    private val v1LogService: LogMessageService,
-    private val v2LogService: LogService,
+    private val v1LogService: Provider<LogMessageService>,
+    private val v2LogService: Provider<LogService>,
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
     private val serializer: EmbraceSerializer
@@ -27,11 +28,11 @@ internal class CompositeLogService(
         get() = configService.oTelBehavior.isBetaEnabled()
 
     private val baseLogService: BaseLogService
-        get() = if (useV2LogService) v2LogService else v1LogService
+        get() = if (useV2LogService) v2LogService() else v1LogService()
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
         // Network logs are still always handled by the v1 LogMessageService
-        v1LogService.logNetwork(networkCaptureCall)
+        v1LogService().logNetwork(networkCaptureCall)
     }
 
     override fun log(
@@ -59,7 +60,7 @@ internal class CompositeLogService(
             }
             val severity = type.getSeverity() ?: Severity.INFO
             if (logExceptionType == LogExceptionType.NONE) {
-                v2LogService.log(
+                v2LogService().log(
                     message,
                     severity,
                     properties
@@ -71,7 +72,7 @@ internal class CompositeLogService(
                     customStackTrace
                 }
                 if (framework == Embrace.AppFramework.FLUTTER) {
-                    v2LogService.logFlutterException(
+                    v2LogService().logFlutterException(
                         message = message,
                         severity = severity,
                         logExceptionType = logExceptionType,
@@ -83,7 +84,7 @@ internal class CompositeLogService(
                         library = library
                     )
                 } else {
-                    v2LogService.logException(
+                    v2LogService().logException(
                         message = message,
                         severity = severity,
                         logExceptionType = logExceptionType,
@@ -96,7 +97,7 @@ internal class CompositeLogService(
                 }
             }
         } else {
-            v1LogService.log(
+            v1LogService().log(
                 message = message,
                 type = type,
                 logExceptionType = logExceptionType,
@@ -126,7 +127,7 @@ internal class CompositeLogService(
 
     override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
         // Network logs are still always handled by the v1 LogMessageService
-        return v1LogService.findNetworkLogIds(startTime, endTime)
+        return v1LogService().findNetworkLogIds(startTime, endTime)
     }
 
     override fun getInfoLogsAttemptedToSend(): Int {

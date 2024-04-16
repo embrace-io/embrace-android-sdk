@@ -34,8 +34,8 @@ internal class CompositeLogServiceTest {
         v1LogService = FakeLogMessageService()
         v2LogService = FakeLogService()
         compositeLogService = CompositeLogService(
-            v1LogService = v1LogService,
-            v2LogService = v2LogService,
+            v1LogService = { v1LogService },
+            v2LogService = { v2LogService },
             configService = configService,
             logger = InternalEmbraceLogger(),
             serializer = EmbraceSerializer()

@@ -340,6 +340,7 @@ internal class EssentialServiceModuleImpl(
         LogWriterImpl(
             logger = openTelemetryModule.logger,
             sessionIdTracker = sessionIdTracker,
+            metadataService = metadataService,
         )
     }
 }

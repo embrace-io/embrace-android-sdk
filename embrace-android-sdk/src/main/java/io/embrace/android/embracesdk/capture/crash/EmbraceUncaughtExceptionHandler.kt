@@ -26,7 +26,7 @@ internal class EmbraceUncaughtExceptionHandler(
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         try {
-            crashService.handleCrash(thread, exception)
+            crashService.handleCrash(exception)
         } catch (ex: Exception) {
             logger.logDebug("Error occurred in the uncaught exception handler", ex)
         } finally {

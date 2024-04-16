@@ -68,7 +68,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     }
 
     internal class CrashingCrashService : CrashService {
-        override fun handleCrash(thread: Thread, exception: Throwable) {
+        override fun handleCrash(exception: Throwable) {
             throw RuntimeException("Test crash")
         }
 

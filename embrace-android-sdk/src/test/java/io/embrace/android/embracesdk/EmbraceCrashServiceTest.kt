@@ -1,20 +1,16 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
-import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandler
-import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -34,12 +30,14 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceCrashServiceTest {
 
     private lateinit var embraceCrashService: EmbraceCrashService
+    private lateinit var logOrchestrator: FakeLogOrchestrator
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var metadataService: FakeMetadataService
@@ -49,7 +47,6 @@ internal class EmbraceCrashServiceTest {
     private lateinit var eventService: FakeEventService
     private lateinit var anrService: FakeAnrService
     private lateinit var ndkService: FakeNdkService
-    private lateinit var configService: FakeConfigService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var logger: InternalEmbraceLogger
 
@@ -64,6 +61,7 @@ internal class EmbraceCrashServiceTest {
         mockkStatic(Crash::class)
         mockkObject(CrashFactory)
 
+        logOrchestrator = FakeLogOrchestrator()
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()
@@ -80,23 +78,11 @@ internal class EmbraceCrashServiceTest {
         localJsException = JsException("jsException", "Error", "Error", "")
     }
 
-    private fun setupForHandleCrash(crashHandlerEnabled: Boolean) {
-        configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                localCfg = {
-                    LocalConfig(
-                        "",
-                        false,
-                        SdkLocalConfig(crashHandler = CrashHandlerLocalConfig(crashHandlerEnabled))
-                    )
-                }
-            )
-        )
-
+    private fun setupForHandleCrash() {
         val gatingService = EmbraceGatingService(FakeConfigService(), logger)
 
         embraceCrashService = EmbraceCrashService(
-            configService,
+            logOrchestrator,
             sessionOrchestrator,
             sessionPropertiesService,
             metadataService,
@@ -117,9 +103,22 @@ internal class EmbraceCrashServiceTest {
     }
 
     @Test
+    fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
+        crash = CrashFactory.ofThrowable(logger, testException, null, 1)
+        setupForHandleCrash()
+
+        embraceCrashService.handleCrash(testException)
+
+        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertNotNull(deliveryService.lastSentCrash)
+        assertTrue(logOrchestrator.flushCalled)
+        assertNotNull(sessionOrchestrator.crashId)
+    }
+
+    @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with JSException`() {
-        setupForHandleCrash(true)
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        setupForHandleCrash()
+        embraceCrashService.handleCrash(testException)
 
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         val lastSentCrash = deliveryService.lastSentCrash
@@ -130,7 +129,7 @@ internal class EmbraceCrashServiceTest {
          * Verify mainCrashHandled is true after the first execution
          * by testing that a second execution of handleCrash wont run anything
          */
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)
         assertSame(lastSentCrash, deliveryService.lastSentCrash)
@@ -139,10 +138,10 @@ internal class EmbraceCrashServiceTest {
     @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with unityId`() {
         crash = CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123")
-        setupForHandleCrash(false)
+        setupForHandleCrash()
         ndkService.lastUnityCrashId = "Unity123"
 
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         verify { CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123") }
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
@@ -153,23 +152,11 @@ internal class EmbraceCrashServiceTest {
     @Test
     fun `test handleCrash calls mark() method when capture_last_run config is enabled`() {
         crash = CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123")
-        setupForHandleCrash(false)
+        setupForHandleCrash()
 
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         verify(exactly = 1) { crashMarker.mark() }
-    }
-
-    @Test
-    fun `test exception handler is registered with config option enabled`() {
-        setupForHandleCrash(true)
-        assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)
-    }
-
-    @Test
-    fun `test exception handler is not registered with config option disabled`() {
-        setupForHandleCrash(false)
-        assert(Thread.getDefaultUncaughtExceptionHandler() !is EmbraceUncaughtExceptionHandler)
     }
 
     @After

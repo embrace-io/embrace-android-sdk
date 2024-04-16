@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
@@ -46,7 +45,6 @@ internal class EmbraceLogServiceTest {
 
     companion object {
         private lateinit var logWriter: FakeLogWriter
-        private lateinit var metadataService: FakeMetadataService
         private lateinit var configService: ConfigService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var executor: ExecutorService
@@ -56,7 +54,6 @@ internal class EmbraceLogServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            metadataService = FakeMetadataService()
             executor = Executors.newSingleThreadExecutor()
             tick = AtomicLong(1609823408L)
             clock = Clock { tick.incrementAndGet() }
@@ -405,7 +402,6 @@ internal class EmbraceLogServiceTest {
     private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
         return EmbraceLogService(
             logWriter,
-            metadataService,
             configService,
             appFramework,
             sessionProperties,

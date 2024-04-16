@@ -39,7 +39,7 @@ internal class LogOrchestratorTest {
         logSink = LogSinkImpl()
         deliveryService = FakeDeliveryService()
         clock.setCurrentTime(now)
-        logOrchestrator = LogOrchestrator(
+        logOrchestrator = LogOrchestratorImpl(
             scheduledWorker,
             clock,
             logSink,
@@ -55,13 +55,13 @@ internal class LogOrchestratorTest {
         val logs = mutableListOf<LogRecordData>()
 
         // Fill the sink with max batch size - 1 logs
-        repeat(49) {
+        repeat(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1) {
             logs.add(FakeLogRecordData())
         }
         logSink.storeLogs(logs.toList())
 
         // Verify the logs are not sent
-        assertEquals(49, logSink.completedLogs().size)
+        assertEquals(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1, logSink.completedLogs().size)
         verifyPayloadNotSent()
 
         // Add one more log to reach max batch size
@@ -69,7 +69,7 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verifyPayload(50)
+        verifyPayload(LogOrchestratorImpl.MAX_LOGS_PER_BATCH)
     }
 
     @Test
@@ -117,11 +117,34 @@ internal class LogOrchestratorTest {
         verifyPayloadNotSent()
 
         // flush the logs
-        logOrchestrator.flush()
+        logOrchestrator.flush(false)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
         verifyPayload(4)
+    }
+
+    @Test
+    fun `flushing logs with save only enabled`() {
+        val timeStep = 1100L
+
+        repeat(4) {
+            logSink.storeLogs(listOf(FakeLogRecordData()))
+            moveTimeAhead(timeStep)
+        }
+
+        // Verify no logs have been sent
+        assertFalse(logSink.completedLogs().isEmpty())
+        verifyPayloadNotSent()
+
+        // flush the logs
+        logOrchestrator.flush(true)
+
+        // Verify the logs are sent
+        assertTrue(logSink.completedLogs().isEmpty())
+        assertEquals(0, deliveryService.lastSentLogPayloads.size)
+        assertEquals(1, deliveryService.lastSavedLogPayloads.size)
+        assertEquals(4, deliveryService.lastSavedLogPayloads[0].data.logs?.size)
     }
 
     @Test

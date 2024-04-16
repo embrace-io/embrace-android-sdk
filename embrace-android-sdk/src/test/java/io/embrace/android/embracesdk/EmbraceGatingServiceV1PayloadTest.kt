@@ -375,7 +375,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
     @Test
     fun `test gate performance info for Session`() {
         val performanceInfo = PerformanceInfo(
-            anrIntervals = listOf(),
             networkInterfaceIntervals = listOf(),
             diskUsage = DiskUsage(100, null)
         )
@@ -409,7 +408,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
         val perfInfo = checkNotNull(sanitizedMessage.performanceInfo)
-        assertNotNull(perfInfo.anrIntervals)
         assertNotNull(perfInfo.diskUsage)
         assertNotNull(perfInfo.networkInterfaceIntervals)
         assertNotNull(perfInfo.networkRequests)

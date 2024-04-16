@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.spans.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
@@ -43,8 +41,7 @@ internal class EmbraceEventService(
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: InternalEmbraceLogger,
     workerThreadModule: WorkerThreadModule,
-    private val clock: Clock,
-    private val spanService: SpanService
+    private val clock: Clock
 ) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
     private val backgroundWorker: BackgroundWorker
 
@@ -218,9 +215,6 @@ internal class EmbraceEventService(
                 sessionProperties
             )
             if (isStartupEvent(name)) {
-                if (!late) {
-                    logStartupSpan()
-                }
                 startupEventInfo = eventHandler.buildStartupEventInfo(
                     originEventDescription.event,
                     event
@@ -265,21 +259,8 @@ internal class EmbraceEventService(
         return activeEvents[getInternalEventKey(eventName, identifier)]
     }
 
-    private fun logStartupSpan() {
-        val startupEndTimeMillis = clock.now()
-        backgroundWorker.submit {
-            spanService.recordCompletedSpan(
-                name = STARTUP_SPAN_NAME,
-                startTimeMs = startupStartTimeMs,
-                endTimeMs = startupEndTimeMillis,
-                internal = false
-            )
-        }
-    }
-
     companion object {
         const val STARTUP_EVENT_NAME = "_startup"
-        private val STARTUP_SPAN_NAME = "startup-moment".toEmbraceObjectName()
 
         internal fun getInternalEventKey(eventName: String, identifier: String?): String =
             when (identifier) {

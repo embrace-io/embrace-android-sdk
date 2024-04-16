@@ -22,6 +22,7 @@ internal class FakePersistableEmbraceSpan(
     val name: String? = null,
     val type: TelemetryType = EmbType.Performance.Default,
     val internal: Boolean = false,
+    val private: Boolean = internal,
     private val fakeClock: FakeClock = FakeClock()
 ) : PersistableEmbraceSpan {
 
@@ -116,14 +117,14 @@ internal class FakePersistableEmbraceSpan(
     companion object {
         fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
-                name = "not-started",
-                parent = parent
+                parent = parent,
+                name = "not-started"
             )
 
         fun started(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
             val span = FakePersistableEmbraceSpan(
-                name = "started",
-                parent = parent
+                parent = parent,
+                name = "started"
             )
             span.start()
             return span
@@ -131,8 +132,8 @@ internal class FakePersistableEmbraceSpan(
 
         fun stopped(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
             val span = FakePersistableEmbraceSpan(
-                name = "stopped",
-                parent = parent
+                parent = parent,
+                name = "stopped"
             )
             span.start()
             span.stop()

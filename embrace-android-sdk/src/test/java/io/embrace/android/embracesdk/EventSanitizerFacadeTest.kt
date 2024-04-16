@@ -58,7 +58,6 @@ internal class EventSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.event.customProperties)
         assertNotNull(sanitizedMessage.event.sessionProperties)
         assertNotNull(checkNotNull(sanitizedMessage.userInfo).personas)
-        assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
@@ -75,7 +74,6 @@ internal class EventSanitizerFacadeTest {
         assertNull(sanitizedMessage.event.customProperties)
         assertNull(sanitizedMessage.event.sessionProperties)
         assertNull(checkNotNull(sanitizedMessage.userInfo).personas)
-        assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 

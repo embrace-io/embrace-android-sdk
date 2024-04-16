@@ -27,8 +27,7 @@ internal class EmbraceEventMessageTest {
     private val eventMessage = EventMessage(
         event = eventComplete,
         performanceInfo = PerformanceInfo(
-            diskUsage = DiskUsage(appDiskUsage = null, deviceDiskFree = 3862863872L),
-            powerSaveModeIntervals = listOf(PowerModeInterval(startTime = 1679580212117L)),
+            diskUsage = DiskUsage(appDiskUsage = null, deviceDiskFree = 3862863872L)
         ),
         userInfo = UserInfo(personas = setOf("first_day")),
         version = 13
@@ -53,7 +52,6 @@ internal class EmbraceEventMessageTest {
 
         assertEquals(13, obj.version)
         assertEquals(3862863872L, obj.performanceInfo?.diskUsage?.deviceDiskFree)
-        assertEquals(1679580212117L, obj.performanceInfo?.powerSaveModeIntervals?.get(0)?.startTime)
         assertEquals(1, obj.userInfo?.personas?.size)
     }
 }

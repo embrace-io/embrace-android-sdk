@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -42,5 +43,5 @@ internal class FakeCustomerLogModule(
         get() = TODO("Not yet implemented")
 
     override val logOrchestrator: LogOrchestrator
-        get() = TODO("Not yet implemented")
+        get() = FakeLogOrchestrator()
 }

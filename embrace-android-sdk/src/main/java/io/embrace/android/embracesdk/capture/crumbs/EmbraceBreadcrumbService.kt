@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.Notifica
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 
 /**
  * Handles the logging of breadcrumbs.
@@ -28,30 +27,22 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
-    private val activityTracker: ActivityTracker,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
     logger: InternalEmbraceLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
-    private val viewBreadcrumbDataSource = ViewBreadcrumbDataSource(configService, clock, logger)
-    private val pushNotificationBreadcrumbDataSource =
-        PushNotificationBreadcrumbDataSource(configService, clock, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
-        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, false)
-    }
-
-    override fun forceLogView(screen: String?, timestamp: Long) {
-        viewBreadcrumbDataSource.addToViewLogsQueue(screen, timestamp, true)
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, false)
     }
 
     override fun startView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.startFragment(name) ?: false
+        return dataSourceModuleProvider()?.viewDataSource?.dataSource?.startView(name) ?: false
     }
 
     override fun endView(name: String?): Boolean {
-        return dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.endFragment(name) ?: false
+        return dataSourceModuleProvider()?.viewDataSource?.dataSource?.endView(name) ?: false
     }
 
     override fun logTap(
@@ -89,9 +80,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun getBreadcrumbs() = Breadcrumbs(
-        viewBreadcrumbs = viewBreadcrumbDataSource.getCapturedData(),
         rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
-        pushNotifications = pushNotificationBreadcrumbDataSource.getCapturedData()
     )
 
     override fun flushBreadcrumbs(): Breadcrumbs {
@@ -108,14 +97,18 @@ internal class EmbraceBreadcrumbService(
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
         type: NotificationType
-    ) = pushNotificationBreadcrumbDataSource.logPushNotification(
-        title,
-        body,
-        topic,
-        id,
-        notificationPriority,
-        type
-    )
+    ) {
+        dataSourceModuleProvider()?.pushNotificationDataSource?.dataSource?.apply {
+            logPushNotification(
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                type
+            )
+        }
+    }
 
     override fun onView(activity: Activity) {
         if (configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
@@ -130,35 +123,10 @@ internal class EmbraceBreadcrumbService(
         if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             return
         }
-        viewBreadcrumbDataSource.onViewClose()
-        dataSourceModuleProvider()?.fragmentViewDataSource?.dataSource?.onViewClose()
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {
-        viewBreadcrumbDataSource.cleanCollections()
-        pushNotificationBreadcrumbDataSource.cleanCollections()
         rnBreadcrumbDataSource.cleanCollections()
     }
-
-    override fun addFirstViewBreadcrumbForSession(startTime: Long) {
-        val screen: String? = getLastViewBreadcrumbScreenName()
-        if (screen != null) {
-            replaceFirstSessionView(screen, startTime)
-        } else {
-            val foregroundActivity = activityTracker.foregroundActivity
-            if (foregroundActivity != null) {
-                forceLogView(
-                    foregroundActivity.localClassName,
-                    startTime
-                )
-            }
-        }
-    }
-
-    override fun replaceFirstSessionView(screen: String, timestamp: Long) {
-        viewBreadcrumbDataSource.replaceFirstSessionView(screen, timestamp)
-    }
-
-    override fun getLastViewBreadcrumbScreenName(): String? =
-        viewBreadcrumbDataSource.getLastViewBreadcrumbScreenName()
 }

@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.spyk
+import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -288,6 +289,64 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall3)
 
         deliveryCacheManager.savePendingApiCalls(pendingApiCalls)
+        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+
+        assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall3, cachedCalls.pollNextPendingApiCall())
+        assertNull(cachedCalls.pollNextPendingApiCall())
+    }
+
+    @Test
+    fun `save pending api calls with sync on runs on the main thread`() {
+        val spyWorker = spyk(worker)
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
+            cacheService,
+            spyWorker,
+            logger
+        )
+
+        val pendingApiCalls = PendingApiCalls()
+        val request1 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/sessions"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id_1",
+            deviceId = "test_device_id",
+            eventId = "request_1",
+            contentEncoding = "gzip"
+        )
+        val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall1)
+
+        val request2 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/events"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id",
+            deviceId = "test_device_id",
+            eventId = "request_2",
+            contentEncoding = "gzip"
+        )
+        fakeClock.tickSecond()
+        val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall2)
+
+        val request3 = ApiRequest(
+            url = EmbraceUrl.create("http://test.url/logging"),
+            httpMethod = HttpMethod.POST,
+            appId = "test_app_id",
+            deviceId = "test_device_id",
+            eventId = "request_3",
+            contentEncoding = "gzip"
+        )
+        fakeClock.tickSecond()
+        val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
+        pendingApiCalls.add(pendingApiCall3)
+
+        deliveryCacheManager.savePendingApiCalls(pendingApiCalls, true)
+
+        // Verify that the caching was not done in a background worker
+        verify(exactly = 0) { spyWorker.submit(any(), any()) }
+
         val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
 
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())

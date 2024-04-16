@@ -214,6 +214,7 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
+                            coreModule,
                             openTelemetryModule,
                             essentialServiceModule,
                             systemServiceModule,
@@ -246,7 +247,6 @@ internal class ModuleInitBootstrapper(
                             dataCaptureServiceModule.webviewService,
                             dataCaptureServiceModule.memoryService,
                             dataCaptureServiceModule.componentCallbackService,
-                            dataCaptureServiceModule.powerSaveModeService,
                             dataCaptureServiceModule.breadcrumbService,
                             dataCaptureServiceModule.pushNotificationService,
                             dataCaptureServiceModule.thermalStatusService
@@ -397,8 +397,6 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             openTelemetryModule,
                             workerThreadModule,
-                            systemServiceModule,
-                            androidServicesModule,
                             essentialServiceModule,
                             dataCaptureServiceModule,
                             anrModule,
@@ -413,7 +411,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
-                            dataContainerModule.applicationExitInfoService
                         )
                     }
 
@@ -450,7 +447,8 @@ internal class ModuleInitBootstrapper(
                             sessionModule,
                             anrModule,
                             dataContainerModule,
-                            androidServicesModule
+                            androidServicesModule,
+                            customerLogModule
                         )
                     }
 

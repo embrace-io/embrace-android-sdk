@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -22,8 +21,7 @@ internal class OrchestratorBoundaryDelegate(
     private val ndkService: NdkService?,
     private val sessionProperties: EmbraceSessionProperties,
     private val internalErrorService: InternalErrorService,
-    private val networkConnectivityService: NetworkConnectivityService,
-    private val breadcrumbService: BreadcrumbService
+    private val networkConnectivityService: NetworkConnectivityService
 ) {
 
     /**
@@ -41,6 +39,5 @@ internal class OrchestratorBoundaryDelegate(
 
         // Record the connection type at the start of the session.
         networkConnectivityService.networkStatusOnSessionStarted(startTime)
-        breadcrumbService.addFirstViewBreadcrumbForSession(startTime)
     }
 }

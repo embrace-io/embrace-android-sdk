@@ -16,20 +16,8 @@ import com.squareup.moshi.JsonClass
 internal data class Breadcrumbs(
 
     /**
-     * List of breadcrumbs which relate to views.
-     */
-    @Json(name = "vb")
-    val viewBreadcrumbs: List<ViewBreadcrumb>? = null,
-
-    /**
      * List of RN Action breadcrumbs.
      */
     @Json(name = "rna")
     val rnActionBreadcrumbs: List<RnActionBreadcrumb>? = null,
-
-    /**
-     * List of captured push notifications
-     */
-    @Json(name = "pn")
-    val pushNotifications: List<PushNotificationBreadcrumb>? = null,
 )

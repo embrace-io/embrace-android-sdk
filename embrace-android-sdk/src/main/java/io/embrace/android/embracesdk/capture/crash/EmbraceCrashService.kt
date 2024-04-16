@@ -6,12 +6,11 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -28,7 +27,7 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
  * Intercepts uncaught Java exceptions and forwards them to the Embrace API.
  */
 internal class EmbraceCrashService(
-    configService: ConfigService,
+    private val logOrchestrator: LogOrchestrator,
     private val sessionOrchestrator: SessionOrchestrator,
     private val sessionPropertiesService: SessionPropertiesService,
     private val metadataService: MetadataService,
@@ -48,21 +47,14 @@ internal class EmbraceCrashService(
     private var mainCrashHandled = false
     private var jsException: JsException? = null
 
-    init {
-        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() && !ApkToolsConfig.IS_EXCEPTION_CAPTURE_DISABLED) {
-            registerExceptionHandler()
-        }
-    }
-
     /**
      * Handles a crash caught by the [EmbraceUncaughtExceptionHandler] by constructing a
      * JSON message containing a description of the crash, device, and context, and then sending
      * it to the Embrace API.
      *
-     * @param thread    the crashing thread
      * @param exception the exception thrown by the thread
      */
-    override fun handleCrash(thread: Thread, exception: Throwable) {
+    override fun handleCrash(exception: Throwable) {
         if (!mainCrashHandled) {
             mainCrashHandled = true
 
@@ -122,22 +114,15 @@ internal class EmbraceCrashService(
             // attempt to send the crash and if it fails, we will send it again on the next launch.
             deliveryService.sendCrash(crashEvent, true)
 
+            // Attempt to send any logs that are still waiting in the sink
+            logOrchestrator.flush(true)
+
             // End, cache and send the session
             sessionOrchestrator.endSessionWithCrash(crash.crashId)
 
             // Indicate that a crash happened so we can know that in the next launch
             crashMarker.mark()
         }
-    }
-
-    /**
-     * Registers the Embrace [java.lang.Thread.UncaughtExceptionHandler] to intercept uncaught
-     * exceptions and forward them to the Embrace API as crashes.
-     */
-    private fun registerExceptionHandler() {
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
-        Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
     }
 
     /**

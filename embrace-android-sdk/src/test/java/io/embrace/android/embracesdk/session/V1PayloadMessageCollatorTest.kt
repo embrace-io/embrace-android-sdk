@@ -16,6 +16,8 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
+import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
@@ -30,6 +32,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -39,6 +42,7 @@ internal class V1PayloadMessageCollatorTest {
     private lateinit var coreModule: FakeCoreModule
     private lateinit var collator: PayloadMessageCollator
     private lateinit var gatingService: FakeGatingService
+    private lateinit var anrService: FakeAnrService
 
     private enum class PayloadType {
         BACKGROUND_ACTIVITY,
@@ -50,6 +54,10 @@ internal class V1PayloadMessageCollatorTest {
         initModule = FakeInitModule()
         coreModule = FakeCoreModule()
         gatingService = FakeGatingService()
+        anrService = FakeAnrService().apply {
+            data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
+        }
+
         collator = V1PayloadMessageCollator(
             gatingService = gatingService,
             configService = FakeConfigService(),
@@ -60,7 +68,9 @@ internal class V1PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply { currentExceptionError = LegacyExceptionError() },
+            internalErrorService = FakeInternalErrorService().apply {
+                currentExceptionError = LegacyExceptionError()
+            },
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
@@ -69,7 +79,7 @@ internal class V1PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
+            anrOtelMapper = AnrOtelMapper(anrService),
             logger = initModule.logger
         )
     }
@@ -152,6 +162,47 @@ internal class V1PayloadMessageCollatorTest {
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
         assertEquals(1, gatingService.sessionMessagesFiltered.size)
+    }
+
+    @Test
+    fun `anr spans added to message`() {
+        // create start message
+        val startMsg = collator.buildInitialSession(
+            InitialEnvelopeParams.SessionParams(
+                true,
+                LifeEventType.STATE,
+                5
+            )
+        )
+
+        // create session
+        val normalEndPayload = collator.buildFinalSessionMessage(
+            FinalEnvelopeParams.SessionParams(
+                startMsg,
+                15000000000,
+                LifeEventType.STATE,
+                SessionSnapshotType.NORMAL_END,
+                initModule.logger,
+                true,
+                "crashId"
+            )
+        )
+        val spans = checkNotNull(normalEndPayload.spans)
+        assertEquals(2, spans.count { it.name == "emb-thread-blockage" })
+
+        // create session
+        val cacheEndPayload = collator.buildFinalSessionMessage(
+            FinalEnvelopeParams.SessionParams(
+                startMsg,
+                15000000000,
+                LifeEventType.STATE,
+                SessionSnapshotType.PERIODIC_CACHE,
+                initModule.logger,
+                false,
+                "crashId"
+            )
+        )
+        assertNull(cacheEndPayload.spans)
     }
 
     private fun SessionMessage.verifyFinalFieldsPopulated(

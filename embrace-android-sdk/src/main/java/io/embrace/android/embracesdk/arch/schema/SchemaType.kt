@@ -76,6 +76,33 @@ internal sealed class SchemaType(
     }
 
     /**
+     * Represents a push notification event.
+     * @param viewName The name of the view that the tap event occurred in.
+     * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
+     * @param coords The coordinates of the tap event.
+     */
+    internal class PushNotification(
+        title: String?,
+        type: String?,
+        body: String?,
+        id: String,
+        from: String?,
+        priority: Int
+    ) : SchemaType(
+        telemetryType = EmbType.System.PushNotification,
+        fixedObjectName = "push-notification"
+    ) {
+        override val attrs = mapOf(
+            "notification.title" to title,
+            "notification.type" to type,
+            "notification.body" to body,
+            "notification.id" to id,
+            "notification.from" to from,
+            "notification.priority" to priority.toString()
+        ).toNonNullMap()
+    }
+
+    /**
      * Represents a tap breadcrumb event.
      * @param viewName The name of the view that the tap event occurred in.
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
@@ -113,16 +140,16 @@ internal sealed class SchemaType(
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val attrs = mapOf(
-            "session-id" to message.sessionId,
-            "session-id-error" to message.sessionIdError,
-            "process-importance" to message.importance.toString(),
+            "aei_session_id" to message.sessionId,
+            "session_id_error" to message.sessionIdError,
+            "process_importance" to message.importance.toString(),
             "pss" to message.pss.toString(),
-            "rs" to message.reason.toString(),
+            "reason" to message.reason.toString(),
             "rss" to message.rss.toString(),
-            "exit-status" to message.status.toString(),
+            "exit_status" to message.status.toString(),
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
-            "trace-status" to message.traceStatus
+            "trace_status" to message.traceStatus
         ).toNonNullMap()
     }
 
@@ -148,5 +175,12 @@ internal sealed class SchemaType(
 
     internal class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
         override val attrs = attributes.snapshot()
+    }
+
+    internal object LowPower : SchemaType(
+        telemetryType = EmbType.System.LowPower,
+        fixedObjectName = "device-low-power"
+    ) {
+        override val attrs = emptyMap<String, String>()
     }
 }

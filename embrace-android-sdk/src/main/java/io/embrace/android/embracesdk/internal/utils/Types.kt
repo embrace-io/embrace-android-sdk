@@ -174,8 +174,6 @@ internal typealias DataContainerModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     anrModule: AnrModule,
@@ -191,6 +189,7 @@ internal typealias DataContainerModuleSupplier = (
 
 internal typealias DataSourceModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
@@ -232,7 +231,8 @@ internal typealias CrashModuleSupplier = (
     sessionModule: SessionModule,
     anrModule: AnrModule,
     dataContainerModule: DataContainerModule,
-    androidServicesModule: AndroidServicesModule
+    androidServicesModule: AndroidServicesModule,
+    logModule: CustomerLogModule
 ) -> CrashModule
 
 /**

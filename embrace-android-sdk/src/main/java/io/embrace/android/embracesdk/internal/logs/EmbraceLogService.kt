@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.arch.schema.SchemaType.FlutterException
 import io.embrace.android.embracesdk.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
@@ -36,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class EmbraceLogService(
     private val logWriter: LogWriter,
-    private val metadataService: MetadataService,
     private val configService: ConfigService,
     private val appFramework: AppFramework,
     private val sessionProperties: EmbraceSessionProperties,
@@ -195,7 +192,6 @@ internal class EmbraceLogService(
         )
 
         attributes.setAttribute(logRecordUid, Uuid.getEmbUuid())
-        metadataService.getAppState()?.let { attributes.setAttribute(embState, it) }
 
         return attributes
     }

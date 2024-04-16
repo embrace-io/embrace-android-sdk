@@ -9,13 +9,21 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-internal class LogOrchestrator(
+internal interface LogOrchestrator {
+
+    /**
+     * Flushes immediately any log still in the sink
+     */
+    fun flush(saveOnly: Boolean)
+}
+
+internal class LogOrchestratorImpl(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
     private val sink: LogSink,
     private val deliveryService: DeliveryService,
     private val logEnvelopeSource: LogEnvelopeSource,
-) {
+) : LogOrchestrator {
     @Volatile
     private var lastLogTime: AtomicLong = AtomicLong(0)
 
@@ -27,6 +35,21 @@ internal class LogOrchestrator(
 
     init {
         sink.callOnLogsStored(::onLogsAdded)
+    }
+
+    override fun flush(saveOnly: Boolean) {
+        scheduledCheckFuture?.cancel(false)
+        scheduledCheckFuture = null
+        firstLogInBatchTime.set(0)
+
+        val envelope = logEnvelopeSource.getEnvelope()
+        if (!envelope.data.logs.isNullOrEmpty()) {
+            if (saveOnly) {
+                deliveryService.saveLogs(envelope)
+            } else {
+                deliveryService.sendLogs(envelope)
+            }
+        }
     }
 
     private fun onLogsAdded() {
@@ -53,19 +76,8 @@ internal class LogOrchestrator(
         if (!shouldSendLogs) {
             return false
         }
-        flush()
+        flush(false)
         return true
-    }
-
-    fun flush() {
-        scheduledCheckFuture?.cancel(false)
-        scheduledCheckFuture = null
-        firstLogInBatchTime.set(0)
-
-        val envelope = logEnvelopeSource.getEnvelope()
-        if (!envelope.data.logs.isNullOrEmpty()) {
-            deliveryService.sendLogs(envelope)
-        }
     }
 
     private fun scheduleCheck() {

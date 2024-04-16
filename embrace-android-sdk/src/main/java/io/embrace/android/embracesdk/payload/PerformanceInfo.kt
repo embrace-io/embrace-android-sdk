@@ -22,12 +22,6 @@ internal data class PerformanceInfo(
     val networkInterfaceIntervals: List<Interval>? = null,
 
     /**
-     * Periods during which the application was not responding (UI thread blocked for > 1 sec).
-     */
-    @Json(name = "anr")
-    val anrIntervals: List<AnrInterval>? = null,
-
-    /**
      * Timestamps where Google ANRs were triggered.
      */
     @Json(name = "ga")
@@ -44,13 +38,6 @@ internal data class PerformanceInfo(
      */
     @Json(name = "nst")
     val nativeThreadAnrIntervals: List<NativeThreadAnrInterval>? = null,
-
-    /**
-     * Periods of save power mode
-     * lp refers "low power"
-     */
-    @Json(name = "lp")
-    val powerSaveModeIntervals: List<PowerModeInterval>? = null,
 
     /**
      * Network requests that happened during the session

@@ -57,7 +57,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
             2509L,
             200
         )
-        impl.recordAndDeduplicateNetworkRequest("testID", request)
+        impl.recordAndDeduplicateNetworkRequest("testID", request,)
         impl.recordIncompleteNetworkRequest(
             "https://google.com",
             "get",

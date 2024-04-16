@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -338,16 +339,11 @@ internal class EmbraceNetworkLoggingServiceTest {
         val startTime = 10000L
         val endTime = 20000L
 
-        networkLoggingService.logNetworkError(
+        networkLoggingService.endNetworkRequestWithError(
             randomId(),
-            url,
-            httpMethod,
-            startTime,
             endTime,
             "test",
             "test",
-            null,
-            null,
             null
         )
 
@@ -359,17 +355,12 @@ internal class EmbraceNetworkLoggingServiceTest {
     @Test
     fun `test logNetworkCall sends the network body if necessary`() {
         val url = "www.example.com"
-        networkLoggingService.logNetworkCall(
+        networkLoggingService.endNetworkRequest(
             randomId(),
-            url,
-            "GET",
             200,
-            10000L,
             20000L,
             1000L,
             1000L,
-            null,
-            null,
             NetworkCaptureData(
                 null,
                 null,
@@ -384,17 +375,12 @@ internal class EmbraceNetworkLoggingServiceTest {
 
     @Test
     fun `test logNetworkCall doesn't send the network body if null`() {
-        networkLoggingService.logNetworkCall(
+        networkLoggingService.endNetworkRequest(
             randomId(),
-            "www.example.com",
-            "GET",
             200,
-            10000L,
             20000L,
             1000L,
             1000L,
-            null,
-            null,
             null
         )
         assertTrue(networkCaptureService.urls.isEmpty())
@@ -456,37 +442,28 @@ internal class EmbraceNetworkLoggingServiceTest {
             EmbraceNetworkLoggingService(
                 configService,
                 logger,
-                networkCaptureService
+                networkCaptureService,
+                FakeSpanService()
             )
     }
 
     private fun logNetworkCall(url: String, startTime: Long = 100, endTime: Long = 200, callId: String = randomId()) {
-        networkLoggingService.logNetworkCall(
+        networkLoggingService.endNetworkRequest(
             callId,
-            url,
-            "GET",
             200,
-            startTime,
             endTime,
             1000L,
             1000L,
-            null,
-            null,
             null
         )
     }
 
     private fun logNetworkError(url: String, startTime: Long = 100, callId: String = randomId()) {
-        networkLoggingService.logNetworkError(
+        networkLoggingService.endNetworkRequestWithError(
             callId,
-            url,
-            "GET",
-            startTime,
             0,
             NullPointerException::class.java.canonicalName,
             "NPE baby",
-            null,
-            null,
             null
         )
     }

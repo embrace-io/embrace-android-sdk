@@ -1,21 +1,23 @@
 package io.embrace.android.embracesdk.network.logging
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.max
 
 /**
  * Logs network calls according to defined limits per domain.
@@ -28,7 +30,8 @@ import kotlin.math.max
 internal class EmbraceNetworkLoggingService(
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
-    private val networkCaptureService: NetworkCaptureService
+    private val networkCaptureService: NetworkCaptureService,
+    private val spanService: SpanService
 ) : NetworkLoggingService, MemoryCleanerListener {
 
     private val callsStorageLastUpdate = AtomicInteger(0)
@@ -37,6 +40,8 @@ internal class EmbraceNetworkLoggingService(
      * Network calls per domain prepared for the session.
      */
     private val sessionNetworkCalls = ConcurrentHashMap<String, NetworkCallV2>()
+
+    private val networkCallTraces = ConcurrentHashMap<String, PersistableEmbraceSpan>()
 
     private val networkCallCache = CacheableValue<List<NetworkCallV2>> { callsStorageLastUpdate.get() }
 
@@ -57,6 +62,7 @@ internal class EmbraceNetworkLoggingService(
         var cachedCallsSize: Int? = null
 
         try {
+            // TODO: Do we need this?
             synchronized(callsStorageLastUpdate) {
                 val calls = networkCallCache.value {
                     sessionNetworkCalls.values.toList()
@@ -82,87 +88,67 @@ internal class EmbraceNetworkLoggingService(
         }
     }
 
-    override fun logNetworkCall(
+    override fun endNetworkRequest(
+        callId: String,
+        statusCode: Int,
+        endTime: Long,
+        bytesSent: Long,
+        bytesReceived: Long,
+        networkCaptureData: NetworkCaptureData?
+    ) {
+        val networkCall = NetworkCallV2(
+            responseCode = statusCode,
+            bytesSent = bytesSent,
+            bytesReceived = bytesReceived,
+            endTime = endTime,
+        )
+
+        if (networkCaptureData != null) {
+            // TODO: record network request capture
+        }
+
+        endNetworkCall(callId, networkCall)
+    }
+
+    override fun endNetworkRequestWithError(
+        callId: String,
+        endTime: Long,
+        errorType: String?,
+        errorMessage: String?,
+        networkCaptureData: NetworkCaptureData?
+    ) {
+        val networkCall = NetworkCallV2(
+            endTime = endTime,
+            errorMessage = errorMessage,
+            errorType = errorType
+        )
+
+        if (networkCaptureData != null) {
+            // TODO: record network request capture
+        }
+
+        endNetworkCall(callId, networkCall)
+    }
+
+    override fun startNetworkCall(
         callId: String,
         url: String,
         httpMethod: String,
         statusCode: Int,
         startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
         traceId: String?,
-        w3cTraceparent: String?,
-        networkCaptureData: NetworkCaptureData?
+        w3cTraceparent: String?
     ) {
-        val duration = max(endTime - startTime, 0)
         val strippedUrl = stripUrl(url)
         val validTraceId = getValidTraceId(traceId)
         val networkCall = NetworkCallV2(
             url = strippedUrl,
             httpMethod = httpMethod,
             responseCode = statusCode,
-            bytesSent = bytesSent,
-            bytesReceived = bytesReceived,
             startTime = startTime,
-            endTime = endTime,
-            duration = duration,
             traceId = validTraceId,
             w3cTraceparent = w3cTraceparent
         )
-
-        if (networkCaptureData != null) {
-            networkCaptureService.logNetworkCapturedData(
-                url,
-                httpMethod,
-                statusCode,
-                startTime,
-                endTime,
-                networkCaptureData
-            )
-        }
-
-        processNetworkCall(callId, networkCall)
-    }
-
-    override fun logNetworkError(
-        callId: String,
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-        w3cTraceparent: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) {
-        val duration = max(endTime - startTime, 0)
-        val strippedUrl = stripUrl(url)
-        val validTraceId = getValidTraceId(traceId)
-        val networkCall = NetworkCallV2(
-            url = strippedUrl,
-            httpMethod = httpMethod,
-            startTime = startTime,
-            endTime = endTime,
-            duration = duration,
-            traceId = validTraceId,
-            w3cTraceparent = w3cTraceparent,
-            errorMessage = errorMessage,
-            errorType = errorType
-        )
-
-        if (networkCaptureData != null) {
-            networkCaptureService.logNetworkCapturedData(
-                url,
-                httpMethod,
-                NETWORK_ERROR_CODE,
-                startTime,
-                endTime,
-                networkCaptureData,
-                errorMessage
-            )
-        }
         processNetworkCall(callId, networkCall)
     }
 
@@ -188,7 +174,7 @@ internal class EmbraceNetworkLoggingService(
         synchronized(callsStorageLastUpdate) {
             if (isIpAddress(domain)) {
                 if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                    storeNetworkCall(callId, networkCall)
+                    startNetworkRequestTrace(callId, networkCall)
                 }
                 return
             } else if (!domainSetting.containsKey(domain)) {
@@ -199,7 +185,7 @@ internal class EmbraceNetworkLoggingService(
             if (settings == null) {
                 // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
                 if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                    storeNetworkCall(callId, networkCall)
+                    startNetworkRequestTrace(callId, networkCall)
                 }
                 return
             } else {
@@ -213,7 +199,7 @@ internal class EmbraceNetworkLoggingService(
 
                 // Exclude if the network call exceeds the limit
                 if (countPerSuffix.requestCount < limit) {
-                    storeNetworkCall(callId, networkCall)
+                    startNetworkRequestTrace(callId, networkCall)
                 }
 
                 // Track the number of calls for each domain (or configured suffix)
@@ -240,9 +226,34 @@ internal class EmbraceNetworkLoggingService(
         }
     }
 
-    private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
+    private fun startNetworkRequestTrace(callId: String, networkCall: NetworkCallV2) {
         callsStorageLastUpdate.incrementAndGet()
         sessionNetworkCalls[callId] = networkCall
+        spanService.startSpan(
+            name = "/${networkCall.httpMethod} /${networkCall.url}",
+            type = EmbType.Performance.Default,
+            internal = false
+        )?.let {
+            networkCallTraces[callId] = it
+        }
+    }
+
+    private fun endNetworkCall(callId: String, networkCall: NetworkCallV2) {
+        networkCallTraces[callId]?.apply {
+            // TODO: figure out the real failure case
+            // TODO: add attributes properly
+            val errorCode = if (networkCall.responseCode == null || networkCall.responseCode >= 400) {
+                addAttribute("error-type", networkCall.errorType ?: "")
+                addAttribute("error-message", networkCall.errorMessage ?: "")
+                ErrorCode.FAILURE
+            } else {
+                addAttribute("request-size", networkCall.bytesSent.toString())
+                addAttribute("response-size", networkCall.bytesReceived.toString())
+                null
+            }
+
+            stop(endTimeMs = networkCall.endTime, errorCode = errorCode)
+        }
     }
 
     private fun clearNetworkCalls() {

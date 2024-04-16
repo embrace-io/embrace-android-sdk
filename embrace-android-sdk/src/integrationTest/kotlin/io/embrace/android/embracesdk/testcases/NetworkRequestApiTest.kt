@@ -223,7 +223,7 @@ internal class NetworkRequestApiTest {
                         BYTES_SENT,
                         BYTES_RECEIVED,
                         200
-                    )
+                    ),
                 )
                 embrace.internalInterface.recordAndDeduplicateNetworkRequest(
                     callId,
@@ -235,7 +235,7 @@ internal class NetworkRequestApiTest {
                         BYTES_SENT,
                         BYTES_RECEIVED,
                         200
-                    )
+                    ),
                 )
             }
 

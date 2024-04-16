@@ -102,7 +102,8 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      */
     public fun recordAndDeduplicateNetworkRequest(
         callId: String,
-        embraceNetworkRequest: EmbraceNetworkRequest
+        embraceNetworkRequest: EmbraceNetworkRequest,
+        isStart: Boolean = false
     )
 
     /**

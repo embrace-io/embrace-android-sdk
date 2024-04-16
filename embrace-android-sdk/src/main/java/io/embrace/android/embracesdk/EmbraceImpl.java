@@ -717,11 +717,11 @@ final class EmbraceImpl {
 
     void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
         if (embraceInternalInterface != null && checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
-            embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
+            embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request, false);
         }
     }
 
-    void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
+    void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request, boolean isStart) {
         if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
             logNetworkRequestImpl(
                 callId,
@@ -759,29 +759,19 @@ final class EmbraceImpl {
                 errorMessage != null &&
                 !errorType.isEmpty() &&
                 !errorMessage.isEmpty()) {
-                networkLoggingService.logNetworkError(
+                networkLoggingService.endNetworkRequestWithError(
                     callId,
-                    url,
-                    httpMethod,
-                    startTime,
                     endTime != null ? endTime : 0,
                     errorType,
                     errorMessage,
-                    traceId,
-                    w3cTraceparent,
                     networkCaptureData);
             } else {
-                networkLoggingService.logNetworkCall(
+                networkLoggingService.endNetworkRequest(
                     callId,
-                    url,
-                    httpMethod,
                     responseCode != null ? responseCode : 0,
-                    startTime,
                     endTime != null ? endTime : 0,
                     bytesOut,
                     bytesIn,
-                    traceId,
-                    w3cTraceparent,
                     networkCaptureData);
             }
             onActivityReported();

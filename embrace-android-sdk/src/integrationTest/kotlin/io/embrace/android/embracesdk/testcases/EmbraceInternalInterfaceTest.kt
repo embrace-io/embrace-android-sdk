@@ -100,7 +100,7 @@ internal class EmbraceInternalInterfaceTest {
                     0L,
                     200,
                     null
-                )
+                ),
             )
 
             logComposeTap(Pair(0.0f, 0.0f), "")
@@ -204,7 +204,7 @@ internal class EmbraceInternalInterfaceTest {
                         301L,
                         200,
                         null
-                    )
+                    ),
                 )
             }
 

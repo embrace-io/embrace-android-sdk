@@ -57,7 +57,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         mockInternalInterface = mockk(relaxed = true)
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
         every {
-            mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest))
+            mockInternalInterface.recordAndDeduplicateNetworkRequest(capture(capturedCallId), capture(capturedEmbraceNetworkRequest),)
         } answers { }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         every { mockInternalInterface.getSdkCurrentTime() } answers { fakeTimeMs }
@@ -280,7 +280,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockGzipConnection(),
             wrappedIoStream = true
         )
-        verify(exactly = 0) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 0) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
     }
 
     @Test
@@ -291,7 +291,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        verify(exactly = 0) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 0) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
     }
 
     @Test
@@ -309,7 +309,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockUncompressedConnection(),
             wrappedIoStream = false
         )
-        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
         assertTrue(capturedCallId[0].isNotBlank())
     }
 
@@ -320,7 +320,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
     }
 
     @Test
@@ -328,7 +328,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         val mockConnection = createMockUncompressedConnection()
         EmbraceUrlConnectionDelegate(mockConnection, true, mockEmbrace).disconnect()
         verifyIncompleteRequestLogged(mockConnection)
-        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 1) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
         assertEquals(1, capturedCallId.size)
     }
 
@@ -611,7 +611,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     }
 
     private fun verifyTwoCallsRecordedWithSameCallId() {
-        verify(exactly = 2) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any()) }
+        verify(exactly = 2) { mockInternalInterface.recordAndDeduplicateNetworkRequest(any(), any(),) }
         assertEquals(2, capturedCallId.size)
         assertEquals(capturedCallId[0], capturedCallId[1])
     }

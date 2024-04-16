@@ -16,6 +16,7 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
+import java.util.UUID
 import kotlin.math.abs
 
 /**
@@ -48,7 +49,6 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
         if (!embrace.isStarted || embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
             return chain.proceed(originalRequest)
         }
-
         val networkSpanForwardingEnabled = embrace.internalInterface.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
@@ -60,6 +60,21 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
         // Take a snapshot of the difference in the system and SDK clocks and send the request along the chain
         val offset = sdkClockOffset()
         val networkResponse: Response = chain.proceed(request)
+
+        val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(originalRequest))
+        val call = EmbraceNetworkRequest.fromIncompleteRequest(
+            urlString,
+            HttpMethod.fromString(originalRequest.method),
+            networkResponse.sentRequestAtMillis + offset ,
+            embrace.internalInterface.getSdkCurrentTime(),
+            "",
+            "",
+            request.header(embrace.traceIdHeader),
+            if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
+            null
+        )
+        val callId = UUID.randomUUID().toString()
+        embrace.internalInterface.recordAndDeduplicateNetworkRequest(callId, call, true)
 
         // Get response and determine the size of the body
         var contentLength: Long? = getContentLengthFromHeader(networkResponse)
@@ -104,19 +119,21 @@ public class EmbraceOkHttp3NetworkInterceptor internal constructor(
             networkCaptureData = getNetworkCaptureData(request, response)
         }
 
-        embrace.recordNetworkRequest(
+        embrace.internalInterface.recordAndDeduplicateNetworkRequest(
+            callId,
             EmbraceNetworkRequest.fromCompletedRequest(
-                EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
+                "",
                 HttpMethod.fromString(request.method),
-                response.sentRequestAtMillis + offset,
+                0,
                 response.receivedResponseAtMillis + offset,
                 request.body?.contentLength() ?: 0,
                 contentLength,
                 response.code,
-                request.header(embrace.traceIdHeader),
-                if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
+                null,
+                null,
                 networkCaptureData
-            )
+            ),
+            false
         )
         return response
     }

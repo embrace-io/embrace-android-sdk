@@ -11,33 +11,35 @@ internal class FakeNetworkLoggingService : NetworkLoggingService {
     override fun getNetworkCallsSnapshot(): NetworkSessionV2 =
         data
 
-    override fun logNetworkCall(
+    override fun endNetworkRequest(
         callId: String,
-        url: String,
-        httpMethod: String,
         statusCode: Int,
-        startTime: Long,
         endTime: Long,
         bytesSent: Long,
         bytesReceived: Long,
-        traceId: String?,
-        w3cTraceparent: String?,
         networkCaptureData: NetworkCaptureData?
     ) {
         TODO("Not yet implemented")
     }
 
-    override fun logNetworkError(
+    override fun endNetworkRequestWithError(
         callId: String,
-        url: String,
-        httpMethod: String,
-        startTime: Long,
         endTime: Long,
         errorType: String?,
         errorMessage: String?,
-        traceId: String?,
-        w3cTraceparent: String?,
         networkCaptureData: NetworkCaptureData?
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun startNetworkCall(
+        callId: String,
+        url: String,
+        httpMethod: String,
+        statusCode: Int,
+        startTime: Long,
+        traceId: String?,
+        w3cTraceparent: String?
     ) {
         TODO("Not yet implemented")
     }

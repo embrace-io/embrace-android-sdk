@@ -586,7 +586,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                             traceId,
                             traceparent,
                             networkCaptureData.get()
-                        )
+                        ),
+                        false
                     );
                 } else {
                     String exceptionClass = null;
@@ -616,7 +617,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                             traceId,
                             traceparent,
                             networkCaptureData.get()
-                        )
+                        ),
+                        false
                     );
                 }
             } catch (Exception e) {

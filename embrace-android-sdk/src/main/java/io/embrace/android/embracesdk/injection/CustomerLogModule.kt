@@ -50,7 +50,8 @@ internal class CustomerLogModuleImpl(
         EmbraceNetworkLoggingService(
             essentialServiceModule.configService,
             initModule.logger,
-            networkCaptureService
+            networkCaptureService,
+            openTelemetryModule.spanService
         )
     }
 

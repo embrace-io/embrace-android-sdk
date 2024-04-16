@@ -20,29 +20,18 @@ internal interface NetworkLoggingService {
      * Logs a HTTP network call.
      *
      * @param callId             the unique ID of the call used for deduplication purposes
-     * @param url                the URL being called
-     * @param httpMethod         the HTTP method
      * @param statusCode         the status code from the response
-     * @param startTime          the start time of the request
      * @param endTime            the end time of the request
      * @param bytesSent          the number of bytes sent
      * @param bytesReceived      the number of bytes received
-     * @param traceId            optional trace ID that can be used to trace a particular request
-     * @param w3cTraceparent     optional W3C-compliant traceparent representing the network call that is being recorded
      * @param networkCaptureData the additional data captured if network body capture is enabled for the URL
      */
-    @Suppress("LongParameterList")
-    fun logNetworkCall(
+    fun endNetworkRequest(
         callId: String,
-        url: String,
-        httpMethod: String,
         statusCode: Int,
-        startTime: Long,
         endTime: Long,
         bytesSent: Long,
         bytesReceived: Long,
-        traceId: String?,
-        w3cTraceparent: String?,
         networkCaptureData: NetworkCaptureData?
     )
 
@@ -50,26 +39,26 @@ internal interface NetworkLoggingService {
      * Logs an exception which occurred when attempting to make a network call.
      *
      * @param callId             the unique ID of the call used for deduplication purposes
-     * @param url                the URL being called
-     * @param httpMethod         the HTTP method
-     * @param startTime          the start time of the request
      * @param endTime            the end time of the request
      * @param errorType          the type of error being thrown
      * @param errorMessage       the error message
-     * @param traceId            optional trace ID that can be used to trace a particular request
-     * @param w3cTraceparent     optional W3C-compliant traceparent representing the network call that is being recorded
      * @param networkCaptureData the additional data captured if network body capture is enabled for the URL
      */
-    fun logNetworkError(
+    fun endNetworkRequestWithError(
         callId: String,
-        url: String,
-        httpMethod: String,
-        startTime: Long,
         endTime: Long,
         errorType: String?,
         errorMessage: String?,
+        networkCaptureData: NetworkCaptureData?
+    )
+
+    fun startNetworkCall(
+        callId: String,
+        url: String,
+        httpMethod: String,
+        statusCode: Int,
+        startTime: Long,
         traceId: String?,
         w3cTraceparent: String?,
-        networkCaptureData: NetworkCaptureData?
     )
 }

@@ -41,3 +41,28 @@ internal val embSessionId: EmbraceAttributeKey = EmbraceAttributeKey("session_id
  * Attribute name for the application state (foreground/background) at the time the log was recorded
  */
 internal val embState = EmbraceAttributeKey("state")
+
+/**
+ * Attribute name for whether the session is a cold start
+ */
+internal val embColdStart = EmbraceAttributeKey("cold_start")
+
+/**
+ * Attribute name for session number (integer sequence ID)
+ */
+internal val embSessionNumber = EmbraceAttributeKey("session_number")
+
+/**
+ * Attribute name that indicates whether the session was ended by the SDK or an unexpected termination
+ */
+internal val embCleanExit = EmbraceAttributeKey("clean_exit")
+
+/**
+ * Attribute name that represents last known time that the session existed (nanoseconds since epoch)
+ */
+internal val embHeartbeatTimeUnixNano = EmbraceAttributeKey("heartbeat_time_unix_nano")
+
+/**
+ * Attribute name that identifies the crash report tied to the session
+ */
+internal val embCrashId = EmbraceAttributeKey("crash_id")

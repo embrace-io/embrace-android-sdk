@@ -125,6 +125,29 @@ internal class LogOrchestratorTest {
     }
 
     @Test
+    fun `flushing logs with save only enabled`() {
+        val timeStep = 1100L
+
+        repeat(4) {
+            logSink.storeLogs(listOf(FakeLogRecordData()))
+            moveTimeAhead(timeStep)
+        }
+
+        // Verify no logs have been sent
+        assertFalse(logSink.completedLogs().isEmpty())
+        verifyPayloadNotSent()
+
+        // flush the logs
+        logOrchestrator.flush(true)
+
+        // Verify the logs are sent
+        assertTrue(logSink.completedLogs().isEmpty())
+        assertEquals(0, deliveryService.lastSentLogPayloads.size)
+        assertEquals(1, deliveryService.lastSavedLogPayloads.size)
+        assertEquals(4, deliveryService.lastSavedLogPayloads[0].data.logs?.size)
+    }
+
+    @Test
     fun `simulate race condition`() {
         val fakeLog = FakeLogRecordData()
         val fakeLogs = mutableListOf<LogRecordData>()

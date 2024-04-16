@@ -113,7 +113,7 @@ internal class AeiDataSourceImplTest {
         // when getCapturedData is called
         val attrs = getAeiLogAttrs()
         assertEquals(TIMESTAMP.toString(), attrs["timestamp"])
-        assertEquals(SESSION_ID, attrs["session_id"])
+        assertEquals(SESSION_ID, attrs["aei_session_id"])
         assertEquals(IMPORTANCE.toString(), attrs["process_importance"])
         assertEquals(PSS.toString(), attrs["pss"])
         assertEquals(RSS.toString(), attrs["rss"])
@@ -218,7 +218,7 @@ internal class AeiDataSourceImplTest {
 
         // then the invalid session ID message should be added to the sessionIdError
         assertEquals("invalid session ID: $invalidSessionId", attrs["session_id_error"])
-        assertEquals(invalidSessionId, attrs["session_id"])
+        assertEquals(invalidSessionId, attrs["aei_session_id"])
     }
 
     @Test

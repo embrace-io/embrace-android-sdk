@@ -48,7 +48,7 @@ internal class AeiFeatureTest {
 
             // assert AEI fields populated
             assertEquals(log.findLogAttribute("timestamp").toLong(), 15000000000L)
-            assertEquals(log.findLogAttribute("session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
+            assertEquals(log.findLogAttribute("aei_session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
             assertEquals(log.findLogAttribute("process_importance").toInt(), 125)
             assertEquals(log.findLogAttribute("pss").toLong(), 1509123409L)
             assertEquals(log.findLogAttribute("rss").toLong(), 1123409L)

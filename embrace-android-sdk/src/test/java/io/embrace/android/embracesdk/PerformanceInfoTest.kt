@@ -48,7 +48,6 @@ internal class PerformanceInfoTest {
     private fun verifyFields(performanceInfo: PerformanceInfo) {
         assertEquals(anrIntervals, performanceInfo.anrIntervals)
         assertEquals(googleAnrTimestamps, performanceInfo.googleAnrTimestamps)
-        assertEquals(memoryWarnings, performanceInfo.memoryWarnings)
         assertEquals(nativeThreadAnrIntervals, performanceInfo.nativeThreadAnrIntervals)
         assertEquals(networkInterfaceIntervals, performanceInfo.networkInterfaceIntervals)
         assertEquals(powerSaveModeIntervals, performanceInfo.powerSaveModeIntervals)
@@ -60,7 +59,6 @@ internal class PerformanceInfoTest {
         appExitInfoData = appExitInfoData,
         diskUsage = diskUsage,
         googleAnrTimestamps = googleAnrTimestamps,
-        memoryWarnings = memoryWarnings,
         nativeThreadAnrIntervals = nativeThreadAnrIntervals,
         networkInterfaceIntervals = networkInterfaceIntervals,
         powerSaveModeIntervals = powerSaveModeIntervals,

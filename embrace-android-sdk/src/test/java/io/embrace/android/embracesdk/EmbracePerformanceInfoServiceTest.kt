@@ -41,7 +41,6 @@ internal class EmbracePerformanceInfoServiceTest {
             networkConnectivityService,
             networkLoggingService,
             powerSaveModeService,
-            memoryService,
             metadataService,
             googleAnrTimestampRepository,
             applicationExitInfoService,
@@ -80,7 +79,6 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(metadataService.getDiskUsage(), info.diskUsage)
-        assertValueCopied(memoryService.data, info.memoryWarnings)
         assertValueCopied(networkConnectivityService.data, info.networkInterfaceIntervals)
         assertValueCopied(powerSaveModeService.data, info.powerSaveModeIntervals)
     }

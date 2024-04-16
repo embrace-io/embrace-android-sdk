@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_ANR
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CONNECTIVITY
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CPU
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_LOW_MEMORY
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_NETWORK
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_MOMENTS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_ORIENTATIONS
@@ -74,7 +73,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         STARTUP_MOMENT,
         PERFORMANCE_CPU,
         PERFORMANCE_NETWORK,
-        PERFORMANCE_LOW_MEMORY,
         PERFORMANCE_ANR,
         PERFORMANCE_CONNECTIVITY,
         PERFORMANCE_CURRENT_DISK_USAGE,
@@ -378,7 +376,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
     fun `test gate performance info for Session`() {
         val performanceInfo = PerformanceInfo(
             anrIntervals = listOf(),
-            memoryWarnings = listOf(),
             networkInterfaceIntervals = listOf(),
             diskUsage = DiskUsage(100, null)
         )
@@ -404,8 +401,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
                 PERFORMANCE_CONNECTIVITY,
                 PERFORMANCE_CPU,
                 PERFORMANCE_NETWORK,
-                PERFORMANCE_CURRENT_DISK_USAGE,
-                PERFORMANCE_LOW_MEMORY
+                PERFORMANCE_CURRENT_DISK_USAGE
             ),
             null
         )
@@ -415,7 +411,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val perfInfo = checkNotNull(sanitizedMessage.performanceInfo)
         assertNotNull(perfInfo.anrIntervals)
         assertNotNull(perfInfo.diskUsage)
-        assertNotNull(perfInfo.memoryWarnings)
         assertNotNull(perfInfo.networkInterfaceIntervals)
         assertNotNull(perfInfo.networkRequests)
     }

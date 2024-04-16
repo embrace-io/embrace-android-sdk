@@ -70,8 +70,7 @@ internal class SessionSanitizerFacadeTest {
         SessionGatingKeys.PERFORMANCE_ANR,
         SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE,
         SessionGatingKeys.PERFORMANCE_CPU,
-        SessionGatingKeys.PERFORMANCE_CONNECTIVITY,
-        SessionGatingKeys.PERFORMANCE_LOW_MEMORY
+        SessionGatingKeys.PERFORMANCE_CONNECTIVITY
     )
 
     @Test
@@ -99,7 +98,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
         assertNotNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        assertNotNull(sanitizedMessage.performanceInfo?.memoryWarnings)
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)
@@ -132,7 +130,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.performanceInfo?.networkRequests)
         assertNull(sanitizedMessage.performanceInfo?.anrIntervals)
         assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
-        assertNull(sanitizedMessage.performanceInfo?.memoryWarnings)
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)

@@ -41,26 +41,4 @@ internal class EmbraceMemoryServiceTest {
     fun tearDown() {
         unmockkAll()
     }
-
-    @Test
-    fun `onMemoryWarning populates memoryTimestamps if the offset is less than 100`() {
-        with(embraceMemoryService) {
-            repeat(100) {
-                onMemoryWarning()
-                fakeClock.tick()
-            }
-            val result = this.getCapturedData()
-            assertEquals(result.size, 100)
-            onMemoryWarning()
-            assertEquals(result.size, 100)
-        }
-    }
-
-    @Test
-    fun testCleanCollections() {
-        embraceMemoryService.onMemoryWarning()
-        assertEquals(1, embraceMemoryService.getCapturedData().size)
-        embraceMemoryService.cleanCollections()
-        assertEquals(0, embraceMemoryService.getCapturedData().size)
-    }
 }

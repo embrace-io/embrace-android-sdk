@@ -40,7 +40,7 @@ internal class CompositeCrashService(
      */
     private fun registerExceptionHandler() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, baseCrashService, logger)
+        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
         Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
     }
 }

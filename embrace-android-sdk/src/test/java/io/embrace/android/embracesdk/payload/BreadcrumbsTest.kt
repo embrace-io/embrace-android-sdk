@@ -19,17 +19,6 @@ internal class BreadcrumbsTest {
                 0,
                 "output"
             )
-        ),
-        pushNotifications = listOf(
-            PushNotificationBreadcrumb(
-                "PushNotification",
-                "body",
-                "from",
-                "id",
-                null,
-                null,
-                1600000000
-            )
         )
     )
 
@@ -44,7 +33,6 @@ internal class BreadcrumbsTest {
         assertNotNull(obj)
         assertNotNull(obj.viewBreadcrumbs?.single())
         assertNotNull(obj.rnActionBreadcrumbs?.single())
-        assertNotNull(obj.pushNotifications?.single())
     }
 
     @Test

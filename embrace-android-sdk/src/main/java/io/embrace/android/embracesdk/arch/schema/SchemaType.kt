@@ -76,6 +76,33 @@ internal sealed class SchemaType(
     }
 
     /**
+     * Represents a push notification event.
+     * @param viewName The name of the view that the tap event occurred in.
+     * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
+     * @param coords The coordinates of the tap event.
+     */
+    internal class PushNotification(
+        title: String?,
+        type: String?,
+        body: String?,
+        id: String,
+        from: String?,
+        priority: Int
+    ) : SchemaType(
+        telemetryType = EmbType.System.PushNotification,
+        fixedObjectName = "push-notification"
+    ) {
+        override val attrs = mapOf(
+            "notification.title" to title,
+            "notification.type" to type,
+            "notification.body" to body,
+            "notification.id" to id,
+            "notification.from" to from,
+            "notification.priority" to priority.toString()
+        ).toNonNullMap()
+    }
+
+    /**
      * Represents a tap breadcrumb event.
      * @param viewName The name of the view that the tap event occurred in.
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.

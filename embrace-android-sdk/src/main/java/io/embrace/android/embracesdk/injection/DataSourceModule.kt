@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.FragmentViewDataSource
+import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
@@ -31,6 +32,7 @@ internal interface DataSourceModule {
     val fragmentViewDataSource: DataSourceState<FragmentViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
+    val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
 }
 
@@ -62,6 +64,19 @@ internal class DataSourceModuleImpl(
             factory = {
                 TapDataSource(
                     breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger
+                )
+            }
+        )
+    }
+
+    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                PushNotificationDataSource(
+                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    initModule.clock,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger
                 )

@@ -18,7 +18,6 @@ internal class SessionSanitizerFacadeTest {
 
     private val breadcrumbs = Breadcrumbs(
         emptyList(),
-        emptyList(),
         emptyList()
     )
 

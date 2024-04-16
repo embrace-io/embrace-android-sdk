@@ -38,7 +38,7 @@ internal class CrashModuleImpl(
         CrashFileMarker(markerFile, initModule.logger)
     }
 
-    private val crashServiceV1: CrashService by singleton {
+    private val legacyCrashService: CrashService by singleton {
         EmbraceCrashService(
             sessionModule.sessionOrchestrator,
             sessionModule.sessionPropertiesService,
@@ -57,7 +57,7 @@ internal class CrashModuleImpl(
         )
     }
 
-    private val crashServiceV2: CrashDataSource by singleton {
+    private val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
             essentialServiceModule.configService,
             sessionModule.sessionOrchestrator,
@@ -74,8 +74,8 @@ internal class CrashModuleImpl(
 
     override val crashService: CrashService by singleton {
         CompositeCrashService(
-            crashServiceV1,
-            crashServiceV2,
+            legacyCrashService,
+            crashDataSource,
             essentialServiceModule.configService,
             initModule.logger
         )

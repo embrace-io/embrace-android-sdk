@@ -57,7 +57,7 @@ internal class InternalEmbraceLogger {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
         log(
             msg,
-            Severity.ERROR,
+            Severity.WARNING,
             Throwable(msg),
             true
         )

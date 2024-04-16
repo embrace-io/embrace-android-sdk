@@ -5,12 +5,11 @@ import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.limits.OnOffLimitStrategy
+import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsExceptions
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
@@ -33,7 +32,6 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
  * Intercept and track uncaught Android Runtime exceptions
  */
 internal class CrashDataSourceImpl(
-    configService: ConfigService,
     private val logOrchestrator: LogOrchestrator,
     private val sessionOrchestrator: SessionOrchestrator,
     private val sessionProperties: EmbraceSessionProperties,
@@ -42,13 +40,13 @@ internal class CrashDataSourceImpl(
     @Suppress("UnusedPrivateMember") private val gatingService: GatingService,
     private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
-    private val logger: InternalEmbraceLogger,
     private val logWriter: LogWriter,
+    logger: InternalEmbraceLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
         destination = logWriter,
         logger = logger,
-        limitStrategy = OnOffLimitStrategy { configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() }
+        limitStrategy = NoopLimitStrategy,
     ) {
 
     private var mainCrashHandled = false

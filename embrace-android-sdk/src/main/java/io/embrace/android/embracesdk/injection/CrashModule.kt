@@ -61,7 +61,6 @@ internal class CrashModuleImpl(
 
     private val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
-            essentialServiceModule.configService,
             logModule.logOrchestrator,
             sessionModule.sessionOrchestrator,
             essentialServiceModule.sessionProperties,
@@ -70,8 +69,8 @@ internal class CrashModuleImpl(
             essentialServiceModule.gatingService,
             androidServicesModule.preferencesService,
             crashMarker,
-            initModule.logger,
             essentialServiceModule.logWriter,
+            initModule.logger,
         )
     }
 

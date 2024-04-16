@@ -25,7 +25,7 @@ internal class FakeLogService : LogService {
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        exceptions.add(message)
+        exceptions.add("$exceptionName $exceptionMessage $stackTrace")
     }
 
     override fun logFlutterException(

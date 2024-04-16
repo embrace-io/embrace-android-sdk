@@ -20,13 +20,16 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
     private static final String PROTOCOL_HTTPS = "https";
     private static final String CLASS_HTTP_OKHTTP_STREAM_HANDLER = "com.android.okhttp.HttpHandler";
     private static final String CLASS_HTTPS_OKHTTP_STREAM_HANDLER = "com.android.okhttp.HttpsHandler";
-    private static final Map<String, URLStreamHandler> handlers = new HashMap<>();
+    private static final Map<String, URLStreamHandler> embraceHandlers = new HashMap<>();
+    private static final Map<String, URLStreamHandler> defaultHandlers = new HashMap<>();
 
     static {
         try {
             // Pre-allocate and cache these stream handlers up front so no pre-fetch checks are required later.
-            handlers.put(PROTOCOL_HTTP, new EmbraceHttpUrlStreamHandler(newUrlStreamHandler(CLASS_HTTP_OKHTTP_STREAM_HANDLER)));
-            handlers.put(PROTOCOL_HTTPS, new EmbraceHttpsUrlStreamHandler(newUrlStreamHandler(CLASS_HTTPS_OKHTTP_STREAM_HANDLER)));
+            defaultHandlers.put(PROTOCOL_HTTP, newUrlStreamHandler(CLASS_HTTP_OKHTTP_STREAM_HANDLER));
+            defaultHandlers.put(PROTOCOL_HTTPS, newUrlStreamHandler(CLASS_HTTPS_OKHTTP_STREAM_HANDLER));
+            embraceHandlers.put(PROTOCOL_HTTP, new EmbraceHttpUrlStreamHandler(defaultHandlers.get(PROTOCOL_HTTP)));
+            embraceHandlers.put(PROTOCOL_HTTPS, new EmbraceHttpsUrlStreamHandler(defaultHandlers.get(PROTOCOL_HTTPS)));
         } catch (Exception ex) {
             logError("Failed initialize EmbraceUrlStreamHandlerFactory", ex);
         }
@@ -52,6 +55,10 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
 
     @Override
     public URLStreamHandler createURLStreamHandler(String protocol) {
-        return protocol != null ? handlers.get(protocol) : null;
+        if (Embrace.getInstance().isStarted()) {
+            return protocol != null ? embraceHandlers.get(protocol) : null;
+        } else {
+            return protocol != null ? defaultHandlers.get(protocol) : null;
+        }
     }
 }

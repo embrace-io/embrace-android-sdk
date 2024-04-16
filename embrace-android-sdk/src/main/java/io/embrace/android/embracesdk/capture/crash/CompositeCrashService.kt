@@ -26,8 +26,8 @@ internal class CompositeCrashService(
         }
     }
 
-    override fun handleCrash(thread: Thread, exception: Throwable) {
-        baseCrashService.handleCrash(thread, exception)
+    override fun handleCrash(exception: Throwable) {
+        baseCrashService.handleCrash(exception)
     }
 
     override fun logUnhandledJsException(exception: JsException) {

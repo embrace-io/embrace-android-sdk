@@ -59,10 +59,9 @@ internal class CrashDataSourceImpl(
      * JSON message containing a description of the crash, device, and context, and then sending
      * it to the Embrace API.
      *
-     * @param thread    the crashing thread
      * @param exception the exception thrown by the thread
      */
-    override fun handleCrash(thread: Thread, exception: Throwable) {
+    override fun handleCrash(exception: Throwable) {
         if (!mainCrashHandled) {
             mainCrashHandled = true
 

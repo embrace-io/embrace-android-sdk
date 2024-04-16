@@ -49,7 +49,7 @@ internal class CompositeCrashServiceTest {
     fun `test handleCrash is called on crashServiceV1 if OTelConfig is false`() {
         setupForHandleCrash(true)
         val exception = RuntimeException("Test exception")
-        compositeCrashService.handleCrash(Thread.currentThread(), exception)
+        compositeCrashService.handleCrash(exception)
         assertEquals(null, crashServiceV2.exception)
         assertEquals(exception, crashServiceV1.exception)
     }
@@ -59,7 +59,7 @@ internal class CompositeCrashServiceTest {
         oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         setupForHandleCrash(true)
         val exception = RuntimeException("Test exception")
-        compositeCrashService.handleCrash(Thread.currentThread(), exception)
+        compositeCrashService.handleCrash(exception)
         assertEquals(exception, crashServiceV2.exception)
         assertEquals(null, crashServiceV1.exception)
     }

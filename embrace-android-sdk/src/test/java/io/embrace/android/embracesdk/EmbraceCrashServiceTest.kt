@@ -107,7 +107,7 @@ internal class EmbraceCrashServiceTest {
         crash = CrashFactory.ofThrowable(logger, testException, null, 1)
         setupForHandleCrash()
 
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)
@@ -118,7 +118,7 @@ internal class EmbraceCrashServiceTest {
     @Test
     fun `test ApiClient and SessionService are called when handleCrash is called with JSException`() {
         setupForHandleCrash()
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         val lastSentCrash = deliveryService.lastSentCrash
@@ -129,7 +129,7 @@ internal class EmbraceCrashServiceTest {
          * Verify mainCrashHandled is true after the first execution
          * by testing that a second execution of handleCrash wont run anything
          */
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertNotNull(deliveryService.lastSentCrash)
         assertSame(lastSentCrash, deliveryService.lastSentCrash)
@@ -141,7 +141,7 @@ internal class EmbraceCrashServiceTest {
         setupForHandleCrash()
         ndkService.lastUnityCrashId = "Unity123"
 
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         verify { CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123") }
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
@@ -154,7 +154,7 @@ internal class EmbraceCrashServiceTest {
         crash = CrashFactory.ofThrowable(logger, testException, localJsException, 1, "Unity123")
         setupForHandleCrash()
 
-        embraceCrashService.handleCrash(Thread.currentThread(), testException)
+        embraceCrashService.handleCrash(testException)
 
         verify(exactly = 1) { crashMarker.mark() }
     }

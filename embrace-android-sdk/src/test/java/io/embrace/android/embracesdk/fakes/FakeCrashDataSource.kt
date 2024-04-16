@@ -27,7 +27,7 @@ internal class FakeCrashDataSource : CrashDataSource {
         TODO("Not yet implemented")
     }
 
-    override fun handleCrash(thread: Thread, exception: Throwable) {
+    override fun handleCrash(exception: Throwable) {
         this.exception = exception
     }
 

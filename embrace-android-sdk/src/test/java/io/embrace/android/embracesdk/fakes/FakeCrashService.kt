@@ -7,7 +7,7 @@ internal class FakeCrashService : CrashService {
     internal var exception: Throwable? = null
     internal var jsException: JsException? = null
 
-    override fun handleCrash(thread: Thread, exception: Throwable) {
+    override fun handleCrash(exception: Throwable) {
         this.exception = exception
     }
 

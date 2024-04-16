@@ -8,9 +8,6 @@ import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
-import io.embrace.android.embracesdk.capture.powersave.EmbracePowerSaveModeService
-import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
-import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
@@ -43,11 +40,6 @@ internal interface DataCaptureServiceModule {
      * Captures memory events
      */
     val memoryService: MemoryService
-
-    /**
-     * Captures intervals where power save mode was enabled
-     */
-    val powerSaveModeService: PowerSaveModeService
 
     /**
      * Captures information from webviews
@@ -109,22 +101,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val componentCallbackService: ComponentCallbackService by singleton {
         Systrace.traceSynchronous("component-callback-service-init") {
             ComponentCallbackService(coreModule.application, memoryService, initModule.logger)
-        }
-    }
-
-    override val powerSaveModeService: PowerSaveModeService by singleton {
-        Systrace.traceSynchronous("power-service-init") {
-            if (configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled()) {
-                EmbracePowerSaveModeService(
-                    coreModule.context,
-                    backgroundWorker,
-                    initModule.clock,
-                    initModule.logger,
-                    powerManagerProvider,
-                )
-            } else {
-                NoOpPowerSaveModeService()
-            }
         }
     }
 

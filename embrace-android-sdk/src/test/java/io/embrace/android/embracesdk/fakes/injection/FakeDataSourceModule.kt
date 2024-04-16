@@ -12,5 +12,6 @@ internal fun fakeDataSourceModule(): DataSourceModule {
         systemServiceModule = FakeSystemServiceModule(),
         androidServicesModule = FakeAndroidServicesModule(),
         workerThreadModule = FakeWorkerThreadModule(),
+        coreModule = FakeCoreModule()
     )
 }

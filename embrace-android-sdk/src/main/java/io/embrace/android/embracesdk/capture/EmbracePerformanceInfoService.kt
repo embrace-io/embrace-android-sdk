@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
-import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.session.captureDataSafely
 internal class EmbracePerformanceInfoService(
     private val networkConnectivityService: NetworkConnectivityService,
     private val networkLoggingService: NetworkLoggingService,
-    private val powerSaveModeService: PowerSaveModeService,
     private val memoryService: MemoryService,
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
@@ -46,9 +44,6 @@ internal class EmbracePerformanceInfoService(
                     sessionStart,
                     sessionLastKnownTime
                 ).toList()
-            },
-            powerSaveModeIntervals = captureDataSafely(logger) {
-                powerSaveModeService.getCapturedData()?.toList()
             },
             nativeThreadAnrIntervals = captureDataSafely(logger) {
                 nativeThreadSamplerService?.getCapturedIntervals(
@@ -81,10 +76,7 @@ internal class EmbracePerformanceInfoService(
             memoryWarnings = captureDataSafely(logger) { memoryService.getCapturedData()?.toList() },
             networkInterfaceIntervals = captureDataSafely(logger) {
                 networkConnectivityService.getCapturedData()?.toList()
-            },
-            powerSaveModeIntervals = captureDataSafely(logger) {
-                powerSaveModeService.getCapturedData()?.toList()
-            },
+            }
         )
     }
 }

@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
-import io.embrace.android.embracesdk.capture.powersave.NoOpPowerSaveModeService
-import io.embrace.android.embracesdk.capture.powersave.PowerSaveModeService
 import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupTracker
@@ -23,7 +21,6 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 internal class FakeDataCaptureServiceModule(
     override val thermalStatusService: ThermalStatusService = NoOpThermalStatusService(),
-    override val powerSaveModeService: PowerSaveModeService = NoOpPowerSaveModeService(),
     override val memoryService: MemoryService = FakeMemoryService(),
     override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),
     override val webviewService: WebViewService =

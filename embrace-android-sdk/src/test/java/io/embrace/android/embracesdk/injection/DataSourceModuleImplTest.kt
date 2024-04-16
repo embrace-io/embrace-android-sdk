@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
@@ -18,6 +19,7 @@ internal class DataSourceModuleImplTest {
         val fakeInitModule = FakeInitModule()
         val module = DataSourceModuleImpl(
             fakeInitModule,
+            FakeCoreModule(),
             FakeOpenTelemetryModule(),
             FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
@@ -31,6 +33,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.webViewUrlDataSource)
         assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.sessionPropertiesDataSource)
-        assertEquals(6, module.getDataSources().size)
+        assertNotNull(module.lowPowerDataSource)
+        assertEquals(7, module.getDataSources().size)
     }
 }

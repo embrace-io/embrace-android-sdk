@@ -191,6 +191,7 @@ internal typealias DataContainerModuleSupplier = (
 
 internal typealias DataSourceModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,

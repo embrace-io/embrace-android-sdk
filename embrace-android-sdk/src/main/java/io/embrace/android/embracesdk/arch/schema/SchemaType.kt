@@ -172,4 +172,11 @@ internal sealed class SchemaType(
     internal class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
         override val attrs = attributes.snapshot()
     }
+
+    internal object LowPower : SchemaType(
+        telemetryType = EmbType.System.LowPower,
+        fixedObjectName = "device-low-power"
+    ) {
+        override val attrs = emptyMap<String, String>()
+    }
 }

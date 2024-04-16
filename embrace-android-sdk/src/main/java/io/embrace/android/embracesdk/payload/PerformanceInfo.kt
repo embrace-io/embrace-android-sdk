@@ -46,13 +46,6 @@ internal data class PerformanceInfo(
     val nativeThreadAnrIntervals: List<NativeThreadAnrInterval>? = null,
 
     /**
-     * Periods of save power mode
-     * lp refers "low power"
-     */
-    @Json(name = "lp")
-    val powerSaveModeIntervals: List<PowerModeInterval>? = null,
-
-    /**
      * Network requests that happened during the session
      */
     @Json(name = "nr")

@@ -111,8 +111,8 @@ internal class CompositeCrashServiceTest {
             )
         )
         compositeCrashService = CompositeCrashService(
-            crashServiceV1,
-            crashServiceV2,
+            { crashServiceV1 },
+            { crashServiceV2 },
             configService,
             logger
         )

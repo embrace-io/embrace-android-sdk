@@ -77,8 +77,8 @@ internal class CrashModuleImpl(
 
     override val crashService: CrashService by singleton {
         CompositeCrashService(
-            legacyCrashService,
-            crashDataSource,
+            { legacyCrashService },
+            { crashDataSource },
             essentialServiceModule.configService,
             initModule.logger
         )

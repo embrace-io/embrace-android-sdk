@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -33,6 +34,7 @@ import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
  */
 internal class CrashDataSourceImpl(
     configService: ConfigService,
+    private val logOrchestrator: LogOrchestrator,
     private val sessionOrchestrator: SessionOrchestrator,
     private val sessionProperties: EmbraceSessionProperties,
     private val anrService: AnrService?,
@@ -98,6 +100,9 @@ internal class CrashDataSourceImpl(
             logWriter.addLog(logEventData)
 
             // TODO: apply gating service logic
+
+            // Attempt to send any logs that are still waiting in the sink
+            logOrchestrator.flush(true)
 
             // Attempt to end and send the session
             sessionOrchestrator.endSessionWithCrash(crashId)

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -42,6 +43,7 @@ internal interface DataSourceModule {
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>
+    val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -129,6 +131,18 @@ internal class DataSourceModuleImpl(
                     logger = initModule.logger
                 )
             }
+        )
+    }
+
+    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                MemoryWarningDataSource(
+                    sessionSpanWriter = otelModule.currentSessionSpan,
+                    logger = initModule.logger,
+                )
+            },
+            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() }
         )
     }
 

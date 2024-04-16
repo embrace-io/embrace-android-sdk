@@ -35,6 +35,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.sessionPropertiesDataSource)
         assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.lowPowerDataSource)
-        assertEquals(8, module.getDataSources().size)
+        assertNotNull(module.memoryWarningDataSource)
+        assertEquals(9, module.getDataSources().size)
     }
 }

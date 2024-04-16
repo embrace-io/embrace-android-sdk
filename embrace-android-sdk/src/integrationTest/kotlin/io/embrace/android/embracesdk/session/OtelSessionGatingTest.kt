@@ -7,7 +7,10 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
+import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.findSessionSpan
@@ -107,6 +110,13 @@ internal class OtelSessionGatingTest {
         assertEquals(!gated, payload.hasSpanOfType(EmbType.Ux.View))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.WebView))
+
+        val anrSpans = payload.spans?.filter { it.name == "emb-thread-blockage" }
+        val expectedCount = when (gated) {
+            true -> 0
+            false -> 2
+        }
+        assertEquals(expectedCount, anrSpans?.size)
     }
 
     private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
@@ -116,6 +126,11 @@ internal class OtelSessionGatingTest {
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
             harness.logWebView("https://example.com")
+
+            // simulate ANR intervals
+            val anrService = bootstrapper.anrModule.anrService as FakeAnrService
+            anrService.data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
+
             harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }

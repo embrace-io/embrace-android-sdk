@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeApplicationExitInfoService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -24,7 +23,6 @@ private const val SESSION_END_TIME_MS = 1609234092345
 internal class EmbracePerformanceInfoServiceTest {
 
     private lateinit var service: EmbracePerformanceInfoService
-    private val anrService = FakeAnrService()
     private val networkConnectivityService = FakeNetworkConnectivityService()
     private val networkLoggingService = FakeNetworkLoggingService()
     private val powerSaveModeService = FakePowerSaveModeService()
@@ -37,7 +35,6 @@ internal class EmbracePerformanceInfoServiceTest {
     @Before
     fun setUp() {
         service = EmbracePerformanceInfoService(
-            anrService,
             networkConnectivityService,
             networkLoggingService,
             powerSaveModeService,
@@ -73,8 +70,6 @@ internal class EmbracePerformanceInfoServiceTest {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, true, null)
         assertBasicPerfInfoIncluded(info)
         assertBasicSessionPerfInfoIncluded(info)
-
-        assertValueCopied(anrService.data, info.anrIntervals)
         assertValueCopied(applicationExitInfoService.data, info.appExitInfoData)
     }
 
@@ -87,7 +82,6 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private fun assertBasicSessionPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(NetworkRequests(networkLoggingService.data), info.networkRequests)
-        assertValueCopied(anrService.data, info.anrIntervals)
         assertValueCopied(
             googleAnrTimestampRepository.getGoogleAnrTimestamps(0, SESSION_END_TIME_MS),
             info.googleAnrTimestamps

@@ -22,6 +22,7 @@ internal class DataContainerModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    @Suppress("UNUSED_PARAMETER")
     dataCaptureServiceModule: DataCaptureServiceModule,
     anrModule: AnrModule,
     customerLogModule: CustomerLogModule,

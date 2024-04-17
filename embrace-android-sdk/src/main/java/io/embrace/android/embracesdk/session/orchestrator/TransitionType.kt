@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 
 internal enum class TransitionType {
@@ -9,5 +10,17 @@ internal enum class TransitionType {
         ON_FOREGROUND -> ProcessState.FOREGROUND
         ON_BACKGROUND -> ProcessState.BACKGROUND
         else -> currentState
+    }
+
+    fun lifeEventType(currentState: ProcessState): Session.LifeEventType = when (this) {
+        END_MANUAL -> when (currentState) {
+            ProcessState.FOREGROUND -> Session.LifeEventType.MANUAL
+            else -> Session.LifeEventType.BKGND_MANUAL
+        }
+
+        else -> when (currentState) {
+            ProcessState.FOREGROUND -> Session.LifeEventType.STATE
+            else -> Session.LifeEventType.BKGND_STATE
+        }
     }
 }

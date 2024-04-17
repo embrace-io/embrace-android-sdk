@@ -5,7 +5,8 @@
     "sn": 1,
     "ty": "en",
     "as": "background",
-    "cs": false
+    "cs": false,
+    "sm": "s"
   },
   "u": {
     "id": "fake-user-id"

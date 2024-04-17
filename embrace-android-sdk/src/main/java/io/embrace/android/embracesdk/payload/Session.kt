@@ -146,13 +146,7 @@ internal data class Session @JvmOverloads internal constructor(
         BKGND_STATE,
 
         @Json(name = "bm")
-        BKGND_MANUAL,
-
-        @Json(name = "bt")
-        BKGND_TIME,
-
-        @Json(name = "be")
-        BKGND_SIZE
+        BKGND_MANUAL
     }
 
     companion object {

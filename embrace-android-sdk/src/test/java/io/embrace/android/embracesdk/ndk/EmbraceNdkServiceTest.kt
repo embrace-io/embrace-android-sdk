@@ -354,22 +354,6 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test testCrash where isCpp is true`() {
-        initializeService()
-        embraceNdkService.testCrash(true)
-        verify { delegate._testNativeCrash_CPP() }
-        verify(exactly = 0) { delegate._testNativeCrash_C() }
-    }
-
-    @Test
-    fun `test testCrash where isCpp is false`() {
-        initializeService()
-        embraceNdkService.testCrash(false)
-        verify { delegate._testNativeCrash_C() }
-        verify(exactly = 0) { delegate._testNativeCrash_CPP() }
-    }
-
-    @Test
     fun `test onUserInfoUpdate where _updateMetaData was not executed and isInstalled false`() {
         enableNdk(false)
         initializeService()

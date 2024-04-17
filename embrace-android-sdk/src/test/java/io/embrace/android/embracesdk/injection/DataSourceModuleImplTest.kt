@@ -24,7 +24,7 @@ internal class DataSourceModuleImplTest {
             FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
-            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION)
+            FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION),
         )
         assertNotNull(module.getDataSources())
         assertNotNull(module.breadcrumbDataSource)

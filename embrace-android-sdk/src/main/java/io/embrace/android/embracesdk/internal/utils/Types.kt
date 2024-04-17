@@ -233,7 +233,7 @@ internal typealias CrashModuleSupplier = (
     anrModule: AnrModule,
     dataContainerModule: DataContainerModule,
     androidServicesModule: AndroidServicesModule,
-    logModule: CustomerLogModule
+    logModule: CustomerLogModule,
 ) -> CrashModule
 
 /**

@@ -219,7 +219,7 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             systemServiceModule,
                             androidServicesModule,
-                            workerThreadModule
+                            workerThreadModule,
                         )
                     }
 
@@ -449,7 +449,7 @@ internal class ModuleInitBootstrapper(
                             anrModule,
                             dataContainerModule,
                             androidServicesModule,
-                            customerLogModule
+                            customerLogModule,
                         )
                     }
 

@@ -28,7 +28,7 @@ internal class CrashModuleImplTest {
             FakeAnrModule(),
             FakeDataContainerModule(),
             FakeAndroidServicesModule(),
-            FakeCustomerLogModule()
+            FakeCustomerLogModule(),
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashService)

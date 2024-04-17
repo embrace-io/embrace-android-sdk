@@ -46,7 +46,7 @@ internal class SessionModuleImplTest {
             essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
-            workerThreadModule
+            workerThreadModule,
         )
         val module = SessionModuleImpl(
             initModule,
@@ -84,7 +84,7 @@ internal class SessionModuleImplTest {
             essentialServiceModule,
             systemServiceModule,
             androidServicesModule,
-            workerThreadModule
+            workerThreadModule,
         )
 
         val module = SessionModuleImpl(

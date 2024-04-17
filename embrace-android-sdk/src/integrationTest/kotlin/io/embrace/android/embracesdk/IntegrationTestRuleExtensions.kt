@@ -1,16 +1,18 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -26,6 +28,19 @@ internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? =
         null -> logs
         else -> returnIfConditionMet({ logs }) {
             logs.size == expectedSize
+        }
+    }
+}
+
+/**
+ * Wait for there to at least be [minSize] number of log envelopes to be sent and return all the ones sent. Times out at 1 second.
+ */
+internal fun IntegrationTestRule.Harness.getSentLogPayloads(minSize: Int? = null): List<Envelope<LogPayload>> {
+    val logs = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
+    return when (minSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs.size >= minSize
         }
     }
 }

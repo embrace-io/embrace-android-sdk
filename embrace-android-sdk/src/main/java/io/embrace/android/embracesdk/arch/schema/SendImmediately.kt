@@ -1,5 +1,4 @@
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
-import io.embrace.android.embracesdk.arch.schema.FixedAttribute
+package io.embrace.android.embracesdk.arch.schema
 
 internal object SendImmediately : FixedAttribute {
     override val key = EmbraceAttributeKey(id = "send_immediately")

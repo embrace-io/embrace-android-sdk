@@ -143,6 +143,7 @@ internal class SessionModuleImpl(
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
+            openTelemetryModule.currentSessionSpan,
             initModule.logger
         )
     }

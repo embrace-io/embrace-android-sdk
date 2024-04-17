@@ -14,25 +14,31 @@ internal sealed class SchemaType(
     val telemetryType: TelemetryType,
     val fixedObjectName: String = "",
 ) {
-    protected abstract val attrs: Map<String, String>
+    protected abstract val schemaAttributes: Map<String, String>
+
+    private val commonAttributes: Map<String, String> = mutableMapOf(telemetryType.toEmbraceKeyValuePair()).apply {
+        if (telemetryType.sendImmediately) {
+            plusAssign(SendImmediately.toEmbraceKeyValuePair())
+        }
+    }
 
     /**
      * The attributes defined for this schema that should be used to populate telemetry objects
      */
-    fun attributes(): Map<String, String> = attrs.plus(telemetryType.toEmbraceKeyValuePair())
+    fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
 
     internal class Breadcrumb(message: String) : SchemaType(
         telemetryType = EmbType.System.Breadcrumb,
         fixedObjectName = "breadcrumb"
     ) {
-        override val attrs = mapOf("message" to message)
+        override val schemaAttributes = mapOf("message" to message)
     }
 
     internal class View(viewName: String) : SchemaType(
         telemetryType = EmbType.Ux.View,
         fixedObjectName = "screen-view"
     ) {
-        override val attrs = mapOf("view.name" to viewName)
+        override val schemaAttributes = mapOf("view.name" to viewName)
     }
 
     /**
@@ -46,7 +52,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.ThreadBlockage,
         fixedObjectName = "thread_blockage"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "thread_priority" to threadPriority.toString(),
             "last_known_time_unix_nano" to lastKnownTimeMs.millisToNanos().toString(),
             "interval_code" to intervalCode.toString()
@@ -66,7 +72,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.ThreadBlockageSample,
         fixedObjectName = "thread_blockage_sample"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "sample_overhead" to sampleOverheadMs.millisToNanos().toString(),
             "frame_count" to frameCount.toString(),
             "stacktrace" to stacktrace,
@@ -92,7 +98,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.PushNotification,
         fixedObjectName = "push-notification"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "notification.title" to title,
             "notification.type" to type,
             "notification.body" to body,
@@ -116,7 +122,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.NativeThreadBlockage,
         fixedObjectName = "native_thread_blockage"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "thread_id" to threadId.toString(),
             "thread_name" to threadName,
             "thread_priority" to threadPriority.toString(),
@@ -137,7 +143,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.NativeThreadBlockageSample,
         fixedObjectName = "native_thread_blockage_sample"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "result" to result.toString(),
             "sample_overhead_ms" to sampleOverheadMs.toString(),
             "stacktrace" to stacktrace
@@ -158,7 +164,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Ux.Tap,
         fixedObjectName = "ui-tap"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "view.name" to viewName,
             "tap.type" to type,
             "tap.coords" to coords
@@ -171,17 +177,17 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Ux.WebView,
         fixedObjectName = "web-view"
     ) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "webview.url" to url
         ).toNonNullMap()
     }
 
     internal class MemoryWarning : SchemaType(EmbType.Performance.MemoryWarning) {
-        override val attrs = emptyMap<String, String>()
+        override val schemaAttributes = emptyMap<String, String>()
     }
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
-        override val attrs = mapOf(
+        override val schemaAttributes = mapOf(
             "aei_session_id" to message.sessionId,
             "session_id_error" to message.sessionIdError,
             "process_importance" to message.importance.toString(),
@@ -196,35 +202,35 @@ internal sealed class SchemaType(
     }
 
     internal class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal class Exception(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.Exception) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal class FlutterException(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.FlutterException) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
-        override val attrs = attributes.snapshot()
+        override val schemaAttributes = attributes.snapshot()
     }
 
     internal object LowPower : SchemaType(
         telemetryType = EmbType.System.LowPower,
         fixedObjectName = "device-low-power"
     ) {
-        override val attrs = emptyMap<String, String>()
+        override val schemaAttributes = emptyMap<String, String>()
     }
 }

@@ -21,6 +21,7 @@ internal interface CrashModule {
 
 internal class CrashModuleImpl(
     initModule: InitModule,
+    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
@@ -70,6 +71,7 @@ internal class CrashModuleImpl(
             crashMarker,
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
+            coreModule.jsonSerializer,
             initModule.logger,
         )
     }

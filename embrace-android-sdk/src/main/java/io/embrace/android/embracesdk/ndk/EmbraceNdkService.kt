@@ -290,7 +290,11 @@ internal class EmbraceNdkService(
      *
      * @return Crash data, if a native crash file was found
      */
-    override fun checkForNativeCrash(): NativeCrashData? {
+    override fun getAndSendNativeCrash(): NativeCrashData? {
+        return getNativeCrash()?.apply { sendNativeCrash(this) }
+    }
+
+    override fun getNativeCrash(): NativeCrashData? {
         var nativeCrash: NativeCrashData? = null
         val matchingFiles = repository.sortNativeCrashes(false)
         for (crashFile in matchingFiles) {
@@ -322,7 +326,6 @@ internal class EmbraceNdkService(
                     } else {
                         nativeCrash.symbols = symbols.toMap()
                     }
-                    sendNativeCrash(nativeCrash)
                 }
                 repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
             } catch (ex: Exception) {

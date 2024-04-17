@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -42,7 +43,10 @@ internal open class FakeDeliveryService : DeliveryService {
         lastSnapshotType = snapshotType
     }
 
-    override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
+    override fun sendCachedSessions(
+        nativeCrashServiceProvider: Provider<NativeCrashService?>,
+        sessionIdTracker: SessionIdTracker
+    ) {
         lastSentCachedSession = sessionIdTracker.getActiveSessionId()
     }
 

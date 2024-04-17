@@ -27,7 +27,9 @@ internal class FakeNdkService : NdkService {
         return lastUnityCrashId
     }
 
-    override fun checkForNativeCrash(): NativeCrashData? {
+    override fun getNativeCrash(): NativeCrashData? = null
+
+    override fun getAndSendNativeCrash(): NativeCrashData? {
         checkForNativeCrashCount++
         return null
     }

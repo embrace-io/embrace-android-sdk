@@ -102,14 +102,6 @@ internal class EmbraceNdkService(
         }
     }
 
-    override fun testCrash(isCpp: Boolean) {
-        if (isCpp) {
-            testCrashCpp()
-        } else {
-            testCrashC()
-        }
-    }
-
     override fun updateSessionId(newSessionId: String) {
         if (isInstalled) {
             delegate._updateSessionId(newSessionId)
@@ -564,14 +556,6 @@ internal class EmbraceNdkService(
     @Suppress("UnusedPrivateMember")
     private fun uninstallSignals() {
         delegate._uninstallSignals()
-    }
-
-    private fun testCrashC() {
-        delegate._testNativeCrash_C()
-    }
-
-    private fun testCrashCpp() {
-        delegate._testNativeCrash_CPP()
     }
 
     companion object {

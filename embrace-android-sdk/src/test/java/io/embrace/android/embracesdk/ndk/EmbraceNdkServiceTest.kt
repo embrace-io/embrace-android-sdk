@@ -28,7 +28,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -238,7 +238,7 @@ internal class EmbraceNdkServiceTest {
 
         val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =
-            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
         verify(exactly = 1) {
             delegate._installSignalHandlers(
                 reportBasePath,
@@ -285,7 +285,7 @@ internal class EmbraceNdkServiceTest {
 
         val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =
-            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarker.CRASH_MARKER_FILE_NAME
+            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
             metadataService.getLightweightAppInfo()

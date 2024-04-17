@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.capture.crash.CrashDataSourceImpl
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandler
@@ -21,6 +22,7 @@ internal interface CrashModule {
 
 internal class CrashModuleImpl(
     initModule: InitModule,
+    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
@@ -34,9 +36,9 @@ internal class CrashModuleImpl(
 
     private val crashMarker: CrashFileMarker by singleton {
         val markerFile = lazy {
-            storageModule.storageService.getFileForWrite(CrashFileMarker.CRASH_MARKER_FILE_NAME)
+            storageModule.storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
         }
-        CrashFileMarker(markerFile, initModule.logger)
+        CrashFileMarkerImpl(markerFile, initModule.logger)
     }
 
     private val legacyCrashService: CrashService by singleton {
@@ -70,6 +72,7 @@ internal class CrashModuleImpl(
             crashMarker,
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
+            coreModule.jsonSerializer,
             initModule.logger,
         )
     }

@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.JsException
@@ -52,7 +52,7 @@ internal class EmbraceCrashServiceTest {
 
     private lateinit var crash: Crash
     private lateinit var localJsException: JsException
-    private lateinit var crashMarker: CrashFileMarker
+    private lateinit var crashMarker: CrashFileMarkerImpl
     private val testException = RuntimeException("Test exception")
     private val fakeClock = FakeClock(1000L)
 

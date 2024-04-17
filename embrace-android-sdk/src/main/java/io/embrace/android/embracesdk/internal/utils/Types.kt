@@ -224,6 +224,7 @@ internal typealias SessionModuleSupplier = (
 
 internal typealias CrashModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,

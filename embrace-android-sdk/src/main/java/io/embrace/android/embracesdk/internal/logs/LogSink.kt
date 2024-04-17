@@ -11,23 +11,28 @@ import io.opentelemetry.sdk.logs.data.LogRecordData
 internal interface LogSink {
 
     /**
-     * Stores Logs. Implementations must support concurrent invocations.
+     * Store [Log] objects to be sent in the nexdt batch. Implementations must support concurrent invocations.
      */
     fun storeLogs(logs: List<LogRecordData>): CompletableResultCode
 
     /**
-     * Returns the list of currently stored Logs.
+     * Returns the list of currently stored [Log] objects, waiting to be sent in the next batch
      */
     fun completedLogs(): List<Log>
 
     /**
-     * Returns and clears the currently stored Logs. Implementations of this method must make sure the clearing and returning is
-     * atomic, i.e. logs cannot be added during this operation.
+     * Returns and clears the currently stored [Log] objects, to be used when the next batch is to be sent.
+     * Implementations of this method must make sure the clearing and returning is atomic, i.e. logs cannot be added during this operation.
      */
     fun flushLogs(): List<Log>
 
     /**
-     * Registers a callback to be called when logs are stored.
+     * Return a [Log] that is to be sent immediately rather than batched
      */
-    fun callOnLogsStored(onLogsStored: () -> Unit)
+    fun pollNonbatchedLog(): Log?
+
+    /**
+     * Registers a callback to be called after new logs are stored.
+     */
+    fun registerLogStoredCallback(onLogsStored: () -> Unit)
 }

@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fixtures.testLog
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.internal.ImmutableSpanContext
+import io.opentelemetry.api.internal.ImmutableSpanContext.INVALID
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.TraceFlags
@@ -13,7 +15,9 @@ import io.opentelemetry.sdk.logs.data.Body
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.resources.Resource
 
-internal class FakeLogRecordData : LogRecordData {
+internal class FakeLogRecordData(
+    val log: Log = testLog
+) : LogRecordData {
 
     override fun getResource(): Resource {
         return Resource.builder().build()
@@ -24,15 +28,26 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getTimestampEpochNanos(): Long {
-        return checkNotNull(testLog.timeUnixNano)
+        return checkNotNull(log.timeUnixNano)
     }
 
     override fun getObservedTimestampEpochNanos(): Long {
-        return checkNotNull(testLog.timeUnixNano)
+        return checkNotNull(log.timeUnixNano)
     }
 
     override fun getSpanContext(): SpanContext {
-        return ImmutableSpanContext.create(testLog.traceId, testLog.spanId, TraceFlags.getDefault(), TraceState.getDefault(), false, true)
+        return if (log.traceId != null && log.spanId != null) {
+            ImmutableSpanContext.create(
+                log.traceId,
+                log.spanId,
+                TraceFlags.getDefault(),
+                TraceState.getDefault(),
+                false,
+                true
+            )
+        } else {
+            INVALID
+        }
     }
 
     override fun getSeverity(): Severity {
@@ -40,22 +55,22 @@ internal class FakeLogRecordData : LogRecordData {
     }
 
     override fun getSeverityText(): String? {
-        return testLog.severityText
+        return log.severityText
     }
 
     override fun getBody(): Body {
-        return Body.string(checkNotNull(testLog.body))
+        return Body.string(checkNotNull(log.body))
     }
 
     override fun getAttributes(): Attributes {
         val attrBuilder = Attributes.builder()
-        testLog.attributes?.forEach { (key, value) ->
-            attrBuilder.put(AttributeKey.stringKey(key), value as String)
+        log.attributes?.forEach { (key, value) ->
+            attrBuilder.put(AttributeKey.stringKey(checkNotNull(key)), checkNotNull(value))
         }
         return attrBuilder.build()
     }
 
     override fun getTotalAttributeCount(): Int {
-        return checkNotNull(testLog.attributes?.size)
+        return checkNotNull(log.attributes?.size)
     }
 }

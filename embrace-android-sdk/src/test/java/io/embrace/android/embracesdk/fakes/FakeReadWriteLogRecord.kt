@@ -10,7 +10,7 @@ internal class FakeReadWriteLogRecord : ReadWriteLogRecord {
 
     private val logRecordData = FakeLogRecordData()
 
-    override fun <T : Any?> setAttribute(key: AttributeKey<T>, value: T): ReadWriteLogRecord {
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): ReadWriteLogRecord {
         attributes[key.key] = value.toString()
         return this
     }

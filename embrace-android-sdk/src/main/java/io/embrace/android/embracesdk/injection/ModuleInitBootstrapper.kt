@@ -440,6 +440,7 @@ internal class ModuleInitBootstrapper(
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,
+                            coreModule,
                             storageModule,
                             essentialServiceModule,
                             deliveryModule,

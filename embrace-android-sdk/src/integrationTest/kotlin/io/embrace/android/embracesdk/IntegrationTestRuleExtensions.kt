@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import org.junit.Assert.assertNotNull
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -31,6 +31,40 @@ internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? =
             logs.size == expectedSize
         }
     }
+}
+
+/**
+ * Wait for there to at least be [minSize] number of log envelopes to be sent and return all the ones sent. Times out at 1 second.
+ */
+internal fun IntegrationTestRule.Harness.getSentLogPayloads(minSize: Int? = null): List<Envelope<LogPayload>> {
+    val logs = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
+    return when (minSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs.size >= minSize
+        }
+    }
+}
+
+/**
+ *  Returns a list of [Log]s that were sent by the SDK since the last logs flush.
+ */
+internal fun IntegrationTestRule.Harness.getSentLogs(expectedSize: Int? = null): List<Log>? {
+    val logPayloads = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
+    val logs = logPayloads.last().data.logs
+    return when (expectedSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs?.size == expectedSize
+        }
+    }
+}
+
+/**
+ * Returns the last [Log] that was sent to the delivery service.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {
+    return getSentLogs(expectedSize)?.last()
 }
 
 /**
@@ -68,27 +102,6 @@ internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMe
  */
 internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
     return getSentSessionMessages().lastOrNull()
-}
-
-/**
- *  Returns a list of [Log]s that were sent by the SDK since the last logs flush.
- */
-internal fun IntegrationTestRule.Harness.getSentLogs(expectedSize: Int? = null): List<Log>? {
-    val logPayloads = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
-    val logs = logPayloads.last().data.logs
-    return when (expectedSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs?.size == expectedSize
-        }
-    }
-}
-
-/**
- * Returns the last [Log] that was sent to the delivery service.
- */
-internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {
-    return getSentLogs(expectedSize)?.last()
 }
 
 /**

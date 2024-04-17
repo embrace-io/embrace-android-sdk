@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -251,7 +252,7 @@ internal class AeiDataSourceImpl(
                 logger.logDebug("AEI - No info trace collected")
                 return null
             }
-            return bytesToUTF8String(bytes)
+            return bytes.toUTF8String()
         } else {
             return appExitInfo.traceInputStream?.bufferedReader()?.readText()
         }
@@ -263,27 +264,6 @@ internal class AeiDataSourceImpl(
      */
     private fun ApplicationExitInfo.isNdkProtobufFile(): Boolean {
         return buildVersionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
-    }
-
-    /**
-     * Converts a byte array to a UTF-8 string, escaping non-encodable bytes as
-     * 2-byte UTF-8 sequences, which will later be converted into unicode by JSON marshalling.
-     * This allows us to send arbitrary binary data from the NDK
-     * protobuf file without needing to encode it as Base64 (which compresses poorly).
-     */
-    private fun bytesToUTF8String(bytes: ByteArray): String {
-        val encoded = ByteArray(bytes.size * 2)
-        var i = 0
-        for (b in bytes) {
-            val u = b.toInt() and 0xFF
-            if (u < 128) {
-                encoded[i++] = u.toByte()
-                continue
-            }
-            encoded[i++] = (0xC0 or (u shr 6)).toByte()
-            encoded[i++] = (0x80 or (u and 0x3F)).toByte()
-        }
-        return String(encoded.copyOf(i), Charsets.UTF_8)
     }
 
     private fun getSessionIdValidationError(sid: String): String {

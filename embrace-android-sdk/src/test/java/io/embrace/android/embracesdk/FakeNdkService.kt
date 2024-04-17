@@ -27,10 +27,6 @@ internal class FakeNdkService : NdkService {
         return lastUnityCrashId
     }
 
-    override fun testCrash(isCpp: Boolean) {
-        TODO("Not yet implemented")
-    }
-
     override fun checkForNativeCrash(): NativeCrashData? {
         checkForNativeCrashCount++
         return null

@@ -13,7 +13,9 @@ import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
+import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.opentelemetry.embAndroidThreads
@@ -24,6 +26,7 @@ import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -41,6 +44,7 @@ internal class CrashDataSourceImpl(
     private val crashMarker: CrashFileMarker,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
+    private val serializer: EmbraceSerializer,
     logger: InternalEmbraceLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
@@ -76,15 +80,29 @@ internal class CrashDataSourceImpl(
                 sessionProperties = sessionProperties
             )
 
-            // TODO: make sure serialized JSON values in strings is corrected and as expected
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
             crashAttributes.setAttribute(exceptionType, crashException.name)
             crashAttributes.setAttribute(exceptionMessage, crashException.message ?: "")
-            crashAttributes.setAttribute(exceptionStacktrace, crashException.lines.toString())
+            crashAttributes.setAttribute(
+                exceptionStacktrace,
+                encodeToUTF8String(
+                    serializer.toJson(crashException.lines, List::class.java)
+                )
+            )
             crashAttributes.setAttribute(logRecordUid, crashId)
             crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
-            crashAttributes.setAttribute(EmbType.System.Crash.embAndroidCrashExceptionCause, getCause(exception.cause))
-            crashAttributes.setAttribute(embAndroidThreads, crashNumber.toString())
+            crashAttributes.setAttribute(
+                EmbType.System.Crash.embAndroidCrashExceptionCause,
+                encodeToUTF8String(
+                    getExceptionCause(exception)
+                )
+            )
+            crashAttributes.setAttribute(
+                embAndroidThreads,
+                encodeToUTF8String(
+                    getThreadsInfo()
+                )
+            )
 
             // TODO: add threading through of jsException
             jsException?.let { crashAttributes.setAttribute(embAndroidReactNativeCrashJsExceptions, jsException.toString()) }
@@ -119,14 +137,34 @@ internal class CrashDataSourceImpl(
             SchemaType.Crash(attributes)
         }
 
-    private fun getCause(throwable: Throwable?): String {
+    /**
+     * @return a String representation of the exception cause.
+     */
+    private fun getExceptionCause(t: Throwable?): String {
         val result = mutableListOf<LegacyExceptionInfo>()
-        var cause = throwable
-        while (cause != null) {
-            val exceptionInfo = LegacyExceptionInfo.ofThrowable(cause)
+        var throwable: Throwable? = t
+        while (throwable != null && throwable != throwable.cause) {
+            val exceptionInfo = LegacyExceptionInfo.ofThrowable(throwable)
+            if (result.contains(exceptionInfo)) {
+                break
+            }
             result.add(0, exceptionInfo)
-            cause = cause.cause
+            throwable = throwable.cause
         }
-        return result.toString()
+        val stackString = result.map(LegacyExceptionInfo::toString).toList()
+        return serializer.toJson(stackString, List::class.java)
+    }
+
+    /**
+     * @return a String representation of the current thread list.
+     */
+    private fun getThreadsInfo(): String {
+        val threadsList = Thread.getAllStackTraces().map { ThreadInfo.ofThread(it.key, it.value) }
+        val stackString = threadsList.map(ThreadInfo::toString).toList()
+        return serializer.toJson(stackString, List::class.java)
+    }
+
+    private fun encodeToUTF8String(source: String): String {
+        return source.toByteArray().toUTF8String()
     }
 }

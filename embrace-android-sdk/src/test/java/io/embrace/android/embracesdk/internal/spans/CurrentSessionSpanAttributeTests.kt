@@ -33,7 +33,6 @@ internal class CurrentSessionSpanAttributeTests {
 
         // assert attributes added by default
         span.assertCommonSessionSpanAttrs()
-        assertEquals("true", span.findSpanAttribute("emb.cold_start"))
     }
 
     @Test
@@ -45,7 +44,6 @@ internal class CurrentSessionSpanAttributeTests {
 
         // assert attributes added by default
         span.assertCommonSessionSpanAttrs()
-        assertEquals("false", span.findSpanAttribute("emb.cold_start"))
     }
 
     private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {

@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -65,6 +68,27 @@ internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMe
  */
 internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
     return getSentSessionMessages().lastOrNull()
+}
+
+/**
+ *  Returns a list of [Log]s that were sent by the SDK since the last logs flush.
+ */
+internal fun IntegrationTestRule.Harness.getSentLogs(expectedSize: Int? = null): List<Log>? {
+    val logPayloads = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
+    val logs = logPayloads.last().data.logs
+    return when (expectedSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs?.size == expectedSize
+        }
+    }
+}
+
+/**
+ * Returns the last [Log] that was sent to the delivery service.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {
+    return getSentLogs(expectedSize)?.last()
 }
 
 /**

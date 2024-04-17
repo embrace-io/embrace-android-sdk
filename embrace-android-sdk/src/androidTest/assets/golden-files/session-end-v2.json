@@ -7,6 +7,10 @@
       {
         "attributes": [
           {
+            "key": "emb.cold_start",
+            "value": "true"
+          },
+          {
             "key": "emb.session_id",
             "value": "__EMBRACE_TEST_IGNORE__"
           },
@@ -107,6 +111,10 @@
           {
             "key": "emb.okhttp3_on_classpath",
             "value": "4.9.3"
+          },
+          {
+            "key": "emb.cold_start",
+            "value": "true"
           },
           {
             "key": "emb.private.sequence_id",

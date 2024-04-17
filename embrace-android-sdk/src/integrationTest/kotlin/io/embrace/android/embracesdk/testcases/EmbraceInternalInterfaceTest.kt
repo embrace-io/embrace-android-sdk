@@ -206,7 +206,7 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session?.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+            val requests = checkNotNull(session?.spans?.filter { it.attributes.containsKey("http.request.method") })
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,

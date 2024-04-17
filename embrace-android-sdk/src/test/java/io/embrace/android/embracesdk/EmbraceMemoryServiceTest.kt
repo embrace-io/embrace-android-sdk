@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -13,7 +15,9 @@ import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.mockk.unmockkAll
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Test
 
 internal class EmbraceMemoryServiceTest {
 
@@ -34,7 +38,28 @@ internal class EmbraceMemoryServiceTest {
             androidServicesModule = FakeAndroidServicesModule(),
             workerThreadModule = FakeWorkerThreadModule(),
         )
+        dataSourceModule.getDataSources().forEach { it.onSessionTypeChange(SessionType.FOREGROUND) }
         embraceMemoryService = EmbraceMemoryService(fakeClock) { dataSourceModule }
+    }
+
+    @Test
+    fun `onMemoryWarning populates events up to MAX_CAPTURED_MEMORY_WARNINGS`() {
+        with(embraceMemoryService) {
+            repeat(EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS) {
+                onMemoryWarning()
+                fakeClock.tick()
+            }
+            val currentSessionSpan = otelModule.currentSessionSpan as FakeCurrentSessionSpan
+            assertEquals(
+                EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS,
+                currentSessionSpan.addedEvents.size
+            )
+            onMemoryWarning()
+            assertEquals(
+                EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS,
+                currentSessionSpan.addedEvents.size
+            )
+        }
     }
 
     @After

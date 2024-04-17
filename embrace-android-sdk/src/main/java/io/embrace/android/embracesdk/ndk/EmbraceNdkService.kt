@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -216,7 +216,7 @@ internal class EmbraceNdkService(
     private fun installSignals() {
         val reportBasePath = storageService.getNativeCrashDir().absolutePath
         val markerFilePath = storageService.getFileForWrite(
-            CrashFileMarker.CRASH_MARKER_FILE_NAME
+            CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
         ).absolutePath
 
         // Assign the native crash id to the unity crash id. Then when a unity crash occurs, the

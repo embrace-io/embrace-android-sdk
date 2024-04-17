@@ -17,7 +17,7 @@ import org.junit.Test
 internal class LastRunCrashVerifierTest {
 
     private lateinit var lastRunCrashVerifier: LastRunCrashVerifier
-    private lateinit var mockCrashFileMarker: CrashFileMarker
+    private lateinit var mockCrashFileMarker: CrashFileMarkerImpl
     private lateinit var fakeWorkerThreadModule: FakeWorkerThreadModule
     private lateinit var worker: BackgroundWorker
 

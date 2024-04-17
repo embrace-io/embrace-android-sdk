@@ -9,7 +9,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-internal class CrashFileMarkerTest {
+internal class CrashFileMarkerImplTest {
     @get:Rule
     val tempFolder = TemporaryFolder()
 
@@ -31,14 +31,14 @@ internal class CrashFileMarkerTest {
     /**
      * Class being tested
      */
-    private lateinit var crashMarker: CrashFileMarker
+    private lateinit var crashMarker: CrashFileMarkerImpl
 
     @Before
     fun setUp() {
-        testFile = File(tempFolder.root.path, CrashFileMarker.CRASH_MARKER_FILE_NAME)
+        testFile = File(tempFolder.root.path, CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
         mockFile = testFile
         markerLazyFile = lazy { mockFile }
-        crashMarker = CrashFileMarker(markerLazyFile, InternalEmbraceLogger())
+        crashMarker = CrashFileMarkerImpl(markerLazyFile, InternalEmbraceLogger())
     }
 
     @After

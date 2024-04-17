@@ -5,12 +5,12 @@ import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Crash
@@ -19,10 +19,7 @@ import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.at
-import io.mockk.mockk
-import io.mockk.unmockkAll
 import io.mockk.verify
-import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -39,7 +36,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var anrService: FakeAnrService
     private lateinit var ndkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var crashMarker: CrashFileMarker
+    private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
     private lateinit var logWriter: FakeLogWriter
@@ -54,7 +51,7 @@ internal class CrashDataSourceImplTest {
         anrService = FakeAnrService()
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService()
-        crashMarker = mockk(relaxUnitFun = true)
+        crashMarker = FakeCrashFileMarker()
         logWriter = FakeLogWriter()
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
@@ -81,7 +78,6 @@ internal class CrashDataSourceImplTest {
 
     @Test
     fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
-        //crash = CrashFactory.ofThrowable(logger, testException, null, 1)
         setupForHandleCrash()
 
         crashDataSource.handleCrash(testException)
@@ -132,11 +128,6 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         verify(exactly = 1) { crashMarker.mark() }
-    }
-
-    @After
-    fun tearDown() {
-        unmockkAll()
     }
 
     @Test

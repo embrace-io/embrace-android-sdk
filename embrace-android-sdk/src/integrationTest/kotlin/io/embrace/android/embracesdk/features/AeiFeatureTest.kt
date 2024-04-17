@@ -8,8 +8,6 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.recordSession
 import io.mockk.every
@@ -40,9 +38,7 @@ internal class AeiFeatureTest {
             testRule.startSdk(context = ApplicationProvider.getApplicationContext())
             harness.recordSession()
 
-            val logOrchestrator = bootstrapper.customerLogModule.logOrchestrator
             val deliveryService = harness.overriddenDeliveryModule.deliveryService
-            logOrchestrator.flush(false)
             val payload = deliveryService.lastSentLogPayloads.single()
             val log = checkNotNull(payload.data.logs?.single())
 

@@ -7,11 +7,13 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
+import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -173,6 +175,14 @@ internal class LogOrchestratorTest {
 
         assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
         assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].data.logs?.size)
+    }
+
+    @Test
+    fun `priority logs are sent immediately`() {
+        logSink.storeLogs(listOf(unbatchableLogRecordData))
+        // Verify the logs are sent
+        assertNull(logSink.pollNonbatchedLog())
+        verifyPayload(1)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {

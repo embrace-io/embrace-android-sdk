@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.schema
 internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     override val key = EmbraceAttributeKey(id = "type")
     override val value = type + (subtype?.run { ".$this" } ?: "")
+    override val sendImmediately: Boolean = false
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
@@ -18,6 +19,10 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object ThreadBlockageSample : Performance("thread_blockage_sample")
 
         internal object MemoryWarning : Performance("memory_warning")
+
+        internal object NativeThreadBlockage : Performance("native_thread_blockage")
+
+        internal object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
     }
 
     /**
@@ -39,7 +44,10 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
      * Keys that track telemetry that is not explicitly tied to user behaviour and is not visual in nature.
      * Applies to spans, logs, and span events.
      */
-    internal sealed class System(subtype: String) : EmbType("sys", subtype) {
+    internal sealed class System(
+        subtype: String,
+        override val sendImmediately: Boolean = false
+    ) : EmbType("sys", subtype) {
 
         internal object Breadcrumb : System("breadcrumb")
 
@@ -59,25 +67,25 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
             val embFlutterExceptionLibrary = EmbraceAttributeKey("exception.library")
         }
 
-        internal object Exit : System("exit")
+        internal object Exit : System("exit", true)
 
         internal object PushNotification : System("push_notification")
 
-        internal object Crash : System("android.crash") {
+        internal object Crash : System("android.crash", true) {
             /**
              * The list of [Throwable] that caused the exception responsible for a crash
              */
             val embAndroidCrashExceptionCause = EmbraceAttributeKey("android.crash.exception_cause")
         }
 
-        internal object ReactNativeCrash : System("android.react_native_crash") {
+        internal object ReactNativeCrash : System("android.react_native_crash", true) {
             /**
              * The list JavaScript exceptions from the ReactNative layer
              */
             val embAndroidReactNativeCrashJsExceptions = EmbraceAttributeKey("android.react_native_crash.js_exceptions")
         }
 
-        internal object NativeCrash : System("android.native_crash") {
+        internal object NativeCrash : System("android.native_crash", true) {
             /**
              * Exception coming from the native layer
              */
@@ -113,4 +121,6 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
  * a visual event around a UI element. ux is the type, and view is the subtype. This tells the
  * backend that it can assume the data in the event follows a particular schema.
  */
-internal interface TelemetryType : FixedAttribute
+internal interface TelemetryType : FixedAttribute {
+    val sendImmediately: Boolean
+}

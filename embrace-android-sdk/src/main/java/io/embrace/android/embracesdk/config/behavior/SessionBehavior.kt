@@ -116,6 +116,18 @@ internal class SessionBehavior(
         getFullSessionEvents().contains(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
 
     /**
+     * Check if should gate Session Properties based on gating config.
+     */
+    fun shouldGateSessionProperties() =
+        shouldGateFeature(SessionGatingKeys.SESSION_PROPERTIES)
+
+    /**
+     * Check if should gate Log Properties based on gating config.
+     */
+    fun shouldGateLogProperties() =
+        shouldGateFeature(SessionGatingKeys.LOG_PROPERTIES)
+
+    /**
      * Checks whether a feature should be gated.
      * If [getSessionComponents] is null, this will return false.
      * If [getSessionComponents] is empty, this will return true.

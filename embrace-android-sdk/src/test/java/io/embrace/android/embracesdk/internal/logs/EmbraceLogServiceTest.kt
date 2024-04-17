@@ -13,11 +13,13 @@ import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
@@ -46,6 +48,7 @@ internal class EmbraceLogServiceTest {
     companion object {
         private lateinit var logWriter: FakeLogWriter
         private lateinit var configService: ConfigService
+        private lateinit var gatingService: GatingService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var executor: ExecutorService
         private lateinit var tick: AtomicLong
@@ -82,6 +85,7 @@ internal class EmbraceLogServiceTest {
                 cfg
             }
         )
+        gatingService = FakeGatingService(configService)
     }
 
     @Test

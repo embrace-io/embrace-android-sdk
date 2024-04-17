@@ -66,10 +66,10 @@ internal class CrashModuleImpl(
             essentialServiceModule.sessionProperties,
             anrModule.anrService,
             nativeModule.ndkService,
-            essentialServiceModule.gatingService,
             androidServicesModule.preferencesService,
             crashMarker,
             essentialServiceModule.logWriter,
+            essentialServiceModule.configService,
             initModule.logger,
         )
     }

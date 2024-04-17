@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.destination
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -58,7 +59,10 @@ internal class LogWriterImplTest {
         sessionIdTracker.setActiveSessionId("session-id", true)
         val logEventData = LogEventData(
             schemaType = SchemaType.Log(
-                TelemetryAttributes(customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair()))
+                TelemetryAttributes(
+                    configService = FakeConfigService(),
+                    customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair())
+                )
             ),
             severity = io.embrace.android.embracesdk.Severity.ERROR,
             message = "test"

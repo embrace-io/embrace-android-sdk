@@ -34,7 +34,7 @@ internal class LogOrchestratorImpl(
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
 
     init {
-        sink.callOnLogsStored(::onLogsAdded)
+        sink.registerLogStoredCallback(::onLogsAdded)
     }
 
     override fun flush(saveOnly: Boolean) {
@@ -42,7 +42,7 @@ internal class LogOrchestratorImpl(
         scheduledCheckFuture = null
         firstLogInBatchTime.set(0)
 
-        val envelope = logEnvelopeSource.getEnvelope()
+        val envelope = logEnvelopeSource.getBatchedLogEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
             if (saveOnly) {
                 deliveryService.saveLogs(envelope)
@@ -53,6 +53,10 @@ internal class LogOrchestratorImpl(
     }
 
     private fun onLogsAdded() {
+        logEnvelopeSource.getNonbatchedEnvelope().forEach { logEnvelope ->
+            deliveryService.sendLogs(logEnvelope)
+        }
+
         lastLogTime.set(clock.now())
         firstLogInBatchTime.compareAndSet(0, lastLogTime.get())
         if (!sendLogsIfNeeded()) {

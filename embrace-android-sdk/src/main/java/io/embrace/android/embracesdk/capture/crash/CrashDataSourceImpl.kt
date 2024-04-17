@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsExceptions
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -37,10 +37,10 @@ internal class CrashDataSourceImpl(
     private val sessionProperties: EmbraceSessionProperties,
     private val anrService: AnrService?,
     private val ndkService: NdkService,
-    @Suppress("UnusedPrivateMember") private val gatingService: GatingService,
     private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
     private val logWriter: LogWriter,
+    private val configService: ConfigService,
     logger: InternalEmbraceLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
@@ -72,6 +72,7 @@ internal class CrashDataSourceImpl(
             val crashId = ndkService.getUnityCrashId() ?: getEmbUuid()
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
+                configService = configService,
                 sessionProperties = sessionProperties
             )
 
@@ -95,8 +96,6 @@ internal class CrashDataSourceImpl(
             )
 
             logWriter.addLog(logEventData)
-
-            // TODO: apply gating service logic
 
             // Attempt to send any logs that are still waiting in the sink
             logOrchestrator.flush(true)

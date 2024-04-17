@@ -12,6 +12,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData
 import java.util.concurrent.TimeUnit
 
@@ -145,6 +146,9 @@ internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIB
 
 internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value
+
+internal fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+    attributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
 
 internal fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]

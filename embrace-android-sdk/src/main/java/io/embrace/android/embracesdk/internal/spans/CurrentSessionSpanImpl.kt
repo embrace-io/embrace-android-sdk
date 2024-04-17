@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -38,7 +39,7 @@ internal class CurrentSessionSpanImpl(
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         synchronized(sessionSpan) {
-            sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
+            sessionSpan.set(startSessionSpan(sdkInitStartTimeMs, true))
         }
     }
 
@@ -87,7 +88,7 @@ internal class CurrentSessionSpanImpl(
             if (appTerminationCause == null) {
                 endingSessionSpan.stop()
                 spanRepository.clearCompletedSpans()
-                sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis(), false))
             } else {
                 val crashTime = openTelemetryClock.now().nanosToMillis()
                 spanRepository.failActiveSpans(crashTime)
@@ -121,7 +122,10 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
+    private fun startSessionSpan(
+        startTimeMs: Long,
+        coldStart: Boolean
+    ): PersistableEmbraceSpan {
         traceCount.set(0)
 
         return embraceSpanFactorySupplier().create(
@@ -132,6 +136,7 @@ internal class CurrentSessionSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             addAttribute(embSessionId.name, Uuid.getEmbUuid())
+            addAttribute(embColdStart.name, coldStart.toString())
         }
     }
 }

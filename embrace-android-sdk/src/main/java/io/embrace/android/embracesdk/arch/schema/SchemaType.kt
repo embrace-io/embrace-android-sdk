@@ -103,6 +103,48 @@ internal sealed class SchemaType(
     }
 
     /**
+     * Represents a span in which a native thread was blocked.
+     */
+    internal class NativeThreadBlockage(
+        threadId: Int,
+        threadName: String,
+        threadPriority: Int,
+        threadState: String,
+        samplingOffsetMs: Long,
+        stackUnwinder: String,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.NativeThreadBlockage,
+        fixedObjectName = "native_thread_blockage"
+    ) {
+        override val attrs = mapOf(
+            "thread_id" to threadId.toString(),
+            "thread_name" to threadName,
+            "thread_priority" to threadPriority.toString(),
+            "thread_state" to threadState,
+            "sampling_offset_ms" to samplingOffsetMs.toString(),
+            "stack_unwinder" to stackUnwinder,
+        )
+    }
+
+    /**
+     * Represents a point in time when a native thread was blocked.
+     */
+    internal class NativeThreadBlockageSample(
+        result: Int,
+        sampleOverheadMs: Long,
+        stacktrace: String,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.NativeThreadBlockageSample,
+        fixedObjectName = "native_thread_blockage_sample"
+    ) {
+        override val attrs = mapOf(
+            "result" to result.toString(),
+            "sample_overhead_ms" to sampleOverheadMs.toString(),
+            "stacktrace" to stacktrace
+        )
+    }
+
+    /**
      * Represents a tap breadcrumb event.
      * @param viewName The name of the view that the tap event occurred in.
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
@@ -157,11 +199,13 @@ internal sealed class SchemaType(
         override val attrs = attributes.snapshot()
     }
 
-    internal class Exception(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Exception) {
+    internal class Exception(attributes: TelemetryAttributes) :
+        SchemaType(EmbType.System.Exception) {
         override val attrs = attributes.snapshot()
     }
 
-    internal class FlutterException(attributes: TelemetryAttributes) : SchemaType(EmbType.System.FlutterException) {
+    internal class FlutterException(attributes: TelemetryAttributes) :
+        SchemaType(EmbType.System.FlutterException) {
         override val attrs = attributes.snapshot()
     }
 

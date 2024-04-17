@@ -18,6 +18,10 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object ThreadBlockageSample : Performance("thread_blockage_sample")
 
         internal object MemoryWarning : Performance("memory_warning")
+
+        internal object NativeThreadBlockage : Performance("native_thread_blockage")
+
+        internal object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
     }
 
     /**

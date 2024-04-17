@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -54,6 +56,7 @@ internal class SessionOrchestratorTest {
     private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: InternalEmbraceLogger
+    private lateinit var sessionSpan: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
@@ -74,6 +77,7 @@ internal class SessionOrchestratorTest {
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
         periodicBackgroundActivityCacher = PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())
+        sessionSpan = FakeCurrentSessionSpan()
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             listOf(
                 DataSourceState(
@@ -103,6 +107,7 @@ internal class SessionOrchestratorTest {
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
+            sessionSpan,
             logger
         )
         sessionProperties.add("key", "value", false)
@@ -267,6 +272,66 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.snapshotSessionCount)
     }
 
+    @Test
+    fun `test session span cold start`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, TIMESTAMP)
+        assertSessionSpanAttrsAdded(true, "foreground")
+    }
+
+    @Test
+    fun `test session span non cold start`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, TIMESTAMP)
+        orchestrator.onBackground(TIMESTAMP)
+        assertSessionSpanAttrsAdded(false, "background")
+    }
+
+    @Test
+    fun `test session span with crash`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, TIMESTAMP)
+        orchestrator.endSessionWithCrash("my-crash-id")
+        assertSessionSpanAttrsAdded(true, "foreground", "my-crash-id", true)
+    }
+
+    @Test
+    fun `test foreground session span heartbeat`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, TIMESTAMP)
+        assertHeartbeatMatchesClock()
+        clock.tick(2000)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertHeartbeatMatchesClock()
+    }
+
+    @Test
+    fun `test background session span heartbeat`() {
+        createOrchestrator(true)
+        assertHeartbeatMatchesClock()
+        clock.tick(6000)
+        baCacheExecutor.runCurrentlyBlocked()
+        assertHeartbeatMatchesClock()
+    }
+
+    private fun assertHeartbeatMatchesClock() {
+        val attr = checkNotNull(sessionSpan.getAttribute("emb.heartbeat_time_unix_nano"))
+        assertEquals(clock.now(), attr.toLong().nanosToMillis())
+    }
+
+    private fun assertSessionSpanAttrsAdded(
+        coldStart: Boolean,
+        state: String,
+        crashId: String? = null,
+        cleanExit: Boolean = false
+    ) {
+        assertEquals(coldStart.toString(), sessionSpan.getAttribute("emb.cold_start"))
+        assertEquals(cleanExit.toString(), sessionSpan.getAttribute("emb.clean_exit"))
+        assertEquals("1", sessionSpan.getAttribute("emb.session_number"))
+        assertEquals(state, sessionSpan.getAttribute("emb.state"))
+        assertEquals(crashId, sessionSpan.getAttribute("emb.crash_id"))
+    }
+
     private fun createOrchestrator(background: Boolean) {
         processStateService.listeners.clear()
         processStateService.isInBackground = background
@@ -291,6 +356,7 @@ internal class SessionOrchestratorTest {
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
+            sessionSpan,
             logger
         )
     }

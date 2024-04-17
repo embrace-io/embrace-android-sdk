@@ -46,7 +46,7 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
         return "testSessionId"
     }
 
-    fun getAttribute(key: String): String? = addedAttributes.find { it.key == key }?.value
+    fun getAttribute(key: String): String? = addedAttributes.lastOrNull { it.key == key }?.value
 
     fun attributeCount(): Int = addedAttributes.size
 }

@@ -43,14 +43,14 @@ internal class EmbraceDomainCountLimiter(
                 countPerSuffix = NetworkSessionV2.DomainCount(0, limit)
             }
 
-            // Exclude if the network call exceeds the limit
-            if (countPerSuffix.requestCount < limit) {
-                return true
-            }
-
             // Track the number of calls for each domain (or configured suffix)
             suffix?.let {
                 callsPerDomainSuffix[it] = NetworkSessionV2.DomainCount(countPerSuffix.requestCount + 1, limit)
+            }
+
+            // Exclude if the network call exceeds the limit
+            if (countPerSuffix.requestCount < limit) {
+                return true
             }
         }
         return false

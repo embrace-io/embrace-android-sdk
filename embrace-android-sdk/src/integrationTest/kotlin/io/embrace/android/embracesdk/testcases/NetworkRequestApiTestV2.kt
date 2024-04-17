@@ -271,11 +271,12 @@ internal class NetworkRequestApiTestV2 {
             }
 
             val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
-            val requests = checkNotNull(session.performanceInfo?.networkRequests?.networkSessionV2?.requests)
+
+            val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
             assertEquals(
-                "Unexpected number of requests in sent session: ${requests.size}",
+                "Unexpected number of requests in sent session: ${spans.size}",
                 2,
-                requests.size
+                spans.size
             )
         }
     }
@@ -308,8 +309,8 @@ internal class NetworkRequestApiTestV2 {
                     assertEquals(null, this.attributes["error.message"])
                 } else {
                     assertEquals(null, this.attributes["http.response.status_code"])
-                    assertEquals(0.toString(), this.attributes["http.request.body.size"])
-                    assertEquals(0.toString(), this.attributes["http.response.body.size"])
+                    assertEquals(null, this.attributes["http.request.body.size"])
+                    assertEquals(null, this.attributes["http.response.body.size"])
                     assertEquals(expectedRequest.errorType, this.attributes["error.type"])
                     assertEquals(expectedRequest.errorMessage, this.attributes["error.message"])
                 }
@@ -320,7 +321,7 @@ internal class NetworkRequestApiTestV2 {
     private fun validateAndReturnExpectedNetworkSpan(): EmbraceSpanData {
         val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
 
-        val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.response.body.size") })
+        val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

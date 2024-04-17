@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runners.model.MultipleFailureException.assertEmpty
 
 internal class NetworkUtilsTest {
 
@@ -140,7 +141,7 @@ internal class NetworkUtilsTest {
 
     @Test
     fun stripUrl() {
-        assertNull(stripUrl(null))
+        assertEquals("", stripUrl(""))
 
         for (pairs in urlsToStrip) {
             val url = pairs[0]

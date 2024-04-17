@@ -2,26 +2,12 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.CacheableValue
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
-import io.embrace.android.embracesdk.payload.NetworkCallV2
-import io.embrace.android.embracesdk.payload.NetworkSessionV2
-import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.getUrlPath
-import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
-import io.embrace.android.embracesdk.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.max
 
 /**
  * Logs network calls according to defined limits per domain.
@@ -32,308 +18,63 @@ import kotlin.math.max
  * and the number of calls is also captured if the limit is exceeded.
  */
 internal class EmbraceNetworkLoggingService(
-    private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger,
+    private val networkLoggingDomainCountLimiter: NetworkLoggingDomainCountLimiter,
     private val networkCaptureService: NetworkCaptureService,
     private val spanService: SpanService
-) : NetworkLoggingService, MemoryCleanerListener {
-
-    private val callsStorageLastUpdate = AtomicInteger(0)
-
-    /**
-     * Network calls per domain prepared for the session.
-     */
-    private val sessionNetworkCalls = ConcurrentHashMap<String, NetworkCallV2>()
-
-    private val networkCallCache = CacheableValue<List<NetworkCallV2>> { callsStorageLastUpdate.get() }
-
-    private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
-
-    private val callsPerDomainSuffix = hashMapOf<String, DomainCount>()
-
-    private val ipAddressNetworkCallCount = AtomicInteger(0)
-
-    private val untrackedNetworkCallCount = AtomicInteger(0)
-
-    private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-
-    private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
-
-    override fun getNetworkCallsSnapshot(): NetworkSessionV2 {
-        var storedCallsSize: Int? = null
-        var cachedCallsSize: Int? = null
-
-        try {
-            synchronized(callsStorageLastUpdate) {
-                val calls = networkCallCache.value {
-                    sessionNetworkCalls.values.toList()
-                }
-
-                storedCallsSize = sessionNetworkCalls.size
-                cachedCallsSize = calls.size
-
-                val overLimit = hashMapOf<String, DomainCount>()
-                for ((key, value) in callsPerDomainSuffix) {
-                    if (value.requestCount > value.captureLimit) {
-                        overLimit[key] = value
-                    }
-                }
-
-                return NetworkSessionV2(calls, overLimit)
-            }
-        } finally {
-            if (cachedCallsSize != storedCallsSize) {
-                val msg = "Cached network call count different than expected: $cachedCallsSize instead of $storedCallsSize"
-                logger.logError(msg, IllegalStateException(msg), true)
-            }
-        }
-    }
-
-    override fun logNetworkCall(
-        callId: String,
-        url: String,
-        httpMethod: String,
-        statusCode: Int,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        traceId: String?,
-        w3cTraceparent: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) {
-        val duration = max(endTime - startTime, 0)
-        val strippedUrl = stripUrl(url)
-        val validTraceId = getValidTraceId(traceId)
-        val networkCall = NetworkCallV2(
-            url = strippedUrl,
-            httpMethod = httpMethod,
-            responseCode = statusCode,
-            bytesSent = bytesSent,
-            bytesReceived = bytesReceived,
-            startTime = startTime,
-            endTime = endTime,
-            duration = duration,
-            traceId = validTraceId,
-            w3cTraceparent = w3cTraceparent
-        )
-
-        if (networkCaptureData != null) {
-            networkCaptureService.logNetworkCapturedData(
-                url,
-                httpMethod,
-                statusCode,
-                startTime,
-                endTime,
-                networkCaptureData
-            )
-        }
-
-        processNetworkCall(callId, networkCall)
-    }
-
-    override fun logNetworkError(
-        callId: String,
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-        w3cTraceparent: String?,
-        networkCaptureData: NetworkCaptureData?
-    ) {
-        val duration = max(endTime - startTime, 0)
-        val strippedUrl = stripUrl(url)
-        val validTraceId = getValidTraceId(traceId)
-        val networkCall = NetworkCallV2(
-            url = strippedUrl,
-            httpMethod = httpMethod,
-            startTime = startTime,
-            endTime = endTime,
-            duration = duration,
-            traceId = validTraceId,
-            w3cTraceparent = w3cTraceparent,
-            errorMessage = errorMessage,
-            errorType = errorType
-        )
-
-        if (networkCaptureData != null) {
-            networkCaptureService.logNetworkCapturedData(
-                url,
-                httpMethod,
-                NETWORK_ERROR_CODE,
-                startTime,
-                endTime,
-                networkCaptureData,
-                errorMessage
-            )
-        }
-        processNetworkCall(callId, networkCall)
-    }
+) : NetworkLoggingService {
 
     override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        if (networkRequest.isError()) {
-            logNetworkError(
-                UUID.randomUUID().toString(),   // temporary
-                networkRequest.url,
+        logNetworkCaptureData(networkRequest)
+        recordNetworkRequest(networkRequest)
+    }
+
+    private fun logNetworkCaptureData(networkRequest: EmbraceNetworkRequest) {
+        if (networkRequest.networkCaptureData != null) {
+            networkCaptureService.logNetworkCapturedData(
+                networkRequest.url, //TODO: This uses the non-stripped URL, is that correct?
                 networkRequest.httpMethod,
+                networkRequest.responseCode ?: NETWORK_ERROR_CODE,
                 networkRequest.startTime,
                 networkRequest.endTime,
-                networkRequest.errorType,
-                networkRequest.errorMessage,
-                networkRequest.traceId,
-                networkRequest.w3cTraceparent,
-                networkRequest.networkCaptureData
-            )
-        } else {
-            logNetworkCall(
-                UUID.randomUUID().toString(),   // temporary
-                networkRequest.url,
-                networkRequest.httpMethod,
-                networkRequest.responseCode ?: 0,
-                networkRequest.startTime,
-                networkRequest.endTime,
-                networkRequest.bytesOut,
-                networkRequest.bytesIn,
-                networkRequest.traceId,
-                networkRequest.w3cTraceparent,
-                networkRequest.networkCaptureData
+                networkRequest.networkCaptureData,
+                networkRequest.errorMessage
             )
         }
     }
 
-    override fun logURLConnectionNetworkRequest(callId: String, networkRequest: EmbraceNetworkRequest) {
-        if (networkRequest.isError()) {
-            logNetworkError(
-                callId,
-                networkRequest.url,
-                networkRequest.httpMethod,
-                networkRequest.startTime,
-                networkRequest.endTime,
-                networkRequest.errorType,
-                networkRequest.errorMessage,
-                networkRequest.traceId,
-                networkRequest.w3cTraceparent,
-                networkRequest.networkCaptureData
-            )
-        } else {
-            logNetworkCall(
-                callId,
-                networkRequest.url,
-                networkRequest.httpMethod,
-                networkRequest.responseCode ?: 0,
-                networkRequest.startTime,
-                networkRequest.endTime,
-                networkRequest.bytesOut,
-                networkRequest.bytesIn,
-                networkRequest.traceId,
-                networkRequest.w3cTraceparent,
-                networkRequest.networkCaptureData
-            )
-        }
-    }
-
-    override fun cleanCollections() {
-        clearNetworkCalls()
-        // re-fetch limits in case they changed since they last time they were fetched
-        defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+    override fun logURLConnectionNetworkRequest(callId: String, request: EmbraceNetworkRequest) {
+        logNetworkRequest(request)
     }
 
     /**
-     * Process network calls to be ready when the session requests them.
+     * Records network calls as spans if their domain can be parsed and is within the limits.
      *
-     * @param callId      the unique ID that identifies the specific network call instance being recorded
      * @param networkCall that is going to be captured
      */
-    private fun processNetworkCall(callId: String, networkCall: NetworkCallV2) {
+    private fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+        // TODO: Shouldn't we ignore domains that can't be parsed for networkCapturedData too?
+        // Shouldn't we also track limits for networkCapturedData?
+
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
-        val domain = networkCall.url?.let {
-            getDomain(it)
-        } ?: return
+        val domain = getDomain(
+            stripUrl(networkRequest.url)
+        ) ?: return
 
-        synchronized(callsStorageLastUpdate) {
-            if (isIpAddress(domain)) {
-                if (ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                    storeNetworkCall(callId, networkCall)
-                }
-                return
-            } else if (!domainSetting.containsKey(domain)) {
-                createLimitForDomain(domain)
-            }
+        if (networkLoggingDomainCountLimiter.canLogNetworkRequest(domain)) {
+            //TODO: Why do we want to strip the URL?
+            val strippedUrl = stripUrl(networkRequest.url)
 
-            val settings = domainSetting[domain]
-            if (settings == null) {
-                // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
-                if (untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit) {
-                    storeNetworkCall(callId, networkCall)
-                }
-                return
-            } else {
-                val suffix = settings.suffix
-                val limit = settings.limit
-                var countPerSuffix = callsPerDomainSuffix[suffix]
-
-                if (countPerSuffix == null) {
-                    countPerSuffix = DomainCount(0, limit)
-                }
-
-                // Exclude if the network call exceeds the limit
-                if (countPerSuffix.requestCount < limit) {
-                    storeNetworkCall(callId, networkCall)
-                }
-
-                // Track the number of calls for each domain (or configured suffix)
-                suffix?.let {
-                    callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
-                }
-            }
+            val networkRequestSchemaType = SchemaType.NetworkRequest(networkRequest)
+            spanService.recordCompletedSpan(
+                name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
+                startTimeMs = networkRequest.startTime,
+                endTimeMs = networkRequest.endTime,
+                errorCode = null,
+                parent = null,
+                attributes = networkRequestSchemaType.attributes(),
+                type = EmbType.Performance.Network,
+            )
         }
     }
 
-    private fun createLimitForDomain(domain: String) {
-        try {
-            for ((key, value) in domainSuffixCallLimits) {
-                if (domain.endsWith(key)) {
-                    domainSetting[domain] = DomainSettings(value, key)
-                }
-            }
-
-            if (!domainSetting.containsKey(domain)) {
-                domainSetting[domain] = DomainSettings(defaultPerDomainSuffixCallLimit, domain)
-            }
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to determine limits for domain: $domain", ex)
-        }
-    }
-
-    private fun storeNetworkCall(callId: String, networkCall: NetworkCallV2) {
-        callsStorageLastUpdate.incrementAndGet()
-        sessionNetworkCalls[callId] = networkCall
-        val networkRequestSchemaType = SchemaType.NetworkRequest(networkCall)
-        spanService.recordCompletedSpan(
-            name = "${networkCall.httpMethod} ${getUrlPath(networkCall.url)}",
-            startTimeMs = networkCall.startTime,
-            endTimeMs = networkCall.endTime,
-            errorCode = null,
-            parent = null,
-            attributes = networkRequestSchemaType.attributes(),
-            type = EmbType.Performance.Network,
-        )
-    }
-
-    private fun clearNetworkCalls() {
-        synchronized(callsStorageLastUpdate) {
-            domainSetting.clear()
-            callsPerDomainSuffix.clear()
-            ipAddressNetworkCallCount.set(0)
-            untrackedNetworkCallCount.set(0)
-            callsStorageLastUpdate.set(0)
-            sessionNetworkCalls.clear()
-        }
-    }
-
-    private fun EmbraceNetworkRequest.isError() = !errorType.isNullOrEmpty() && !errorMessage.isNullOrEmpty()
 }

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.network.logging.NetworkLoggingDomainCountLimiter
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -47,10 +48,16 @@ internal class CustomerLogModuleImpl(
         )
     }
 
+    private val networkLoggingDomainCountLimiter: NetworkLoggingDomainCountLimiter by singleton {
+        NetworkLoggingDomainCountLimiter(
+            essentialServiceModule.configService,
+            initModule.logger
+        )
+    }
+
     override val networkLoggingService: NetworkLoggingService by singleton {
         EmbraceNetworkLoggingService(
-            essentialServiceModule.configService,
-            initModule.logger,
+            networkLoggingDomainCountLimiter,
             networkCaptureService,
             openTelemetryModule.spanService
         )

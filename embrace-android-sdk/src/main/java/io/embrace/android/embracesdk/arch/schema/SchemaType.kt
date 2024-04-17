@@ -2,8 +2,9 @@ package io.embrace.android.embracesdk.arch.schema
 
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.AppExitInfoData
-import io.embrace.android.embracesdk.payload.NetworkCallV2
+import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -196,19 +197,17 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class NetworkRequest(networkCallV2: NetworkCallV2) : SchemaType(EmbType.Performance.Network) {
-        // TODO: This implementation does not add some fields to the attributes if they're null (i.e status code).
-        //  Do we expect fields to be always present in the attributes, even if they're null?
+    internal class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
         override val attrs = mapOf(
-            "url.full" to networkCallV2.url,
-            "http.request.method" to networkCallV2.httpMethod,
-            "http.response.status_code" to networkCallV2.responseCode,
-            "http.request.body.size" to networkCallV2.bytesSent,
-            "http.response.body.size" to networkCallV2.bytesReceived,
-            "error.type" to networkCallV2.errorType,
-            "error.message" to networkCallV2.errorMessage,
-            "emb.w3c_traceparent" to networkCallV2.w3cTraceparent,
-            "emb.trace_id" to networkCallV2.traceId
+            "url.full" to networkRequest.url,
+            "http.request.method" to networkRequest.httpMethod,
+            "http.response.status_code" to networkRequest.responseCode,
+            "http.request.body.size" to networkRequest.bytesSent,
+            "http.response.body.size" to networkRequest.bytesReceived,
+            "error.type" to networkRequest.errorType,
+            "error.message" to networkRequest.errorMessage,
+            "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
+            "emb.trace_id" to getValidTraceId(networkRequest.traceId),
         ).toNonNullMap().mapValues { it.value.toString() }
     }
 

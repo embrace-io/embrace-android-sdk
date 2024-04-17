@@ -36,6 +36,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var logger: InternalEmbraceLogger
     private lateinit var localJsException: JsException
     private lateinit var testException: Exception
+
     @Before
     fun setUp() {
         logOrchestrator = FakeLogOrchestrator()

@@ -425,6 +425,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
         assertTrue(sessionBehavior.shouldGateInfoLog())
         assertTrue(sessionBehavior.shouldGateWarnLog())
         assertTrue(sessionBehavior.shouldGateStartupMoment())
+        assertTrue(sessionBehavior.shouldGateLogProperties())
+        assertTrue(sessionBehavior.shouldGateSessionProperties())
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>?) =

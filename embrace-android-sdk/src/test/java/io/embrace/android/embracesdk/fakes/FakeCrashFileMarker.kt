@@ -4,21 +4,21 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 
 internal class FakeCrashFileMarker : CrashFileMarker {
 
-    var isMarked = false
+    var marked = false
 
     override fun mark() {
-        isMarked = true
+        marked = true
     }
 
     override fun removeMark() {
-        isMarked = false
+        marked = false
     }
 
     override fun isMarked(): Boolean {
-        return isMarked
+        return marked
     }
 
     override fun getAndCleanMarker(): Boolean {
-        return isMarked.also { isMarked = false }
+        return marked.also { marked = false }
     }
 }

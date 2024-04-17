@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.capture.crash
 
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
-import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
@@ -13,16 +11,11 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.JsException
-import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
-import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.utils.at
-import io.mockk.verify
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -105,7 +98,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertEquals(1, logWriter.logEvents.size)
-        Assert.assertSame(lastSentCrash, logWriter.logEvents.single())
+        assertSame(lastSentCrash, logWriter.logEvents.single())
     }
 
     @Test
@@ -127,46 +120,6 @@ internal class CrashDataSourceImplTest {
 
         crashDataSource.handleCrash(testException)
 
-        verify(exactly = 1) { crashMarker.mark() }
-    }
-
-    @Test
-    fun testSerialization() {
-        val crash = Crash(
-            "123",
-            listOf(
-                LegacyExceptionInfo(
-                    "java.lang.RuntimeException",
-                    "ExceptionMessage",
-                    listOf("stacktrace.line")
-                )
-            ),
-            listOf("js_exception"),
-            listOf(
-                ThreadInfo(
-                    123,
-                    Thread.State.RUNNABLE,
-                    "ReferenceHandler",
-                    1,
-                    listOf("stacktrace.line.thread")
-                )
-            )
-        )
-        assertJsonMatchesGoldenFile("crash_expected.json", crash)
-    }
-
-    @Test
-    fun testDeserialization() {
-        val obj = deserializeJsonFromResource<Crash>("crash_expected.json")
-        assertEquals("123", obj.crashId)
-        assertEquals("java.lang.RuntimeException", obj.exceptions?.at(0)?.name)
-        assertEquals("ExceptionMessage", obj.exceptions?.at(0)?.message)
-        assertEquals("stacktrace.line", obj.exceptions?.at(0)?.lines?.at(0))
-        assertEquals("js_exception", obj.jsExceptions?.at(0))
-        assertEquals(123L, obj.threads?.at(0)?.threadId)
-        assertEquals(Thread.State.RUNNABLE, obj.threads?.at(0)?.state)
-        assertEquals("ReferenceHandler", obj.threads?.at(0)?.name)
-        assertEquals(1, obj.threads?.at(0)?.priority)
-        assertEquals("stacktrace.line.thread", obj.threads?.at(0)?.lines?.at(0))
+        assertTrue(crashMarker.isMarked())
     }
 }

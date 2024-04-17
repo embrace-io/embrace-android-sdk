@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
  * and the number of calls is also captured if the limit is exceeded.
  */
 internal class EmbraceNetworkLoggingService(
-    private val networkLoggingDomainCountLimiter: NetworkLoggingDomainCountLimiter,
+    private val embraceDomainCountLimiter: DomainCountLimiter,
     private val networkCaptureService: NetworkCaptureService,
     private val spanService: SpanService
 ) : NetworkLoggingService {
@@ -56,7 +56,7 @@ internal class EmbraceNetworkLoggingService(
             stripUrl(networkRequest.url)
         ) ?: return
 
-        if (networkLoggingDomainCountLimiter.canLogNetworkRequest(domain)) {
+        if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
             val strippedUrl = stripUrl(networkRequest.url)
 
             val networkRequestSchemaType = SchemaType.NetworkRequest(networkRequest)

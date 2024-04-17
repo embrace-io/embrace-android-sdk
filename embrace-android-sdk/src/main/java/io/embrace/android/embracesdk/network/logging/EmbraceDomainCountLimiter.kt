@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class NetworkLoggingDomainCountLimiter(
+internal class EmbraceDomainCountLimiter(
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
-) : MemoryCleanerListener {
+) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
     private val callsPerDomainSuffix = hashMapOf<String, NetworkSessionV2.DomainCount>()
@@ -20,7 +20,7 @@ internal class NetworkLoggingDomainCountLimiter(
     private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
-    fun canLogNetworkRequest(domain: String): Boolean {
+    override fun canLogNetworkRequest(domain: String): Boolean {
         // TODO: Should we synchronize on another object now that we don't use callsStorageLastUpdate?
         if (NetworkUtils.isIpAddress(domain)) {
             // TODO: All of the IP address domains fall under the same limit? Is that correct?

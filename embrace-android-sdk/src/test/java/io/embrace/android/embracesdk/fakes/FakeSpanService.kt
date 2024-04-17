@@ -50,7 +50,19 @@ internal class FakeSpanService : SpanService {
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?
-    ): Boolean = true
+    ): Boolean {
+        createdSpans.add(
+            FakePersistableEmbraceSpan(parent, name, type, internal, private).apply {
+                start(startTimeMs)
+                attributes.forEach { (key, value) -> addAttribute(key, value) }
+                events.forEach {
+                    addEvent(it.name, it.timestampNanos, it.attributes)
+                }
+                stop(errorCode, endTimeMs)
+            }
+        )
+        return true
+    }
 
     override fun getSpan(spanId: String): EmbraceSpan? = null
 }

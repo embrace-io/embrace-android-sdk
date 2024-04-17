@@ -7,12 +7,12 @@ import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule

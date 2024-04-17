@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
-import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -21,7 +19,6 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private lateinit var service: EmbracePerformanceInfoService
     private val networkConnectivityService = FakeNetworkConnectivityService()
-    private val networkLoggingService = FakeNetworkLoggingService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
@@ -30,7 +27,6 @@ internal class EmbracePerformanceInfoServiceTest {
     fun setUp() {
         service = EmbracePerformanceInfoService(
             networkConnectivityService,
-            networkLoggingService,
             metadataService,
             googleAnrTimestampRepository,
             null,

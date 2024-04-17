@@ -113,19 +113,24 @@ internal class EmbraceNetworkLoggingServiceTest {
         assertEquals(2, spanService.createdSpans.size)
     }
 
-    private fun logNetworkRequest(url: String, startTime: Long = 100, endTime: Long = 200, networkCaptureData: NetworkCaptureData? = null) {
+    private fun logNetworkRequest(
+        url: String,
+        startTime: Long = 100,
+        endTime: Long = 200,
+        networkCaptureData: NetworkCaptureData? = null
+    ) {
         networkLoggingService.logNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
-                /* url = */ url,
-                /* httpMethod = */ HttpMethod.GET,
-                /* startTime = */ startTime,
-                /* endTime = */ endTime,
-                /* bytesSent = */ 100L,
-                /* bytesReceived = */ 1000L,
-                /* statusCode = */ 200,
-                /* traceId = */ null,
-                /* w3cTraceparent = */ null,
-                /* networkCaptureData = */ networkCaptureData
+                url,
+                HttpMethod.GET,
+                startTime,
+                endTime,
+                100L,
+                1000L,
+                200,
+                null,
+                null,
+                networkCaptureData
             )
         )
     }

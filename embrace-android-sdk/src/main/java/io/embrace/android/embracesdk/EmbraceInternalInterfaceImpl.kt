@@ -167,11 +167,8 @@ internal class EmbraceInternalInterfaceImpl(
         )
     }
 
-    override fun recordAndDeduplicateNetworkRequest(
-        callId: String,
-        embraceNetworkRequest: EmbraceNetworkRequest
-    ) {
-        embraceImpl.recordAndDeduplicateNetworkRequest(callId, embraceNetworkRequest)
+    override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) {
+        embraceImpl.recordNetworkRequest(embraceNetworkRequest)
     }
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = embraceImpl.shouldCaptureNetworkCall(url, method)

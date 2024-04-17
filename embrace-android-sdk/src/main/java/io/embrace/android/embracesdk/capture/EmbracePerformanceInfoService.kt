@@ -30,7 +30,6 @@ internal class EmbracePerformanceInfoService(
         val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
 
         return info.copy(
-            networkRequests = captureDataSafely(logger) { NetworkRequests(networkLoggingService.getNetworkCallsSnapshot()) },
             googleAnrTimestamps = captureDataSafely(logger) {
                 googleAnrTimestampRepository.getGoogleAnrTimestamps(
                     sessionStart,

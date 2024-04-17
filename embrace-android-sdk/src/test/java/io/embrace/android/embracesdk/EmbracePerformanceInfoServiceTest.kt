@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
@@ -23,7 +22,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private lateinit var service: EmbracePerformanceInfoService
     private val networkConnectivityService = FakeNetworkConnectivityService()
     private val networkLoggingService = FakeNetworkLoggingService()
-    private val memoryService = FakeMemoryService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
@@ -33,7 +31,6 @@ internal class EmbracePerformanceInfoServiceTest {
         service = EmbracePerformanceInfoService(
             networkConnectivityService,
             networkLoggingService,
-            memoryService,
             metadataService,
             googleAnrTimestampRepository,
             null,
@@ -68,7 +65,6 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(metadataService.getDiskUsage(), info.diskUsage)
-        assertValueCopied(memoryService.data, info.memoryWarnings)
         assertValueCopied(networkConnectivityService.data, info.networkInterfaceIntervals)
     }
 

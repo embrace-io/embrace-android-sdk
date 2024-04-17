@@ -20,8 +20,7 @@ internal class SessionPerformanceInfoSanitizerTest {
             SessionGatingKeys.PERFORMANCE_ANR,
             SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE,
             SessionGatingKeys.PERFORMANCE_CPU,
-            SessionGatingKeys.PERFORMANCE_CONNECTIVITY,
-            SessionGatingKeys.PERFORMANCE_LOW_MEMORY
+            SessionGatingKeys.PERFORMANCE_CONNECTIVITY
         )
 
         val result = PerformanceInfoSanitizer(sessionPerformanceInfo, components).sanitize()
@@ -37,7 +36,6 @@ internal class SessionPerformanceInfoSanitizerTest {
         val result = PerformanceInfoSanitizer(sessionPerformanceInfo, components).sanitize()
         assertNull(result?.networkRequests)
         assertNull(result?.networkInterfaceIntervals)
-        assertNull(result?.memoryWarnings)
         assertNull(result?.diskUsage)
     }
 }

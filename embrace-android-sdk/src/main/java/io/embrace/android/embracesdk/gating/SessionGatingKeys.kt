@@ -24,7 +24,6 @@ internal object SessionGatingKeys {
     const val PERFORMANCE_CONNECTIVITY = "pr_ns"
     const val PERFORMANCE_NETWORK = "pr_nr"
     const val PERFORMANCE_CPU = "pr_cp"
-    const val PERFORMANCE_LOW_MEMORY = "pr_mw"
     const val PERFORMANCE_CURRENT_DISK_USAGE = "pr_ds"
 
     // Events that can send full session payloads

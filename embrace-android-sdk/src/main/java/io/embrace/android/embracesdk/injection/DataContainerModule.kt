@@ -22,6 +22,7 @@ internal class DataContainerModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    @Suppress("UNUSED_PARAMETER")
     dataCaptureServiceModule: DataCaptureServiceModule,
     anrModule: AnrModule,
     customerLogModule: CustomerLogModule,
@@ -34,7 +35,6 @@ internal class DataContainerModuleImpl(
         EmbracePerformanceInfoService(
             essentialServiceModule.networkConnectivityService,
             customerLogModule.networkLoggingService,
-            dataCaptureServiceModule.memoryService,
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
             nativeModule.nativeThreadSamplerService,

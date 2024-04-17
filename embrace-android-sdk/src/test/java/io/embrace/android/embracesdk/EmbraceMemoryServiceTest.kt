@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.arch.SessionType
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -36,33 +38,32 @@ internal class EmbraceMemoryServiceTest {
             androidServicesModule = FakeAndroidServicesModule(),
             workerThreadModule = FakeWorkerThreadModule(),
         )
+        dataSourceModule.getDataSources().forEach { it.onSessionTypeChange(SessionType.FOREGROUND) }
         embraceMemoryService = EmbraceMemoryService(fakeClock) { dataSourceModule }
+    }
+
+    @Test
+    fun `onMemoryWarning populates events up to MAX_CAPTURED_MEMORY_WARNINGS`() {
+        with(embraceMemoryService) {
+            repeat(EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS) {
+                onMemoryWarning()
+                fakeClock.tick()
+            }
+            val currentSessionSpan = otelModule.currentSessionSpan as FakeCurrentSessionSpan
+            assertEquals(
+                EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS,
+                currentSessionSpan.addedEvents.size
+            )
+            onMemoryWarning()
+            assertEquals(
+                EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS,
+                currentSessionSpan.addedEvents.size
+            )
+        }
     }
 
     @After
     fun tearDown() {
         unmockkAll()
-    }
-
-    @Test
-    fun `onMemoryWarning populates memoryTimestamps if the offset is less than 100`() {
-        with(embraceMemoryService) {
-            repeat(100) {
-                onMemoryWarning()
-                fakeClock.tick()
-            }
-            val result = this.getCapturedData()
-            assertEquals(result.size, 100)
-            onMemoryWarning()
-            assertEquals(result.size, 100)
-        }
-    }
-
-    @Test
-    fun testCleanCollections() {
-        embraceMemoryService.onMemoryWarning()
-        assertEquals(1, embraceMemoryService.getCapturedData().size)
-        embraceMemoryService.cleanCollections()
-        assertEquals(0, embraceMemoryService.getCapturedData().size)
     }
 }

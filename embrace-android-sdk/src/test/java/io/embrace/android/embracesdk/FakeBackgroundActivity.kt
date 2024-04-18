@@ -37,5 +37,6 @@ internal fun fakeBackgroundActivity() = Session(
     appState = "background",
     number = 1,
     messageType = "en",
-    isColdStart = false
+    isColdStart = false,
+    startType = Session.LifeEventType.STATE
 )

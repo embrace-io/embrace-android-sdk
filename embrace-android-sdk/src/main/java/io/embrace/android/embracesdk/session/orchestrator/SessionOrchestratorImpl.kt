@@ -15,8 +15,11 @@ import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
+import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.opentelemetry.embState
+import io.embrace.android.embracesdk.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
@@ -25,6 +28,7 @@ import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.message.PayloadFactory
+import java.util.Locale
 
 internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,
@@ -189,7 +193,7 @@ internal class SessionOrchestratorImpl(
             // second, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
-                populateSessionSpanEndAttrs(crashId)
+                populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId)
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
@@ -238,14 +242,21 @@ internal class SessionOrchestratorImpl(
             addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
             addCustomAttribute(SpanAttributeData(embState.name, session.appState))
             addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
+            session.startType?.toString()?.toLowerCase(Locale.US)?.let {
+                addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
+            }
         }
     }
 
-    private fun populateSessionSpanEndAttrs(crashId: String?) {
+    private fun populateSessionSpanEndAttrs(endType: Session.LifeEventType?, crashId: String?) {
         with(sessionSpanWriter) {
             addCustomAttribute(SpanAttributeData(embCleanExit.name, true.toString()))
+            addCustomAttribute(SpanAttributeData(embTerminated.name, false.toString()))
             crashId?.let {
                 addCustomAttribute(SpanAttributeData(embCrashId.name, crashId))
+            }
+            endType?.toString()?.toLowerCase(Locale.US)?.let {
+                addCustomAttribute(SpanAttributeData(embSessionEndType.name, it))
             }
         }
     }
@@ -274,10 +285,10 @@ internal class SessionOrchestratorImpl(
         endProcessState: ProcessState,
         newState: Session
     ) {
-        updateHeartbeatTime()
+        updatePeriodicCacheAttrs()
         periodicSessionCacher.start {
             synchronized(lock) {
-                updateHeartbeatTime()
+                updatePeriodicCacheAttrs()
                 payloadFactory.snapshotPayload(endProcessState, clock.now(), newState)?.apply {
                     deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
                 }
@@ -286,10 +297,10 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: Session) {
-        updateHeartbeatTime()
+        updatePeriodicCacheAttrs()
         periodicBackgroundActivityCacher.scheduleSave {
             synchronized(lock) {
-                updateHeartbeatTime()
+                updatePeriodicCacheAttrs()
                 payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
                     deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
                 }
@@ -297,10 +308,11 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun updateHeartbeatTime() {
+    private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
         val attr = SpanAttributeData(embHeartbeatTimeUnixNano.name, now.toString())
         sessionSpanWriter.addCustomAttribute(attr)
+        sessionSpanWriter.addCustomAttribute(SpanAttributeData(embTerminated.name, true.toString()))
     }
 
     private fun logSessionStateChange(

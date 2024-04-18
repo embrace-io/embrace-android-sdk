@@ -58,6 +58,11 @@ internal val embSessionNumber = EmbraceAttributeKey("session_number")
 internal val embCleanExit = EmbraceAttributeKey("clean_exit")
 
 /**
+ * Attribute name that indicates whether the session was terminated
+ */
+internal val embTerminated = EmbraceAttributeKey("terminated")
+
+/**
  * Attribute name that represents last known time that the session existed (nanoseconds since epoch)
  */
 internal val embHeartbeatTimeUnixNano = EmbraceAttributeKey("heartbeat_time_unix_nano")
@@ -66,3 +71,13 @@ internal val embHeartbeatTimeUnixNano = EmbraceAttributeKey("heartbeat_time_unix
  * Attribute name that identifies the crash report tied to the session
  */
 internal val embCrashId = EmbraceAttributeKey("crash_id")
+
+/**
+ * Attribute name that identifies the session start type
+ */
+internal val embSessionStartType = EmbraceAttributeKey("session_start_type")
+
+/**
+ * Attribute name that identifies the session end type
+ */
+internal val embSessionEndType = EmbraceAttributeKey("session_end_type")

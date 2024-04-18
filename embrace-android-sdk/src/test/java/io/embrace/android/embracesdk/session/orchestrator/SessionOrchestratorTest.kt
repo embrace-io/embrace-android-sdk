@@ -285,6 +285,11 @@ internal class SessionOrchestratorTest {
         orchestrator.onForeground(true, TIMESTAMP)
         orchestrator.onBackground(TIMESTAMP)
         assertSessionSpanAttrsAdded(false, "background")
+
+        val startTypes = sessionSpan.addedAttributes.filter { it.key == "emb.session_start_type" }.map { it.value }
+        val endTypes = sessionSpan.addedAttributes.filter { it.key == "emb.session_end_type" }.map { it.value }
+        assertEquals(listOf("state", "state", "state", "state"), startTypes)
+        assertEquals(listOf("bkgnd_state", "state"), endTypes)
     }
 
     @Test
@@ -300,18 +305,34 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, TIMESTAMP)
         assertHeartbeatMatchesClock()
+        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
+
+        // run periodic cache
         clock.tick(2000)
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
+        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
+
+        // end with crash
+        orchestrator.endSessionWithCrash("my-crash-id")
+        assertEquals("false", sessionSpan.getAttribute("emb.terminated"))
     }
 
     @Test
     fun `test background session span heartbeat`() {
         createOrchestrator(true)
         assertHeartbeatMatchesClock()
+        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
+
+        // run periodic cache
         clock.tick(6000)
         baCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
+        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
+
+        // end with crash
+        orchestrator.endSessionWithCrash("my-crash-id")
+        assertEquals("false", sessionSpan.getAttribute("emb.terminated"))
     }
 
     private fun assertHeartbeatMatchesClock() {

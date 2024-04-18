@@ -146,8 +146,6 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    /* Implementation details */
-
     override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
         DataSourceState(
             factory = { aeiService },
@@ -189,9 +187,8 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    /* Implementation details */
-
     private val configService = essentialServiceModule.configService
+
     override fun getDataSources(): List<DataSourceState<*>> = values
 
     /**

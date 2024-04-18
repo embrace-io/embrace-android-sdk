@@ -29,8 +29,8 @@ internal class TelemetryAttributes(
         }
 
         if (!shouldGateSessionProperties) {
-            sessionProperties?.get()?.let {
-                result.putAll(it.mapKeys { it.key.toSessionPropertyAttributeName() })
+            sessionProperties?.get()?.let { properties ->
+                result.putAll(properties.mapKeys { property -> property.key.toSessionPropertyAttributeName() })
             }
         }
 

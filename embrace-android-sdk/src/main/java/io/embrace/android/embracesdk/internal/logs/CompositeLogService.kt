@@ -34,7 +34,9 @@ internal class CompositeLogService(
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
         if (useV2LogService) {
-            networkCaptureDataSource().logNetworkCapturedCall(networkCaptureCall)
+            networkCaptureCall?.let {
+                networkCaptureDataSource().logNetworkCapturedCall(it)
+            }
         } else {
             v1LogService().logNetwork(networkCaptureCall)
         }

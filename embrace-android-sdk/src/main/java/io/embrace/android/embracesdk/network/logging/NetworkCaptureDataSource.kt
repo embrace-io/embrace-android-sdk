@@ -5,5 +5,5 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 internal interface NetworkCaptureDataSource : LogDataSource {
 
-    fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall?)
+    fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall)
 }

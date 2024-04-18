@@ -90,7 +90,8 @@ internal class CompositeLogServiceTest {
     fun testNetworkCaptureV1() {
         oTelConfig = OTelRemoteConfig(isBetaEnabled = false)
         compositeLogService.logNetwork(
-            fakeNetworkCapturedCall())
+            fakeNetworkCapturedCall()
+        )
         assertEquals(1, v1LogService.networkCalls.size)
         assertEquals(0, networkCaptureDataSource.loggedCalls.size)
     }
@@ -99,7 +100,8 @@ internal class CompositeLogServiceTest {
     fun testNetworkCaptureV2() {
         oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
         compositeLogService.logNetwork(
-            fakeNetworkCapturedCall())
+            fakeNetworkCapturedCall()
+        )
         assertEquals(0, v1LogService.networkCalls.size)
         assertEquals(1, networkCaptureDataSource.loggedCalls.size)
     }

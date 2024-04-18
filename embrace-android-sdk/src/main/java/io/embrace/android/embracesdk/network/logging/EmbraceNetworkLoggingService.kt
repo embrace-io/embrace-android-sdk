@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.payload.NetworkCallV2
-import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2.DomainCount
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
@@ -39,8 +37,6 @@ internal class EmbraceNetworkLoggingService(
      */
     private val sessionNetworkCalls = ConcurrentHashMap<String, NetworkCallV2>()
 
-    private val networkCallCache = CacheableValue<List<NetworkCallV2>> { callsStorageLastUpdate.get() }
-
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
 
     private val callsPerDomainSuffix = hashMapOf<String, DomainCount>()
@@ -52,36 +48,6 @@ internal class EmbraceNetworkLoggingService(
     private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
 
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
-
-    fun getNetworkCallsSnapshot(): NetworkSessionV2 {
-        var storedCallsSize: Int? = null
-        var cachedCallsSize: Int? = null
-
-        try {
-            synchronized(callsStorageLastUpdate) {
-                val calls = networkCallCache.value {
-                    sessionNetworkCalls.values.toList()
-                }
-
-                storedCallsSize = sessionNetworkCalls.size
-                cachedCallsSize = calls.size
-
-                val overLimit = hashMapOf<String, DomainCount>()
-                for ((key, value) in callsPerDomainSuffix) {
-                    if (value.requestCount > value.captureLimit) {
-                        overLimit[key] = value
-                    }
-                }
-
-                return NetworkSessionV2(calls, overLimit)
-            }
-        } finally {
-            if (cachedCallsSize != storedCallsSize) {
-                val msg = "Cached network call count different than expected: $cachedCallsSize instead of $storedCallsSize"
-                logger.logError(msg, IllegalStateException(msg), true)
-            }
-        }
-    }
 
     fun logNetworkCall(
         callId: String,

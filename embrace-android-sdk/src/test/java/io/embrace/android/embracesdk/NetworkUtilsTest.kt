@@ -140,7 +140,7 @@ internal class NetworkUtilsTest {
 
     @Test
     fun stripUrl() {
-        assertNull(stripUrl(null))
+        assertEquals("", stripUrl(""))
 
         for (pairs in urlsToStrip) {
             val url = pairs[0]

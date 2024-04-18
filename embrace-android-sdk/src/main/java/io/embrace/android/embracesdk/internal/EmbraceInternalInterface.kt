@@ -94,14 +94,11 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     )
 
     /**
-     * Record a network request and overwrite any previously recorded request with the same callId
+     * Record a network request.
      *
-     * @param callId                the ID with which the request will be identified internally. The session will only contain one recorded
-     *                              request with a given ID - last writer wins.
      * @param embraceNetworkRequest the request to be recorded
      */
-    public fun recordAndDeduplicateNetworkRequest(
-        callId: String,
+    public fun recordNetworkRequest(
         embraceNetworkRequest: EmbraceNetworkRequest
     )
 

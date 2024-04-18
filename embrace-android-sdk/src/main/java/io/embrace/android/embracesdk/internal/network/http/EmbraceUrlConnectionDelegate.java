@@ -573,8 +573,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 long contentLength = Math.max(0, responseSize.get());
 
                 if (inputStreamAccessException == null && lastConnectionAccessException == null && responseCode.get() != 0) {
-                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
-                        callId,
+                    embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -604,8 +603,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                     String errorType = exceptionClass != null ? exceptionClass : "UnknownState";
                     String errorMessage = exceptionMessage != null ? exceptionMessage : "HTTP response state unknown";
 
-                    embrace.getInternalInterface().recordAndDeduplicateNetworkRequest(
-                        callId,
+                    embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),

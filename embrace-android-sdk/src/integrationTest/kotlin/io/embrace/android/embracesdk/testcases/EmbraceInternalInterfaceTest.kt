@@ -89,8 +89,7 @@ internal class EmbraceInternalInterfaceTest {
                 networkCaptureData = null
             )
 
-            recordAndDeduplicateNetworkRequest(
-                callId = "",
+            recordNetworkRequest(
                 embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
                     "",
                     HttpMethod.GET,
@@ -193,8 +192,7 @@ internal class EmbraceInternalInterfaceTest {
                     networkCaptureData = null
                 )
 
-                embrace.internalInterface.recordAndDeduplicateNetworkRequest(
-                    callId = "",
+                embrace.internalInterface.recordNetworkRequest(
                     embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
                         URL,
                         HttpMethod.POST,

@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -45,7 +44,6 @@ import io.embrace.android.embracesdk.internal.IdGenerator;
 import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
@@ -717,74 +715,14 @@ final class EmbraceImpl {
     }
 
     void recordNetworkRequest(@NonNull EmbraceNetworkRequest request) {
-        if (embraceInternalInterface != null && checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
-            embraceInternalInterface.recordAndDeduplicateNetworkRequest(UUID.randomUUID().toString(), request);
-        }
-    }
-
-    void recordAndDeduplicateNetworkRequest(@NonNull String callId, @NonNull EmbraceNetworkRequest request) {
         if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
-            logNetworkRequestImpl(
-                callId,
-                request.getNetworkCaptureData(),
-                request.getUrl(),
-                request.getHttpMethod(),
-                request.getStartTime(),
-                request.getResponseCode(),
-                request.getEndTime(),
-                request.getErrorType(),
-                request.getErrorMessage(),
-                request.getTraceId(),
-                request.getW3cTraceparent(),
-                request.getBytesOut(),
-                request.getBytesIn()
-            );
+            logNetworkRequest(request);
         }
     }
 
-    private void logNetworkRequestImpl(@NonNull String callId,
-                                       @Nullable NetworkCaptureData networkCaptureData,
-                                       String url,
-                                       String httpMethod,
-                                       Long startTime,
-                                       Integer responseCode,
-                                       Long endTime,
-                                       String errorType,
-                                       String errorMessage,
-                                       String traceId,
-                                       @Nullable String w3cTraceparent,
-                                       Long bytesOut,
-                                       Long bytesIn) {
-        if (configService.getNetworkBehavior().isUrlEnabled(url)) {
-            if (errorType != null &&
-                errorMessage != null &&
-                !errorType.isEmpty() &&
-                !errorMessage.isEmpty()) {
-                networkLoggingService.logNetworkError(
-                    callId,
-                    url,
-                    httpMethod,
-                    startTime,
-                    endTime != null ? endTime : 0,
-                    errorType,
-                    errorMessage,
-                    traceId,
-                    w3cTraceparent,
-                    networkCaptureData);
-            } else {
-                networkLoggingService.logNetworkCall(
-                    callId,
-                    url,
-                    httpMethod,
-                    responseCode != null ? responseCode : 0,
-                    startTime,
-                    endTime != null ? endTime : 0,
-                    bytesOut,
-                    bytesIn,
-                    traceId,
-                    w3cTraceparent,
-                    networkCaptureData);
-            }
+    private void logNetworkRequest(@NonNull EmbraceNetworkRequest request) {
+        if (configService.getNetworkBehavior().isUrlEnabled(request.getUrl())) {
+            networkLoggingService.logNetworkRequest(request);
             onActivityReported();
         }
     }

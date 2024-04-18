@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.payload.NetworkCallV2
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
@@ -52,7 +53,7 @@ internal class EmbraceNetworkLoggingService(
 
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
-    override fun getNetworkCallsSnapshot(): NetworkSessionV2 {
+    fun getNetworkCallsSnapshot(): NetworkSessionV2 {
         var storedCallsSize: Int? = null
         var cachedCallsSize: Int? = null
 
@@ -82,7 +83,7 @@ internal class EmbraceNetworkLoggingService(
         }
     }
 
-    override fun logNetworkCall(
+    fun logNetworkCall(
         callId: String,
         url: String,
         httpMethod: String,
@@ -125,7 +126,7 @@ internal class EmbraceNetworkLoggingService(
         processNetworkCall(callId, networkCall)
     }
 
-    override fun logNetworkError(
+    fun logNetworkError(
         callId: String,
         url: String,
         httpMethod: String,
@@ -254,5 +255,9 @@ internal class EmbraceNetworkLoggingService(
             callsStorageLastUpdate.set(0)
             sessionNetworkCalls.clear()
         }
+    }
+
+    override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+        // TODO("Not yet implemented")
     }
 }

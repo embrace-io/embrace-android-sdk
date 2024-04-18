@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.ndk
 
 import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
+import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.config.ConfigService
@@ -19,6 +20,7 @@ internal interface NativeModule {
     val ndkService: NdkService
     val nativeThreadSamplerService: NativeThreadSamplerService?
     val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller?
+    val nativeAnrOtelMapper: NativeAnrOtelMapper
 }
 
 internal class NativeModuleImpl(
@@ -71,6 +73,10 @@ internal class NativeModuleImpl(
                 null
             }
         }
+    }
+
+    override val nativeAnrOtelMapper: NativeAnrOtelMapper by singleton {
+        NativeAnrOtelMapper(nativeThreadSamplerService, coreModule.jsonSerializer)
     }
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {

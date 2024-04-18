@@ -402,7 +402,6 @@ internal class ModuleInitBootstrapper(
                             anrModule,
                             customerLogModule,
                             deliveryModule,
-                            nativeModule,
                             sdkStartTimeMs
                         )
                     }

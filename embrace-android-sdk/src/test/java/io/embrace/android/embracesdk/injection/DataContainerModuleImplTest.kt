@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModul
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -25,7 +24,6 @@ internal class DataContainerModuleImplTest {
             FakeAnrModule(),
             FakeCustomerLogModule(),
             FakeDeliveryModule(),
-            FakeNativeModule(),
             0
         )
         assertNotNull(module.eventService)

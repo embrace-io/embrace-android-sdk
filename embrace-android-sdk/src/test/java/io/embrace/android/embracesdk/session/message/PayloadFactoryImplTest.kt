@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.message
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -24,6 +25,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState.FOREGROUND
@@ -69,6 +71,7 @@ internal class PayloadFactoryImplTest {
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
             anrOtelMapper = AnrOtelMapper(FakeAnrService()),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
             logger = initModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(

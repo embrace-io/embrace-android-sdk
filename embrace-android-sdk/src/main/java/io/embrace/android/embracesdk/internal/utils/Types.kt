@@ -180,7 +180,6 @@ internal typealias DataContainerModuleSupplier = (
     anrModule: AnrModule,
     customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
-    nativeModule: NativeModule,
     startTime: Long
 ) -> DataContainerModule
 

@@ -29,5 +29,6 @@ internal class NativeModuleImplTest {
         assertNotNull(module.ndkService)
         assertNull(module.nativeThreadSamplerService)
         assertNull(module.nativeThreadSamplerInstaller)
+        assertNotNull(module.nativeAnrOtelMapper)
     }
 }

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -188,6 +189,7 @@ internal class PayloadFactoryBaTest {
             FakeSessionPropertiesService(),
             FakeStartupService(),
             AnrOtelMapper(FakeAnrService()),
+            NativeAnrOtelMapper(null, EmbraceSerializer()),
             logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(

@@ -65,6 +65,7 @@ internal class SessionModuleImpl(
             sessionPropertiesService,
             dataCaptureServiceModule.startupService,
             anrModule.anrOtelMapper,
+            nativeModule.nativeAnrOtelMapper,
             initModule.logger
         )
     }

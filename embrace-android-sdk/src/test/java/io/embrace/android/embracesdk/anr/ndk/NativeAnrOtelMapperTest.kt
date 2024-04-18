@@ -26,6 +26,12 @@ internal class NativeAnrOtelMapperTest {
     }
 
     @Test
+    fun `disabled service`() {
+        val disabledMapper = NativeAnrOtelMapper(null, EmbraceSerializer())
+        assertEquals(emptyList<Span>(), disabledMapper.snapshot(false))
+    }
+
+    @Test
     fun `null intervals`() {
         assertEquals(emptyList<Span>(), mapper.snapshot(false))
     }
@@ -87,10 +93,14 @@ internal class NativeAnrOtelMapperTest {
         val eventAttrs = checkNotNull(event.attributes)
         assertEquals("0", eventAttrs.findAttribute("result").data)
         assertEquals("5", eventAttrs.findAttribute("sample_overhead_ms").data)
-        assertEquals("perf.native_thread_blockage_sample", eventAttrs.findAttribute("emb.type").data)
+        assertEquals(
+            "perf.native_thread_blockage_sample",
+            eventAttrs.findAttribute("emb.type").data
+        )
 
-        val expectedStacktrace = "[{\"program_counter\":\"0x8000050209\",\"so_load_addr\":\"0x500234500\"," +
-            "\"so_name\":\"/data/app/lib.so\",\"result\":0}]"
+        val expectedStacktrace =
+            "[{\"program_counter\":\"0x8000050209\",\"so_load_addr\":\"0x500234500\"," +
+                "\"so_name\":\"/data/app/lib.so\",\"result\":0}]"
         assertEquals(expectedStacktrace, eventAttrs.findAttribute("stacktrace").data)
     }
 

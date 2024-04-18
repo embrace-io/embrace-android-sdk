@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
@@ -48,7 +49,8 @@ internal class V1PayloadMessageCollator(
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService,
-    @Suppress("UnusedPrivateProperty") private val anrOtelMapper: AnrOtelMapper,
+    private val anrOtelMapper: AnrOtelMapper,
+    private val nativeAnrOtelMapper: NativeAnrOtelMapper,
     private val logger: InternalEmbraceLogger,
 ) : PayloadMessageCollator {
 
@@ -181,7 +183,9 @@ internal class V1PayloadMessageCollator(
                 else -> spanSink.completedSpans()
             }
             // add ANR spans if the payload is capturing spans.
-            result?.plus(anrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload)) ?: result
+            result?.plus(anrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
+                ?.plus(nativeAnrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
+                ?: result
         }
         val breadcrumbs = captureDataSafely(logger) {
             when {

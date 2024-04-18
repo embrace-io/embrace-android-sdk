@@ -14,47 +14,50 @@ internal class EmbraceDomainCountLimiter(
 ) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
-    private val callsPerDomainSuffix = hashMapOf<String, NetworkSessionV2.DomainCount>()
+    private val callsPerDomainSuffix = ConcurrentHashMap<String, NetworkSessionV2.DomainCount>()
     private val ipAddressNetworkCallCount = AtomicInteger(0)
     private val untrackedNetworkCallCount = AtomicInteger(0)
     private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
     private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
 
+    private val lock = Any()
+
     override fun canLogNetworkRequest(domain: String): Boolean {
-        // TODO: Should we synchronize on another object now that we don't use callsStorageLastUpdate?
-        if (NetworkUtils.isIpAddress(domain)) {
-            // TODO: All of the IP address domains fall under the same limit? Is that correct?
-            return ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit
-        }
-
-        if (!domainSetting.containsKey(domain)) {
-            createLimitForDomain(domain)
-        }
-
-        val settings = domainSetting[domain]
-        if (settings == null) {
-            // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
-            return untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit
-        } else {
-            val suffix = settings.suffix
-            val limit = settings.limit
-            var countPerSuffix = callsPerDomainSuffix[suffix]
-
-            if (countPerSuffix == null) {
-                countPerSuffix = NetworkSessionV2.DomainCount(0, limit)
+        synchronized(lock) {
+            if (NetworkUtils.isIpAddress(domain)) {
+                // TODO: All of the IP address domains fall under the same limit? Is that correct?
+                return ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit
             }
 
-            // Track the number of calls for each domain (or configured suffix)
-            suffix?.let {
-                callsPerDomainSuffix[it] = NetworkSessionV2.DomainCount(countPerSuffix.requestCount + 1, limit)
+            if (!domainSetting.containsKey(domain)) {
+                createLimitForDomain(domain)
             }
 
-            // Exclude if the network call exceeds the limit
-            if (countPerSuffix.requestCount < limit) {
-                return true
+            val settings = domainSetting[domain]
+            if (settings == null) {
+                // Not sure how this is possible, but in case it is, limit logged logs where we can't figure out the settings to apply
+                return untrackedNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit
+            } else {
+                val suffix = settings.suffix
+                val limit = settings.limit
+                var countPerSuffix = callsPerDomainSuffix[suffix]
+
+                if (countPerSuffix == null) {
+                    countPerSuffix = NetworkSessionV2.DomainCount(0, limit)
+                }
+
+                // Track the number of calls for each domain (or configured suffix)
+                suffix?.let {
+                    callsPerDomainSuffix[it] = NetworkSessionV2.DomainCount(countPerSuffix.requestCount + 1, limit)
+                }
+
+                // Exclude if the network call exceeds the limit
+                if (countPerSuffix.requestCount < limit) {
+                    return true
+                }
             }
+            return false
         }
-        return false
     }
 
     private fun createLimitForDomain(domain: String) {
@@ -74,10 +77,12 @@ internal class EmbraceDomainCountLimiter(
     }
 
     override fun cleanCollections() {
-        clearNetworkCalls()
-        // re-fetch limits in case they changed since they last time they were fetched
-        defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-        domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+        synchronized(lock) {
+            clearNetworkCalls()
+            // re-fetch limits in case they changed since they last time they were fetched
+            defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
+            domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+        }
     }
 
     private fun clearNetworkCalls() {

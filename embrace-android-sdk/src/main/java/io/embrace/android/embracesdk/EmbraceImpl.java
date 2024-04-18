@@ -334,15 +334,16 @@ final class EmbraceImpl {
         sessionOrchestrator = sessionModule.getSessionOrchestrator();
         sessionPropertiesService = sessionModule.getSessionPropertiesService();
 
+        final CrashModule crashModule = moduleInitBootstrapper.getCrashModule();
+
         Systrace.startSynchronous("send-cached-sessions");
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
-            nativeModule::getNdkService,
+            crashModule::getNativeCrashService,
             essentialServiceModule.getSessionIdTracker()
         );
         Systrace.endSynchronous();
 
-        final CrashModule crashModule = moduleInitBootstrapper.getCrashModule();
         loadCrashVerifier(crashModule, moduleInitBootstrapper.getWorkerThreadModule());
 
         internalInterfaceModule = new InternalInterfaceModuleImpl(

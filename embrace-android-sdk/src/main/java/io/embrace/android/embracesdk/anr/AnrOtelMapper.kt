@@ -17,7 +17,7 @@ internal class AnrOtelMapper(
     private val anrService: AnrService
 ) : DataCaptureServiceOtelConverter {
 
-    override fun snapshot(): List<Span> {
+    override fun snapshot(isFinalPayload: Boolean): List<Span> {
         val intervals = anrService.getCapturedData()
 
         return intervals.map { interval ->

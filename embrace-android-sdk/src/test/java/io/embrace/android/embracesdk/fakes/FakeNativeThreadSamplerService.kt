@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 internal class FakeNativeThreadSamplerService : NativeThreadSamplerService {
 
     var symbols: Map<String, String>? = mapOf("armeabi-v7a" to "my-symbols")
+    var intervals: List<NativeThreadAnrInterval>? = null
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
         TODO("Not yet implemented")
@@ -30,7 +31,7 @@ internal class FakeNativeThreadSamplerService : NativeThreadSamplerService {
     override fun getNativeSymbols(): Map<String, String>? = symbols
 
     override fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>? {
-        TODO("Not yet implemented")
+        return intervals
     }
 
     override fun cleanCollections() {

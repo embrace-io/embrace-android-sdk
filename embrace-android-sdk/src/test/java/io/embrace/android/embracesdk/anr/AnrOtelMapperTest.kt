@@ -89,7 +89,7 @@ internal class AnrOtelMapperTest {
 
     @Test
     fun `empty intervals`() {
-        assertEquals(emptyList<Span>(), mapper.snapshot())
+        assertEquals(emptyList<Span>(), mapper.snapshot(false))
     }
 
     @Test
@@ -100,14 +100,14 @@ internal class AnrOtelMapperTest {
             clearedInterval,
             intervalWithLimitedSample
         )
-        val spans = mapper.snapshot()
+        val spans = mapper.snapshot(false)
         assertEquals(4, spans.size)
     }
 
     @Test
     fun `map completed interval`() {
         anrService.data = listOf(completedInterval)
-        val spans = mapper.snapshot()
+        val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
         assertEquals(END_TIME_MS, span.endTimeUnixNano?.nanosToMillis())
@@ -123,7 +123,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map in progress interval`() {
         anrService.data = listOf(inProgressInterval)
-        val spans = mapper.snapshot()
+        val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
 
@@ -143,7 +143,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map cleared interval`() {
         anrService.data = listOf(clearedInterval)
-        val spans = mapper.snapshot()
+        val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
         assertEquals("1", span.attributes?.findAttribute("interval_code")?.data)
@@ -153,7 +153,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map limited sample`() {
         anrService.data = listOf(intervalWithLimitedSample)
-        val spans = mapper.snapshot()
+        val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)

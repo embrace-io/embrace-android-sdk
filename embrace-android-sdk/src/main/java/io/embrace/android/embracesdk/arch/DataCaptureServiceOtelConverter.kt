@@ -18,5 +18,5 @@ internal fun interface DataCaptureServiceOtelConverter {
     /**
      * Returns a snapshot of the data captured by the service as a list of spans.
      */
-    fun snapshot(): List<Span>?
+    fun snapshot(isFinalPayload: Boolean): List<Span>?
 }

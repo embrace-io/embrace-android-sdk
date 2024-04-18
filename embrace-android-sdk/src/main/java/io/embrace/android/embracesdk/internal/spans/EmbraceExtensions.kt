@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.trace.Span
@@ -167,3 +168,7 @@ internal fun MutableMap<String, String>.setFixedAttribute(fixedAttribute: FixedA
 }
 
 internal fun Map<String, String>.getSessionProperty(key: String): String? = this[key.toSessionPropertyAttributeName()]
+
+internal fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? = this[key.key]
+
+internal fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = getAttribute(key.attributeKey)

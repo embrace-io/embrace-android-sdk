@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 internal fun fakeDataSourceModule(): DataSourceModule {
     return DataSourceModuleImpl(
         initModule = FakeInitModule(),
+        coreModule = FakeCoreModule(),
         otelModule = FakeOpenTelemetryModule(),
         essentialServiceModule = FakeEssentialServiceModule(),
         systemServiceModule = FakeSystemServiceModule(),
         androidServicesModule = FakeAndroidServicesModule(),
         workerThreadModule = FakeWorkerThreadModule(),
-        coreModule = FakeCoreModule()
     )
 }

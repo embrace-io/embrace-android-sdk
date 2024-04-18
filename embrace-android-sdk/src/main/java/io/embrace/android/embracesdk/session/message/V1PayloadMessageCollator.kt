@@ -181,7 +181,7 @@ internal class V1PayloadMessageCollator(
                 else -> spanSink.completedSpans()
             }
             // add ANR spans if the payload is capturing spans.
-            result?.plus(anrOtelMapper.snapshot().map(Span::toOldPayload)) ?: result
+            result?.plus(anrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload)) ?: result
         }
         val breadcrumbs = captureDataSafely(logger) {
             when {

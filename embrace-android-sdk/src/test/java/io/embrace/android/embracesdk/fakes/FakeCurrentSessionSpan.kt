@@ -12,7 +12,7 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     var initializedCallCount = 0
     var addedEvents = mutableListOf<SpanEventData>()
     var spanData = listOf<EmbraceSpanData>()
-    private var addedAttributes = mutableListOf<SpanAttributeData>()
+    var addedAttributes = mutableListOf<SpanAttributeData>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }

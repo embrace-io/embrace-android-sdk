@@ -10,6 +10,7 @@ internal class FakeNdkService : NdkService {
     var sessionId: String? = null
     var userUpdateCount: Int = 0
     var lastUnityCrashId: String? = null
+    private var nativeCrashData: NativeCrashData? = null
 
     override fun updateSessionId(newSessionId: String) {
         sessionId = newSessionId
@@ -27,12 +28,24 @@ internal class FakeNdkService : NdkService {
         return lastUnityCrashId
     }
 
-    override fun checkForNativeCrash(): NativeCrashData? {
+    override fun getNativeCrash(): NativeCrashData? {
+        val data = nativeCrashData
+        nativeCrashData = null
+        return data
+    }
+
+    override fun getAndSendNativeCrash(): NativeCrashData? {
         checkForNativeCrashCount++
-        return null
+        return getNativeCrash()
     }
 
     override fun getSymbolsForCurrentArch(): Map<String, String>? {
         TODO("Not yet implemented")
+    }
+
+    fun hasNativeCrash(): Boolean = nativeCrashData != null
+
+    fun setNativeCrashData(data: NativeCrashData) {
+        nativeCrashData = data
     }
 }

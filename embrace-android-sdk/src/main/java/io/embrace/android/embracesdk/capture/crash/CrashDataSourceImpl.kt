@@ -151,8 +151,7 @@ internal class CrashDataSourceImpl(
             result.add(0, exceptionInfo)
             throwable = throwable.cause
         }
-        val stackString = result.map(LegacyExceptionInfo::toString).toList()
-        return serializer.toJson(stackString, List::class.java)
+        return serializer.toJson(result, List::class.java)
     }
 
     /**
@@ -160,8 +159,7 @@ internal class CrashDataSourceImpl(
      */
     private fun getThreadsInfo(): String {
         val threadsList = Thread.getAllStackTraces().map { ThreadInfo.ofThread(it.key, it.value) }
-        val stackString = threadsList.map(ThreadInfo::toString).toList()
-        return serializer.toJson(stackString, List::class.java)
+        return serializer.toJson(threadsList, List::class.java)
     }
 
     private fun encodeToUTF8String(source: String): String {

@@ -37,7 +37,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         fun setupNativeThreadSampler(is32Bit: Boolean): Boolean
         fun monitorCurrentThread(): Boolean
         fun startSampling(unwinderOrdinal: Int, intervalMs: Long)
-        fun finishSampling(): List<NativeThreadAnrSample>? // TODO: call this when entering bg!
+        fun finishSampling(): List<NativeThreadAnrSample>?
     }
 
     internal var ignored = true

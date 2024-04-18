@@ -19,6 +19,18 @@
             "value": "true"
           },
           {
+            "key": "emb.session_start_type",
+            "value":"state"
+          },
+          {
+            "key": "emb.terminated",
+            "value":"false"
+          },
+          {
+            "key": "emb.session_end_type",
+            "value":"state"
+          },
+          {
             "key": "emb.session_id",
             "value": "__EMBRACE_TEST_IGNORE__"
           },
@@ -101,6 +113,10 @@
       {
         "attributes": [
           {
+            "key":"emb.session_start_type",
+            "value":"state"
+          },
+          {
             "key":"emb.usage.add_user_persona",
             "value":"1"
           },
@@ -109,16 +125,24 @@
             "value":"__EMBRACE_TEST_IGNORE__"
           },
           {
-            "key":"emb.usage.set_user_identifier",
-            "value":"1"
-          },
-          {
             "key":"emb.session_id",
             "value":"__EMBRACE_TEST_IGNORE__"
           },
           {
+            "key":"emb.usage.set_user_identifier",
+            "value":"1"
+          },
+          {
             "key":"emb.kotlin_on_classpath",
             "value":"1.4.32"
+          },
+          {
+            "key":"emb.terminated",
+            "value":"false"
+          },
+          {
+            "key":"emb.session_end_type",
+            "value":"state"
           },
           {
             "key":"emb.usage.add_breadcrumb",
@@ -154,7 +178,7 @@
           },
           {
             "key":"emb.is_emulator",
-            "value":"__EMBRACE_TEST_IGNORE__"
+            "value":"true"
           },
           {
             "key":"emb.process_identifier",

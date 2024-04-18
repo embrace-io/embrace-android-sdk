@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.arch.schema.SendImmediately
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.payload.NativeCrashDataError
 
 internal val testLog = Log(
     traceId = "ceadd56622414a06ae382e4e5a70bcf7",
@@ -26,3 +28,21 @@ internal val nonbatchableLog = Log(
 )
 
 internal val unbatchableLogRecordData = FakeLogRecordData(log = nonbatchableLog)
+
+internal val testNativeCrashData = NativeCrashData(
+    nativeCrashId = "nativeCrashId",
+    sessionId = "sessionId",
+    timestamp = 1700000000000,
+    appState = null,
+    metadata = null,
+    unwindError = 5,
+    crash = "base64binarystring",
+    symbols = mapOf("key" to "value"),
+    errors = listOf(
+        NativeCrashDataError(
+            6,
+            7
+        )
+    ),
+    map = null
+)

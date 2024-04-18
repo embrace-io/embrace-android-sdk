@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 /**
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 internal class CompositeLogService(
     private val v1LogService: Provider<LogMessageService>,
     private val v2LogService: Provider<LogService>,
+    private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
     private val logger: InternalEmbraceLogger,
     private val serializer: EmbraceSerializer
@@ -31,8 +33,13 @@ internal class CompositeLogService(
         get() = if (useV2LogService) v2LogService() else v1LogService()
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        // Network logs are still always handled by the v1 LogMessageService
-        v1LogService().logNetwork(networkCaptureCall)
+        if (useV2LogService) {
+            networkCaptureCall?.let {
+                networkCaptureDataSource().logNetworkCapturedCall(it)
+            }
+        } else {
+            v1LogService().logNetwork(networkCaptureCall)
+        }
     }
 
     override fun log(

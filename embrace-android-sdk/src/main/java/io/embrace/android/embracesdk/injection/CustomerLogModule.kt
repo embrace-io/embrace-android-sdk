@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
+import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -19,6 +21,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  */
 internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
+    val networkCaptureDataSource: NetworkCaptureDataSource
     val networkLoggingService: NetworkLoggingService
     val logMessageService: LogMessageService
     val logOrchestrator: LogOrchestrator
@@ -43,6 +46,13 @@ internal class CustomerLogModuleImpl(
             logMessageService,
             essentialServiceModule.configService,
             coreModule.jsonSerializer,
+            initModule.logger
+        )
+    }
+
+    override val networkCaptureDataSource: NetworkCaptureDataSource by singleton {
+        NetworkCaptureDataSourceImpl(
+            essentialServiceModule.logWriter,
             initModule.logger
         )
     }
@@ -87,6 +97,7 @@ internal class CustomerLogModuleImpl(
         CompositeLogService(
             { v1LogService },
             { v2LogService },
+            { networkCaptureDataSource },
             essentialServiceModule.configService,
             initModule.logger,
             coreModule.jsonSerializer

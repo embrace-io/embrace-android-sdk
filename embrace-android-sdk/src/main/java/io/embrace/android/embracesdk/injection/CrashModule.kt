@@ -8,7 +8,10 @@ import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
+import io.embrace.android.embracesdk.ndk.NativeCrashDataSourceImpl
+import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.ndk.NativeModule
+import io.embrace.android.embracesdk.ndk.NoopNativeCrashService
 import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandler
 
 /**
@@ -18,6 +21,7 @@ internal interface CrashModule {
     val lastRunCrashVerifier: LastRunCrashVerifier
     val crashService: CrashService
     val automaticVerificationExceptionHandler: AutomaticVerificationExceptionHandler
+    val nativeCrashService: NativeCrashService
 }
 
 internal class CrashModuleImpl(
@@ -93,5 +97,23 @@ internal class CrashModuleImpl(
     override val automaticVerificationExceptionHandler: AutomaticVerificationExceptionHandler by singleton {
         val prevHandler = Thread.getDefaultUncaughtExceptionHandler()
         AutomaticVerificationExceptionHandler(prevHandler, initModule.logger)
+    }
+
+    override val nativeCrashService: NativeCrashService by singleton {
+        if (!essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+            NoopNativeCrashService()
+        } else if (essentialServiceModule.configService.oTelBehavior.isBetaEnabled()) {
+            NativeCrashDataSourceImpl(
+                sessionProperties = essentialServiceModule.sessionProperties,
+                ndkService = nativeModule.ndkService,
+                preferencesService = androidServicesModule.preferencesService,
+                logWriter = essentialServiceModule.logWriter,
+                configService = essentialServiceModule.configService,
+                serializer = coreModule.jsonSerializer,
+                logger = initModule.logger,
+            )
+        } else {
+            nativeModule.ndkService
+        }
     }
 }

@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.arch.schema
 
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
+import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -200,6 +202,20 @@ internal sealed class SchemaType(
             "description" to message.description,
             "trace_status" to message.traceStatus
         ).toNonNullMap()
+    }
+
+    internal class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
+        override val schemaAttributes = mapOf(
+            "url.full" to networkRequest.url,
+            "http.request.method" to networkRequest.httpMethod,
+            "http.response.status_code" to networkRequest.responseCode,
+            "http.request.body.size" to networkRequest.bytesSent,
+            "http.response.body.size" to networkRequest.bytesReceived,
+            "error.type" to networkRequest.errorType,
+            "error.message" to networkRequest.errorMessage,
+            "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
+            "emb.trace_id" to getValidTraceId(networkRequest.traceId),
+        ).toNonNullMap().mapValues { it.value.toString() }
     }
 
     internal class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {

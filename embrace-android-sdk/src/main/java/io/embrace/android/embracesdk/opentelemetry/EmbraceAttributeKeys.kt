@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.opentelemetry
 
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.payload.ThreadInfo
 
 /**
  * A snapshot of the current call stack of the threads running in the app process per [ThreadInfo]
@@ -8,14 +9,9 @@ import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 internal val embAndroidThreads = EmbraceAttributeKey("android.threads")
 
 /**
- * Attribute name for the app framework for which the telemetry is being logged
- */
-internal val embAppFramework = EmbraceAttributeKey("app_framework")
-
-/**
  * Sequence number for the number of crashes captured by Embrace on the device, reported on every crash
  */
-internal val embCrashNumber = EmbraceAttributeKey("crash_number")
+internal val embCrashNumber = EmbraceAttributeKey("android.crash_number")
 
 /**
  * Attribute name for the exception handling type - whether it's handled or unhandled

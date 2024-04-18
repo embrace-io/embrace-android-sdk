@@ -12,7 +12,6 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.utils.NetworkUtils;
 
 /**
  * Custom implementation of URLStreamHandler that wraps a base URLStreamHandler and provides a context for executing
@@ -87,12 +86,12 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      * Given an instance of URLConnection, returns a new URLConnection that wraps the provided instance with additional
      * Embrace-specific logic.
      */
-    protected abstract URLConnection newEmbraceUrlConnection(URLConnection connection);
+    protected abstract URLConnection wrapUrlConnection(URLConnection connection);
 
     @Override
     protected URLConnection openConnection(URL url) throws IOException {
         try {
-            return newEmbraceUrlConnection((URLConnection) this.methodOpenConnection1.invoke(this.handler, url));
+            return newUrlConnection((URLConnection) this.methodOpenConnection1.invoke(this.handler, url));
         } catch (Exception e) {
             // We catch Exception here instead of the specific exceptions that can be thrown due to a change in the way some
             // of these exceptions are compiled on different OS versions.
@@ -104,7 +103,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     @Override
     protected URLConnection openConnection(URL url, Proxy proxy) throws IOException {
         try {
-            return newEmbraceUrlConnection((URLConnection) this.methodOpenConnection2.invoke(this.handler, url, proxy));
+            return newUrlConnection((URLConnection) this.methodOpenConnection2.invoke(this.handler, url, proxy));
         } catch (Exception e) {
             // We catch Exception here instead of the specific exceptions that can be thrown due to a change in the way some
             // of these exceptions are compiled on different OS versions.
@@ -117,6 +116,19 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
         boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
         if (networkSpanForwardingEnabled && !connection.getRequestProperties().containsKey(TRACEPARENT_HEADER_NAME)) {
             connection.addRequestProperty(TRACEPARENT_HEADER_NAME, embrace.generateW3cTraceparent());
+        }
+    }
+
+    /**
+     * If sdk is not started we won't wrap url connection. Instead, we return the original connection.
+     * @param connection
+     * @return
+     */
+    private URLConnection newUrlConnection(URLConnection connection) {
+        if (embrace.isStarted()) {
+            return wrapUrlConnection(connection);
+        } else {
+            return connection;
         }
     }
 }

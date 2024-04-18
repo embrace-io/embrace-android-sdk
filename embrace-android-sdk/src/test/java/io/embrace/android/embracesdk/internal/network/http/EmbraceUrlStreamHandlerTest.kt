@@ -11,7 +11,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,6 +37,7 @@ internal class EmbraceUrlStreamHandlerTest {
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
         every { mockEmbrace.generateW3cTraceparent() } answers { TRACEPARENT }
+        every { mockEmbrace.isStarted } returns true
         isNetworkSpanForwardingEnabled = false
     }
 
@@ -102,6 +105,72 @@ internal class EmbraceUrlStreamHandlerTest {
         )
         val connection = checkNotNull(url.openConnection())
         assertEquals(TRACEPARENT, connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
+    }
+
+    @Test
+    fun `check http connection is intercepted by embrace if sdk is started`() {
+        val url = URL(
+            "http",
+            "embrace.io",
+            1881,
+            "insecure.txt",
+            EmbraceHttpUrlStreamHandler(
+                httpUrlStreamHandler,
+                mockEmbrace
+            )
+        )
+        val connection = checkNotNull(url.openConnection())
+        assertTrue(connection is EmbraceHttpUrlConnectionImpl<*>)
+    }
+
+    @Test
+    fun `check https connection is intercepted by embrace if sdk is started`() {
+        val url = URL(
+            "https",
+            "embrace.io",
+            1881,
+            "insecure.txt",
+            EmbraceHttpsUrlStreamHandler(
+                httpsUrlStreamHandler,
+                mockEmbrace
+            )
+        )
+        val connection = checkNotNull(url.openConnection())
+        assertTrue(connection is EmbraceHttpsUrlConnectionImpl<*>)
+    }
+
+    @Test
+    fun `check http connection is not intercepted by embrace if sdk is not started`() {
+        every { mockEmbrace.isStarted } returns false
+        val url = URL(
+            "http",
+            "embrace.io",
+            1881,
+            "insecure.txt",
+            EmbraceHttpUrlStreamHandler(
+                httpUrlStreamHandler,
+                mockEmbrace
+            )
+        )
+        val connection = checkNotNull(url.openConnection())
+        assertFalse(connection is EmbraceHttpUrlConnectionImpl<*>)
+    }
+
+    @Test
+    fun `check https connection is not intercepted by embrace if sdk is not started`() {
+        every { mockEmbrace.isStarted } returns false
+        val url = URL(
+            "https",
+            "embrace.io",
+            1881,
+            "insecure.txt",
+            EmbraceHttpsUrlStreamHandler(
+                httpsUrlStreamHandler,
+                mockEmbrace
+            )
+        )
+        val connection = checkNotNull(url.openConnection())
+        assertFalse(connection is EmbraceHttpsUrlConnectionImpl<*>)
     }
 
     companion object {

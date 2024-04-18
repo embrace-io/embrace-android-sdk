@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch.schema
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -232,5 +233,33 @@ internal sealed class SchemaType(
         fixedObjectName = "device-low-power"
     ) {
         override val schemaAttributes = emptyMap<String, String>()
+    }
+
+    internal class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
+        telemetryType = EmbType.System.NetworkCapturedRequest,
+        fixedObjectName = "network-captured-request"
+    ) {
+        override val schemaAttributes = mapOf(
+            "duration" to networkCapturedCall.duration.toString(),
+            "end-time" to networkCapturedCall.endTime.toString(),
+            "http-method" to networkCapturedCall.httpMethod,
+            "matched-url" to networkCapturedCall.matchedUrl,
+            "network-id" to networkCapturedCall.networkId,
+            "request-body" to networkCapturedCall.requestBody,
+            "request-body-size" to networkCapturedCall.requestBodySize.toString(),
+            "request-query" to networkCapturedCall.requestQuery,
+            "request-query-headers" to networkCapturedCall.requestQueryHeaders.toString(),
+            "request-size" to networkCapturedCall.requestSize.toString(),
+            "response-body" to networkCapturedCall.responseBody,
+            "response-body-size" to networkCapturedCall.responseBodySize.toString(),
+            "response-headers" to networkCapturedCall.responseHeaders.toString(),
+            "response-size" to networkCapturedCall.responseSize.toString(),
+            "response-status" to networkCapturedCall.responseStatus.toString(),
+            "session-id" to networkCapturedCall.sessionId,
+            "start-time" to networkCapturedCall.startTime.toString(),
+            "url" to networkCapturedCall.url,
+            "error-message" to networkCapturedCall.errorMessage,
+            "encrypted-payload" to networkCapturedCall.encryptedPayload
+        ).toNonNullMap()
     }
 }

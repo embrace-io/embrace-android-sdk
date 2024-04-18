@@ -33,7 +33,6 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     private lateinit var mockEmbrace: Embrace
     private lateinit var mockInternalInterface: EmbraceInternalInterface
-    private lateinit var capturedCallId: MutableList<String>
     private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
     private var fakeTimeMs = REQUEST_TIME
     private var isSDKStarted = false
@@ -52,7 +51,6 @@ internal class EmbraceUrlConnectionDelegateTest {
         shouldCaptureNetworkBody = true
         isNetworkSpanForwardingEnabled = false
         traceIdHeaderName = CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-        capturedCallId = mutableListOf()
         capturedEmbraceNetworkRequest = slot()
         mockInternalInterface = mockk(relaxed = true)
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
@@ -295,12 +293,12 @@ internal class EmbraceUrlConnectionDelegateTest {
     }
 
     @Test
-    fun `completed network call logged twice with same callId with a wrapped output stream`() {
+    fun `completed network call logged once with a wrapped output stream`() {
         executeRequest(
             connection = createMockUncompressedConnection(),
             wrappedIoStream = true
         )
-        verifyTwoCallsRecordedWithSameCallId()
+        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
     }
 
     @Test
@@ -310,7 +308,6 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = false
         )
         verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
-        assertTrue(capturedCallId[0].isNotBlank())
     }
 
     @Test
@@ -329,7 +326,6 @@ internal class EmbraceUrlConnectionDelegateTest {
         EmbraceUrlConnectionDelegate(mockConnection, true, mockEmbrace).disconnect()
         verifyIncompleteRequestLogged(mockConnection)
         verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
-        assertEquals(1, capturedCallId.size)
     }
 
     @Test
@@ -339,7 +335,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verifyTwoCallsRecordedWithSameCallId()
+        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
     }
 
     @Test
@@ -349,7 +345,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verifyTwoCallsRecordedWithSameCallId()
+        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
     }
 
     @Test
@@ -359,7 +355,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verifyTwoCallsRecordedWithSameCallId()
+        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
     }
 
     @Test
@@ -608,12 +604,6 @@ internal class EmbraceUrlConnectionDelegateTest {
         }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(errorType, capturedEmbraceNetworkRequest.captured.errorType)
-    }
-
-    private fun verifyTwoCallsRecordedWithSameCallId() {
-        verify(exactly = 2) { mockInternalInterface.recordNetworkRequest(any()) }
-        assertEquals(2, capturedCallId.size)
-        assertEquals(capturedCallId[0], capturedCallId[1])
     }
 
     companion object {

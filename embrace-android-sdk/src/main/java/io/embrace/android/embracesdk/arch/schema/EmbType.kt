@@ -105,11 +105,6 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              * Error encountered during stack unwinding
              */
             val embNativeCrashUnwindError = EmbraceAttributeKey("android.native_crash.unwind_error")
-
-            /**
-             * May delete - not sure if needed
-             */
-            val embNativeCrashMap = EmbraceAttributeKey("android.native_crash.map")
         }
 
         internal object LowPower : System("low_power")

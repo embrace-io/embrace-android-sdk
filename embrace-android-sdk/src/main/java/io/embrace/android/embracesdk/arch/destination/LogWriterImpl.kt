@@ -28,16 +28,16 @@ internal class LogWriterImpl(
             .setSeverity(logEventData.severity.toOtelSeverity())
             .setSeverityText(logEventData.severity.name)
 
-        logEventData.schemaType.attributes().forEach {
-            builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
-        }
-
         sessionIdTracker.getActiveSessionId()?.let { sessionId ->
             builder.setAttribute(embSessionId.attributeKey, sessionId)
         }
 
         metadataService.getAppState()?.let { appState ->
             builder.setAttribute(embState.attributeKey, appState)
+        }
+
+        logEventData.schemaType.attributes().forEach {
+            builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
         }
 
         builder.emit()

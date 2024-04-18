@@ -236,8 +236,7 @@ internal sealed class SchemaType(
     }
 
     internal class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
-        telemetryType = EmbType.System.NetworkCapturedRequest,
-        fixedObjectName = "network-captured-request"
+        telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
         override val schemaAttributes = mapOf(
             "duration" to networkCapturedCall.duration.toString(),

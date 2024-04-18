@@ -86,6 +86,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
+    dataSourceModuleProvider: Provider<DataSourceModule>,
     private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
 
@@ -277,7 +278,7 @@ internal class EssentialServiceModuleImpl(
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager,
-                autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+                dataSourceModuleProvider
             )
         }
     }

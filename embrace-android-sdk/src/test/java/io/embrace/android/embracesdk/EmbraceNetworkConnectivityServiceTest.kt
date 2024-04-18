@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnecti
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -72,8 +73,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             worker,
             logger,
             mockConnectivityManager,
-            true
-        )
+        ) { fakeDataSourceModule() }
     }
 
     /**

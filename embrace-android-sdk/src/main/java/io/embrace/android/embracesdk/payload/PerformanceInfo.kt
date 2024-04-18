@@ -16,12 +16,6 @@ internal data class PerformanceInfo(
     val diskUsage: DiskUsage? = null,
 
     /**
-     * Periods during which the device was connected to WIFI, WAN, or no network.
-     */
-    @Json(name = "ns")
-    val networkInterfaceIntervals: List<Interval>? = null,
-
-    /**
      * Timestamps where Google ANRs were triggered.
      */
     @Json(name = "ga")

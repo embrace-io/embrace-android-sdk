@@ -48,10 +48,7 @@ internal class EmbracePerformanceInfoService(
         coldStart: Boolean
     ): PerformanceInfo {
         return PerformanceInfo(
-            diskUsage = captureDataSafely(logger) { metadataService.getDiskUsage()?.copy() },
-            networkInterfaceIntervals = captureDataSafely(logger) {
-                networkConnectivityService.getCapturedData()?.toList()
-            }
+            diskUsage = captureDataSafely(logger) { metadataService.getDiskUsage()?.copy() }
         )
     }
 }

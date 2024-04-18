@@ -8,7 +8,7 @@ import java.io.Closeable
 /**
  * Detects and records which network the device is connected to.
  */
-internal interface NetworkConnectivityService : DataCaptureService<List<Interval>?>, Closeable {
+internal interface NetworkConnectivityService : Closeable {
 
     /**
      * Record the connection type at the start of the session and open a connectivity interval with it,

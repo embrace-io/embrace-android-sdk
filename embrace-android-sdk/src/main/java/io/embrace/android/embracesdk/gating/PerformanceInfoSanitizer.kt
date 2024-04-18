@@ -12,7 +12,6 @@ internal class PerformanceInfoSanitizer(
     Sanitizable<PerformanceInfo> {
     override fun sanitize(): PerformanceInfo? {
         return info?.copy(
-            networkInterfaceIntervals = networkInterfaceIntervals(info),
             diskUsage = diskUsage(info),
             networkRequests = networkRequests(info),
             responsivenessMonitorSnapshots = threadMonitorSnapshots(info)
@@ -21,11 +20,6 @@ internal class PerformanceInfoSanitizer(
 
     private fun threadMonitorSnapshots(performanceInfo: PerformanceInfo) = when {
         shouldSendANRs() -> performanceInfo.responsivenessMonitorSnapshots
-        else -> null
-    }
-
-    private fun networkInterfaceIntervals(performanceInfo: PerformanceInfo) = when {
-        shouldSendNetworkConnectivityIntervals() -> performanceInfo.networkInterfaceIntervals
         else -> null
     }
 
@@ -44,9 +38,6 @@ internal class PerformanceInfoSanitizer(
 
     private fun shouldSendCurrentDiskUsage() =
         enabledComponents.contains(PERFORMANCE_CURRENT_DISK_USAGE)
-
-    private fun shouldSendNetworkConnectivityIntervals() =
-        enabledComponents.contains(PERFORMANCE_CONNECTIVITY)
 
     private fun shouldSendCapturedNetwork() =
         enabledComponents.contains(SessionGatingKeys.PERFORMANCE_NETWORK)

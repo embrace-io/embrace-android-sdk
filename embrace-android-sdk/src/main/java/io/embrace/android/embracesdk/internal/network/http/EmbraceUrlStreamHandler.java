@@ -12,7 +12,6 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.utils.NetworkUtils;
 
 /**
  * Custom implementation of URLStreamHandler that wraps a base URLStreamHandler and provides a context for executing
@@ -87,7 +86,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      * Given an instance of URLConnection, returns a new URLConnection that wraps the provided instance with additional
      * Embrace-specific logic.
      */
-    protected abstract URLConnection newEmbraceUrlConnection(URLConnection connection);
+    protected abstract URLConnection wrapUrlConnection(URLConnection connection);
 
     @Override
     protected URLConnection openConnection(URL url) throws IOException {
@@ -127,7 +126,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      */
     private URLConnection newUrlConnection(URLConnection connection) {
         if (embrace.isStarted()) {
-            return newEmbraceUrlConnection(connection);
+            return wrapUrlConnection(connection);
         } else {
             return connection;
         }

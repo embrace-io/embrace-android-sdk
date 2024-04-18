@@ -49,7 +49,7 @@ final class EmbraceHttpsUrlStreamHandler extends EmbraceUrlStreamHandler {
     }
 
     @Override
-    protected URLConnection newEmbraceUrlConnection(URLConnection connection) {
+    protected URLConnection wrapUrlConnection(URLConnection connection) {
         if (!(connection instanceof HttpsURLConnection)) {
             return connection;
         }

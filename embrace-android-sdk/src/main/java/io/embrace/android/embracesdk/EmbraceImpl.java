@@ -337,7 +337,7 @@ final class EmbraceImpl {
         Systrace.startSynchronous("send-cached-sessions");
         // Send any sessions that were cached and not yet sent.
         deliveryModule.getDeliveryService().sendCachedSessions(
-            nativeModule.getNdkService(),
+            nativeModule::getNdkService,
             essentialServiceModule.getSessionIdTracker()
         );
         Systrace.endSynchronous();

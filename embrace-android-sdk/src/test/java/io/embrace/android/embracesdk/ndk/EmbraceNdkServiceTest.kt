@@ -400,7 +400,7 @@ internal class EmbraceNdkServiceTest {
     fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
         every { repository.sortNativeCrashes(false) } returns listOf()
         initializeService()
-        val result = embraceNdkService.checkForNativeCrash()
+        val result = embraceNdkService.getAndSendNativeCrash()
         assertNull(result)
         verify { repository.sortNativeCrashes(false) }
         verify(exactly = 0) { delegate._getCrashReport(any()) }
@@ -455,7 +455,7 @@ internal class EmbraceNdkServiceTest {
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
         every { delegate._getCrashReport(any()) } returns ""
         initializeService()
-        val crashData = embraceNdkService.checkForNativeCrash()
+        val crashData = embraceNdkService.getAndSendNativeCrash()
         assertNull(crashData)
     }
 
@@ -475,7 +475,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns json
 
         initializeService()
-        val crashData = embraceNdkService.checkForNativeCrash()
+        val crashData = embraceNdkService.getAndSendNativeCrash()
         assertNull(crashData)
     }
 
@@ -498,7 +498,7 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         every { embraceNdkService.getSymbolsForCurrentArch() } returns mockk()
 
-        val result = embraceNdkService.checkForNativeCrash()
+        val result = embraceNdkService.getAndSendNativeCrash()
         assertNotNull(result)
 
         verify { embraceNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
@@ -515,7 +515,7 @@ internal class EmbraceNdkServiceTest {
         appFramework = Embrace.AppFramework.UNITY
         initializeService()
 
-        val result = embraceNdkService.checkForNativeCrash()
+        val result = embraceNdkService.getAndSendNativeCrash()
         assertNull(result)
 
         verify(exactly = 1) { repository.sortNativeCrashes(false) }

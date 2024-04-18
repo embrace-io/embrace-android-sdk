@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.EventType
-import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeApiService
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
@@ -45,7 +45,7 @@ internal class EmbraceDeliveryServiceTest {
     private lateinit var worker: BackgroundWorker
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var apiService: FakeApiService
-    private lateinit var ndkService: FakeNdkService
+    private lateinit var fakeNativeCrashService: FakeNativeCrashService
     private lateinit var gatingService: FakeGatingService
     private lateinit var testPlatformSerializer: TestPlatformSerializer
     private lateinit var fakeStorageService: FakeStorageService
@@ -59,7 +59,7 @@ internal class EmbraceDeliveryServiceTest {
         fakeClock = FakeClock()
         worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         apiService = FakeApiService()
-        ndkService = FakeNdkService()
+        fakeNativeCrashService = FakeNativeCrashService()
         gatingService = FakeGatingService()
         logger = InternalEmbraceLogger()
         sessionIdTracker = FakeSessionIdTracker()
@@ -109,7 +109,7 @@ internal class EmbraceDeliveryServiceTest {
 
     @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
@@ -117,7 +117,7 @@ internal class EmbraceDeliveryServiceTest {
     fun `send previously cached sessions successfully`() {
         assertNotNull(cacheService.writeSession(sessionFileName, sessionMessage))
         assertNotNull(cacheService.writeSession(anotherMessageFileName, anotherMessage))
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.contains(sessionMessage))
         assertTrue(apiService.sessionRequests.contains(anotherMessage))
         assertEquals(2, apiService.sessionRequests.size)
@@ -129,7 +129,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `fail previously cached snapshot when sending cached session`() {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
         assertEquals(2, sentSession.spans?.size)
         assertEquals(0, sentSession.spanSnapshots?.size)
@@ -161,7 +161,7 @@ internal class EmbraceDeliveryServiceTest {
             false
         ).filename
         assertNotNull(cacheService.writeSession(messedUpSessionFilename, messedUpSession))
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
         assertEquals(1, sentSession.spans?.size)
         assertEquals(0, sentSession.spanSnapshots?.size)
@@ -174,7 +174,7 @@ internal class EmbraceDeliveryServiceTest {
         assertEquals(1, sessionWithSnapshot.spans?.size)
         assertEquals(1, sessionWithSnapshot.spanSnapshots?.size)
         apiService.throwExceptionSendSession = true
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
         val transformedSession =
             checkNotNull(cacheService.loadObject(sessionWithSnapshotFileName, SessionMessage::class.java))
@@ -187,7 +187,7 @@ internal class EmbraceDeliveryServiceTest {
         assertNotNull(cacheService.writeSession(sessionFileName, sessionMessage))
         assertNotNull(cacheService.writeSession(anotherMessageFileName, anotherMessage))
         sessionIdTracker.sessionId = anotherMessage.session.sessionId
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertEquals(listOf(sessionMessage), apiService.sessionRequests)
     }
 
@@ -195,14 +195,14 @@ internal class EmbraceDeliveryServiceTest {
     fun `if an exception is thrown while sending cached session then sendCachedSession should not crash`() {
         assertNotNull(cacheService.writeSession(sessionFileName, sessionMessage))
         apiService.throwExceptionSendSession = true
-        deliveryService.sendCachedSessions(null, sessionIdTracker)
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
     }
 
     @Test
-    fun `check for native crash info if ndk feature is enabled`() {
-        deliveryService.sendCachedSessions(ndkService, sessionIdTracker)
-        assertEquals(1, ndkService.checkForNativeCrashCount)
+    fun `check for native crash info if native crash service found`() {
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
+        assertEquals(1, fakeNativeCrashService.checkAndSendNativeCrashInvocation)
     }
 
     @Test

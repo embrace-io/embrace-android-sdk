@@ -6,8 +6,9 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
@@ -97,7 +98,10 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    override fun sendCachedSessions(ndkService: NdkService?, sessionIdTracker: SessionIdTracker) {
+    override fun sendCachedSessions(
+        nativeCrashServiceProvider: Provider<NativeCrashService?>,
+        sessionIdTracker: SessionIdTracker
+    ) {
         sendCachedCrash()
         backgroundWorker.submit(TaskPriority.HIGH) {
             val allSessions = cacheManager.getAllCachedSessionIds().filter {
@@ -116,8 +120,8 @@ internal class EmbraceDeliveryService(
                 }
             }
 
-            ndkService?.let { service ->
-                val nativeCrashData = service.checkForNativeCrash()
+            nativeCrashServiceProvider()?.let { service ->
+                val nativeCrashData = service.getAndSendNativeCrash()
                 if (nativeCrashData != null) {
                     addCrashDataToCachedSession(nativeCrashData)
                 }

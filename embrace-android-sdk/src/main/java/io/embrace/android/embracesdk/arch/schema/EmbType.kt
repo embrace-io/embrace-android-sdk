@@ -80,9 +80,9 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         internal object ReactNativeCrash : System("android.react_native_crash", true) {
             /**
-             * The list JavaScript exceptions from the ReactNative layer
+             * The JavaScript unhandled exception from the ReactNative layer
              */
-            val embAndroidReactNativeCrashJsExceptions = EmbraceAttributeKey("android.react_native_crash.js_exceptions")
+            val embAndroidReactNativeCrashJsException = EmbraceAttributeKey("android.react_native_crash.js_exception")
         }
 
         internal object NativeCrash : System("android.native_crash", true) {

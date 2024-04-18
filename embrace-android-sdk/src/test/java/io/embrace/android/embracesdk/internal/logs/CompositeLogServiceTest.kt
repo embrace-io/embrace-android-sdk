@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeLogService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
+import io.embrace.android.embracesdk.fakes.fakeNetworkCapturedCall
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -21,6 +23,7 @@ internal class CompositeLogServiceTest {
     private lateinit var compositeLogService: CompositeLogService
     private lateinit var v1LogService: FakeLogMessageService
     private lateinit var v2LogService: FakeLogService
+    private lateinit var networkCaptureDataSource: FakeNetworkCaptureDataSource
 
     @Before
     fun setUp() {
@@ -33,9 +36,11 @@ internal class CompositeLogServiceTest {
         )
         v1LogService = FakeLogMessageService()
         v2LogService = FakeLogService()
+        networkCaptureDataSource = FakeNetworkCaptureDataSource()
         compositeLogService = CompositeLogService(
             v1LogService = { v1LogService },
             v2LogService = { v2LogService },
+            networkCaptureDataSource = { networkCaptureDataSource },
             configService = configService,
             logger = InternalEmbraceLogger(),
             serializer = EmbraceSerializer()
@@ -79,6 +84,24 @@ internal class CompositeLogServiceTest {
         )
         assertEquals(0, v1LogService.loggedMessages.size)
         assertEquals(1, v2LogService.logs.size)
+    }
+
+    @Test
+    fun testNetworkCaptureV1() {
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = false)
+        compositeLogService.logNetwork(
+            fakeNetworkCapturedCall())
+        assertEquals(1, v1LogService.networkCalls.size)
+        assertEquals(0, networkCaptureDataSource.loggedCalls.size)
+    }
+
+    @Test
+    fun testNetworkCaptureV2() {
+        oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
+        compositeLogService.logNetwork(
+            fakeNetworkCapturedCall())
+        assertEquals(0, v1LogService.networkCalls.size)
+        assertEquals(1, networkCaptureDataSource.loggedCalls.size)
     }
 
     @Test

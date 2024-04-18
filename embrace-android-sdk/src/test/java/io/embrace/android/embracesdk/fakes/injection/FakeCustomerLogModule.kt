@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.injection.CustomerLogModule
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -44,4 +46,7 @@ internal class FakeCustomerLogModule(
 
     override val logOrchestrator: LogOrchestrator
         get() = FakeLogOrchestrator()
+
+    override val networkCaptureDataSource: NetworkCaptureDataSource
+        get() = FakeNetworkCaptureDataSource()
 }

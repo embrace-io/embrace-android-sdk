@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsExceptions
+import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
@@ -77,7 +77,7 @@ internal class CrashDataSourceImpl(
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
                 configService = configService,
-                sessionProperties = sessionProperties
+                sessionProperties = sessionProperties,
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
@@ -86,26 +86,32 @@ internal class CrashDataSourceImpl(
             crashAttributes.setAttribute(
                 exceptionStacktrace,
                 encodeToUTF8String(
-                    serializer.toJson(crashException.lines, List::class.java)
-                )
+                    serializer.toJson(crashException.lines, List::class.java),
+                ),
             )
             crashAttributes.setAttribute(logRecordUid, crashId)
             crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
             crashAttributes.setAttribute(
                 EmbType.System.Crash.embAndroidCrashExceptionCause,
                 encodeToUTF8String(
-                    getExceptionCause(exception)
+                    getExceptionCause(exception),
                 )
             )
             crashAttributes.setAttribute(
                 embAndroidThreads,
                 encodeToUTF8String(
-                    getThreadsInfo()
-                )
+                    getThreadsInfo(),
+                ),
             )
 
-            // TODO: add threading through of jsException
-            jsException?.let { crashAttributes.setAttribute(embAndroidReactNativeCrashJsExceptions, jsException.toString()) }
+            jsException?.let { e ->
+                crashAttributes.setAttribute(
+                    embAndroidReactNativeCrashJsException,
+                    encodeToUTF8String(
+                        serializer.toJson(e, JsException::class.java),
+                    ),
+                )
+            }
 
             val logEventData = LogEventData(
                 schemaType = getSchemaType(crashAttributes),
@@ -131,7 +137,7 @@ internal class CrashDataSourceImpl(
     }
 
     private fun getSchemaType(attributes: TelemetryAttributes): SchemaType =
-        if (attributes.getAttribute(embAndroidReactNativeCrashJsExceptions) != null) {
+        if (attributes.getAttribute(embAndroidReactNativeCrashJsException) != null) {
             SchemaType.ReactNativeCrash(attributes)
         } else {
             SchemaType.Crash(attributes)

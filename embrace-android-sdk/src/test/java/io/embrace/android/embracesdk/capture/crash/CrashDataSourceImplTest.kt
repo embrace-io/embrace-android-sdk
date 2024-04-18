@@ -50,7 +50,12 @@ internal class CrashDataSourceImplTest {
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
         logger = InternalEmbraceLogger()
-        localJsException = JsException("jsException", "Error", "Error", "")
+        localJsException = JsException(
+            "NullPointerException",
+            "Null pointer exception occurred",
+            "RuntimeException",
+            "at com.example.MyClass.method(MyClass.kt:10)"
+        )
         testException = RuntimeException("Test exception")
     }
 
@@ -122,5 +127,26 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         assertTrue(crashMarker.isMarked())
+    }
+
+    @Test
+    fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
+        setupForHandleCrash()
+        crashDataSource.logUnhandledJsException(localJsException)
+        crashDataSource.handleCrash(testException)
+
+        val lastSentCrashAttributes = logWriter.logEvents.single().schemaType.attributes()
+        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, logWriter.logEvents.size)
+        assertEquals(lastSentCrashAttributes["log.record.uid"], sessionOrchestrator.crashId)
+        assertEquals(lastSentCrashAttributes["emb.type"], "sys.android.react_native_crash")
+        assertEquals(
+            "{\"n\":\"NullPointerException\",\"" +
+                "m\":\"Null pointer exception occurred\",\"" +
+                "t\":\"RuntimeException\",\"" +
+                "st\":\"" +
+                "at com.example.MyClass.method(MyClass.kt:10)\"}",
+            lastSentCrashAttributes["emb.android.react_native_crash.js_exception"]
+        )
     }
 }

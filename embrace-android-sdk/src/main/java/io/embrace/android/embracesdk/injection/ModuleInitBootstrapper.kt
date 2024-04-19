@@ -312,11 +312,10 @@ internal class ModuleInitBootstrapper(
                         val ndkService = nativeModule.ndkService
                         val initWorkerTaskQueueTime = initModule.clock.now()
                         workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
-                            val taskRuntimeMs = initModule.clock.now()
-                            dataCaptureServiceModule.appStartupTraceEmitter.addTrackedInterval(
+                            openTelemetryModule.spanService.recordCompletedSpan(
                                 name = "init-worker-schedule-delay",
                                 startTimeMs = initWorkerTaskQueueTime,
-                                endTimeMs = taskRuntimeMs
+                                endTimeMs = initModule.clock.now()
                             )
                         }
                         serviceRegistry.registerServices(
@@ -494,7 +493,7 @@ internal class ModuleInitBootstrapper(
             val delayStartMs = synchronousInitCompletionMs
             val delayEndMs = max(synchronousInitCompletionMs, asyncInitCompletionMs)
             if (delayStartMs > 0) {
-                dataCaptureServiceModule.appStartupTraceEmitter.addTrackedInterval(
+                openTelemetryModule.spanService.recordCompletedSpan(
                     name = "async-init-delay",
                     startTimeMs = delayStartMs,
                     endTimeMs = delayEndMs

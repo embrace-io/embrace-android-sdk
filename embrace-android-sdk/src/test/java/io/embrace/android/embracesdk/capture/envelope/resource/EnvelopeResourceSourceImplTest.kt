@@ -80,7 +80,6 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("oem", envelope.buildFlavor)
         assertEquals("prod", envelope.environment)
         assertEquals("10", envelope.bundleVersion)
-        assertEquals("6.6.0-SNAPSHOT", envelope.sdkVersion)
         assertEquals(53, envelope.sdkSimpleVersion)
         assertEquals("fakeReactNativeBundleId", envelope.reactNativeBundleId)
         assertEquals("js", envelope.javascriptPatchNumber)

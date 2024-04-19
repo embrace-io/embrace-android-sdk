@@ -121,7 +121,6 @@ internal open class BaseTest(
             EmbraceEndpoint.LOGGING.url to TestServerResponse(HttpURLConnection.HTTP_OK),
             EmbraceEndpoint.EVENTS.url to TestServerResponse(HttpURLConnection.HTTP_OK),
             EmbraceEndpoint.SESSIONS.url to TestServerResponse(HttpURLConnection.HTTP_OK),
-            EmbraceEndpoint.SCREENSHOT.url to TestServerResponse(HttpURLConnection.HTTP_OK),
             EmbraceEndpoint.CONFIG.url to configMockResponse
         )
     }
@@ -424,9 +423,8 @@ public const val BITMAP_WIDTH: Int = 100
 
 public enum class EmbraceEndpoint(public val url: String) {
     CONFIG("/v2/config"),
-    SCREENSHOT("/v1/screenshot"),
     SESSIONS("/v1/log/sessions"),
     SESSIONS_V2("/v2/spans"),
     EVENTS("/v1/log/events"),
-    LOGGING("/v1/log/logging")
+    LOGGING("/v2/logs");
 }

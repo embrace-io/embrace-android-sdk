@@ -1,36 +1,63 @@
 {
-  "a": {
-    "f": 1,
-    "vu": false,
-    "vul": false,
-    "v": "1.1.2",
-    "fl": "default test build flavor",
-    "bi": "default test build id",
-    "bt": "default test build type",
-    "bv": "5",
-    "e": "dev",
-    "ou": false,
-    "oul": false,
-    "sdc": "53",
-    "sdk": "__EMBRACE_TEST_IGNORE__"
+  "resource": {
+    "app_version": "1.1.2",
+    "app_framework": 1,
+    "build_id": "__EMBRACE_TEST_IGNORE__",
+    "app_ecosystem_id": "io.embrace.android.embracesdk.test",
+    "build_type": "default test build type",
+    "build_flavor": "default test build flavor",
+    "environment": "dev",
+    "bundle_version": "5",
+    "sdk_version": "__EMBRACE_TEST_IGNORE__",
+    "sdk_simple_version": 53,
+    "device_manufacturer": "__EMBRACE_TEST_IGNORE__",
+    "device_model": "__EMBRACE_TEST_IGNORE__",
+    "device_architecture": "__EMBRACE_TEST_IGNORE__",
+    "jailbroken": "__EMBRACE_TEST_IGNORE__",
+    "disk_total_capacity": "__EMBRACE_TEST_IGNORE__",
+    "os_type": "linux",
+    "os_name": "android",
+    "os_version": "__EMBRACE_TEST_IGNORE__",
+    "os_code": "__EMBRACE_TEST_IGNORE__",
+    "screen_resolution": "__EMBRACE_TEST_IGNORE__",
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
   },
-  "d": "__EMBRACE_TEST_IGNORE__",
-  "et": {
-    "st": "foreground",
-    "id": "__EMBRACE_TEST_IGNORE__",
-    "et": "none",
-    "f": 1,
-    "li": "__EMBRACE_TEST_IGNORE__",
-    "n": "Test log error",
-    "sc": false,
-    "si": "__EMBRACE_TEST_IGNORE__",
-    "sp": {},
-    "ts": "__EMBRACE_TEST_IGNORE__",
-    "t": "error"
+  "metadata": {
+    "user_id": "some id",
+    "email": "user@email.com",
+    "username": "John Doe",
+    "personas": "__EMBRACE_TEST_IGNORE__",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
+    "locale": "__EMBRACE_TEST_IGNORE__"
   },
-  "sk": {
-    "tt": "__EMBRACE_TEST_IGNORE__"
-  },
-  "u": "__EMBRACE_TEST_IGNORE__",
-  "v": 13
+  "version": "0.1.0",
+  "type": "logs",
+  "data": {
+    "logs": [
+      {
+        "time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "severity_number": 17,
+        "severity_text": "ERROR",
+        "body": "Test log error",
+        "attributes": [
+          {
+            "key": "emb.session_id",
+            "value": "__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key": "emb.state",
+            "value": "foreground"
+          },
+          {
+            "key": "emb.type",
+            "value": "sys.log"
+          },
+          {
+            "key": "log.record.uid",
+            "value": "__EMBRACE_TEST_IGNORE__"
+          }
+        ]
+      }
+    ]
+  }
 }

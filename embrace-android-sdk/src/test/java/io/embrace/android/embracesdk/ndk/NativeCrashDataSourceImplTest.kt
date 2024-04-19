@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -81,6 +82,7 @@ internal class NativeCrashDataSourceImplTest {
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertNotNull(attributes.getAttribute(logRecordUid))
             assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(embSessionId))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
             assertEquals(testNativeCrashData.crash, attributes.getAttribute(embNativeCrashException))

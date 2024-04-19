@@ -92,6 +92,28 @@
             "value":"true"
           }
         ]
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-network-status",
+        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+        "status": "Unset",
+        "events": "__EMBRACE_TEST_IGNORE__",
+        "attributes": [
+          {
+            "key": "emb.type",
+            "value": "sys.network_status"
+          },
+          {
+            "key": "network",
+            "value": "wifi"
+          },
+          {
+            "key": "emb.private",
+            "value": "true"
+          }
+        ]
       }
     ],
     "spans": [

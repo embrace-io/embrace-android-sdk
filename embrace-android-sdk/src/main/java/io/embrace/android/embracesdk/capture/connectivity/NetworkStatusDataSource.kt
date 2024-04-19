@@ -51,7 +51,6 @@ internal class NetworkStatusDataSource(
 
     override fun resetDataCaptureLimits() {
         super.resetDataCaptureLimits()
-
     }
 
     override fun toStartSpanData(obj: NetworkStatusData): StartSpanData {

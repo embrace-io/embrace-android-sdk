@@ -347,8 +347,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
-        final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
         return headerFields.get();
     }
 
@@ -359,14 +358,13 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         if (name == null) {
             return null;
         }
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         if (shouldInterceptHeaderRetrieval(name)) {
             // Strip the content encoding and length headers, as we transparently ungzip the content
             return defaultValue;
         }
 
         R result = action.invoke();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
 
         return result;
     }
@@ -461,8 +459,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     public int getResponseCode() {
         identifyTraceId();
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
         return responseCode.get();
     }
 
@@ -470,9 +467,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     public String getResponseMessage() throws IOException {
         identifyTraceId();
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         String responseMsg = this.connection.getResponseMessage();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
         return responseMsg;
     }
 

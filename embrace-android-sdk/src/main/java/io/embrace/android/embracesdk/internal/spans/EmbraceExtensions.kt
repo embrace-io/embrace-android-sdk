@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
@@ -172,3 +173,9 @@ internal fun Map<String, String>.getSessionProperty(key: String): String? = this
 internal fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? = this[key.key]
 
 internal fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = getAttribute(key.attributeKey)
+
+internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
+    io.embrace.android.embracesdk.Severity.INFO -> Severity.INFO
+    io.embrace.android.embracesdk.Severity.WARNING -> Severity.WARN
+    io.embrace.android.embracesdk.Severity.ERROR -> Severity.ERROR
+}

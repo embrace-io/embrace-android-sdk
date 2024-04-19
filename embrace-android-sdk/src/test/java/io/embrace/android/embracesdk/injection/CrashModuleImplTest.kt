@@ -30,10 +30,10 @@ internal class CrashModuleImplTest {
         localCfg = { LocalConfig(appId = "xYxYx", ndkEnabled = true, sdkConfig = SdkLocalConfig()) }
     )
 
-    private val oTelBehaviorWithBetaFeatureEnabled = fakeOTelBehavior(
+    private val oTelBehaviorWithBetaFeatureDisabled = fakeOTelBehavior(
         remoteCfg = {
             RemoteConfig(
-                oTelConfig = OTelRemoteConfig(isBetaEnabled = true)
+                oTelConfig = OTelRemoteConfig(isBetaEnabled = false)
             )
         }
     )
@@ -60,14 +60,15 @@ internal class CrashModuleImplTest {
     }
 
     @Test
-    fun `NdkService used as NativeCrashService if NDK feature is on`() {
+    fun `NdkService used as NativeCrashService if NDK feature is on and beta flag is off`() {
         val module = CrashModuleImpl(
             InitModuleImpl(),
             FakeCoreModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(
                 configService = FakeConfigService(
-                    autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled
+                    autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled,
+                    oTelBehavior = oTelBehaviorWithBetaFeatureDisabled
                 )
             ),
             FakeDeliveryModule(),
@@ -85,15 +86,14 @@ internal class CrashModuleImplTest {
     }
 
     @Test
-    fun `beta feature flag turns on v2 native crash service`() {
+    fun `default config turns on v2 native crash service`() {
         val module = CrashModuleImpl(
             InitModuleImpl(),
             FakeCoreModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(
                 configService = FakeConfigService(
-                    autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled,
-                    oTelBehavior = oTelBehaviorWithBetaFeatureEnabled
+                    autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled
                 )
             ),
             FakeDeliveryModule(),

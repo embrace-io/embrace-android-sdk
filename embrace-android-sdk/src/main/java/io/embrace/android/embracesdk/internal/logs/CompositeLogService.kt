@@ -27,7 +27,7 @@ internal class CompositeLogService(
 ) : LogMessageService {
 
     private val useV2LogService: Boolean
-        get() = configService.oTelBehavior.isBetaEnabled()
+        get() = configService.oTelBehavior.isStableEnabled()
 
     private val baseLogService: BaseLogService
         get() = if (useV2LogService) v2LogService() else v1LogService()

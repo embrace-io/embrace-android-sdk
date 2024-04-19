@@ -6,17 +6,27 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.getLastSentLogMessage
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
 
 @RunWith(AndroidJUnit4::class)
 internal class LoggingApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
+
+    @Before
+    fun setup() {
+        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
+            RemoteConfig(oTelConfig = OTelRemoteConfig(isStableEnabled = false))
+        }
+    }
 
     @Test
     fun `log info message sent`() {

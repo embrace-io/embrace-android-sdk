@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.arch.destination
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
-import io.opentelemetry.api.logs.Severity
 
 internal class LogWriterImpl(
     private val logger: Logger,
@@ -41,11 +41,5 @@ internal class LogWriterImpl(
         }
 
         builder.emit()
-    }
-
-    private fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
-        io.embrace.android.embracesdk.Severity.INFO -> Severity.INFO
-        io.embrace.android.embracesdk.Severity.WARNING -> Severity.WARN
-        io.embrace.android.embracesdk.Severity.ERROR -> Severity.ERROR
     }
 }

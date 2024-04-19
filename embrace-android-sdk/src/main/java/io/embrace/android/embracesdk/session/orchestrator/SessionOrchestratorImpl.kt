@@ -199,7 +199,7 @@ internal class SessionOrchestratorImpl(
             }
 
             // third, clean up any previous session state
-            boundaryDelegate.prepareForNewSession(timestamp, clearUserInfo)
+            boundaryDelegate.prepareForNewSession(clearUserInfo)
 
             // now, we can start the next session or background activity
             val newState = newSessionAction?.invoke()
@@ -233,6 +233,7 @@ internal class SessionOrchestratorImpl(
             )
 
             // et voila! a new session is born
+            boundaryDelegate.onSessionStarted(timestamp)
         }
     }
 

@@ -6,14 +6,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.Interval
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
-import java.util.NavigableMap
-import java.util.TreeMap
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
@@ -22,15 +21,10 @@ internal class EmbraceNetworkConnectivityService(
     private val backgroundWorker: BackgroundWorker,
     private val logger: InternalEmbraceLogger,
     private val connectivityManager: ConnectivityManager?,
-    private val isNetworkCaptureEnabled: Boolean
+    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
-    companion object {
-        private const val MAX_CAPTURED_NETWORK_STATUS = 100
-    }
-
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-    private val networkReachable: NavigableMap<Long, NetworkStatus> = TreeMap()
     private var lastNetworkStatus: NetworkStatus? = null
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     override val ipAddress by lazy { calculateIpAddress() }
@@ -41,18 +35,6 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun onReceive(context: Context, intent: Intent) = handleNetworkStatus(true)
 
-    override fun getCapturedData(): List<Interval> {
-        val endTime = clock.now()
-        synchronized(this) {
-            val results: MutableList<Interval> = ArrayList()
-            networkReachable.subMap(0, endTime).forEach { (currentTime, value) ->
-                val next = networkReachable.higherKey(currentTime)
-                results.add(Interval(currentTime, next ?: endTime, value.value))
-            }
-            return results
-        }
-    }
-
     override fun networkStatusOnSessionStarted(startTime: Long) = handleNetworkStatus(false, startTime)
 
     private fun handleNetworkStatus(notifyListeners: Boolean, timestamp: Long = clock.now()) {
@@ -60,9 +42,12 @@ internal class EmbraceNetworkConnectivityService(
             val networkStatus = getCurrentNetworkStatus()
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
-                if (isNetworkCaptureEnabled) {
-                    saveStatus(timestamp, networkStatus)
-                }
+
+                dataSourceModuleProvider()
+                    ?.networkStatusDataSource
+                    ?.dataSource
+                    ?.networkStatusChange(networkStatus, timestamp)
+
                 if (notifyListeners) {
                     logger.logInfo("Network status changed to: " + networkStatus.name)
                     notifyNetworkConnectivityListeners(networkStatus)
@@ -103,14 +88,6 @@ internal class EmbraceNetworkConnectivityService(
         return networkStatus
     }
 
-    private fun saveStatus(timestamp: Long, networkStatus: NetworkStatus) {
-        synchronized(this) {
-            if (networkReachable.size < MAX_CAPTURED_NETWORK_STATUS) {
-                networkReachable[timestamp] = networkStatus
-            }
-        }
-    }
-
     private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) =
         lastNetworkStatus == null || lastNetworkStatus != newNetworkStatus
 
@@ -130,10 +107,6 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun close() {
         context.unregisterReceiver(this)
-    }
-
-    override fun cleanCollections() {
-        networkReachable.clear()
     }
 
     /**

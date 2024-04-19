@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
+import io.embrace.android.embracesdk.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
@@ -44,6 +45,7 @@ internal interface DataSourceModule {
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>
     val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
+    val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -184,6 +186,18 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
+        )
+    }
+
+    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                NetworkStatusDataSource(
+                    spanService = otelModule.spanService,
+                    logger = initModule.logger
+                )
+            },
+            configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
         )
     }
 

@@ -43,21 +43,25 @@ internal class OrchestratorBoundaryDelegateTest {
 
     @Test
     fun `prepare new session clear user info true`() {
-        delegate.prepareForNewSession(1000L, clearUserInfo = true)
+        delegate.prepareForNewSession(clearUserInfo = true)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, sessionProperties.get().size)
         assertEquals(1, userService.clearedCount)
         assertEquals(1, ndkService.userUpdateCount)
-        assertEquals(1, networkConnectivityService.networkStatusOnSessionStartedCount)
     }
 
     @Test
     fun `prepare new session clear user info false`() {
-        delegate.prepareForNewSession(1000L, clearUserInfo = false)
+        delegate.prepareForNewSession(clearUserInfo = false)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, sessionProperties.get().size)
         assertEquals(0, userService.clearedCount)
         assertEquals(0, ndkService.userUpdateCount)
+    }
+
+    @Test
+    fun `on session started`() {
+        delegate.onSessionStarted(1000)
         assertEquals(1, networkConnectivityService.networkStatusOnSessionStartedCount)
     }
 }

@@ -28,7 +28,7 @@ internal class OrchestratorBoundaryDelegate(
      * Prepares all services/state for a new session. Practically this involves
      * resetting collections in services etc.
      */
-    fun prepareForNewSession(startTime: Long, clearUserInfo: Boolean = false) {
+    fun prepareForNewSession(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections(internalErrorService)
         sessionProperties.clearTemporary()
 
@@ -36,7 +36,9 @@ internal class OrchestratorBoundaryDelegate(
             userService.clearAllUserInfo()
             ndkService?.onUserInfoUpdate()
         }
+    }
 
+    fun onSessionStarted(startTime: Long) {
         // Record the connection type at the start of the session.
         networkConnectivityService.networkStatusOnSessionStarted(startTime)
     }

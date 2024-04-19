@@ -280,4 +280,15 @@ internal sealed class SchemaType(
             "encrypted-payload" to networkCapturedCall.encryptedPayload
         ).toNonNullMap()
     }
+
+    internal class NetworkStatus(
+        networkStatus: io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+    ) : SchemaType(
+        telemetryType = EmbType.System.NetworkStatus,
+        fixedObjectName = "network-status"
+    ) {
+        override val schemaAttributes = mapOf(
+            "network" to networkStatus.value
+        ).toNonNullMap()
+    }
 }

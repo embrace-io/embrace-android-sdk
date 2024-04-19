@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.LocalConfigParser
-import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
@@ -86,6 +85,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     enableIntegrationTesting: Boolean,
+    dataSourceModuleProvider: Provider<DataSourceModule>,
     private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
 
@@ -266,18 +266,13 @@ internal class EssentialServiceModuleImpl(
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
         Systrace.traceSynchronous("network-connectivity-service-init") {
-            val autoDataCaptureBehavior = AutoDataCaptureBehavior(
-                thresholdCheck = thresholdCheck,
-                localSupplier = { localConfig },
-                remoteSupplier = { null }
-            )
             EmbraceNetworkConnectivityService(
                 coreModule.context,
                 initModule.clock,
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager,
-                autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+                dataSourceModuleProvider
             )
         }
     }

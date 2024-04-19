@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 
 internal fun fakePerformanceInfo() = PerformanceInfo(
-    networkInterfaceIntervals = emptyList(),
     diskUsage = DiskUsage(0, 0),
     networkRequests = NetworkRequests(NetworkSessionV2(emptyList(), emptyMap()))
 )

@@ -1,14 +1,12 @@
 package io.embrace.android.embracesdk.capture.connectivity
 
-import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.payload.Interval
 import java.io.Closeable
 
 /**
  * Detects and records which network the device is connected to.
  */
-internal interface NetworkConnectivityService : DataCaptureService<List<Interval>?>, Closeable {
+internal interface NetworkConnectivityService : Closeable {
 
     /**
      * Record the connection type at the start of the session and open a connectivity interval with it,

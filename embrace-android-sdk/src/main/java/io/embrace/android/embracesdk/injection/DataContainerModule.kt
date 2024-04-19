@@ -34,7 +34,6 @@ internal class DataContainerModuleImpl(
 
     override val performanceInfoService: PerformanceInfoService by singleton {
         EmbracePerformanceInfoService(
-            essentialServiceModule.networkConnectivityService,
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
             nativeModule.nativeThreadSamplerService,

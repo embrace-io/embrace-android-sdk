@@ -189,6 +189,7 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             customAppId,
                             enableIntegrationTesting,
+                            { dataSourceModule },
                             configServiceProvider
                         )
                     }

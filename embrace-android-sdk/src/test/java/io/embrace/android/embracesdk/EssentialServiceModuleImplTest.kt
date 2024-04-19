@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
@@ -48,6 +49,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
+            dataSourceModuleProvider = { fakeDataSourceModule() },
             enableIntegrationTesting = false,
         ) { null }
 
@@ -86,6 +88,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = null,
+            dataSourceModuleProvider = { fakeDataSourceModule() },
             enableIntegrationTesting = false,
         ) { fakeConfigService }
 

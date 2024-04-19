@@ -110,6 +110,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         internal object LowPower : System("low_power")
 
         internal object NetworkCapturedRequest : System("network_captured_request")
+
+        internal object NetworkStatus : System("network_status")
     }
 }
 

@@ -15,7 +15,7 @@ internal class SessionSpanTest : BaseTest(isOTelDevEnabled = true) {
      * Verifies that a session end message is sent.
      */
     @Test
-    fun sessionEndMessageTest() {
+    fun v2SessionMessageTest() {
         logTestMessage("Adding core web vitals")
         addCoreWebVitals()
         sendBackground()

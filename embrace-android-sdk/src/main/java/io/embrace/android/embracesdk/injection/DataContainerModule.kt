@@ -25,6 +25,7 @@ internal class DataContainerModuleImpl(
     @Suppress("UNUSED_PARAMETER")
     dataCaptureServiceModule: DataCaptureServiceModule,
     anrModule: AnrModule,
+    @Suppress("UNUSED_PARAMETER")
     customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
@@ -34,7 +35,6 @@ internal class DataContainerModuleImpl(
     override val performanceInfoService: PerformanceInfoService by singleton {
         EmbracePerformanceInfoService(
             essentialServiceModule.networkConnectivityService,
-            customerLogModule.networkLoggingService,
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
             nativeModule.nativeThreadSamplerService,

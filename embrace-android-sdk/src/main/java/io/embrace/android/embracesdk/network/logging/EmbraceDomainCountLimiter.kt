@@ -27,8 +27,9 @@ internal class EmbraceDomainCountLimiter(
             return ipAddressNetworkCallCount.getAndIncrement() < defaultPerDomainSuffixCallLimit
         }
 
-        if (!domainSetting.containsKey(domain))
+        if (!domainSetting.containsKey(domain)) {
             createLimitForDomain(domain)
+        }
 
         val settings = domainSetting[domain]
         if (settings == null) {
@@ -85,5 +86,4 @@ internal class EmbraceDomainCountLimiter(
         ipAddressNetworkCallCount.set(0)
         untrackedNetworkCallCount.set(0)
     }
-
 }

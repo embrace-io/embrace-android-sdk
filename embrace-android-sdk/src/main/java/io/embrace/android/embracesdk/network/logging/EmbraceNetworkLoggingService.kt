@@ -31,7 +31,7 @@ internal class EmbraceNetworkLoggingService(
     private fun logNetworkCaptureData(networkRequest: EmbraceNetworkRequest) {
         if (networkRequest.networkCaptureData != null) {
             networkCaptureService.logNetworkCapturedData(
-                networkRequest.url, //TODO: This used the non-stripped URL, is that correct?
+                networkRequest.url, // TODO: This used the non-stripped URL, is that correct?
                 networkRequest.httpMethod,
                 networkRequest.responseCode ?: NETWORK_ERROR_CODE,
                 networkRequest.startTime,
@@ -71,5 +71,4 @@ internal class EmbraceNetworkLoggingService(
             )
         }
     }
-
 }

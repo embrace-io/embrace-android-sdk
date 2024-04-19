@@ -59,8 +59,7 @@ internal class NetworkStatusFeatureTest {
     }
 
     @Test
-    fun `no connection creates a span`() {
-        val tickTimeMs = 3000L
+    fun `initial session creates a span snapshot`() {
         with(testRule) {
             var startTimeMs: Long = 0
             val message = checkNotNull(harness.recordSession {
@@ -74,7 +73,7 @@ internal class NetworkStatusFeatureTest {
             assertEquals("emb-network-status", snapshot.name)
             assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
             assertEquals("wan", snapshot.findSpanAttribute("network"))
-            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals(startTimeMs, snapshot.startTimeNanos.nanosToMillis())
         }
     }
 }

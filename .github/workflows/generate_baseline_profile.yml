@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/android-sdk-benchmark
-          ref: main
+          ref: update-deps
           path: ./android-sdk-benchmark
           token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
 
@@ -75,7 +75,7 @@ jobs:
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles
         run:  |
-          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
+          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
       # Commits the generated Baseline Profile to your origin/remote
       - name: Commit Baseline Profiles
         run: |

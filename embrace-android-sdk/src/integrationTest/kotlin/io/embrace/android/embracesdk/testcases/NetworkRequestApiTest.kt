@@ -202,48 +202,6 @@ internal class NetworkRequestApiTest {
         }
     }
 
-//    @Ignore() //TODO: Fix this test
-//    @Test
-//    fun `ensure calls with same callId but different start times are deduped`() {
-//        val expectedStartTime = START_TIME + 1
-//        with(testRule) {
-//            harness.recordSession {
-//                harness.overriddenConfigService.updateListeners()
-//                harness.overriddenClock.tick(5)
-//
-//                val callId = UUID.randomUUID().toString()
-//                embrace.internalInterface.recordURLConnectionNetworkRequest(
-//                    callId,
-//                    EmbraceNetworkRequest.fromCompletedRequest(
-//                        "$URL/bad",
-//                        HttpMethod.GET,
-//                        START_TIME,
-//                        END_TIME,
-//                        BYTES_SENT,
-//                        BYTES_RECEIVED,
-//                        200
-//                    )
-//                )
-//                embrace.internalInterface.recordURLConnectionNetworkRequest(
-//                    callId,
-//                    EmbraceNetworkRequest.fromCompletedRequest(
-//                        URL,
-//                        HttpMethod.GET,
-//                        expectedStartTime,
-//                        expectedStartTime + 1,
-//                        BYTES_SENT,
-//                        BYTES_RECEIVED,
-//                        200
-//                    )
-//                )
-//            }
-//
-//            val networkSpan = validateAndReturnExpectedNetworkSpan()
-//            assertEquals(URL, networkSpan.attributes["url.full"])
-//            assertEquals(expectedStartTime, networkSpan.startTimeNanos)
-//        }
-//    }
-
     /**
      * This reproduces the bug that will be fixed. Uncomment when ready.
      */

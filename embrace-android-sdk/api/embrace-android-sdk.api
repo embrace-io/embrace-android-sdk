@@ -209,10 +209,10 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun logInternalError (Ljava/lang/Throwable;)V
 	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun recordAndDeduplicateNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
 	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun setProcessStartedByNotification ()V
 	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 	public abstract fun stopSdk ()V

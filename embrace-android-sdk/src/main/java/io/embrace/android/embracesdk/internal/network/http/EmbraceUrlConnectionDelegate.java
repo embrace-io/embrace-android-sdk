@@ -21,7 +21,6 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -89,9 +88,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      */
     private final Embrace embrace;
 
-    @NonNull
-    private final String callId;
-
     /**
      * A reference to the output stream wrapped in a counter, so we can determine the bytes sent.
      */
@@ -101,11 +97,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * Whether the network call has already been logged, to prevent duplication.
      */
     private volatile boolean didLogNetworkCall = false;
-
-    /**
-     * The time at which the network call ended.
-     */
-    private volatile Long endTime;
 
     /**
      * The time at which the network call was initiated.
@@ -157,7 +148,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.embrace = embrace;
         this.createdTime = embrace.getInternalInterface().getSdkCurrentTime();
-        this.callId = UUID.randomUUID().toString();
         this.isSDKStarted = embrace.isStarted();
     }
 
@@ -358,8 +348,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
         final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheNetworkCallData();
-        internalLogNetworkCall(startTime);
+        cacheAndLogNetworkCall(startTime);
         return headerFields.get();
     }
 
@@ -377,8 +366,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         }
 
         R result = action.invoke();
-        cacheNetworkCallData();
-        internalLogNetworkCall(startTime);
+        cacheAndLogNetworkCall(startTime);
+
         return result;
     }
 
@@ -473,8 +462,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     public int getResponseCode() {
         identifyTraceId();
         long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheNetworkCallData();
-        internalLogNetworkCall(startTime);
+        cacheAndLogNetworkCall(startTime);
         return responseCode.get();
     }
 
@@ -484,8 +472,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         identifyTraceId();
         long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         String responseMsg = this.connection.getResponseMessage();
-        cacheNetworkCallData();
-        internalLogNetworkCall(startTime);
+        cacheAndLogNetworkCall(startTime);
         return responseMsg;
     }
 
@@ -541,29 +528,17 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     /**
-     * Given a start time (in milliseconds), logs the network call to Embrace using the current time as the end time.
-     * <p>
-     * If the network call has already been logged for this HttpURLConnection, this method is a no-op and is effectively
-     * ignored.
-     */
-    synchronized void internalLogNetworkCall(long startTime) {
-        if (isSDKStarted) {
-            internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime());
-        }
-    }
-
-    /**
      * Given a start time and end time (in milliseconds), logs the network call to Embrace.
      * <p>
      * If this delegate has already logged the call it represents, this method is a no-op.
      */
-    synchronized void internalLogNetworkCall(long startTime, long endTime) {
-        if (!this.didLogNetworkCall) {
+    synchronized void internalLogNetworkCall(long startTime) {
+        if (isSDKStarted && !this.didLogNetworkCall) {
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
-            this.didLogNetworkCall = true;
+            this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
             this.startTime = startTime;
-            this.endTime = endTime;
+            long endTime = embrace.getInternalInterface().getSdkCurrentTime();
 
             String url = EmbraceHttpPathOverride.getURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
 
@@ -656,10 +631,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             inputStream,
             hasNetworkCaptureRules(),
             (responseBody) -> {
-                if (startTime != null && endTime != null) {
-                    cacheNetworkCallData(responseBody);
-                    internalLogNetworkCall(startTime, endTime);
-                }
+                cacheNetworkCallData(responseBody);
+                internalLogNetworkCall(startTime);
                 return null;
             });
     }
@@ -695,7 +668,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 traceId = getRequestProperty(embrace.getTraceIdHeader());
             } catch (Exception e) {
                 Embrace.getInstance().getInternalInterface().logWarning(
-                        "Failed to retrieve actual trace id header. Current: " + traceId, null, null);
+                    "Failed to retrieve actual trace id header. Current: " + traceId, null, null);
             }
         }
     }
@@ -787,7 +760,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
+        startTime = embrace.getInternalInterface().getSdkCurrentTime();
 
         InputStream in = null;
         if (shouldUncompressGzip()) {
@@ -804,9 +777,16 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 countingInputStream(new BufferedInputStream(connectionInputStream)) : connectionInputStream;
         }
 
-        cacheNetworkCallData();
-        internalLogNetworkCall(startTime);
+        cacheAndLogNetworkCall(startTime);
+
         return in;
+    }
+
+    private void cacheAndLogNetworkCall(long startTime) {
+        if (!enableWrapIoStreams) {
+            cacheNetworkCallData();
+            internalLogNetworkCall(startTime);
+        }
     }
 
     private boolean hasNetworkCaptureRules() {

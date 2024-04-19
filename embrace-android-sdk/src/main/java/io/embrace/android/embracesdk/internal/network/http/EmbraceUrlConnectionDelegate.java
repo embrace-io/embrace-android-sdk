@@ -548,18 +548,17 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      */
     synchronized void internalLogNetworkCall(long startTime) {
         if (isSDKStarted) {
-            internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime(), false);
+            internalLogNetworkCall(startTime, embrace.getInternalInterface().getSdkCurrentTime());
         }
     }
 
     /**
      * Given a start time and end time (in milliseconds), logs the network call to Embrace.
      * <p>
-     * If this delegate has already logged the call it represents, this method is a no-op unless "overwrite" is true, in which
-     * case it will overwrite the previously logged call with new data (basically the network capture information if it's turned on)
+     * If this delegate has already logged the call it represents, this method is a no-op.
      */
-    synchronized void internalLogNetworkCall(long startTime, long endTime, boolean overwrite) {
-        if (!this.didLogNetworkCall || overwrite) {
+    synchronized void internalLogNetworkCall(long startTime, long endTime) {
+        if (!this.didLogNetworkCall) {
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;
@@ -659,7 +658,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             (responseBody) -> {
                 if (startTime != null && endTime != null) {
                     cacheNetworkCallData(responseBody);
-                    internalLogNetworkCall(startTime, endTime, true);
+                    internalLogNetworkCall(startTime, endTime);
                 }
                 return null;
             });

@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 internal class NetworkStatusDataSource(
     spanService: SpanService,
     logger: InternalEmbraceLogger
-) : StartSpanMapper<NetworkStatus>, SpanDataSourceImpl(
+) : StartSpanMapper<NetworkStatusData>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
     limitStrategy = UpToLimitStrategy(logger) { MAX_CAPTURED_NETWORK_STATUS }
@@ -42,18 +42,27 @@ internal class NetworkStatusDataSource(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation
         ) {
-            startSpanCapture(networkStatus) {
-                StartSpanData(
-                    SchemaType.NetworkStatus(networkStatus),
-                    spanStartTimeMs = timestamp
-                )
-            }.apply {
-                span = this
-            }
+            startSpanCapture(NetworkStatusData(networkStatus, timestamp), ::toStartSpanData)
+                .apply {
+                    span = this
+                }
         }
     }
 
-    override fun toStartSpanData(obj: NetworkStatus): StartSpanData {
-        TODO("Not yet implemented")
+    override fun resetDataCaptureLimits() {
+        super.resetDataCaptureLimits()
+
+    }
+
+    override fun toStartSpanData(obj: NetworkStatusData): StartSpanData {
+        return StartSpanData(
+            SchemaType.NetworkStatus(obj.networkStatus),
+            spanStartTimeMs = obj.timestamp
+        )
     }
 }
+
+internal data class NetworkStatusData(
+    val networkStatus: NetworkStatus,
+    val timestamp: Long
+)

@@ -5,136 +5,43 @@
   "data": {
     "span_snapshots": [
       {
-        "attributes": [
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "name":"emb-session",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Unset",
+        "events":[
           {
-            "key": "emb.cold_start",
-            "value": "true"
-          },
-          {
-            "key": "emb.state",
-            "value": "foreground"
-          },
-          {
-            "key": "emb.clean_exit",
-            "value": "true"
-          },
-          {
-            "key": "emb.session_start_type",
-            "value":"state"
-          },
-          {
-            "key": "emb.terminated",
-            "value":"false"
-          },
-          {
-            "key": "emb.session_end_type",
-            "value":"state"
-          },
-          {
-            "key": "emb.session_id",
-            "value": "__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key": "emb.heartbeat_time_unix_nano",
-            "value": "__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key": "emb.session_number",
-            "value": "__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key": "emb.type",
-            "value": "ux.session"
+            "name":"emb-breadcrumb",
+            "time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+            "attributes":[
+              {
+                "key":"message",
+                "value":"a message"
+              },
+              {
+                "key":"emb.type",
+                "value":"sys.breadcrumb"
+              }
+            ]
           }
         ],
-        "events": "__EMBRACE_TEST_IGNORE__",
-        "name": "emb-session",
-        "span_id": "__EMBRACE_TEST_IGNORE__",
-        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "status": "Unset",
-        "trace_id": "__EMBRACE_TEST_IGNORE__"
-      },
-      {
-        "attributes": [
+        "attributes":[
           {
-            "key": "emb.type",
-            "value": "ux.view"
+            "key":"emb.cold_start",
+            "value":"true"
           },
           {
-            "key": "view.name",
-            "value": "io.embrace.android.embracesdk.internal.MockActivity"
+            "key":"emb.state",
+            "value":"foreground"
           },
           {
-            "key": "emb.private",
-            "value": "true"
-          }
-        ],
-        "events": "__EMBRACE_TEST_IGNORE__",
-        "name": "emb-screen-view",
-        "span_id": "__EMBRACE_TEST_IGNORE__",
-        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "status": "Unset",
-        "trace_id": "__EMBRACE_TEST_IGNORE__"
-      }
-    ],
-    "spans": [
-      {
-        "attributes": [
-          {
-            "key": "emb.key",
-            "value": "true"
+            "key":"emb.clean_exit",
+            "value":"true"
           },
-          {
-            "key": "emb.process_identifier",
-            "value": "__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key": "emb.type",
-            "value": "perf"
-          },
-          {
-            "key": "emb.private.sequence_id",
-            "value": "2"
-          },
-          {
-            "key": "emb.private",
-            "value": "true"
-          }
-        ],
-        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "events": "__EMBRACE_TEST_IGNORE__",
-        "name": "emb-sdk-init",
-        "parent_span_id": "0000000000000000",
-        "span_id": "__EMBRACE_TEST_IGNORE__",
-        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "status": "Ok",
-        "trace_id": "__EMBRACE_TEST_IGNORE__"
-      },
-      {
-        "attributes": [
           {
             "key":"emb.session_start_type",
             "value":"state"
-          },
-          {
-            "key":"emb.usage.add_user_persona",
-            "value":"1"
-          },
-          {
-            "key":"emb.heartbeat_time_unix_nano",
-            "value":"__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key":"emb.session_id",
-            "value":"__EMBRACE_TEST_IGNORE__"
-          },
-          {
-            "key":"emb.usage.set_user_identifier",
-            "value":"1"
-          },
-          {
-            "key":"emb.kotlin_on_classpath",
-            "value":"1.4.32"
           },
           {
             "key":"emb.terminated",
@@ -145,17 +52,176 @@
             "value":"state"
           },
           {
-            "key":"emb.usage.add_breadcrumb",
-            "value":"1"
+            "key":"emb.session_id",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.heartbeat_time_unix_nano",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.session_number",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.type",
+            "value":"ux.session"
+          }
+        ]
+      },
+      {
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "name":"emb-screen-view",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Unset",
+        "events":[
+
+        ],
+        "attributes":[
+          {
+            "key":"emb.type",
+            "value":"ux.view"
+          },
+          {
+            "key":"view.name",
+            "value":"io.embrace.android.embracesdk.internal.MockActivity"
+          },
+          {
+            "key":"emb.private",
+            "value":"true"
+          }
+        ]
+      }
+    ],
+    "spans": [
+      {
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "parent_span_id":"0000000000000000",
+        "name":"emb-init-worker-schedule-delay",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Ok",
+        "events":[
+
+        ],
+        "attributes":[
+          {
+            "key":"emb.private",
+            "value":"true"
           },
           {
             "key":"emb.private.sequence_id",
-            "value":"1"
+            "value":"2"
           },
           {
-            "key":"emb.clean_exit",
+            "key":"emb.key",
             "value":"true"
           },
+          {
+            "key":"emb.process_identifier",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.type",
+            "value":"perf"
+          }
+        ]
+      },
+      {
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "parent_span_id":"0000000000000000",
+        "name":"emb-sdk-init",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Ok",
+        "events":[
+
+        ],
+        "attributes":[
+          {
+            "key":"emb.private",
+            "value":"true"
+          },
+          {
+            "key":"emb.private.sequence_id",
+            "value":"3"
+          },
+          {
+            "key":"emb.key",
+            "value":"true"
+          },
+          {
+            "key":"emb.process_identifier",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.type",
+            "value":"perf"
+          }
+        ]
+      },
+      {
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "parent_span_id":"0000000000000000",
+        "name":"emb-async-init-delay",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Ok",
+        "events":[
+
+        ],
+        "attributes":[
+          {
+            "key":"emb.private",
+            "value":"true"
+          },
+          {
+            "key":"emb.private.sequence_id",
+            "value":"4"
+          },
+          {
+            "key":"emb.key",
+            "value":"true"
+          },
+          {
+            "key":"emb.process_identifier",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.type",
+            "value":"perf"
+          }
+        ]
+      },
+      {
+        "trace_id":"__EMBRACE_TEST_IGNORE__",
+        "span_id":"__EMBRACE_TEST_IGNORE__",
+        "parent_span_id":"0000000000000000",
+        "name":"emb-session",
+        "start_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "end_time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+        "status":"Ok",
+        "events":[
+          {
+            "name":"emb-breadcrumb",
+            "time_unix_nano":"__EMBRACE_TEST_IGNORE__",
+            "attributes":[
+              {
+                "key":"emb.type",
+                "value":"sys.breadcrumb"
+              },
+              {
+                "key":"message",
+                "value":"a message"
+              }
+            ]
+          }
+        ],
+        "attributes":[
           {
             "key":"emb.usage.set_username",
             "value":"1"
@@ -165,20 +231,32 @@
             "value":"4.9.3"
           },
           {
-            "key":"emb.state",
-            "value":"foreground"
+            "key":"emb.clean_exit",
+            "value":"true"
           },
           {
             "key":"emb.cold_start",
             "value":"true"
           },
           {
-            "key":"emb.session_number",
-            "value":"__EMBRACE_TEST_IGNORE__"
+            "key":"emb.state",
+            "value":"foreground"
           },
           {
-            "key":"emb.is_emulator",
-            "value":"true"
+            "key":"emb.usage.add_breadcrumb",
+            "value":"1"
+          },
+          {
+            "key":"emb.terminated",
+            "value":"false"
+          },
+          {
+            "key":"emb.session_end_type",
+            "value":"state"
+          },
+          {
+            "key":"emb.private.sequence_id",
+            "value":"1"
           },
           {
             "key":"emb.process_identifier",
@@ -195,46 +273,75 @@
           {
             "key":"emb.okhttp3",
             "value":"true"
-          }
-        ],
-        "end_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "events": [
+          },
           {
-            "attributes": [
-              {
-                "key": "emb.type",
-                "value": "sys.breadcrumb"
-              },
-              {
-                "key": "message",
-                "value": "a message"
-              }
-            ],
-            "name": "emb-breadcrumb",
-            "time_unix_nano": "__EMBRACE_TEST_IGNORE__"
+            "key":"emb.session_number",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.is_emulator",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.usage.add_user_persona",
+            "value":"1"
+          },
+          {
+            "key":"emb.session_start_type",
+            "value":"state"
+          },
+          {
+            "key":"emb.session_id",
+            "value":"__EMBRACE_TEST_IGNORE__"
+          },
+          {
+            "key":"emb.usage.set_user_identifier",
+            "value":"1"
+          },
+          {
+            "key":"emb.kotlin_on_classpath",
+            "value":"1.4.32"
+          },
+          {
+            "key":"emb.heartbeat_time_unix_nano",
+            "value":"__EMBRACE_TEST_IGNORE__"
           }
-        ],
-        "name": "emb-session",
-        "parent_span_id": "0000000000000000",
-        "span_id": "__EMBRACE_TEST_IGNORE__",
-        "start_time_unix_nano": "__EMBRACE_TEST_IGNORE__",
-        "status": "Ok",
-        "trace_id": "__EMBRACE_TEST_IGNORE__"
+        ]
       }
     ]
   },
   "metadata": {
     "email": "user@email.com",
     "locale": "__EMBRACE_TEST_IGNORE__",
-    "personas": [
-      "first_day"
-    ],
+    "personas": "__EMBRACE_TEST_IGNORE__",
     "timezone_description": "__EMBRACE_TEST_IGNORE__",
     "user_id": "some id",
     "username": "John Doe"
   },
   "p": "__EMBRACE_TEST_IGNORE__",
-  "resource": "__EMBRACE_TEST_IGNORE__",
+  "resource": {
+    "app_version": "1.1.2",
+    "app_framework": 1,
+    "build_id": "default test build id",
+    "app_ecosystem_id": "io.embrace.android.embracesdk.test",
+    "build_type": "default test build type",
+    "build_flavor": "default test build flavor",
+    "environment": "dev",
+    "bundle_version": "5",
+    "sdk_version": "__EMBRACE_TEST_IGNORE__",
+    "sdk_simple_version": 53,
+    "device_manufacturer": "__EMBRACE_TEST_IGNORE__",
+    "device_model": "__EMBRACE_TEST_IGNORE__",
+    "device_architecture": "__EMBRACE_TEST_IGNORE__",
+    "jailbroken": "__EMBRACE_TEST_IGNORE__",
+    "disk_total_capacity": "__EMBRACE_TEST_IGNORE__",
+    "os_type": "linux",
+    "os_name": "android",
+    "os_version": "__EMBRACE_TEST_IGNORE__",
+    "os_code": "__EMBRACE_TEST_IGNORE__",
+    "screen_resolution": "__EMBRACE_TEST_IGNORE__",
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
+  },
   "s": "__EMBRACE_TEST_IGNORE__",
   "span_snapshots": "__EMBRACE_TEST_IGNORE__",
   "type": "session",

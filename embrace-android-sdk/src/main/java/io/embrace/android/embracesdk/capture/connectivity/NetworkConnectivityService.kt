@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.capture.connectivity
 
-import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.payload.Interval
 import java.io.Closeable
 
 /**

@@ -13,13 +13,13 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 internal class NetworkStatusDataSource(
-        spanService: SpanService,
-        logger: InternalEmbraceLogger
-    ) : StartSpanMapper<NetworkStatus>, SpanDataSourceImpl(
+    spanService: SpanService,
+    logger: InternalEmbraceLogger
+) : StartSpanMapper<NetworkStatus>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
     limitStrategy = UpToLimitStrategy(logger) { MAX_CAPTURED_NETWORK_STATUS }
-)  {
+) {
     private companion object {
         private const val MAX_CAPTURED_NETWORK_STATUS = 100
     }
@@ -27,7 +27,7 @@ internal class NetworkStatusDataSource(
     private var span: EmbraceSpan? = null
 
     fun networkStatusChange(networkStatus: NetworkStatus, timestamp: Long) {
-        //close previous span
+        // close previous span
         if (span != null) {
             captureSpanData(
                 countsTowardsLimits = false,
@@ -37,7 +37,7 @@ internal class NetworkStatusDataSource(
                 }
             )
         }
-        //start a new span with the new network status
+        // start a new span with the new network status
         captureSpanData(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
-import io.embrace.android.embracesdk.payload.Interval
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -288,7 +287,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
         fixedObjectName = "network-status"
     ) {
-        override val schemaAttributes = mapOf (
+        override val schemaAttributes = mapOf(
             "network" to networkStatus.value
         ).toNonNullMap()
     }

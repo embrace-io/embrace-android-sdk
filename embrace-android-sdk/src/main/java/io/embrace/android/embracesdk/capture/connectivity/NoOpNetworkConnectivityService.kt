@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.connectivity
 
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.payload.Interval
 
 internal class NoOpNetworkConnectivityService : NetworkConnectivityService {
     override fun close() {}

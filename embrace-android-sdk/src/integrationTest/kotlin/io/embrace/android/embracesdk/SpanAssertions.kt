@@ -66,6 +66,11 @@ internal fun SessionMessage.findSpansOfType(telemetryType: TelemetryType): List<
         "Spans of type not found: ${telemetryType.key}"
     }
 
+internal fun SessionMessage.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<EmbraceSpanData> =
+    checkNotNull(spanSnapshots?.filter { it.hasFixedAttribute(telemetryType) }) {
+        "Span snapshots of type not found: ${telemetryType.key}"
+    }
+
 /**
  * Returns true if a span exists with the given [TelemetryType].
  */

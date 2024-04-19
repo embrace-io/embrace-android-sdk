@@ -91,7 +91,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.startupThreshold)
 
         assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
-        assertNotNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)
@@ -119,7 +118,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.startupThreshold)
 
         assertNull(sanitizedMessage.performanceInfo?.networkRequests)
-        assertNull(sanitizedMessage.performanceInfo?.networkInterfaceIntervals)
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)

@@ -20,7 +20,6 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -94,85 +93,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
         verify { context.registerReceiver(service, any()) }
         service.close()
         verify { context.unregisterReceiver(service) }
-    }
-
-    @Test
-    fun `test onReceive with no connection creates an interval`() {
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-        service.onReceive(context, mockIntent)
-        fakeClock.tick(2000)
-        val intervals = service.getCapturedData()
-
-        assertEquals(1, intervals.size)
-        assertEquals(intervals.single().value, "none")
-    }
-
-    @Test
-    fun `test networkStatusOnSessionStarted with no connection creates an interval`() {
-        val startTime = fakeClock.now()
-        fakeClock.tick(2000)
-        val endTime = fakeClock.now()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-        service.networkStatusOnSessionStarted(startTime)
-
-        val intervals = service.getCapturedData()
-
-        assertEquals(1, intervals.size)
-        assertEquals(intervals.single().startTime, startTime)
-        assertEquals(intervals.single().endTime, endTime)
-        assertEquals(intervals.single().value, "none")
-    }
-
-    @Test
-    fun `test networkStatusOnSessionStarted with WIFI connection creates an interval`() {
-        val startTime = fakeClock.now()
-        fakeClock.tick(2000)
-        val endTime = fakeClock.now()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
-        service.networkStatusOnSessionStarted(startTime)
-
-        val intervals = service.getCapturedData()
-
-        assertEquals(1, intervals.size)
-        assertEquals(intervals.single().startTime, startTime)
-        assertEquals(intervals.single().endTime, endTime)
-        assertEquals(intervals.single().value, "wifi")
-    }
-
-    @Test
-    fun `test networkStatusOnSessionStarted with WAN connection creates an interval`() {
-        val startTime = fakeClock.now()
-        fakeClock.tick(2000)
-        val endTime = fakeClock.now()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
-
-        service.networkStatusOnSessionStarted(startTime)
-        val intervals = service.getCapturedData()
-
-        assertEquals(1, intervals.size)
-        assertEquals(intervals.single().startTime, startTime)
-        assertEquals(intervals.single().endTime, endTime)
-        assertEquals(intervals.single().value, "wan")
-    }
-
-    @Test
-    fun `test cleanCollections and getCapturedData returns no intervals`() {
-        val startTime = fakeClock.now()
-        fakeClock.tick(2000)
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-
-        service.networkStatusOnSessionStarted(startTime)
-        var intervals = service.getCapturedData()
-
-        assertEquals(1, intervals.size)
-
-        service.cleanCollections()
-
-        intervals = service.getCapturedData()
-        assertEquals(0, intervals.size)
     }
 
     @Test
@@ -252,21 +172,5 @@ internal class EmbraceNetworkConnectivityServiceTest {
         service.onReceive(context, mockIntent)
 
         verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(any()) }
-    }
-
-    @Test
-    fun `test limit exceeded`() {
-        val mockIntent = mockk<Intent>(relaxed = true)
-
-        repeat(60) {
-            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-            fakeClock.tick(1)
-            service.onReceive(context, mockIntent)
-
-            every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-            fakeClock.tick(1)
-            service.onReceive(context, mockIntent)
-        }
-        assertEquals(100, service.getCapturedData().size)
     }
 }

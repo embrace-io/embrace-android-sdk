@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import org.junit.Assert.assertEquals
@@ -18,7 +17,6 @@ private const val SESSION_END_TIME_MS = 1609234092345
 internal class EmbracePerformanceInfoServiceTest {
 
     private lateinit var service: EmbracePerformanceInfoService
-    private val networkConnectivityService = FakeNetworkConnectivityService()
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
     private val monitoringServiceRule = NoOpResponsivenessMonitorService()
@@ -26,7 +24,6 @@ internal class EmbracePerformanceInfoServiceTest {
     @Before
     fun setUp() {
         service = EmbracePerformanceInfoService(
-            networkConnectivityService,
             metadataService,
             googleAnrTimestampRepository,
             null,
@@ -61,7 +58,6 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(metadataService.getDiskUsage(), info.diskUsage)
-        assertValueCopied(networkConnectivityService.data, info.networkInterfaceIntervals)
     }
 
     private fun assertBasicSessionPerfInfoIncluded(info: PerformanceInfo) {

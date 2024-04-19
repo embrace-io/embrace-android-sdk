@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_ANR
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CONNECTIVITY
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 

@@ -10,12 +10,9 @@ import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.payload.Interval
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
-import java.util.NavigableMap
-import java.util.TreeMap
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
@@ -25,8 +22,7 @@ internal class EmbraceNetworkConnectivityService(
     private val logger: InternalEmbraceLogger,
     private val connectivityManager: ConnectivityManager?,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
-    ) : BroadcastReceiver(), NetworkConnectivityService {
-
+) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastNetworkStatus: NetworkStatus? = null
@@ -47,10 +43,10 @@ internal class EmbraceNetworkConnectivityService(
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
 
-                dataSourceModuleProvider()?.
-                    networkStatusDataSource?.
-                    dataSource?.
-                    networkStatusChange(networkStatus, timestamp)
+                dataSourceModuleProvider()
+                    ?.networkStatusDataSource
+                    ?.dataSource
+                    ?.networkStatusChange(networkStatus, timestamp)
 
                 if (notifyListeners) {
                     logger.logInfo("Network status changed to: " + networkStatus.name)

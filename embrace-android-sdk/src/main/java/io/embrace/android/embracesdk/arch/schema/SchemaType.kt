@@ -185,7 +185,10 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class MemoryWarning : SchemaType(EmbType.Performance.MemoryWarning) {
+    internal class MemoryWarning : SchemaType(
+        telemetryType = EmbType.Performance.MemoryWarning,
+        fixedObjectName = "memory-warning"
+    ) {
         override val schemaAttributes = emptyMap<String, String>()
     }
 

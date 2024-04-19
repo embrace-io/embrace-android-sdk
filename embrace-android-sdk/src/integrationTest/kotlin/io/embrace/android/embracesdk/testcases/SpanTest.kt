@@ -50,7 +50,7 @@ internal class SpanTest {
                 assertEquals(2, fakeSpanExporter.exportedSpans.size)
                 val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
                 val testSpan = checkNotNull(exportedSpans["test"])
-                testSpan.assertHasEmbraceAttribute(embSequenceId, "5")
+                testSpan.assertHasEmbraceAttribute(embSequenceId, "6")
                 testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.overriddenInitModule.processIdentifier)
                 testSpan.resource.assertExpectedAttributes(
                     expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceServiceName,

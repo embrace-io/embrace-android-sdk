@@ -32,9 +32,8 @@ internal class NetworkStatusFeatureTest {
                 // look inside embrace internals as there isn't a good way to trigger this E2E
                 val dataSource =
                     checkNotNull(bootstrapper.dataSourceModule.networkStatusDataSource.dataSource)
-                dataSource.networkStatusChange(NetworkStatus.WIFI, startTimeMs)
                 harness.overriddenClock.tick(tickTimeMs)
-                dataSource.networkStatusChange(NetworkStatus.WAN, startTimeMs + tickTimeMs)
+                dataSource.networkStatusChange(NetworkStatus.WIFI, startTimeMs + tickTimeMs)
             })
 
             val spans = message.findSpansOfType(EmbType.System.NetworkStatus)
@@ -43,7 +42,7 @@ internal class NetworkStatusFeatureTest {
 
             assertEquals("emb-network-status", span.name)
             assertEquals("sys.network_status", span.findSpanAttribute("emb.type"))
-            assertEquals("wifi", span.findSpanAttribute("network"))
+            assertEquals("wan", span.findSpanAttribute("network"))
             assertEquals(startTimeMs, span.startTimeNanos.nanosToMillis())
             assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos.nanosToMillis())
 
@@ -53,7 +52,7 @@ internal class NetworkStatusFeatureTest {
 
             assertEquals("emb-network-status", snapshot.name)
             assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
-            assertEquals("wan", snapshot.findSpanAttribute("network"))
+            assertEquals("wifi", snapshot.findSpanAttribute("network"))
             assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos.nanosToMillis())
         }
     }

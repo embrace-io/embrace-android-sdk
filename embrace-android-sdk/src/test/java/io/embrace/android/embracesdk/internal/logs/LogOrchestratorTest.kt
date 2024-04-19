@@ -78,7 +78,7 @@ internal class LogOrchestratorTest {
     fun `logs are sent after inactivity time has passed`() {
         logSink.storeLogs(listOf(FakeLogRecordData()))
 
-        moveTimeAhead(2500L)
+        moveTimeAhead(2000L)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
@@ -87,9 +87,9 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `logs are sent after batch time has passed`() {
-        val timeStep = 1100L
+        val timeStep = 500L
 
-        repeat(4) {
+        repeat(9) {
             logSink.storeLogs(listOf(FakeLogRecordData()))
             moveTimeAhead(timeStep)
         }
@@ -98,11 +98,11 @@ internal class LogOrchestratorTest {
         assertFalse(logSink.completedLogs().isEmpty())
         verifyPayloadNotSent()
 
-        moveTimeAhead(700)
+        moveTimeAhead(500)
 
         // Verify the logs are sent
         assertTrue(logSink.completedLogs().isEmpty())
-        verifyPayload(4)
+        verifyPayload(9)
     }
 
     @Test

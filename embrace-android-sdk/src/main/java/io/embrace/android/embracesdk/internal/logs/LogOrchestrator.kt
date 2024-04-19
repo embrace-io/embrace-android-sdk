@@ -100,11 +100,11 @@ internal class LogOrchestratorImpl(
         sink.completedLogs().size >= MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
-        now - lastLogTime.get() > MAX_INACTIVITY_TIME
+        now - lastLogTime.get() >= MAX_INACTIVITY_TIME
 
     private fun isMaxBatchTimeReached(now: Long): Boolean {
         val firstLogInBatchTime = firstLogInBatchTime.get()
-        return firstLogInBatchTime != 0L && now - firstLogInBatchTime > MAX_BATCH_TIME
+        return firstLogInBatchTime != 0L && now - firstLogInBatchTime >= MAX_BATCH_TIME
     }
 
     companion object {

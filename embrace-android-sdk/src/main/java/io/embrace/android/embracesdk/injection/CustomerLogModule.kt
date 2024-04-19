@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingServic
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.NetworkLoggingDomainCountLimiter
+import io.embrace.android.embracesdk.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -58,8 +58,8 @@ internal class CustomerLogModuleImpl(
         )
     }
 
-    private val networkLoggingDomainCountLimiter: NetworkLoggingDomainCountLimiter by singleton {
-        NetworkLoggingDomainCountLimiter(
+    private val embraceDomainCountLimiter: EmbraceDomainCountLimiter by singleton {
+        EmbraceDomainCountLimiter(
             essentialServiceModule.configService,
             initModule.logger
         )
@@ -67,7 +67,7 @@ internal class CustomerLogModuleImpl(
 
     override val networkLoggingService: NetworkLoggingService by singleton {
         EmbraceNetworkLoggingService(
-            networkLoggingDomainCountLimiter,
+            embraceDomainCountLimiter,
             networkCaptureService,
             openTelemetryModule.spanService
         )

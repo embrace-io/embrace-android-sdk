@@ -23,7 +23,7 @@ internal class OTelBehavior(
     /**
      * Returns whether OTel Beta is enabled.
      */
-    fun isBetaEnabled() = remote?.oTelConfig?.isBetaEnabled ?: false
+    fun isBetaEnabled() = remote?.oTelConfig?.isBetaEnabled ?: true
 
     /**
      * Returns whether OTel Dev is enabled.

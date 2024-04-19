@@ -9,6 +9,9 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentLogMessages
@@ -46,6 +49,9 @@ internal class EmbraceInternalInterfaceTest {
     @Before
     fun setup() {
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
+        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
+            RemoteConfig(oTelConfig = OTelRemoteConfig(isStableEnabled = false))
+        }
     }
 
     @Test
@@ -112,7 +118,7 @@ internal class EmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `internal logging methods work as expected`() {
+    fun `internal logging methods work as expected in v1`() {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             val expectedProperties = mapOf(Pair("key", "value"))
@@ -223,7 +229,7 @@ internal class EmbraceInternalInterfaceTest {
 
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
-            val session = checkNotNull( harness.recordSession {
+            val session = checkNotNull(harness.recordSession {
                 embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
             })
 

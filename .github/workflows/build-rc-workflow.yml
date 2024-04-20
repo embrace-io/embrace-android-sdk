@@ -19,7 +19,7 @@ on:
 jobs:
   release:
     timeout-minutes: 60
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         jdk-version: [ "17" ]

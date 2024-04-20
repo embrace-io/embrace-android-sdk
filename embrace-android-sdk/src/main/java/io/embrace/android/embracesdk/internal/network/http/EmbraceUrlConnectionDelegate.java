@@ -174,7 +174,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     public void disconnect() {
         // The network call must be logged before we close the transport
-        internalLogNetworkCall(createdTime);
+        setStartTime(createdTime);
+        internalLogNetworkCall();
         this.connection.disconnect();
     }
 
@@ -347,8 +348,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     @Nullable
     public Map<String, List<String>> getHeaderFields() {
-        final long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
         return headerFields.get();
     }
 
@@ -359,14 +359,13 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         if (name == null) {
             return null;
         }
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
         if (shouldInterceptHeaderRetrieval(name)) {
             // Strip the content encoding and length headers, as we transparently ungzip the content
             return defaultValue;
         }
 
         R result = action.invoke();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
 
         return result;
     }
@@ -461,8 +460,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     public int getResponseCode() {
         identifyTraceId();
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
         return responseCode.get();
     }
 
@@ -470,10 +468,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     public String getResponseMessage() throws IOException {
         identifyTraceId();
-        long startTime = embrace.getInternalInterface().getSdkCurrentTime();
-        String responseMsg = this.connection.getResponseMessage();
-        cacheAndLogNetworkCall(startTime);
-        return responseMsg;
+        cacheNetworkCallData();
+        return this.connection.getResponseMessage();
     }
 
     @Override
@@ -532,12 +528,11 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * <p>
      * If this delegate has already logged the call it represents, this method is a no-op.
      */
-    synchronized void internalLogNetworkCall(long startTime) {
+    synchronized void internalLogNetworkCall() {
         if (isSDKStarted && !this.didLogNetworkCall) {
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
-            this.startTime = startTime;
             long endTime = embrace.getInternalInterface().getSdkCurrentTime();
 
             String url = EmbraceHttpPathOverride.getURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
@@ -632,7 +627,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             hasNetworkCaptureRules(),
             (responseBody) -> {
                 cacheNetworkCallData(responseBody);
-                internalLogNetworkCall(startTime);
+                internalLogNetworkCall();
                 return null;
             });
     }
@@ -760,8 +755,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        startTime = embrace.getInternalInterface().getSdkCurrentTime();
-
+        setStartTime(embrace.getInternalInterface().getSdkCurrentTime());
         InputStream in = null;
         if (shouldUncompressGzip()) {
             try {
@@ -777,16 +771,9 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 countingInputStream(new BufferedInputStream(connectionInputStream)) : connectionInputStream;
         }
 
-        cacheAndLogNetworkCall(startTime);
+        cacheNetworkCallData();
 
         return in;
-    }
-
-    private void cacheAndLogNetworkCall(long startTime) {
-        if (!enableWrapIoStreams) {
-            cacheNetworkCallData();
-            internalLogNetworkCall(startTime);
-        }
     }
 
     private boolean hasNetworkCaptureRules() {
@@ -800,9 +787,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private void cacheNetworkCallData() {
-        if (isSDKStarted) {
-            cacheNetworkCallData(null);
-        }
+        cacheNetworkCallData(null);
     }
 
     /**
@@ -810,6 +795,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * is not available.
      */
     private void cacheNetworkCallData(@Nullable byte[] responseBody) {
+        if (!isSDKStarted) {
+            return;
+        }
+
+        setStartTime(embrace.getInternalInterface().getSdkCurrentTime());
+
         if (headerFields.get() == null) {
             synchronized (headerFields) {
                 if (headerFields.get() == null) {
@@ -854,6 +845,10 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                     }
                 }
             }
+        }
+
+        if (!enableWrapIoStreams) {
+            internalLogNetworkCall();
         }
 
         if (shouldCaptureNetworkData()) {
@@ -903,6 +898,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     private boolean shouldCaptureNetworkData() {
         return (hasNetworkCaptureRules() && (enableWrapIoStreams || inputStreamAccessException != null)) &&
             (networkCaptureData.get() == null || networkCaptureData.get().getCapturedResponseBody() == null);
+    }
+
+    private void setStartTime(@NonNull Long startTimeMs) {
+        if (startTime == null) {
+            startTime = startTimeMs;
+        }
     }
 
     private void logError(@NonNull Throwable t) {

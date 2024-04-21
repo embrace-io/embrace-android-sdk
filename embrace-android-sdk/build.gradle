@@ -90,9 +90,7 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-api:${Versions.openTelemetryCore}"
     implementation "io.opentelemetry:opentelemetry-sdk:${Versions.openTelemetryCore}"
     implementation "io.opentelemetry:opentelemetry-context:${Versions.openTelemetryCore}"
-    // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
-    // Please, don"t update it until we update compileSdk.
-    implementation "androidx.profileinstaller:profileinstaller:1.0.0"
+    implementation "androidx.profileinstaller:profileinstaller:1.3.1"
 
     testImplementation "io.mockk:mockk:1.12.2"
     testImplementation "androidx.test:core:1.4.0"

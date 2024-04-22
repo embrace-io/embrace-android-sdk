@@ -4,11 +4,7 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert
 import org.junit.Rule
@@ -35,7 +31,7 @@ internal class LogRecordExporterTest {
 
             val fakeLogRecordExporter = FakeLogRecordExporter()
             embrace.addLogRecordExporter(fakeLogRecordExporter)
-            embrace.start(harness.fakeCoreModule.context)
+            embrace.start(harness.overriddenCoreModule.context)
 
             harness.recordSession {
                 embrace.logMessage("test message", Severity.INFO)
@@ -43,7 +39,7 @@ internal class LogRecordExporterTest {
                 sleep(3000)
             }
             Assert.assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) > 0)
-            Assert.assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body)
+            Assert.assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
         }
     }
 }

@@ -9,10 +9,7 @@ import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.anr.sigquit.FilesDelegate
-import io.embrace.android.embracesdk.anr.sigquit.FindGoogleThread
-import io.embrace.android.embracesdk.anr.sigquit.GetThreadCommand
-import io.embrace.android.embracesdk.anr.sigquit.GetThreadsInCurrentProcess
+import io.embrace.android.embracesdk.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrHandlerNativeDelegate
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
@@ -118,15 +115,9 @@ internal class AnrModuleImpl(
     }
 
     private val sigquitDetectionService: SigquitDetectionService by singleton {
-        val filesDelegate = FilesDelegate()
-
         SigquitDetectionService(
             sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
-            findGoogleThread = FindGoogleThread(
-                initModule.logger,
-                GetThreadsInCurrentProcess(filesDelegate),
-                GetThreadCommand(filesDelegate)
-            ),
+            anrThreadIdDelegate = AnrThreadIdDelegate(initModule.logger),
             googleAnrHandlerNativeDelegate = GoogleAnrHandlerNativeDelegate(googleAnrTimestampRepository, initModule.logger),
             googleAnrTimestampRepository = googleAnrTimestampRepository,
             configService = configService,

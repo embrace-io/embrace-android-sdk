@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SigquitDetectionService(
     private val sharedObjectLoader: SharedObjectLoader,
-    private val findGoogleThread: FindGoogleThread,
+    private val anrThreadIdDelegate: AnrThreadIdDelegate,
     private val googleAnrHandlerNativeDelegate: GoogleAnrHandlerNativeDelegate,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     var configService: ConfigService,
@@ -59,7 +59,7 @@ internal class SigquitDetectionService(
         }
 
         // we must find the Google watcher thread in order to install the Google ANR handle.
-        val googleThreadId = findGoogleThread.invoke()
+        val googleThreadId = anrThreadIdDelegate.findGoogleAnrThread()
         if (googleThreadId <= 0) {
             logger.logError("Could not initialize Google ANR tracking: Google thread not found.")
             googleAnrTrackerInstalled.set(false)

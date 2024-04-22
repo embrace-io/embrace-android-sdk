@@ -17,7 +17,6 @@ internal class GoogleAnrHandlerNativeDelegate(
         }
     }
 
-    @Synchronized
     fun saveGoogleAnr(timestamp: Long) {
         logger.logInfo("got Google ANR timestamp $timestamp")
         googleAnrTimestampRepository.add(timestamp)

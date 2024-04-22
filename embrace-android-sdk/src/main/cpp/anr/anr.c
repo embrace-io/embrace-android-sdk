@@ -221,9 +221,9 @@ static bool configure_reporting(JNIEnv *env) {
         return false;
     }
 
-    jclass anr_class = emb_jni_find_class(env, "io/embrace/android/embracesdk/anr/sigquit/GoogleAnrHandlerNativeDelegate");
+    jclass anr_class = emb_jni_find_class(env, "io/embrace/android/embracesdk/anr/sigquit/SigquitDataSource");
     if (anr_class == NULL) {
-        EMB_LOGERROR("Reporting config failed, could not find GoogleAnrHandlerNativeDelegate class");
+        EMB_LOGERROR("Reporting config failed, could not find SigquitDataSource class");
         return false;
     }
     EMB_LOGDEV("got ANR class id %p", anr_class);

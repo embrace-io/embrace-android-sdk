@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture
 
-import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -8,7 +7,6 @@ import io.embrace.android.embracesdk.session.captureDataSafely
 
 internal class EmbracePerformanceInfoService(
     private val metadataService: MetadataService,
-    private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val logger: InternalEmbraceLogger
 ) : PerformanceInfoService {
 
@@ -18,16 +16,7 @@ internal class EmbracePerformanceInfoService(
         coldStart: Boolean,
         receivedTermination: Boolean?
     ): PerformanceInfo {
-        val info = getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
-
-        return info.copy(
-            googleAnrTimestamps = captureDataSafely(logger) {
-                googleAnrTimestampRepository.getGoogleAnrTimestamps(
-                    sessionStart,
-                    sessionLastKnownTime
-                ).toList()
-            }
-        )
+        return getPerformanceInfo(sessionStart, sessionLastKnownTime, coldStart)
     }
 
     override fun getPerformanceInfo(

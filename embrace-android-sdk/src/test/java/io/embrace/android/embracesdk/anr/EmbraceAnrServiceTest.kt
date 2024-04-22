@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.WrongThreadException
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -349,23 +348,6 @@ internal class EmbraceAnrServiceTest {
                 assertTrue(blockedThreadDetector.isAnrDurationThresholdExceeded(now + 1001))
                 assertTrue(blockedThreadDetector.isAnrDurationThresholdExceeded(now + 10000))
             }
-        }
-    }
-
-    @Test
-    fun `finishing initialization adds a config service listener when google anr capture is disabled`() {
-        with(rule) {
-            // given anr capture is disabled
-            cfg = cfg.copy(googlePctEnabled = 0)
-            // when finishing initialization
-            anrExecutorService.submit {
-                anrService.finishInitialization(
-                    fakeConfigService
-                )
-            }.get(1L, TimeUnit.SECONDS)
-
-            // a listener is added to config service
-            verify(exactly = 1) { mockSigquitDetectionService.configService = any() }
         }
     }
 

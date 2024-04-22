@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -47,7 +48,8 @@ internal class AnrFeatureTest {
             val anrModule = AnrModuleImpl(
                 initModule,
                 FakeEssentialServiceModule(),
-                workerThreadModule
+                workerThreadModule,
+                FakeOpenTelemetryModule()
             )
             blockedThreadDetector = anrModule.blockedThreadDetector
 

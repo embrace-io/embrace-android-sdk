@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Build
+import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
@@ -46,6 +47,7 @@ internal interface DataSourceModule {
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>
     val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
+    val sigquitDataSource: DataSourceState<SigquitDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -56,6 +58,7 @@ internal class DataSourceModuleImpl(
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
+    anrModule: AnrModule
 ) : DataSourceModule {
 
     private val values: MutableList<DataSourceState<*>> = mutableListOf()
@@ -198,6 +201,13 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
+        )
+    }
+
+    override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
+        DataSourceState(
+            factory = anrModule::sigquitDataSource,
+            configGate = { configService.anrBehavior.isGoogleAnrCaptureEnabled() }
         )
     }
 

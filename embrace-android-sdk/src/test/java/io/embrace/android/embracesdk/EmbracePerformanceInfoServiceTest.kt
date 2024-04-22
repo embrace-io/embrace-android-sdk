@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -17,16 +16,13 @@ internal class EmbracePerformanceInfoServiceTest {
 
     private lateinit var service: EmbracePerformanceInfoService
     private val metadataService = FakeMetadataService()
-    private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
 
     @Before
     fun setUp() {
         service = EmbracePerformanceInfoService(
             metadataService,
-            googleAnrTimestampRepository,
             InternalEmbraceLogger()
         )
-        googleAnrTimestampRepository.add(150209234099)
     }
 
     @Test
@@ -39,7 +35,6 @@ internal class EmbracePerformanceInfoServiceTest {
     fun testSessionPerformanceInfoNonColdStart() {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, false, null)
         assertBasicPerfInfoIncluded(info)
-        assertBasicSessionPerfInfoIncluded(info)
 
         // verify certain fields were not included in non-cold start
         assertNull(info.appExitInfoData)
@@ -49,18 +44,10 @@ internal class EmbracePerformanceInfoServiceTest {
     fun testSessionPerformanceInfoColdStart() {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, true, null)
         assertBasicPerfInfoIncluded(info)
-        assertBasicSessionPerfInfoIncluded(info)
     }
 
     private fun assertBasicPerfInfoIncluded(info: PerformanceInfo) {
         assertValueCopied(metadataService.getDiskUsage(), info.diskUsage)
-    }
-
-    private fun assertBasicSessionPerfInfoIncluded(info: PerformanceInfo) {
-        assertValueCopied(
-            googleAnrTimestampRepository.getGoogleAnrTimestamps(0, SESSION_END_TIME_MS),
-            info.googleAnrTimestamps
-        )
     }
 
     private fun assertValueCopied(expected: Any?, observed: Any?) {

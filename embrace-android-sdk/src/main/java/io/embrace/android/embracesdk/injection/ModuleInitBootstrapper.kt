@@ -212,6 +212,10 @@ internal class ModuleInitBootstrapper(
                         essentialServiceModule.metadataService.precomputeValues()
                     }
 
+                    anrModule = init(AnrModule::class) {
+                        anrModuleSupplier(initModule, essentialServiceModule, workerThreadModule, openTelemetryModule)
+                    }
+
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
@@ -221,6 +225,7 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             workerThreadModule,
+                            anrModule
                         )
                     }
 
@@ -260,18 +265,6 @@ internal class ModuleInitBootstrapper(
 
                     postInit(DeliveryModule::class) {
                         serviceRegistry.registerService(deliveryModule.deliveryService)
-                    }
-
-                    /** Since onForeground() is called sequential in the order that services registered for it,
-                     * it is important to initialize the `EmbraceAnrService`, and thus register the `onForeground()
-                     * listener for it, before the `EmbraceSessionService`.
-                     * The onForeground() call inside the EmbraceAnrService should be called before the
-                     * EmbraceSessionService call. This is necessary since the EmbraceAnrService should be able to
-                     * force a Main thread health check and close the pending ANR intervals that happened on the
-                     * background before the next session is created.
-                     * */
-                    anrModule = init(AnrModule::class) {
-                        anrModuleSupplier(initModule, essentialServiceModule, workerThreadModule)
                     }
 
                     postInit(AnrModule::class) {
@@ -395,12 +388,8 @@ internal class ModuleInitBootstrapper(
                     dataContainerModule = init(DataContainerModule::class) {
                         dataContainerModuleSupplier(
                             initModule,
-                            openTelemetryModule,
                             workerThreadModule,
                             essentialServiceModule,
-                            dataCaptureServiceModule,
-                            anrModule,
-                            customerLogModule,
                             deliveryModule,
                             sdkStartTimeMs
                         )

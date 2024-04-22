@@ -47,6 +47,7 @@ internal class SessionModuleImplTest {
             systemServiceModule,
             androidServicesModule,
             workerThreadModule,
+            FakeAnrModule()
         )
         val module = SessionModuleImpl(
             initModule,
@@ -85,6 +86,7 @@ internal class SessionModuleImplTest {
             systemServiceModule,
             androidServicesModule,
             workerThreadModule,
+            FakeAnrModule()
         )
 
         val module = SessionModuleImpl(

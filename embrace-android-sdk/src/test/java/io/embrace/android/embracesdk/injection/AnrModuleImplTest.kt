@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.config.local.AutomaticDataCaptureLocalConfi
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -33,11 +34,11 @@ internal class AnrModuleImplTest {
         val module = AnrModuleImpl(
             FakeInitModule(),
             FakeEssentialServiceModule(),
-            WorkerThreadModuleImpl(FakeInitModule())
+            WorkerThreadModuleImpl(FakeInitModule()),
+            FakeOpenTelemetryModule()
         )
         assertNotNull(module.anrService)
         assertNotNull(module.anrOtelMapper)
-        assertNotNull(module.googleAnrTimestampRepository)
         assertNotNull(module.responsivenessMonitorService)
     }
 
@@ -48,11 +49,11 @@ internal class AnrModuleImplTest {
             FakeEssentialServiceModule(
                 configService = createConfigServiceWithAnrDisabled()
             ),
-            FakeWorkerThreadModule()
+            FakeWorkerThreadModule(),
+            FakeOpenTelemetryModule()
         )
         assertTrue(module.anrService is NoOpAnrService)
         assertTrue(module.responsivenessMonitorService is NoOpResponsivenessMonitorService)
-        assertNotNull(module.googleAnrTimestampRepository)
         assertNotNull(module.anrOtelMapper)
     }
 

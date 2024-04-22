@@ -5,7 +5,6 @@ import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
-import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
@@ -30,7 +29,6 @@ internal class EmbraceAnrService(
     var configService: ConfigService,
     looper: Looper,
     logger: InternalEmbraceLogger,
-    sigquitDetectionService: SigquitDetectionService,
     livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: ScheduledWorker,
     state: ThreadMonitoringState,
@@ -42,7 +40,6 @@ internal class EmbraceAnrService(
     private val targetThread: Thread
     val stacktraceSampler: AnrStacktraceSampler
     private val logger: InternalEmbraceLogger
-    private val sigquitDetectionService: SigquitDetectionService
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
     val listeners = CopyOnWriteArrayList<BlockedThreadListener>()
@@ -50,7 +47,6 @@ internal class EmbraceAnrService(
     init {
         targetThread = looper.thread
         this.logger = logger
-        this.sigquitDetectionService = sigquitDetectionService
         this.state = state
         targetThreadHeartbeatScheduler = livenessCheckScheduler
         stacktraceSampler = AnrStacktraceSampler(configService, clock, targetThread, anrMonitorThread, anrMonitorWorker)
@@ -72,9 +68,7 @@ internal class EmbraceAnrService(
     ) {
         this.configService = configService
         stacktraceSampler.setConfigService(configService)
-        sigquitDetectionService.configService = configService
         targetThreadHeartbeatScheduler.configService = configService
-        sigquitDetectionService.initializeGoogleAnrTracking()
         startAnrCapture()
     }
 
@@ -113,7 +107,6 @@ internal class EmbraceAnrService(
 
     override fun cleanCollections() {
         stacktraceSampler.cleanCollections()
-        sigquitDetectionService.cleanCollections()
     }
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -37,6 +38,7 @@ internal class EmbraceMemoryServiceTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             workerThreadModule = FakeWorkerThreadModule(),
+            anrModule = FakeAnrModule()
         )
         dataSourceModule.getDataSources().forEach { it.onSessionTypeChange(SessionType.FOREGROUND) }
         embraceMemoryService = EmbraceMemoryService(fakeClock) { dataSourceModule }

@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -18,12 +14,8 @@ internal class DataContainerModuleImplTest {
     fun testDefaultImplementations() {
         val module = DataContainerModuleImpl(
             FakeInitModule(),
-            FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
             FakeEssentialServiceModule(),
-            FakeDataCaptureServiceModule(),
-            FakeAnrModule(),
-            FakeCustomerLogModule(),
             FakeDeliveryModule(),
             FakeNativeModule(),
             0

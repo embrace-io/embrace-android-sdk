@@ -254,6 +254,13 @@ internal sealed class SchemaType(
         override val schemaAttributes = emptyMap<String, String>()
     }
 
+    internal object Sigquit : SchemaType(
+        telemetryType = EmbType.System.Sigquit,
+        fixedObjectName = "sigquit"
+    ) {
+        override val schemaAttributes = emptyMap<String, String>()
+    }
+
     internal class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {

@@ -128,6 +128,7 @@ internal typealias AnrModuleSupplier = (
     initModule: InitModule,
     essentialServiceModule: EssentialServiceModule,
     workerModule: WorkerThreadModule,
+    otelModule: OpenTelemetryModule
 ) -> AnrModule
 
 /**
@@ -173,12 +174,8 @@ internal typealias NativeModuleSupplier = (
  */
 internal typealias DataContainerModuleSupplier = (
     initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
-    anrModule: AnrModule,
-    customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     startTime: Long
@@ -196,6 +193,7 @@ internal typealias DataSourceModuleSupplier = (
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
+    anrModule: AnrModule
 ) -> DataSourceModule
 
 /**

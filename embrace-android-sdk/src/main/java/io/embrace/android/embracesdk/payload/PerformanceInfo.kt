@@ -37,11 +37,5 @@ internal data class PerformanceInfo(
      * Network requests that happened during the session
      */
     @Json(name = "nr")
-    val networkRequests: NetworkRequests? = null,
-
-    /**
-     * Stats about the responsiveness of the ANR monitoring components
-     */
-    @Json(name = "rms")
-    val responsivenessMonitorSnapshots: List<ResponsivenessSnapshot>? = null
+    val networkRequests: NetworkRequests? = null
 )

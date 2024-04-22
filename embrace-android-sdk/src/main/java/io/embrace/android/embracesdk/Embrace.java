@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
+import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
 
@@ -539,6 +540,18 @@ public final class Embrace implements EmbraceAndroidApi {
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
         if (verifyNonNullParameters("addSpanExporter", spanExporter)) {
             impl.addSpanExporter(spanExporter);
+        }
+    }
+
+    /**
+     * Adds a [LogRecordExporter] to the open telemetry logger.
+     *
+     * @param logRecordExporter the LogRecord exporter to add
+     */
+    @Override
+    public void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter) {
+        if (verifyNonNullParameters("addLogRecordExporter", logRecordExporter)) {
+            impl.addLogRecordExporter(logRecordExporter);
         }
     }
 

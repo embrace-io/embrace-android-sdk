@@ -1204,10 +1204,18 @@ final class EmbraceImpl {
     }
 
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
+        if (isStarted()) {
+            internalEmbraceLogger.logError("A SpanExporter can only be added before the SDK is started.");
+            return;
+        }
         moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addSpanExporter(spanExporter);
     }
 
     public void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter) {
+        if (isStarted()) {
+            internalEmbraceLogger.logError("A LogRecordExporter can only be added before the SDK is started.");
+            return;
+        }
         moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addLogExporter(logRecordExporter);
     }
 }

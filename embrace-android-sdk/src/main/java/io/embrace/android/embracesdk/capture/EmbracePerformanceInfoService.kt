@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.session.captureDataSafely
@@ -12,7 +11,6 @@ internal class EmbracePerformanceInfoService(
     private val metadataService: MetadataService,
     private val googleAnrTimestampRepository: GoogleAnrTimestampRepository,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val responsivenessMonitorService: ResponsivenessMonitorService?,
     private val logger: InternalEmbraceLogger
 ) : PerformanceInfoService {
 
@@ -35,8 +33,7 @@ internal class EmbracePerformanceInfoService(
                 nativeThreadSamplerService?.getCapturedIntervals(
                     receivedTermination
                 )
-            },
-            responsivenessMonitorSnapshots = captureDataSafely(logger) { responsivenessMonitorService?.getCapturedData() }
+            }
         )
     }
 

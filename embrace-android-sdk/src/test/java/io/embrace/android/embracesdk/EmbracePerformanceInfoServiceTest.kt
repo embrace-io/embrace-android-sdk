@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
-import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -19,7 +18,6 @@ internal class EmbracePerformanceInfoServiceTest {
     private lateinit var service: EmbracePerformanceInfoService
     private val metadataService = FakeMetadataService()
     private val googleAnrTimestampRepository = GoogleAnrTimestampRepository(InternalEmbraceLogger())
-    private val monitoringServiceRule = NoOpResponsivenessMonitorService()
 
     @Before
     fun setUp() {
@@ -27,7 +25,6 @@ internal class EmbracePerformanceInfoServiceTest {
             metadataService,
             googleAnrTimestampRepository,
             null,
-            monitoringServiceRule,
             InternalEmbraceLogger()
         )
         googleAnrTimestampRepository.add(150209234099)

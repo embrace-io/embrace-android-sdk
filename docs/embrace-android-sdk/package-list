@@ -89,6 +89,7 @@ $dokka.location:io.embrace.android.embracesdk/Embrace.LastRunEndState/valueOf/#j
 $dokka.location:io.embrace.android.embracesdk/Embrace.LastRunEndState/values/#/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/-last-run-end-state/values.html
 $dokka.location:io.embrace.android.embracesdk/Embrace///PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/index.html
 $dokka.location:io.embrace.android.embracesdk/Embrace/addBreadcrumb/#java.lang.String/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/add-breadcrumb.html
+$dokka.location:io.embrace.android.embracesdk/Embrace/addLogRecordExporter/#io.opentelemetry.sdk.logs.export.LogRecordExporter/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/add-log-record-exporter.html
 $dokka.location:io.embrace.android.embracesdk/Embrace/addSessionProperty/#java.lang.String#java.lang.String#boolean/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/add-session-property.html
 $dokka.location:io.embrace.android.embracesdk/Embrace/addSpanExporter/#io.opentelemetry.sdk.trace.export.SpanExporter/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/add-span-exporter.html
 $dokka.location:io.embrace.android.embracesdk/Embrace/addUserPersona/#java.lang.String/PointingToDeclaration/embrace-android-sdk/io.embrace.android.embracesdk/-embrace/add-user-persona.html

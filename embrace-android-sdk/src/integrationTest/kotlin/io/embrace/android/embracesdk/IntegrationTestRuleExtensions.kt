@@ -61,6 +61,22 @@ internal fun IntegrationTestRule.Harness.getSentLogs(expectedSize: Int? = null):
 }
 
 /**
+ * Returns a list of [EventMessage] moments that were sent by the SDK since startup. If [expectedSize] is specified, it will wait up to
+ * 1 second to validate the number of sent moments equal that size. If a second passes that the size requirement is not met, a
+ * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent moments will be returned right
+ * away.
+ */
+internal fun IntegrationTestRule.Harness.getSentMoments(expectedSize: Int? = null): List<EventMessage> {
+    val logs = overriddenDeliveryModule.deliveryService.sentMoments
+    return when (expectedSize) {
+        null -> logs
+        else -> returnIfConditionMet({ logs }) {
+            logs.size == expectedSize
+        }
+    }
+}
+
+/**
  * Returns the last [Log] that was sent to the delivery service.
  */
 internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {

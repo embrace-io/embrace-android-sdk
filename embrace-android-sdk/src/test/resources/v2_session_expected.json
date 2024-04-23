@@ -1,0 +1,45 @@
+{
+  "a": "__EMBRACE_TEST_IGNORE__",
+  "br": "__EMBRACE_TEST_IGNORE__",
+  "d": "__EMBRACE_TEST_IGNORE__",
+  "data": {
+    "span_snapshots": "__EMBRACE_TEST_IGNORE__",
+    "spans": "__EMBRACE_TEST_IGNORE__"
+  },
+  "metadata": {
+    "email": "user@email.com",
+    "locale": "__EMBRACE_TEST_IGNORE__",
+    "personas": "__EMBRACE_TEST_IGNORE__",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
+    "user_id": "some id",
+    "username": "John Doe"
+  },
+  "p": "__EMBRACE_TEST_IGNORE__",
+  "resource": {
+    "app_version": "",
+    "app_framework": 1,
+    "build_id": "5.22.0",
+    "app_ecosystem_id": "io.embrace.android.embracesdk.test",
+    "build_type": "release",
+    "build_flavor": "delicious",
+    "environment": "dev",
+    "bundle_version": "0",
+    "sdk_version": "__EMBRACE_TEST_IGNORE__",
+    "sdk_simple_version": 53,
+    "device_manufacturer": "__EMBRACE_TEST_IGNORE__",
+    "device_model": "__EMBRACE_TEST_IGNORE__",
+    "device_architecture": "__EMBRACE_TEST_IGNORE__",
+    "jailbroken": "__EMBRACE_TEST_IGNORE__",
+    "disk_total_capacity": "__EMBRACE_TEST_IGNORE__",
+    "os_type": "linux",
+    "os_name": "android",
+    "os_version": "__EMBRACE_TEST_IGNORE__",
+    "os_code": "__EMBRACE_TEST_IGNORE__",
+    "screen_resolution": "__EMBRACE_TEST_IGNORE__",
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
+  },
+  "s": "__EMBRACE_TEST_IGNORE__",
+  "span_snapshots": "__EMBRACE_TEST_IGNORE__",
+  "type": "session",
+  "version": "0.1.0"
+}

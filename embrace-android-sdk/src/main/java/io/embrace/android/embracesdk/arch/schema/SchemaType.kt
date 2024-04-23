@@ -291,4 +291,19 @@ internal sealed class SchemaType(
             "network" to networkStatus.value
         ).toNonNullMap()
     }
+
+    internal class WebViewInfo(
+        url: String,
+        webVitals: String,
+        tag: String?
+    ) : SchemaType(
+        telemetryType = EmbType.System.WebViewInfo,
+        fixedObjectName = "webview-info"
+    ) {
+        override val schemaAttributes = mapOf(
+            "emb.webview_info.url" to url,
+            "emb.webview_info.web_vitals" to webVitals,
+            "emb.webview_info.tag" to tag
+        ).toNonNullMap()
+    }
 }

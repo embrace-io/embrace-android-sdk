@@ -1,0 +1,66 @@
+{
+  "a": {
+    "f": 1,
+    "vu": false,
+    "vul": false,
+    "v": "UNKNOWN",
+    "fl": "delicious",
+    "bi": "5.22.0",
+    "bt": "release",
+    "bv": "0",
+    "e": "dev",
+    "ou": false,
+    "oul": false,
+    "sdc": "53",
+    "sdk": "__EMBRACE_TEST_IGNORE__"
+  },
+  "br": {
+    "rna": []
+  },
+  "d": "__EMBRACE_TEST_IGNORE__",
+  "p": {
+    "ds": {
+      "as": "__EMBRACE_TEST_IGNORE__",
+      "fs": "__EMBRACE_TEST_IGNORE__"
+    },
+    "ga": []
+  },
+  "s": {
+    "as": "__EMBRACE_TEST_IGNORE__",
+    "ty": "__EMBRACE_TEST_IGNORE__",
+    "bf": "__EMBRACE_TEST_IGNORE__",
+    "cs": true,
+    "et": "__EMBRACE_TEST_IGNORE__",
+    "em": "s",
+    "ce": true,
+    "el": [],
+    "lec": 0,
+    "ss": "__EMBRACE_TEST_IGNORE__",
+    "il": [],
+    "lic": 0,
+    "ht": "__EMBRACE_TEST_IGNORE__",
+    "sn": "__EMBRACE_TEST_IGNORE__",
+    "sp": {},
+    "si": "__EMBRACE_TEST_IGNORE__",
+    "id": "__EMBRACE_TEST_IGNORE__",
+    "st": "__EMBRACE_TEST_IGNORE__",
+    "sm": "s",
+    "sd": "__EMBRACE_TEST_IGNORE__",
+    "sdt": "__EMBRACE_TEST_IGNORE__",
+    "ue": 0,
+    "lwc": 0,
+    "nc": [],
+    "wl": [],
+    "e": "__EMBRACE_TEST_IGNORE__",
+    "wvi_beta": "__EMBRACE_TEST_IGNORE__"
+  },
+  "u": {
+    "id": "some id",
+    "em": "user@email.com",
+    "un": "John Doe",
+    "per": "__EMBRACE_TEST_IGNORE__"
+  },
+  "spans": "__EMBRACE_TEST_IGNORE__",
+  "span_snapshots": "__EMBRACE_TEST_IGNORE__",
+  "v": 13
+}

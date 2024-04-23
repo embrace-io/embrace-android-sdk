@@ -8,12 +8,15 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import org.json.JSONObject
+import org.junit.Assert
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -153,6 +156,32 @@ internal fun IntegrationTestRule.Harness.recordSession(
     activityController?.stop()
     activityService.onBackground()
     return getLastSentSessionMessage()
+}
+
+/**
+ * Validates a payload against a golden file in the test resources. If the payload does not match
+ * the golden file, the assertion fails.
+ */
+internal fun <T> IntegrationTestRule.validatePayloadAgainstGoldenFile(
+    payload: T,
+    goldenFileName: String
+) {
+    try {
+        val observedJson = harness.overriddenCoreModule.jsonSerializer.toJson(payload)
+        val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
+        val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
+
+        if (result.isNotEmpty()) {
+            val msg by lazy {
+                "Request payload differed from expected JSON '$goldenFileName' due to following " +
+                    "reasons: ${result.joinToString("; ")}\n" +
+                    "Dump of full JSON: $observedJson"
+            }
+            Assert.fail(msg)
+        }
+    } catch (e: IOException) {
+        throw IllegalStateException("Failed to validate request against golden file.", e)
+    }
 }
 
 internal fun internalErrorService(): InternalErrorService? = Embrace.getImpl().internalErrorService

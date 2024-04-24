@@ -61,7 +61,7 @@ internal class FakeConfigService(
 
     fun updateListeners() {
         listeners.forEach {
-            it.onConfigChange(this)
+            it.onConfigChange()
         }
     }
 }

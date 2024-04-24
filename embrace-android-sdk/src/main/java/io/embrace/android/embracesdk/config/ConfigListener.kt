@@ -10,5 +10,5 @@ internal fun interface ConfigListener {
      * that the remote config has been fetched from the server. This allows callers
      * to check config when this happens if they wish.
      */
-    fun onConfigChange(configService: ConfigService)
+    fun onConfigChange()
 }

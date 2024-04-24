@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -37,7 +36,7 @@ internal class DataCaptureOrchestratorTest {
         assertEquals(1, dataSource.enableDataCaptureCount)
 
         enabled = false
-        orchestrator.onConfigChange(FakeConfigService())
+        orchestrator.onConfigChange()
         assertEquals(1, dataSource.disableDataCaptureCount)
     }
 

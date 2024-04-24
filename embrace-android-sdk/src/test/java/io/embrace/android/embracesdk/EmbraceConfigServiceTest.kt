@@ -224,7 +224,7 @@ internal class EmbraceConfigServiceTest {
 
         // call an arbitrary function to trigger a config refresh
         service.anrBehavior.shouldCaptureMainThreadOnly()
-        verify(exactly = 1) { mockConfigListener.onConfigChange(service) }
+        verify(exactly = 1) { mockConfigListener.onConfigChange() }
     }
 
     /**
@@ -244,7 +244,7 @@ internal class EmbraceConfigServiceTest {
 
         service.onForeground(true, 1100L)
 
-        verify(exactly = 1) { mockConfigListener.onConfigChange(service) }
+        verify(exactly = 1) { mockConfigListener.onConfigChange() }
     }
 
     @Test

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.registry
 
 import io.embrace.android.embracesdk.config.ConfigListener
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
@@ -84,7 +83,7 @@ internal class ServiceRegistryTest {
         override fun cleanCollections() {
         }
 
-        override fun onConfigChange(configService: ConfigService) {
+        override fun onConfigChange() {
         }
     }
 }

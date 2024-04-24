@@ -277,7 +277,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private fun notifyListeners() {
         stream(listeners) { listener: ConfigListener ->
             try {
-                listener.onConfigChange(this)
+                listener.onConfigChange()
             } catch (ex: Exception) {
                 logger.logDebug("Failed to notify ConfigListener", ex)
             }

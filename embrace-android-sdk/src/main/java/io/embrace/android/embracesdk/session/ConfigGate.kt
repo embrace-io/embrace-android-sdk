@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.config.ConfigListener
-import io.embrace.android.embracesdk.config.ConfigService
 
 /**
  * Gate that controls access to a service based on a config value. This
@@ -26,7 +25,7 @@ internal class ConfigGate<T>(
         else -> null
     }
 
-    override fun onConfigChange(configService: ConfigService) {
+    override fun onConfigChange() {
         configState = predicate()
     }
 }

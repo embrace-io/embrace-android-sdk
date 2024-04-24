@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.config.ConfigListener
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
 /**
@@ -14,7 +13,7 @@ internal class DataCaptureOrchestrator(
     private val logger: InternalEmbraceLogger
 ) : ConfigListener {
 
-    override fun onConfigChange(configService: ConfigService) {
+    override fun onConfigChange() {
         dataSourceState.forEach { state ->
             try {
                 state.onConfigChange()

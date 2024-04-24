@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -14,7 +13,7 @@ internal class ConfigGateTest {
         assertEquals("test", gate.getService())
 
         value = false
-        gate.onConfigChange(FakeConfigService())
+        gate.onConfigChange()
         assertNull(gate.getService())
     }
 }

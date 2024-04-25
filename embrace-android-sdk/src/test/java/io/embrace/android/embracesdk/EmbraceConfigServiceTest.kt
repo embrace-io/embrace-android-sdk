@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -50,8 +49,9 @@ internal class EmbraceConfigServiceTest {
         private lateinit var mockCacheService: CacheService
         private lateinit var logger: InternalEmbraceLogger
         private lateinit var fakeClock: FakeClock
-        private lateinit var mockConfigListener: ConfigListener
+        private lateinit var mockConfigListener: () -> Unit
         private lateinit var fakeCachedConfig: RemoteConfig
+        private var configListenerTriggered = false
 
         /**
          * Setup before all tests get executed. Create mocks here.
@@ -67,7 +67,8 @@ internal class EmbraceConfigServiceTest {
             mockCacheService = mockk(relaxed = true)
             fakeClock = FakeClock()
             logger = InternalEmbraceLogger()
-            mockConfigListener = mockk()
+            configListenerTriggered = false
+            mockConfigListener = { configListenerTriggered = true }
             fakeCachedConfig = RemoteConfig( // alter config to trigger listener
                 anrConfig = AnrRemoteConfig(pctIdleHandlerEnabled = 59f)
             )
@@ -224,7 +225,7 @@ internal class EmbraceConfigServiceTest {
 
         // call an arbitrary function to trigger a config refresh
         service.anrBehavior.shouldCaptureMainThreadOnly()
-        verify(exactly = 1) { mockConfigListener.onConfigChange() }
+        assertTrue(configListenerTriggered)
     }
 
     /**
@@ -244,7 +245,7 @@ internal class EmbraceConfigServiceTest {
 
         service.onForeground(true, 1100L)
 
-        verify(exactly = 1) { mockConfigListener.onConfigChange() }
+        assertTrue(configListenerTriggered)
     }
 
     @Test
@@ -285,8 +286,6 @@ internal class EmbraceConfigServiceTest {
         // variable is initialized, before the cached version is loaded.
         val configService = createService(BackgroundWorker(pausableExecutorService))
         assertFalse(configService.hasValidRemoteConfig())
-
-        configService.addListener(ConfigListener { })
 
         // call arbitrary function to trigger config refresh
         configService.anrBehavior.shouldCaptureMainThreadOnly()

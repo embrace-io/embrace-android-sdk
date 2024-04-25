@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.registry
 
-import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
@@ -29,7 +27,6 @@ internal class ServiceRegistryTest {
         assertEquals(expected, registry.processStateListeners)
         assertEquals(expected, registry.activityLifecycleListeners)
         assertEquals(expected, registry.memoryCleanerListeners)
-        assertEquals(expected, registry.configListeners)
     }
 
     @Test
@@ -51,10 +48,6 @@ internal class ServiceRegistryTest {
         registry.registerMemoryCleanerListeners(memoryCleanerService)
         assertEquals(expected, memoryCleanerService.listeners)
 
-        val configService = FakeConfigService()
-        registry.registerConfigListeners(configService)
-        assertEquals(expected, configService.listeners.toList())
-
         assertFalse(service.closed)
         registry.close()
         assertTrue(service.closed)
@@ -69,7 +62,6 @@ internal class ServiceRegistryTest {
 
     private class FakeService :
         Closeable,
-        ConfigListener,
         MemoryCleanerListener,
         ProcessStateListener,
         ActivityLifecycleListener {
@@ -81,9 +73,6 @@ internal class ServiceRegistryTest {
         }
 
         override fun cleanCollections() {
-        }
-
-        override fun onConfigChange() {
         }
     }
 }

@@ -48,7 +48,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     /**
      * The listeners subscribed to configuration changes.
      */
-    private val listeners: MutableSet<ConfigListener> = CopyOnWriteArraySet()
+    private val listeners: MutableSet<() -> Unit> = CopyOnWriteArraySet()
     private val lock = Any()
 
     @Volatile
@@ -258,7 +258,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         return preferencesService.backgroundActivityEnabled
     }
 
-    override fun addListener(configListener: ConfigListener) {
+    override fun addListener(configListener: () -> Unit) {
         listeners.add(configListener)
     }
 
@@ -275,11 +275,11 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      * Notifies the listeners that a new config was fetched from the server.
      */
     private fun notifyListeners() {
-        stream(listeners) { listener: ConfigListener ->
+        stream(listeners) { listener ->
             try {
-                listener.onConfigChange()
+                listener()
             } catch (ex: Exception) {
-                logger.logDebug("Failed to notify ConfigListener", ex)
+                logger.logDebug("Failed to notify configListener", ex)
             }
         }
     }

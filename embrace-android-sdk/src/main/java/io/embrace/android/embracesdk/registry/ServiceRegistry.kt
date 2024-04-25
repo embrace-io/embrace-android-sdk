@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.registry
 
-import io.embrace.android.embracesdk.config.ConfigListener
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.MemoryCleanerService
@@ -26,7 +24,6 @@ internal class ServiceRegistry(
     // lazy init avoids type checks at startup until absolutely necessary.
     // once these variables are initialized, no further services should be registered.
     val closeables by lazy { registry.filterIsInstance<Closeable>() }
-    val configListeners by lazy { registry.filterIsInstance<ConfigListener>() }
     val memoryCleanerListeners by lazy { registry.filterIsInstance<MemoryCleanerListener>() }
     val processStateListeners by lazy { registry.filterIsInstance<ProcessStateListener>() }
     val activityLifecycleListeners by lazy { registry.filterIsInstance<ActivityLifecycleListener>() }
@@ -64,14 +61,6 @@ internal class ServiceRegistry(
             "Failed to register memory cleaner listener",
             memoryCleanerService::addListener
         )
-
-    /**
-     * Register all of the services in the registry that implement ConfigListener.
-     */
-    fun registerConfigListeners(configService: ConfigService) = configListeners.forEachSafe(
-        "Failed to register config listener",
-        configService::addListener
-    )
 
     // close all of the services in one go. this prevents someone creating a Closeable service
     // but forgetting to close it.

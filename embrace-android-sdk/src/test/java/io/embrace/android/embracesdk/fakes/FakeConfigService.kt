@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.config.ConfigListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
@@ -44,9 +43,8 @@ internal class FakeConfigService(
     override var oTelBehavior: OTelBehavior = fakeOTelBehavior()
 ) : ConfigService {
 
-    val listeners = mutableSetOf<ConfigListener>()
-
-    override fun addListener(configListener: ConfigListener) {
+    val listeners = mutableSetOf<() -> Unit>()
+    override fun addListener(configListener: () -> Unit) {
         listeners.add(configListener)
     }
 
@@ -61,7 +59,7 @@ internal class FakeConfigService(
 
     fun updateListeners() {
         listeners.forEach {
-            it.onConfigChange()
+            it()
         }
     }
 }

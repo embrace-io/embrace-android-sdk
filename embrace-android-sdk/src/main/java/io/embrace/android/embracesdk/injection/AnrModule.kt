@@ -93,7 +93,7 @@ internal class AnrModuleImpl(
         )
     }
 
-    private val blockedThreadDetector by singleton {
+    val blockedThreadDetector by singleton {
         BlockedThreadDetector(
             configService = configService,
             clock = initModule.clock,

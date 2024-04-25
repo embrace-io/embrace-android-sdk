@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import java.util.concurrent.atomic.AtomicReference
 
 internal class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
@@ -33,4 +34,6 @@ internal class FakeWorkerThreadModule(
             else -> base.scheduledWorker(workerName)
         }
     }
+
+    override var anrMonitorThread: AtomicReference<Thread> = base.anrMonitorThread
 }

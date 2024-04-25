@@ -86,7 +86,8 @@ internal class SessionOrchestratorTest {
                     currentSessionType = null,
                 )
             ),
-            logger
+            logger,
+            configService
         )
 
         orchestrator = SessionOrchestratorImpl(

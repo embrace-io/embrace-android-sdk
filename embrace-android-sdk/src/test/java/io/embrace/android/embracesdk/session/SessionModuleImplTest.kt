@@ -71,7 +71,7 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionOrchestrator)
         assertNotNull(module.periodicSessionCacher)
         assertNotNull(module.periodicBackgroundActivityCacher)
-        assertTrue(configService.listeners.contains(module.dataCaptureOrchestrator))
+        assertTrue(configService.listeners.single().javaClass.toString().contains("DataCaptureOrchestrator"))
     }
 
     @Test

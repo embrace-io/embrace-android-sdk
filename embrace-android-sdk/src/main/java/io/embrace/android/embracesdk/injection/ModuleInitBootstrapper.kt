@@ -462,7 +462,6 @@ internal class ModuleInitBootstrapper(
                     // be added to the registry. It sets listeners for any services that were registered.
                     serviceRegistry.closeRegistration()
                     serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
-                    serviceRegistry.registerConfigListeners(essentialServiceModule.configService)
                     serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.memoryCleanerService)
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
 

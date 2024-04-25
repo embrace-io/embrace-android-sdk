@@ -126,9 +126,7 @@ internal class SessionModuleImpl(
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
         val dataSources = dataSourceModule.getDataSources()
-        DataCaptureOrchestrator(dataSources, initModule.logger).apply {
-            essentialServiceModule.configService.addListener(this)
-        }
+        DataCaptureOrchestrator(dataSources, initModule.logger, essentialServiceModule.configService)
     }
 
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {

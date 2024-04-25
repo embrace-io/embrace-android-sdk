@@ -106,7 +106,7 @@ internal interface ConfigService : Closeable {
      *
      * @param configListener the listener to add
      */
-    fun addListener(configListener: ConfigListener)
+    fun addListener(configListener: () -> Unit)
 
     /**
      * Checks if the SDK is enabled.

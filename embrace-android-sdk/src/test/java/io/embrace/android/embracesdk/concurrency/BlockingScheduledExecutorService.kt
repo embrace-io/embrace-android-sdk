@@ -37,6 +37,12 @@ internal class BlockingScheduledExecutorService(
     val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
     private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
 
+    var blockingMode: Boolean
+        get() = delegateExecutorService.blockingMode
+        set(value) {
+            delegateExecutorService.blockingMode = value
+        }
+
     /**
      * Run all tasks due to run at the current time and return when all the tasks have finished running. This does not include tasks
      * submitted during the running of these tasks.

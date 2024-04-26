@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
@@ -28,7 +27,6 @@ internal class DataContainerModuleImpl(
     @Suppress("UNUSED_PARAMETER")
     customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
-    nativeModule: NativeModule,
     sdkStartTimeMs: Long
 ) : DataContainerModule {
 
@@ -36,7 +34,6 @@ internal class DataContainerModuleImpl(
         EmbracePerformanceInfoService(
             essentialServiceModule.metadataService,
             anrModule.googleAnrTimestampRepository,
-            nativeModule.nativeThreadSamplerService,
             initModule.logger
         )
     }

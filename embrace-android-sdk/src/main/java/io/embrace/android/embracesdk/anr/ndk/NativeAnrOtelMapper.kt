@@ -15,11 +15,14 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
 
 internal class NativeAnrOtelMapper(
-    private val nativeThreadSamplerService: NativeThreadSamplerService,
+    private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val serializer: EmbraceSerializer
 ) : DataCaptureServiceOtelConverter {
 
     override fun snapshot(isFinalPayload: Boolean): List<Span> {
+        if (nativeThreadSamplerService == null) {
+            return emptyList()
+        }
         val intervals: List<NativeThreadAnrInterval> =
             nativeThreadSamplerService.getCapturedIntervals(isFinalPayload) ?: emptyList()
 

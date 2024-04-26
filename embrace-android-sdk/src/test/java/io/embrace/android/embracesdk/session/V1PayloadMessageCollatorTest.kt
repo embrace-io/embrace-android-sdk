@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -80,6 +82,7 @@ internal class V1PayloadMessageCollatorTest {
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
             anrOtelMapper = AnrOtelMapper(anrService),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
             logger = initModule.logger
         )
     }

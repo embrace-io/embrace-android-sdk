@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.DiskUsage
-import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NetworkRequests
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -16,7 +15,6 @@ internal class PerformanceInfoTest {
     private val networkRequests: NetworkRequests = NetworkRequests(NetworkSessionV2(emptyList(), emptyMap()))
     private val googleAnrTimestamps: List<Long> = emptyList()
     private val appExitInfoData: List<AppExitInfoData> = emptyList()
-    private val nativeThreadAnrIntervals: List<NativeThreadAnrInterval> = emptyList()
 
     @Test
     fun testPerfInfoSerialization() {
@@ -37,14 +35,12 @@ internal class PerformanceInfoTest {
 
     private fun verifyFields(performanceInfo: PerformanceInfo) {
         assertEquals(googleAnrTimestamps, performanceInfo.googleAnrTimestamps)
-        assertEquals(nativeThreadAnrIntervals, performanceInfo.nativeThreadAnrIntervals)
     }
 
     private fun buildPerformanceInfo(): PerformanceInfo = PerformanceInfo(
         appExitInfoData = appExitInfoData,
         diskUsage = diskUsage,
         googleAnrTimestamps = googleAnrTimestamps,
-        nativeThreadAnrIntervals = nativeThreadAnrIntervals,
         networkRequests = networkRequests
     )
 }

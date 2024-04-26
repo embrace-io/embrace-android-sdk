@@ -28,12 +28,6 @@ internal data class PerformanceInfo(
     val appExitInfoData: List<AppExitInfoData>? = null,
 
     /**
-     * Native thread ANR samples
-     */
-    @Json(name = "nst")
-    val nativeThreadAnrIntervals: List<NativeThreadAnrInterval>? = null,
-
-    /**
      * Network requests that happened during the session
      */
     @Json(name = "nr")

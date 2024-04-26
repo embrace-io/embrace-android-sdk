@@ -24,7 +24,6 @@ internal class EmbracePerformanceInfoServiceTest {
         service = EmbracePerformanceInfoService(
             metadataService,
             googleAnrTimestampRepository,
-            null,
             InternalEmbraceLogger()
         )
         googleAnrTimestampRepository.add(150209234099)

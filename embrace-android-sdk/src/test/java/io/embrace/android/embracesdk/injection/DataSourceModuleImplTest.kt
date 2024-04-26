@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
+import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -25,6 +26,7 @@ internal class DataSourceModuleImplTest {
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
             FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.BACKGROUND_REGISTRATION),
+            FakeAnrModule()
         )
         assertNotNull(module.getDataSources())
         assertNotNull(module.breadcrumbDataSource)
@@ -37,6 +39,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.lowPowerDataSource)
         assertNotNull(module.memoryWarningDataSource)
         assertNotNull(module.networkStatusDataSource)
-        assertEquals(10, module.getDataSources().size)
+        assertNotNull(module.sigquitDataSource)
+        assertEquals(11, module.getDataSources().size)
     }
 }

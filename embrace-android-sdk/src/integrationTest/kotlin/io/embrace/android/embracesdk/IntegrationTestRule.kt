@@ -25,8 +25,6 @@ import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
 import io.embrace.android.embracesdk.injection.AnrModule
 import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.DataSourceModule
-import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.injection.DeliveryModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
@@ -107,7 +105,7 @@ internal class IntegrationTestRule(
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
                 deliveryModuleSupplier = { _, _, _, _, _ -> overriddenDeliveryModule },
-                anrModuleSupplier = { _, _, _ -> fakeAnrModule }
+                anrModuleSupplier = { _, _, _, _ -> fakeAnrModule }
             )
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)

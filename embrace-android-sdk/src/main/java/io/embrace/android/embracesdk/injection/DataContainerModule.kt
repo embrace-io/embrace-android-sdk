@@ -17,15 +17,8 @@ internal interface DataContainerModule {
 
 internal class DataContainerModuleImpl(
     initModule: InitModule,
-    @Suppress("UNUSED_PARAMETER")
-    openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
-    @Suppress("UNUSED_PARAMETER")
-    dataCaptureServiceModule: DataCaptureServiceModule,
-    anrModule: AnrModule,
-    @Suppress("UNUSED_PARAMETER")
-    customerLogModule: CustomerLogModule,
     deliveryModule: DeliveryModule,
     sdkStartTimeMs: Long
 ) : DataContainerModule {
@@ -33,7 +26,6 @@ internal class DataContainerModuleImpl(
     override val performanceInfoService: PerformanceInfoService by singleton {
         EmbracePerformanceInfoService(
             essentialServiceModule.metadataService,
-            anrModule.googleAnrTimestampRepository,
             initModule.logger
         )
     }

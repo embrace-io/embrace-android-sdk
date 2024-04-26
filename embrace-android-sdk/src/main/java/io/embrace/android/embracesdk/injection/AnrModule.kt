@@ -9,13 +9,8 @@ import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.anr.sigquit.FilesDelegate
-import io.embrace.android.embracesdk.anr.sigquit.FindGoogleThread
-import io.embrace.android.embracesdk.anr.sigquit.GetThreadCommand
-import io.embrace.android.embracesdk.anr.sigquit.GetThreadsInCurrentProcess
-import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrHandlerNativeDelegate
-import io.embrace.android.embracesdk.anr.sigquit.GoogleAnrTimestampRepository
-import io.embrace.android.embracesdk.anr.sigquit.SigquitDetectionService
+import io.embrace.android.embracesdk.anr.sigquit.AnrThreadIdDelegate
+import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.capture.monitor.EmbraceResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
@@ -25,24 +20,21 @@ import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface AnrModule {
-    val googleAnrTimestampRepository: GoogleAnrTimestampRepository
     val anrService: AnrService
     val anrOtelMapper: AnrOtelMapper
     val responsivenessMonitorService: ResponsivenessMonitorService
+    val sigquitDataSource: SigquitDataSource
 }
 
 internal class AnrModuleImpl(
     initModule: InitModule,
     essentialServiceModule: EssentialServiceModule,
     workerModule: WorkerThreadModule,
+    otelModule: OpenTelemetryModule
 ) : AnrModule {
 
     private val anrMonitorWorker = workerModule.scheduledWorker(WorkerName.ANR_MONITOR)
     private val configService = essentialServiceModule.configService
-
-    override val googleAnrTimestampRepository: GoogleAnrTimestampRepository by singleton {
-        GoogleAnrTimestampRepository(initModule.logger)
-    }
 
     override val anrService: AnrService by singleton {
         if (configService.autoDataCaptureBehavior.isAnrServiceEnabled() && !ApkToolsConfig.IS_ANR_MONITORING_DISABLED) {
@@ -52,7 +44,6 @@ internal class AnrModuleImpl(
                 configService = configService,
                 looper = looper,
                 logger = initModule.logger,
-                sigquitDetectionService = sigquitDetectionService,
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
@@ -76,6 +67,16 @@ internal class AnrModuleImpl(
         } else {
             NoOpResponsivenessMonitorService()
         }
+    }
+
+    override val sigquitDataSource: SigquitDataSource by singleton {
+        SigquitDataSource(
+            sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
+            anrThreadIdDelegate = AnrThreadIdDelegate(initModule.logger),
+            anrBehavior = configService.anrBehavior,
+            logger = initModule.logger,
+            writer = otelModule.currentSessionSpan
+        )
     }
 
     private val looper by singleton { Looper.getMainLooper() }
@@ -114,23 +115,6 @@ internal class AnrModuleImpl(
             blockedThreadDetector = blockedThreadDetector,
             anrMonitorThread = workerModule.anrMonitorThread,
             logger = initModule.logger,
-        )
-    }
-
-    private val sigquitDetectionService: SigquitDetectionService by singleton {
-        val filesDelegate = FilesDelegate()
-
-        SigquitDetectionService(
-            sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
-            findGoogleThread = FindGoogleThread(
-                initModule.logger,
-                GetThreadsInCurrentProcess(filesDelegate),
-                GetThreadCommand(filesDelegate)
-            ),
-            googleAnrHandlerNativeDelegate = GoogleAnrHandlerNativeDelegate(googleAnrTimestampRepository, initModule.logger),
-            googleAnrTimestampRepository = googleAnrTimestampRepository,
-            configService = configService,
-            logger = initModule.logger
         )
     }
 }

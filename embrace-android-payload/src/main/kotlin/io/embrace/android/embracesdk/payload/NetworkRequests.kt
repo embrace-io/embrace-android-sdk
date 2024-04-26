@@ -4,7 +4,6 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal class NativeCrashDataError(
-    @Json(name = "n") val number: Int?,
-    @Json(name = "c") val context: Int?
+public data class NetworkRequests(
+    @Json(name = "v2") val networkSessionV2: NetworkSessionV2?
 )

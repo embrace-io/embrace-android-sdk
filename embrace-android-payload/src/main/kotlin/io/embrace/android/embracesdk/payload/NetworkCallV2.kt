@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class NetworkCallV2(
+public data class NetworkCallV2(
     /** The URL being requested.  */
     @Json(name = "url")
     val url: String? = null,

@@ -4,7 +4,11 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class BlobSession(
-    @Json(name = "si")
-    val sessionId: String? = null
+public data class ThermalState(
+
+    @Json(name = "t")
+    val timestamp: Long,
+
+    @Json(name = "s")
+    val status: Int
 )

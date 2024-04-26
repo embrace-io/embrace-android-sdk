@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonClass
  * See: [https://developer.android.com/reference/android/content/ComponentCallbacks2.html.onTrimMemory]
 ) */
 @JsonClass(generateAdapter = true)
-internal data class MemoryWarning(
+public data class MemoryWarning(
 
     /**
      * The timestamp at which the memory trim event occurred.

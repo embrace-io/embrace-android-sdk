@@ -4,11 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class ThermalState(
-
-    @Json(name = "t")
-    internal val timestamp: Long,
-
-    @Json(name = "s")
-    internal val status: Int
+public class NativeCrashDataError(
+    @Json(name = "n") public val number: Int?,
+    @Json(name = "c") public val context: Int?
 )

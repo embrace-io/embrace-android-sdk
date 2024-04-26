@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Disk space used by the app and available memory on the device.
  */
 @JsonClass(generateAdapter = true)
-internal data class DiskUsage(
+public data class DiskUsage(
 
     /**
      * Amount of disk space consumed by the app in bytes.

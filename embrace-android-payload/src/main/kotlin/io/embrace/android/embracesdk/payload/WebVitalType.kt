@@ -9,6 +9,6 @@ package io.embrace.android.embracesdk.payload
  * FCP = First Contentful Paint: Indicates the time it takes for the first content element to appear on the screen.
  *
  */
-internal enum class WebVitalType {
+public enum class WebVitalType {
     FID, LCP, CLS, FCP
 }

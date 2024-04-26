@@ -11,8 +11,8 @@ import com.squareup.moshi.JsonClass
  * features we should move the functionality into a different location.
  */
 @JsonClass(generateAdapter = true)
-internal data class BetaFeatures(
+public data class BetaFeatures(
 
     @Json(name = "ts")
-    internal val thermalStates: List<ThermalState>? = null
+    val thermalStates: List<ThermalState>? = null
 )

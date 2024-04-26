@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class WebViewInfo(
+public data class WebViewInfo(
     @Json(name = "t")
     val tag: String? = null,
 

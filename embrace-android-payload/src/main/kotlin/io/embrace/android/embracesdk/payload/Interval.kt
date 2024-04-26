@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  *
  */
 @JsonClass(generateAdapter = true)
-internal data class Interval @JvmOverloads constructor(
+public data class Interval @JvmOverloads constructor(
     @Json(name = "st") val startTime: Long,
     @Json(name = "en") val endTime: Long,
     @Json(name = "v") val value: String? = null

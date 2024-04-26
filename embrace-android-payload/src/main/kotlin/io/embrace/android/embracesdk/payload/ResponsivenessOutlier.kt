@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * denote the two points in time when the pings are recorded.
  */
 @JsonClass(generateAdapter = true)
-internal data class ResponsivenessOutlier(
+public data class ResponsivenessOutlier(
     @Json(name = "start")
     val startMs: Long,
 

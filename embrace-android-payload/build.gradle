@@ -1,0 +1,21 @@
+import io.embrace.gradle.Versions
+
+plugins {
+    id("internal-embrace-plugin")
+    id "org.jetbrains.kotlin.kapt"
+}
+
+description = "Embrace Android SDK: Payload"
+
+android {
+    namespace = "io.embrace.android.embracesdk.payload"
+}
+
+dependencies {
+//    compileOnly(project(":embrace-android-sdk"))
+//    testImplementation(project(":embrace-android-sdk"))
+
+    // json
+    implementation("com.squareup.moshi:moshi:${Versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}")
+}

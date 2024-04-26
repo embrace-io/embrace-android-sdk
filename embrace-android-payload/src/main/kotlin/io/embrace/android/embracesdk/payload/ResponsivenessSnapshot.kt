@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * between pings.
  */
 @JsonClass(generateAdapter = true)
-internal data class ResponsivenessSnapshot(
+public data class ResponsivenessSnapshot(
     @Json(name = "name")
     val name: String,
 

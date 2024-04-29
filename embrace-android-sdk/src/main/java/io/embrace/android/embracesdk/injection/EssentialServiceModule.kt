@@ -234,7 +234,7 @@ internal class EssentialServiceModuleImpl(
                 (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
 
             val coreBaseUrl = if (isDebug) {
-                sdkEndpointBehavior.getDataDev(appId)
+                sdkEndpointBehavior.getDataDev()
             } else {
                 sdkEndpointBehavior.getData(appId)
             }

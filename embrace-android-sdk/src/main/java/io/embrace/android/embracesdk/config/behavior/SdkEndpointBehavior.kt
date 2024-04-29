@@ -29,7 +29,7 @@ internal class SdkEndpointBehavior(
     /**
      * Data dev base URL.
      */
-    fun getDataDev(appId: String): String = local?.dataDev ?: "https://a-$appId.$DATA_DEV_DEFAULT"
+    fun getDataDev(): String = local?.dataDev ?: "https://$DATA_DEV_DEFAULT"
 
     /**
      * Config base URL.

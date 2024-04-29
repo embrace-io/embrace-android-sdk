@@ -19,7 +19,7 @@ internal class SdkEndpointBehaviorTest {
         with(fakeSdkEndpointBehavior()) {
             assertEquals("https://a-12345.config.emb-api.com", getConfig("12345"))
             assertEquals("https://a-12345.data.emb-api.com", getData("12345"))
-            assertEquals("https://a-12345.data-dev.emb-api.com", getDataDev("12345"))
+            assertEquals("https://data-dev.emb-api.com", getDataDev())
         }
     }
 
@@ -28,7 +28,7 @@ internal class SdkEndpointBehaviorTest {
         with(fakeSdkEndpointBehavior(localCfg = { local })) {
             assertEquals("https://config.example.com", getConfig("12345"))
             assertEquals("https://data.example.com", getData("12345"))
-            assertEquals("https://data-dev.example.com", getDataDev("12345"))
+            assertEquals("https://data-dev.example.com", getDataDev())
         }
     }
 }

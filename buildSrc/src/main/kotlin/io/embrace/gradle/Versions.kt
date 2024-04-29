@@ -5,7 +5,7 @@ package io.embrace.gradle
  */
 object Versions {
     @JvmField
-    val compileSdk = 33
+    val compileSdk = 34
 
     @JvmField
     val minSdk = 21
@@ -30,7 +30,7 @@ object Versions {
 
     // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     @JvmField
-    val agp = "8.2.2"
+    val agp = "8.3.2"
 
     @JvmField
     val lint = "30.1.0"

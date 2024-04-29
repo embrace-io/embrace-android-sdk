@@ -4,17 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.opentelemetry.api.logs.Severity
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,15 +26,6 @@ internal class OTelLoggingApiTest {
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.REMOTE_LOGGING)
-        )
-    }
-
-    @Before
-    fun setup() {
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior(
-            remoteCfg = {
-                RemoteConfig(oTelConfig = OTelRemoteConfig(isBetaEnabled = true))
-            }
         )
     }
 
@@ -138,7 +125,8 @@ internal class OTelLoggingApiTest {
                 expectedType = LogExceptionType.HANDLED.value,
                 expectedExceptionName = testException.javaClass.simpleName,
                 expectedExceptionMessage = checkNotNull(testException.message),
-                expectedStacktrace = testException.getSafeStackTrace()?.toList()
+                expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                expectedEmbType = "sys.exception",
             )
         }
     }
@@ -157,7 +145,8 @@ internal class OTelLoggingApiTest {
                 expectedType = LogExceptionType.HANDLED.value,
                 expectedExceptionName = testException.javaClass.simpleName,
                 expectedExceptionMessage = checkNotNull(testException.message),
-                expectedStacktrace = testException.getSafeStackTrace()?.toList()
+                expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                expectedEmbType = "sys.exception",
             )
         }
     }
@@ -181,7 +170,8 @@ internal class OTelLoggingApiTest {
                     expectedExceptionName = testException.javaClass.simpleName,
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                    expectedProperties = customProperties
+                    expectedProperties = customProperties,
+                    expectedEmbType = "sys.exception",
                 )
             }
         }
@@ -204,7 +194,8 @@ internal class OTelLoggingApiTest {
                     expectedExceptionName = testException.javaClass.simpleName,
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                    expectedProperties = customProperties
+                    expectedProperties = customProperties,
+                    expectedEmbType = "sys.exception",
                 )
             }
         }
@@ -222,7 +213,8 @@ internal class OTelLoggingApiTest {
                 expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
                 expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
                 expectedType = LogExceptionType.HANDLED.value,
-                expectedStacktrace = stacktrace.toList()
+                expectedStacktrace = stacktrace.toList(),
+                expectedEmbType = "sys.exception",
             )
         }
     }
@@ -240,7 +232,8 @@ internal class OTelLoggingApiTest {
                     expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                     expectedSeverityText = severity.name,
                     expectedType = LogExceptionType.HANDLED.value,
-                    expectedStacktrace = stacktrace.toList()
+                    expectedStacktrace = stacktrace.toList(),
+                    expectedEmbType = "sys.exception",
                 )
             }
         }
@@ -260,7 +253,8 @@ internal class OTelLoggingApiTest {
                     expectedSeverityText = severity.name,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
-                    expectedProperties = customProperties
+                    expectedProperties = customProperties,
+                    expectedEmbType = "sys.exception",
                 )
             }
         }
@@ -281,7 +275,8 @@ internal class OTelLoggingApiTest {
                     expectedSeverityText = severity.name,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
-                    expectedProperties = customProperties
+                    expectedProperties = customProperties,
+                    expectedEmbType = "sys.exception",
                 )
             }
         }

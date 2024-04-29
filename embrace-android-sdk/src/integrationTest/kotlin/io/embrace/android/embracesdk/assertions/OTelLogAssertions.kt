@@ -12,32 +12,37 @@ import org.junit.Assert.assertNotNull
 
 internal fun assertOtelLogReceived(
     logReceived: Log?,
-    message: String,
-    severityNumber: Int,
-    severityText: String,
-    timeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
-    type: String? = null,
-    exception: Throwable? = null,
-    stack: List<StackTraceElement>? = null,
-    properties: Map<String, Any>? = null
+    expectedMessage: String,
+    expectedSeverityNumber: Int,
+    expectedSeverityText: String,
+    expectedTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    expectedType: String? = null,
+    expectedExceptionName: String? = null,
+    expectedExceptionMessage: String? = null,
+    expectedStacktrace: List<StackTraceElement>? = null,
+    expectedProperties: Map<String, Any>? = null,
+    expectedEmbType: String = "sys.log",
 ) {
     assertNotNull(logReceived)
     logReceived?.let { log ->
-        assertEquals(message, log.body)
-        assertEquals(severityNumber, log.severityNumber)
-        assertEquals(severityText, log.severityText)
-        assertEquals(timeMs * 1000000, log.timeUnixNano)
-        type?.let { assertAttribute(log, embExceptionHandling.name, it) }
-        exception?.let {
-            assertAttribute(log, exceptionType.key, it.javaClass.simpleName)
-            assertAttribute(log, exceptionMessage.key, it.message ?: "")
+        assertEquals(expectedEmbType, log.attributes?.find { it.key == "emb.type" }?.data)
+        assertEquals(expectedMessage, log.body)
+        assertEquals(expectedSeverityNumber, log.severityNumber)
+        assertEquals(expectedSeverityText, log.severityText)
+        assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
+        expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
+        expectedExceptionName?.let {
+            assertAttribute(log, exceptionType.key, expectedExceptionName)
         }
-        stack?.let {
+        expectedExceptionMessage?.let {
+            assertAttribute(log, exceptionMessage.key, expectedExceptionMessage)
+        }
+        expectedStacktrace?.let {
             val stackString = it.map(StackTraceElement::toString).take(200).toList()
             val serializedStack = EmbraceSerializer().toJson(stackString, List::class.java)
             assertAttribute(log, exceptionStacktrace.key, serializedStack)
         }
-        properties?.forEach { (key, value) ->
+        expectedProperties?.forEach { (key, value) ->
             assertAttribute(log, key, value.toString())
         }
     }

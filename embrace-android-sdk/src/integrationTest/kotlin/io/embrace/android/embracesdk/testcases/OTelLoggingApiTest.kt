@@ -18,7 +18,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
 
 @RunWith(AndroidJUnit4::class)
 internal class OTelLoggingApiTest {
@@ -51,9 +50,9 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = "test message",
-                severityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.INFO).severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.INFO.name
+                expectedMessage = "test message",
+                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.INFO).severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name
             )
         }
     }
@@ -66,9 +65,9 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = "test message",
-                severityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.WARNING).severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.WARNING.name
+                expectedMessage = "test message",
+                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.WARNING).severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.WARNING.name
             )
         }
     }
@@ -81,9 +80,9 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = "test message",
-                severityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.ERROR.name
+                expectedMessage = "test message",
+                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name
             )
         }
     }
@@ -98,9 +97,9 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = expectedMessage,
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name
+                    expectedMessage = expectedMessage,
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name
                 )
             }
         }
@@ -116,10 +115,10 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = expectedMessage,
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    properties = customProperties
+                    expectedMessage = expectedMessage,
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedProperties = customProperties
                 )
             }
         }
@@ -133,12 +132,13 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = checkNotNull(testException.message),
-                severityNumber = Severity.ERROR.severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.ERROR.name,
-                type = LogExceptionType.HANDLED.value,
-                exception = testException,
-                stack = testException.getSafeStackTrace()?.toList()
+                expectedMessage = checkNotNull(testException.message),
+                expectedSeverityNumber = Severity.ERROR.severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
+                expectedType = LogExceptionType.HANDLED.value,
+                expectedExceptionName = testException.javaClass.simpleName,
+                expectedExceptionMessage = checkNotNull(testException.message),
+                expectedStacktrace = testException.getSafeStackTrace()?.toList()
             )
         }
     }
@@ -151,12 +151,13 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = checkNotNull(testException.message),
-                severityNumber = Severity.INFO.severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.INFO.name,
-                type = LogExceptionType.HANDLED.value,
-                exception = testException,
-                stack = testException.getSafeStackTrace()?.toList()
+                expectedMessage = checkNotNull(testException.message),
+                expectedSeverityNumber = Severity.INFO.severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
+                expectedType = LogExceptionType.HANDLED.value,
+                expectedExceptionName = testException.javaClass.simpleName,
+                expectedExceptionMessage = checkNotNull(testException.message),
+                expectedStacktrace = testException.getSafeStackTrace()?.toList()
             )
         }
     }
@@ -173,13 +174,14 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = checkNotNull(testException.message),
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    type = LogExceptionType.HANDLED.value,
-                    exception = testException,
-                    stack = testException.getSafeStackTrace()?.toList(),
-                    properties = customProperties
+                    expectedMessage = checkNotNull(testException.message),
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedExceptionName = testException.javaClass.simpleName,
+                    expectedExceptionMessage = checkNotNull(testException.message),
+                    expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                    expectedProperties = customProperties
                 )
             }
         }
@@ -195,13 +197,14 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = expectedMessage,
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    type = LogExceptionType.HANDLED.value,
-                    exception = testException,
-                    stack = testException.getSafeStackTrace()?.toList(),
-                    properties = customProperties
+                    expectedMessage = expectedMessage,
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedExceptionName = testException.javaClass.simpleName,
+                    expectedExceptionMessage = checkNotNull(testException.message),
+                    expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                    expectedProperties = customProperties
                 )
             }
         }
@@ -215,11 +218,11 @@ internal class OTelLoggingApiTest {
             val log = harness.getLastSentLog()
             assertOtelLogReceived(
                 log,
-                message = "",
-                severityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
-                severityText = io.embrace.android.embracesdk.Severity.ERROR.name,
-                type = LogExceptionType.HANDLED.value,
-                stack = stacktrace.toList()
+                expectedMessage = "",
+                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
+                expectedType = LogExceptionType.HANDLED.value,
+                expectedStacktrace = stacktrace.toList()
             )
         }
     }
@@ -233,11 +236,11 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = "",
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    type = LogExceptionType.HANDLED.value,
-                    stack = stacktrace.toList()
+                    expectedMessage = "",
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedStacktrace = stacktrace.toList()
                 )
             }
         }
@@ -252,12 +255,12 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = "",
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    type = LogExceptionType.HANDLED.value,
-                    stack = stacktrace.toList(),
-                    properties = customProperties
+                    expectedMessage = "",
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedStacktrace = stacktrace.toList(),
+                    expectedProperties = customProperties
                 )
             }
         }
@@ -273,12 +276,12 @@ internal class OTelLoggingApiTest {
                 val log = harness.getLastSentLog()
                 assertOtelLogReceived(
                     log,
-                    message = expectedMessage,
-                    severityNumber = getOtelSeverity(severity).severityNumber,
-                    severityText = severity.name,
-                    type = LogExceptionType.HANDLED.value,
-                    stack = stacktrace.toList(),
-                    properties = customProperties
+                    expectedMessage = expectedMessage,
+                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                    expectedSeverityText = severity.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedStacktrace = stacktrace.toList(),
+                    expectedProperties = customProperties
                 )
             }
         }

@@ -21,6 +21,7 @@ internal class EnvelopeResourceSourceImpl(
     private val metadataService: MetadataService
 ) : EnvelopeResourceSource {
 
+    @Suppress("DEPRECATION")
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
             appVersion = packageInfo.versionName?.toString()?.trim { it <= ' ' } ?: "",

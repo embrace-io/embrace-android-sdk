@@ -128,7 +128,7 @@ internal class EmbraceMetadataService private constructor(
         }
     }
 
-    @SuppressWarnings("deprecation")
+    @Suppress("DEPRECATION")
     private fun asyncRetrieveScreenResolution() {
         // if the screenResolution exists in memory, don't try to retrieve it
         if (!screenResolution.isNullOrEmpty()) {
@@ -189,8 +189,8 @@ internal class EmbraceMetadataService private constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
     @TargetApi(Build.VERSION_CODES.O)
-    @SuppressWarnings("deprecation")
     fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,
         packageManager: PackageManager,

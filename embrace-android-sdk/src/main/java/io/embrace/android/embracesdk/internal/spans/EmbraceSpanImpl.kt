@@ -63,7 +63,7 @@ internal class EmbraceSpanImpl(
             }
             if (successful) {
                 spanStartTimeMs = attemptedStartTimeMs
-                spanRepository?.trackStartedSpan(this)
+                spanRepository.trackStartedSpan(this)
             }
             return successful
         }
@@ -107,7 +107,7 @@ internal class EmbraceSpanImpl(
                     Span.Status.OK
                 }
                 spanEndTimeMs = attemptedEndTimeMs
-                spanId?.let { spanRepository?.trackedSpanStopped(it) }
+                spanId?.let { spanRepository.trackedSpanStopped(it) }
             }
             return successful
         }

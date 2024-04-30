@@ -7,7 +7,7 @@ internal class FakeLogWriter : LogWriter {
 
     val logEvents = mutableListOf<LogEventData>()
 
-    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?) {
+    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?, isPrivate: Boolean) {
         val logEvent = if (log is LogEventData) {
             log
         } else if (mapper != null) {

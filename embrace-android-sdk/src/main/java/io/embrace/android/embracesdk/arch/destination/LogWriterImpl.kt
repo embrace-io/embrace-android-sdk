@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.arch.destination
 
+import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
@@ -16,7 +18,7 @@ internal class LogWriterImpl(
     private val metadataService: MetadataService,
 ) : LogWriter {
 
-    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?) {
+    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?, isPrivate: Boolean) {
         val logEventData = if (log is LogEventData) {
             log
         } else if (mapper != null) {
@@ -38,6 +40,10 @@ internal class LogWriterImpl(
 
         metadataService.getAppState()?.let { appState ->
             builder.setAttribute(embState.attributeKey, appState)
+        }
+
+        if (isPrivate) {
+            builder.setFixedAttribute(PrivateSpan)
         }
 
         logEventData.schemaType.attributes().forEach {

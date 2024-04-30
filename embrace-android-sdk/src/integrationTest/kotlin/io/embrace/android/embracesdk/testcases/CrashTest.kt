@@ -11,7 +11,9 @@ import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getLastSentSessionMessage
 import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import io.opentelemetry.api.logs.Severity
@@ -30,6 +32,7 @@ internal class CrashTest {
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private val testException = RuntimeException("Boom!")
+    private val serializer = EmbraceSerializer()
 
     @Before
     fun setup() {
@@ -58,6 +61,12 @@ internal class CrashTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.crash"
         )
+        val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
+        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
+
+        assertEquals("1", log?.findLogAttribute("emb.android.crash_number"))
+        assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
+        assertNotNull(log?.findLogAttribute("emb.android.threads"))
 
         val message = checkNotNull(testRule.harness.getLastSentSessionMessage())
         verifySessionHappened(message)
@@ -94,8 +103,13 @@ internal class CrashTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.react_native_crash"
         )
+        val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
+        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
         val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
         assertEquals(expectedJsException, log?.findLogAttribute("emb.android.react_native_crash.js_exception"))
+        assertEquals("1", log?.findLogAttribute("emb.android.crash_number"))
+        assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
+        assertNotNull(log?.findLogAttribute("emb.android.threads"))
 
         val message = checkNotNull(testRule.harness.getLastSentSessionMessage())
         verifySessionHappened(message)

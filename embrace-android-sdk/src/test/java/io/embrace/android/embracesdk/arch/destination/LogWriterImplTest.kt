@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.logs.Severity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -80,6 +81,27 @@ internal class LogWriterImplTest {
             assertNotNull(attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(logRecordUid))
             assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+        }
+    }
+
+    @Test
+    fun `check that private value is set`() {
+        val logEventData = LogEventData(
+            schemaType = SchemaType.Log(
+                TelemetryAttributes(
+                    configService = FakeConfigService()
+                )
+            ),
+            severity = io.embrace.android.embracesdk.Severity.ERROR,
+            message = "test"
+        )
+        logWriterImpl.addLog(logEventData, isPrivate = true)
+        with(logger.builders.single()) {
+            assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+        }
+        logWriterImpl.addLog(logEventData, isPrivate = false)
+        with(logger.builders.last()) {
+            assertFalse(attributes.hasFixedAttribute(PrivateSpan))
         }
     }
 }

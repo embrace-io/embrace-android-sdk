@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
+import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -90,6 +91,11 @@ internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): 
 }
 
 internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
+
+internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
+    setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
+    return this
+}
 
 /**
  * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]

@@ -313,4 +313,15 @@ internal sealed class SchemaType(
             "emb.webview_info.tag" to tag
         ).toNonNullMap()
     }
+
+    internal class ThermalState(
+        status: Int
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.ThermalState,
+        fixedObjectName = "thermal-state"
+    ) {
+        override val schemaAttributes = mapOf(
+            "status" to status.toString()
+        )
+    }
 }

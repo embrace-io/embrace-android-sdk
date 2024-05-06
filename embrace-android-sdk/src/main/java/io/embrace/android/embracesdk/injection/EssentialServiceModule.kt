@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import android.os.Debug
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
@@ -84,7 +83,7 @@ internal class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    enableIntegrationTesting: Boolean,
+    isDevMode: Boolean,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
@@ -229,9 +228,7 @@ internal class EssentialServiceModuleImpl(
                 localSupplier = localConfig.sdkConfig::baseUrls,
             )
 
-            val isDebug = coreModule.isDebug &&
-                enableIntegrationTesting &&
-                (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
+            val isDebug = coreModule.isDebug || isDevMode
 
             val coreBaseUrl = if (isDebug) {
                 sdkEndpointBehavior.getDataDev()

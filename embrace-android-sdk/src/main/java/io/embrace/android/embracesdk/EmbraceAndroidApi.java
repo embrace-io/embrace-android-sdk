@@ -33,13 +33,12 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param enableIntegrationTesting if true, debug sessions (those which are not part of a
-     *                                 release APK) will go to the live integration testing tab
-     *                                 of the dashboard. If false, they will appear in 'recent
-     *                                 sessions'.
+     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
+     *                                 similar to using a build type with debuggable set to true.
+     *
      */
     void start(@NonNull Context context,
-               boolean enableIntegrationTesting);
+               boolean isDevMode);
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -50,13 +49,11 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param enableIntegrationTesting if true, debug sessions (those which are not part of a
-     *                                 release APK) will go to the live integration testing tab
-     *                                 of the dashboard. If false, they will appear in 'recent
-     *                                 sessions'.
+     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
+     *                                 similar to using a build type with debuggable set to true.
      */
     void start(@NonNull Context context,
-               boolean enableIntegrationTesting,
+               boolean isDevMode,
                @NonNull Embrace.AppFramework appFramework);
 
     /**

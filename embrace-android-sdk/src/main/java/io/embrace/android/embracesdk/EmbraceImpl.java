@@ -230,24 +230,22 @@ final class EmbraceImpl {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param enableIntegrationTesting if true, debug sessions (those which are not part of a
-     *                                 release APK) will go to the live integration testing tab
-     *                                 of the dashboard. If false, they will appear in 'recent
-     *                                 sessions'.
+     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
+     *                                 similar to using a build type with debuggable set to true.
      */
     void start(@NonNull Context context,
-               boolean enableIntegrationTesting,
+               boolean isDevMode,
                @NonNull Embrace.AppFramework appFramework) {
-        startInternal(context, enableIntegrationTesting, appFramework, () -> null);
+        startInternal(context, isDevMode, appFramework, () -> null);
     }
 
     void startInternal(@NonNull Context context,
-                       boolean enableIntegrationTesting,
+                       boolean isDevMode,
                        @NonNull Embrace.AppFramework appFramework,
                        @NonNull Function0<ConfigService> configServiceProvider) {
         try {
             Systrace.startSynchronous("sdk-start");
-            startImpl(context, enableIntegrationTesting, appFramework, configServiceProvider);
+            startImpl(context, isDevMode, appFramework, configServiceProvider);
             Systrace.endSynchronous();
         } catch (Throwable t) {
             internalEmbraceLogger.logError(
@@ -256,7 +254,7 @@ final class EmbraceImpl {
     }
 
     private void startImpl(@NonNull Context context,
-                           boolean enableIntegrationTesting,
+                           boolean isDevMode,
                            @NonNull Embrace.AppFramework framework,
                            @NonNull Function0<ConfigService> configServiceProvider) {
         if (application != null) {
@@ -273,7 +271,7 @@ final class EmbraceImpl {
 
         final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, enableIntegrationTesting, framework, startTimeMs, customAppId, configServiceProvider);
+        moduleInitBootstrapper.init(context, isDevMode, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 

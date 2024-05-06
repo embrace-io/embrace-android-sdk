@@ -75,16 +75,16 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     @Override
-    public void start(@NonNull Context context, boolean enableIntegrationTesting) {
+    public void start(@NonNull Context context, boolean isDevMode) {
         if (verifyNonNullParameters("start", context)) {
-            start(context, enableIntegrationTesting, AppFramework.NATIVE);
+            start(context, isDevMode, AppFramework.NATIVE);
         }
     }
 
     @Override
-    public void start(@NonNull Context context, boolean enableIntegrationTesting, @NonNull AppFramework appFramework) {
+    public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, enableIntegrationTesting, appFramework);
+            impl.start(context, isDevMode, appFramework);
         }
     }
 

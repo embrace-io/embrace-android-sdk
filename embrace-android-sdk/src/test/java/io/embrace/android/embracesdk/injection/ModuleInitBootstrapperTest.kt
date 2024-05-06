@@ -46,7 +46,7 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(
                 moduleInitBootstrapper.init(
                     context = context,
-                    enableIntegrationTesting = false,
+                    isDevMode = false,
                     appFramework = Embrace.AppFramework.NATIVE,
                     sdkStartTimeMs = 0L,
                 )
@@ -69,7 +69,7 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                enableIntegrationTesting = false,
+                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -77,7 +77,7 @@ internal class ModuleInitBootstrapperTest {
         assertFalse(
             moduleInitBootstrapper.init(
                 context = context,
-                enableIntegrationTesting = false,
+                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -89,7 +89,7 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                enableIntegrationTesting = false,
+                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -114,7 +114,7 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             bootstrapper.init(
                 context = context,
-                enableIntegrationTesting = false,
+                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )

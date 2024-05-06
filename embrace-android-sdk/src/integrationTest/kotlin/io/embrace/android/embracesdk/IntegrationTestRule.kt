@@ -110,7 +110,7 @@ internal class IntegrationTestRule(
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embraceImpl.startInternal(overriddenCoreModule.context, enableIntegrationTesting, appFramework) { overriddenConfigService }
+                embraceImpl.startInternal(overriddenCoreModule.context, isDevMode, appFramework) { overriddenConfigService }
             }
         }
     }
@@ -136,7 +136,7 @@ internal class IntegrationTestRule(
     internal class Harness(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val startImmediately: Boolean = true,
-        val enableIntegrationTesting: Boolean = false,
+        val isDevMode: Boolean = false,
         val appFramework: AppFramework = AppFramework.NATIVE,
         val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),

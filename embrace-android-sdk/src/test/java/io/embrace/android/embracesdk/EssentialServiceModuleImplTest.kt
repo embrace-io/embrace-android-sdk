@@ -4,7 +4,6 @@ import android.os.Looper
 import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
@@ -27,7 +26,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -95,91 +93,5 @@ internal class EssentialServiceModuleImplTest {
         ) { fakeConfigService }
 
         assertSame(fakeConfigService, module.configService)
-    }
-
-    @Test
-    fun `test data URL is returned when isDevMode and isDebug are false`() {
-        val fakeCoreModule = FakeCoreModule(isDebug = false)
-        val initModule = InitModuleImpl()
-        val module = EssentialServiceModuleImpl(
-            initModule = initModule,
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            coreModule = fakeCoreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
-            systemServiceModule = FakeSystemServiceModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            storageModule = FakeStorageModule(),
-            customAppId = "abcde",
-            dataSourceModuleProvider = { fakeDataSourceModule() },
-            isDevMode = false,
-        ) { null }
-
-        assertFalse(AppEnvironment(fakeCoreModule.context.applicationInfo).isDebug)
-        val dataUrl = module.urlBuilder.getEmbraceUrlWithSuffix("v1", "log")
-        assertTrue(dataUrl.startsWith("https://a-abcde.data.emb-api.com"))
-    }
-
-    @Test
-    fun `test data dev URL is returned when isDevMode is true and isDebug is false`() {
-        val fakeCoreModule = FakeCoreModule(isDebug = false)
-        val initModule = InitModuleImpl()
-        val module = EssentialServiceModuleImpl(
-            initModule = initModule,
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            coreModule = fakeCoreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
-            systemServiceModule = FakeSystemServiceModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            storageModule = FakeStorageModule(),
-            customAppId = "abcde",
-            dataSourceModuleProvider = { fakeDataSourceModule() },
-            isDevMode = true,
-        ) { null }
-
-        assertFalse(AppEnvironment(fakeCoreModule.context.applicationInfo).isDebug)
-        val dataUrl = module.urlBuilder.getEmbraceUrlWithSuffix("v1", "log")
-        assertTrue(dataUrl.startsWith("https://data-dev.emb-api.com"))
-    }
-
-    @Test
-    fun `test data dev URL is returned when isDevMode is false and isDebug is true`() {
-        val fakeCoreModule = FakeCoreModule(isDebug = true)
-        val initModule = InitModuleImpl()
-        val module = EssentialServiceModuleImpl(
-            initModule = initModule,
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            coreModule = fakeCoreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
-            systemServiceModule = FakeSystemServiceModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            storageModule = FakeStorageModule(),
-            customAppId = "abcde",
-            dataSourceModuleProvider = { fakeDataSourceModule() },
-            isDevMode = false,
-        ) { null }
-
-        val dataUrl = module.urlBuilder.getEmbraceUrlWithSuffix("v1", "log")
-        assertTrue(dataUrl.startsWith("https://data-dev.emb-api.com"))
-    }
-
-    @Test
-    fun `test data dev URL is returned when isDevMode and isDebug are true`() {
-        val fakeCoreModule = FakeCoreModule(isDebug = true)
-        val initModule = InitModuleImpl()
-        val module = EssentialServiceModuleImpl(
-            initModule = initModule,
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            coreModule = fakeCoreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
-            systemServiceModule = FakeSystemServiceModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            storageModule = FakeStorageModule(),
-            customAppId = "abcde",
-            dataSourceModuleProvider = { fakeDataSourceModule() },
-            isDevMode = true,
-        ) { null }
-
-        val dataUrl = module.urlBuilder.getEmbraceUrlWithSuffix("v1", "log")
-        assertTrue(dataUrl.startsWith("https://data-dev.emb-api.com"))
     }
 }

@@ -33,8 +33,8 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
-     *                                 similar to using a build type with debuggable set to true.
+     * @param isDevMode                if true, and the build type is debuggable, it
+     *                                 sets the environment for all sessions to 'Development'.
      *
      */
     void start(@NonNull Context context,
@@ -49,8 +49,8 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
-     *                                 similar to using a build type with debuggable set to true.
+     * @param isDevMode                if true, and the build type is debuggable, it
+     *                                 sets the environment for all sessions to 'Development'.
      */
     void start(@NonNull Context context,
                boolean isDevMode,

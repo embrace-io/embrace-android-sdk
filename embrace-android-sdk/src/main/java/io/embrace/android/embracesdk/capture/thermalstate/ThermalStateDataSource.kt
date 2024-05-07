@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.worker.TaskPriority
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
-internal class ThermalStatusDataSource(
+internal class ThermalStateDataSource(
     spanService: SpanService,
     logger: InternalEmbraceLogger,
     private val backgroundWorker: BackgroundWorker,

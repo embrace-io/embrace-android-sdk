@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusDataSource
+import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
@@ -13,15 +13,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class ThermalStatusDataSourceTest {
+internal class ThermalStateDataSourceTest {
 
-    private lateinit var dataSource: ThermalStatusDataSource
+    private lateinit var dataSource: ThermalStateDataSource
     private lateinit var spanWriter: FakeSpanService
 
     @Before
     fun setUp() {
         spanWriter = FakeSpanService()
-        dataSource = ThermalStatusDataSource(
+        dataSource = ThermalStateDataSource(
             spanWriter,
             InternalEmbraceLogger(),
             BackgroundWorker(BlockableExecutorService()),

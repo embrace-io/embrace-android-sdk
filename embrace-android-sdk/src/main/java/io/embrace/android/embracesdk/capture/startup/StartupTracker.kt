@@ -42,9 +42,17 @@ internal class StartupTracker(
 ) : Application.ActivityLifecycleCallbacks {
     private var isFirstDraw = false
     private var nullWindowCallbackErrorLogged = false
+    private var startupActivityId: Int? = null
+
+    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+        if (activity.useAsStartupActivity()) {
+            appStartupTraceEmitter.startupActivityPreCreated()
+        }
+    }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeForStartup()) {
+        if (activity.useAsStartupActivity()) {
+            val activityName = activity.localClassName
             appStartupTraceEmitter.startupActivityInitStart()
             if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 if (!isFirstDraw) {
@@ -55,7 +63,7 @@ internal class StartupTracker(
                             decorView.onNextDraw {
                                 if (!isFirstDraw) {
                                     isFirstDraw = true
-                                    val callback = { appStartupTraceEmitter.firstFrameRendered() }
+                                    val callback = { appStartupTraceEmitter.firstFrameRendered(activityName = activityName) }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
                                 }
                             }
@@ -69,21 +77,21 @@ internal class StartupTracker(
         }
     }
 
-    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityInitStart()
+    override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
+        if (activity.useAsStartupActivity()) {
+            appStartupTraceEmitter.startupActivityPostCreated()
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (activity.observeForStartup()) {
+        if (activity.isStartupActivity()) {
             appStartupTraceEmitter.startupActivityInitEnd()
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityResumed()
+            appStartupTraceEmitter.startupActivityResumed(activityName = activity.localClassName)
         }
     }
 
@@ -94,6 +102,34 @@ internal class StartupTracker(
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
     override fun onActivityDestroyed(activity: Activity) {}
+
+    /**
+     * Returns true if the Activity instance is being used as the startup Activity. It will return false if [useAsStartupActivity] has
+     * not been called previously to setup the Activity instance to be used as the startup Activity.
+     */
+    private fun Activity.isStartupActivity(): Boolean {
+        return if (observeForStartup()) {
+            startupActivityId == hashCode()
+        } else {
+            false
+        }
+    }
+
+    /**
+     * Use this Activity instance as the startup activity if appropriate. Return true the current instance is the startup Activity
+     * instance going forward, false otherwise.
+     */
+    private fun Activity.useAsStartupActivity(): Boolean {
+        if (isStartupActivity()) {
+            return true
+        }
+
+        if (observeForStartup()) {
+            startupActivityId = hashCode()
+        }
+
+        return isStartupActivity()
+    }
 
     companion object {
         private class PyNextDrawListener(

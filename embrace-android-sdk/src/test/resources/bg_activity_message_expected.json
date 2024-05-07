@@ -35,6 +35,7 @@
       "end_time_unix_nano": 0,
       "status": "OK",
       "events": [],
+      "links": [],
       "attributes": {}
     }
   ],

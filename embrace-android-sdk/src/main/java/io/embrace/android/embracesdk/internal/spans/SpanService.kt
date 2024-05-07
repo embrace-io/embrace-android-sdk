@@ -79,6 +79,7 @@ internal interface SpanService : Initializable {
         private: Boolean = internal,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
+        links: List<EmbraceSpanLink> = emptyList(),
         errorCode: ErrorCode? = null
     ): Boolean
 
@@ -86,4 +87,9 @@ internal interface SpanService : Initializable {
      * Return the [EmbraceSpan] corresponding to the given spanId if it is active or it has completed in the current session
      */
     fun getSpan(spanId: String): EmbraceSpan?
+
+    /**
+     * Get a list of active spans that are being tracked
+     */
+    fun getActiveSpans(): List<PersistableEmbraceSpan>
 }

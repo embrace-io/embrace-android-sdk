@@ -92,4 +92,12 @@ public interface EmbraceSpan {
      * if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.
      */
     public fun addAttribute(key: String, value: String): Boolean
+
+    /**
+     * Add a Link to another Span. Returns false if the Link was not added. Returns true if the validation at the Embrace level
+     * has passed.
+     *
+     * TODO: Should we add trace state and flags?
+     */
+    public fun addLink(spanId: String, traceId: String, attributes: Map<String, String>): Boolean
 }

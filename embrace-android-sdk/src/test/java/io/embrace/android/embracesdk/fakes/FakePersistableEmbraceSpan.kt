@@ -89,6 +89,10 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
+    override fun addLink(spanId: String, traceId: String, attributes: Map<String, String>): Boolean {
+        return false
+    }
+
     override fun snapshot(): Span? {
         return if (spanId == null) {
             null

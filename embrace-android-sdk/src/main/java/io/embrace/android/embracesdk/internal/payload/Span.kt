@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLink
 
 /**
  * A span represents a single unit of work done in the app. It can be a network request, a database
@@ -50,6 +51,9 @@ internal data class Span(
 
     @Json(name = "events")
     val events: List<SpanEvent>? = null,
+
+    @Json(name = "links")
+    val links: List<EmbraceSpanLink>? = null,
 
     @Json(name = "attributes")
     val attributes: List<Attribute>? = null

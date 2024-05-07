@@ -13,6 +13,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsVali
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanContext
+import io.opentelemetry.api.trace.TraceFlags
+import io.opentelemetry.api.trace.TraceState
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -31,6 +34,7 @@ internal class EmbraceSpanImpl(
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val links = ConcurrentLinkedQueue<EmbraceSpanLink>()
     private val schemaAttributes = spanBuilder.fixedAttributes.associate {
         it.toEmbraceKeyValuePair()
     }.toMutableMap()
@@ -80,6 +84,22 @@ internal class EmbraceSpanImpl(
                 startedSpan.get()?.let { spanToStop ->
                     allAttributes().forEach { attribute ->
                         spanToStop.setAttribute(attribute.key, attribute.value)
+                    }
+
+                    links.forEach { link ->
+                        spanToStop.addLink(
+                            SpanContext.create(
+                                link.spanContext.traceId,
+                                link.spanContext.spanId,
+                                TraceFlags.getDefault(), // TODO: check if this is correct
+                                TraceState.getDefault() // TODO: check if this is correct
+                            ),
+                            if (link.attributes.isNotEmpty()) {
+                                Attributes.builder().fromMap(link.attributes).build()
+                            } else {
+                                Attributes.empty()
+                            }
+                        )
                     }
 
                     events.forEach { event ->
@@ -145,6 +165,17 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    override fun addLink(spanId: String, traceId: String, attributes: Map<String, String>): Boolean {
+        synchronized(links) {
+            if (isRecording) {
+                links.add(EmbraceSpanLink(EmbraceSpanContext(spanId, traceId), attributes))
+                return true
+            }
+        }
+
+        return false
+    }
+
     override fun snapshot(): Span? {
         return if (canSnapshot()) {
             Span(
@@ -156,6 +187,7 @@ internal class EmbraceSpanImpl(
                 endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
+                links = links.toList(),
                 attributes = allAttributes().toNewPayload()
             )
         } else {

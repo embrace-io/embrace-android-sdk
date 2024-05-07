@@ -82,6 +82,7 @@ internal class EmbraceSpanService(
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        links: List<EmbraceSpanLink>,
         errorCode: ErrorCode?
     ): Boolean = currentDelegate.recordCompletedSpan(
         name = name,
@@ -93,8 +94,10 @@ internal class EmbraceSpanService(
         private = private,
         attributes = attributes,
         events = events,
+        links = links,
         errorCode = errorCode
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId = spanId)
+    override fun getActiveSpans(): List<PersistableEmbraceSpan> = currentDelegate.getActiveSpans()
 }

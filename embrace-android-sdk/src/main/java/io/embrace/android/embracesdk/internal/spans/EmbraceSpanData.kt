@@ -38,7 +38,11 @@ internal data class EmbraceSpanData(
     val events: List<EmbraceSpanEvent> = emptyList(),
 
     @Json(name = "attributes")
-    val attributes: Map<String, String> = emptyMap()
+    val attributes: Map<String, String> = emptyMap(),
+
+    @Json(name = "links")
+    val spanLinks: List<EmbraceSpanLink> = emptyList()
+
 ) {
     internal constructor(spanData: SpanData) : this(
         traceId = spanData.spanContext.traceId,
@@ -49,6 +53,12 @@ internal data class EmbraceSpanData(
         endTimeNanos = spanData.endEpochNanos,
         status = spanData.status.statusCode,
         events = fromEventData(eventDataList = spanData.events),
+        spanLinks = spanData.links.map { linkData ->
+            EmbraceSpanLink(
+                EmbraceSpanContext(linkData.spanContext.traceId, linkData.spanContext.spanId),
+                linkData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
+            )
+        },
         attributes = spanData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
     )
 

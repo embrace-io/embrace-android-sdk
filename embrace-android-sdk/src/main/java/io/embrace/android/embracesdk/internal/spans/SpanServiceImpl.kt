@@ -93,6 +93,7 @@ internal class SpanServiceImpl(
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        links: List<EmbraceSpanLink>,
         errorCode: ErrorCode?
     ): Boolean {
         if (startTimeMs > endTimeMs) {
@@ -108,6 +109,9 @@ internal class SpanServiceImpl(
                 events.forEach {
                     newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                 }
+                links.forEach {
+                    newSpan.addLink(it.spanContext.spanId, it.spanContext.traceId, it.attributes)
+                }
                 return newSpan.stop(errorCode, endTimeMs)
             }
         }
@@ -116,6 +120,7 @@ internal class SpanServiceImpl(
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
+    override fun getActiveSpans(): List<PersistableEmbraceSpan> = spanRepository.getActiveSpans()
 
     private fun inputsValid(
         name: String,

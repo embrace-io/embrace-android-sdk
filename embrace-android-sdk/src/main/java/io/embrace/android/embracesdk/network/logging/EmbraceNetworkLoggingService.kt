@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanContext
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLink
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
@@ -59,15 +61,27 @@ internal class EmbraceNetworkLoggingService(
         if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
             val strippedUrl = stripUrl(networkRequest.url)
 
+            val activeSpansLink: List<EmbraceSpanLink> = spanService.getActiveSpans()
+                .filter { !(it.snapshot()?.name?.startsWith("emb-") ?: true) } // TODO: improve filtering
+                .mapNotNull {
+                    val spanId = it.spanId
+                    val traceId = it.traceId
+                    if (spanId != null && traceId != null) {
+                        return@mapNotNull EmbraceSpanLink(EmbraceSpanContext(spanId, traceId), emptyMap())
+                    }
+                    null
+                }
+
             val networkRequestSchemaType = SchemaType.NetworkRequest(networkRequest)
             spanService.recordCompletedSpan(
                 name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
                 startTimeMs = networkRequest.startTime,
                 endTimeMs = networkRequest.endTime,
-                errorCode = null,
                 parent = null,
-                attributes = networkRequestSchemaType.attributes(),
                 type = EmbType.Performance.Network,
+                attributes = networkRequestSchemaType.attributes(),
+                errorCode = null,
+                links = activeSpansLink
             )
         }
     }

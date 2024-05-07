@@ -25,6 +25,7 @@ internal fun EmbraceSpanData.toNewPayload() = Span(
         else -> Span.Status.UNSET
     },
     events = events.map(EmbraceSpanEvent::toNewPayload),
+    links = spanLinks,
     attributes = attributes.toNewPayload()
 )
 
@@ -61,7 +62,8 @@ internal fun Span.toOldPayload(): EmbraceSpanData {
             else -> StatusCode.UNSET
         },
         events = events?.map { it.toOldPayload() } ?: emptyList(),
-        attributes = attributes?.toOldPayload() ?: emptyMap()
+        spanLinks = links ?: emptyList(),
+        attributes = attributes?.toOldPayload() ?: emptyMap(),
     )
 }
 

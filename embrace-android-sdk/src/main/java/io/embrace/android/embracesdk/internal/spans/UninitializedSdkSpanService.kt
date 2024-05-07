@@ -52,6 +52,7 @@ internal class UninitializedSdkSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        links: List<EmbraceSpanLink>,
         errorCode: ErrorCode?
     ): Boolean {
         return realSpanService.get()?.recordCompletedSpan(
@@ -91,6 +92,7 @@ internal class UninitializedSdkSpanService : SpanService {
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = null
+    override fun getActiveSpans(): List<PersistableEmbraceSpan> = emptyList()
 
     /**
      * Set the real [SpanService] to record completed spans and record the buffered instances

@@ -112,10 +112,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         Systrace.traceSynchronous("breadcrumb-service-init") {
             EmbraceBreadcrumbService(
                 initModule.clock,
-                configService,
-                { dataSourceModule },
-                initModule.logger
-            )
+                configService
+            ) { dataSourceModule }
         }
     }
 

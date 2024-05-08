@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
+import io.embrace.android.embracesdk.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
@@ -48,6 +49,7 @@ internal interface DataSourceModule {
     val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
     val sigquitDataSource: DataSourceState<SigquitDataSource>
+    val rnActionDataSource: DataSourceState<RnActionDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -208,6 +210,18 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = anrModule::sigquitDataSource,
             configGate = { configService.anrBehavior.isGoogleAnrCaptureEnabled() }
+        )
+    }
+
+    override val rnActionDataSource: DataSourceState<RnActionDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                RnActionDataSource(
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
+                    otelModule.spanService,
+                    initModule.logger
+                )
+            }
         )
     }
 

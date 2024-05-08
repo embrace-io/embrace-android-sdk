@@ -36,9 +36,7 @@ internal class ThermalStateDataSource(
         private const val MAX_CAPTURED_THERMAL_STATES = 100
     }
 
-    private val thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
-        handleThermalStateChange(it)
-    }
+    private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
 
     private val powerManager: PowerManager? by lazy(powerManagerProvider)
 
@@ -47,6 +45,9 @@ internal class ThermalStateDataSource(
     override fun enableDataCapture() {
         backgroundWorker.submit(TaskPriority.LOW) {
             Systrace.traceSynchronous("thermal-service-registration") {
+                thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
+                    handleThermalStateChange(it)
+                }
                 val pm = powerManager
                 if (pm != null) {
                     // Android API only accepts an executor. We don't want to directly expose those
@@ -55,8 +56,19 @@ internal class ThermalStateDataSource(
                     val executor = Executor {
                         backgroundWorker.submit(runnable = it)
                     }
-                    pm.addThermalStatusListener(executor, thermalStatusListener)
+                    thermalStatusListener?.let {
+                        pm.addThermalStatusListener(executor, it)
+                    }
                 }
+            }
+        }
+    }
+
+    override fun disableDataCapture() {
+        backgroundWorker.submit(TaskPriority.LOW) {
+            thermalStatusListener?.let {
+                powerManager?.removeThermalStatusListener(it)
+                thermalStatusListener = null
             }
         }
     }

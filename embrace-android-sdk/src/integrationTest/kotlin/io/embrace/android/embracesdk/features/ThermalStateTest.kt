@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
@@ -107,6 +108,14 @@ internal class ThermalStateFeatureTest {
                 remoteCfg = {
                     RemoteConfig(
                         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 100.0f)
+                    )
+                }
+            )
+        testRule.harness.overriddenConfigService.sdkModeBehavior =
+            fakeSdkModeBehavior(
+                remoteCfg = {
+                    RemoteConfig(
+                        pctBetaFeaturesEnabled = 100.0f
                     )
                 }
             )

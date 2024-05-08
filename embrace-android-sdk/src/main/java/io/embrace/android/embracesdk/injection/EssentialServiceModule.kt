@@ -84,7 +84,7 @@ internal class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    enableIntegrationTesting: Boolean,
+    isDevMode: Boolean,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
@@ -230,7 +230,7 @@ internal class EssentialServiceModuleImpl(
             )
 
             val isDebug = coreModule.isDebug &&
-                enableIntegrationTesting &&
+                isDevMode &&
                 (Debug.isDebuggerConnected() || Debug.waitingForDebugger())
 
             val coreBaseUrl = if (isDebug) {

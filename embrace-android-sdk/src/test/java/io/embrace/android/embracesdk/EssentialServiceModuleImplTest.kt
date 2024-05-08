@@ -50,7 +50,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
             dataSourceModuleProvider = { fakeDataSourceModule() },
-            enableIntegrationTesting = false,
+            isDevMode = false,
         ) { null }
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
@@ -89,7 +89,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = null,
             dataSourceModuleProvider = { fakeDataSourceModule() },
-            enableIntegrationTesting = false,
+            isDevMode = false,
         ) { fakeConfigService }
 
         assertSame(fakeConfigService, module.configService)

@@ -217,8 +217,8 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = { thermalService },
             configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()
-                        && configService.sdkModeBehavior.isBetaFeaturesEnabled()
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
+                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
             }
         )
     }

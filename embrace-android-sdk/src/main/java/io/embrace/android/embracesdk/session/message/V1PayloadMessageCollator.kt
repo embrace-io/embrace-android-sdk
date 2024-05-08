@@ -8,10 +8,8 @@ import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
-import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
@@ -23,7 +21,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -32,14 +29,12 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class V1PayloadMessageCollator(
     private val gatingService: GatingService,
-    private val configService: ConfigService,
     private val metadataService: MetadataService,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
     private val internalErrorService: InternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
-    private val thermalStatusService: ThermalStatusService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val breadcrumbService: BreadcrumbService,
     private val userService: UserService,
@@ -81,13 +76,6 @@ internal class V1PayloadMessageCollator(
         val base = buildFinalBackgroundActivity(params)
         val startupInfo = getStartupEventInfo(eventService)
 
-        val betaFeatures = when (configService.sdkModeBehavior.isBetaFeaturesEnabled()) {
-            false -> null
-            else -> BetaFeatures(
-                thermalStates = captureDataSafely(logger, thermalStatusService::getCapturedData),
-            )
-        }
-
         val endSession = base.copy(
             isEndedCleanly = endType.endedCleanly,
             networkLogIds = captureDataSafely(logger) {
@@ -104,7 +92,6 @@ internal class V1PayloadMessageCollator(
             sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
             startupDuration = startupInfo?.duration,
             startupThreshold = startupInfo?.threshold,
-            betaFeatures = betaFeatures,
             symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
         )
         val envelope = buildWrapperEnvelope(params, endSession, initial.startTime, endTime)

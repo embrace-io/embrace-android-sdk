@@ -50,7 +50,6 @@ internal class SessionSanitizerTest {
         assertNotNull(result.eventIds)
         assertNotNull(result.startupDuration)
         assertNotNull(result.startupThreshold)
-        assertNull(result.betaFeatures)
     }
 
     @Test
@@ -70,6 +69,5 @@ internal class SessionSanitizerTest {
         assertNull(result.eventIds)
         assertNull(result.startupDuration)
         assertNull(result.startupThreshold)
-        assertNull(result.betaFeatures)
     }
 }

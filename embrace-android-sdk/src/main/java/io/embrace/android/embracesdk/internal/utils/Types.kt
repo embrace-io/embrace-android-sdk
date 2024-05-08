@@ -102,7 +102,6 @@ internal typealias DataCaptureServiceModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker,

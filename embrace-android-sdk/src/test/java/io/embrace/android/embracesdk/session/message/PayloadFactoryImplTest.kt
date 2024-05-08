@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
@@ -51,9 +50,7 @@ internal class PayloadFactoryImplTest {
         val initModule = FakeInitModule()
         val v1Collator = V1PayloadMessageCollator(
             gatingService = FakeGatingService(),
-            configService = FakeConfigService(),
             nativeThreadSamplerService = null,
-            thermalStatusService = FakeThermalStatusService(),
             webViewService = FakeWebViewService(),
             userService = FakeUserService(),
             preferencesService = FakePreferenceService(),

@@ -234,7 +234,6 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             openTelemetryModule,
                             coreModule,
-                            systemServiceModule,
                             essentialServiceModule,
                             workerThreadModule,
                             versionChecker,
@@ -254,8 +253,7 @@ internal class ModuleInitBootstrapper(
                             dataCaptureServiceModule.memoryService,
                             dataCaptureServiceModule.componentCallbackService,
                             dataCaptureServiceModule.breadcrumbService,
-                            dataCaptureServiceModule.pushNotificationService,
-                            dataCaptureServiceModule.thermalStatusService
+                            dataCaptureServiceModule.pushNotificationService
                         )
                     }
 

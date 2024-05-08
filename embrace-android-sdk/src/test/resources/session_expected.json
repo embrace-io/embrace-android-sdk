@@ -48,7 +48,6 @@
   "sdt": 5000,
   "si": 109,
   "ue": 1,
-  "bf": {},
   "sb": {
     "fake-native-key": "fake-native-value"
   },

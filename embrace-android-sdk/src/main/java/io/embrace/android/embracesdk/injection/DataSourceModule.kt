@@ -216,7 +216,10 @@ internal class DataSourceModuleImpl(
     override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
         DataSourceState(
             factory = { thermalService },
-            configGate = { configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() }
+            configGate = {
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()
+                        && configService.sdkModeBehavior.isBetaFeaturesEnabled()
+            }
         )
     }
 

@@ -68,8 +68,8 @@ internal class ThermalStateDataSource(
         backgroundWorker.submit(TaskPriority.LOW) {
             thermalStatusListener?.let {
                 powerManager?.removeThermalStatusListener(it)
+                thermalStatusListener = null
             }
-            thermalStatusListener = null
         }
     }
 

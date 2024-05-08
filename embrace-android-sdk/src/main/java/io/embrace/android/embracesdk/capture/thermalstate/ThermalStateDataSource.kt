@@ -78,7 +78,7 @@ internal class ThermalStateDataSource(
                 }
             )
         }
-        // start a new span with the new network status
+        // start a new span with the new thermal state
         captureSpanData(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation

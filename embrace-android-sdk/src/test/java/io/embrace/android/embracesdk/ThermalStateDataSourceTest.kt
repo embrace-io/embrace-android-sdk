@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -17,6 +18,7 @@ internal class ThermalStateDataSourceTest {
 
     private lateinit var dataSource: ThermalStateDataSource
     private lateinit var spanWriter: FakeSpanService
+    private val mockPowerManager = mockPowerManager()
 
     @Before
     fun setUp() {
@@ -26,11 +28,11 @@ internal class ThermalStateDataSourceTest {
             InternalEmbraceLogger(),
             BackgroundWorker(BlockableExecutorService()),
             FakeClock(100),
-        ) { mockPowerManager() }
+        ) { mockPowerManager }
     }
 
     @Test
-    fun onThermalStatusChanged() {
+    fun onThermalStateChanged() {
         with(dataSource) {
             handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
             handleThermalStateChange(PowerManager.THERMAL_STATUS_SEVERE)
@@ -52,5 +54,14 @@ internal class ThermalStateDataSourceTest {
         }
 
         assertEquals(100, spanWriter.createdSpans.size)
+    }
+
+    @Test
+    fun onEnableAndDisable() {
+        verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
+        dataSource.enableDataCapture()
+        verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), any()) }
+        dataSource.disableDataCapture()
+        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(any()) }
     }
 }

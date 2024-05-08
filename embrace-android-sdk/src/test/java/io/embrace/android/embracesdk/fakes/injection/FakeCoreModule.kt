@@ -32,6 +32,7 @@ internal class FakeCoreModule(
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),
+    @Suppress("DEPRECATION")
     override val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 ) : CoreModule {
 

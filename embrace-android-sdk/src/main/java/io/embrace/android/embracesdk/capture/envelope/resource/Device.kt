@@ -109,6 +109,7 @@ internal class DeviceImpl(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun getScreenResolution(windowManager: WindowManager?): String {
         return try {
             val display = windowManager?.defaultDisplay

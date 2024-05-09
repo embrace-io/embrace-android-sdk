@@ -97,7 +97,7 @@ dependencies {
     testImplementation "io.mockk:mockk:1.12.2"
     testImplementation "androidx.test:core:1.4.0"
     testImplementation "androidx.test.ext:junit:1.1.3"
-    testImplementation "org.robolectric:robolectric:4.10.3"
+    testImplementation "org.robolectric:robolectric:4.12.1"
     testImplementation project(path: ":embrace-android-sdk")
     testImplementation "com.squareup.okhttp3:mockwebserver:4.9.3"
     testImplementation("com.google.protobuf:protobuf-java:3.24.0")

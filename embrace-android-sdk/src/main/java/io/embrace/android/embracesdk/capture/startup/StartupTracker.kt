@@ -36,7 +36,7 @@ import io.embrace.android.embracesdk.logging.EmbLogger
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
 internal class StartupTracker(
-    private val appStartupTraceEmitter: AppStartupTraceEmitter,
+    private val appStartupDataCollector: AppStartupDataCollector,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
@@ -46,14 +46,14 @@ internal class StartupTracker(
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.useAsStartupActivity()) {
-            appStartupTraceEmitter.startupActivityPreCreated()
+            appStartupDataCollector.startupActivityPreCreated()
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.useAsStartupActivity()) {
             val activityName = activity.localClassName
-            appStartupTraceEmitter.startupActivityInitStart()
+            appStartupDataCollector.startupActivityInitStart()
             if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 if (!isFirstDraw) {
                     val window = activity.window
@@ -63,7 +63,7 @@ internal class StartupTracker(
                             decorView.onNextDraw {
                                 if (!isFirstDraw) {
                                     isFirstDraw = true
-                                    val callback = { appStartupTraceEmitter.firstFrameRendered(activityName = activityName) }
+                                    val callback = { appStartupDataCollector.firstFrameRendered(activityName = activityName) }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
                                 }
                             }
@@ -79,19 +79,19 @@ internal class StartupTracker(
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.useAsStartupActivity()) {
-            appStartupTraceEmitter.startupActivityPostCreated()
+            appStartupDataCollector.startupActivityPostCreated()
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
         if (activity.isStartupActivity()) {
-            appStartupTraceEmitter.startupActivityInitEnd()
+            appStartupDataCollector.startupActivityInitEnd()
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityResumed(activityName = activity.localClassName)
+            appStartupDataCollector.startupActivityResumed(activityName = activity.localClassName)
         }
     }
 

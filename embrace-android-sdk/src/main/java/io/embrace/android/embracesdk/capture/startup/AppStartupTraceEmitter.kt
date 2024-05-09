@@ -41,7 +41,7 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger
-) {
+) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
@@ -90,31 +90,31 @@ internal class AppStartupTraceEmitter(
     private val startupRecorded = AtomicBoolean(false)
     private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
 
-    fun applicationInitStart(timestampMs: Long? = null) {
+    override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
     }
 
-    fun applicationInitEnd(timestampMs: Long? = null) {
+    override fun applicationInitEnd(timestampMs: Long?) {
         applicationInitEndMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityPreCreated(timestampMs: Long? = null) {
+    override fun startupActivityPreCreated(timestampMs: Long?) {
         startupActivityPreCreatedMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityInitStart(timestampMs: Long? = null) {
+    override fun startupActivityInitStart(timestampMs: Long?) {
         startupActivityInitStartMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityPostCreated(timestampMs: Long? = null) {
+    override fun startupActivityPostCreated(timestampMs: Long?) {
         startupActivityPostCreatedMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityInitEnd(timestampMs: Long? = null) {
+    override fun startupActivityInitEnd(timestampMs: Long?) {
         startupActivityInitEndMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityResumed(activityName: String, timestampMs: Long? = null) {
+    override fun startupActivityResumed(activityName: String, timestampMs: Long?) {
         startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: nowMs()
         if (!endWithFrameDraw) {
@@ -122,7 +122,7 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    fun firstFrameRendered(activityName: String, timestampMs: Long? = null) {
+    override fun firstFrameRendered(activityName: String, timestampMs: Long?) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: nowMs()
         if (endWithFrameDraw) {
@@ -130,12 +130,15 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
+    override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
         additionalTrackedIntervals.add(
             TrackedInterval(name = name, startTimeMs = startTimeMs, endTimeMs = endTimeMs)
         )
     }
 
+    /**
+     * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
+     */
     private fun dataCollectionComplete() {
         if (!startupRecorded.get()) {
             synchronized(startupRecorded) {

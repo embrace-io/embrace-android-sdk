@@ -28,25 +28,20 @@ internal class RnActionDataSource(
         countsTowardsLimits = true,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
-            val data = StartSpanData(
-                schemaType = SchemaType.ReactNativeAction(
-                    checkNotNull(name),
-                    checkNotNull(output),
-                    bytesSent,
-                    properties
-                ),
-                spanStartTimeMs = startTime,
+            val schemaType = SchemaType.ReactNativeAction(
+                checkNotNull(name),
+                checkNotNull(output),
+                bytesSent,
+                properties
             )
-
-            startSpan(
-                name = data.schemaType.fixedObjectName,
-                startTimeMs = data.spanStartTimeMs,
-                type = data.schemaType.telemetryType
-            )?.apply {
-                data.schemaType.attributes().forEach {
-                    addAttribute(it.key, it.value)
-                }
-            }?.stop(endTime)
+            recordCompletedSpan(
+                name = schemaType.fixedObjectName,
+                startTimeMs = startTime,
+                endTimeMs = endTime,
+                type = schemaType.telemetryType,
+                private = false,
+                attributes = schemaType.attributes()
+            )
         }
     )
 }

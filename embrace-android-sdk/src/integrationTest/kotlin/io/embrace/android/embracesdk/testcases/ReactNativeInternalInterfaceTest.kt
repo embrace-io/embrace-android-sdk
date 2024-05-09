@@ -7,7 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig

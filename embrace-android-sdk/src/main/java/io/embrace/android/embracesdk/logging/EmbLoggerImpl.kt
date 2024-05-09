@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import java.util.concurrent.CopyOnWriteArrayList
 
 internal const val EMBRACE_TAG = "[Embrace]"
 
@@ -11,18 +10,9 @@ internal const val EMBRACE_TAG = "[Embrace]"
  * Can only be used internally, it's not part of the public API.
  */
 
-// Suppressing "Nothing to inline". These functions are used all around the codebase, pretty often, so we want them to
-// perform as fast as possible.
 internal class EmbLoggerImpl : EmbLogger {
-    private val logActions = CopyOnWriteArrayList<LogAction>(listOf())
 
-    internal fun interface LogAction {
-        fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
-    }
-
-    override fun addLoggerAction(action: LogAction) {
-        logActions.add(action)
-    }
+    override var internalErrorService: InternalErrorService? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
         log(msg, Severity.DEBUG, throwable, true)
@@ -58,8 +48,14 @@ internal class EmbLoggerImpl : EmbLogger {
         if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
             logcatImpl(throwable, logStacktrace, severity, msg)
 
-            logActions.forEach {
-                it.log(msg, severity, throwable, logStacktrace)
+            // report to internal error service if necessary
+            if (throwable != null) {
+                try {
+                    internalErrorService?.handleInternalError(throwable)
+                } catch (exc: Throwable) {
+                    // don't cause a crash loop!
+                    Log.w(EMBRACE_TAG, msg, exc)
+                }
             }
         }
     }

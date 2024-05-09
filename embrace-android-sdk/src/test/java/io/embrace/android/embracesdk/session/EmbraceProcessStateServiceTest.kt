@@ -6,7 +6,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.system.mockLooper
@@ -63,7 +63,7 @@ internal class EmbraceProcessStateServiceTest {
         }
     }
 
-    private lateinit var logger: FakeLogAction
+    private lateinit var fakeInternalErrorService: FakeInternalErrorService
 
     @Before
     fun before() {
@@ -73,10 +73,10 @@ internal class EmbraceProcessStateServiceTest {
             constructorMocks = false,
             staticMocks = false
         )
-        logger = FakeLogAction()
+        fakeInternalErrorService = FakeInternalErrorService()
         stateService = EmbraceProcessStateService(
             fakeClock,
-            EmbLoggerImpl().apply { addLoggerAction(logger) }
+            EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
         )
     }
 
@@ -201,7 +201,7 @@ internal class EmbraceProcessStateServiceTest {
             stateService.onForeground()
             stateService.onBackground()
         }
-        val messages = fetchLogMessages()
+        val messages = fakeInternalErrorService.throwables
         assertTrue(messages.isEmpty())
     }
 
@@ -213,7 +213,7 @@ internal class EmbraceProcessStateServiceTest {
         stateService.onBackground()
         stateService.onForeground()
 
-        val messages = fetchLogMessages().map { it.msg }
+        val messages = fakeInternalErrorService.throwables.map { it.message }
         assertEquals(2, messages.size)
         assertEquals(
             listOf(
@@ -232,12 +232,8 @@ internal class EmbraceProcessStateServiceTest {
         stateService.onForeground()
         stateService.onBackground()
 
-        val messages = fetchLogMessages().map { it.msg }
+        val messages = fakeInternalErrorService.throwables.map { it.message }
         assertEquals(0, messages.size)
-    }
-
-    private fun fetchLogMessages() = logger.msgQueue.filter {
-        it.severity >= EmbLoggerImpl.Severity.ERROR
     }
 
     private class DecoratedListener(

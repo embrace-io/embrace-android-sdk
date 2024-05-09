@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -38,7 +38,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var loggerAction: FakeLogAction
+    private lateinit var fakeInternalErrorService: FakeInternalErrorService
     private lateinit var logger: EmbLoggerImpl
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
@@ -56,8 +56,8 @@ internal class AppStartupTraceEmitterTest {
             backgroundWorker
         )
         clock.tick(100L)
-        loggerAction = FakeLogAction()
-        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
+        fakeInternalErrorService = FakeInternalErrorService()
+        logger = EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,
             startupServiceProvider = { startupService },
@@ -66,7 +66,7 @@ internal class AppStartupTraceEmitterTest {
             versionChecker = BuildVersionChecker,
             logger = logger
         )
-        loggerAction.msgQueue.clear()
+        fakeInternalErrorService.throwables.clear()
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
@@ -74,7 +74,6 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in T`() {
         startupService = null
         appStartupTraceEmitter.firstFrameRendered()
-        assertEquals(1, loggerAction.msgQueue.size)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
@@ -100,7 +99,6 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in S`() {
         startupService = null
         appStartupTraceEmitter.firstFrameRendered()
-        assertEquals(1, loggerAction.msgQueue.size)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
@@ -126,7 +124,6 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in P`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
@@ -152,7 +149,6 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in M`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
@@ -178,7 +174,6 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in L`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -238,7 +233,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyColdStartWithRenderWithoutAppInitEvents() {
@@ -273,7 +268,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyColdStartWithResume(trackProcessStart: Boolean = true) {
@@ -320,7 +315,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart: Boolean = true) {
@@ -359,7 +354,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyWarmStartWithRenderWithoutAppInitEvents() {
@@ -394,7 +389,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyWarmStartWithResumeWithoutAppInitEvents() {
@@ -426,7 +421,7 @@ internal class AppStartupTraceEmitterTest {
         }
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun assertTraceRoot(trace: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

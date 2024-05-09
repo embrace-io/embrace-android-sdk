@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.worker
 
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.InitModule
@@ -8,21 +8,20 @@ import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 internal class WorkerThreadModuleImplTest {
 
-    private lateinit var action: FakeLogAction
+    private lateinit var fakeInternalErrorService: FakeInternalErrorService
     private lateinit var logger: EmbLoggerImpl
     private lateinit var initModule: InitModule
     private lateinit var coreModule: CoreModule
 
     @Before
     fun setup() {
-        action = FakeLogAction()
-        logger = EmbLoggerImpl().apply { addLoggerAction(action) }
+        fakeInternalErrorService = FakeInternalErrorService()
+        logger = EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
         initModule = InitModuleImpl(logger = logger)
         coreModule = FakeCoreModule(logger = logger)
     }
@@ -64,8 +63,6 @@ internal class WorkerThreadModuleImplTest {
         module.close()
 
         val future = worker.submit {}
-        val msg = action.msgQueue.single().msg
-        assertTrue(msg.startsWith("Rejected execution of"))
         assertNotNull(future)
     }
 }

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.comms.delivery.SessionPurgeException
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
@@ -50,7 +50,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
-    private lateinit var loggerAction: FakeLogAction
+    private lateinit var fakeService: FakeInternalErrorService
     private lateinit var logger: EmbLoggerImpl
     private lateinit var fakeClock: FakeClock
 
@@ -61,8 +61,8 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Before
     fun before() {
         fakeClock = FakeClock(clockInit)
-        loggerAction = FakeLogAction()
-        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
+        fakeService = FakeInternalErrorService()
+        logger = EmbLoggerImpl().apply { internalErrorService = fakeService }
         storageService = FakeStorageService()
         cacheService = spyk(
             EmbraceCacheService(
@@ -198,7 +198,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         assertEquals(
             100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED,
-            loggerAction.msgQueue.filter { it.throwable is SessionPurgeException }.size
+            fakeService.throwables.filterIsInstance<SessionPurgeException>().size
         )
     }
 

@@ -48,7 +48,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
 import io.embrace.android.embracesdk.logging.EmbLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
-import io.embrace.android.embracesdk.logging.InternalErrorServiceAction;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -855,7 +854,7 @@ final class EmbraceImpl {
             } else {
                 messageWithDetails = message;
             }
-            internalErrorService.handleInternalError(new InternalErrorServiceAction.InternalError(messageWithDetails));
+            internalErrorService.handleInternalError(new RuntimeException(messageWithDetails));
         }
     }
 

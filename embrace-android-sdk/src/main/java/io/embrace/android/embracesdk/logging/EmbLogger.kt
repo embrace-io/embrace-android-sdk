@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.logging
  */
 internal interface EmbLogger {
 
-    fun addLoggerAction(action: EmbLoggerImpl.LogAction)
+    var internalErrorService: InternalErrorService?
 
     /**
      * Logs a debug message with an optional throwable.

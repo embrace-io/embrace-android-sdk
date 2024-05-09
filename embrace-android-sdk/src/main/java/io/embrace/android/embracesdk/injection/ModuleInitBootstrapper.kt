@@ -286,7 +286,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(SdkObservabilityModule::class) {
                         serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
-                        initModule.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
+                        initModule.logger.internalErrorService = sdkObservabilityModule.internalErrorService
                     }
 
                     nativeModule = init(NativeModule::class) {

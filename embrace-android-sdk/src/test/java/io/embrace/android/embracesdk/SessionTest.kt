@@ -41,7 +41,7 @@ internal class SessionTest {
         startupThreshold = 5000,
         sdkStartupDuration = 109,
         unhandledExceptions = 1,
-        exceptionError = LegacyExceptionError(false),
+        exceptionError = LegacyExceptionError(),
         orientations = listOf(Orientation(1, 16092342200)),
         properties = mapOf("fake-key" to "fake-value"),
         symbols = mapOf("fake-native-key" to "fake-native-value"),
@@ -92,7 +92,7 @@ internal class SessionTest {
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)
             assertEquals(1, unhandledExceptions)
-            assertEquals(LegacyExceptionError(false), exceptionError)
+            assertEquals(LegacyExceptionError(), exceptionError)
             assertEquals(listOf(Orientation(1, 16092342200)), orientations)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
             assertEquals(mapOf("fake-native-key" to "fake-native-value"), symbols)

@@ -3,8 +3,7 @@ package io.embrace.android.embracesdk.logging
 import android.util.Log
 
 internal class ReportingLoggerAction(
-    private val internalErrorService: InternalErrorService,
-    private val logStrictMode: Boolean = false
+    private val internalErrorService: InternalErrorService
 ) : InternalEmbraceLogger.LoggerAction {
 
     override fun log(
@@ -13,16 +12,9 @@ internal class ReportingLoggerAction(
         throwable: Throwable?,
         logStacktrace: Boolean
     ) {
-        val finalThrowable = when {
-            logStrictMode && severity == InternalEmbraceLogger.Severity.ERROR && throwable == null -> LogStrictModeException(
-                msg
-            )
-            else -> throwable
-        }
-
-        if (finalThrowable != null) {
+        if (throwable != null) {
             try {
-                internalErrorService.handleInternalError(finalThrowable)
+                internalErrorService.handleInternalError(throwable)
             } catch (e: Throwable) {
                 // Yo dawg, I heard you like to handle internal errors...
                 Log.w(EMBRACE_TAG, msg, e)
@@ -30,7 +22,6 @@ internal class ReportingLoggerAction(
         }
     }
 
-    class LogStrictModeException(msg: String) : Exception(msg)
     class InternalError(msg: String) : Exception(msg)
     class NotAnException(msg: String) : Exception(msg)
 }

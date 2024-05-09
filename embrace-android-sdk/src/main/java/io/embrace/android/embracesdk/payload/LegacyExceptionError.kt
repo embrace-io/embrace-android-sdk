@@ -9,13 +9,14 @@ import io.embrace.android.embracesdk.internal.payload.InternalError
  * Describes an Exception Error with a count of occurrences and a list of exceptions (causes).
  */
 @JsonClass(generateAdapter = true)
-internal data class LegacyExceptionError(@Transient private val logStrictMode: Boolean = false) {
+internal data class LegacyExceptionError(
 
     @Json(name = "c")
-    var occurrences = 0
+    var occurrences: Int = 0,
 
     @Json(name = "rep")
-    var exceptionErrors = mutableListOf<LegacyExceptionErrorInfo>()
+    var exceptionErrors: MutableList<LegacyExceptionErrorInfo> = mutableListOf()
+) {
 
     /**
      * Add a new exception error info if exceptionError's size is below 20.
@@ -26,11 +27,7 @@ internal data class LegacyExceptionError(@Transient private val logStrictMode: B
      */
     fun addException(ex: Throwable?, appState: String?, clock: Clock) {
         occurrences++
-        var exceptionsLimits = DEFAULT_EXCEPTION_ERROR_LIMIT
-        if (logStrictMode) {
-            exceptionsLimits = DEFAULT_EXCEPTION_ERROR_LIMIT_STRICT_MODE
-        }
-        if (exceptionErrors.size < exceptionsLimits) {
+        if (exceptionErrors.size < DEFAULT_EXCEPTION_ERROR_LIMIT) {
             exceptionErrors.add(
                 LegacyExceptionErrorInfo(
                     clock.now(),
@@ -61,4 +58,3 @@ internal data class LegacyExceptionError(@Transient private val logStrictMode: B
  * The occurrences list limit.
  */
 private const val DEFAULT_EXCEPTION_ERROR_LIMIT = 10
-private const val DEFAULT_EXCEPTION_ERROR_LIMIT_STRICT_MODE = 50

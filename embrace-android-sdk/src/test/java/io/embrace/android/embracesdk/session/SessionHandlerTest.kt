@@ -74,7 +74,7 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService =
-            EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
+            EmbraceInternalErrorService(FakeProcessStateService(), clock)
         private const val now = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)

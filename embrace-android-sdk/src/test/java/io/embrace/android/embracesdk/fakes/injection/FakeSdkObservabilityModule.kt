@@ -10,8 +10,7 @@ import io.embrace.android.embracesdk.logging.ReportingLoggerAction
 internal class FakeSdkObservabilityModule(
     override val internalErrorService: InternalErrorService = EmbraceInternalErrorService(
         FakeProcessStateService(),
-        FakeClock(),
-        true
+        FakeClock()
     )
 ) : SdkObservabilityModule {
 

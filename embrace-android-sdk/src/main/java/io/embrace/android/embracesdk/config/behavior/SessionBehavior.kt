@@ -22,21 +22,8 @@ internal class SessionBehavior(
 ) {
 
     companion object {
-
-        /**
-         * By default, prevents to capture internal error logs as part of session payload
-         */
-        const val ERROR_LOG_STRICT_MODE_DEFAULT = false
-
         const val SESSION_PROPERTY_LIMIT = 10
     }
-
-    /**
-     * Whether the limit on the number of internal exceptions in the payload should be increased
-     * for strict mode.
-     */
-    fun isSessionErrorLogStrictModeEnabled(): Boolean =
-        local?.sessionEnableErrorLogStrictMode ?: ERROR_LOG_STRICT_MODE_DEFAULT
 
     /**
      * The whitelist of events (crashes, errors) that should send a full session payload even

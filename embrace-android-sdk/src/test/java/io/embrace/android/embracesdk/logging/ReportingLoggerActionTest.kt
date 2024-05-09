@@ -16,9 +16,9 @@ internal class ReportingLoggerActionTest {
     private lateinit var reportingLoggerAction: ReportingLoggerAction
     private lateinit var loggerAction: FakeLoggerAction
 
-    private fun setupService(strictModeEnabled: Boolean = false) {
+    private fun setupService() {
         internalErrorService = mockk(relaxUnitFun = true)
-        reportingLoggerAction = ReportingLoggerAction(internalErrorService, strictModeEnabled)
+        reportingLoggerAction = ReportingLoggerAction(internalErrorService)
     }
 
     @Before
@@ -39,7 +39,7 @@ internal class ReportingLoggerActionTest {
         setupService()
         reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
 
-        verify { internalErrorService.handleInternalError(exception) }
+        verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
@@ -47,49 +47,20 @@ internal class ReportingLoggerActionTest {
         setupService()
         every { internalErrorService.handleInternalError(exception) } throws RuntimeException()
         reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
-        verify { internalErrorService.handleInternalError(exception) }
+        verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
-    fun `if logStrictMode is enabled and a throwable is available with ERROR severity`() {
-        setupService(true)
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, exception, true)
-        verify { internalErrorService.handleInternalError(exception) }
-    }
-
-    @Test
-    fun `if logStrictMode is enabled and a throwable is not available with ERROR severity then handle exception`() {
-        setupService(true)
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, null, true)
-        verify(exactly = 1) {
-            internalErrorService.handleInternalError(
-                any() as ReportingLoggerAction.LogStrictModeException
-            )
-        }
-    }
-
-    @Test
-    fun `if logStrictMode is enabled and a throwable is not available with INFO severity then dont handle exception`() {
-        setupService(true)
+    fun `if a throwable is not available with INFO severity then dont handle exception`() {
+        setupService()
         reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.INFO, null, true)
         verify(exactly = 0) { internalErrorService.handleInternalError(any() as Exception) }
     }
 
     @Test
-    fun `if logStrictMode is disabled and a throwable is available with ERROR severity`() {
-        setupService(false)
+    fun `if a throwable is available with ERROR severity`() {
+        setupService()
         reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, exception, true)
-        verify { internalErrorService.handleInternalError(exception) }
-    }
-
-    @Test
-    fun `if logStrictMode is enabled and an exception is thrown, swallow it`() {
-        setupService(true)
-        every {
-            internalErrorService.handleInternalError(any() as ReportingLoggerAction.LogStrictModeException)
-        } throws RuntimeException()
-
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
-        verify { internalErrorService.handleInternalError(any() as ReportingLoggerAction.LogStrictModeException) }
+        verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
 }

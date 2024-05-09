@@ -98,10 +98,19 @@ internal class OpenTelemetryModuleImpl(
 
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {
         Systrace.traceSynchronous("otel-sdk-wrapper-init") {
-            OpenTelemetrySdk(
-                openTelemetryClock = initModule.openTelemetryClock,
-                configuration = openTelemetryConfiguration
-            )
+            try {
+                OpenTelemetrySdk(
+                    openTelemetryClock = initModule.openTelemetryClock,
+                    configuration = openTelemetryConfiguration
+                )
+            } catch (exc: NoClassDefFoundError) {
+                throw LinkageError(
+                    "Please enable library desugaring in your project to use the Embrace SDK. " +
+                        "This is required if you target API levels below 24. For instructions, please see " +
+                        "https://developer.android.com/studio/write/java8-support#library-desugaring",
+                    exc
+                )
+            }
         }
     }
 

@@ -13,15 +13,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 // perform as fast as possible.
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
-    private val loggerActions = CopyOnWriteArrayList<LoggerAction>(listOf(AndroidLoggingAction()))
+    private val logActions = CopyOnWriteArrayList<LogAction>(listOf(LogcatAction()))
     private var threshold = Severity.INFO
 
-    interface LoggerAction {
+    internal fun interface LogAction {
         fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
     }
 
-    fun addLoggerAction(action: LoggerAction) {
-        loggerActions.add(action)
+    fun addLoggerAction(action: LogAction) {
+        logActions.add(action)
     }
 
     @JvmOverloads
@@ -45,12 +45,12 @@ internal class InternalEmbraceLogger {
 
     // Log with INFO severity that always contains a throwable as an internal exception to be sent to Grafana
     inline fun logInfoWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.INFO, throwable ?: ReportingLoggerAction.NotAnException(msg), logStacktrace)
+        log(msg, Severity.INFO, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
     }
 
     // Log with WARNING severity that always contains a throwable as an internal exception to be sent to Grafana
     inline fun logWarningWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.WARNING, throwable ?: ReportingLoggerAction.NotAnException(msg), logStacktrace)
+        log(msg, Severity.WARNING, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
     }
 
     fun logSDKNotInitialized(action: String) {
@@ -74,7 +74,7 @@ internal class InternalEmbraceLogger {
 
     fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
         if (shouldTriggerLoggerActions(severity)) {
-            loggerActions.forEach {
+            logActions.forEach {
                 it.log(msg, severity, throwable, logStacktrace)
             }
         }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.logging
 
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger.Severity
 import org.junit.Assert.assertEquals
@@ -10,7 +10,7 @@ import org.junit.Test
 
 internal class InternalEmbraceLoggerTest {
 
-    private val action = FakeLoggerAction()
+    private val action = FakeLogAction()
     private var logger = InternalEmbraceLogger().apply {
         addLoggerAction(action)
     }
@@ -43,7 +43,7 @@ internal class InternalEmbraceLoggerTest {
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLoggerAction.LogMessage("test", Severity.INFO, throwable, false)
+        val expected = FakeLogAction.LogMessage("test", Severity.INFO, throwable, false)
         assertEquals(expected, msg)
     }
 
@@ -58,7 +58,7 @@ internal class InternalEmbraceLoggerTest {
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLoggerAction.LogMessage("test", Severity.WARNING, throwable, false)
+        val expected = FakeLogAction.LogMessage("test", Severity.WARNING, throwable, false)
         assertEquals(expected, msg)
     }
 
@@ -74,7 +74,7 @@ internal class InternalEmbraceLoggerTest {
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLoggerAction.LogMessage("test", Severity.DEBUG, throwable, false)
+        val expected = FakeLogAction.LogMessage("test", Severity.DEBUG, throwable, false)
         assertEquals(expected, msg)
     }
 }

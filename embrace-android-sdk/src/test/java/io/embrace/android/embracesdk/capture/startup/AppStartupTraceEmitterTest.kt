@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -38,7 +38,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var loggerAction: FakeLoggerAction
+    private lateinit var loggerAction: FakeLogAction
     private lateinit var logger: InternalEmbraceLogger
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
@@ -56,7 +56,7 @@ internal class AppStartupTraceEmitterTest {
             backgroundWorker
         )
         clock.tick(100L)
-        loggerAction = FakeLoggerAction()
+        loggerAction = FakeLogAction()
         logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.logging
 
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.mockk.Called
 import io.mockk.every
 import io.mockk.mockk
@@ -8,22 +8,22 @@ import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
 
-internal class ReportingLoggerActionTest {
+internal class InternalErrorServiceActionTest {
 
     private val exception = Exception()
     private val errorMsg = "Error message"
     private lateinit var internalErrorService: InternalErrorService
-    private lateinit var reportingLoggerAction: ReportingLoggerAction
-    private lateinit var loggerAction: FakeLoggerAction
+    private lateinit var reportingLoggerAction: InternalErrorServiceAction
+    private lateinit var loggerAction: FakeLogAction
 
     private fun setupService() {
         internalErrorService = mockk(relaxUnitFun = true)
-        reportingLoggerAction = ReportingLoggerAction(internalErrorService)
+        reportingLoggerAction = InternalErrorServiceAction(internalErrorService)
     }
 
     @Before
     fun setUp() {
-        loggerAction = FakeLoggerAction()
+        loggerAction = FakeLogAction()
     }
 
     @Test

@@ -230,22 +230,20 @@ final class EmbraceImpl {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
-     * @param isDevMode                if true, sets the environment for all sessions to 'Development',
-     *                                 similar to using a build type with debuggable set to true.
+     * @param appFramework             the AppFramework of the application
+     *
      */
     void start(@NonNull Context context,
-               boolean isDevMode,
                @NonNull Embrace.AppFramework appFramework) {
-        startInternal(context, isDevMode, appFramework, () -> null);
+        startInternal(context, appFramework, () -> null);
     }
 
     void startInternal(@NonNull Context context,
-                       boolean isDevMode,
                        @NonNull Embrace.AppFramework appFramework,
                        @NonNull Function0<ConfigService> configServiceProvider) {
         try {
             Systrace.startSynchronous("sdk-start");
-            startImpl(context, isDevMode, appFramework, configServiceProvider);
+            startImpl(context, appFramework, configServiceProvider);
             Systrace.endSynchronous();
         } catch (Throwable t) {
             internalEmbraceLogger.logError(
@@ -254,7 +252,6 @@ final class EmbraceImpl {
     }
 
     private void startImpl(@NonNull Context context,
-                           boolean isDevMode,
                            @NonNull Embrace.AppFramework framework,
                            @NonNull Function0<ConfigService> configServiceProvider) {
         if (application != null) {
@@ -271,7 +268,7 @@ final class EmbraceImpl {
 
         final long startTimeMs = sdkClock.now();
         internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
-        moduleInitBootstrapper.init(context, isDevMode, framework, startTimeMs, customAppId, configServiceProvider);
+        moduleInitBootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
 

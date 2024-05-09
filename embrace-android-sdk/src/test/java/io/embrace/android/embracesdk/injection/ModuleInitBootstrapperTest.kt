@@ -46,7 +46,6 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(
                 moduleInitBootstrapper.init(
                     context = context,
-                    isDevMode = false,
                     appFramework = Embrace.AppFramework.NATIVE,
                     sdkStartTimeMs = 0L,
                 )
@@ -69,7 +68,6 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -77,7 +75,6 @@ internal class ModuleInitBootstrapperTest {
         assertFalse(
             moduleInitBootstrapper.init(
                 context = context,
-                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -89,7 +86,6 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
@@ -108,13 +104,12 @@ internal class ModuleInitBootstrapperTest {
         val bootstrapper = ModuleInitBootstrapper(
             initModule = fakeInitModule,
             coreModuleSupplier = { _, _, _ -> fakeCoreModule },
-            workerThreadModuleSupplier = { _, -> fakeWorkerThreadModule },
+            workerThreadModuleSupplier = { _ -> fakeWorkerThreadModule },
             logger = InternalEmbraceLogger()
         )
         assertTrue(
             bootstrapper.init(
                 context = context,
-                isDevMode = false,
                 appFramework = Embrace.AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )

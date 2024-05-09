@@ -130,7 +130,6 @@ internal class ModuleInitBootstrapper(
     @JvmOverloads
     fun init(
         context: Context,
-        isDevMode: Boolean,
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
         customAppId: String? = null,
@@ -188,7 +187,6 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
-                            isDevMode,
                             { dataSourceModule },
                             configServiceProvider
                         )

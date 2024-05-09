@@ -14,9 +14,6 @@ internal class BaseUrlLocalConfig(
     @Json(name = "data")
     val data: String? = null,
 
-    @Json(name = "data_dev")
-    val dataDev: String? = null,
-
     @Json(name = "images")
     val images: String? = null
 )

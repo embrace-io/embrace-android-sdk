@@ -331,7 +331,7 @@ internal sealed class SchemaType(
         )
             .plus(
                 properties
-                    .mapKeys { it.toString().toSessionPropertyAttributeName() }
+                    .mapKeys { it.key.toString().toSessionPropertyAttributeName() }
                     .mapValues { it.value.toString() }
             )
             .toNonNullMap()

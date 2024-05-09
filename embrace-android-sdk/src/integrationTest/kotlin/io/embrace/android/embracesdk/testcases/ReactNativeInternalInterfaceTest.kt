@@ -137,7 +137,7 @@ internal class ReactNativeInternalInterfaceTest {
             assertEquals("MyAction", span.findSpanAttribute("name"))
             assertEquals("SUCCESS", span.findSpanAttribute("outcome"))
             assertEquals("100", span.findSpanAttribute("payload_size"))
-            //assertEquals("value", span.findSpanAttribute("key"))
+            assertEquals("value", span.findSpanAttribute("emb.properties.key"))
             assertEquals(1000, span.startTimeNanos.nanosToMillis())
             assertEquals(5000, span.endTimeNanos.nanosToMillis())
 

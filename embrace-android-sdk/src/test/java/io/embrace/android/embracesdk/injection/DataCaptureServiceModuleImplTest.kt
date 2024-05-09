@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
+import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.thermalstate.EmbraceThermalStatusService
 import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
@@ -50,6 +51,7 @@ internal class DataCaptureServiceModuleImplTest {
         assertTrue(module.webviewService is EmbraceWebViewService)
         assertTrue(module.breadcrumbService is EmbraceBreadcrumbService)
         assertTrue(module.thermalStatusService is EmbraceThermalStatusService)
+        assertTrue(module.appStartupDataCollector is AppStartupTraceEmitter)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.componentCallbackService)
         assertNotNull(module.startupService)

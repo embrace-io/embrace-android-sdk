@@ -7,9 +7,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakeAppStartupDataCollector
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +25,7 @@ internal class StartupTrackerTest {
     private lateinit var application: Application
     private lateinit var clock: FakeClock
     private lateinit var dataCollector: FakeAppStartupDataCollector
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var startupTracker: StartupTracker
     private lateinit var defaultActivityController: ActivityController<Activity>
 
@@ -32,7 +33,7 @@ internal class StartupTrackerTest {
     fun setUp() {
         application = RuntimeEnvironment.getApplication()
         clock = FakeClock()
-        logger = InternalEmbraceLogger()
+        logger = FakeEmbLogger()
         dataCollector = FakeAppStartupDataCollector(clock = clock)
         startupTracker = StartupTracker(
             appStartupDataCollector = dataCollector,

@@ -42,7 +42,8 @@ internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanD
     return startSpan(
         name = data.schemaType.fixedObjectName,
         startTimeMs = data.spanStartTimeMs,
-        type = data.schemaType.telemetryType
+        type = data.schemaType.telemetryType,
+        private = false
     )?.apply {
         data.schemaType.attributes().forEach {
             addAttribute(it.key, it.value)

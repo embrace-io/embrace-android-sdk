@@ -14,7 +14,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 @Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
     private val logActions = CopyOnWriteArrayList<LogAction>(listOf(LogcatAction()))
-    private var threshold = Severity.INFO
 
     internal fun interface LogAction {
         fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
@@ -43,24 +42,9 @@ internal class InternalEmbraceLogger {
         log(msg, Severity.ERROR, throwable, logStacktrace)
     }
 
-    // Log with INFO severity that always contains a throwable as an internal exception to be sent to Grafana
-    inline fun logInfoWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.INFO, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
-    }
-
-    // Log with WARNING severity that always contains a throwable as an internal exception to be sent to Grafana
-    inline fun logWarningWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.WARNING, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
-    }
-
-    fun logSDKNotInitialized(action: String) {
+    fun logSdkNotInitialized(action: String) {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
-        log(
-            msg,
-            Severity.WARNING,
-            Throwable(msg),
-            true
-        )
+        log(msg, Severity.WARNING, Throwable(msg), true)
     }
 
     /**
@@ -71,22 +55,15 @@ internal class InternalEmbraceLogger {
      * @param throwable exception, if any.
      * @param logStacktrace should add the throwable to the logging
      */
-
     fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
-        if (shouldTriggerLoggerActions(severity)) {
+        if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
             logActions.forEach {
                 it.log(msg, severity, throwable, logStacktrace)
             }
         }
     }
 
-    fun setThreshold(severity: Severity) {
-        threshold = severity
-    }
-
-    private fun shouldTriggerLoggerActions(severity: Severity) = ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED || severity >= threshold
-
     enum class Severity {
-        DEBUG, INFO, WARNING, ERROR, NONE
+        DEBUG, INFO, WARNING, ERROR
     }
 }

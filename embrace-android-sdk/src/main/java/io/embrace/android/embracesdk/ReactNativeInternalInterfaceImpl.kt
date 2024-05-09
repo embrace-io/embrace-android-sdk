@@ -29,7 +29,7 @@ internal class ReactNativeInternalInterfaceImpl(
             val exception = JsException(name, message, type, stacktrace)
             crashService.logUnhandledJsException(exception)
         } else {
-            logger.logSDKNotInitialized("log JS exception")
+            logger.logSdkNotInitialized("log JS exception")
         }
     }
 
@@ -51,7 +51,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 null
             )
         } else {
-            logger.logSDKNotInitialized("log JS exception")
+            logger.logSdkNotInitialized("log JS exception")
         }
     }
 
@@ -67,7 +67,7 @@ internal class ReactNativeInternalInterfaceImpl(
             }
             hostedSdkVersionInfo.javaScriptPatchNumber = number
         } else {
-            logger.logSDKNotInitialized("set JavaScript patch number")
+            logger.logSdkNotInitialized("set JavaScript patch number")
         }
     }
 
@@ -75,7 +75,7 @@ internal class ReactNativeInternalInterfaceImpl(
         if (embrace.isStarted) {
             hostedSdkVersionInfo.hostedSdkVersion = version
         } else {
-            logger.logSDKNotInitialized("set React Native SDK version")
+            logger.logSdkNotInitialized("set React Native SDK version")
         }
     }
 
@@ -91,7 +91,7 @@ internal class ReactNativeInternalInterfaceImpl(
             }
             hostedSdkVersionInfo.hostedPlatformVersion = version
         } else {
-            logger.logSDKNotInitialized("set React Native version number")
+            logger.logSdkNotInitialized("set React Native version number")
         }
     }
 
@@ -114,7 +114,7 @@ internal class ReactNativeInternalInterfaceImpl(
             }
             metadataService.setReactNativeBundleId(context, url, didUpdate)
         } else {
-            logger.logSDKNotInitialized("set JavaScript bundle URL")
+            logger.logSdkNotInitialized("set JavaScript bundle URL")
         }
     }
 

@@ -17,7 +17,7 @@ internal class FlutterInternalInterfaceImpl(
                 hostedSdkVersionInfo.hostedSdkVersion = version
             }
         } else {
-            logger.logSDKNotInitialized("setEmbraceFlutterSdkVersion")
+            logger.logSdkNotInitialized("setEmbraceFlutterSdkVersion")
         }
     }
 
@@ -27,7 +27,7 @@ internal class FlutterInternalInterfaceImpl(
                 hostedSdkVersionInfo.hostedPlatformVersion = version
             }
         } else {
-            logger.logSDKNotInitialized("setDartVersion")
+            logger.logSdkNotInitialized("setDartVersion")
         }
     }
 
@@ -73,7 +73,7 @@ internal class FlutterInternalInterfaceImpl(
                 message
             )
         } else {
-            logger.logSDKNotInitialized("logDartError")
+            logger.logSdkNotInitialized("logDartError")
         }
     }
 }

@@ -27,5 +27,4 @@ internal class InternalErrorServiceAction(
     }
 
     class InternalError(msg: String) : Exception(msg)
-    class NotAnException(msg: String) : Exception(msg)
 }

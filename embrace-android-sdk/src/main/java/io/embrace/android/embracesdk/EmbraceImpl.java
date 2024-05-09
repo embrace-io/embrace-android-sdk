@@ -1193,7 +1193,7 @@ final class EmbraceImpl {
     private boolean checkSdkStarted(@NonNull String action, boolean logPublicApiUsage) {
         boolean isStarted = isStarted();
         if (!isStarted) {
-            internalEmbraceLogger.logSDKNotInitialized(action);
+            internalEmbraceLogger.logSdkNotInitialized(action);
         }
         if (telemetryService != null && logPublicApiUsage) {
             telemetryService.onPublicApiCalled(action);

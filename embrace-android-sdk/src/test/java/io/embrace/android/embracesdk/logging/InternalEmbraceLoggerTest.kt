@@ -22,12 +22,11 @@ internal class InternalEmbraceLoggerTest {
     @Test
     fun `a log with the same severity as the threshold triggers logging actions`() {
         // when log is called with the same severity
-        val throwable = Exception()
-        logger.log("test", Severity.INFO, throwable, false)
+        logger.logInfo("test")
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.INFO, throwable, false)
+        val expected = FakeLogAction.LogMessage("test", Severity.INFO, null, true)
         assertEquals(expected, msg)
     }
 
@@ -35,7 +34,7 @@ internal class InternalEmbraceLoggerTest {
     fun `a log with a higher severity than the threshold triggers logging actions`() {
         // when log is called with a higher severity
         val throwable = Exception()
-        logger.log("test", Severity.WARNING, throwable, false)
+        logger.logWarning("test", throwable, false)
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
@@ -50,11 +49,11 @@ internal class InternalEmbraceLoggerTest {
 
         // when log is called with a lower severity
         val throwable = Exception()
-        logger.log("test", Severity.DEBUG, throwable, false)
+        logger.logDebug("test", throwable)
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.DEBUG, throwable, false)
+        val expected = FakeLogAction.LogMessage("test", Severity.DEBUG, throwable, true)
         assertEquals(expected, msg)
     }
 }

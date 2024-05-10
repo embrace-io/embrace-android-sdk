@@ -37,7 +37,7 @@ internal class FlutterInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setEmbraceFlutterSdkVersion("2.12")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -46,7 +46,7 @@ internal class FlutterInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setDartVersion("2.12")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 

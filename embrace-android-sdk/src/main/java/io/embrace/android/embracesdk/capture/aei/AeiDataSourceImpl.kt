@@ -63,7 +63,7 @@ internal class AeiDataSourceImpl(
             try {
                 processApplicationExitInfo()
             } catch (exc: Throwable) {
-                logger.logWarningWithException(
+                logger.logWarning(
                     "AEI - Failed to process AEIs due to unexpected error",
                     exc,
                     true
@@ -77,7 +77,7 @@ internal class AeiDataSourceImpl(
             backgroundExecution?.cancel(true)
             backgroundExecution = null
         } catch (t: Throwable) {
-            logger.logWarningWithException(
+            logger.logWarning(
                 "AEI - Failed to disable EmbraceApplicationExitInfoService work",
                 t
             )
@@ -124,7 +124,6 @@ internal class AeiDataSourceImpl(
                 ?: return emptyList()
 
         if (historicalProcessExitReasons.size > SDK_AEI_SEND_LIMIT) {
-            logger.logInfoWithException("AEI - size greater than $SDK_AEI_SEND_LIMIT")
             historicalProcessExitReasons = historicalProcessExitReasons.take(SDK_AEI_SEND_LIMIT)
         }
 
@@ -227,19 +226,18 @@ internal class AeiDataSourceImpl(
 
             val traceMaxLimit = appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
-                logger.logInfoWithException("AEI - Blob size was reduced. Current size is ${trace.length} and the limit is $traceMaxLimit")
                 return AppExitInfoBehavior.CollectTracesResult.TooLarge(trace.take(traceMaxLimit))
             }
 
             return AppExitInfoBehavior.CollectTracesResult.Success(trace)
         } catch (e: IOException) {
-            logger.logWarningWithException("AEI - IOException: ${e.message}", e, true)
+            logger.logWarning("AEI - IOException: ${e.message}", e, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
         } catch (e: OutOfMemoryError) {
-            logger.logWarningWithException("AEI - Out of Memory: ${e.message}", e, true)
+            logger.logWarning("AEI - Out of Memory: ${e.message}", e, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
         } catch (tr: Throwable) {
-            logger.logWarningWithException("AEI - An error occurred: ${tr.message}", tr, true)
+            logger.logWarning("AEI - An error occurred: ${tr.message}", tr, true)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
         }
     }

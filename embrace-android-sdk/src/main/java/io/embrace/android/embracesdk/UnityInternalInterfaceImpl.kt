@@ -34,7 +34,7 @@ internal class UnityInternalInterfaceImpl(
                 hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
             }
         } else {
-            logger.logSDKNotInitialized("set Unity metadata")
+            logger.logSdkNotInitialized("set Unity metadata")
         }
     }
 
@@ -67,7 +67,7 @@ internal class UnityInternalInterfaceImpl(
                 message
             )
         } else {
-            logger.logSDKNotInitialized("log Unity exception")
+            logger.logSdkNotInitialized("log Unity exception")
         }
     }
 

@@ -4,6 +4,8 @@ import android.util.Log
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import java.util.concurrent.CopyOnWriteArrayList
 
+internal const val EMBRACE_TAG = "[Embrace]"
+
 /**
  * Wrapper for the Android [Log] utility.
  * Can only be used internally, it's not part of the public API.
@@ -11,10 +13,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 // Suppressing "Nothing to inline". These functions are used all around the codebase, pretty often, so we want them to
 // perform as fast as possible.
-@Suppress("NOTHING_TO_INLINE")
 internal class InternalEmbraceLogger {
-    private val logActions = CopyOnWriteArrayList<LogAction>(listOf(LogcatAction()))
-    private var threshold = Severity.INFO
+    private val logActions = CopyOnWriteArrayList<LogAction>(listOf())
 
     internal fun interface LogAction {
         fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
@@ -25,42 +25,27 @@ internal class InternalEmbraceLogger {
     }
 
     @JvmOverloads
-    inline fun logDebug(msg: String, throwable: Throwable? = null) {
+    fun logDebug(msg: String, throwable: Throwable? = null) {
         log(msg, Severity.DEBUG, throwable, true)
     }
 
-    inline fun logInfo(msg: String) {
+    fun logInfo(msg: String) {
         log(msg, Severity.INFO, null, true)
     }
 
     @JvmOverloads
-    inline fun logWarning(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
+    fun logWarning(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
         log(msg, Severity.WARNING, throwable, logStacktrace)
     }
 
     @JvmOverloads
-    inline fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
+    fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
         log(msg, Severity.ERROR, throwable, logStacktrace)
     }
 
-    // Log with INFO severity that always contains a throwable as an internal exception to be sent to Grafana
-    inline fun logInfoWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.INFO, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
-    }
-
-    // Log with WARNING severity that always contains a throwable as an internal exception to be sent to Grafana
-    inline fun logWarningWithException(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
-        log(msg, Severity.WARNING, throwable ?: InternalErrorServiceAction.NotAnException(msg), logStacktrace)
-    }
-
-    fun logSDKNotInitialized(action: String) {
+    fun logSdkNotInitialized(action: String) {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
-        log(
-            msg,
-            Severity.WARNING,
-            Throwable(msg),
-            true
-        )
+        log(msg, Severity.WARNING, Throwable(msg), true)
     }
 
     /**
@@ -71,22 +56,37 @@ internal class InternalEmbraceLogger {
      * @param throwable exception, if any.
      * @param logStacktrace should add the throwable to the logging
      */
+    @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
+    private inline fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
+        if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
+            logcatImpl(throwable, logStacktrace, severity, msg)
 
-    fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
-        if (shouldTriggerLoggerActions(severity)) {
             logActions.forEach {
                 it.log(msg, severity, throwable, logStacktrace)
             }
         }
     }
 
-    fun setThreshold(severity: Severity) {
-        threshold = severity
+    /**
+     * Logs a message to the Android logcat.
+     */
+    @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
+    private inline fun logcatImpl(
+        throwable: Throwable?,
+        logStacktrace: Boolean,
+        severity: Severity,
+        msg: String
+    ) {
+        val exception = throwable?.takeIf { logStacktrace }
+        when (severity) {
+            Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, exception)
+            Severity.INFO -> Log.i(EMBRACE_TAG, msg, exception)
+            Severity.WARNING -> Log.w(EMBRACE_TAG, msg, exception)
+            Severity.ERROR -> Log.e(EMBRACE_TAG, msg, exception)
+        }
     }
 
-    private fun shouldTriggerLoggerActions(severity: Severity) = ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED || severity >= threshold
-
     enum class Severity {
-        DEBUG, INFO, WARNING, ERROR, NONE
+        DEBUG, INFO, WARNING, ERROR
     }
 }

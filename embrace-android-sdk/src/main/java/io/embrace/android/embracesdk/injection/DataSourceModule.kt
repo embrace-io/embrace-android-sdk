@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Build
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.capture.crumbs.NoOpReactNativeActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
@@ -10,7 +10,7 @@ internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : EmbraceInternalInterface by impl, UnityInternalInterface {
 
     override fun setUnityMetaData(

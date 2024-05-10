@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
@@ -76,7 +76,7 @@ internal class EmbraceProcessStateServiceTest {
         logger = FakeLogAction()
         stateService = EmbraceProcessStateService(
             fakeClock,
-            InternalEmbraceLogger().apply { addLoggerAction(logger) }
+            EmbLoggerImpl().apply { addLoggerAction(logger) }
         )
     }
 
@@ -237,7 +237,7 @@ internal class EmbraceProcessStateServiceTest {
     }
 
     private fun fetchLogMessages() = logger.msgQueue.filter {
-        it.severity >= InternalEmbraceLogger.Severity.ERROR
+        it.severity >= EmbLoggerImpl.Severity.ERROR
     }
 
     private class DecoratedListener(

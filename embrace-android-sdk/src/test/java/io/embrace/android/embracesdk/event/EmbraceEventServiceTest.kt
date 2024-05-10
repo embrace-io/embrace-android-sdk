@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -60,7 +61,7 @@ internal class EmbraceEventServiceTest {
         private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
         private lateinit var processStateService: ProcessStateService
-        private lateinit var logger: InternalEmbraceLogger
+        private lateinit var logger: EmbLogger
 
         @BeforeClass
         @JvmStatic
@@ -70,7 +71,7 @@ internal class EmbraceEventServiceTest {
             preferenceService = FakePreferenceService()
             performanceInfoService = FakePerformanceInfoService()
             processStateService = FakeProcessStateService()
-            logger = InternalEmbraceLogger()
+            logger = EmbLoggerImpl()
             userService = EmbraceUserService(
                 preferencesService = preferenceService,
                 logger = logger

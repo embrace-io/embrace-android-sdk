@@ -13,37 +13,34 @@ internal const val EMBRACE_TAG = "[Embrace]"
 
 // Suppressing "Nothing to inline". These functions are used all around the codebase, pretty often, so we want them to
 // perform as fast as possible.
-internal class InternalEmbraceLogger {
+internal class EmbLoggerImpl : EmbLogger {
     private val logActions = CopyOnWriteArrayList<LogAction>(listOf())
 
     internal fun interface LogAction {
         fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean)
     }
 
-    fun addLoggerAction(action: LogAction) {
+    override fun addLoggerAction(action: LogAction) {
         logActions.add(action)
     }
 
-    @JvmOverloads
-    fun logDebug(msg: String, throwable: Throwable? = null) {
+    override fun logDebug(msg: String, throwable: Throwable?) {
         log(msg, Severity.DEBUG, throwable, true)
     }
 
-    fun logInfo(msg: String) {
-        log(msg, Severity.INFO, null, true)
+    override fun logInfo(msg: String) {
+        log(msg, Severity.INFO, null, false)
     }
 
-    @JvmOverloads
-    fun logWarning(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
+    override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
         log(msg, Severity.WARNING, throwable, logStacktrace)
     }
 
-    @JvmOverloads
-    fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false) {
+    override fun logError(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
         log(msg, Severity.ERROR, throwable, logStacktrace)
     }
 
-    fun logSdkNotInitialized(action: String) {
+    override fun logSdkNotInitialized(action: String) {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
         log(msg, Severity.WARNING, Throwable(msg), true)
     }

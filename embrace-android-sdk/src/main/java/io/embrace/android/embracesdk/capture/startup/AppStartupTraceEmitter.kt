@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.sdk.common.Clock
@@ -40,7 +40,7 @@ internal class AppStartupTraceEmitter(
     private val spanService: SpanService,
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?

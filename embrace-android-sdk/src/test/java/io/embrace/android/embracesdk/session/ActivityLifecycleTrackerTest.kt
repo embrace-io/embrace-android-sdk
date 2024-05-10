@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOrientationService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.mockk.Called
@@ -81,7 +81,7 @@ internal class ActivityLifecycleTrackerTest {
         activityLifecycleTracker = ActivityLifecycleTracker(
             application,
             orientationService,
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
     }
 

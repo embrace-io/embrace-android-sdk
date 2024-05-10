@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.registry
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * to remember to set callbacks & close resources when creating a new service.
  */
 internal class ServiceRegistry(
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : Closeable {
 
     private val registry = mutableListOf<Any>()

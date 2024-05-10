@@ -5,7 +5,7 @@ import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class ActivityLifecycleTracker(
     private val application: Application,
     private val orientationService: OrientationService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : ActivityTracker {
 
     init {

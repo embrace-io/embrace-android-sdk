@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.utils.ThreadUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -18,7 +18,7 @@ internal class SigquitDataSource(
     private val sharedObjectLoader: SharedObjectLoader,
     private val anrThreadIdDelegate: AnrThreadIdDelegate,
     private val anrBehavior: AnrBehavior,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     writer: SessionSpanWriter
 ) : SpanEventMapper<Long>, DataSourceImpl<SessionSpanWriter>(
     writer,

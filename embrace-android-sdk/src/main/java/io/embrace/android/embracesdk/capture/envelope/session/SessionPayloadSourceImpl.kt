@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -23,7 +23,7 @@ internal class SessionPayloadSourceImpl(
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
 ) : SessionPayloadSource {
 

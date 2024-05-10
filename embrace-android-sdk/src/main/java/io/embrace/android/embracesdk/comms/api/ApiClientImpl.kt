@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPO
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.TOO_MANY_REQUESTS
 import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.defaultTimeoutMs
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -23,7 +23,7 @@ import java.net.HttpURLConnection.HTTP_OK
  * testing is enabled when calling [Embrace.start()].
  */
 internal class ApiClientImpl(
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : ApiClient {
 
     override fun executeGet(request: ApiRequest): ApiResponse {

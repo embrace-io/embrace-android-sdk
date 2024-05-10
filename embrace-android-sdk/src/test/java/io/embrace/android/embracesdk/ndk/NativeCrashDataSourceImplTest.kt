@@ -20,7 +20,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.logRecordUid
@@ -41,7 +42,7 @@ internal class NativeCrashDataSourceImplTest {
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
     private lateinit var logWriter: LogWriter
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var otelLogger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: SessionIdTracker
     private lateinit var metadataService: FakeMetadataService
@@ -52,7 +53,7 @@ internal class NativeCrashDataSourceImplTest {
         sessionProperties = fakeEmbraceSessionProperties()
         fakeNdkService = FakeNdkService()
         preferencesService = FakePreferenceService()
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSessionId("currentSessionId", true) }
         metadataService = FakeMetadataService()
         otelLogger = FakeOpenTelemetryLogger()

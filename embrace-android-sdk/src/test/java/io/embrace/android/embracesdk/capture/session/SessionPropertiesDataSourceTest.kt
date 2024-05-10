@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.capture.session
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,7 +20,7 @@ internal class SessionPropertiesDataSourceTest {
         dataSource = SessionPropertiesDataSource(
             FakeConfigService().sessionBehavior,
             fakeCurrentSessionSpan,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
     }
 

@@ -11,17 +11,17 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.injection.AnrModule
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 
 internal class FakeAnrModule(
     override val anrService: AnrService = FakeAnrService(),
     override val anrOtelMapper: AnrOtelMapper = AnrOtelMapper(anrService),
     override val responsivenessMonitorService: ResponsivenessMonitorService = NoOpResponsivenessMonitorService(),
     override val sigquitDataSource: SigquitDataSource = SigquitDataSource(
-        SharedObjectLoader(InternalEmbraceLogger()),
-        AnrThreadIdDelegate(InternalEmbraceLogger()),
+        SharedObjectLoader(EmbLoggerImpl()),
+        AnrThreadIdDelegate(EmbLoggerImpl()),
         fakeAnrBehavior(),
-        InternalEmbraceLogger(),
+        EmbLoggerImpl(),
         FakeCurrentSessionSpan()
     )
 ) : AnrModule

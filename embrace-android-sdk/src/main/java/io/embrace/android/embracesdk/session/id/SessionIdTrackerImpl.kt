@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.session.id
 
 import android.app.ActivityManager
 import android.os.Build
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class SessionIdTrackerImpl(
     private val activityManager: ActivityManager?,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : SessionIdTracker {
 
     @Volatile

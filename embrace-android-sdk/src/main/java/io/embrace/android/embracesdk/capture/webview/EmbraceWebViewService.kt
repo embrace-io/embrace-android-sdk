@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
 import java.util.EnumMap
@@ -10,7 +10,7 @@ import java.util.EnumMap
 internal class EmbraceWebViewService(
     val configService: ConfigService,
     private val serializer: EmbraceSerializer,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : WebViewService {
 
     /**

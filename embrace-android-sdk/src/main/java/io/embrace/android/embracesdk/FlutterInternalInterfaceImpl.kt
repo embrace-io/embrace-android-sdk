@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : EmbraceInternalInterface by impl, FlutterInternalInterface {
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {

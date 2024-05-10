@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -26,13 +27,13 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var fakeClock: FakeClock
 
     @Before
     fun before() {
         fakeClock = FakeClock(clockInit)
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         storageService = FakeStorageService()
         worker = BackgroundWorker(SingleThreadTestScheduledExecutor())
         cacheService = spyk(

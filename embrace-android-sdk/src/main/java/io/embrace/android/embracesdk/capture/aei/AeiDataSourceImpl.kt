@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
@@ -38,7 +38,7 @@ internal class AeiDataSourceImpl(
     private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
     logWriter: LogWriter,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker,
 ) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
     logWriter,

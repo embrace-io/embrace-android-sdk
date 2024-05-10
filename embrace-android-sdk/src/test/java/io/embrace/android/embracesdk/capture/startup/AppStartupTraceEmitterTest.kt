@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -39,7 +39,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var loggerAction: FakeLogAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLoggerImpl
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
 
@@ -57,7 +57,7 @@ internal class AppStartupTraceEmitterTest {
         )
         clock.tick(100L)
         loggerAction = FakeLogAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,
             startupServiceProvider = { startupService },

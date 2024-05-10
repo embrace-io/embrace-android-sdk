@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -56,7 +56,7 @@ internal class EmbraceMetadataServiceTest {
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
         private val windowManager = mockk<WindowManager>()
-        private val logger = InternalEmbraceLogger()
+        private val logger = EmbLoggerImpl()
 
         @BeforeClass
         @JvmStatic
@@ -147,7 +147,7 @@ internal class EmbraceMetadataServiceTest {
             lazy { packageInfo.versionName },
             lazy { packageInfo.versionCode.toString() },
             hostedSdkVersionInfo,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         ).apply { precomputeValues() }
     }
 

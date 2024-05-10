@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.comms.api.ApiResponse
 import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -18,7 +18,7 @@ internal class EmbracePendingApiCallsSender(
     private val scheduledWorker: ScheduledWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
     private val pendingApiCalls: PendingApiCalls by lazy {

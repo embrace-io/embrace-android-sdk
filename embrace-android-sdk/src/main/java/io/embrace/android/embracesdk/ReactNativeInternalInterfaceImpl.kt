@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(
@@ -16,7 +16,7 @@ internal class ReactNativeInternalInterfaceImpl(
     private val crashService: CrashService,
     private val metadataService: MetadataService,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : EmbraceInternalInterface by impl, ReactNativeInternalInterface {
 
     override fun logUnhandledJsException(

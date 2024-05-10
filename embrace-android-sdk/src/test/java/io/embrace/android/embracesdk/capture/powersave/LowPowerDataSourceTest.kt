@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -30,7 +30,7 @@ internal class LowPowerDataSourceTest {
         dataSource = LowPowerDataSource(
             ApplicationProvider.getApplicationContext(),
             spanService,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             FakeClock()
         ) { mockPowerManager() }.apply {

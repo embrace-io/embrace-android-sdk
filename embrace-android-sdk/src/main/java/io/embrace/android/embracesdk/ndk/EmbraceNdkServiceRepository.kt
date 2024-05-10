@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.ndk
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.storage.StorageService
@@ -17,7 +17,7 @@ private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
  */
 internal class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
 
     fun sortNativeCrashes(byOldest: Boolean): List<File> {

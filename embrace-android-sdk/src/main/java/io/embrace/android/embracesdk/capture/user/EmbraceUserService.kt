@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.user
 
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.UserInfo.Companion.ofStored
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 
 internal class EmbraceUserService(
     private val preferencesService: PreferencesService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : UserService {
     /**
      * Do not access this directly - use [userInfo] and [modifyUserInfo] to get and set this

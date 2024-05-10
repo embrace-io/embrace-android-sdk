@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.injection.SessionModule
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
@@ -34,5 +34,5 @@ internal class FakeSessionModule(
         get() = TODO("Not yet implemented")
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator =
-        DataCaptureOrchestrator(emptyList(), InternalEmbraceLogger(), FakeConfigService())
+        DataCaptureOrchestrator(emptyList(), EmbLoggerImpl(), FakeConfigService())
 }

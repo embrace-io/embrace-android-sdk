@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicReference
 
@@ -37,7 +37,7 @@ internal class BlockedThreadDetector(
     var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val anrMonitorThread: AtomicReference<Thread>
 ) {
     private val heartbeatResponseMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatResponse")

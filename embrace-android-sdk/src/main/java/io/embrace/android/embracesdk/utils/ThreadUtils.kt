@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.utils
 
 import android.os.Handler
 import android.os.Looper
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal object ThreadUtils {
 
     private val mainLooper = Looper.getMainLooper()
     private val mainThread = mainLooper.thread
 
-    fun runOnMainThread(logger: InternalEmbraceLogger, runnable: Runnable) {
+    fun runOnMainThread(logger: EmbLogger, runnable: Runnable) {
         val wrappedRunnable = Runnable {
             try {
                 runnable.run()

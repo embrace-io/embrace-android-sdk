@@ -17,14 +17,14 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 
 internal class FakeDataCaptureServiceModule(
     override val thermalStatusService: ThermalStatusService = NoOpThermalStatusService(),
     override val memoryService: MemoryService = FakeMemoryService(),
     override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),
     override val webviewService: WebViewService =
-        EmbraceWebViewService(FakeConfigService(), EmbraceSerializer(), InternalEmbraceLogger()),
+        EmbraceWebViewService(FakeConfigService(), EmbraceSerializer(), EmbLoggerImpl()),
 ) : DataCaptureServiceModule {
 
     override val pushNotificationService: PushNotificationCaptureService

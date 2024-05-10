@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.utils
 
 import android.os.Parcelable
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import java.io.Serializable
 
 /**
@@ -22,7 +22,7 @@ internal object PropertyUtils {
      * @return a normalized Map of the provided properties.
      */
     @JvmStatic
-    fun sanitizeProperties(properties: Map<String?, Any?>?, logger: InternalEmbraceLogger): Map<String, Any> {
+    fun sanitizeProperties(properties: Map<String?, Any?>?, logger: EmbLogger): Map<String, Any> {
         properties ?: return emptyMap()
 
         if (properties.size > MAX_PROPERTY_SIZE) {
@@ -34,7 +34,7 @@ internal object PropertyUtils {
             .associate { Pair(it.key ?: "null", checkIfSerializable(it.key ?: "", it.value, logger)) }
     }
 
-    private fun checkIfSerializable(key: String, value: Any?, logger: InternalEmbraceLogger): Any {
+    private fun checkIfSerializable(key: String, value: Any?, logger: EmbLogger): Any {
         if (value == null) {
             return "null"
         }

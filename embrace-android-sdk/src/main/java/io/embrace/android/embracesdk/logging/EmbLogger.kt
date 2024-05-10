@@ -24,12 +24,12 @@ internal interface EmbLogger {
     /**
      * Logs a warning message with an optional throwable.
      */
-    fun logWarning(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false)
+    fun logWarning(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message with an optional error.
      */
-    fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false)
+    fun logError(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message that the SDK is not yet initialized for the given action.

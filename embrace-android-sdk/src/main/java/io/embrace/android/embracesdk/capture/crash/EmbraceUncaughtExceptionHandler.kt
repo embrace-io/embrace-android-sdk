@@ -32,7 +32,7 @@ internal class EmbraceUncaughtExceptionHandler(
             logger.logError("Error occurred in the uncaught exception handler", ex)
             logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
         } finally {
-            logger.logDebug("Finished handling exception. Delegating to default handler.", exception)
+            logger.logDebug("Finished handling exception. Delegating to default handler.")
             defaultHandler?.uncaughtException(thread, exception)
         }
     }

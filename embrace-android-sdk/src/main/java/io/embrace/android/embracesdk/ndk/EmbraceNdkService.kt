@@ -179,7 +179,7 @@ internal class EmbraceNdkService(
                 """.trimIndent()
                 val exc = RuntimeException(errMsg)
                 exc.stackTrace = arrayOfNulls(0)
-                logger.logWarning(errMsg, exc, false)
+                logger.logWarning(errMsg, exc)
                 delegate._reinstallSignalHandlers()
             }
         }
@@ -334,8 +334,7 @@ internal class EmbraceNdkService(
                 crashFile.delete()
                 logger.logError(
                     "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                    ex,
-                    true
+                    ex
                 )
                 logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
             }

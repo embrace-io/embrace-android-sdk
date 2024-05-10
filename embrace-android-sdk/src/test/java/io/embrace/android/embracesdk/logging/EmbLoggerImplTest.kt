@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.logging
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -27,20 +26,18 @@ internal class EmbLoggerImplTest {
         val msg = logger.infoMessages.single()
         assertEquals("test", msg.msg)
         assertNull(msg.throwable)
-        assertFalse(msg.logStacktrace)
     }
 
     @Test
     fun `a log with a higher severity than the threshold triggers logging actions`() {
         // when log is called with a higher severity
         val throwable = Exception()
-        logger.logWarning("test", throwable, false)
+        logger.logWarning("test", throwable)
 
         // then logger actions are triggered
         val msg = logger.warningMessages.single()
         assertEquals("test", msg.msg)
         assertEquals(throwable, msg.throwable)
-        assertFalse(msg.logStacktrace)
     }
 
     @Test
@@ -56,6 +53,5 @@ internal class EmbLoggerImplTest {
         val msg = logger.debugMessages.single()
         assertEquals("test", msg.msg)
         assertEquals(throwable, msg.throwable)
-        assertFalse(msg.logStacktrace)
     }
 }

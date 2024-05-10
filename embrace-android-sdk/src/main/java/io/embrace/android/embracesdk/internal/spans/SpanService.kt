@@ -33,7 +33,7 @@ internal interface SpanService : Initializable {
         startTimeMs: Long? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
-        private: Boolean = internal
+        private: Boolean = false
     ): PersistableEmbraceSpan? {
         createSpan(
             name = name,

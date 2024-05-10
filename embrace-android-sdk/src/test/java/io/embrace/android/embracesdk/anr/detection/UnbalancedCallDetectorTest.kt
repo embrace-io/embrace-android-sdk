@@ -72,7 +72,6 @@ internal class UnbalancedCallDetectorTest {
     }
 
     private fun verifyInternalErrorLogs(expectedCount: Int) {
-        val messages = logger.errorMessages.filter { msg -> msg.logStacktrace }
-        assertEquals(expectedCount, messages.size)
+        assertEquals(expectedCount, logger.warningMessages.size)
     }
 }

@@ -19,17 +19,17 @@ internal interface EmbLogger {
     /**
      * Logs an informational message.
      */
-    fun logInfo(msg: String)
+    fun logInfo(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message with an optional throwable.
      */
-    fun logWarning(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false)
+    fun logWarning(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message with an optional error.
      */
-    fun logError(msg: String, throwable: Throwable? = null, logStacktrace: Boolean = false)
+    fun logError(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message that the SDK is not yet initialized for the given action.
@@ -40,5 +40,5 @@ internal interface EmbLogger {
      * Tracks an internal error. This is sent to our own telemetry so should be used sparingly
      * & only for states that we can take actions to improve.
      */
-    fun trackInternalError(msg: String, throwable: Throwable, severity: Severity)
+    fun trackInternalError(type: InternalErrorType, throwable: Throwable)
 }

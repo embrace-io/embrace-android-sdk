@@ -27,7 +27,7 @@ internal class ComponentCallbackService(
             try {
                 memoryService.onMemoryWarning()
             } catch (ex: Exception) {
-                logger.logDebug(
+                logger.logWarning(
                     "Failed to handle onTrimMemory (low memory) event",
                     ex
                 )
@@ -42,7 +42,7 @@ internal class ComponentCallbackService(
         try {
             application.applicationContext.unregisterComponentCallbacks(this)
         } catch (ex: Exception) {
-            logger.logDebug(
+            logger.logWarning(
                 "Error when closing ComponentCallbackService",
                 ex
             )

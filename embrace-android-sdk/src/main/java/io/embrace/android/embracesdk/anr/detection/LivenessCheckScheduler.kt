@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -98,7 +99,7 @@ internal class LivenessCheckScheduler internal constructor(
         } catch (exc: Exception) {
             // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
             val message = "ANR capture initialization failed"
-            logger.logError(message, exc, true)
+            logger.logWarning(message, exc)
         }
     }
 
@@ -115,7 +116,9 @@ internal class LivenessCheckScheduler internal constructor(
         // There is no expected situation where this cancel should fail because monitorFuture should never be null or canceled when
         // we get here, and if this is running, the heartbeat task won't be. If for some reason it fails, log an error.
         val message = "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
-        logger.logError(message, IllegalStateException(message))
+        val exc = IllegalStateException(message)
+        logger.logError(message, exc)
+        logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_STOP_FAIL, exc)
         return false
     }
 
@@ -147,17 +150,17 @@ internal class LivenessCheckScheduler internal constructor(
                 blockedThreadDetector.updateAnrTracking(now)
             }
         } catch (exc: Exception) {
-            logger.logError("Failed to process ANR monitor thread heartbeat", exc, true)
+            logger.logError("Failed to process ANR monitor thread heartbeat", exc)
+            logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }
     }
 
     private fun sendHeartbeatMessage() {
         val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
         if (!targetThreadHandler.sendMessage(heartbeatMessage)) {
-            logger.logError(
+            logger.logWarning(
                 "Failed to send message to targetHandler, main thread likely shutting down.",
-                IllegalStateException("Failed to send message to targetHandler"),
-                true
+                IllegalStateException("Failed to send message to targetHandler")
             )
         }
     }

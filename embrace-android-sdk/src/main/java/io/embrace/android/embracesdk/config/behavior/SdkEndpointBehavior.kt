@@ -18,18 +18,12 @@ internal class SdkEndpointBehavior(
     companion object {
         const val CONFIG_DEFAULT = "config.emb-api.com"
         const val DATA_DEFAULT = "data.emb-api.com"
-        const val DATA_DEV_DEFAULT = "data-dev.emb-api.com"
     }
 
     /**
      * Data base URL.
      */
     fun getData(appId: String): String = local?.data ?: "https://a-$appId.$DATA_DEFAULT"
-
-    /**
-     * Data dev base URL.
-     */
-    fun getDataDev(): String = local?.dataDev ?: "https://$DATA_DEV_DEFAULT"
 
     /**
      * Config base URL.

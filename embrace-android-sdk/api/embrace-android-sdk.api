@@ -76,6 +76,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
+	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/Embrace$AppFramework;)V
 	public fun start (Landroid/content/Context;Z)V
 	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
 	public fun startMoment (Ljava/lang/String;)V

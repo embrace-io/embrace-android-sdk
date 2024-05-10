@@ -89,7 +89,6 @@ internal typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    isDevMode: Boolean,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule

@@ -100,17 +100,6 @@ internal class LocalConfigTest {
         localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
-            "{\"base_urls\": {\"data_dev\": \"custom_data_dev\"}}",
-            serializer,
-            logger
-        )
-        assertEquals(
-            localConfig.sdkConfig.baseUrls?.dataDev,
-            "custom_data_dev"
-        )
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
             "{\"base_urls\": {\"images\": \"custom_images\"}}",
             serializer,
             logger

@@ -19,7 +19,6 @@ internal class BaseUrlLocalConfigTest {
         val obj = deserializeJsonFromResource<BaseUrlLocalConfig>("base_url_config.json")
         assertEquals("https://config.example.com", obj.config)
         assertEquals("https://data.example.com", obj.data)
-        assertEquals("https://data-dev.example.com", obj.dataDev)
         assertEquals("https://images.example.com", obj.images)
     }
 
@@ -32,7 +31,6 @@ internal class BaseUrlLocalConfigTest {
     private fun verifyDefaults(obj: BaseUrlLocalConfig) {
         assertNull("https://config.emb-api.com", obj.config)
         assertNull("https://data.emb-api.com", obj.data)
-        assertNull("https://data-dev.emb-api.com", obj.dataDev)
         assertNull("https://images.emb-api.com", obj.images)
     }
 }

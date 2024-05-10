@@ -45,22 +45,3 @@ internal open class RnActionDataSource(
         }
     )
 }
-
-internal class NoOpReactNativeActionDataSource(
-    breadcrumbBehavior: BreadcrumbBehavior,
-    spanService: SpanService,
-    logger: InternalEmbraceLogger
-) : RnActionDataSource(
-    breadcrumbBehavior,
-    spanService,
-    logger
-) {
-    override fun logRnAction(
-        name: String?,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String?
-    ): Boolean = false
-}

@@ -218,19 +218,11 @@ internal class DataSourceModuleImpl(
     override val rnActionDataSource: DataSourceState<RnActionDataSource> by dataSourceState {
         DataSourceState(
             factory = {
-                if (coreModule.appFramework == Embrace.AppFramework.REACT_NATIVE) {
-                    RnActionDataSource(
-                        breadcrumbBehavior = configService.breadcrumbBehavior,
-                        otelModule.spanService,
-                        initModule.logger
-                    )
-                } else {
-                    NoOpReactNativeActionDataSource(
-                        breadcrumbBehavior = configService.breadcrumbBehavior,
-                        otelModule.spanService,
-                        initModule.logger
-                    )
-                }
+                RnActionDataSource(
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
+                    otelModule.spanService,
+                    initModule.logger
+                )
             }
         )
     }

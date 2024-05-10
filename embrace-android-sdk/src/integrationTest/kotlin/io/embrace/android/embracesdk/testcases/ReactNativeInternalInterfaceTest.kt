@@ -6,7 +6,11 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -104,6 +108,38 @@ internal class ReactNativeInternalInterfaceTest {
             assertEquals("28.9.2", checkNotNull(session?.appInfo?.reactNativeVersion))
             assertEquals("1.2.4", checkNotNull(session?.appInfo?.hostedSdkVersion))
             assertEquals("999", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+        }
+    }
+
+    @Test
+    fun `react native action`() {
+        with(testRule) {
+            val message = checkNotNull(harness.recordSession {
+                embrace.reactNativeInternalInterface?.logRnAction(
+                    "MyAction",
+                    1000,
+                    5000,
+                    mapOf("key" to "value"),
+                    100,
+                    "SUCCESS"
+                )
+            })
+
+            val spans = message.findSpansOfType(EmbType.System.ReactNativeAction)
+
+            assertEquals(1, spans.size)
+
+            val span = spans.single()
+
+            assertEquals("emb-rn-action", span.name)
+            assertEquals("sys.rn_action", span.findSpanAttribute("emb.type"))
+            assertEquals("MyAction", span.findSpanAttribute("name"))
+            assertEquals("SUCCESS", span.findSpanAttribute("outcome"))
+            assertEquals("100", span.findSpanAttribute("payload_size"))
+            assertEquals("value", span.findSpanAttribute("emb.properties.key"))
+            assertEquals(1000, span.startTimeNanos.nanosToMillis())
+            assertEquals(5000, span.endTimeNanos.nanosToMillis())
+
         }
     }
 }

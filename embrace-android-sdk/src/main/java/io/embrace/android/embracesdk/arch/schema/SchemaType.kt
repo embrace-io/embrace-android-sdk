@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch.schema
 
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.AppExitInfoData
@@ -312,5 +313,27 @@ internal sealed class SchemaType(
             "emb.webview_info.web_vitals" to webVitals,
             "emb.webview_info.tag" to tag
         ).toNonNullMap()
+    }
+
+    internal class ReactNativeAction(
+        name: String,
+        outcome: String,
+        payloadSize: Int,
+        properties: Map<String?, Any?>,
+    ) : SchemaType(
+        telemetryType = EmbType.System.ReactNativeAction,
+        fixedObjectName = "rn-action"
+    ) {
+        override val schemaAttributes = mapOf(
+            "name" to name,
+            "outcome" to outcome,
+            "payload_size" to payloadSize.toString(),
+        )
+            .plus(
+                properties
+                    .mapKeys { it.key.toString().toSessionPropertyAttributeName() }
+                    .mapValues { it.value.toString() }
+            )
+            .toNonNullMap()
     }
 }

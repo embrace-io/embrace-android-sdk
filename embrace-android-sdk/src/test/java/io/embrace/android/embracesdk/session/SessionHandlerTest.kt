@@ -72,13 +72,13 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(clock)
-        private const val now = 123L
+        private const val NOW = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
     }
 
-    private val initial = fakeSession(startMs = now)
+    private val initial = fakeSession(startMs = NOW)
     private val userService: FakeUserService = FakeUserService()
     private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
     private val webViewService: WebViewService = FakeWebViewService()
@@ -107,7 +107,7 @@ internal class SessionHandlerTest {
         executorService = BlockingScheduledExecutorService()
         scheduledWorker = ScheduledWorker(executorService)
         logger = EmbLoggerImpl()
-        clock.setCurrentTime(now)
+        clock.setCurrentTime(NOW)
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
         ndkService = FakeNdkService()
@@ -186,7 +186,7 @@ internal class SessionHandlerTest {
         sessionLocalConfig = SessionLocalConfig()
         // this is needed so session handler creates automatic session stopper
 
-        payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, now, true)
+        payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
     }
@@ -229,16 +229,16 @@ internal class SessionHandlerTest {
             assertEquals(0, warnLogsAttemptedToSend)
             assertEquals(0, errorLogsAttemptedToSend)
             assertNull(exceptionError)
-            assertEquals(now, lastHeartbeatTime)
+            assertEquals(NOW, lastHeartbeatTime)
             assertEquals(sessionProperties.get(), properties)
             assertEquals(Session.LifeEventType.STATE, endType)
             assertEquals(0, unhandledExceptions)
             assertEquals(crashId, crashReportId)
-            assertEquals(now, endTime)
+            assertEquals(NOW, endTime)
             assertEquals(sdkStartupDuration, sdkStartupDuration)
             assertEquals(0L, startupDuration)
             assertEquals(0L, startupThreshold)
-            assertEquals(0, webViewInfo?.size)
+            assertEquals(null, webViewInfo)
         }
     }
 
@@ -316,7 +316,7 @@ internal class SessionHandlerTest {
     }
 
     private fun startFakeSession(): Session {
-        return checkNotNull(payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, now, true))
+        return checkNotNull(payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true))
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {

@@ -90,7 +90,11 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val webviewService: WebViewService by singleton {
-        EmbraceWebViewService(configService, coreModule.jsonSerializer, initModule.logger)
+        EmbraceWebViewService(
+            configService,
+            coreModule.jsonSerializer,
+            initModule.logger,
+        ) { dataSourceModule }
     }
 
     override val breadcrumbService: BreadcrumbService by singleton {

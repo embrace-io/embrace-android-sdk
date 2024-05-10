@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -27,6 +28,10 @@ internal class FakeCurrentSessionSpan(
     override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
         addedEvents.add(obj.mapper())
         return true
+    }
+
+    override fun removeEvents(type: EmbType) {
+        addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
     }
 
     override fun addCustomAttribute(attribute: SpanAttributeData): Boolean = addedAttributes.add(attribute)

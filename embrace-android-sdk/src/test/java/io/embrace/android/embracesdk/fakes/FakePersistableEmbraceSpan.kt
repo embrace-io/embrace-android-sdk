@@ -84,6 +84,10 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
+    override fun removeEvents(name: String) {
+        events.removeAll { it.name == name }
+    }
+
     override fun addAttribute(key: String, value: String): Boolean {
         attributes[key] = value
         return true

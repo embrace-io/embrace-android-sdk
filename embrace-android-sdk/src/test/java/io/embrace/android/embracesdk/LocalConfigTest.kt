@@ -161,18 +161,6 @@ internal class LocalConfigTest {
         var localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
-            "{\"session\": {\"error_log_strict_mode\": true}}",
-            serializer,
-            logger
-        )
-        assertTrue(
-            checkNotNull(localConfig.sdkConfig.sessionConfig?.sessionEnableErrorLogStrictMode)
-        )
-
-        // receive a session component to restrict session messages
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
             "{\"session\": {\"components\": [\"breadcrumbs_taps\"]}}",
             serializer,
             logger

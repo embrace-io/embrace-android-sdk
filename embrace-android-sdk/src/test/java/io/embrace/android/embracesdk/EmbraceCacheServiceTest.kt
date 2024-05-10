@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companio
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
@@ -38,14 +38,14 @@ internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
     private lateinit var storageManager: FakeStorageService
-    private lateinit var loggerAction: FakeLoggerAction
+    private lateinit var loggerAction: FakeLogAction
     private lateinit var logger: InternalEmbraceLogger
     private val serializer = TestPlatformSerializer()
 
     @Before
     fun setUp() {
         storageManager = FakeStorageService()
-        loggerAction = FakeLoggerAction()
+        loggerAction = FakeLogAction()
         logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
         service = EmbraceCacheService(
             storageManager,

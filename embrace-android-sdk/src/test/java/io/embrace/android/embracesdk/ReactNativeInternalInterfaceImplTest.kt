@@ -58,7 +58,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setJavaScriptPatchNumber("28.9.1")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -89,7 +89,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setReactNativeVersionNumber("0.69.1")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -127,7 +127,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -210,7 +210,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.logUnhandledJsException("name", "message", "type", "stack")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 }

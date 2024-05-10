@@ -177,7 +177,7 @@ internal class EmbraceNdkService(
                 """.trimIndent()
                 val exc = RuntimeException(errMsg)
                 exc.stackTrace = arrayOfNulls(0)
-                logger.logWarningWithException(errMsg, exc, false)
+                logger.logWarning(errMsg, exc, false)
                 delegate._reinstallSignalHandlers()
             }
         }

@@ -24,7 +24,7 @@ internal class EmbraceInternalErrorServiceTest {
     @Before
     fun setUp() {
         activityService = FakeProcessStateService()
-        service = EmbraceInternalErrorService(activityService, clock, false)
+        service = EmbraceInternalErrorService(activityService, clock)
         cfg = RemoteConfig()
         cfgService =
             FakeConfigService(dataCaptureEventBehavior = fakeDataCaptureEventBehavior { cfg })

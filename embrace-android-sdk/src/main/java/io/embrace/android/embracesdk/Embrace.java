@@ -82,7 +82,7 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * @deprecated Use {@link #start(Context)} instead.
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
      */
     @Override
     @Deprecated
@@ -93,7 +93,7 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     /**
-     * @deprecated Use {@link #start(Context, AppFramework)} instead.
+     * @deprecated Use {@link #start(Context, AppFramework)} instead. The isDevMode parameter has no effect.
      */
     @Override
     @Deprecated

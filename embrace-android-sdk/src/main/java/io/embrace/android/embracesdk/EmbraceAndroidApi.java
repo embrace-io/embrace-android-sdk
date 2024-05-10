@@ -50,7 +50,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * @param isDevMode                if true, and the build type is debuggable, it
      *                                 sets the environment for all sessions to 'Development'.
      *
-     * @deprecated Use {@link #start(Context)} instead.
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
      */
     @Deprecated
     void start(@NonNull Context context,
@@ -69,7 +69,7 @@ interface EmbraceAndroidApi extends EmbraceApi {
      *                                 sets the environment for all sessions to 'Development'.
      * @param appFramework             the AppFramework of the application
      *
-     * @deprecated Use {@link #start(Context, Embrace.AppFramework)} instead.
+     * @deprecated Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.
      */
     @Deprecated
     void start(@NonNull Context context,

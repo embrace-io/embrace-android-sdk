@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.capture.webview
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
 import java.util.EnumMap
@@ -94,6 +95,7 @@ internal class EmbraceWebViewService(
             }
         } catch (e: Exception) {
             logger.logError("Cannot parse Web Vital", e)
+            logger.trackInternalError(InternalErrorType.WEB_VITAL_PARSE_FAIL, e)
         }
         return null
     }

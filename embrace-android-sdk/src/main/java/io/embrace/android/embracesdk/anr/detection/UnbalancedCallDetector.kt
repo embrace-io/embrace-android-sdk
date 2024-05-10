@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class UnbalancedCallDetector(
     private val logger: EmbLogger
@@ -34,6 +35,7 @@ internal class UnbalancedCallDetector(
         if (lastTimestamp > timestamp) {
             val msg = "Time travel in $name. $lastTimestamp to $timestamp"
             logger.logWarning(msg, IllegalStateException(msg), true)
+            logger.trackInternalError(InternalErrorType.TIME_TRAVEL, IllegalStateException("Time Travel"))
         }
         lastTimestamp = timestamp
     }
@@ -43,6 +45,7 @@ internal class UnbalancedCallDetector(
             val threadName = Thread.currentThread().name
             val msg = "Unbalanced call to $name in ANR detection. Thread=$threadName"
             logger.logWarning(msg, IllegalStateException(msg), true)
+            logger.trackInternalError(InternalErrorType.UNBALANCED_CALL, IllegalStateException("Unbalanced call"))
         }
     }
 }

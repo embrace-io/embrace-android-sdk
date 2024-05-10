@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 /**
  * Base class for data sources.
@@ -47,6 +48,8 @@ internal abstract class DataSourceImpl<T>(
             return true
         } catch (exc: Throwable) {
             logger.logError("Error capturing data", exc)
+            logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)
+
             return false
         }
     }

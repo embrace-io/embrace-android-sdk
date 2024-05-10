@@ -35,12 +35,12 @@ internal class EmbLoggerImpl : EmbLogger {
         log(msg, Severity.WARNING, Throwable(msg), true)
     }
 
-    override fun trackInternalError(msg: String, throwable: Throwable, severity: Severity) {
+    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         try {
             internalErrorService?.handleInternalError(throwable)
         } catch (exc: Throwable) {
             // don't cause a crash loop!
-            Log.w(EMBRACE_TAG, msg, exc)
+            Log.w(EMBRACE_TAG, "Failed to track internal error", exc)
         }
     }
 
@@ -56,11 +56,6 @@ internal class EmbLoggerImpl : EmbLogger {
     private inline fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
         if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
             logcatImpl(throwable, logStacktrace, severity, msg)
-
-            // report to internal error service if necessary
-            if (throwable != null) {
-                trackInternalError(msg, throwable, severity)
-            }
         }
     }
 

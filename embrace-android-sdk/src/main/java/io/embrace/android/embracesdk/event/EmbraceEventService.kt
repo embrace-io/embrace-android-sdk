@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
@@ -167,6 +168,7 @@ internal class EmbraceEventService(
                 ex,
                 false
             )
+            logger.trackInternalError(InternalErrorType.START_EVENT_FAIL, ex)
         }
     }
 
@@ -225,6 +227,7 @@ internal class EmbraceEventService(
                 "Cannot end event with name: $name, identifier: $identifier due to an exception",
                 ex
             )
+            logger.trackInternalError(InternalErrorType.END_EVENT_FAIL, ex)
         }
     }
 

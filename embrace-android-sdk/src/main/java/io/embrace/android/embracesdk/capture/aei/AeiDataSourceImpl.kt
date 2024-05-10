@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
@@ -68,6 +69,7 @@ internal class AeiDataSourceImpl(
                     exc,
                     true
                 )
+                logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
             }
         }
     }
@@ -81,6 +83,7 @@ internal class AeiDataSourceImpl(
                 "AEI - Failed to disable EmbraceApplicationExitInfoService work",
                 t
             )
+            logger.trackInternalError(InternalErrorType.DISABLE_DATA_CAPTURE, t)
         }
     }
 

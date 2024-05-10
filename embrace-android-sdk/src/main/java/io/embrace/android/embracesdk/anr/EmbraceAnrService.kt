@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
@@ -92,6 +93,7 @@ internal class EmbraceAnrService(
             anrMonitorWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
             logger.logWarning("Failed to getAnrIntervals()", exc, true)
+            logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
             emptyList()
         }
     }

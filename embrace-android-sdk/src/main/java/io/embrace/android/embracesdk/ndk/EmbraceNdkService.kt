@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
@@ -157,6 +158,7 @@ internal class EmbraceNdkService(
             }
         } catch (ex: Exception) {
             logger.logError("Failed to start native crash monitoring", ex)
+            logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
         }
     }
 
@@ -335,6 +337,7 @@ internal class EmbraceNdkService(
                     ex,
                     true
                 )
+                logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
             }
         }
         return nativeCrash
@@ -375,6 +378,7 @@ internal class EmbraceNdkService(
                     ),
                     ex
                 )
+                logger.trackInternalError(InternalErrorType.INVALID_NATIVE_SYMBOLS, ex)
             }
         } else {
             logger.logError(

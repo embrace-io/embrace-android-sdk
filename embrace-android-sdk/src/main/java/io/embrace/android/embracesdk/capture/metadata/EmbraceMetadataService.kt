@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
@@ -209,6 +210,7 @@ internal class EmbraceMetadataService private constructor(
         } catch (ex: java.lang.Exception) {
             // The package name and storage volume should always exist
             logger.logError("Error retrieving device disk usage", ex)
+            logger.trackInternalError(InternalErrorType.DISK_STAT_CAPTURE_FAIL, ex)
         }
         return null
     }

@@ -40,5 +40,5 @@ internal interface EmbLogger {
      * Tracks an internal error. This is sent to our own telemetry so should be used sparingly
      * & only for states that we can take actions to improve.
      */
-    fun trackInternalError(msg: String, throwable: Throwable, severity: Severity)
+    fun trackInternalError(type: InternalErrorType, throwable: Throwable)
 }

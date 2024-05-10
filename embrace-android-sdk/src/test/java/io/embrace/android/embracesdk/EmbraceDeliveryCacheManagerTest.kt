@@ -8,15 +8,13 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.comms.delivery.SessionPurgeException
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
@@ -50,8 +48,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
-    private lateinit var fakeService: FakeInternalErrorService
-    private lateinit var logger: EmbLoggerImpl
+    private lateinit var logger: FakeEmbLogger
     private lateinit var fakeClock: FakeClock
 
     companion object {
@@ -61,8 +58,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Before
     fun before() {
         fakeClock = FakeClock(clockInit)
-        fakeService = FakeInternalErrorService()
-        logger = EmbLoggerImpl().apply { internalErrorService = fakeService }
+        logger = FakeEmbLogger()
         storageService = FakeStorageService()
         cacheService = spyk(
             EmbraceCacheService(
@@ -198,7 +194,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         assertEquals(
             100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED,
-            fakeService.throwables.filterIsInstance<SessionPurgeException>().size
+            logger.warningMessages.size
         )
     }
 

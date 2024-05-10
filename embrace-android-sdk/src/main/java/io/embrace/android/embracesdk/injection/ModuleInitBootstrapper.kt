@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -341,6 +342,7 @@ internal class ModuleInitBootstrapper(
                                         }
                                     } catch (t: Throwable) {
                                         initModule.logger.logError("Failed to sample current thread during ANRs", t)
+                                        logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                                     }
                                 }
                             }

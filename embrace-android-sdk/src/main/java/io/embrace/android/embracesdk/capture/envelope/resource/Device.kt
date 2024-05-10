@@ -8,6 +8,7 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.File
@@ -123,6 +124,7 @@ internal class DeviceImpl(
             )
         } catch (ex: Exception) {
             logger.logWarning("Could not determine screen resolution", ex)
+            logger.trackInternalError(InternalErrorType.SCREEN_RES_CAPTURE_FAIL, ex)
             ""
         }
     }

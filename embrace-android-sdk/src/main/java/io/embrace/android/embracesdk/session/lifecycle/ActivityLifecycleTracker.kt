@@ -6,6 +6,7 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
@@ -68,6 +69,7 @@ internal class ActivityLifecycleTracker(
             orientationService.onOrientationChanged(activity.resources.configuration.orientation)
         } catch (ex: Exception) {
             logger.logWarning("Failed to register an orientation change", ex)
+            logger.trackInternalError(InternalErrorType.ORIENTATION_CAPTURE_FAIL, ex)
         }
     }
 
@@ -79,6 +81,7 @@ internal class ActivityLifecycleTracker(
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
                 logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }
@@ -90,6 +93,7 @@ internal class ActivityLifecycleTracker(
                 listener.onView(activity)
             } catch (ex: Exception) {
                 logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }
@@ -103,6 +107,7 @@ internal class ActivityLifecycleTracker(
                     listener.applicationStartupComplete()
                 } catch (ex: Exception) {
                     logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
+                    logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
                 }
             }
         }
@@ -115,6 +120,7 @@ internal class ActivityLifecycleTracker(
                 listener.onViewClose(activity)
             } catch (ex: Exception) {
                 logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }

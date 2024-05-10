@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class FakeEmbLogger : EmbLogger {
 
@@ -40,7 +41,7 @@ internal class FakeEmbLogger : EmbLogger {
         sdkNotInitializedMessages.add(LogMessage(action, null, false))
     }
 
-    override fun trackInternalError(msg: String, throwable: Throwable, severity: EmbLogger.Severity) {
-        internalErrorMessages.add(LogMessage(msg, throwable, false))
+    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        internalErrorMessages.add(LogMessage(type.toString(), throwable, false))
     }
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.capture.user
 
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.UserInfo.Companion.ofStored
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -23,6 +24,7 @@ internal class EmbraceUserService(
             ofStored(preferencesService)
         } catch (ex: Exception) {
             logger.logError("Failed to load user info from persistent storage.", ex, true)
+            logger.trackInternalError(InternalErrorType.USER_LOAD_FAIL, ex)
             null
         }
     }

@@ -36,7 +36,7 @@ internal class UnityInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 

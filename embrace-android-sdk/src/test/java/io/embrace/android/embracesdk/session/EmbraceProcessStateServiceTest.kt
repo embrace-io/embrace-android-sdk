@@ -6,7 +6,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.system.mockLooper
@@ -63,7 +63,7 @@ internal class EmbraceProcessStateServiceTest {
         }
     }
 
-    private lateinit var logger: FakeLoggerAction
+    private lateinit var logger: FakeLogAction
 
     @Before
     fun before() {
@@ -73,7 +73,7 @@ internal class EmbraceProcessStateServiceTest {
             constructorMocks = false,
             staticMocks = false
         )
-        logger = FakeLoggerAction()
+        logger = FakeLogAction()
         stateService = EmbraceProcessStateService(
             fakeClock,
             InternalEmbraceLogger().apply { addLoggerAction(logger) }

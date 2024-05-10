@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.worker
 
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.InitModule
@@ -14,14 +14,14 @@ import org.junit.Test
 
 internal class WorkerThreadModuleImplTest {
 
-    private lateinit var action: FakeLoggerAction
+    private lateinit var action: FakeLogAction
     private lateinit var logger: InternalEmbraceLogger
     private lateinit var initModule: InitModule
     private lateinit var coreModule: CoreModule
 
     @Before
     fun setup() {
-        action = FakeLoggerAction()
+        action = FakeLogAction()
         logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
         initModule = InitModuleImpl(logger = logger)
         coreModule = FakeCoreModule(logger = logger)

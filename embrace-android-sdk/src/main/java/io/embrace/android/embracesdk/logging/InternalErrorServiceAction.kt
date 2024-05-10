@@ -2,9 +2,13 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 
-internal class ReportingLoggerAction(
+/**
+ * Sends a log message from Embrace's log implementation to [InternalErrorService],
+ * if it contains a throwable.
+ */
+internal class InternalErrorServiceAction(
     private val internalErrorService: InternalErrorService
-) : InternalEmbraceLogger.LoggerAction {
+) : InternalEmbraceLogger.LogAction {
 
     override fun log(
         msg: String,
@@ -23,5 +27,4 @@ internal class ReportingLoggerAction(
     }
 
     class InternalError(msg: String) : Exception(msg)
-    class NotAnException(msg: String) : Exception(msg)
 }

@@ -19,7 +19,7 @@ internal interface EmbLogger {
     /**
      * Logs an informational message.
      */
-    fun logInfo(msg: String)
+    fun logInfo(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message with an optional throwable.

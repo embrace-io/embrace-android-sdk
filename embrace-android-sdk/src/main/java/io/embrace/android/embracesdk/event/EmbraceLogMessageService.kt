@@ -111,7 +111,7 @@ internal class EmbraceLogMessageService(
                 }
             }
         } catch (ex: Exception) {
-            logger.logDebug("Failed to log network call using Embrace SDK.", ex)
+            logger.logInfo("Failed to log network call using Embrace SDK.", ex)
         }
     }
 
@@ -144,7 +144,7 @@ internal class EmbraceLogMessageService(
         backgroundWorker.submit {
             synchronized(lock) {
                 if (!configService.dataCaptureEventBehavior.isLogMessageEnabled(message)) {
-                    logger.logWarning("Log message disabled. Ignoring log with message $message")
+                    logger.logInfo("Log message disabled. Ignoring log with message $message")
                     return@submit
                 }
                 val id = getEmbUuid()
@@ -153,7 +153,7 @@ internal class EmbraceLogMessageService(
                     if (infoLogIds.size < configService.logMessageBehavior.getInfoLogLimit()) {
                         infoLogIds[timestamp] = id
                     } else {
-                        logger.logWarning("Info Log limit has been reached.")
+                        logger.logInfo("Info Log limit has been reached.")
                         return@submit
                     }
                 } else if (type == EventType.WARNING_LOG) {
@@ -161,7 +161,7 @@ internal class EmbraceLogMessageService(
                     if (warningLogIds.size < configService.logMessageBehavior.getWarnLogLimit()) {
                         warningLogIds[timestamp] = id
                     } else {
-                        logger.logWarning("Warning Log limit has been reached.")
+                        logger.logInfo("Warning Log limit has been reached.")
                         return@submit
                     }
                 } else if (type == EventType.ERROR_LOG) {
@@ -169,7 +169,7 @@ internal class EmbraceLogMessageService(
                     if (errorLogIds.size < configService.logMessageBehavior.getErrorLogLimit()) {
                         errorLogIds[timestamp] = id
                     } else {
-                        logger.logWarning("Error Log limit has been reached.")
+                        logger.logInfo("Error Log limit has been reached.")
                         return@submit
                     }
                 } else {
@@ -226,7 +226,7 @@ internal class EmbraceLogMessageService(
                     null
                 )
                 if (checkIfShouldGateLog(type)) {
-                    logger.logDebug("$type was gated by config. The event wasnot sent.")
+                    logger.logDebug("$type was gated by config. The event was not sent.")
                     return@submit
                 }
 
@@ -284,7 +284,7 @@ internal class EmbraceLogMessageService(
                 maxLength >= endChars.length -> maxLength - endChars.length
                 else -> LogMessageBehavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
             }
-            logger.logWarning("Truncating message to ${message.length} characters")
+            logger.logInfo("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars
         } else {
             message

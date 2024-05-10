@@ -24,8 +24,8 @@ internal class FakeEmbLogger : EmbLogger {
         debugMessages.add(LogMessage(msg, throwable, false))
     }
 
-    override fun logInfo(msg: String) {
-        infoMessages.add(LogMessage(msg, null, false))
+    override fun logInfo(msg: String, throwable: Throwable?) {
+        infoMessages.add(LogMessage(msg, throwable, false))
     }
 
     override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {

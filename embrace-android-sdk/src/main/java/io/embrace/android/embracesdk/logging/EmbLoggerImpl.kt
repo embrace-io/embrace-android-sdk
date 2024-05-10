@@ -18,8 +18,8 @@ internal class EmbLoggerImpl : EmbLogger {
         log(msg, Severity.DEBUG, throwable, true)
     }
 
-    override fun logInfo(msg: String) {
-        log(msg, Severity.INFO, null, false)
+    override fun logInfo(msg: String, throwable: Throwable?) {
+        log(msg, Severity.INFO, throwable, false)
     }
 
     override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {

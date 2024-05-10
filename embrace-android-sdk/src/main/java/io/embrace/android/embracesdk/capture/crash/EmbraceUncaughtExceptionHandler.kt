@@ -28,7 +28,7 @@ internal class EmbraceUncaughtExceptionHandler(
         try {
             crashService.handleCrash(exception)
         } catch (ex: Exception) {
-            logger.logDebug("Error occurred in the uncaught exception handler", ex)
+            logger.logError("Error occurred in the uncaught exception handler", ex)
         } finally {
             logger.logDebug("Finished handling exception. Delegating to default handler.", exception)
             defaultHandler?.uncaughtException(thread, exception)

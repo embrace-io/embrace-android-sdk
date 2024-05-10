@@ -54,7 +54,7 @@ internal class EmbraceNetworkConnectivityService(
                 }
             }
         } catch (ex: Exception) {
-            logger.logDebug("Failed to record network connectivity", ex)
+            logger.logWarning("Failed to record network connectivity", ex)
         }
     }
 
@@ -96,7 +96,7 @@ internal class EmbraceNetworkConnectivityService(
             try {
                 context.registerReceiver(this, intentFilter)
             } catch (ex: Exception) {
-                logger.logDebug(
+                logger.logInfo(
                     "Failed to register EmbraceNetworkConnectivityService " +
                         "broadcast receiver. Connectivity status will be unavailable.",
                     ex

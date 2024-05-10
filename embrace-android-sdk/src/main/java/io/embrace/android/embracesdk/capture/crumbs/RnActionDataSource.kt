@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 
-internal class RnActionDataSource(
+internal open class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     spanService: SpanService,
     logger: InternalEmbraceLogger
@@ -17,7 +17,7 @@ internal class RnActionDataSource(
     logger,
     UpToLimitStrategy(logger) { breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {
-    fun logRnAction(
+    open fun logRnAction(
         name: String?,
         startTime: Long,
         endTime: Long,
@@ -44,4 +44,23 @@ internal class RnActionDataSource(
             )
         }
     )
+}
+
+internal class NoOpReactNativeActionDataSource(
+    breadcrumbBehavior: BreadcrumbBehavior,
+    spanService: SpanService,
+    logger: InternalEmbraceLogger
+) : RnActionDataSource(
+    breadcrumbBehavior,
+    spanService,
+    logger
+) {
+    override fun logRnAction(
+        name: String?,
+        startTime: Long,
+        endTime: Long,
+        properties: Map<String?, Any?>,
+        bytesSent: Int,
+        output: String?
+    ): Boolean = false
 }

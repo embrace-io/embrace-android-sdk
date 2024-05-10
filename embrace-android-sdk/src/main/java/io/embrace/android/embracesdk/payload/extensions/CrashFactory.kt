@@ -78,8 +78,7 @@ internal object CrashFactory {
             } catch (ex: Exception) {
                 logger.logError(
                     "Failed to parse javascript exception",
-                    ex,
-                    true
+                    ex
                 )
                 logger.trackInternalError(InternalErrorType.INVALID_JS_EXCEPTION, ex)
             }

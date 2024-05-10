@@ -15,24 +15,24 @@ internal class EmbLoggerImpl : EmbLogger {
     override var internalErrorService: InternalErrorService? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
-        log(msg, Severity.DEBUG, throwable, true)
+        log(msg, Severity.DEBUG, throwable)
     }
 
     override fun logInfo(msg: String, throwable: Throwable?) {
-        log(msg, Severity.INFO, throwable, false)
+        log(msg, Severity.INFO, throwable)
     }
 
-    override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
-        log(msg, Severity.WARNING, throwable, logStacktrace)
+    override fun logWarning(msg: String, throwable: Throwable?) {
+        log(msg, Severity.WARNING, throwable)
     }
 
-    override fun logError(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
-        log(msg, Severity.ERROR, throwable, logStacktrace)
+    override fun logError(msg: String, throwable: Throwable?) {
+        log(msg, Severity.ERROR, throwable)
     }
 
     override fun logSdkNotInitialized(action: String) {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
-        log(msg, Severity.WARNING, Throwable(msg), true)
+        log(msg, Severity.WARNING, Throwable(msg))
     }
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
@@ -50,12 +50,11 @@ internal class EmbLoggerImpl : EmbLogger {
      * @param msg the message to log.
      * @param severity how severe the log is. If it's lower than the threshold, the message will not be logged.
      * @param throwable exception, if any.
-     * @param logStacktrace should add the throwable to the logging
      */
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
-    private inline fun log(msg: String, severity: Severity, throwable: Throwable?, logStacktrace: Boolean) {
+    private inline fun log(msg: String, severity: Severity, throwable: Throwable?) {
         if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
-            logcatImpl(throwable, logStacktrace, severity, msg)
+            logcatImpl(throwable, severity, msg)
         }
     }
 
@@ -65,16 +64,14 @@ internal class EmbLoggerImpl : EmbLogger {
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
     private inline fun logcatImpl(
         throwable: Throwable?,
-        logStacktrace: Boolean,
         severity: Severity,
         msg: String
     ) {
-        val exception = throwable?.takeIf { logStacktrace }
         when (severity) {
-            Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, exception)
-            Severity.INFO -> Log.i(EMBRACE_TAG, msg, exception)
-            Severity.WARNING -> Log.w(EMBRACE_TAG, msg, exception)
-            Severity.ERROR -> Log.e(EMBRACE_TAG, msg, exception)
+            Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)
+            Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
+            Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
+            Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
         }
     }
 }

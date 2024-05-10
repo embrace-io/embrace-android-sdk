@@ -165,8 +165,7 @@ internal class EmbraceEventService(
         } catch (ex: Exception) {
             logger.logError(
                 "Cannot start event with name: $name, identifier: $identifier due to an exception",
-                ex,
-                false
+                ex
             )
             logger.trackInternalError(InternalErrorType.START_EVENT_FAIL, ex)
         }

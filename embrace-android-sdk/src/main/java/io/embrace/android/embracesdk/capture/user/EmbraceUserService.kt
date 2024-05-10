@@ -23,7 +23,7 @@ internal class EmbraceUserService(
         return try {
             ofStored(preferencesService)
         } catch (ex: Exception) {
-            logger.logError("Failed to load user info from persistent storage.", ex, true)
+            logger.logError("Failed to load user info from persistent storage.", ex)
             logger.trackInternalError(InternalErrorType.USER_LOAD_FAIL, ex)
             null
         }

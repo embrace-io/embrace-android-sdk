@@ -76,7 +76,7 @@ internal class EmbraceCacheService(
             try {
                 return serializer.fromJson(file.inputStream(), clazz)
             } catch (ex: FileNotFoundException) {
-                logger.logDebug("Cache file cannot be found " + file.path)
+                logger.logInfo("Cache file cannot be found " + file.path)
             } catch (ex: Exception) {
                 logger.logDebug("Failed to read cache object " + file.path, ex)
             }
@@ -90,7 +90,7 @@ internal class EmbraceCacheService(
             try {
                 file.delete()
             } catch (ex: Exception) {
-                logger.logDebug("Failed to delete cache object " + file.path)
+                logger.logInfo("Failed to delete cache object " + file.path)
             }
             false
         }

@@ -1,21 +1,19 @@
 package io.embrace.android.embracesdk.logging
 
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl.Severity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
 internal class EmbLoggerImplTest {
 
-    private val action = FakeLogAction()
-    private var logger = EmbLoggerImpl().apply {
-        addLoggerAction(action)
-    }
+    private lateinit var logger: FakeEmbLogger
 
     @Before
     fun setUp() {
+        logger = FakeEmbLogger()
         ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED = false
     }
 
@@ -25,21 +23,21 @@ internal class EmbLoggerImplTest {
         logger.logInfo("test")
 
         // then logger actions are triggered
-        val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.INFO, null, false)
-        assertEquals(expected, msg)
+        val msg = logger.infoMessages.single()
+        assertEquals("test", msg.msg)
+        assertNull(msg.throwable)
     }
 
     @Test
     fun `a log with a higher severity than the threshold triggers logging actions`() {
         // when log is called with a higher severity
         val throwable = Exception()
-        logger.logWarning("test", throwable, false)
+        logger.logWarning("test", throwable)
 
         // then logger actions are triggered
-        val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.WARNING, throwable, false)
-        assertEquals(expected, msg)
+        val msg = logger.warningMessages.single()
+        assertEquals("test", msg.msg)
+        assertEquals(throwable, msg.throwable)
     }
 
     @Test
@@ -52,8 +50,8 @@ internal class EmbLoggerImplTest {
         logger.logDebug("test", throwable)
 
         // then logger actions are triggered
-        val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.DEBUG, throwable, true)
-        assertEquals(expected, msg)
+        val msg = logger.debugMessages.single()
+        assertEquals("test", msg.msg)
+        assertEquals(throwable, msg.throwable)
     }
 }

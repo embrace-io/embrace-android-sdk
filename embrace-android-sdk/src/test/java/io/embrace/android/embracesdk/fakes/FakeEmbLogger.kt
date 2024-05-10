@@ -1,25 +1,46 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.InternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class FakeEmbLogger : EmbLogger {
 
-    override fun addLoggerAction(action: EmbLoggerImpl.LogAction) {
-    }
+    data class LogMessage(
+        val msg: String,
+        val throwable: Throwable?
+    )
+
+    var debugMessages: MutableList<LogMessage> = mutableListOf()
+    var infoMessages: MutableList<LogMessage> = mutableListOf()
+    var warningMessages: MutableList<LogMessage> = mutableListOf()
+    var errorMessages: MutableList<LogMessage> = mutableListOf()
+    var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
+    var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
+
+    override var internalErrorService: InternalErrorService? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
+        debugMessages.add(LogMessage(msg, throwable))
     }
 
-    override fun logInfo(msg: String) {
+    override fun logInfo(msg: String, throwable: Throwable?) {
+        infoMessages.add(LogMessage(msg, throwable))
     }
 
-    override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
+    override fun logWarning(msg: String, throwable: Throwable?) {
+        warningMessages.add(LogMessage(msg, throwable))
     }
 
-    override fun logError(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
+    override fun logError(msg: String, throwable: Throwable?) {
+        errorMessages.add(LogMessage(msg, throwable))
     }
 
     override fun logSdkNotInitialized(action: String) {
+        sdkNotInitializedMessages.add(LogMessage(action, null))
+    }
+
+    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        internalErrorMessages.add(LogMessage(type.toString(), throwable))
     }
 }

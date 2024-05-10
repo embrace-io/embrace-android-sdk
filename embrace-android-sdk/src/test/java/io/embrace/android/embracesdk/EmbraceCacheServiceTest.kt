@@ -11,14 +11,13 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companio
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -38,15 +37,13 @@ internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
     private lateinit var storageManager: FakeStorageService
-    private lateinit var loggerAction: FakeLogAction
-    private lateinit var logger: EmbLoggerImpl
+    private lateinit var logger: FakeEmbLogger
     private val serializer = TestPlatformSerializer()
 
     @Before
     fun setUp() {
         storageManager = FakeStorageService()
-        loggerAction = FakeLogAction()
-        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
+        logger = FakeEmbLogger()
         service = EmbraceCacheService(
             storageManager,
             serializer,
@@ -359,8 +356,8 @@ internal class EmbraceCacheServiceTest {
         assertEquals(1, filesAgain.size)
         assertEquals(files[0], filesAgain[0])
 
-        val errors = loggerAction.msgQueue.filter { it.severity == EmbLoggerImpl.Severity.ERROR }
-        assertEquals("The following errors were logged: $errors", 0, errors.size)
+        val errors = logger.errorMessages
+        assertEquals("The following errors were logged: $errors", 0, logger.errorMessages.size)
     }
 
     @Test

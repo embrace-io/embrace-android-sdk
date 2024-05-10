@@ -40,7 +40,7 @@ internal class RnBreadcrumbDataSource(
                 RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output)
             )
         } catch (ex: Exception) {
-            logger.logDebug("Failed to log RN Action breadcrumb with name $name", ex)
+            logger.logWarning("Failed to log RN Action breadcrumb", ex)
         }
     }
 }

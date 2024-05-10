@@ -194,12 +194,12 @@ internal class ApiClientImplTest {
                 "Content-Type" to "application/json",
                 "Content-Encoding" to "gzip",
                 "Accept-Encoding" to "gzip",
-                "Connection" to "keep-alive",
-                "Content-Length" to "${delivered.bodySize}",
                 "X-EM-AID" to "abcde",
                 "X-EM-DID" to "test_did",
                 "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid"
+                "X-EM-LID" to "test_lid",
+                "Connection" to "keep-alive",
+                "Content-Length" to "${delivered.bodySize}",
             ),
             headers
         )

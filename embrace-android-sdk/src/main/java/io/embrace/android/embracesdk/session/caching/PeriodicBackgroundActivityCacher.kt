@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.caching
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -38,7 +39,8 @@ internal class PeriodicBackgroundActivityCacher(
                     lastSaved = clock.now()
                 }
             } catch (ex: Exception) {
-                logger.logDebug("Error while caching active session", ex)
+                logger.logWarning("Error while caching active session", ex)
+                logger.trackInternalError(InternalErrorType.BG_SESSION_CACHE_FAIL, ex)
             }
         }
         scheduledFuture = scheduledWorker.schedule<Unit>(

@@ -6,11 +6,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
@@ -63,7 +62,7 @@ internal class EmbraceProcessStateServiceTest {
         }
     }
 
-    private lateinit var logger: FakeLogAction
+    private lateinit var fakeEmbLogger: FakeEmbLogger
 
     @Before
     fun before() {
@@ -73,10 +72,10 @@ internal class EmbraceProcessStateServiceTest {
             constructorMocks = false,
             staticMocks = false
         )
-        logger = FakeLogAction()
+        fakeEmbLogger = FakeEmbLogger()
         stateService = EmbraceProcessStateService(
             fakeClock,
-            EmbLoggerImpl().apply { addLoggerAction(logger) }
+            fakeEmbLogger
         )
     }
 
@@ -201,7 +200,7 @@ internal class EmbraceProcessStateServiceTest {
             stateService.onForeground()
             stateService.onBackground()
         }
-        val messages = fetchLogMessages()
+        val messages = fakeEmbLogger.internalErrorMessages
         assertTrue(messages.isEmpty())
     }
 
@@ -213,15 +212,8 @@ internal class EmbraceProcessStateServiceTest {
         stateService.onBackground()
         stateService.onForeground()
 
-        val messages = fetchLogMessages().map { it.msg }
-        assertEquals(2, messages.size)
-        assertEquals(
-            listOf(
-                "Unbalanced call to onForeground(). This will contribute to session loss.",
-                "Unbalanced call to onForeground(). This will contribute to session loss.",
-            ),
-            messages
-        )
+        val messages = fakeEmbLogger.internalErrorMessages
+        assertEquals(0, messages.size)
     }
 
     @Test
@@ -232,12 +224,8 @@ internal class EmbraceProcessStateServiceTest {
         stateService.onForeground()
         stateService.onBackground()
 
-        val messages = fetchLogMessages().map { it.msg }
-        assertEquals(0, messages.size)
-    }
-
-    private fun fetchLogMessages() = logger.msgQueue.filter {
-        it.severity >= EmbLoggerImpl.Severity.ERROR
+        val messages = fakeEmbLogger.internalErrorMessages
+        assertTrue(messages.isEmpty())
     }
 
     private class DecoratedListener(

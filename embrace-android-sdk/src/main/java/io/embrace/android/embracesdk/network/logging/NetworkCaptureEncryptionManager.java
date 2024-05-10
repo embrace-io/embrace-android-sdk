@@ -48,11 +48,11 @@ class NetworkCaptureEncryptionManager {
             if (publicKey != null) {
                 return encrypt(data, publicKey);
             } else {
-                logger.logError("wrong public key", null, false);
+                logger.logError("wrong public key", null);
                 return null;
             }
         } catch (Exception e) {
-            logger.logError("data cannot be encrypted", e, false);
+            logger.logError("data cannot be encrypted", e);
             return null;
         }
     }
@@ -74,7 +74,7 @@ class NetworkCaptureEncryptionManager {
             result += encodedString;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException |
                  IllegalBlockSizeException | IOException e) {
-            logger.logError("data cannot be encrypted", e, false);
+            logger.logError("data cannot be encrypted", e);
         }
         return result;
     }
@@ -97,7 +97,7 @@ class NetworkCaptureEncryptionManager {
             result = new String(decodedData, UTF_8);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  BadPaddingException | IllegalBlockSizeException | IOException e) {
-            logger.logError("data cannot be encrypted", e, false);
+            logger.logError("data cannot be encrypted", e);
         }
         return result;
     }

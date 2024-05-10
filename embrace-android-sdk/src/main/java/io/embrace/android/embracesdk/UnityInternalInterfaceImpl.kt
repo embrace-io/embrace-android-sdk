@@ -53,7 +53,6 @@ internal class UnityInternalInterfaceImpl(
         exceptionType: LogExceptionType
     ) {
         if (embrace.isStarted) {
-            logger.logError("message: $message -- stacktrace: $stacktrace")
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 "Unity exception",

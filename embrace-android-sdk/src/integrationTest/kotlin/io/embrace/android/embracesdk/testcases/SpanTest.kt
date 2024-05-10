@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.FakeLogAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
 import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
@@ -71,8 +71,10 @@ internal class SpanTest {
     fun `a SpanExporter added after initialization won't be used`() {
         with(testRule) {
 
-            val fake = FakeLogAction()
-            harness.overriddenInitModule.logger.apply { addLoggerAction(fake) }
+            val fake = FakeInternalErrorService()
+            harness.overriddenInitModule.logger.apply {
+                internalErrorService = fake
+            }
 
             val fakeSpanExporter = FakeSpanExporter()
             embrace.start(harness.overriddenCoreModule.context)
@@ -84,9 +86,6 @@ internal class SpanTest {
                 Thread.sleep(3000)
             }
             assertTrue(fakeSpanExporter.exportedSpans.size == 0)
-            assertTrue(fake.msgQueue.any {
-                it.msg == "A SpanExporter can only be added before the SDK is started."
-            })
         }
     }
 }

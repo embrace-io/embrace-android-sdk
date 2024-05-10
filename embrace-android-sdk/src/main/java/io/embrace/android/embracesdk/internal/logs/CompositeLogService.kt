@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
@@ -22,7 +22,7 @@ internal class CompositeLogService(
     private val v2LogService: Provider<LogService>,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val serializer: EmbraceSerializer
 ) : LogMessageService {
 

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
  */
 internal class DataCaptureOrchestrator(
     private val dataSourceState: List<DataSourceState<*>>,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     configService: ConfigService
 ) {
 

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks
 import io.mockk.unmockkAll
 import org.junit.AfterClass
@@ -56,7 +56,7 @@ internal class EmbraceNetworkCaptureServiceTest {
                     false,
                     "{\"base_urls\": {\"data\": \"https://data.emb-api.com\"}}",
                     EmbraceSerializer(),
-                    InternalEmbraceLogger()
+                    EmbLoggerImpl()
                 )
         }
 
@@ -229,7 +229,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         logMessageService,
         configService,
         EmbraceSerializer(),
-        InternalEmbraceLogger()
+        EmbLoggerImpl()
     )
 
     private fun getDefaultRule(

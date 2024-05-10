@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -12,7 +12,7 @@ internal class PayloadFactoryImpl(
     private val v1payloadMessageCollator: V1PayloadMessageCollator,
     private val v2payloadMessageCollator: V2PayloadMessageCollator,
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : PayloadFactory {
 
     private val collator: PayloadMessageCollator

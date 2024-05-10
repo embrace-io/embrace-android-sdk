@@ -29,7 +29,7 @@ internal class InternalErrorServiceActionTest {
     @Test
     fun `do not report error if no throwable available`() {
         setupService()
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, null, true)
+        reportingLoggerAction.log(errorMsg, EmbLoggerImpl.Severity.DEBUG, null, true)
 
         verify { internalErrorService wasNot Called }
     }
@@ -37,7 +37,7 @@ internal class InternalErrorServiceActionTest {
     @Test
     fun `report error if throwable available`() {
         setupService()
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
+        reportingLoggerAction.log(errorMsg, EmbLoggerImpl.Severity.DEBUG, exception, true)
 
         verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
@@ -46,21 +46,21 @@ internal class InternalErrorServiceActionTest {
     fun `if an exception is thrown reporting error, swallow it`() {
         setupService()
         every { internalErrorService.handleInternalError(exception) } throws RuntimeException()
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.DEBUG, exception, true)
+        reportingLoggerAction.log(errorMsg, EmbLoggerImpl.Severity.DEBUG, exception, true)
         verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
 
     @Test
     fun `if a throwable is not available with INFO severity then dont handle exception`() {
         setupService()
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.INFO, null, true)
+        reportingLoggerAction.log(errorMsg, EmbLoggerImpl.Severity.INFO, null, true)
         verify(exactly = 0) { internalErrorService.handleInternalError(any() as Exception) }
     }
 
     @Test
     fun `if a throwable is available with ERROR severity`() {
         setupService()
-        reportingLoggerAction.log(errorMsg, InternalEmbraceLogger.Severity.ERROR, exception, true)
+        reportingLoggerAction.log(errorMsg, EmbLoggerImpl.Severity.ERROR, exception, true)
         verify(exactly = 1) { internalErrorService.handleInternalError(exception) }
     }
 }

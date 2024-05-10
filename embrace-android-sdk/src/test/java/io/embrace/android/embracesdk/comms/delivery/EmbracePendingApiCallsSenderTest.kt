@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
@@ -315,7 +315,7 @@ internal class EmbracePendingApiCallsSenderTest {
             scheduledWorker = worker,
             networkConnectivityService = networkConnectivityService,
             cacheManager = mockCacheManager,
-            logger = InternalEmbraceLogger(),
+            logger = EmbLoggerImpl(),
             clock = FakeClock()
         )
 

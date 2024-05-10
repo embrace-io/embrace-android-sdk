@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.utils.NetworkUtils
@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceDomainCountLimiter(
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
 ) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()

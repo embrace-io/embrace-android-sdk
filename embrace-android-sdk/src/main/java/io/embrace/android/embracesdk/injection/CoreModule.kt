@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 
 /**
@@ -62,7 +62,7 @@ internal interface CoreModule {
 internal class CoreModuleImpl(
     ctx: Context,
     override val appFramework: AppFramework,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : CoreModule {
 
     override val context: Context by singleton {

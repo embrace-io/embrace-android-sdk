@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -13,7 +13,7 @@ import org.junit.Test
 internal class LocalConfigTest {
 
     private val serializer = EmbraceSerializer()
-    private val logger = InternalEmbraceLogger()
+    private val logger = EmbLoggerImpl()
 
     @Test
     fun testEmptyConfig() {

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -19,7 +19,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
     private lateinit var storageService: FakeStorageService
     private lateinit var serializer: TestPlatformSerializer
     private lateinit var loggerAction: FakeLogAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLoggerImpl
     private lateinit var executionCoordinator: ExecutionCoordinator
 
     @Before
@@ -27,7 +27,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         storageService = FakeStorageService()
         serializer = TestPlatformSerializer()
         loggerAction = FakeLogAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
         embraceCacheService = EmbraceCacheService(
             storageService,
             serializer,
@@ -152,7 +152,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     private fun getErrorLogs() = loggerAction
         .msgQueue
-        .filter { it.severity == InternalEmbraceLogger.Severity.ERROR }
+        .filter { it.severity == EmbLoggerImpl.Severity.ERROR }
         .toList()
 
     companion object {

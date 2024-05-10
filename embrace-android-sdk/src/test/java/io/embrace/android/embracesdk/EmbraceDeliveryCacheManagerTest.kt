@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
@@ -51,7 +51,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
     private lateinit var loggerAction: FakeLogAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLoggerImpl
     private lateinit var fakeClock: FakeClock
 
     companion object {
@@ -62,7 +62,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun before() {
         fakeClock = FakeClock(clockInit)
         loggerAction = FakeLogAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
         storageService = FakeStorageService()
         cacheService = spyk(
             EmbraceCacheService(

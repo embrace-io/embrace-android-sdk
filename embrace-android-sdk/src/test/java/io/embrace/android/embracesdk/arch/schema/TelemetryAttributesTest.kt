@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -30,7 +30,7 @@ internal class TelemetryAttributesTest {
         sessionProperties = EmbraceSessionProperties(
             FakePreferenceService(),
             FakeConfigService(),
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
         sessionId = Uuid.getEmbUuid()
         configService = FakeConfigService()

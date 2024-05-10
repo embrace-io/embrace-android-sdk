@@ -8,11 +8,11 @@ import android.util.Log
  */
 internal class InternalErrorServiceAction(
     private val internalErrorService: InternalErrorService
-) : InternalEmbraceLogger.LogAction {
+) : EmbLoggerImpl.LogAction {
 
     override fun log(
         msg: String,
-        severity: InternalEmbraceLogger.Severity,
+        severity: EmbLoggerImpl.Severity,
         throwable: Throwable?,
         logStacktrace: Boolean
     ) {

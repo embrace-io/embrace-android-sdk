@@ -19,7 +19,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
+import io.embrace.android.embracesdk.logging.EmbLogger;
 
 /**
  * API to encrypt/decrypt data
@@ -32,9 +32,9 @@ class NetworkCaptureEncryptionManager {
     private static final int mDecryptionBlockSize = 256;
 
     @NonNull
-    private final InternalEmbraceLogger logger;
+    private final EmbLogger logger;
 
-    NetworkCaptureEncryptionManager(@NonNull InternalEmbraceLogger logger) {
+    NetworkCaptureEncryptionManager(@NonNull EmbLogger logger) {
         this.logger = logger;
     }
 
@@ -48,11 +48,11 @@ class NetworkCaptureEncryptionManager {
             if (publicKey != null) {
                 return encrypt(data, publicKey);
             } else {
-                logger.logError("wrong public key");
+                logger.logError("wrong public key", null, false);
                 return null;
             }
         } catch (Exception e) {
-            logger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e, false);
             return null;
         }
     }
@@ -74,7 +74,7 @@ class NetworkCaptureEncryptionManager {
             result += encodedString;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException |
                  IllegalBlockSizeException | IOException e) {
-            logger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e, false);
         }
         return result;
     }
@@ -97,7 +97,7 @@ class NetworkCaptureEncryptionManager {
             result = new String(decodedData, UTF_8);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  BadPaddingException | IllegalBlockSizeException | IOException e) {
-            logger.logError("data cannot be encrypted", e);
+            logger.logError("data cannot be encrypted", e, false);
         }
         return result;
     }

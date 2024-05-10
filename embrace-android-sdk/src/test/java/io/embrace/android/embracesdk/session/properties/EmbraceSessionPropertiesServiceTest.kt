@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,7 +22,7 @@ internal class EmbraceSessionPropertiesServiceTest {
 
     @Before
     fun setUp() {
-        val logger = InternalEmbraceLogger()
+        val logger = EmbLoggerImpl()
         val fakeConfigService = FakeConfigService()
         props = EmbraceSessionProperties(FakePreferenceService(), fakeConfigService, logger)
         ndkService = FakeNdkService()

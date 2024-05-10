@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
@@ -42,7 +42,7 @@ internal class SessionOrchestratorImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : SessionOrchestrator {
 
     private val lock = Any()
@@ -321,7 +321,7 @@ internal class SessionOrchestratorImpl(
         timestamp: Long,
         inBackground: Boolean,
         stateChange: String,
-        logger: InternalEmbraceLogger
+        logger: EmbLogger
     ) {
         val type = when {
             inBackground -> "background"

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 
@@ -18,7 +18,7 @@ internal fun shouldEndManualSession(
     clock: Clock,
     activeSession: Session?,
     state: ProcessState,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ): Boolean {
     if (state == ProcessState.BACKGROUND) {
         logger.logWarning("Cannot manually end session while in background.")
@@ -44,7 +44,7 @@ internal fun shouldEndManualSession(
 
 internal fun shouldRunOnBackground(
     state: ProcessState,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ): Boolean {
     return if (state == ProcessState.BACKGROUND) {
         logger.logWarning("Detected unbalanced call to onBackground. Ignoring..")
@@ -56,7 +56,7 @@ internal fun shouldRunOnBackground(
 
 internal fun shouldRunOnForeground(
     state: ProcessState,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ): Boolean {
     return if (state == ProcessState.FOREGROUND) {
         logger.logWarning("Detected unbalanced call to onForeground. Ignoring..")

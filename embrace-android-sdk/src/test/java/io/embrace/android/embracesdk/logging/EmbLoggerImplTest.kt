@@ -2,15 +2,15 @@ package io.embrace.android.embracesdk.logging
 
 import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger.Severity
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl.Severity
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class InternalEmbraceLoggerTest {
+internal class EmbLoggerImplTest {
 
     private val action = FakeLogAction()
-    private var logger = InternalEmbraceLogger().apply {
+    private var logger = EmbLoggerImpl().apply {
         addLoggerAction(action)
     }
 
@@ -26,7 +26,7 @@ internal class InternalEmbraceLoggerTest {
 
         // then logger actions are triggered
         val msg = action.msgQueue.single()
-        val expected = FakeLogAction.LogMessage("test", Severity.INFO, null, true)
+        val expected = FakeLogAction.LogMessage("test", Severity.INFO, null, false)
         assertEquals(expected, msg)
     }
 

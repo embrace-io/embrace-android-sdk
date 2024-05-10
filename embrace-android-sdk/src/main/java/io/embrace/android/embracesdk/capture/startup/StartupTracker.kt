@@ -11,7 +11,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to
@@ -37,7 +37,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
  */
 internal class StartupTracker(
     private val appStartupTraceEmitter: AppStartupTraceEmitter,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
     private var isFirstDraw = false

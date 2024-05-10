@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -13,7 +13,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     private lateinit var impl: FlutterInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var fakePreferencesService: FakePreferenceService
 

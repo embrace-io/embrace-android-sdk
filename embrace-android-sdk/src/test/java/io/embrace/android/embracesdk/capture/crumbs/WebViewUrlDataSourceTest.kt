@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -41,7 +41,7 @@ internal class WebViewUrlDataSourceTest {
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             writer,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
         source.logWebView(
             "http://www.google.com?query=123",
@@ -77,7 +77,7 @@ internal class WebViewUrlDataSourceTest {
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             writer,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
         source.logWebView(
             "http://www.google.com?query=123",
@@ -113,7 +113,7 @@ internal class WebViewUrlDataSourceTest {
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             writer,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
         repeat(150) { k ->
             source.logWebView(

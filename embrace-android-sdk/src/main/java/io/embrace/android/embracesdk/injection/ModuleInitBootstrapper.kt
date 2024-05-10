@@ -26,7 +26,8 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -44,7 +45,7 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    val logger: EmbLogger = EmbLoggerImpl(),
     val initModule: InitModule = InitModuleImpl(logger = logger),
     val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule),
     private val coreModuleSupplier: CoreModuleSupplier = ::CoreModuleImpl,

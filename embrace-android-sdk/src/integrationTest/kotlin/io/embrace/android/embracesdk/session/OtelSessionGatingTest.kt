@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessionMessages
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -50,7 +50,7 @@ internal class OtelSessionGatingTest {
                 RemoteConfig(sessionConfig = gatingConfig)
             },
         ),
-        InternalEmbraceLogger()
+        EmbLoggerImpl()
     )
 
     @Rule

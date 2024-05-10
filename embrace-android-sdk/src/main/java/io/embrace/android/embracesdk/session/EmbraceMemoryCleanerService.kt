@@ -20,7 +20,7 @@ internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : Memo
             try {
                 listener.cleanCollections()
             } catch (ex: Exception) {
-                logger.logDebug("Failed to clean collections on service listener", ex)
+                logger.logWarning("Failed to clean collections on service listener", ex)
             }
         }
         internalErrorService.resetExceptionErrorObject()

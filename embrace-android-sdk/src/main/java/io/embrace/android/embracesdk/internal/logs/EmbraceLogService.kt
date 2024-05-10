@@ -298,7 +298,7 @@ internal class LogCounter(
         if (logIds.size < getConfigLogLimit.invoke()) {
             logIds[timestamp] = logId
         } else {
-            logger.logWarning("$name log limit has been reached.")
+            logger.logInfo("$name log limit has been reached.")
             return false
         }
         return true

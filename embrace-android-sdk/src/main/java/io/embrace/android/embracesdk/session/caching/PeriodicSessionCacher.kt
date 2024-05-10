@@ -40,7 +40,7 @@ internal class PeriodicSessionCacher(
             try {
                 provider()
             } catch (ex: Exception) {
-                logger.logDebug("Error while caching active session", ex)
+                logger.logWarning("Error while caching active session", ex)
             }
         }
     }

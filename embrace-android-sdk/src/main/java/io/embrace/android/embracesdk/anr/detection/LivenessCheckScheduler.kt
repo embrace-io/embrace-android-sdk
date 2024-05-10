@@ -98,7 +98,7 @@ internal class LivenessCheckScheduler internal constructor(
         } catch (exc: Exception) {
             // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
             val message = "ANR capture initialization failed"
-            logger.logError(message, exc, true)
+            logger.logWarning(message, exc, true)
         }
     }
 
@@ -154,7 +154,7 @@ internal class LivenessCheckScheduler internal constructor(
     private fun sendHeartbeatMessage() {
         val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
         if (!targetThreadHandler.sendMessage(heartbeatMessage)) {
-            logger.logError(
+            logger.logWarning(
                 "Failed to send message to targetHandler, main thread likely shutting down.",
                 IllegalStateException("Failed to send message to targetHandler"),
                 true

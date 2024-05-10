@@ -67,7 +67,7 @@ internal class ActivityLifecycleTracker(
         try {
             orientationService.onOrientationChanged(activity.resources.configuration.orientation)
         } catch (ex: Exception) {
-            logger.logDebug("Failed to register an orientation change", ex)
+            logger.logWarning("Failed to register an orientation change", ex)
         }
     }
 
@@ -78,7 +78,7 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
             }
         }
     }
@@ -89,7 +89,7 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onView(activity)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
             }
         }
     }
@@ -102,7 +102,7 @@ internal class ActivityLifecycleTracker(
                 try {
                     listener.applicationStartupComplete()
                 } catch (ex: Exception) {
-                    logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                    logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
                 }
             }
         }
@@ -114,7 +114,7 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onViewClose(activity)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
             }
         }
     }
@@ -135,7 +135,7 @@ internal class ActivityLifecycleTracker(
             application.unregisterActivityLifecycleCallbacks(this)
             listeners.clear()
         } catch (ex: Exception) {
-            logger.logDebug("Error when closing EmbraceActivityService", ex)
+            logger.logWarning("Error when closing EmbraceActivityService", ex)
         }
     }
 

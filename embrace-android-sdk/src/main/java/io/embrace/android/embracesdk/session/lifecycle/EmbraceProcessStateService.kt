@@ -101,7 +101,7 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+            logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
         }
     }
 
@@ -118,7 +118,7 @@ internal class EmbraceProcessStateService(
             listeners.clear()
             sessionOrchestrator = null
         } catch (ex: Exception) {
-            logger.logDebug("Error when closing EmbraceProcessStateService", ex)
+            logger.logWarning("Error when closing EmbraceProcessStateService", ex)
         }
     }
 

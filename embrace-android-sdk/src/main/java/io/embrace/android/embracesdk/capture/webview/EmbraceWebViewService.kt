@@ -90,7 +90,7 @@ internal class EmbraceWebViewService(
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
                 return serializer.fromJson(message, WebViewInfo::class.java)
             } else {
-                logger.logError("Web Vital info is too large to parse")
+                logger.logWarning("Web Vital info is too large to parse")
             }
         } catch (e: Exception) {
             logger.logError("Cannot parse Web Vital", e)

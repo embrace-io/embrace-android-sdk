@@ -279,7 +279,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             try {
                 listener()
             } catch (ex: Exception) {
-                logger.logDebug("Failed to notify configListener", ex)
+                logger.logWarning("Failed to notify configListener", ex)
             }
         }
     }

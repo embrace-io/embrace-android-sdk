@@ -33,7 +33,7 @@ internal class UnbalancedCallDetector(
     private fun checkTimeTravel(name: String, timestamp: Long) {
         if (lastTimestamp > timestamp) {
             val msg = "Time travel in $name. $lastTimestamp to $timestamp"
-            logger.logError(msg, IllegalStateException(msg), true)
+            logger.logWarning(msg, IllegalStateException(msg), true)
         }
         lastTimestamp = timestamp
     }
@@ -42,7 +42,7 @@ internal class UnbalancedCallDetector(
         if (blocked != expected) {
             val threadName = Thread.currentThread().name
             val msg = "Unbalanced call to $name in ANR detection. Thread=$threadName"
-            logger.logError(msg, IllegalStateException(msg), true)
+            logger.logWarning(msg, IllegalStateException(msg), true)
         }
     }
 }

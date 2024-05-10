@@ -263,13 +263,13 @@ final class EmbraceImpl {
         }
 
         if (ApkToolsConfig.IS_SDK_DISABLED) {
-            logger.logInfo("SDK disabled through ApkToolsConfig");
+            logger.logInfo("SDK disabled through ApkToolsConfig", null);
             stop();
             return;
         }
 
         final long startTimeMs = sdkClock.now();
-        logger.logInfo("Starting SDK for framework " + framework.name());
+        logger.logInfo("Starting SDK for framework " + framework.name(), null);
         moduleInitBootstrapper.init(context, isDevMode, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
@@ -283,7 +283,7 @@ final class EmbraceImpl {
 
         final EssentialServiceModule essentialServiceModule = moduleInitBootstrapper.getEssentialServiceModule();
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
-            logger.logInfo("Interrupting SDK start because it is disabled");
+            logger.logInfo("Interrupting SDK start because it is disabled", null);
             stop();
             return;
         }
@@ -371,7 +371,7 @@ final class EmbraceImpl {
 
         final String startMsg = "Embrace SDK started. App ID: " +
             essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
-        logger.logInfo(startMsg);
+        logger.logInfo(startMsg, null);
 
         final long endTimeMs = sdkClock.now();
         started.set(true);
@@ -474,7 +474,7 @@ final class EmbraceImpl {
      */
     void stop() {
         if (started.compareAndSet(true, false)) {
-            logger.logInfo("Shutting down Embrace SDK.");
+            logger.logInfo("Shutting down Embrace SDK.", null);
             try {
                 if (composeActivityListenerInstance != null && application != null) {
                     unregisterComposeActivityListener(application);
@@ -1002,7 +1002,7 @@ final class EmbraceImpl {
             if (sessionId != null) {
                 return sessionId;
             } else {
-                logger.logInfo("Session ID is null");
+                logger.logInfo("Session ID is null", null);
             }
         }
         return null;

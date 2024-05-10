@@ -38,7 +38,7 @@ internal class PeriodicBackgroundActivityCacher(
                     lastSaved = clock.now()
                 }
             } catch (ex: Exception) {
-                logger.logDebug("Error while caching active session", ex)
+                logger.logWarning("Error while caching active session", ex)
             }
         }
         scheduledFuture = scheduledWorker.schedule<Unit>(

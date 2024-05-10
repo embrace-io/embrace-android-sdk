@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.EmbraceAutomaticVerification
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Exception Handler that verifies if a VerifyIntegrationException was received,
@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
  */
 internal class AutomaticVerificationExceptionHandler(
     private val defaultHandler: Thread.UncaughtExceptionHandler?,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) :
 
     Thread.UncaughtExceptionHandler {

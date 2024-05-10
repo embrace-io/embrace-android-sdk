@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.capture.cpu
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal class EmbraceCpuInfoDelegate(
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : CpuInfoDelegate {
 
     override fun getCpuName(): String? {

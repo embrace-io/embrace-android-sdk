@@ -21,7 +21,8 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.UserInfo
@@ -54,7 +55,7 @@ internal class EventHandlerTest {
         private lateinit var userService: UserService
         private lateinit var gatingService: GatingService
         private lateinit var sessionProperties: EmbraceSessionProperties
-        private lateinit var logger: InternalEmbraceLogger
+        private lateinit var logger: EmbLogger
         private lateinit var mockStartup: StartupEventInfo
         private lateinit var mockLateTimer: ScheduledFuture<*>
         private lateinit var userInfo: UserInfo
@@ -69,7 +70,7 @@ internal class EventHandlerTest {
             performanceService = FakePerformanceInfoService()
             userService = FakeUserService()
             gatingService = FakeGatingService()
-            logger = InternalEmbraceLogger()
+            logger = EmbLoggerImpl()
             mockStartup = StartupEventInfo()
             mockLateTimer = mockk(relaxed = true)
             userInfo = UserInfo()

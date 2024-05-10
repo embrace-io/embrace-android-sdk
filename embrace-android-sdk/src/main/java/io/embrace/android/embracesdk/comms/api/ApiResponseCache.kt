@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.comms.api
 import android.net.http.HttpResponseCache
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.Closeable
 import java.io.IOException
@@ -22,7 +22,7 @@ import java.net.URI
 internal class ApiResponseCache(
     private val serializer: EmbraceSerializer,
     private val storageService: StorageService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : Closeable {
 
     companion object {

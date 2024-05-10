@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.fakes.system.mockActivity
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import org.junit.Assert.assertEquals
@@ -47,7 +47,7 @@ internal class EmbraceBreadcrumbServiceTest {
         )
         processStateService = FakeProcessStateService()
         activity = mockActivity()
-        memoryCleanerService = EmbraceMemoryCleanerService(InternalEmbraceLogger())
+        memoryCleanerService = EmbraceMemoryCleanerService(EmbLoggerImpl())
         clock.setCurrentTime(MILLIS_FOR_2020_01_01)
         clock.tickSecond()
     }
@@ -84,7 +84,7 @@ internal class EmbraceBreadcrumbServiceTest {
         clock,
         configService,
         { fakeDataSourceModule() },
-        InternalEmbraceLogger(),
+        EmbLoggerImpl(),
     )
 
     companion object {

@@ -11,14 +11,14 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companio
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -38,15 +38,15 @@ internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
     private lateinit var storageManager: FakeStorageService
-    private lateinit var loggerAction: FakeLoggerAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var loggerAction: FakeLogAction
+    private lateinit var logger: EmbLoggerImpl
     private val serializer = TestPlatformSerializer()
 
     @Before
     fun setUp() {
         storageManager = FakeStorageService()
-        loggerAction = FakeLoggerAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        loggerAction = FakeLogAction()
+        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
         service = EmbraceCacheService(
             storageManager,
             serializer,
@@ -359,7 +359,7 @@ internal class EmbraceCacheServiceTest {
         assertEquals(1, filesAgain.size)
         assertEquals(files[0], filesAgain[0])
 
-        val errors = loggerAction.msgQueue.filter { it.severity == InternalEmbraceLogger.Severity.ERROR }
+        val errors = loggerAction.msgQueue.filter { it.severity == EmbLoggerImpl.Severity.ERROR }
         assertEquals("The following errors were logged: $errors", 0, errors.size)
     }
 

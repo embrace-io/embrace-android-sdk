@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal class UnbalancedCallDetector(
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : BlockedThreadListener {
 
     @Volatile

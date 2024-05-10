@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
@@ -28,7 +28,7 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)

@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
@@ -65,7 +65,7 @@ internal class EmbraceMetadataService private constructor(
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : MetadataService, ActivityLifecycleListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
@@ -407,7 +407,7 @@ internal class EmbraceMetadataService private constructor(
             lazyAppVersionName: Lazy<String>,
             lazyAppVersionCode: Lazy<String>,
             hostedSdkVersionInfo: HostedSdkVersionInfo,
-            logger: InternalEmbraceLogger
+            logger: EmbLogger
         ): EmbraceMetadataService {
             val isAppUpdated = lazy {
                 val lastKnownAppVersion = preferencesService.appVersion
@@ -482,7 +482,7 @@ internal class EmbraceMetadataService private constructor(
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)
         }
 
-        private fun getBundleAsset(context: Context, bundleUrl: String, logger: InternalEmbraceLogger): InputStream? {
+        private fun getBundleAsset(context: Context, bundleUrl: String, logger: EmbLogger): InputStream? {
             try {
                 return context.assets.open(getBundleAssetName(bundleUrl))
             } catch (e: Exception) {
@@ -491,7 +491,7 @@ internal class EmbraceMetadataService private constructor(
             return null
         }
 
-        private fun getCustomBundleStream(bundleUrl: String, logger: InternalEmbraceLogger): InputStream? {
+        private fun getCustomBundleStream(bundleUrl: String, logger: EmbLogger): InputStream? {
             try {
                 return FileInputStream(bundleUrl)
             } catch (e: NullPointerException) {
@@ -506,7 +506,7 @@ internal class EmbraceMetadataService private constructor(
             context: Context,
             bundleUrl: String?,
             defaultBundleId: String?,
-            logger: InternalEmbraceLogger
+            logger: EmbLogger
         ): String? {
             if (bundleUrl == null) {
                 // If JS bundle URL is null, we set React Native bundle ID to the defaultBundleId.

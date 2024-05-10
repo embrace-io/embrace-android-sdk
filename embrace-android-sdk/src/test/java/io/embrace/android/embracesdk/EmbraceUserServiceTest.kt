@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,11 +39,11 @@ internal class EmbraceUserServiceTest {
 
     private lateinit var service: EmbraceUserService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
 
     @Before
     fun setUp() {
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         preferencesService = FakePreferenceService()
     }
 

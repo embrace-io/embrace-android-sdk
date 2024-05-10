@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Base class for data sources.
  */
 internal abstract class SpanDataSourceImpl(
     destination: SpanService,
-    logger: InternalEmbraceLogger,
+    logger: EmbLogger,
     limitStrategy: LimitStrategy
 ) : SpanDataSource, DataSourceImpl<SpanService>(
     destination = destination,

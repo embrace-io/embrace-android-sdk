@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
@@ -50,7 +50,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         configService = FakeConfigService(anrBehavior = anrBehavior)
         sharedObjectLoader = mockk(relaxed = true)
         delegate = mockk(relaxed = true)
-        val logger = InternalEmbraceLogger()
+        val logger = EmbLoggerImpl()
         random = mockk(relaxed = true)
         executorService = BlockingScheduledExecutorService()
         sampler =

@@ -5,7 +5,7 @@ import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -65,7 +65,7 @@ internal class DeviceImplTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
             cpuInfoDelegate,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
 
         assertEquals("200x300", device.screenResolution)
@@ -79,7 +79,7 @@ internal class DeviceImplTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
             cpuInfoDelegate,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
 
         assertEquals("fake_cpu", device.cpuName)
@@ -93,7 +93,7 @@ internal class DeviceImplTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
             cpuInfoDelegate,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
 
         assertEquals("fake_egl", device.eglInfo)

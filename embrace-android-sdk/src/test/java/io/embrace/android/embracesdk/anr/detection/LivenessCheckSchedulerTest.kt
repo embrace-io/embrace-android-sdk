@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -29,7 +30,7 @@ internal class LivenessCheckSchedulerTest {
 
     private lateinit var configService: ConfigService
     private lateinit var anrExecutorService: BlockingScheduledExecutorService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var looper: Looper
     private lateinit var fakeClock: FakeClock
     private lateinit var fakeTargetThreadHandler: TargetThreadHandler
@@ -47,7 +48,7 @@ internal class LivenessCheckSchedulerTest {
         fakeClock = FakeClock(160982340900)
         configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         looper = mockk {
             every { thread } returns Thread.currentThread()
         }
@@ -58,7 +59,7 @@ internal class LivenessCheckSchedulerTest {
             state = state,
             targetThread = Thread.currentThread(),
             anrMonitorThread = anrMonitorThread,
-            logger = InternalEmbraceLogger()
+            logger = EmbLoggerImpl()
         )
         fakeTargetThreadHandler = mockk(relaxUnitFun = true) {
             every { action = any() } returns Unit

@@ -2,11 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>ArgumentListWrapping:LegacyExceptionInfoTest.kt$LegacyExceptionInfoTest$( "io.embrace.android.embracesdk.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:45)", info.lines.first())</ID>
-    <ID>ArgumentListWrapping:LegacyExceptionInfoTest.kt$LegacyExceptionInfoTest$("io.embrace.android.embracesdk.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:45)", info.lines.first())</ID>
     <ID>DataClassContainsFunctions:LegacyExceptionError.kt$LegacyExceptionError$fun addException(ex: Throwable?, appState: String?, clock: Clock)</ID>
     <ID>DataClassContainsFunctions:LegacyExceptionError.kt$LegacyExceptionError$private fun getExceptionInfo(ex: Throwable?): List&lt;LegacyExceptionInfo&gt;</ID>
-    <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "c") var occurrences = 0</ID>
-    <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "rep") var exceptionErrors = mutableListOf&lt;LegacyExceptionErrorInfo&gt;()</ID>
+    <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "c") var occurrences: Int = 0</ID>
+    <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "rep") var exceptionErrors: MutableList&lt;LegacyExceptionErrorInfo&gt; = mutableListOf()</ID>
   </CurrentIssues>
 </SmellBaseline>

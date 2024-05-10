@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -38,8 +38,8 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var loggerAction: FakeLoggerAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var loggerAction: FakeLogAction
+    private lateinit var logger: EmbLoggerImpl
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
 
@@ -56,8 +56,8 @@ internal class AppStartupTraceEmitterTest {
             backgroundWorker
         )
         clock.tick(100L)
-        loggerAction = FakeLoggerAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        loggerAction = FakeLogAction()
+        logger = EmbLoggerImpl().apply { addLoggerAction(loggerAction) }
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,
             startupServiceProvider = { startupService },

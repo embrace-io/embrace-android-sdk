@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.utils
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.utils.PropertyUtils.sanitizeProperties
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class PropertyUtilsTest {
 
-    private val logger = InternalEmbraceLogger()
+    private val logger = EmbLoggerImpl()
 
     @Test
     fun testEmptyCase() {

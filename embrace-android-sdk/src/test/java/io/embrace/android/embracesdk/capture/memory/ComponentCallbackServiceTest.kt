@@ -5,7 +5,7 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.system.mockContext
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -43,7 +43,7 @@ internal class ComponentCallbackServiceTest {
         service = ComponentCallbackService(
             application,
             memoryService,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
     }
 

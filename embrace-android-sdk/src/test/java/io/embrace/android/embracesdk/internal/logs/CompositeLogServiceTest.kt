@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.fakeNetworkCapturedCall
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -43,7 +43,7 @@ internal class CompositeLogServiceTest {
             v2LogService = { v2LogService },
             networkCaptureDataSource = { networkCaptureDataSource },
             configService = configService,
-            logger = InternalEmbraceLogger(),
+            logger = EmbLoggerImpl(),
             serializer = EmbraceSerializer()
         )
     }

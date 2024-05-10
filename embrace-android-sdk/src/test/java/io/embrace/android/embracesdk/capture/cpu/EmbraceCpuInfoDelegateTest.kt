@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.capture.cpu
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -13,12 +14,12 @@ import org.junit.Test
 internal class EmbraceCpuInfoDelegateTest {
 
     private val mockSharedObjectLoader: SharedObjectLoader = mockk(relaxed = true)
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
 
     @Before
     fun before() {
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, logger)
     }
 

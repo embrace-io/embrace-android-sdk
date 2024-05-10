@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 
 /**
@@ -19,7 +19,7 @@ internal class PushNotificationDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     writer: SessionSpanWriter,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,

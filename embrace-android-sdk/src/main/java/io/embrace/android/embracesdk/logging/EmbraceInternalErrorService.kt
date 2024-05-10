@@ -20,8 +20,7 @@ import java.net.UnknownServiceException
  */
 internal class EmbraceInternalErrorService(
     private val processStateService: ProcessStateService,
-    private val clock: Clock,
-    private val logStrictMode: Boolean
+    private val clock: Clock
 ) : InternalErrorService {
     private var configService: ConfigService? = null
     private var err: LegacyExceptionError? = null
@@ -95,7 +94,7 @@ internal class EmbraceInternalErrorService(
             return
         }
         if (err == null) {
-            err = LegacyExceptionError(logStrictMode)
+            err = LegacyExceptionError()
         }
 
         // if the config service has not been set yet, capture the exception

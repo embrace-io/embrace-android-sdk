@@ -10,7 +10,8 @@ import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock
@@ -21,7 +22,7 @@ import org.robolectric.RuntimeEnvironment
  * If used in a Robolectric test, [application] and [context] will be fakes supplied by the Robolectric framework
  */
 internal class FakeCoreModule(
-    val logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    val logger: EmbLogger = EmbLoggerImpl(),
     override val application: Application =
         if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
     override val context: Context =

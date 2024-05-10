@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Component to load native binaries
  */
 internal class SharedObjectLoader(
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
     val loaded = AtomicBoolean(false)
 

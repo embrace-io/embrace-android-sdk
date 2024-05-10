@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 
 /**
  * Encapsulates the logic to trigger different type of crashes for testing purpose.
@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
  */
 internal object EmbraceCrashSamples {
 
-    private val logger = InternalEmbraceLogger()
+    private val logger = EmbLoggerImpl()
 
     private val ndkCrashSamplesNdkDelegate = EmbraceCrashSamplesNdkDelegateImpl()
 

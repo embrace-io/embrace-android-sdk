@@ -44,8 +44,9 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
@@ -74,7 +75,7 @@ internal class SessionHandlerTest {
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService =
-            EmbraceInternalErrorService(FakeProcessStateService(), clock, false)
+            EmbraceInternalErrorService(FakeProcessStateService(), clock)
         private const val now = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
@@ -104,13 +105,13 @@ internal class SessionHandlerTest {
     private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var scheduledWorker: ScheduledWorker
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
 
     @Before
     fun before() {
         executorService = BlockingScheduledExecutorService()
         scheduledWorker = ScheduledWorker(executorService)
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         clock.setCurrentTime(now)
         activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties

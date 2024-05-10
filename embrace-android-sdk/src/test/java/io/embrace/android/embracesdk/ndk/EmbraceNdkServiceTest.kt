@@ -31,7 +31,8 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -88,7 +89,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var appFramework: Embrace.AppFramework
     private lateinit var sharedObjectLoader: SharedObjectLoader
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
     private lateinit var repository: EmbraceNdkServiceRepository
     private lateinit var resources: Resources
@@ -116,10 +117,10 @@ internal class EmbraceNdkServiceTest {
         deliveryService = FakeDeliveryService()
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
-        sessionProperties = EmbraceSessionProperties(preferencesService, configService, InternalEmbraceLogger())
+        sessionProperties = EmbraceSessionProperties(preferencesService, configService, EmbLoggerImpl())
         appFramework = Embrace.AppFramework.NATIVE
         sharedObjectLoader = mockk()
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
         repository = mockk(relaxUnitFun = true)
         resources = mockResources()

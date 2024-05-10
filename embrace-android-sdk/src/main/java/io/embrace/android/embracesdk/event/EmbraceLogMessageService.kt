@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
@@ -38,7 +38,7 @@ internal class EmbraceLogMessageService(
     private val userService: UserService,
     private val configService: ConfigService,
     private val sessionProperties: EmbraceSessionProperties,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val clock: Clock,
     private val backgroundWorker: BackgroundWorker,
     private val gatingService: GatingService,
@@ -66,7 +66,7 @@ internal class EmbraceLogMessageService(
         userService: UserService,
         configService: ConfigService,
         sessionProperties: EmbraceSessionProperties,
-        logger: InternalEmbraceLogger,
+        logger: EmbLogger,
         clock: Clock,
         sessionGatingService: GatingService,
         networkConnectivityService: NetworkConnectivityService,

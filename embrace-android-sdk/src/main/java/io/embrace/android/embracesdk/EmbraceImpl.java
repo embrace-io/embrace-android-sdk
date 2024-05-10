@@ -46,9 +46,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock;
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier;
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer;
 import io.embrace.android.embracesdk.internal.utils.ThrowableUtilsKt;
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger;
+import io.embrace.android.embracesdk.logging.EmbLogger;
 import io.embrace.android.embracesdk.logging.InternalErrorService;
-import io.embrace.android.embracesdk.logging.ReportingLoggerAction;
+import io.embrace.android.embracesdk.logging.InternalErrorServiceAction;
 import io.embrace.android.embracesdk.ndk.NativeModule;
 import io.embrace.android.embracesdk.ndk.NdkService;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
@@ -104,7 +104,7 @@ final class EmbraceImpl {
     private final Clock sdkClock;
 
     @NonNull
-    private final InternalEmbraceLogger internalEmbraceLogger;
+    private final EmbLogger logger;
 
     /**
      * Custom app ID that overrides the one specified at build time
@@ -209,7 +209,7 @@ final class EmbraceImpl {
     EmbraceImpl(@NonNull ModuleInitBootstrapper bs) {
         moduleInitBootstrapper = bs;
         sdkClock = moduleInitBootstrapper.getInitModule().getClock();
-        internalEmbraceLogger = moduleInitBootstrapper.getInitModule().getLogger();
+        logger = moduleInitBootstrapper.getInitModule().getLogger();
         tracer = moduleInitBootstrapper.getOpenTelemetryModule().getEmbraceTracer();
         uninitializedSdkInternalInterface =
             LazyKt.lazy(
@@ -246,7 +246,7 @@ final class EmbraceImpl {
             startImpl(context, appFramework, configServiceProvider);
             Systrace.endSynchronous();
         } catch (Throwable t) {
-            internalEmbraceLogger.logError(
+            logger.logError(
                 "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t, true);
         }
     }
@@ -256,18 +256,18 @@ final class EmbraceImpl {
                            @NonNull Function0<ConfigService> configServiceProvider) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
-            internalEmbraceLogger.logWarning("Embrace SDK has already been initialized");
+            logger.logWarning("Embrace SDK has already been initialized", null, false);
             return;
         }
 
         if (ApkToolsConfig.IS_SDK_DISABLED) {
-            internalEmbraceLogger.logInfo("SDK disabled through ApkToolsConfig");
+            logger.logInfo("SDK disabled through ApkToolsConfig");
             stop();
             return;
         }
 
         final long startTimeMs = sdkClock.now();
-        internalEmbraceLogger.logInfo("Starting SDK for framework " + framework.name());
+        logger.logInfo("Starting SDK for framework " + framework.name());
         moduleInitBootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider);
         Systrace.startSynchronous("post-services-setup");
         telemetryService = moduleInitBootstrapper.getInitModule().getTelemetryService();
@@ -281,7 +281,7 @@ final class EmbraceImpl {
 
         final EssentialServiceModule essentialServiceModule = moduleInitBootstrapper.getEssentialServiceModule();
         if (essentialServiceModule.getConfigService().isSdkDisabled()) {
-            internalEmbraceLogger.logInfo("Interrupting SDK start because it is disabled");
+            logger.logInfo("Interrupting SDK start because it is disabled");
             stop();
             return;
         }
@@ -369,7 +369,7 @@ final class EmbraceImpl {
 
         final String startMsg = "Embrace SDK started. App ID: " +
             essentialServiceModule.getConfigService().getSdkModeBehavior().getAppId() + " Version: " + BuildConfig.VERSION_NAME;
-        internalEmbraceLogger.logInfo(startMsg);
+        logger.logInfo(startMsg);
 
         final long endTimeMs = sdkClock.now();
         started.set(true);
@@ -415,7 +415,7 @@ final class EmbraceImpl {
             composeActivityListenerInstance = composeActivityListener.newInstance();
             coreModule.getApplication().registerActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks) composeActivityListenerInstance);
         } catch (Throwable e) {
-            internalEmbraceLogger.logError("registerComposeActivityListener error", e);
+            logger.logError("registerComposeActivityListener error", e, false);
         }
     }
 
@@ -428,7 +428,7 @@ final class EmbraceImpl {
         try {
             app.unregisterActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks) composeActivityListenerInstance);
         } catch (Throwable e) {
-            internalEmbraceLogger.logError("Instantiation error for ComposeActivityListener", e);
+            logger.logError("Instantiation error for ComposeActivityListener", e, false);
         }
     }
 
@@ -450,16 +450,16 @@ final class EmbraceImpl {
      */
     boolean setAppId(@NonNull String appId) {
         if (isStarted()) {
-            internalEmbraceLogger.logError("You must set the custom app ID before the SDK is started.");
+            logger.logError("You must set the custom app ID before the SDK is started.", null, false);
             return false;
         }
         if (appId.isEmpty()) {
-            internalEmbraceLogger.logError("App ID cannot be null or empty.");
+            logger.logError("App ID cannot be null or empty.", null, false);
             return false;
         }
         if (!appIdPattern.matcher(appId).find()) {
-            internalEmbraceLogger.logError("Invalid app ID. Must be a 5-character string with " +
-                "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".");
+            logger.logError("Invalid app ID. Must be a 5-character string with " +
+                "characters from the set [A-Za-z0-9], but it was \"" + appId + "\".", null, false);
             return false;
         }
 
@@ -472,7 +472,7 @@ final class EmbraceImpl {
      */
     void stop() {
         if (started.compareAndSet(true, false)) {
-            internalEmbraceLogger.logInfo("Shutting down Embrace SDK.");
+            logger.logInfo("Shutting down Embrace SDK.");
             try {
                 if (composeActivityListenerInstance != null && application != null) {
                     unregisterComposeActivityListener(application);
@@ -481,7 +481,7 @@ final class EmbraceImpl {
                 application = null;
                 moduleInitBootstrapper.stopServices();
             } catch (Exception ex) {
-                internalEmbraceLogger.logError("Error while shutting down Embrace SDK", ex);
+                logger.logError("Error while shutting down Embrace SDK", ex, false);
             }
         }
     }
@@ -662,7 +662,7 @@ final class EmbraceImpl {
                      @Nullable String identifier,
                      @Nullable Map<String, Object> properties) {
         if (checkSdkStartedAndLogPublicApiUsage("start_moment")) {
-            eventService.startEvent(name, identifier, normalizeProperties(properties, internalEmbraceLogger));
+            eventService.startEvent(name, identifier, normalizeProperties(properties, logger));
             onActivityReported();
         }
     }
@@ -678,7 +678,7 @@ final class EmbraceImpl {
      */
     void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
         if (checkSdkStartedAndLogPublicApiUsage("end_moment")) {
-            eventService.endEvent(name, identifier, normalizeProperties(properties, internalEmbraceLogger));
+            eventService.endEvent(name, identifier, normalizeProperties(properties, logger));
             onActivityReported();
         }
     }
@@ -811,7 +811,7 @@ final class EmbraceImpl {
                     message,
                     type,
                     logExceptionType,
-                    normalizeProperties(properties, internalEmbraceLogger),
+                    normalizeProperties(properties, logger),
                     stackTraceElements,
                     customStackTrace,
                     appFramework,
@@ -821,7 +821,7 @@ final class EmbraceImpl {
                     exceptionMessage);
                 onActivityReported();
             } catch (Exception ex) {
-                internalEmbraceLogger.logDebug("Failed to log message using Embrace SDK.", ex);
+                logger.logDebug("Failed to log message using Embrace SDK.", ex);
             }
         }
     }
@@ -855,7 +855,7 @@ final class EmbraceImpl {
             } else {
                 messageWithDetails = message;
             }
-            internalErrorService.handleInternalError(new ReportingLoggerAction.InternalError(messageWithDetails));
+            internalErrorService.handleInternalError(new InternalErrorServiceAction.InternalError(messageWithDetails));
         }
     }
 
@@ -1000,7 +1000,7 @@ final class EmbraceImpl {
             if (sessionId != null) {
                 return sessionId;
             } else {
-                internalEmbraceLogger.logInfo("Session ID is null");
+                logger.logInfo("Session ID is null");
             }
         }
         return null;
@@ -1104,7 +1104,7 @@ final class EmbraceImpl {
      */
     void logRnView(@NonNull String screen) {
         if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
-            internalEmbraceLogger.logWarning("[Embrace] logRnView is only available on React Native");
+            logger.logWarning("[Embrace] logRnView is only available on React Native", null, false);
             return;
         }
 
@@ -1155,21 +1155,21 @@ final class EmbraceImpl {
                     service
                 );
             } else {
-                internalEmbraceLogger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread");
+                logger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread", null, false);
             }
         } catch (Exception exc) {
-            internalEmbraceLogger.logError("Failed to sample current thread during ANRs", exc);
+            logger.logError("Failed to sample current thread during ANRs", exc, false);
         }
     }
 
     @Nullable
-    private Map<String, Object> normalizeProperties(@Nullable Map<String, ?> properties, @Nullable InternalEmbraceLogger logger) {
+    private Map<String, Object> normalizeProperties(@Nullable Map<String, ?> properties, @Nullable EmbLogger logger) {
         Map<String, Object> normalizedProperties = new HashMap<>();
         if (properties != null) {
             try {
                 normalizedProperties = PropertyUtils.sanitizeProperties(properties, logger);
             } catch (Exception e) {
-                internalEmbraceLogger.logError("Exception occurred while normalizing the properties.", e);
+                this.logger.logError("Exception occurred while normalizing the properties.", e, false);
             }
             return normalizedProperties;
         } else {
@@ -1190,7 +1190,7 @@ final class EmbraceImpl {
     private boolean checkSdkStarted(@NonNull String action, boolean logPublicApiUsage) {
         boolean isStarted = isStarted();
         if (!isStarted) {
-            internalEmbraceLogger.logSDKNotInitialized(action);
+            logger.logSdkNotInitialized(action);
         }
         if (telemetryService != null && logPublicApiUsage) {
             telemetryService.onPublicApiCalled(action);
@@ -1200,7 +1200,7 @@ final class EmbraceImpl {
 
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
         if (isStarted()) {
-            internalEmbraceLogger.logError("A SpanExporter can only be added before the SDK is started.");
+            logger.logError("A SpanExporter can only be added before the SDK is started.", null, false);
             return;
         }
         moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addSpanExporter(spanExporter);
@@ -1208,7 +1208,7 @@ final class EmbraceImpl {
 
     public void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter) {
         if (isStarted()) {
-            internalEmbraceLogger.logError("A LogRecordExporter can only be added before the SDK is started.");
+            logger.logError("A LogRecordExporter can only be added before the SDK is started.", null, false);
             return;
         }
         moduleInitBootstrapper.getOpenTelemetryModule().getOpenTelemetryConfiguration().addLogExporter(logRecordExporter);

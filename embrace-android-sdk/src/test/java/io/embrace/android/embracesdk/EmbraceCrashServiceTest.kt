@@ -13,7 +13,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
@@ -48,7 +49,7 @@ internal class EmbraceCrashServiceTest {
     private lateinit var anrService: FakeAnrService
     private lateinit var ndkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
 
     private lateinit var crash: Crash
     private lateinit var localJsException: JsException
@@ -73,7 +74,7 @@ internal class EmbraceCrashServiceTest {
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService()
         crashMarker = mockk(relaxUnitFun = true)
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
 
         localJsException = JsException("jsException", "Error", "Error", "")
     }

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session.caching
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
@@ -12,7 +12,7 @@ import kotlin.math.max
 internal class PeriodicBackgroundActivityCacher(
     private val clock: Clock,
     private val scheduledWorker: ScheduledWorker,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
 
     companion object {

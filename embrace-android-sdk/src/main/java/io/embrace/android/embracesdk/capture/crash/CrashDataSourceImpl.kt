@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
@@ -45,7 +45,7 @@ internal class CrashDataSourceImpl(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val serializer: EmbraceSerializer,
-    logger: InternalEmbraceLogger,
+    logger: EmbLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
         destination = logWriter,

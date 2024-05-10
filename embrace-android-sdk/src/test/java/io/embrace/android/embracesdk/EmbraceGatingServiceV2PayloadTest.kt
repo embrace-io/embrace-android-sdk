@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -37,7 +37,7 @@ internal class EmbraceGatingServiceV2PayloadTest {
     fun setUp() {
         sessionBehavior = fakeSessionBehavior { cfg }
         configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
-        gatingService = EmbraceGatingService(configService, InternalEmbraceLogger())
+        gatingService = EmbraceGatingService(configService, EmbLoggerImpl())
     }
 
     @Test

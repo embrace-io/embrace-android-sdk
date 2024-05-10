@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionLocalConfigTest {
@@ -18,7 +17,6 @@ internal class SessionLocalConfigTest {
     @Test
     fun testDeserialization() {
         val obj = deserializeJsonFromResource<SessionLocalConfig>("session_config.json")
-        assertTrue(checkNotNull(obj.sessionEnableErrorLogStrictMode))
         assertEquals(setOf("breadcrumbs"), obj.sessionComponents)
         assertEquals(setOf("crash"), obj.fullSessionEvents)
     }
@@ -30,7 +28,6 @@ internal class SessionLocalConfigTest {
     }
 
     private fun verifyDefaults(cfg: SessionLocalConfig) {
-        assertNull(cfg.sessionEnableErrorLogStrictMode)
         assertNull(cfg.sessionComponents)
         assertNull(cfg.fullSessionEvents)
     }

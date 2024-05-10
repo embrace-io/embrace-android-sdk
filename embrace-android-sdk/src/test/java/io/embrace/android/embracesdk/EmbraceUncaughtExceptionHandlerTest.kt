@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandler
 import io.embrace.android.embracesdk.fakes.FakeCrashService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -25,7 +25,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
      */
     @Test
     fun testNullArg1() {
-        EmbraceUncaughtExceptionHandler(null, FakeCrashService(), InternalEmbraceLogger())
+        EmbraceUncaughtExceptionHandler(null, FakeCrashService(), EmbLoggerImpl())
     }
 
     /**
@@ -36,7 +36,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val fakeCrashService = FakeCrashService()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, InternalEmbraceLogger())
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, EmbLoggerImpl())
 
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
@@ -58,7 +58,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testCrashingExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val crashingCrashService = CrashingCrashService()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, InternalEmbraceLogger())
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, EmbLoggerImpl())
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
 

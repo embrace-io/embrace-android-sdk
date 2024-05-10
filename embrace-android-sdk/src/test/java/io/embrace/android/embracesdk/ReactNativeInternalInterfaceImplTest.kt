@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.system.mockContext
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.every
@@ -26,7 +26,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var preferencesService: PreferencesService
     private lateinit var crashService: CrashService
     private lateinit var metadataService: FakeMetadataService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var context: Context
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
 
@@ -58,7 +58,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setJavaScriptPatchNumber("28.9.1")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -89,7 +89,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setReactNativeVersionNumber("0.69.1")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -127,7 +127,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 
@@ -210,7 +210,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.logUnhandledJsException("name", "message", "type", "stack")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 }

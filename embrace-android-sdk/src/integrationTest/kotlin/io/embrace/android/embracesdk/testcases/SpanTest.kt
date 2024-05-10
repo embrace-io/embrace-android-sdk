@@ -3,16 +3,13 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeLogAction
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
 import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.recordSession
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -74,7 +71,7 @@ internal class SpanTest {
     fun `a SpanExporter added after initialization won't be used`() {
         with(testRule) {
 
-            val fake = FakeLoggerAction()
+            val fake = FakeLogAction()
             harness.overriddenInitModule.logger.apply { addLoggerAction(fake) }
 
             val fakeSpanExporter = FakeSpanExporter()

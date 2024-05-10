@@ -30,15 +30,15 @@ internal class LegacyExceptionErrorTest {
 
     @Test
     fun `serialize then deserialize default object`() {
-        val obj = LegacyExceptionError(false)
+        val obj = LegacyExceptionError()
         assertJsonMatchesGoldenFile("exception_error_expected.json", obj)
         val other = deserializeJsonFromResource<LegacyExceptionError>("exception_error_expected.json")
         assertEquals(obj, other)
     }
 
     @Test
-    fun `test addException with strict mode disabled has a limit of 10 exceptions`() {
-        exceptionError = LegacyExceptionError(false)
+    fun `test addException has a limit of 10 exceptions`() {
+        exceptionError = LegacyExceptionError()
         val max = 10
         repeat(max + 1) {
             exceptionError.addException(Throwable("exceptions"), "state", clock)
@@ -46,21 +46,5 @@ internal class LegacyExceptionErrorTest {
 
         assertEquals(exceptionError.exceptionErrors.size, max)
         assertEquals(exceptionError.occurrences, max + 1)
-    }
-
-    @Test
-    fun `test addException with strict mode enabled has a limit of 50 exceptions`() {
-        exceptionError = LegacyExceptionError(true)
-        val throwable = Throwable("exceptions")
-
-        repeat(50) {
-            exceptionError.addException(throwable, "state", clock)
-        }
-
-        assertEquals(exceptionError.exceptionErrors.size, 50)
-        assertEquals(exceptionError.occurrences, 50)
-        exceptionError.addException(throwable, "state", clock)
-        assertEquals(exceptionError.exceptionErrors.size, 50)
-        assertEquals(exceptionError.occurrences, 51)
     }
 }

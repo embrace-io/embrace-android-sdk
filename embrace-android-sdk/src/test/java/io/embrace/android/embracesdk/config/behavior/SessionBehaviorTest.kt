@@ -14,8 +14,7 @@ internal class SessionBehaviorTest {
 
     private val local = SessionLocalConfig(
         sessionComponents = setOf("breadcrumbs"),
-        fullSessionEvents = setOf("crash"),
-        sessionEnableErrorLogStrictMode = true
+        fullSessionEvents = setOf("crash")
     )
 
     private val remote = RemoteConfig(
@@ -30,7 +29,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testDefaults() {
         with(fakeSessionBehavior()) {
-            assertFalse(isSessionErrorLogStrictModeEnabled())
             assertEquals(emptySet<String>(), getFullSessionEvents())
             assertNull(getSessionComponents())
             assertFalse(isGatingFeatureEnabled())
@@ -42,7 +40,6 @@ internal class SessionBehaviorTest {
     @Test
     fun testLocalOnly() {
         with(fakeSessionBehavior(localCfg = { local })) {
-            assertTrue(isSessionErrorLogStrictModeEnabled())
             assertEquals(setOf("breadcrumbs"), getSessionComponents())
             assertEquals(setOf("crash"), getFullSessionEvents())
             assertTrue(isGatingFeatureEnabled())

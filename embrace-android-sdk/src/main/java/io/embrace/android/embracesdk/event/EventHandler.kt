@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -32,7 +32,7 @@ internal class EventHandler(
     private val userService: UserService,
     private val performanceInfoService: PerformanceInfoService,
     private val deliveryService: DeliveryService,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val clock: Clock,
     private val scheduledWorker: ScheduledWorker
 ) {

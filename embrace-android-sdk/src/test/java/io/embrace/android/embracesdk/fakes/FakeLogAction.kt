@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger.Severity
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl.Severity
 import java.util.LinkedList
 
-internal class FakeLoggerAction : InternalEmbraceLogger.LoggerAction {
+internal class FakeLogAction : EmbLoggerImpl.LogAction {
 
     val msgQueue = LinkedList<LogMessage>()
 

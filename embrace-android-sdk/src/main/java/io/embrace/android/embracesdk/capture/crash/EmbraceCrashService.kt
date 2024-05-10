@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -41,7 +41,7 @@ internal class EmbraceCrashService(
     private val preferencesService: PreferencesService,
     private val crashMarker: CrashFileMarker,
     private val clock: Clock,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : CrashService {
 
     private var mainCrashHandled = false

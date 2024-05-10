@@ -7,11 +7,11 @@ import android.content.IntentFilter
 import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val powerManagerProvider: Provider<PowerManager?>,
     private val callback: (powerSaveMode: Boolean) -> Unit
 ) : BroadcastReceiver() {

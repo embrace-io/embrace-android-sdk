@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -19,7 +19,7 @@ internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val clock: Clock,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val connectivityManager: ConnectivityManager?,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {

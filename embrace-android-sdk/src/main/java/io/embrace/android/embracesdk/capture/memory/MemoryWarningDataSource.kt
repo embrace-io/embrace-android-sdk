@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.MemoryWarning
 
 /**
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.payload.MemoryWarning
  */
 internal class MemoryWarningDataSource(
     sessionSpanWriter: SessionSpanWriter,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = sessionSpanWriter,
     logger = logger,

@@ -10,7 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import org.junit.Assert.assertEquals
@@ -33,7 +34,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
     private lateinit var logWriter: FakeLogWriter
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var localJsException: JsException
     private lateinit var testException: Exception
 
@@ -49,7 +50,7 @@ internal class CrashDataSourceImplTest {
         logWriter = FakeLogWriter()
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         localJsException = JsException(
             "NullPointerException",
             "Null pointer exception occurred",

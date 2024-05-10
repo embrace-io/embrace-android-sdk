@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -21,7 +21,7 @@ internal class ViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : SpanDataSourceImpl(
     spanService,
     logger,

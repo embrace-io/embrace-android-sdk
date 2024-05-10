@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -153,7 +153,7 @@ internal class AeiNdkCrashProtobufSendTest {
             sessionIdTracker,
             FakeUserService(),
             logWriter,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
             VersionChecker { ndkTraceFile }
         ).enableDataCapture()
         return logWriter

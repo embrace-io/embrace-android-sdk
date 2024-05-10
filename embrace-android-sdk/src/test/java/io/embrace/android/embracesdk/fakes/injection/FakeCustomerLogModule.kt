@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.injection.CustomerLogModule
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
@@ -33,7 +33,7 @@ internal class FakeCustomerLogModule(
         FakeUserService(),
         FakeConfigService(),
         fakeEmbraceSessionProperties(),
-        InternalEmbraceLogger(),
+        EmbLoggerImpl(),
         FakeClock(),
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         FakeGatingService(),

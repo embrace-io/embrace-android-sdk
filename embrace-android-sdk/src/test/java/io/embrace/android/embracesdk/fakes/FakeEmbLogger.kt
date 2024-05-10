@@ -16,6 +16,7 @@ internal class FakeEmbLogger : EmbLogger {
     var warningMessages: MutableList<LogMessage> = mutableListOf()
     var errorMessages: MutableList<LogMessage> = mutableListOf()
     var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
+    var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
 
     override var internalErrorService: InternalErrorService? = null
 
@@ -37,5 +38,9 @@ internal class FakeEmbLogger : EmbLogger {
 
     override fun logSdkNotInitialized(action: String) {
         sdkNotInitializedMessages.add(LogMessage(action, null, false))
+    }
+
+    override fun trackInternalError(msg: String, throwable: Throwable, severity: EmbLogger.Severity) {
+        internalErrorMessages.add(LogMessage(msg, throwable, false))
     }
 }

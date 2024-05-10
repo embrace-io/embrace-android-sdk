@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.logging
 
 import android.util.Log
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.logging.EmbLogger.Severity
 
 internal const val EMBRACE_TAG = "[Embrace]"
 
 /**
- * Wrapper for the Android [Log] utility.
- * Can only be used internally, it's not part of the public API.
+ * Implementation of [EmbLogger] that logs to Android logcat & also allows tracking of internal
+ * errors for our telemetry.
  */
-
 internal class EmbLoggerImpl : EmbLogger {
 
     override var internalErrorService: InternalErrorService? = null
@@ -35,6 +35,15 @@ internal class EmbLoggerImpl : EmbLogger {
         log(msg, Severity.WARNING, Throwable(msg), true)
     }
 
+    override fun trackInternalError(msg: String, throwable: Throwable, severity: Severity) {
+        try {
+            internalErrorService?.handleInternalError(throwable)
+        } catch (exc: Throwable) {
+            // don't cause a crash loop!
+            Log.w(EMBRACE_TAG, msg, exc)
+        }
+    }
+
     /**
      * Logs a message.
      *
@@ -50,12 +59,7 @@ internal class EmbLoggerImpl : EmbLogger {
 
             // report to internal error service if necessary
             if (throwable != null) {
-                try {
-                    internalErrorService?.handleInternalError(throwable)
-                } catch (exc: Throwable) {
-                    // don't cause a crash loop!
-                    Log.w(EMBRACE_TAG, msg, exc)
-                }
+                trackInternalError(msg, throwable, severity)
             }
         }
     }
@@ -77,9 +81,5 @@ internal class EmbLoggerImpl : EmbLogger {
             Severity.WARNING -> Log.w(EMBRACE_TAG, msg, exception)
             Severity.ERROR -> Log.e(EMBRACE_TAG, msg, exception)
         }
-    }
-
-    enum class Severity {
-        DEBUG, INFO, WARNING, ERROR
     }
 }

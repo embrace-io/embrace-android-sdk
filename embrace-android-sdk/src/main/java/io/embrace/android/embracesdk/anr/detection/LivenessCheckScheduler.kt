@@ -99,7 +99,7 @@ internal class LivenessCheckScheduler internal constructor(
         } catch (exc: Exception) {
             // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
             val message = "ANR capture initialization failed"
-            logger.logWarning(message, exc, true)
+            logger.logWarning(message, exc)
         }
     }
 
@@ -150,7 +150,7 @@ internal class LivenessCheckScheduler internal constructor(
                 blockedThreadDetector.updateAnrTracking(now)
             }
         } catch (exc: Exception) {
-            logger.logError("Failed to process ANR monitor thread heartbeat", exc, true)
+            logger.logError("Failed to process ANR monitor thread heartbeat", exc)
             logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }
     }
@@ -160,8 +160,7 @@ internal class LivenessCheckScheduler internal constructor(
         if (!targetThreadHandler.sendMessage(heartbeatMessage)) {
             logger.logWarning(
                 "Failed to send message to targetHandler, main thread likely shutting down.",
-                IllegalStateException("Failed to send message to targetHandler"),
-                true
+                IllegalStateException("Failed to send message to targetHandler")
             )
         }
     }

@@ -66,7 +66,7 @@ internal class TargetThreadHandler(
                 }
             }
         } catch (ex: Exception) {
-            logger.logError("ANR healthcheck failed in main (monitored) thread", ex, true)
+            logger.logError("ANR healthcheck failed in main (monitored) thread", ex)
         }
     }
 

@@ -66,8 +66,7 @@ internal class AeiDataSourceImpl(
             } catch (exc: Throwable) {
                 logger.logWarning(
                     "AEI - Failed to process AEIs due to unexpected error",
-                    exc,
-                    true
+                    exc
                 )
                 logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
             }
@@ -234,13 +233,13 @@ internal class AeiDataSourceImpl(
 
             return AppExitInfoBehavior.CollectTracesResult.Success(trace)
         } catch (e: IOException) {
-            logger.logWarning("AEI - IOException: ${e.message}", e, true)
+            logger.logWarning("AEI - IOException", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
         } catch (e: OutOfMemoryError) {
-            logger.logWarning("AEI - Out of Memory: ${e.message}", e, true)
+            logger.logWarning("AEI - Out of Memory", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
         } catch (tr: Throwable) {
-            logger.logWarning("AEI - An error occurred: ${tr.message}", tr, true)
+            logger.logWarning("AEI - An error occurred", tr)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
         }
     }

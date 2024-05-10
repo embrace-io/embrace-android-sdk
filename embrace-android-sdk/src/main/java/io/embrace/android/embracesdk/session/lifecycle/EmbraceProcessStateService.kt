@@ -102,7 +102,7 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logger.logWarning(ERROR_FAILED_TO_NOTIFY, ex)
+            logger.logWarning(ERROR_FAILED_TO_NOTIFY)
             logger.trackInternalError(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL, ex)
         }
     }

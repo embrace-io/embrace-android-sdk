@@ -71,7 +71,7 @@ internal class ServiceRegistry(
             try {
                 action(it)
             } catch (exc: Throwable) {
-                logger.logError(msg, exc, true)
+                logger.logError(msg, exc)
             }
         }
     }

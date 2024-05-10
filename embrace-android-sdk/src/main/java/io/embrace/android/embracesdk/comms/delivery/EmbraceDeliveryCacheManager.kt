@@ -62,7 +62,7 @@ internal class EmbraceDeliveryCacheManager(
                 }
             }
         } catch (exc: Throwable) {
-            logger.logError("Save session failed", exc, true)
+            logger.logError("Save session failed", exc)
             throw exc
         }
     }
@@ -243,7 +243,7 @@ internal class EmbraceDeliveryCacheManager(
                 }
             }
         } catch (ex: Throwable) {
-            logger.logError("Failed to cache current active session", ex, true)
+            logger.logError("Failed to cache current active session", ex)
         }
     }
 }

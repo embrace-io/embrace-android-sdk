@@ -13,7 +13,7 @@ internal class EmbraceCpuInfoDelegate(
             try {
                 getNativeCpuName()
             } catch (exception: LinkageError) {
-                logger.logWarning("Could not get the CPU name. Exception: $exception", exception)
+                logger.logWarning("Could not get the CPU name.", exception)
                 null
             }
         } else {
@@ -26,7 +26,7 @@ internal class EmbraceCpuInfoDelegate(
             try {
                 getNativeEgl()
             } catch (exception: LinkageError) {
-                logger.logWarning("Could not get the EGL name. Exception: $exception", exception)
+                logger.logWarning("Could not get the EGL name.", exception)
                 null
             }
         } else {

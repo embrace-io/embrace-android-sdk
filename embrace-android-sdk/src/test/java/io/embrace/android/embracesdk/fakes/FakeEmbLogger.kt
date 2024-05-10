@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.InternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class FakeEmbLogger : EmbLogger {
 
     data class LogMessage(
         val msg: String,
-        val throwable: Throwable?,
-        val logStacktrace: Boolean
+        val throwable: Throwable?
     )
 
     var debugMessages: MutableList<LogMessage> = mutableListOf()
@@ -21,26 +21,26 @@ internal class FakeEmbLogger : EmbLogger {
     override var internalErrorService: InternalErrorService? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
-        debugMessages.add(LogMessage(msg, throwable, false))
+        debugMessages.add(LogMessage(msg, throwable))
     }
 
     override fun logInfo(msg: String, throwable: Throwable?) {
-        infoMessages.add(LogMessage(msg, throwable, false))
+        infoMessages.add(LogMessage(msg, throwable))
     }
 
-    override fun logWarning(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
-        warningMessages.add(LogMessage(msg, throwable, logStacktrace))
+    override fun logWarning(msg: String, throwable: Throwable?) {
+        warningMessages.add(LogMessage(msg, throwable))
     }
 
-    override fun logError(msg: String, throwable: Throwable?, logStacktrace: Boolean) {
-        errorMessages.add(LogMessage(msg, throwable, logStacktrace))
+    override fun logError(msg: String, throwable: Throwable?) {
+        errorMessages.add(LogMessage(msg, throwable))
     }
 
     override fun logSdkNotInitialized(action: String) {
-        sdkNotInitializedMessages.add(LogMessage(action, null, false))
+        sdkNotInitializedMessages.add(LogMessage(action, null))
     }
 
-    override fun trackInternalError(msg: String, throwable: Throwable, severity: EmbLogger.Severity) {
-        internalErrorMessages.add(LogMessage(msg, throwable, false))
+    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        internalErrorMessages.add(LogMessage(type.toString(), throwable))
     }
 }

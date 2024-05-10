@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.capture.crash
 
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 /**
  * Intercepts uncaught exceptions from the JVM and forwards them to the Embrace API. Once handled,
@@ -29,8 +30,9 @@ internal class EmbraceUncaughtExceptionHandler(
             crashService.handleCrash(exception)
         } catch (ex: Exception) {
             logger.logError("Error occurred in the uncaught exception handler", ex)
+            logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
         } finally {
-            logger.logDebug("Finished handling exception. Delegating to default handler.", exception)
+            logger.logDebug("Finished handling exception. Delegating to default handler.")
             defaultHandler?.uncaughtException(thread, exception)
         }
     }

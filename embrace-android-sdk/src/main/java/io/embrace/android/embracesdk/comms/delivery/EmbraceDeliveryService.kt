@@ -170,7 +170,7 @@ internal class EmbraceDeliveryService(
                     logger.logError("Session $sessionId not found")
                 }
             } catch (ex: Throwable) {
-                logger.logError("Could not send cached session", ex, true)
+                logger.logError("Could not send cached session", ex)
             }
         }
     }

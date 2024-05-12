@@ -42,7 +42,12 @@ internal class StartupServiceImplTest {
         clock.tick(10L)
         val endTimeMillis = clock.now()
         spanService.initializeService(startTimeMillis)
-        startupService.setSdkStartupInfo(startTimeMillis, endTimeMillis, false, "main")
+        startupService.setSdkStartupInfo(
+            startTimeMs = startTimeMillis,
+            endTimeMs = endTimeMillis,
+            endedInForeground = false,
+            threadName = "main"
+        )
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         with(currentSpans[0]) {
@@ -61,10 +66,23 @@ internal class StartupServiceImplTest {
     @Test
     fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
         spanService.initializeService(10)
-        startupService.setSdkStartupInfo(10, 20, false, "main")
+        startupService.run {
+            setSdkStartupInfo(
+                startTimeMs = 10,
+                endTimeMs = 20,
+                endedInForeground = false,
+                threadName = "main"
+            )
+        }
         assertEquals(1, spanSink.completedSpans().size)
-        startupService.setSdkStartupInfo(10, 20, false, "main")
-        startupService.setSdkStartupInfo(10, 20, false, "main")
+        startupService.run {
+            setSdkStartupInfo(
+                startTimeMs = 10,
+                endTimeMs = 20,
+                endedInForeground = false,
+                threadName = "main"
+            )
+        }
         assertEquals(1, spanSink.completedSpans().size)
     }
 

@@ -309,7 +309,8 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule.spanService.recordCompletedSpan(
                                 name = "init-worker-schedule-delay",
                                 startTimeMs = initWorkerTaskQueueTime,
-                                endTimeMs = initModule.clock.now()
+                                endTimeMs = initModule.clock.now(),
+                                private = true,
                             )
                         }
                         serviceRegistry.registerServices(
@@ -485,7 +486,8 @@ internal class ModuleInitBootstrapper(
                 openTelemetryModule.spanService.recordCompletedSpan(
                     name = "async-init-delay",
                     startTimeMs = delayStartMs,
-                    endTimeMs = delayEndMs
+                    endTimeMs = delayEndMs,
+                    private = true
                 )
             }
         }

@@ -26,7 +26,8 @@ internal class StartupServiceImpl(
             spanService.recordCompletedSpan(
                 name = "sdk-init",
                 startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs
+                endTimeMs = endTimeMs,
+                private = true,
             )
         }
         sdkInitStartMs = startTimeMs

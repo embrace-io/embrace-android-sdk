@@ -8,7 +8,7 @@ internal interface StartupService {
     /**
      * Sets the SDK startup info. This is called when the SDK is initialized.
      */
-    fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long)
+    fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long, endedInForeground: Boolean, threadName: String?)
 
     /**
      * Returns the SDK startup duration. This is called when the session ends.

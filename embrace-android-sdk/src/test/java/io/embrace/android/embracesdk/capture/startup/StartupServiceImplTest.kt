@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
@@ -41,7 +42,7 @@ internal class StartupServiceImplTest {
         clock.tick(10L)
         val endTimeMillis = clock.now()
         spanService.initializeService(startTimeMillis)
-        startupService.setSdkStartupInfo(startTimeMillis, endTimeMillis)
+        startupService.setSdkStartupInfo(startTimeMillis, endTimeMillis, false, "main")
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         with(currentSpans[0]) {
@@ -52,29 +53,31 @@ internal class StartupServiceImplTest {
             assertIsTypePerformance()
             assertIsPrivateSpan()
             assertEquals(StatusCode.OK, status)
+            assertEquals("false", findSpanAttribute("ended-in-foreground"))
+            assertEquals("main", findSpanAttribute("thread-name"))
         }
     }
 
     @Test
     fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
         spanService.initializeService(10)
-        startupService.setSdkStartupInfo(10, 20)
+        startupService.setSdkStartupInfo(10, 20, false, "main")
         assertEquals(1, spanSink.completedSpans().size)
-        startupService.setSdkStartupInfo(10, 20)
-        startupService.setSdkStartupInfo(10, 20)
+        startupService.setSdkStartupInfo(10, 20, false, "main")
+        startupService.setSdkStartupInfo(10, 20, false, "main")
         assertEquals(1, spanSink.completedSpans().size)
     }
 
     @Test
     fun `sdk startup span recorded if the startup info is set before span service initializes`() {
-        startupService.setSdkStartupInfo(10, 20)
+        startupService.setSdkStartupInfo(10, 20, false, "main")
         spanService.initializeService(10)
         assertEquals(1, spanSink.completedSpans().size)
     }
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L)
+        startupService.setSdkStartupInfo(1111L, 3222L, false, "main")
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration(true))

@@ -87,6 +87,12 @@ internal class AppStartupTraceEmitter(
     @Volatile
     private var firstFrameRenderedMs: Long? = null
 
+    @Volatile
+    private var sdkInitThreadName: String? = null
+
+    @Volatile
+    private var sdkInitEndedInForeground: Boolean? = null
+
     private val startupRecorded = AtomicBoolean(false)
     private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
 
@@ -173,6 +179,9 @@ internal class AppStartupTraceEmitter(
             } else {
                 startupActivityResumedMs
             }
+
+        sdkInitEndedInForeground = startupService.endedInForeground()
+        sdkInitThreadName = startupService.getInitThreadName()
 
         if (processStartTimeMs != null && traceEndTimeMs != null) {
             val gap = applicationActivityCreationGap() ?: duration(sdkInitEndMs, startupActivityInitStartMs)
@@ -375,6 +384,14 @@ internal class AppStartupTraceEmitter(
 
         startupActivityPostCreatedMs?.let { timeMs ->
             addAttribute("startup-activity-post-created-ms", timeMs.toString())
+        }
+
+        sdkInitEndedInForeground?.let { inForeground ->
+            addAttribute("embrace-init-in-foreground", inForeground.toString())
+        }
+
+        sdkInitThreadName?.let { threadName ->
+            addAttribute("embrace-init-thread-name", threadName)
         }
     }
 

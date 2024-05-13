@@ -206,7 +206,12 @@ internal class AppStartupTraceEmitterTest {
         appStartupTraceEmitter.applicationInitEnd()
         val applicationInitEnd = clock.now()
         clock.tick(50L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         appStartupTraceEmitter.startupActivityPreCreated()
         val startupActivityPreCreated = clock.now()
         clock.tick()
@@ -256,7 +261,12 @@ internal class AppStartupTraceEmitterTest {
         clock.tick(30L)
         val sdkInitEnd = clock.now()
         clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         appStartupTraceEmitter.startupActivityPreCreated()
         val startupActivityPreCreated = clock.now()
         clock.tick()
@@ -311,7 +321,12 @@ internal class AppStartupTraceEmitterTest {
         appStartupTraceEmitter.applicationInitEnd()
         val applicationInitEnd = clock.now()
         clock.tick(50L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
         clock.tick(180L)
@@ -356,7 +371,12 @@ internal class AppStartupTraceEmitterTest {
         clock.tick(30L)
         val sdkInitEnd = clock.now()
         clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
         clock.tick(180L)
@@ -398,7 +418,12 @@ internal class AppStartupTraceEmitterTest {
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         clock.tick(60001L)
         appStartupTraceEmitter.startupActivityPreCreated()
         val startupActivityPreCreated = clock.now()
@@ -446,7 +471,12 @@ internal class AppStartupTraceEmitterTest {
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        checkNotNull(startupService).setSdkStartupInfo(
+            startTimeMs = sdkInitStart,
+            endTimeMs = sdkInitEnd,
+            endedInForeground = false,
+            threadName = "main"
+        )
         clock.tick(60001L)
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
@@ -493,6 +523,8 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedProcessCreateDelayMs?.toString(), trace.attributes["process-create-delay-ms"])
         assertEquals(expectedActivityPreCreatedMs?.toString(), trace.attributes["startup-activity-pre-created-ms"])
         assertEquals(expectedActivityPostCreatedMs?.toString(), trace.attributes["startup-activity-post-created-ms"])
+        assertEquals("false", trace.attributes["embrace-init-in-foreground"])
+        assertEquals("main", trace.attributes["embrace-init-thread-name"])
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

@@ -8,7 +8,12 @@ internal class FakeStartupService : StartupService {
     var endedInForeground: Boolean? = null
     var threadName: String? = null
 
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long, endedInForeground: Boolean, threadName: String?) {
+    override fun setSdkStartupInfo(
+        startTimeMs: Long,
+        endTimeMs: Long,
+        endedInForeground: Boolean,
+        threadName: String
+    ) {
         sdkStartupDuration = endTimeMs - startTimeMs
         this.endedInForeground = endedInForeground
         this.threadName = threadName
@@ -25,4 +30,8 @@ internal class FakeStartupService : StartupService {
     override fun getSdkInitEndMs(): Long? {
         TODO("Not yet implemented")
     }
+
+    override fun endedInForeground(): Boolean? = endedInForeground
+
+    override fun getInitThreadName(): String? = threadName
 }

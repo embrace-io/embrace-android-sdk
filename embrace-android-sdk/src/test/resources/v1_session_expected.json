@@ -14,9 +14,7 @@
     "sdc": "53",
     "sdk": "__EMBRACE_TEST_IGNORE__"
   },
-  "br": {
-    "rna": []
-  },
+  "br": {},
   "d": "__EMBRACE_TEST_IGNORE__",
   "p": {
     "ds": {

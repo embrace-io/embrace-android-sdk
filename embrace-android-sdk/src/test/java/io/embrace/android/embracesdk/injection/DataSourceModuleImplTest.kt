@@ -40,7 +40,8 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.memoryWarningDataSource)
         assertNotNull(module.networkStatusDataSource)
         assertNotNull(module.sigquitDataSource)
+        assertNotNull(module.rnActionDataSource)
         assertNotNull(module.thermalStateDataSource)
-        assertEquals(12, module.getDataSources().size)
+        assertEquals(13, module.getDataSources().size)
     }
 }

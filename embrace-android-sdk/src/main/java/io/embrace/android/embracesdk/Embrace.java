@@ -70,21 +70,36 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void start(@NonNull Context context) {
         if (verifyNonNullParameters("start", context)) {
-            start(context, true, AppFramework.NATIVE);
+            start(context, AppFramework.NATIVE);
         }
     }
 
     @Override
+    public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
+        if (verifyNonNullParameters("start", context, appFramework)) {
+            impl.start(context, appFramework);
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
+     */
+    @Override
+    @Deprecated
     public void start(@NonNull Context context, boolean isDevMode) {
         if (verifyNonNullParameters("start", context)) {
-            start(context, isDevMode, AppFramework.NATIVE);
+            start(context);
         }
     }
 
+    /**
+     * @deprecated Use {@link #start(Context, AppFramework)} instead. The isDevMode parameter has no effect.
+     */
     @Override
+    @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, isDevMode, appFramework);
+            impl.start(context, appFramework);
         }
     }
 

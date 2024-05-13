@@ -17,7 +17,8 @@ import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession
@@ -38,7 +39,7 @@ internal class AeiDataSourceImpl(
     private val sessionIdTracker: SessionIdTracker,
     private val userService: UserService,
     logWriter: LogWriter,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker,
 ) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
     logWriter,
@@ -63,11 +64,11 @@ internal class AeiDataSourceImpl(
             try {
                 processApplicationExitInfo()
             } catch (exc: Throwable) {
-                logger.logWarningWithException(
+                logger.logWarning(
                     "AEI - Failed to process AEIs due to unexpected error",
-                    exc,
-                    true
+                    exc
                 )
+                logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
             }
         }
     }
@@ -77,10 +78,11 @@ internal class AeiDataSourceImpl(
             backgroundExecution?.cancel(true)
             backgroundExecution = null
         } catch (t: Throwable) {
-            logger.logWarningWithException(
+            logger.logWarning(
                 "AEI - Failed to disable EmbraceApplicationExitInfoService work",
                 t
             )
+            logger.trackInternalError(InternalErrorType.DISABLE_DATA_CAPTURE, t)
         }
     }
 
@@ -124,7 +126,6 @@ internal class AeiDataSourceImpl(
                 ?: return emptyList()
 
         if (historicalProcessExitReasons.size > SDK_AEI_SEND_LIMIT) {
-            logger.logInfoWithException("AEI - size greater than $SDK_AEI_SEND_LIMIT")
             historicalProcessExitReasons = historicalProcessExitReasons.take(SDK_AEI_SEND_LIMIT)
         }
 
@@ -227,19 +228,18 @@ internal class AeiDataSourceImpl(
 
             val traceMaxLimit = appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
-                logger.logInfoWithException("AEI - Blob size was reduced. Current size is ${trace.length} and the limit is $traceMaxLimit")
                 return AppExitInfoBehavior.CollectTracesResult.TooLarge(trace.take(traceMaxLimit))
             }
 
             return AppExitInfoBehavior.CollectTracesResult.Success(trace)
         } catch (e: IOException) {
-            logger.logWarningWithException("AEI - IOException: ${e.message}", e, true)
+            logger.logWarning("AEI - IOException", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
         } catch (e: OutOfMemoryError) {
-            logger.logWarningWithException("AEI - Out of Memory: ${e.message}", e, true)
+            logger.logWarning("AEI - Out of Memory", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
         } catch (tr: Throwable) {
-            logger.logWarningWithException("AEI - An error occurred: ${tr.message}", tr, true)
+            logger.logWarning("AEI - An error occurred", tr)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
         }
     }

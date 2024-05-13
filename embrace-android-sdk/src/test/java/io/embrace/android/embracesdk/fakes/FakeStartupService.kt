@@ -5,9 +5,18 @@ import io.embrace.android.embracesdk.capture.startup.StartupService
 internal class FakeStartupService : StartupService {
 
     var sdkStartupDuration: Long? = null
+    var endedInForeground: Boolean? = null
+    var threadName: String? = null
 
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
+    override fun setSdkStartupInfo(
+        startTimeMs: Long,
+        endTimeMs: Long,
+        endedInForeground: Boolean,
+        threadName: String
+    ) {
         sdkStartupDuration = endTimeMs - startTimeMs
+        this.endedInForeground = endedInForeground
+        this.threadName = threadName
     }
 
     override fun getSdkStartupDuration(coldStart: Boolean): Long? {
@@ -21,4 +30,8 @@ internal class FakeStartupService : StartupService {
     override fun getSdkInitEndMs(): Long? {
         TODO("Not yet implemented")
     }
+
+    override fun endedInForeground(): Boolean? = endedInForeground
+
+    override fun getInitThreadName(): String? = threadName
 }

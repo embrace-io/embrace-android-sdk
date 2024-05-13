@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -13,7 +13,7 @@ import org.junit.Test
 internal class LocalConfigTest {
 
     private val serializer = EmbraceSerializer()
-    private val logger = InternalEmbraceLogger()
+    private val logger = EmbLoggerImpl()
 
     @Test
     fun testEmptyConfig() {
@@ -100,17 +100,6 @@ internal class LocalConfigTest {
         localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
-            "{\"base_urls\": {\"data_dev\": \"custom_data_dev\"}}",
-            serializer,
-            logger
-        )
-        assertEquals(
-            localConfig.sdkConfig.baseUrls?.dataDev,
-            "custom_data_dev"
-        )
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
             "{\"base_urls\": {\"images\": \"custom_images\"}}",
             serializer,
             logger
@@ -159,18 +148,6 @@ internal class LocalConfigTest {
     @Test
     fun testSessionOnlyConfig() {
         var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
-            "{\"session\": {\"error_log_strict_mode\": true}}",
-            serializer,
-            logger
-        )
-        assertTrue(
-            checkNotNull(localConfig.sdkConfig.sessionConfig?.sessionEnableErrorLogStrictMode)
-        )
-
-        // receive a session component to restrict session messages
-        localConfig = LocalConfigParser.buildConfig(
             "GrCPU",
             false,
             "{\"session\": {\"components\": [\"breadcrumbs_taps\"]}}",

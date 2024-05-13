@@ -15,22 +15,40 @@ internal class StartupServiceImpl(
     @Volatile
     private var sdkInitEndMs: Long? = null
 
+    @Volatile
+    private var endedInForeground: Boolean? = null
+
+    @Volatile
+    private var threadName: String = "unknown"
+
     /**
      * SDK startup time. Only set for cold start sessions.
      */
     @Volatile
     private var sdkStartupDurationMs: Long? = null
 
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
+    override fun setSdkStartupInfo(
+        startTimeMs: Long,
+        endTimeMs: Long,
+        endedInForeground: Boolean,
+        threadName: String
+    ) {
         if (sdkStartupDurationMs == null) {
             spanService.recordCompletedSpan(
                 name = "sdk-init",
                 startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs
+                endTimeMs = endTimeMs,
+                private = true,
+                attributes = mapOf(
+                    "ended-in-foreground" to endedInForeground.toString(),
+                    "thread-name" to (threadName ?: "unknown"),
+                ),
             )
         }
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs
+        this.endedInForeground = endedInForeground
+        this.threadName = threadName
         sdkStartupDurationMs = endTimeMs - startTimeMs
     }
 
@@ -42,4 +60,8 @@ internal class StartupServiceImpl(
     override fun getSdkInitStartMs(): Long? = sdkInitStartMs
 
     override fun getSdkInitEndMs(): Long? = sdkInitEndMs
+
+    override fun endedInForeground(): Boolean? = endedInForeground
+
+    override fun getInitThreadName(): String? = threadName
 }

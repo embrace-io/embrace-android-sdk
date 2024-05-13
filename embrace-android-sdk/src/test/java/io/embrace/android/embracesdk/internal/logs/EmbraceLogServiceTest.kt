@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
@@ -71,7 +71,7 @@ internal class EmbraceLogServiceTest {
         sessionProperties = EmbraceSessionProperties(
             FakePreferenceService(),
             FakeConfigService(),
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
         cfg = RemoteConfig()
         configService = FakeConfigService(
@@ -410,7 +410,7 @@ internal class EmbraceLogServiceTest {
             appFramework,
             sessionProperties,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
             clock,
         )
     }

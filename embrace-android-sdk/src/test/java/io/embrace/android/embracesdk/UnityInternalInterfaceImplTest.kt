@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +17,7 @@ internal class UnityInternalInterfaceImplTest {
     private lateinit var impl: UnityInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var preferencesService: PreferencesService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
 
     @Before
     fun setUp() {
@@ -36,7 +36,7 @@ internal class UnityInternalInterfaceImplTest {
         every { embrace.isStarted } returns false
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
         verify(exactly = 1) {
-            logger.logSDKNotInitialized(any())
+            logger.logSdkNotInitialized(any())
         }
     }
 

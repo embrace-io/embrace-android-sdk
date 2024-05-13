@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.comms.api
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
 import io.mockk.mockk
@@ -33,7 +33,7 @@ internal class ApiClientImplTest {
 
     @Before
     fun setUp() {
-        apiClient = ApiClientImpl(InternalEmbraceLogger())
+        apiClient = ApiClientImpl(EmbLoggerImpl())
         server = MockWebServer()
         server.start()
         baseUrl = server.url("test").toString()
@@ -194,12 +194,12 @@ internal class ApiClientImplTest {
                 "Content-Type" to "application/json",
                 "Content-Encoding" to "gzip",
                 "Accept-Encoding" to "gzip",
-                "Connection" to "keep-alive",
-                "Content-Length" to "${delivered.bodySize}",
                 "X-EM-AID" to "abcde",
                 "X-EM-DID" to "test_did",
                 "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid"
+                "X-EM-LID" to "test_lid",
+                "Connection" to "keep-alive",
+                "Content-Length" to "${delivered.bodySize}",
             ),
             headers
         )

@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.utils.stream
@@ -38,7 +39,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val apiService: ApiService,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
     internal val thresholdCheck: BehaviorThresholdCheck =
@@ -279,7 +280,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             try {
                 listener()
             } catch (ex: Exception) {
-                logger.logDebug("Failed to notify configListener", ex)
+                logger.logWarning("Failed to notify configListener", ex)
+                logger.trackInternalError(InternalErrorType.CONFIG_LISTENER_FAIL, ex)
             }
         }
     }

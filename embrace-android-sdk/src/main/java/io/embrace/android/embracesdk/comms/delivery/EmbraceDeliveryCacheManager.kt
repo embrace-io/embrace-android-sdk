@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.isV2Payload
@@ -16,7 +16,7 @@ import java.io.Closeable
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
@@ -62,7 +62,7 @@ internal class EmbraceDeliveryCacheManager(
                 }
             }
         } catch (exc: Throwable) {
-            logger.logError("Save session failed", exc, true)
+            logger.logError("Save session failed", exc)
             throw exc
         }
     }
@@ -243,7 +243,7 @@ internal class EmbraceDeliveryCacheManager(
                 }
             }
         } catch (ex: Throwable) {
-            logger.logError("Failed to cache current active session", ex, true)
+            logger.logError("Failed to cache current active session", ex)
         }
     }
 }

@@ -9,12 +9,12 @@ import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 internal class NetworkStatusDataSource(
     spanService: SpanService,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : StartSpanMapper<NetworkStatusData>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,

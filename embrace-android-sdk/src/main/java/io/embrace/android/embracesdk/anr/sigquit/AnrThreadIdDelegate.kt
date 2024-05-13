@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.anr.sigquit
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import java.io.File
 
 internal class AnrThreadIdDelegate(
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
 
     /**

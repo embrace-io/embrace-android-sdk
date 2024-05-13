@@ -10,7 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeCrashDataSource
 import io.embrace.android.embracesdk.fakes.FakeCrashService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -20,14 +21,14 @@ internal class CompositeCrashServiceTest {
 
     private lateinit var compositeCrashService: CompositeCrashService
     private lateinit var configService: FakeConfigService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var crashServiceV1: FakeCrashService
     private lateinit var crashServiceV2: FakeCrashDataSource
     private lateinit var oTelConfig: OTelRemoteConfig
 
     @Before
     fun setUp() {
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         crashServiceV1 = FakeCrashService()
         crashServiceV2 = FakeCrashDataSource()
         oTelConfig = OTelRemoteConfig(isBetaEnabled = false)

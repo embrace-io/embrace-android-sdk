@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -62,7 +62,7 @@ internal class EmbraceMetadataReactNativeTest {
         preferencesService.javaScriptPatchNumber = "patch-number"
         preferencesService.reactNativeVersionNumber = "rn-version-number"
         mockSharedObjectLoader = mockk(relaxed = true)
-        cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, InternalEmbraceLogger())
+        cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, EmbLoggerImpl())
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
             Embrace.AppFramework.REACT_NATIVE
@@ -87,7 +87,7 @@ internal class EmbraceMetadataReactNativeTest {
         lazy { "" },
         lazy { "" },
         hostedSdkVersionInfo,
-        InternalEmbraceLogger(),
+        EmbLoggerImpl(),
     )
 
     @Test

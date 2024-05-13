@@ -1,22 +1,19 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 internal class UnbalancedCallDetectorTest {
 
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: FakeEmbLogger
     private lateinit var detector: UnbalancedCallDetector
-    private lateinit var action: FakeLoggerAction
     private val thread = Thread.currentThread()
 
     @Before
     fun setUp() {
-        action = FakeLoggerAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(action) }
+        logger = FakeEmbLogger()
         detector = UnbalancedCallDetector(logger)
     }
 
@@ -75,9 +72,6 @@ internal class UnbalancedCallDetectorTest {
     }
 
     private fun verifyInternalErrorLogs(expectedCount: Int) {
-        val messages = action.msgQueue.filter { msg ->
-            msg.severity == InternalEmbraceLogger.Severity.ERROR && msg.logStacktrace
-        }
-        assertEquals(expectedCount, messages.size)
+        assertEquals(expectedCount, logger.warningMessages.size)
     }
 }

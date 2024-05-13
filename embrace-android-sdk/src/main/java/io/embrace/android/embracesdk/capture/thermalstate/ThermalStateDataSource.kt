@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -23,7 +23,7 @@ import java.util.concurrent.Executor
 @RequiresApi(Build.VERSION_CODES.Q)
 internal class ThermalStateDataSource(
     spanService: SpanService,
-    logger: InternalEmbraceLogger,
+    logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     powerManagerProvider: Provider<PowerManager?>

@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.anr.detection.UnbalancedCallDetector
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceAnrService(
     var configService: ConfigService,
     looper: Looper,
-    logger: InternalEmbraceLogger,
+    logger: EmbLogger,
     livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: ScheduledWorker,
     state: ThreadMonitoringState,
@@ -39,7 +40,7 @@ internal class EmbraceAnrService(
     private val state: ThreadMonitoringState
     private val targetThread: Thread
     val stacktraceSampler: AnrStacktraceSampler
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
     val listeners = CopyOnWriteArrayList<BlockedThreadListener>()
@@ -91,7 +92,8 @@ internal class EmbraceAnrService(
             }
             anrMonitorWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
-            logger.logError("Failed to getAnrIntervals()", exc, true)
+            logger.logWarning("Failed to getAnrIntervals()", exc)
+            logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
             emptyList()
         }
     }

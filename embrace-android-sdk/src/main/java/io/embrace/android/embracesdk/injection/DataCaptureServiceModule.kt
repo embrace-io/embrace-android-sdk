@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
+import io.embrace.android.embracesdk.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupServiceImpl
@@ -59,7 +60,7 @@ internal interface DataCaptureServiceModule {
 
     val startupTracker: StartupTracker
 
-    val appStartupTraceEmitter: AppStartupTraceEmitter
+    val appStartupDataCollector: AppStartupDataCollector
 }
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
@@ -96,10 +97,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         Systrace.traceSynchronous("breadcrumb-service-init") {
             EmbraceBreadcrumbService(
                 initModule.clock,
-                configService,
-                { dataSourceModule },
-                initModule.logger
-            )
+                configService
+            ) { dataSourceModule }
         }
     }
 
@@ -117,7 +116,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         )
     }
 
-    override val appStartupTraceEmitter: AppStartupTraceEmitter by singleton {
+    override val appStartupDataCollector: AppStartupDataCollector by singleton {
         AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,
             startupServiceProvider = { startupService },
@@ -130,7 +129,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val startupTracker: StartupTracker by singleton {
         StartupTracker(
-            appStartupTraceEmitter = appStartupTraceEmitter,
+            appStartupDataCollector = appStartupDataCollector,
             logger = initModule.logger,
             versionChecker = versionChecker,
         )

@@ -5,7 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.system.mockBundle
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
@@ -23,7 +24,7 @@ internal class PushNotificationCaptureServiceTest {
     private lateinit var breadcrumbService: FakeBreadcrumbService
 
     companion object {
-        private val logger: InternalEmbraceLogger = InternalEmbraceLogger()
+        private val logger: EmbLogger = EmbLoggerImpl()
         private val mockBundle: Bundle = mockBundle()
         private val mockIntent: Intent = mockk {
             every { extras } returns mockBundle

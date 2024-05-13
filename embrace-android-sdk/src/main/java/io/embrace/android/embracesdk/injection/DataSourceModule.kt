@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.capture.crumbs.PushNotificationDataSource
+import io.embrace.android.embracesdk.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
@@ -49,6 +50,7 @@ internal interface DataSourceModule {
     val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
     val sigquitDataSource: DataSourceState<SigquitDataSource>
+    val rnActionDataSource: DataSourceState<RnActionDataSource>
     val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
 }
 
@@ -213,12 +215,14 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
+    override val rnActionDataSource: DataSourceState<RnActionDataSource> by dataSourceState {
         DataSourceState(
-            factory = { thermalService },
-            configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
-                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
+            factory = {
+                RnActionDataSource(
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
+                    otelModule.spanService,
+                    initModule.logger
+                )
             }
         )
     }
@@ -235,6 +239,16 @@ internal class DataSourceModuleImpl(
         } else {
             null
         }
+    }
+
+    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { thermalService },
+            configGate = {
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
+                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
+            }
+        )
     }
 
     private val configService = essentialServiceModule.configService

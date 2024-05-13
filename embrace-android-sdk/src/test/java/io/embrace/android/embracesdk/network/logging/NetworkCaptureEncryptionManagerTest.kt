@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.network.logging
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -18,7 +18,7 @@ internal class NetworkCaptureEncryptionManagerTest {
 
     @Before
     fun setup() {
-        networkCaptureEncryptionManager = NetworkCaptureEncryptionManager(InternalEmbraceLogger())
+        networkCaptureEncryptionManager = NetworkCaptureEncryptionManager(EmbLoggerImpl())
     }
 
     @Test

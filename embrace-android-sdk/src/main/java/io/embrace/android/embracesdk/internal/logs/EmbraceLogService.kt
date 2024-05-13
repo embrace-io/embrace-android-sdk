@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
@@ -38,7 +38,7 @@ internal class EmbraceLogService(
     private val appFramework: AppFramework,
     private val sessionProperties: EmbraceSessionProperties,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     clock: Clock,
 ) : LogService {
 
@@ -285,7 +285,7 @@ internal class LogCounter(
     private val name: String,
     private val clock: Clock,
     private val getConfigLogLimit: (() -> Int),
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
     private val count = AtomicInteger(0)
     private val logIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
@@ -298,7 +298,7 @@ internal class LogCounter(
         if (logIds.size < getConfigLogLimit.invoke()) {
             logIds[timestamp] = logId
         } else {
-            logger.logWarning("$name log limit has been reached.")
+            logger.logInfo("$name log limit has been reached.")
             return false
         }
         return true

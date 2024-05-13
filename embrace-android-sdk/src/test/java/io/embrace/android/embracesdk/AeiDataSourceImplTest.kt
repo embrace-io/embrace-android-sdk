@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -91,7 +91,7 @@ internal class AeiDataSourceImplTest {
             sessionIdTracker,
             userService,
             logWriter,
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         ).apply(AeiDataSourceImpl::enableDataCapture)
     }
 

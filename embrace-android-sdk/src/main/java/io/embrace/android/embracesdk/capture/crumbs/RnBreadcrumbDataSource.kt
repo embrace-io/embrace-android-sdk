@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.text.TextUtils
 import io.embrace.android.embracesdk.arch.DataCaptureService
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
 
 /**
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.payload.RnActionBreadcrumb
  */
 internal class RnBreadcrumbDataSource(
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val store: BreadcrumbDataStore<RnActionBreadcrumb> = BreadcrumbDataStore {
         configService.breadcrumbBehavior.getCustomBreadcrumbLimit()
     },
@@ -40,7 +40,7 @@ internal class RnBreadcrumbDataSource(
                 RnActionBreadcrumb(name, startTime, endTime, properties, bytesSent, output)
             )
         } catch (ex: Exception) {
-            logger.logDebug("Failed to log RN Action breadcrumb with name $name", ex)
+            logger.logWarning("Failed to log RN Action breadcrumb", ex)
         }
     }
 }

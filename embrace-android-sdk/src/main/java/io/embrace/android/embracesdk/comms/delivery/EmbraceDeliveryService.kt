@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
@@ -25,7 +25,7 @@ internal class EmbraceDeliveryService(
     private val apiService: ApiService,
     private val backgroundWorker: BackgroundWorker,
     private val serializer: PlatformSerializer,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : DeliveryService {
 
     companion object {
@@ -170,7 +170,7 @@ internal class EmbraceDeliveryService(
                     logger.logError("Session $sessionId not found")
                 }
             } catch (ex: Throwable) {
-                logger.logError("Could not send cached session", ex, true)
+                logger.logError("Could not send cached session", ex)
             }
         }
     }

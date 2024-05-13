@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -50,7 +51,7 @@ internal class EmbraceDeliveryServiceTest {
     private lateinit var testPlatformSerializer: TestPlatformSerializer
     private lateinit var fakeStorageService: FakeStorageService
     private lateinit var cacheService: EmbraceCacheService
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var deliveryService: EmbraceDeliveryService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
 
@@ -61,7 +62,7 @@ internal class EmbraceDeliveryServiceTest {
         apiService = FakeApiService()
         fakeNativeCrashService = FakeNativeCrashService()
         gatingService = FakeGatingService()
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         sessionIdTracker = FakeSessionIdTracker()
         fakeStorageService = FakeStorageService()
         testPlatformSerializer = TestPlatformSerializer()

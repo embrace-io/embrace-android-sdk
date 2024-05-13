@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.fakes.system.mockMessage
 import io.embrace.android.embracesdk.fakes.system.mockMessageQueue
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify
@@ -52,7 +52,7 @@ internal class TargetThreadHandlerTest {
             anrMonitorThread = anrMonitorThread,
             configService,
             messageQueue,
-            logger = InternalEmbraceLogger()
+            logger = EmbLoggerImpl()
         ) { FAKE_TIME_MS }.apply {
             action = {}
         }

@@ -3,16 +3,13 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
 import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.recordSession
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -74,8 +71,10 @@ internal class SpanTest {
     fun `a SpanExporter added after initialization won't be used`() {
         with(testRule) {
 
-            val fake = FakeLoggerAction()
-            harness.overriddenInitModule.logger.apply { addLoggerAction(fake) }
+            val fake = FakeInternalErrorService()
+            harness.overriddenInitModule.logger.apply {
+                internalErrorService = fake
+            }
 
             val fakeSpanExporter = FakeSpanExporter()
             embrace.start(harness.overriddenCoreModule.context)
@@ -87,9 +86,6 @@ internal class SpanTest {
                 Thread.sleep(3000)
             }
             assertTrue(fakeSpanExporter.exportedSpans.size == 0)
-            assertTrue(fake.msgQueue.any {
-                it.msg == "A SpanExporter can only be added before the SDK is started."
-            })
         }
     }
 }

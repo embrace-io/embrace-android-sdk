@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)

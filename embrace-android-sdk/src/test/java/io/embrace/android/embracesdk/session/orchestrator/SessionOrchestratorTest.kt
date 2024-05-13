@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -55,7 +56,7 @@ internal class SessionOrchestratorTest {
     private lateinit var baCacheExecutor: BlockingScheduledExecutorService
     private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var sessionSpan: FakeCurrentSessionSpan
 
     @Before
@@ -73,7 +74,7 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
         periodicBackgroundActivityCacher = PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())

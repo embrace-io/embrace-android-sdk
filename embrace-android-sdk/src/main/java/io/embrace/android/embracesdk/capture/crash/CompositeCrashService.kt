@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.capture.crash
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.JsException
 
 internal class CompositeCrashService(
     private val crashServiceProvider: Provider<CrashService>,
     private val crashDataSourceProvider: Provider<CrashDataSource>,
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
 ) : CrashService {
 
     private val useCrashDataSource: Boolean

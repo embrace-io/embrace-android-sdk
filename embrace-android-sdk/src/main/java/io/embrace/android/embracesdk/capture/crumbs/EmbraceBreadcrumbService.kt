@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
@@ -27,11 +26,8 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
-    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
-    logger: InternalEmbraceLogger
+    private val dataSourceModuleProvider: Provider<DataSourceModule?>
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
-
-    private val rnBreadcrumbDataSource = RnBreadcrumbDataSource(configService, logger)
 
     override fun logView(screen: String?, timestamp: Long) {
         dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, false)
@@ -70,7 +66,9 @@ internal class EmbraceBreadcrumbService(
         bytesSent: Int,
         output: String
     ) {
-        rnBreadcrumbDataSource.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+        dataSourceModuleProvider()?.rnActionDataSource?.dataSource?.apply {
+            this.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+        }
     }
 
     override fun logWebView(url: String?, startTime: Long) {
@@ -79,9 +77,7 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun getBreadcrumbs() = Breadcrumbs(
-        rnActionBreadcrumbs = rnBreadcrumbDataSource.getCapturedData(),
-    )
+    override fun getBreadcrumbs() = Breadcrumbs()
 
     override fun flushBreadcrumbs(): Breadcrumbs {
         val breadcrumbs = getBreadcrumbs()
@@ -127,6 +123,5 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun cleanCollections() {
-        rnBreadcrumbDataSource.cleanCollections()
     }
 }

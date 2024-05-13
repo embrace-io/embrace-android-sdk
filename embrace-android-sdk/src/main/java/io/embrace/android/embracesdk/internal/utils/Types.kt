@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.injection.SdkObservabilityModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -43,7 +43,7 @@ internal typealias UnimplementedConfig = Unit?
 internal typealias CoreModuleSupplier = (
     context: Context,
     appFramework: Embrace.AppFramework,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) -> CoreModule
 
 /**
@@ -89,7 +89,6 @@ internal typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    isDevMode: Boolean,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule

@@ -29,7 +29,7 @@ internal class SessionPayloadSourceImpl(
 
     override fun getSessionPayload(endType: SessionSnapshotType): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
-        val internalErrors = captureDataSafely(logger) { internalErrorService.currentExceptionError?.toNewPayload() }
+        val internalErrors = captureDataSafely(logger) { internalErrorService.getCapturedData()?.toNewPayload() }
         val snapshots = retrieveSpanSnapshotData()
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session

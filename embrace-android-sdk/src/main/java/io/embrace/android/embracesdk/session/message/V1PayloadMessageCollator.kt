@@ -139,7 +139,7 @@ internal class V1PayloadMessageCollator(
             infoLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getInfoLogsAttemptedToSend),
             warnLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getWarnLogsAttemptedToSend),
             errorLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(logger, internalErrorService::currentExceptionError),
+            exceptionError = captureDataSafely(logger, internalErrorService::getCapturedData),
             lastHeartbeatTime = endTime,
             endType = lifeEventType,
             unhandledExceptions = captureDataSafely(logger, logMessageService::getUnhandledExceptionsSent),

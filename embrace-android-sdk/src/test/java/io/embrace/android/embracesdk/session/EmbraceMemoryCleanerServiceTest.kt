@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerListener
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.utils.at
@@ -10,12 +9,10 @@ import org.junit.Test
 
 internal class EmbraceMemoryCleanerServiceTest {
 
-    private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var service: EmbraceMemoryCleanerService
 
     @Before
     fun setUp() {
-        internalErrorService = FakeInternalErrorService()
         service = EmbraceMemoryCleanerService(EmbLoggerImpl())
     }
 
@@ -27,7 +24,7 @@ internal class EmbraceMemoryCleanerServiceTest {
         service.addListener(listener)
         service.addListener(listener2)
 
-        service.cleanServicesCollections(internalErrorService)
+        service.cleanServicesCollections()
 
         assertEquals(1, listener.callCount)
         assertEquals(1, listener2.callCount)
@@ -45,16 +42,10 @@ internal class EmbraceMemoryCleanerServiceTest {
         service.addListener(listener2)
         service.addListener(listener3)
 
-        service.cleanServicesCollections(internalErrorService)
+        service.cleanServicesCollections()
 
         assertEquals(1, listener1.callCount)
         assertEquals(1, listener3.callCount)
-    }
-
-    @Test
-    fun `test cleanServicesCollections clears Embrace public API`() {
-        service.cleanServicesCollections(internalErrorService)
-        assertEquals(1, internalErrorService.resetCallCount)
     }
 
     @Test

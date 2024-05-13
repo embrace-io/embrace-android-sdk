@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 
@@ -13,9 +12,7 @@ internal class FakeMemoryCleanerService : MemoryCleanerService {
         listeners.add(listener)
     }
 
-    override fun cleanServicesCollections(
-        internalErrorService: InternalErrorService
-    ) {
+    override fun cleanServicesCollections() {
         callCount++
     }
 }

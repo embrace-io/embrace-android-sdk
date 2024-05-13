@@ -118,7 +118,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.userService,
             ndkService,
             essentialServiceModule.sessionProperties,
-            sdkObservabilityModule.internalErrorService,
             essentialServiceModule.networkConnectivityService
         )
     }

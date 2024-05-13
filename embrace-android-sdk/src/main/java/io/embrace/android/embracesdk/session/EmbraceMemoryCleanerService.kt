@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
@@ -14,9 +13,7 @@ internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : Memo
 
     val listeners = CopyOnWriteArrayList<MemoryCleanerListener>()
 
-    override fun cleanServicesCollections(
-        internalErrorService: InternalErrorService
-    ) {
+    override fun cleanServicesCollections() {
         stream(listeners) { listener: MemoryCleanerListener ->
             try {
                 listener.cleanCollections()
@@ -25,7 +22,6 @@ internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : Memo
                 logger.trackInternalError(InternalErrorType.MEMORY_CLEAN_LISTENER_FAIL, ex)
             }
         }
-        internalErrorService.resetExceptionErrorObject()
     }
 
     override fun addListener(listener: MemoryCleanerListener) {

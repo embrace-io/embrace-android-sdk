@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -18,7 +17,6 @@ internal class OrchestratorBoundaryDelegateTest {
     private lateinit var userService: FakeUserService
     private lateinit var ndkService: FakeNdkService
     private lateinit var sessionProperties: EmbraceSessionProperties
-    private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
 
     @Before
@@ -29,14 +27,12 @@ internal class OrchestratorBoundaryDelegateTest {
         sessionProperties = fakeEmbraceSessionProperties().apply {
             add("key", "value", false)
         }
-        internalErrorService = FakeInternalErrorService()
         networkConnectivityService = FakeNetworkConnectivityService()
         delegate = OrchestratorBoundaryDelegate(
             memoryCleanerService,
             userService,
             ndkService,
             sessionProperties,
-            internalErrorService,
             networkConnectivityService
         )
     }

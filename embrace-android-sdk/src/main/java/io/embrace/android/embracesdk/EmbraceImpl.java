@@ -373,16 +373,19 @@ final class EmbraceImpl {
         final long endTimeMs = sdkClock.now();
         started.set(true);
         Systrace.endSynchronous();
-        Systrace.startSynchronous("startup-tracking");
-        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(startTimeMs, endTimeMs);
-        Systrace.endSynchronous();
+        boolean inForeground = !essentialServiceModule.getProcessStateService().isInBackground();
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
-        if (!essentialServiceModule.getProcessStateService().isInBackground()) {
+        if (inForeground) {
             dataContainerModule.getEventService().sendStartupMoment();
         }
+
+        Systrace.startSynchronous("startup-tracking");
+        dataCaptureServiceModule.getStartupService().setSdkStartupInfo(
+            startTimeMs, endTimeMs, inForeground, Thread.currentThread().getName());
+        Systrace.endSynchronous();
 
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.

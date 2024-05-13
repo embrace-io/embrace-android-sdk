@@ -21,13 +21,17 @@ internal class StartupServiceImpl(
     @Volatile
     private var sdkStartupDurationMs: Long? = null
 
-    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long) {
+    override fun setSdkStartupInfo(startTimeMs: Long, endTimeMs: Long, endedInForeground: Boolean, threadName: String?) {
         if (sdkStartupDurationMs == null) {
             spanService.recordCompletedSpan(
                 name = "sdk-init",
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
                 private = true,
+                attributes = mapOf(
+                    "ended-in-foreground" to endedInForeground.toString(),
+                    "thread-name" to (threadName ?: "unknown"),
+                ),
             )
         }
         sdkInitStartMs = startTimeMs

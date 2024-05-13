@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.fakes.FakeAnrService
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -55,9 +53,7 @@ internal class V2PayloadMessageCollatorTest {
         gatingService = FakeGatingService()
         v1collator = V1PayloadMessageCollator(
             gatingService = gatingService,
-            configService = FakeConfigService(),
             nativeThreadSamplerService = null,
-            thermalStatusService = FakeThermalStatusService(),
             webViewService = FakeWebViewService(),
             userService = FakeUserService(),
             preferencesService = FakePreferenceService(),

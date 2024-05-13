@@ -31,7 +31,6 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -171,14 +170,12 @@ internal class PayloadFactoryBaTest {
         val logger = EmbLoggerImpl()
         val collator = V1PayloadMessageCollator(
             gatingService,
-            configService,
             metadataService,
             eventService,
             logMessageService,
             internalErrorService,
             performanceInfoService,
             FakeWebViewService(),
-            FakeThermalStatusService(),
             null,
             breadcrumbService,
             userService,

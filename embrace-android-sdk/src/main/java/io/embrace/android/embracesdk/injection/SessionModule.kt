@@ -47,14 +47,12 @@ internal class SessionModuleImpl(
     override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
         V1PayloadMessageCollator(
             essentialServiceModule.gatingService,
-            essentialServiceModule.configService,
             essentialServiceModule.metadataService,
             dataContainerModule.eventService,
             customerLogModule.logMessageService,
             sdkObservabilityModule.internalErrorService,
             dataContainerModule.performanceInfoService,
             dataCaptureServiceModule.webviewService,
-            dataCaptureServiceModule.thermalStatusService,
             nativeModule.nativeThreadSamplerService,
             dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,

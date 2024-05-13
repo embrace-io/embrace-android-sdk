@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.payload.BetaFeatures
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
@@ -45,7 +44,6 @@ internal class SessionTest {
         orientations = listOf(Orientation(1, 16092342200)),
         properties = mapOf("fake-key" to "fake-value"),
         symbols = mapOf("fake-native-key" to "fake-native-value"),
-        betaFeatures = BetaFeatures(),
         webViewInfo = listOf(
             WebViewInfo(
                 "fake-webview-id",
@@ -96,7 +94,6 @@ internal class SessionTest {
             assertEquals(listOf(Orientation(1, 16092342200)), orientations)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
             assertEquals(mapOf("fake-native-key" to "fake-native-value"), symbols)
-            assertEquals(BetaFeatures(), betaFeatures)
             assertEquals(1, webViewInfo?.size)
         }
     }

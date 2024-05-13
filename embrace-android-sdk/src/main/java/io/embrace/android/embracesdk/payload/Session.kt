@@ -114,12 +114,6 @@ internal data class Session @JvmOverloads internal constructor(
     @Json(name = "ue")
     val unhandledExceptions: Int? = null,
 
-    /**
-     * Beta feature data that was captured during this session
-     */
-    @Json(name = "bf")
-    val betaFeatures: BetaFeatures? = null,
-
     @Json(name = "sb")
     val symbols: Map<String, String>? = null,
 

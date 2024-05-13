@@ -227,16 +227,6 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
-        DataSourceState(
-            factory = { thermalService },
-            configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
-                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
-            }
-        )
-    }
-
     private val thermalService: ThermalStateDataSource? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             ThermalStateDataSource(
@@ -249,6 +239,16 @@ internal class DataSourceModuleImpl(
         } else {
             null
         }
+    }
+
+    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { thermalService },
+            configGate = {
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
+                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
+            }
+        )
     }
 
     private val configService = essentialServiceModule.configService

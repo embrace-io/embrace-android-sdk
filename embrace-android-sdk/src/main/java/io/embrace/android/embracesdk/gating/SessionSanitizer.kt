@@ -61,7 +61,6 @@ internal class SessionSanitizer(
             else -> session.startupThreshold
         }
         return session.copy(
-            betaFeatures = null, // always disable beta features if the gating config has been enabled
             properties = properties,
             orientations = orientations,
             terminationTime = terminationTime,

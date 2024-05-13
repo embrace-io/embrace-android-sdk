@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.FakeAnrService
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeThermalStatusService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
@@ -62,9 +60,7 @@ internal class V1PayloadMessageCollatorTest {
 
         collator = V1PayloadMessageCollator(
             gatingService = gatingService,
-            configService = FakeConfigService(),
             nativeThreadSamplerService = null,
-            thermalStatusService = FakeThermalStatusService(),
             webViewService = FakeWebViewService(),
             userService = FakeUserService(),
             preferencesService = FakePreferenceService(),

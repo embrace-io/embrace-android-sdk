@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.capture.memory.MemoryService
 import io.embrace.android.embracesdk.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.startup.StartupTracker
-import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
-import io.embrace.android.embracesdk.capture.thermalstate.ThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -20,7 +18,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 
 internal class FakeDataCaptureServiceModule(
-    override val thermalStatusService: ThermalStatusService = NoOpThermalStatusService(),
     override val memoryService: MemoryService = FakeMemoryService(),
     override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),
     override val webviewService: WebViewService =

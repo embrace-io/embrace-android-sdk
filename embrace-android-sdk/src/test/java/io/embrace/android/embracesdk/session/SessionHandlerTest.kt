@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.capture.thermalstate.NoOpThermalStatusService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -150,14 +149,12 @@ internal class SessionHandlerTest {
         spanService = initModule.openTelemetryModule.spanService
         val payloadMessageCollator = V1PayloadMessageCollator(
             gatingService,
-            configService,
             metadataService,
             eventService,
             logMessageService,
             internalErrorService,
             performanceInfoService,
             webViewService,
-            NoOpThermalStatusService(),
             null,
             breadcrumbService,
             userService,

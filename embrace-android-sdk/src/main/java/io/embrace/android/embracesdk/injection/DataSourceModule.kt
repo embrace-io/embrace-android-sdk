@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -50,6 +51,7 @@ internal interface DataSourceModule {
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
     val sigquitDataSource: DataSourceState<SigquitDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
+    val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
 }
 
 internal class DataSourceModuleImpl(
@@ -223,6 +225,30 @@ internal class DataSourceModuleImpl(
                 )
             }
         )
+    }
+
+    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { thermalService },
+            configGate = {
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
+                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
+            }
+        )
+    }
+
+    private val thermalService: ThermalStateDataSource? by singleton {
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+            ThermalStateDataSource(
+                spanService = otelModule.spanService,
+                logger = initModule.logger,
+                backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                clock = initModule.clock,
+                powerManagerProvider = { systemServiceModule.powerManager }
+            )
+        } else {
+            null
+        }
     }
 
     private val configService = essentialServiceModule.configService

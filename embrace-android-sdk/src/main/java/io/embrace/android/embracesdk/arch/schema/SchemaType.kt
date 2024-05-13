@@ -336,4 +336,15 @@ internal sealed class SchemaType(
             )
             .toNonNullMap()
     }
+
+    internal class ThermalState(
+        status: Int
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.ThermalState,
+        fixedObjectName = "thermal-state"
+    ) {
+        override val schemaAttributes = mapOf(
+            "status" to status.toString()
+        )
+    }
 }

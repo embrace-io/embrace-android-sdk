@@ -41,6 +41,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.networkStatusDataSource)
         assertNotNull(module.sigquitDataSource)
         assertNotNull(module.rnActionDataSource)
-        assertEquals(12, module.getDataSources().size)
+        assertNotNull(module.thermalStateDataSource)
+        assertEquals(13, module.getDataSources().size)
     }
 }

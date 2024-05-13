@@ -6,9 +6,6 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
 import android.os.Looper
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOrientationService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
@@ -38,8 +35,6 @@ internal class ActivityLifecycleTrackerTest {
 
     companion object {
         private lateinit var mockLooper: Looper
-        private lateinit var mockLifeCycleOwner: LifecycleOwner
-        private lateinit var mockLifecycle: Lifecycle
         private lateinit var application: Application
         private val fakeClock = FakeClock()
 
@@ -47,18 +42,12 @@ internal class ActivityLifecycleTrackerTest {
         @JvmStatic
         fun beforeClass() {
             mockLooper = mockLooper()
-            mockLifeCycleOwner = mockk()
-            mockLifecycle = mockk(relaxed = true)
             mockkStatic(Looper::class)
-            mockkStatic(ProcessLifecycleOwner::class)
             application = mockApplication()
 
             fakeClock.setCurrentTime(1234)
             every { application.registerActivityLifecycleCallbacks(any()) } returns Unit
             every { Looper.getMainLooper() } returns mockLooper
-            every { ProcessLifecycleOwner.get() } returns mockLifeCycleOwner
-            every { mockLifeCycleOwner.lifecycle } returns mockLifecycle
-            every { mockLifecycle.addObserver(any()) } returns Unit
         }
 
         @JvmStatic

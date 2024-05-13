@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import android.app.Application
 import android.os.Looper
+import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
@@ -215,6 +216,34 @@ internal class EmbraceProcessStateServiceTest {
 
         val messages = fakeEmbLogger.internalErrorMessages
         assertTrue(messages.isEmpty())
+    }
+
+    @Test
+    fun `launched in background`() {
+        stateService = EmbraceProcessStateService(
+            fakeClock,
+            fakeEmbLogger,
+            mockk {
+                every { lifecycle } returns mockk<Lifecycle> {
+                    every { currentState } returns Lifecycle.State.INITIALIZED
+                }
+            }
+        )
+        assertTrue(stateService.isInBackground)
+    }
+
+    @Test
+    fun `launched in foreground`() {
+        stateService = EmbraceProcessStateService(
+            fakeClock,
+            fakeEmbLogger,
+            mockk {
+                every { lifecycle } returns mockk<Lifecycle> {
+                    every { currentState } returns Lifecycle.State.STARTED
+                }
+            }
+        )
+        assertFalse(stateService.isInBackground)
     }
 
     private class DecoratedListener(

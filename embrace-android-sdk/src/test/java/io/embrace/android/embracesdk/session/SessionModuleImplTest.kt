@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
@@ -59,7 +58,6 @@ internal class SessionModuleImplTest {
             FakeDeliveryModule(),
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
-            FakeSdkObservabilityModule(),
             workerThreadModule,
             dataSourceModule,
             FakePayloadModule(),
@@ -99,7 +97,6 @@ internal class SessionModuleImplTest {
             FakeDeliveryModule(),
             FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
-            FakeSdkObservabilityModule(),
             workerThreadModule,
             dataSourceModule,
             FakePayloadModule(),

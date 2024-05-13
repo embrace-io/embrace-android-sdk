@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSdkObservabilityModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
@@ -27,7 +26,6 @@ internal class PayloadModuleImplTest {
             WorkerThreadModuleImpl(initModule),
             FakeNativeModule(),
             FakeOpenTelemetryModule(),
-            FakeSdkObservabilityModule(),
         ) { FakeSessionPropertiesService() }
         assertNotNull(module.sessionEnvelopeSource)
         assertNotNull(module.logEnvelopeSource)

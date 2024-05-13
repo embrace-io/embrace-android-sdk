@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSuppli
 import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.PayloadModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.SdkObservabilityModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
@@ -59,7 +58,6 @@ internal class ModuleInitBootstrapper(
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::DataCaptureServiceModuleImpl,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::DeliveryModuleImpl,
     private val anrModuleSupplier: AnrModuleSupplier = ::AnrModuleImpl,
-    private val sdkObservabilityModuleSupplier: SdkObservabilityModuleSupplier = ::SdkObservabilityModuleImpl,
     private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::CustomerLogModuleImpl,
     private val nativeModuleSupplier: NativeModuleSupplier = ::NativeModuleImpl,
     private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::DataContainerModuleImpl,
@@ -92,9 +90,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var anrModule: AnrModule
-        private set
-
-    lateinit var sdkObservabilityModule: SdkObservabilityModule
         private set
 
     lateinit var customerLogModule: CustomerLogModule
@@ -147,6 +142,11 @@ internal class ModuleInitBootstrapper(
             synchronized(asyncInitTask) {
                 return if (!isInitialized()) {
                     coreModule = init(CoreModule::class) { coreModuleSupplier(context, appFramework, logger) }
+
+                    val serviceRegistry = coreModule.serviceRegistry
+                    postInit(InitModule::class) {
+                        serviceRegistry.registerService(initModule.internalErrorService)
+                    }
                     workerThreadModule = init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
                     val initTask = postInit(OpenTelemetryModule::class) {
@@ -157,8 +157,6 @@ internal class ModuleInitBootstrapper(
                             asyncInitCompletionMs = initModule.clock.now()
                         }
                     }
-
-                    val serviceRegistry = coreModule.serviceRegistry
                     postInit(OpenTelemetryModule::class) {
                         serviceRegistry.registerService(initModule.telemetryService)
                         serviceRegistry.registerService(openTelemetryModule.spanService)
@@ -194,6 +192,7 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(EssentialServiceModule::class) {
+                        initModule.internalErrorService.configService = essentialServiceModule.configService
                         serviceRegistry.registerServices(
                             essentialServiceModule.processStateService,
                             essentialServiceModule.metadataService,
@@ -277,17 +276,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    // initialize the logger early so that logged exceptions have a good chance of
-                    // being appended to the exceptions service rather than logcat
-                    sdkObservabilityModule = init(SdkObservabilityModule::class) {
-                        sdkObservabilityModuleSupplier(initModule, essentialServiceModule)
-                    }
-
-                    postInit(SdkObservabilityModule::class) {
-                        serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
-                        initModule.logger.internalErrorService = sdkObservabilityModule.internalErrorService
-                    }
-
                     nativeModule = init(NativeModule::class) {
                         nativeModuleSupplier(
                             initModule,
@@ -357,8 +345,7 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             workerThreadModule,
                             nativeModule,
-                            openTelemetryModule,
-                            sdkObservabilityModule
+                            openTelemetryModule
                         ) { sessionModule.sessionPropertiesService }
                     }
 
@@ -413,7 +400,6 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             dataCaptureServiceModule,
                             customerLogModule,
-                            sdkObservabilityModule,
                             workerThreadModule,
                             dataSourceModule,
                             payloadModule,

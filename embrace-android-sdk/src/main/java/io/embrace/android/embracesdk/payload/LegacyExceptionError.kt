@@ -23,15 +23,13 @@ internal data class LegacyExceptionError(
      * For each exceptions, occurrences is incremented by 1.
      *
      * @param ex       the exception error.
-     * @param appState (foreground or background).
      */
-    fun addException(ex: Throwable?, appState: String?, clock: Clock) {
+    fun addException(ex: Throwable?, clock: Clock) {
         occurrences++
         if (exceptionErrors.size < DEFAULT_EXCEPTION_ERROR_LIMIT) {
             exceptionErrors.add(
                 LegacyExceptionErrorInfo(
                     clock.now(),
-                    appState,
                     getExceptionInfo(ex)
                 )
             )

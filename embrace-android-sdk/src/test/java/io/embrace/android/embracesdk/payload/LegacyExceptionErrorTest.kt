@@ -41,7 +41,7 @@ internal class LegacyExceptionErrorTest {
         exceptionError = LegacyExceptionError()
         val max = 10
         repeat(max + 1) {
-            exceptionError.addException(Throwable("exceptions"), "state", clock)
+            exceptionError.addException(Throwable("exceptions"), clock)
         }
 
         assertEquals(exceptionError.exceptionErrors.size, max)

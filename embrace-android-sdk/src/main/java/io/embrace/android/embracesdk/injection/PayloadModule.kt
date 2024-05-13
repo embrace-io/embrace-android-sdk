@@ -33,7 +33,6 @@ internal class PayloadModuleImpl(
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
-    sdkObservabilityModule: SdkObservabilityModule,
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
 ) : PayloadModule {
 
@@ -66,7 +65,7 @@ internal class PayloadModuleImpl(
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
-            sdkObservabilityModule.internalErrorService,
+            initModule.internalErrorService,
             nativeModule.nativeThreadSamplerService,
             otelModule.spanSink,
             otelModule.currentSessionSpan,

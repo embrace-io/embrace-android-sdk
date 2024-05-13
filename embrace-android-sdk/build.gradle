@@ -80,8 +80,8 @@ koverReport {
 }
 
 dependencies {
-    implementation "androidx.lifecycle:lifecycle-common-java8:2.5.0"
-    implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
+    implementation "androidx.lifecycle:lifecycle-common-java8:${Versions.lifecycle}"
+    implementation "androidx.lifecycle:lifecycle-process:${Versions.lifecycle}"
 
     // json
     implementation("com.squareup.moshi:moshi:${Versions.moshi}")

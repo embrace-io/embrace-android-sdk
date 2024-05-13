@@ -43,4 +43,7 @@ object Versions {
 
     @JvmField
     val moshi = "1.12.0"
+
+    @JvmField
+    val lifecycle = "2.7.0"
 }

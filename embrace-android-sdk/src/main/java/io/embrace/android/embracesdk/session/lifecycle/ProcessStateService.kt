@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.session.lifecycle
 
-import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleEventObserver
 import java.io.Closeable
 
 /**
  * Service which handles Android process lifecycle callbacks.
  */
-internal interface ProcessStateService : LifecycleObserver, Closeable {
+internal interface ProcessStateService : LifecycleEventObserver, Closeable {
 
     /**
      * Whether the application is in the background.

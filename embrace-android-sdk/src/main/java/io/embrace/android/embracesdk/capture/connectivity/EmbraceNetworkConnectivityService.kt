@@ -9,7 +9,8 @@ import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -19,7 +20,7 @@ internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val clock: Clock,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val connectivityManager: ConnectivityManager?,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {
@@ -54,7 +55,8 @@ internal class EmbraceNetworkConnectivityService(
                 }
             }
         } catch (ex: Exception) {
-            logger.logDebug("Failed to record network connectivity", ex)
+            logger.logWarning("Failed to record network connectivity", ex)
+            logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, ex)
         }
     }
 
@@ -83,6 +85,7 @@ internal class EmbraceNetworkConnectivityService(
             }
         } catch (e: java.lang.Exception) {
             logger.logError("Error while trying to get connectivity status.", e)
+            logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, e)
             networkStatus = NetworkStatus.UNKNOWN
         }
         return networkStatus
@@ -96,7 +99,7 @@ internal class EmbraceNetworkConnectivityService(
             try {
                 context.registerReceiver(this, intentFilter)
             } catch (ex: Exception) {
-                logger.logDebug(
+                logger.logInfo(
                     "Failed to register EmbraceNetworkConnectivityService " +
                         "broadcast receiver. Connectivity status will be unavailable.",
                     ex

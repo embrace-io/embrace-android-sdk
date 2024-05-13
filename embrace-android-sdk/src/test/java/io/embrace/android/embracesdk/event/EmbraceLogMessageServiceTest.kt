@@ -23,7 +23,8 @@ import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -56,7 +57,7 @@ internal class EmbraceLogMessageServiceTest {
         private lateinit var configService: ConfigService
         private lateinit var sessionProperties: EmbraceSessionProperties
         private lateinit var gatingService: EmbraceGatingService
-        private lateinit var logcat: InternalEmbraceLogger
+        private lateinit var logcat: EmbLogger
         private lateinit var executor: ExecutorService
         private lateinit var tick: AtomicLong
         private lateinit var clock: Clock
@@ -67,7 +68,7 @@ internal class EmbraceLogMessageServiceTest {
             metadataService = FakeMetadataService()
             sessionIdTracker = FakeSessionIdTracker()
             userService = FakeUserService()
-            logcat = InternalEmbraceLogger()
+            logcat = EmbLoggerImpl()
             executor = Executors.newSingleThreadExecutor()
             tick = AtomicLong(1609823408L)
             clock = Clock { tick.incrementAndGet() }

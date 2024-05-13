@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
@@ -27,7 +27,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
     private val scheduledExecutorSupplier: Provider<T>
 ) : ExternalResource() {
-    val logger = InternalEmbraceLogger()
+    val logger = EmbLoggerImpl()
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var anrService: EmbraceAnrService

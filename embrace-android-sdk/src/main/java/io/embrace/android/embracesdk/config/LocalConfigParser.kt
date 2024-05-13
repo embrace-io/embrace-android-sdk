@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal object LocalConfigParser {
 
@@ -42,7 +42,7 @@ internal object LocalConfigParser {
         packageName: String,
         customAppId: String?,
         serializer: EmbraceSerializer,
-        logger: InternalEmbraceLogger
+        logger: EmbLogger
     ): LocalConfig {
         return try {
             val appId: String = customAppId ?: resources.getString(
@@ -85,7 +85,7 @@ internal object LocalConfigParser {
         ndkEnabled: Boolean,
         sdkConfigs: String?,
         serializer: EmbraceSerializer,
-        logger: InternalEmbraceLogger
+        logger: EmbLogger
     ): LocalConfig {
         require(!appId.isNullOrEmpty()) { "Embrace AppId cannot be null or empty." }
 

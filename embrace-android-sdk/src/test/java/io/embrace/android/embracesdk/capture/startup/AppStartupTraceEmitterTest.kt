@@ -9,14 +9,15 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -27,9 +28,9 @@ import org.robolectric.annotation.Config
 /**
  * The various combinations of OS capabilities mean we have to test the following Android versions:
  *
- *  - 14+:         cold start trace from process create to render, process requested time available
- *  - 10 to 13:    cold start trace from process create to render, process requested time NOT available
- *  - 7 to 9:      cold start trace from process create to activity resume, process requested time NOT available
+ *  - 14+:         cold start trace from process create to render, process requested time available, activity pre/post create available
+ *  - 10 to 13:    cold start trace from process create to render, process requested time NOT available, activity pre/post create available
+ *  - 7 to 9:      cold start trace from process create to activity resume, process requested + activity pre/post create times NOT available
  *  - 5 to 6.0.1:  cold start trace application init if available (sdk init if not) to activity resume
  */
 @RunWith(AndroidJUnit4::class)
@@ -38,8 +39,8 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var loggerAction: FakeLoggerAction
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var fakeInternalErrorService: FakeInternalErrorService
+    private lateinit var logger: EmbLoggerImpl
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
 
@@ -56,8 +57,8 @@ internal class AppStartupTraceEmitterTest {
             backgroundWorker
         )
         clock.tick(100L)
-        loggerAction = FakeLoggerAction()
-        logger = InternalEmbraceLogger().apply { addLoggerAction(loggerAction) }
+        fakeInternalErrorService = FakeInternalErrorService()
+        logger = EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryClock,
             startupServiceProvider = { startupService },
@@ -66,41 +67,39 @@ internal class AppStartupTraceEmitterTest {
             versionChecker = BuildVersionChecker,
             logger = logger
         )
-        loggerAction.msgQueue.clear()
+        fakeInternalErrorService.throwables.clear()
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `no crashes if startup service not available in T`() {
         startupService = null
-        appStartupTraceEmitter.firstFrameRendered()
-        assertEquals(1, loggerAction.msgQueue.size)
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with every event triggered in T`() {
-        verifyColdStartWithRender()
+        verifyColdStartWithRender(processCreateDelayMs = 0L)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace without application init start and end triggered in T`() {
-        verifyColdStartWithRenderWithoutAppInitEvents()
+        verifyColdStartWithRenderWithoutAppInitEvents(processCreateDelayMs = 0L)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify warm start trace without application init start and end triggered in T`() {
-        verifyWarmStartWithRenderWithoutAppInitEvents()
+        verifyWarmStartWithRenderWithoutAppInitEvents(processCreateDelayMs = 0L)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `no crashes if startup service not available in S`() {
         startupService = null
-        appStartupTraceEmitter.firstFrameRendered()
-        assertEquals(1, loggerAction.msgQueue.size)
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
@@ -125,8 +124,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in P`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
@@ -151,8 +149,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in M`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
@@ -177,8 +174,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in L`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed()
-        assertEquals(1, loggerAction.msgQueue.size)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -199,7 +195,7 @@ internal class AppStartupTraceEmitterTest {
         verifyWarmStartWithResumeWithoutAppInitEvents()
     }
 
-    private fun verifyColdStartWithRender() {
+    private fun verifyColdStartWithRender(processCreateDelayMs: Long? = null) {
         clock.tick(100L)
         appStartupTraceEmitter.applicationInitStart()
         clock.tick(15L)
@@ -210,16 +206,22 @@ internal class AppStartupTraceEmitterTest {
         appStartupTraceEmitter.applicationInitEnd()
         val applicationInitEnd = clock.now()
         clock.tick(50L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        appStartupTraceEmitter.startupActivityPreCreated()
+        val startupActivityPreCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
-        clock.tick(180L)
+        clock.tick(180)
+        appStartupTraceEmitter.startupActivityPostCreated()
+        val startupActivityPostCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         clock.tick(199L)
-        appStartupTraceEmitter.firstFrameRendered()
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(7, spanSink.completedSpans().size)
@@ -231,32 +233,45 @@ internal class AppStartupTraceEmitterTest {
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
-        assertTraceRoot(trace, DEFAULT_FAKE_CURRENT_TIME, traceEnd)
+        assertTraceRoot(
+            trace = trace,
+            expectedStartTimeMs = DEFAULT_FAKE_CURRENT_TIME,
+            expectedEndTimeMs = traceEnd,
+            expectedProcessCreateDelayMs = processCreateDelayMs,
+            expectedActivityPreCreatedMs = startupActivityPreCreated,
+            expectedActivityPostCreatedMs = startupActivityPostCreated,
+        )
         assertChildSpan(processInit, DEFAULT_FAKE_CURRENT_TIME, applicationInitEnd)
         assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
         assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
-    private fun verifyColdStartWithRenderWithoutAppInitEvents() {
+    private fun verifyColdStartWithRenderWithoutAppInitEvents(processCreateDelayMs: Long? = null) {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
         clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
+        appStartupTraceEmitter.startupActivityPreCreated()
+        val startupActivityPreCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
-        clock.tick(180L)
+        clock.tick(180)
+        appStartupTraceEmitter.startupActivityPostCreated()
+        val startupActivityPostCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         clock.tick(199L)
-        appStartupTraceEmitter.firstFrameRendered()
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(6, spanSink.completedSpans().size)
@@ -267,13 +282,21 @@ internal class AppStartupTraceEmitterTest {
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
-        assertTraceRoot(trace, DEFAULT_FAKE_CURRENT_TIME, traceEnd)
+        assertTraceRoot(
+            trace = trace,
+            expectedStartTimeMs = DEFAULT_FAKE_CURRENT_TIME,
+            expectedEndTimeMs = traceEnd,
+            expectedProcessCreateDelayMs = processCreateDelayMs,
+            expectedActivityPreCreatedMs = startupActivityPreCreated,
+            expectedActivityPostCreatedMs = startupActivityPostCreated,
+        )
+
         assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
         assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyColdStartWithResume(trackProcessStart: Boolean = true) {
@@ -288,14 +311,14 @@ internal class AppStartupTraceEmitterTest {
         appStartupTraceEmitter.applicationInitEnd()
         val applicationInitEnd = clock.now()
         clock.tick(50L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
         clock.tick(180L)
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(7, spanSink.completedSpans().size)
@@ -313,14 +336,18 @@ internal class AppStartupTraceEmitterTest {
             applicationInitStart
         }
 
-        assertTraceRoot(trace, traceStartMs, traceEnd)
+        assertTraceRoot(
+            trace = trace,
+            expectedStartTimeMs = traceStartMs,
+            expectedEndTimeMs = traceEnd,
+        )
         assertChildSpan(processInit, traceStartMs, applicationInitEnd)
         assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
         assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart: Boolean = true) {
@@ -329,14 +356,14 @@ internal class AppStartupTraceEmitterTest {
         clock.tick(30L)
         val sdkInitEnd = clock.now()
         clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
         clock.tick(180L)
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(6, spanSink.completedSpans().size)
@@ -353,31 +380,41 @@ internal class AppStartupTraceEmitterTest {
             sdkInitStart
         }
 
-        assertTraceRoot(trace, traceStartMs, traceEnd)
+        assertTraceRoot(
+            trace = trace,
+            expectedStartTimeMs = traceStartMs,
+            expectedEndTimeMs = traceEnd,
+        )
         assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
         assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
-    private fun verifyWarmStartWithRenderWithoutAppInitEvents() {
+    private fun verifyWarmStartWithRenderWithoutAppInitEvents(processCreateDelayMs: Long? = null) {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
         clock.tick(60001L)
+        appStartupTraceEmitter.startupActivityPreCreated()
+        val startupActivityPreCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
-        clock.tick(180L)
+        clock.tick(180)
+        appStartupTraceEmitter.startupActivityPostCreated()
+        val startupActivityPostCreated = clock.now()
+        clock.tick()
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         clock.tick(199L)
-        appStartupTraceEmitter.firstFrameRendered()
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(4, spanSink.completedSpans().size)
@@ -387,14 +424,21 @@ internal class AppStartupTraceEmitterTest {
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
         with(trace) {
-            assertTraceRoot(this, startupActivityStart, traceEnd)
-            assertEquals("60001", attributes["emb.activity-init-gap-ms"])
-            assertEquals("30", attributes["emb.embrace-init-duration-ms"])
+            assertTraceRoot(
+                trace = this,
+                expectedStartTimeMs = startupActivityStart,
+                expectedEndTimeMs = traceEnd,
+                expectedProcessCreateDelayMs = processCreateDelayMs,
+                expectedActivityPreCreatedMs = startupActivityPreCreated,
+                expectedActivityPostCreatedMs = startupActivityPostCreated,
+            )
+            assertEquals((startupActivityStart - sdkInitEnd).toString(), attributes["activity-init-gap-ms"])
+            assertEquals("30", attributes["embrace-init-duration-ms"])
         }
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
 
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
     private fun verifyWarmStartWithResumeWithoutAppInitEvents() {
@@ -402,7 +446,7 @@ internal class AppStartupTraceEmitterTest {
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
-        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd)
+        checkNotNull(startupService).setSdkStartupInfo(sdkInitStart, sdkInitEnd, false, "main")
         clock.tick(60001L)
         appStartupTraceEmitter.startupActivityInitStart()
         val startupActivityStart = clock.now()
@@ -410,7 +454,7 @@ internal class AppStartupTraceEmitterTest {
         appStartupTraceEmitter.startupActivityInitEnd()
         val startupActivityEnd = clock.now()
         clock.tick(15L)
-        appStartupTraceEmitter.startupActivityResumed()
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
         val traceEnd = clock.now()
 
         assertEquals(4, spanSink.completedSpans().size)
@@ -420,20 +464,35 @@ internal class AppStartupTraceEmitterTest {
         val activityResume = checkNotNull(spanMap["emb-activity-resume"])
 
         with(trace) {
-            assertTraceRoot(this, startupActivityStart, traceEnd)
-            assertEquals("60001", attributes["emb.activity-init-gap-ms"])
-            assertEquals("30", attributes["emb.embrace-init-duration-ms"])
+            assertTraceRoot(
+                trace = this,
+                expectedStartTimeMs = startupActivityStart,
+                expectedEndTimeMs = traceEnd,
+            )
+            assertEquals("60001", attributes["activity-init-gap-ms"])
+            assertEquals("30", attributes["embrace-init-duration-ms"])
         }
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
-        assertEquals(0, loggerAction.msgQueue.size)
+        assertEquals(0, fakeInternalErrorService.throwables.size)
     }
 
-    private fun assertTraceRoot(trace: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {
-        assertEquals(expectedStartTimeNanos, trace.startTimeNanos.nanosToMillis())
-        assertEquals(expectedEndTimeNanos, trace.endTimeNanos.nanosToMillis())
+    private fun assertTraceRoot(
+        trace: EmbraceSpanData,
+        expectedStartTimeMs: Long,
+        expectedEndTimeMs: Long,
+        expectedProcessCreateDelayMs: Long? = null,
+        expectedActivityPreCreatedMs: Long? = null,
+        expectedActivityPostCreatedMs: Long? = null,
+    ) {
+        assertEquals(expectedStartTimeMs, trace.startTimeNanos.nanosToMillis())
+        assertEquals(expectedEndTimeMs, trace.endTimeNanos.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         trace.assertIsKeySpan()
+        assertEquals(STARTUP_ACTIVITY_NAME, trace.findSpanAttribute("startup-activity-name"))
+        assertEquals(expectedProcessCreateDelayMs?.toString(), trace.attributes["process-create-delay-ms"])
+        assertEquals(expectedActivityPreCreatedMs?.toString(), trace.attributes["startup-activity-pre-created-ms"])
+        assertEquals(expectedActivityPostCreatedMs?.toString(), trace.attributes["startup-activity-post-created-ms"])
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {
@@ -441,5 +500,9 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedEndTimeNanos, span.endTimeNanos.nanosToMillis())
         span.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         span.assertDoesNotHaveEmbraceAttribute(KeySpan)
+    }
+
+    companion object {
+        private const val STARTUP_ACTIVITY_NAME = "StartupActivity"
     }
 }

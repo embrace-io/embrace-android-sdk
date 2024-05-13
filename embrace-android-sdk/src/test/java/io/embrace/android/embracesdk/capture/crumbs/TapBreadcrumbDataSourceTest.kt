@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -22,7 +22,7 @@ internal class TapBreadcrumbDataSourceTest {
         source = TapDataSource(
             FakeConfigService().breadcrumbBehavior,
             writer,
-            InternalEmbraceLogger(),
+            EmbLoggerImpl(),
         )
     }
 

@@ -33,10 +33,26 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context                  an instance of context
+     * @param appFramework             the AppFramework of the application
+     */
+    void start(@NonNull Context context,
+               @NonNull Embrace.AppFramework appFramework);
+
+    /**
+     * Starts instrumentation of the Android application using the Embrace SDK. This should be
+     * called during creation of the application, as early as possible.
+     * <p>
+     * See <a href="https://embrace.io/docs/android/">Embrace Docs</a> for
+     * integration instructions. For compatibility with other networking SDKs such as Akamai,
+     * the Embrace SDK must be initialized after any other SDK.
+     *
+     * @param context                  an instance of context
      * @param isDevMode                if true, and the build type is debuggable, it
      *                                 sets the environment for all sessions to 'Development'.
      *
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
      */
+    @Deprecated
     void start(@NonNull Context context,
                boolean isDevMode);
 
@@ -51,7 +67,11 @@ interface EmbraceAndroidApi extends EmbraceApi {
      * @param context                  an instance of context
      * @param isDevMode                if true, and the build type is debuggable, it
      *                                 sets the environment for all sessions to 'Development'.
+     * @param appFramework             the AppFramework of the application
+     *
+     * @deprecated Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.
      */
+    @Deprecated
     void start(@NonNull Context context,
                boolean isDevMode,
                @NonNull Embrace.AppFramework appFramework);

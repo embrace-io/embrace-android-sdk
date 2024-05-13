@@ -14,7 +14,8 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -47,7 +48,7 @@ internal class EmbraceConfigServiceTest {
         private lateinit var mockApiService: ApiService
         private lateinit var processStateService: ProcessStateService
         private lateinit var mockCacheService: CacheService
-        private lateinit var logger: InternalEmbraceLogger
+        private lateinit var logger: EmbLogger
         private lateinit var fakeClock: FakeClock
         private lateinit var mockConfigListener: () -> Unit
         private lateinit var fakeCachedConfig: RemoteConfig
@@ -66,7 +67,7 @@ internal class EmbraceConfigServiceTest {
             processStateService = FakeProcessStateService()
             mockCacheService = mockk(relaxed = true)
             fakeClock = FakeClock()
-            logger = InternalEmbraceLogger()
+            logger = EmbLoggerImpl()
             configListenerTriggered = false
             mockConfigListener = { configListenerTriggered = true }
             fakeCachedConfig = RemoteConfig( // alter config to trigger listener

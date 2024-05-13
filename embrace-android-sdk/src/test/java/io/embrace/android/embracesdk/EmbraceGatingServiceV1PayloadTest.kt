@@ -34,7 +34,8 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -58,7 +59,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
     private lateinit var localConfig: LocalConfig
     private lateinit var gatingService: EmbraceGatingService
     private lateinit var configService: ConfigService
-    private lateinit var internalEmbraceLogger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
 
     private val enabledComponentsFull = setOf(
         BREADCRUMBS_TAPS,
@@ -90,10 +91,10 @@ internal class EmbraceGatingServiceV1PayloadTest {
         localConfig = LocalConfig("default test app Id", false, SdkLocalConfig())
         sessionBehavior = fakeSessionBehavior { cfg }
         configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
-        internalEmbraceLogger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         gatingService = EmbraceGatingService(
             configService,
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
     }
 
@@ -177,7 +178,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
                 "]" +
                 "}}",
             EmbraceSerializer(),
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
 
         cfg = buildCustomRemoteConfig(
@@ -187,7 +188,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
         gatingService = EmbraceGatingService(
             configService,
-            internalEmbraceLogger
+            logger
         )
     }
 

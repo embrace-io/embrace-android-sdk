@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
 import java.util.EnumMap
@@ -10,7 +11,7 @@ import java.util.EnumMap
 internal class EmbraceWebViewService(
     val configService: ConfigService,
     private val serializer: EmbraceSerializer,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : WebViewService {
 
     /**
@@ -90,10 +91,11 @@ internal class EmbraceWebViewService(
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
                 return serializer.fromJson(message, WebViewInfo::class.java)
             } else {
-                logger.logError("Web Vital info is too large to parse")
+                logger.logWarning("Web Vital info is too large to parse")
             }
         } catch (e: Exception) {
             logger.logError("Cannot parse Web Vital", e)
+            logger.trackInternalError(InternalErrorType.WEB_VITAL_PARSE_FAIL, e)
         }
         return null
     }

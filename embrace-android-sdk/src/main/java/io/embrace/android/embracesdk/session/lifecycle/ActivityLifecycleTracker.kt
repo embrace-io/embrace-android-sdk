@@ -5,7 +5,8 @@ import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.orientation.OrientationService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
@@ -16,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class ActivityLifecycleTracker(
     private val application: Application,
     private val orientationService: OrientationService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : ActivityTracker {
 
     init {
@@ -67,7 +68,8 @@ internal class ActivityLifecycleTracker(
         try {
             orientationService.onOrientationChanged(activity.resources.configuration.orientation)
         } catch (ex: Exception) {
-            logger.logDebug("Failed to register an orientation change", ex)
+            logger.logWarning("Failed to register an orientation change")
+            logger.trackInternalError(InternalErrorType.ORIENTATION_CAPTURE_FAIL, ex)
         }
     }
 
@@ -78,7 +80,8 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }
@@ -89,7 +92,8 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onView(activity)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }
@@ -102,7 +106,8 @@ internal class ActivityLifecycleTracker(
                 try {
                     listener.applicationStartupComplete()
                 } catch (ex: Exception) {
-                    logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                    logger.logWarning(ERROR_FAILED_TO_NOTIFY)
+                    logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
                 }
             }
         }
@@ -114,7 +119,8 @@ internal class ActivityLifecycleTracker(
             try {
                 listener.onViewClose(activity)
             } catch (ex: Exception) {
-                logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
+                logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
     }
@@ -135,7 +141,7 @@ internal class ActivityLifecycleTracker(
             application.unregisterActivityLifecycleCallbacks(this)
             listeners.clear()
         } catch (ex: Exception) {
-            logger.logDebug("Error when closing EmbraceActivityService", ex)
+            logger.logWarning("Error when closing EmbraceActivityService", ex)
         }
     }
 

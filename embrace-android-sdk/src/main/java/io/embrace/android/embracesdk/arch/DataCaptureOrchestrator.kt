@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
@@ -10,7 +11,7 @@ import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
  */
 internal class DataCaptureOrchestrator(
     private val dataSourceState: List<DataSourceState<*>>,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     configService: ConfigService
 ) {
 
@@ -26,6 +27,7 @@ internal class DataCaptureOrchestrator(
                 state.onConfigChange()
             } catch (exc: Throwable) {
                 logger.logError("Exception thrown starting data capture", exc)
+                logger.trackInternalError(InternalErrorType.CFG_CHANGE_DATA_CAPTURE_FAIL, exc)
             }
         }
     }
@@ -40,6 +42,7 @@ internal class DataCaptureOrchestrator(
                 state.onSessionTypeChange(sessionType)
             } catch (exc: Throwable) {
                 logger.logError("Exception thrown starting data capture", exc)
+                logger.trackInternalError(InternalErrorType.SESSION_CHANGE_DATA_CAPTURE_FAIL, exc)
             }
         }
     }

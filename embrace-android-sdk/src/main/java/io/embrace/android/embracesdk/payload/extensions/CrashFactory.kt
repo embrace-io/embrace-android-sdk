@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.payload.extensions
 import android.util.Base64
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.Crash
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
@@ -23,7 +24,7 @@ internal object CrashFactory {
      * @return a crash
      */
     fun ofThrowable(
-        logger: InternalEmbraceLogger,
+        logger: EmbLogger,
         throwable: Throwable?,
         jsException: JsException?,
         crashNumber: Int,
@@ -67,7 +68,7 @@ internal object CrashFactory {
      * @return a list of [String] representing the javascript stacktrace of the crash.
      */
     @JvmStatic
-    private fun jsExceptions(jsException: JsException?, logger: InternalEmbraceLogger): List<String>? {
+    private fun jsExceptions(jsException: JsException?, logger: EmbLogger): List<String>? {
         var jsExceptions: List<String>? = null
         if (jsException != null) {
             try {
@@ -77,9 +78,9 @@ internal object CrashFactory {
             } catch (ex: Exception) {
                 logger.logError(
                     "Failed to parse javascript exception",
-                    ex,
-                    true
+                    ex
                 )
+                logger.trackInternalError(InternalErrorType.INVALID_JS_EXCEPTION, ex)
             }
         }
         return jsExceptions

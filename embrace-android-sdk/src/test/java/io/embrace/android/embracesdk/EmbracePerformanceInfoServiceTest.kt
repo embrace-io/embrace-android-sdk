@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -21,7 +21,7 @@ internal class EmbracePerformanceInfoServiceTest {
     fun setUp() {
         service = EmbracePerformanceInfoService(
             metadataService,
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
     }
 

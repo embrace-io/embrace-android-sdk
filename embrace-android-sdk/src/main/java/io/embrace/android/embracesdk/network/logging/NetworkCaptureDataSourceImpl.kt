@@ -7,12 +7,12 @@ import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 internal class NetworkCaptureDataSourceImpl(
     private val logWriter: LogWriter,
-    logger: InternalEmbraceLogger
+    logger: EmbLogger
 ) : NetworkCaptureDataSource,
     LogEventMapper<NetworkCapturedCall>, LogDataSourceImpl(
         destination = logWriter,

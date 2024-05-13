@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.concurrency
 
-import io.embrace.android.embracesdk.fakes.FakeLoggerAction
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -17,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class ExecutionCoordinator(
     private val executionModifiers: ExecutionModifiers,
-    private val errorLogsProvider: Provider<List<FakeLoggerAction.LogMessage>>?
+    private val errorLogsProvider: Provider<List<Throwable>>?
 ) {
     private val thread1 = SingleThreadTestScheduledExecutor()
     private val thread2 = SingleThreadTestScheduledExecutor()

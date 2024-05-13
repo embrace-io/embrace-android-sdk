@@ -6,7 +6,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.utils.ThreadUtils
 import io.embrace.android.embracesdk.utils.stream
@@ -18,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 internal class EmbraceProcessStateService(
     private val clock: Clock,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : ProcessStateService {
 
     /**
@@ -101,7 +102,8 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logger.logDebug(ERROR_FAILED_TO_NOTIFY, ex)
+            logger.logWarning(ERROR_FAILED_TO_NOTIFY)
+            logger.trackInternalError(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL, ex)
         }
     }
 
@@ -118,7 +120,7 @@ internal class EmbraceProcessStateService(
             listeners.clear()
             sessionOrchestrator = null
         } catch (ex: Exception) {
-            logger.logDebug("Error when closing EmbraceProcessStateService", ex)
+            logger.logWarning("Error when closing EmbraceProcessStateService", ex)
         }
     }
 

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 
@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
  */
 internal class EmbraceGatingService(
     private val configService: ConfigService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : GatingService {
 
     /**

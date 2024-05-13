@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 
@@ -18,7 +18,7 @@ internal class FakeGatingService(configService: ConfigService = FakeConfigServic
     val envelopesFiltered = mutableListOf<Envelope<SessionPayload>>()
     val eventMessagesFiltered = mutableListOf<EventMessage>()
 
-    private val realGatingService = EmbraceGatingService(configService, InternalEmbraceLogger())
+    private val realGatingService = EmbraceGatingService(configService, EmbLoggerImpl())
 
     override fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage {
         val filteredMessage = realGatingService.gateSessionMessage(sessionMessage)

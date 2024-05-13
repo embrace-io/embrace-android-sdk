@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import android.app.Activity
 import android.os.Bundle
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
  */
 internal class PushNotificationCaptureService(
     private val breadCrumbService: BreadcrumbService,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : ActivityLifecycleListener {
 
     companion object Utils {

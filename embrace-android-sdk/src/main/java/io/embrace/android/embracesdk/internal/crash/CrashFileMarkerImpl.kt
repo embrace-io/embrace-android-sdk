@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import java.io.File
 
 /**
@@ -9,7 +9,7 @@ import java.io.File
  */
 internal class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : CrashFileMarker {
 
     private val lock = Any()

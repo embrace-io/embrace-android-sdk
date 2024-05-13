@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.BlobMessage
@@ -611,7 +611,7 @@ internal class EmbraceApiServiceTest {
             apiClient = fakeApiClient,
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
-            logger = InternalEmbraceLogger(),
+            logger = EmbLoggerImpl(),
             backgroundWorker = BackgroundWorker(testScheduledExecutor),
             cacheManager = fakeCacheManager,
             lazyDeviceId = lazy { fakeDeviceId },

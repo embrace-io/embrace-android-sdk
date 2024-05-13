@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerListener
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -16,7 +16,7 @@ internal class EmbraceMemoryCleanerServiceTest {
     @Before
     fun setUp() {
         internalErrorService = FakeInternalErrorService()
-        service = EmbraceMemoryCleanerService(InternalEmbraceLogger())
+        service = EmbraceMemoryCleanerService(EmbLoggerImpl())
     }
 
     @Test

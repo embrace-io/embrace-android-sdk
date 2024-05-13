@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
@@ -10,7 +10,7 @@ internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) : EmbraceInternalInterface by impl, UnityInternalInterface {
 
     override fun setUnityMetaData(
@@ -34,7 +34,7 @@ internal class UnityInternalInterfaceImpl(
                 hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
             }
         } else {
-            logger.logSDKNotInitialized("set Unity metadata")
+            logger.logSdkNotInitialized("set Unity metadata")
         }
     }
 
@@ -53,7 +53,6 @@ internal class UnityInternalInterfaceImpl(
         exceptionType: LogExceptionType
     ) {
         if (embrace.isStarted) {
-            logger.logError("message: $message -- stacktrace: $stacktrace")
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 "Unity exception",
@@ -67,7 +66,7 @@ internal class UnityInternalInterfaceImpl(
                 message
             )
         } else {
-            logger.logSDKNotInitialized("log Unity exception")
+            logger.logSdkNotInitialized("log Unity exception")
         }
     }
 

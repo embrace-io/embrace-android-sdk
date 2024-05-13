@@ -13,6 +13,5 @@ internal class SdkObservabilityModuleImplTest {
             FakeEssentialServiceModule()
         )
         assertNotNull(module.internalErrorService)
-        assertNotNull(module.reportingLoggerAction)
     }
 }

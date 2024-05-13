@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,7 +38,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `capture data respects limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -52,7 +52,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `capture data respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -88,7 +88,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `start span respects limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -102,7 +102,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `start span respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -138,7 +138,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `stop span does not increment limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -152,7 +152,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `stop span respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(InternalEmbraceLogger()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
 
         var count = 0
         repeat(4) {
@@ -166,5 +166,5 @@ internal class SpanDataSourceImplTest {
     private class FakeDataSourceImpl(
         dst: FakeSpanService,
         limitStrategy: LimitStrategy = NoopLimitStrategy
-    ) : SpanDataSourceImpl(dst, InternalEmbraceLogger(), limitStrategy)
+    ) : SpanDataSourceImpl(dst, EmbLoggerImpl(), limitStrategy)
 }

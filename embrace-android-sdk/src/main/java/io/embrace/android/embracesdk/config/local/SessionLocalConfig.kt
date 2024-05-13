@@ -22,11 +22,5 @@ internal class SessionLocalConfig(
      * gating feature is enabled.
      */
     @Json(name = "send_full_for")
-    val fullSessionEvents: Set<String>? = null,
-
-    /**
-     * Local/Internal logs with ERROR severity are going to be captured as part of our session payload tp monitor potential issues
-     */
-    @Json(name = "error_log_strict_mode")
-    val sessionEnableErrorLogStrictMode: Boolean? = null
+    val fullSessionEvents: Set<String>? = null
 )

@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 
 internal class FakeInitModule(
     clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = FakeOpenTelemetryClock(clock),
-    logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    logger: EmbLoggerImpl = EmbLoggerImpl(),
     systemInfo: SystemInfo = SystemInfo(
         osVersion = "99.0.0",
         deviceManufacturer = "Fake Manufacturer",

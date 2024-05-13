@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -28,7 +28,7 @@ internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: EmbraceSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,

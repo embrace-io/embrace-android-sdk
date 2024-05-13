@@ -40,7 +40,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
@@ -105,7 +105,7 @@ internal class PayloadFactoryBaTest {
             false,
             "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",
             EmbraceSerializer(),
-            InternalEmbraceLogger()
+            EmbLoggerImpl()
         )
 
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
@@ -168,7 +168,7 @@ internal class PayloadFactoryBaTest {
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val gatingService = FakeGatingService()
-        val logger = InternalEmbraceLogger()
+        val logger = EmbLoggerImpl()
         val collator = V1PayloadMessageCollator(
             gatingService,
             configService,

@@ -12,7 +12,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -39,7 +40,7 @@ internal class EmbraceSessionPropertiesTest {
     private lateinit var preferencesService: PreferencesService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var context: Context
-    private lateinit var logger: InternalEmbraceLogger
+    private lateinit var logger: EmbLogger
     private lateinit var configService: ConfigService
     private lateinit var config: RemoteConfig
 
@@ -47,7 +48,7 @@ internal class EmbraceSessionPropertiesTest {
     fun setUp() {
         val worker = BackgroundWorker(Executors.newSingleThreadExecutor())
         context = ApplicationProvider.getApplicationContext()
-        logger = InternalEmbraceLogger()
+        logger = EmbLoggerImpl()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }
         preferencesService =
             EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())

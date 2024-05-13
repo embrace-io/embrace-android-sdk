@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -56,7 +56,7 @@ internal class AeiDataSourceImplTest {
     private val metadataService = FakeMetadataService()
     private val sessionIdTracker = FakeSessionIdTracker()
     private val userService = FakeUserService()
-    private val logger = InternalEmbraceLogger()
+    private val logger = EmbLoggerImpl()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()

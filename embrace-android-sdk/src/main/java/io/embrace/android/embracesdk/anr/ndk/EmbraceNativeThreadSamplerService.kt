@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.mapThreadState
@@ -22,7 +22,7 @@ internal class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val configService: ConfigService,
     private val symbols: Lazy<Map<String, String>?>,
     private val random: Random = Random(),
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
     private val scheduledWorker: ScheduledWorker,
     private val deviceArchitecture: DeviceArchitecture,

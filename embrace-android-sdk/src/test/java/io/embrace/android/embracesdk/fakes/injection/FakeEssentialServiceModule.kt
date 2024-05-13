@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
@@ -53,7 +53,7 @@ internal class FakeEssentialServiceModule(
     override val orientationService: OrientationService = NoOpOrientationService(),
     override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
-    override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(InternalEmbraceLogger()),
+    override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(EmbLoggerImpl()),
     override val deviceArchitecture: DeviceArchitecture = FakeDeviceArchitecture(),
     override val apiService: ApiService = FakeApiService(),
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),

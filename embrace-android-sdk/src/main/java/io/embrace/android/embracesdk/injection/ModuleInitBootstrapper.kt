@@ -26,7 +26,9 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -44,7 +46,7 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: InternalEmbraceLogger = InternalEmbraceLogger(),
+    val logger: EmbLogger = EmbLoggerImpl(),
     val initModule: InitModule = InitModuleImpl(logger = logger),
     val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule),
     private val coreModuleSupplier: CoreModuleSupplier = ::CoreModuleImpl,
@@ -130,7 +132,6 @@ internal class ModuleInitBootstrapper(
     @JvmOverloads
     fun init(
         context: Context,
-        isDevMode: Boolean,
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
         customAppId: String? = null,
@@ -188,7 +189,6 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
-                            isDevMode,
                             { dataSourceModule },
                             configServiceProvider
                         )
@@ -287,7 +287,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(SdkObservabilityModule::class) {
                         serviceRegistry.registerService(sdkObservabilityModule.internalErrorService)
-                        initModule.logger.addLoggerAction(sdkObservabilityModule.reportingLoggerAction)
+                        initModule.logger.internalErrorService = sdkObservabilityModule.internalErrorService
                     }
 
                     nativeModule = init(NativeModule::class) {
@@ -309,7 +309,8 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule.spanService.recordCompletedSpan(
                                 name = "init-worker-schedule-delay",
                                 startTimeMs = initWorkerTaskQueueTime,
-                                endTimeMs = initModule.clock.now()
+                                endTimeMs = initModule.clock.now(),
+                                private = true,
                             )
                         }
                         serviceRegistry.registerServices(
@@ -342,6 +343,7 @@ internal class ModuleInitBootstrapper(
                                         }
                                     } catch (t: Throwable) {
                                         initModule.logger.logError("Failed to sample current thread during ANRs", t)
+                                        logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                                     }
                                 }
                             }
@@ -484,7 +486,8 @@ internal class ModuleInitBootstrapper(
                 openTelemetryModule.spanService.recordCompletedSpan(
                     name = "async-init-delay",
                     startTimeMs = delayStartMs,
-                    endTimeMs = delayEndMs
+                    endTimeMs = delayEndMs,
+                    private = true
                 )
             }
         }

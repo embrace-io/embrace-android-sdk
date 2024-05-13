@@ -77,7 +77,7 @@ internal class CrashTest {
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context, false, Embrace.AppFramework.REACT_NATIVE)
+            embrace.start(harness.overriddenCoreModule.context, Embrace.AppFramework.REACT_NATIVE)
 
             testRule.harness.recordSession {
                 embrace.reactNativeInternalInterface?.logUnhandledJsException(

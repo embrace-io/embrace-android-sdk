@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk;
 
 import static org.junit.Assert.assertFalse;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -23,6 +25,7 @@ public class PreSdkStartTest {
     @Test
     public void testStartWithNullContext() {
         embrace.start(null);
+        embrace.start(null, Embrace.AppFramework.NATIVE);
         embrace.start(null, true);
         embrace.start(null, false, Embrace.AppFramework.NATIVE);
         assertFalse(embrace.isStarted());
@@ -30,7 +33,9 @@ public class PreSdkStartTest {
 
     @Test
     public void testStartWithNullAppFramework() {
-        embrace.start(testRule.harness.getOverriddenCoreModule().getContext(), false, null);
+        Context context = testRule.harness.getOverriddenCoreModule().getContext();
+        embrace.start(context, false, null);
+        embrace.start(context, null);
         assertFalse(embrace.isStarted());
     }
 

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class LastRunCrashVerifier(
     private val crashFileMarker: CrashFileMarker,
-    private val logger: InternalEmbraceLogger
+    private val logger: EmbLogger
 ) {
 
     private var didLastRunCrashFuture: Future<Boolean>? = null

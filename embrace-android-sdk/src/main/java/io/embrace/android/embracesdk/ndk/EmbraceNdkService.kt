@@ -20,7 +20,8 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.InternalEmbraceLogger
+import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
@@ -55,7 +56,7 @@ internal class EmbraceNdkService(
     private val sessionProperties: EmbraceSessionProperties,
     appFramework: AppFramework,
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: InternalEmbraceLogger,
+    private val logger: EmbLogger,
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
     private val backgroundWorker: BackgroundWorker,
@@ -157,6 +158,7 @@ internal class EmbraceNdkService(
             }
         } catch (ex: Exception) {
             logger.logError("Failed to start native crash monitoring", ex)
+            logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
         }
     }
 
@@ -177,7 +179,7 @@ internal class EmbraceNdkService(
                 """.trimIndent()
                 val exc = RuntimeException(errMsg)
                 exc.stackTrace = arrayOfNulls(0)
-                logger.logWarningWithException(errMsg, exc, false)
+                logger.logWarning(errMsg, exc)
                 delegate._reinstallSignalHandlers()
             }
         }
@@ -332,9 +334,9 @@ internal class EmbraceNdkService(
                 crashFile.delete()
                 logger.logError(
                     "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                    ex,
-                    true
+                    ex
                 )
+                logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
             }
         }
         return nativeCrash
@@ -375,6 +377,7 @@ internal class EmbraceNdkService(
                     ),
                     ex
                 )
+                logger.trackInternalError(InternalErrorType.INVALID_NATIVE_SYMBOLS, ex)
             }
         } else {
             logger.logError(

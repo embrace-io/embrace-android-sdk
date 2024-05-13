@@ -36,16 +36,24 @@ import io.embrace.android.embracesdk.logging.EmbLogger
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
 internal class StartupTracker(
-    private val appStartupTraceEmitter: AppStartupTraceEmitter,
+    private val appStartupDataCollector: AppStartupDataCollector,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
     private var isFirstDraw = false
     private var nullWindowCallbackErrorLogged = false
+    private var startupActivityId: Int? = null
+
+    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+        if (activity.useAsStartupActivity()) {
+            appStartupDataCollector.startupActivityPreCreated()
+        }
+    }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityInitStart()
+        if (activity.useAsStartupActivity()) {
+            val activityName = activity.localClassName
+            appStartupDataCollector.startupActivityInitStart()
             if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 if (!isFirstDraw) {
                     val window = activity.window
@@ -55,7 +63,7 @@ internal class StartupTracker(
                             decorView.onNextDraw {
                                 if (!isFirstDraw) {
                                     isFirstDraw = true
-                                    val callback = { appStartupTraceEmitter.firstFrameRendered() }
+                                    val callback = { appStartupDataCollector.firstFrameRendered(activityName = activityName) }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
                                 }
                             }
@@ -69,21 +77,21 @@ internal class StartupTracker(
         }
     }
 
-    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityInitStart()
+    override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
+        if (activity.useAsStartupActivity()) {
+            appStartupDataCollector.startupActivityPostCreated()
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityInitEnd()
+        if (activity.isStartupActivity()) {
+            appStartupDataCollector.startupActivityInitEnd()
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
-            appStartupTraceEmitter.startupActivityResumed()
+            appStartupDataCollector.startupActivityResumed(activityName = activity.localClassName)
         }
     }
 
@@ -94,6 +102,34 @@ internal class StartupTracker(
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
     override fun onActivityDestroyed(activity: Activity) {}
+
+    /**
+     * Returns true if the Activity instance is being used as the startup Activity. It will return false if [useAsStartupActivity] has
+     * not been called previously to setup the Activity instance to be used as the startup Activity.
+     */
+    private fun Activity.isStartupActivity(): Boolean {
+        return if (observeForStartup()) {
+            startupActivityId == hashCode()
+        } else {
+            false
+        }
+    }
+
+    /**
+     * Use this Activity instance as the startup activity if appropriate. Return true the current instance is the startup Activity
+     * instance going forward, false otherwise.
+     */
+    private fun Activity.useAsStartupActivity(): Boolean {
+        if (isStartupActivity()) {
+            return true
+        }
+
+        if (observeForStartup()) {
+            startupActivityId = hashCode()
+        }
+
+        return isStartupActivity()
+    }
 
     companion object {
         private class PyNextDrawListener(

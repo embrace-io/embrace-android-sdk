@@ -4,11 +4,11 @@ import android.os.Build.VERSION_CODES
 import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -41,7 +41,7 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger
-) {
+) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
@@ -67,7 +67,16 @@ internal class AppStartupTraceEmitter(
     private var applicationInitEndMs: Long? = null
 
     @Volatile
+    private var startupActivityName: String? = null
+
+    @Volatile
+    private var startupActivityPreCreatedMs: Long? = null
+
+    @Volatile
     private var startupActivityInitStartMs: Long? = null
+
+    @Volatile
+    private var startupActivityPostCreatedMs: Long? = null
 
     @Volatile
     private var startupActivityInitEndMs: Long? = null
@@ -81,44 +90,55 @@ internal class AppStartupTraceEmitter(
     private val startupRecorded = AtomicBoolean(false)
     private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
 
-    fun applicationInitStart(timestampMs: Long? = null) {
+    override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
     }
 
-    fun applicationInitEnd(timestampMs: Long? = null) {
+    override fun applicationInitEnd(timestampMs: Long?) {
         applicationInitEndMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityInitStart(timestampMs: Long? = null) {
-        if (startupActivityInitStartMs == null) {
-            startupActivityInitStartMs = timestampMs ?: nowMs()
-        }
+    override fun startupActivityPreCreated(timestampMs: Long?) {
+        startupActivityPreCreatedMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityInitEnd(timestampMs: Long? = null) {
+    override fun startupActivityInitStart(timestampMs: Long?) {
+        startupActivityInitStartMs = timestampMs ?: nowMs()
+    }
+
+    override fun startupActivityPostCreated(timestampMs: Long?) {
+        startupActivityPostCreatedMs = timestampMs ?: nowMs()
+    }
+
+    override fun startupActivityInitEnd(timestampMs: Long?) {
         startupActivityInitEndMs = timestampMs ?: nowMs()
     }
 
-    fun startupActivityResumed(timestampMs: Long? = null) {
+    override fun startupActivityResumed(activityName: String, timestampMs: Long?) {
+        startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: nowMs()
         if (!endWithFrameDraw) {
             dataCollectionComplete()
         }
     }
 
-    fun firstFrameRendered(timestampMs: Long? = null) {
+    override fun firstFrameRendered(activityName: String, timestampMs: Long?) {
+        startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: nowMs()
         if (endWithFrameDraw) {
             dataCollectionComplete()
         }
     }
 
-    fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
+    override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
         additionalTrackedIntervals.add(
             TrackedInterval(name = name, startTimeMs = startTimeMs, endTimeMs = endTimeMs)
         )
     }
 
+    /**
+     * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
+     */
     private fun dataCollectionComplete() {
         if (!startupRecorded.get()) {
             synchronized(startupRecorded) {
@@ -169,7 +189,6 @@ internal class AppStartupTraceEmitter(
                         activityInitStartMs = startupActivityInitStartMs,
                         activityInitEndMs = startupActivityInitEndMs,
                         traceEndTimeMs = traceEndTimeMs,
-                        processCreateDelay = processCreateDelay(),
                     )
                 } else {
                     startupActivityInitStartMs?.let { startTime ->
@@ -177,9 +196,8 @@ internal class AppStartupTraceEmitter(
                             traceStartTimeMs = startTime,
                             activityInitEndMs = startupActivityInitEndMs,
                             traceEndTimeMs = traceEndTimeMs,
-                            processCreateDelay = processCreateDelay(),
                             processToActivityCreateGap = gap,
-                            sdkStartupDuration = sdkStartupDuration
+                            sdkStartupDuration = sdkStartupDuration,
                         )
                     }
                 }
@@ -214,7 +232,6 @@ internal class AppStartupTraceEmitter(
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
-        processCreateDelay: Long?,
     ): EmbraceSpan? {
         return if (!startupRecorded.get()) {
             spanService.startSpan(
@@ -222,9 +239,8 @@ internal class AppStartupTraceEmitter(
                 startTimeMs = traceStartTimeMs,
                 private = false
             )?.apply {
-                processCreateDelay?.let { delay ->
-                    addAttribute("process-create-delay-ms".toEmbraceAttributeName(), delay.toString())
-                }
+                addTraceMetadata()
+
                 if (stop(endTimeMs = traceEndTimeMs)) {
                     startupRecorded.set(true)
                 }
@@ -290,7 +306,6 @@ internal class AppStartupTraceEmitter(
         traceStartTimeMs: Long,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
-        processCreateDelay: Long?,
         processToActivityCreateGap: Long?,
         sdkStartupDuration: Long?,
     ): EmbraceSpan? {
@@ -300,15 +315,15 @@ internal class AppStartupTraceEmitter(
                 startTimeMs = traceStartTimeMs,
                 private = false,
             )?.apply {
-                processCreateDelay?.let { delay ->
-                    addAttribute("process-create-delay-ms".toEmbraceAttributeName(), delay.toString())
-                }
                 processToActivityCreateGap?.let { gap ->
-                    addAttribute("activity-init-gap-ms".toEmbraceAttributeName(), gap.toString())
+                    addAttribute("activity-init-gap-ms", gap.toString())
                 }
                 sdkStartupDuration?.let { duration ->
-                    addAttribute("embrace-init-duration-ms".toEmbraceAttributeName(), duration.toString())
+                    addAttribute("embrace-init-duration-ms", duration.toString())
                 }
+
+                addTraceMetadata()
+
                 if (stop(endTimeMs = traceEndTimeMs)) {
                     startupRecorded.set(true)
                 }
@@ -344,6 +359,24 @@ internal class AppStartupTraceEmitter(
     private fun applicationActivityCreationGap(): Long? = duration(applicationInitEndMs, startupActivityInitStartMs)
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
+
+    private fun PersistableEmbraceSpan.addTraceMetadata() {
+        processCreateDelay()?.let { delay ->
+            addAttribute("process-create-delay-ms", delay.toString())
+        }
+
+        startupActivityName?.let { name ->
+            addAttribute("startup-activity-name", name)
+        }
+
+        startupActivityPreCreatedMs?.let { timeMs ->
+            addAttribute("startup-activity-pre-created-ms", timeMs.toString())
+        }
+
+        startupActivityPostCreatedMs?.let { timeMs ->
+            addAttribute("startup-activity-post-created-ms", timeMs.toString())
+        }
+    }
 
     private data class TrackedInterval(
         val name: String,

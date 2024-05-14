@@ -1,9 +1,8 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.session.lifecycle
 
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -19,8 +18,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 internal class EmbraceProcessStateService(
     private val clock: Clock,
-    private val logger: EmbLogger
-) : ProcessStateService {
+    private val logger: EmbLogger,
+    private val lifecycleOwner: LifecycleOwner = ProcessLifecycleOwner.get()
+) : ProcessStateService, LifecycleEventObserver {
 
     /**
      * List of listeners that subscribe to process lifecycle events.
@@ -39,8 +39,7 @@ internal class EmbraceProcessStateService(
      * Returns if the app's in background or not.
      */
     @Volatile
-    // TODO: future: investigate setting via ProcessLifecycleOwner initial state
-    override var isInBackground = true
+    override var isInBackground = !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         private set
 
     init {
@@ -49,17 +48,25 @@ internal class EmbraceProcessStateService(
         ThreadUtils.runOnMainThread(
             logger,
             Runnable {
-                ProcessLifecycleOwner.get().lifecycle
-                    .addObserver(this@EmbraceProcessStateService)
+                lifecycleOwner.lifecycle.addObserver(this)
             }
         )
+    }
+
+    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        when (event) {
+            Lifecycle.Event.ON_START -> onForeground()
+            Lifecycle.Event.ON_STOP -> onBackground()
+            else -> {
+                // no-op
+            }
+        }
     }
 
     /**
      * This method will be called by the ProcessLifecycleOwner when the main app process calls
      * ON START.
      */
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
     override fun onForeground() {
         logger.logDebug("AppState: App entered foreground.")
 
@@ -84,7 +91,6 @@ internal class EmbraceProcessStateService(
      * This method will be called by the ProcessLifecycleOwner when the main app process calls
      * ON STOP.
      */
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     override fun onBackground() {
         logger.logDebug("AppState: App entered background")
         isInBackground = true

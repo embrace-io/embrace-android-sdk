@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.session
 import android.app.Application
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
@@ -32,8 +30,6 @@ internal class EmbraceProcessStateServiceTest {
 
     companion object {
         private lateinit var looper: Looper
-        private lateinit var mockLifeCycleOwner: LifecycleOwner
-        private lateinit var mockLifecycle: Lifecycle
         private lateinit var mockApplication: Application
         private val fakeClock = FakeClock()
 
@@ -41,18 +37,12 @@ internal class EmbraceProcessStateServiceTest {
         @JvmStatic
         fun beforeClass() {
             looper = mockLooper()
-            mockLifeCycleOwner = mockk()
-            mockLifecycle = mockk(relaxed = true)
             mockkStatic(Looper::class)
-            mockkStatic(ProcessLifecycleOwner::class)
             mockApplication = mockk(relaxed = true)
 
             fakeClock.setCurrentTime(1234)
             every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
             every { Looper.getMainLooper() } returns looper
-            every { ProcessLifecycleOwner.get() } returns mockLifeCycleOwner
-            every { mockLifeCycleOwner.lifecycle } returns mockLifecycle
-            every { mockLifecycle.addObserver(any()) } returns Unit
         }
 
         @JvmStatic
@@ -226,6 +216,34 @@ internal class EmbraceProcessStateServiceTest {
 
         val messages = fakeEmbLogger.internalErrorMessages
         assertTrue(messages.isEmpty())
+    }
+
+    @Test
+    fun `launched in background`() {
+        stateService = EmbraceProcessStateService(
+            fakeClock,
+            fakeEmbLogger,
+            mockk {
+                every { lifecycle } returns mockk<Lifecycle> {
+                    every { currentState } returns Lifecycle.State.INITIALIZED
+                }
+            }
+        )
+        assertTrue(stateService.isInBackground)
+    }
+
+    @Test
+    fun `launched in foreground`() {
+        stateService = EmbraceProcessStateService(
+            fakeClock,
+            fakeEmbLogger,
+            mockk {
+                every { lifecycle } returns mockk<Lifecycle> {
+                    every { currentState } returns Lifecycle.State.STARTED
+                }
+            }
+        )
+        assertFalse(stateService.isInBackground)
     }
 
     private class DecoratedListener(
